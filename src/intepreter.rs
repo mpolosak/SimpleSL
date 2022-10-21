@@ -149,6 +149,57 @@ impl Intepreter{
             var1=if var1==0.0 { 1.0 } else { 0.0 };
             variables.insert(var1name, Variable::Float(var1));
         }));
+        variables.insert(String::from("if"), Variable::Function(|variables, param|{
+            let vecparam: Vec<&str> = param.splitn(2, ' ').collect();
+            let var1name = String::from(vecparam[0]);
+            let mut var1: f64;
+            match variables.get(&var1name) {
+                Some(Variable::Float(value)) => var1=*value,
+                Some(_) => return println!("Function if requiers float"),
+                _ => return println!("Variable {} doesn't exist", var1name),
+            }
+            if var1 != 0.0 {
+                let var2 = String::from(vecparam[1]);
+                let vecvar2: Vec<&str> = var2.splitn(2, ' ').collect();
+                let execvarname = String::from(vecvar2[0]);
+                let param = if vecvar2.len() == 2 {
+                    String::from(vecvar2[1])
+                }   else {
+                    String::new()
+                };
+                match variables.get(&execvarname) {
+                    Some(Variable::Function(function)) => function(variables, param),
+                    Some(_) => println!("Not the function"),
+                    _ => println!("Variable doesn't exist"),
+                }
+            }
+        }));
+        variables.insert(String::from("while"), Variable::Function(|variables, param|{
+            let vecparam: Vec<&str> = param.splitn(2, ' ').collect();
+            let var1name = String::from(vecparam[0]);
+            loop{
+                let mut var1: f64;
+                match variables.get(&var1name) {
+                    Some(Variable::Float(value)) => var1=*value,
+                    Some(_) => return println!("Function if requiers float"),
+                    _ => return println!("Variable {} doesn't exist", var1name),
+                }
+                if var1 == 0.0 { break };
+                let var2 = String::from(vecparam[1]);
+                let vecvar2: Vec<&str> = var2.splitn(2, ' ').collect();
+                let execvarname = String::from(vecvar2[0]);
+                let param = if vecvar2.len() == 2 {
+                    String::from(vecvar2[1])
+                }   else {
+                    String::new()
+                };
+                match variables.get(&execvarname) {
+                    Some(Variable::Function(function)) => function(variables, param),
+                    Some(_) => println!("Not the function"),
+                    _ => println!("Variable doesn't exist"),
+                }
+            }
+        }));
         Intepreter{variables}
     }
     pub fn exec(&mut self, line: String){
