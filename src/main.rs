@@ -20,7 +20,10 @@ fn run_shell(){
         io::stdout().flush().unwrap();
         let mut input = String::new();
         io::stdin().read_line(&mut input).expect("Unable to read user input");
-        intepreter.exec(input.replace("\n", ""));
+        input = input.replace("\n", "");
+        if !input.is_empty(){
+            intepreter.exec(input);
+        }
     }
 }
 
