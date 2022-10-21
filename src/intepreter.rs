@@ -46,6 +46,72 @@ impl Intepreter{
             };
             variables.insert(varname, Variable::Text(value));
         }));
+        variables.insert(String::from("add"), Variable::Function(|variables, param|{
+            let vecparam: Vec<&str> = param.split(' ').collect();
+            if(vecparam.len()!=2){
+                return println!("Function add requiers 2 arguments")
+            }
+            let var1name = String::from(vecparam[0]);
+            let mut var1: f64;
+            match variables.get(&var1name) {
+                Some(Variable::Float(value)) => var1=*value,
+                Some(_) => return println!("Function add requiers float"),
+                _ => return println!("Variable {} doesn't exist", var1name),
+            }
+            let var2name = String::from(vecparam[1]);
+            let mut var2: f64;
+            match variables.get(&var2name) {
+                Some(Variable::Float(value)) => var2=*value,
+                Some(_) => return println!("Function add requiers float"),
+                _ => return println!("Variable {} doesn't exist", var2name),
+            }
+            var1+=var2;
+            variables.insert(var1name, Variable::Float(var1));
+        }));
+        variables.insert(String::from("multiply"), Variable::Function(|variables, param|{
+            let vecparam: Vec<&str> = param.split(' ').collect();
+            if(vecparam.len()!=2){
+                return println!("Function multiply requiers 2 arguments")
+            }
+            let var1name = String::from(vecparam[0]);
+            let mut var1: f64;
+            match variables.get(&var1name) {
+                Some(Variable::Float(value)) => var1=*value,
+                Some(_) => return println!("Function multiply requiers float"),
+                _ => return println!("Variable {} doesn't exist", var1name),
+            }
+            let var2name = String::from(vecparam[1]);
+            let mut var2: f64;
+            match variables.get(&var2name) {
+                Some(Variable::Float(value)) => var2=*value,
+                Some(_) => return println!("Function multiply requiers float"),
+                _ => return println!("Variable {} doesn't exist", var2name),
+            }
+            var1*=var2;
+            variables.insert(var1name, Variable::Float(var1));
+        }));
+        variables.insert(String::from("divide"), Variable::Function(|variables, param|{
+            let vecparam: Vec<&str> = param.split(' ').collect();
+            if(vecparam.len()!=2){
+                return println!("Function add requiers 2 arguments")
+            }
+            let var1name = String::from(vecparam[0]);
+            let mut var1: f64;
+            match variables.get(&var1name) {
+                Some(Variable::Float(value)) => var1=*value,
+                Some(_) => return println!("Function add requiers float"),
+                _ => return println!("Variable {} doesn't exist", var1name),
+            }
+            let var2name = String::from(vecparam[1]);
+            let mut var2: f64;
+            match variables.get(&var2name) {
+                Some(Variable::Float(value)) => var2=*value,
+                Some(_) => return println!("Function divide requiers float"),
+                _ => return println!("Variable {} doesn't exist", var2name),
+            }
+            var1/=var2;
+            variables.insert(var1name, Variable::Float(var1));
+        }));
         Intepreter{variables}
     }
     pub fn exec(&mut self, line: String){
