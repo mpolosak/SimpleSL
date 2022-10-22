@@ -200,6 +200,44 @@ impl Intepreter{
                 }
             }
         }));
+        variables.insert(String::from("foreach"), Variable::Function(|variables, param|{
+            let vecparam: Vec<&str> = param.splitn(4, ' ').collect();
+            if vec.len()!=4 {
+                return println!("Function foreach requires 4 arguments");
+            }
+            let varnameprefix = String::from(vecparam[0]);
+            let mvarname = String::from(vecparam[1]);
+            let nvarname = String::from(vecparam[2]);
+            let sfunction = String::from(vecparam[3]);
+            let n: i64;
+            match variables.get(&nvarname) {
+                Some(Variable::Float(value)) => n=value.floor() as i64,
+                Some(_) => return println!("Variable {} must be float", nvarname),
+                _ => return println!("Variable {} doesn't exist", nvarname),
+            }
+            let m: i64;
+            match variables.get(&mvarname) {
+                Some(Variable::Float(value)) => m=value.floor() as i64,
+                Some(_) => return println!("Variable {} must be float", nvarname),
+                _ => return println!("Variable {} doesn't exist", nvarname),
+            }
+            for i in m..n{
+                let varname = String::from(&varnameprefix)+&i.to_string();
+                let vecfunction: Vec<&str> = sfunction.splitn(2, ' ').collect();
+                let execvarname = String::from(vecfunction[0]);
+                let mut param = if vecfunction.len() == 2 {
+                    String::from(vecfunction[1])
+                }   else {
+                    String::new()
+                };
+                param = param.replace("%", &varname);
+                match variables.get(&execvarname) {
+                    Some(Variable::Function(function)) => function(variables, param),
+                    Some(_) => println!("Not the function"),
+                    _ => println!("Variable doesn't exist"),
+                }
+            }
+        }));
         Intepreter{variables}
     }
     pub fn exec(&mut self, line: String){
