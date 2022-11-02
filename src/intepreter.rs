@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::io;
 
 type Function = fn(&mut VariableMap, String);
 
@@ -22,6 +23,12 @@ impl Intepreter{
                 Some(variable) => print_variable(variable),
                 _ => println!("Variable doesn't exist"),
             }
+        }));
+        variables.insert(String::from("cgetline"), Variable::Function(|variables, param|{
+            let mut input = String::new();
+            io::stdin().read_line(&mut input).expect("Unable to read user input");
+            input = input.replace("\n", "");
+            variables.insert(param, Variable::Text(input));
         }));
         variables.insert(String::from("setf"), Variable::Function(|variables, param|{
             let vecparam: Vec<&str> = param.splitn(2, ' ').collect();
