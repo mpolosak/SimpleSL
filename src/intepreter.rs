@@ -59,7 +59,7 @@ impl Intepreter{
                 _ => return println!("Variable {} doesn't exist", var1name),
             }
             let var2name = String::from(vecparam[1]);
-            let mut var2: f64;
+            let var2: f64;
             match variables.get(&var2name) {
                 Some(Variable::Float(value)) => var2=*value,
                 Some(_) => return println!("Function add requiers float"),
@@ -81,7 +81,7 @@ impl Intepreter{
                 _ => return println!("Variable {} doesn't exist", var1name),
             }
             let var2name = String::from(vecparam[1]);
-            let mut var2: f64;
+            let var2: f64;
             match variables.get(&var2name) {
                 Some(Variable::Float(value)) => var2=*value,
                 Some(_) => return println!("Function multiply requiers float"),
@@ -103,7 +103,7 @@ impl Intepreter{
                 _ => return println!("Variable {} doesn't exist", var1name),
             }
             let var2name = String::from(vecparam[1]);
-            let mut var2: f64;
+            let var2: f64;
             match variables.get(&var2name) {
                 Some(Variable::Float(value)) => var2=*value,
                 Some(_) => return println!("Function divide requiers float"),
@@ -125,7 +125,7 @@ impl Intepreter{
                 _ => return println!("Variable {} doesn't exist", var1name),
             }
             let var2name = String::from(vecparam[1]);
-            let mut var2: f64;
+            let var2: f64;
             match variables.get(&var2name) {
                 Some(Variable::Float(value)) => var2=*value,
                 Some(_) => return println!("Function or requiers float"),
@@ -152,7 +152,7 @@ impl Intepreter{
         variables.insert(String::from("if"), Variable::Function(|variables, param|{
             let vecparam: Vec<&str> = param.splitn(2, ' ').collect();
             let var1name = String::from(vecparam[0]);
-            let mut var1: f64;
+            let var1: f64;
             match variables.get(&var1name) {
                 Some(Variable::Float(value)) => var1=*value,
                 Some(_) => return println!("Function if requiers float"),
@@ -178,7 +178,7 @@ impl Intepreter{
             let vecparam: Vec<&str> = param.splitn(2, ' ').collect();
             let var1name = String::from(vecparam[0]);
             loop{
-                let mut var1: f64;
+                let var1: f64;
                 match variables.get(&var1name) {
                     Some(Variable::Float(value)) => var1=*value,
                     Some(_) => return println!("Function if requiers float"),
@@ -202,7 +202,7 @@ impl Intepreter{
         }));
         variables.insert(String::from("foreach"), Variable::Function(|variables, param|{
             let vecparam: Vec<&str> = param.splitn(4, ' ').collect();
-            if vec.len()!=4 {
+            if vecparam.len()!=4 {
                 return println!("Function foreach requires 4 arguments");
             }
             let varnameprefix = String::from(vecparam[0]);

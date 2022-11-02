@@ -27,6 +27,6 @@ fn run_shell(){
     }
 }
 
-fn run_from_file(path: &String){
+fn run_from_file(_path: &String){
 
 }
