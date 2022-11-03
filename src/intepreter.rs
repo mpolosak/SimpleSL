@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 use std::io;
+use crate::params::*;
 
-type Function = fn(&mut VariableMap, String);
+type Function = fn(&mut VariableMap, ParamVec);
 
 enum Variable{
     Float(f64),
@@ -18,255 +19,226 @@ pub struct Intepreter{
 impl Intepreter{
     pub fn new() -> Intepreter{
         let mut variables = VariableMap::new();
-        variables.insert(String::from("print"), Variable::Function(|variables, param|{
-            match variables.get(&param) {
-                Some(variable) => print_variable(variable),
-                _ => println!("Variable doesn't exist"),
+        variables.insert(String::from("print"), Variable::Function(|variables, params|{
+            let mut text = String::new();
+            for param in params {
+                match param {
+                    Param::Float(value) => text+=&value.to_string(),
+                    Param::Text(value) => text+=&value,
+                    Param::Variable(name) => match variables.get(&name){
+                        Some(Variable::Float(value)) => text+=&value.to_string(),
+                        Some(Variable::Text(value)) => text+=&value,
+                        Some(Variable::Function(_)) => text+="Function",
+                        _ => return eprintln!("Variable {} doesn't exist", name)
+                    }
+                };
+            }
+            println!("{}", text);
+        }));
+        variables.insert(String::from("cgetline"), Variable::Function(|variables, params|{
+            if params.len()!=1 {
+                return eprintln!("Function cgetline requiers exactly 1 argument");
+            }
+            if let Param::Variable(var) = &params[0]{
+                let mut input = String::new();
+                io::stdin().read_line(&mut input).expect("Unable to read user input");
+                input = input.replace("\n", "");
+                variables.insert(var.to_string(), Variable::Text(input));
+            } else {
+                eprintln!("Function cgetline requires variable name as argument");
             }
         }));
-        variables.insert(String::from("cgetline"), Variable::Function(|variables, param|{
-            let mut input = String::new();
-            io::stdin().read_line(&mut input).expect("Unable to read user input");
-            input = input.replace("\n", "");
-            variables.insert(param, Variable::Text(input));
-        }));
-        variables.insert(String::from("setf"), Variable::Function(|variables, param|{
-            let vecparam: Vec<&str> = param.splitn(2, ' ').collect();
-            let varname = String::from(vecparam[0]);
-            let svalue = if vecparam.len() == 2 {
-                String::from(vecparam[1])
-            }   else {
-                String::new()
-            };
-            match svalue.parse::<f64>(){
-                Ok(value) => {variables.insert(varname, Variable::Float(value));},
-                _ => println!("'{}' isn't parsable to float", svalue)
-            }
-        }));
-        variables.insert(String::from("sets"), Variable::Function(|variables, param|{
-            let vecparam: Vec<&str> = param.splitn(2, ' ').collect();
-            let varname = String::from(vecparam[0]);
-            let value = if vecparam.len() == 2 {
-                String::from(vecparam[1])
-            }   else {
-                String::new()
-            };
-            variables.insert(varname, Variable::Text(value));
-        }));
-        variables.insert(String::from("add"), Variable::Function(|variables, param|{
-            let vecparam: Vec<&str> = param.split(' ').collect();
-            if vecparam.len()!=2{
+        variables.insert(String::from("add"), Variable::Function(|variables, params|{
+            if params.len()!=2{
                 return println!("Function add requiers 2 arguments")
             }
-            let var1name = String::from(vecparam[0]);
-            let mut var1: f64;
-            match variables.get(&var1name) {
-                Some(Variable::Float(value)) => var1=*value,
+            let var1name = if let Param::Variable(name) = &params[0] {
+                name.to_string()
+            } else {
+                return eprintln!("First parameter should be variable name");
+            };
+            let var2name = if let Param::Variable(name) = &params[1] {
+                name.to_string()
+            } else {
+                return eprintln!("Second parameter should be variable name");
+            };
+            let mut var1 = match variables.get(&var1name) {
+                Some(Variable::Float(value)) => *value,
                 Some(_) => return println!("Function add requiers float"),
                 _ => return println!("Variable {} doesn't exist", var1name),
-            }
-            let var2name = String::from(vecparam[1]);
-            let var2: f64;
-            match variables.get(&var2name) {
-                Some(Variable::Float(value)) => var2=*value,
+            };
+            let var2 = match variables.get(&var2name) {
+                Some(Variable::Float(value)) => *value,
                 Some(_) => return println!("Function add requiers float"),
                 _ => return println!("Variable {} doesn't exist", var2name),
-            }
+            };
             var1+=var2;
             variables.insert(var1name, Variable::Float(var1));
         }));
-        variables.insert(String::from("multiply"), Variable::Function(|variables, param|{
-            let vecparam: Vec<&str> = param.split(' ').collect();
-            if vecparam.len()!=2{
+        variables.insert(String::from("multiply"), Variable::Function(|variables, params|{
+            if params.len()!=2{
                 return println!("Function multiply requiers 2 arguments")
             }
-            let var1name = String::from(vecparam[0]);
-            let mut var1: f64;
-            match variables.get(&var1name) {
-                Some(Variable::Float(value)) => var1=*value,
+            let var1name = if let Param::Variable(name) = &params[0] {
+                name.to_string()
+            } else {
+                return eprintln!("First parameter should be variable name");
+            };
+            let var2name = if let Param::Variable(name) = &params[1] {
+                name.to_string()
+            } else {
+                return eprintln!("Second parameter should be variable name");
+            };
+            let mut var1 = match variables.get(&var1name) {
+                Some(Variable::Float(value)) => *value,
                 Some(_) => return println!("Function multiply requiers float"),
                 _ => return println!("Variable {} doesn't exist", var1name),
-            }
-            let var2name = String::from(vecparam[1]);
-            let var2: f64;
-            match variables.get(&var2name) {
-                Some(Variable::Float(value)) => var2=*value,
+            };
+            let var2 = match variables.get(&var2name) {
+                Some(Variable::Float(value)) => *value,
                 Some(_) => return println!("Function multiply requiers float"),
                 _ => return println!("Variable {} doesn't exist", var2name),
-            }
+            };
             var1*=var2;
             variables.insert(var1name, Variable::Float(var1));
         }));
-        variables.insert(String::from("divide"), Variable::Function(|variables, param|{
-            let vecparam: Vec<&str> = param.split(' ').collect();
-            if vecparam.len()!=2{
-                return println!("Function add requiers 2 arguments")
+        variables.insert(String::from("divide"), Variable::Function(|variables, params|{
+            if params.len()!=2{
+                return println!("Function divide requiers 2 arguments")
             }
-            let var1name = String::from(vecparam[0]);
-            let mut var1: f64;
-            match variables.get(&var1name) {
-                Some(Variable::Float(value)) => var1=*value,
-                Some(_) => return println!("Function add requiers float"),
+            let var1name = if let Param::Variable(name) = &params[0] {
+                name.to_string()
+            } else {
+                return eprintln!("First parameter should be variable name");
+            };
+            let var2name = if let Param::Variable(name) = &params[1] {
+                name.to_string()
+            } else {
+                return eprintln!("Second parameter should be variable name");
+            };
+            let mut var1 = match variables.get(&var1name) {
+                Some(Variable::Float(value)) => *value,
+                Some(_) => return println!("Function divide requiers float"),
                 _ => return println!("Variable {} doesn't exist", var1name),
-            }
-            let var2name = String::from(vecparam[1]);
-            let var2: f64;
-            match variables.get(&var2name) {
-                Some(Variable::Float(value)) => var2=*value,
+            };
+            let var2 = match variables.get(&var2name) {
+                Some(Variable::Float(value)) => *value,
                 Some(_) => return println!("Function divide requiers float"),
                 _ => return println!("Variable {} doesn't exist", var2name),
-            }
+            };
             var1/=var2;
             variables.insert(var1name, Variable::Float(var1));
         }));
-        variables.insert(String::from("or"), Variable::Function(|variables, param|{
-            let vecparam: Vec<&str> = param.split(' ').collect();
-            if vecparam.len()!=2{
-                return println!("Function or requiers 2 arguments")
+        variables.insert(String::from("or"), Variable::Function(|variables, params|{
+            if params.len()!=2{
+                return eprintln!("Function or requiers 2 arguments")
             }
-            let var1name = String::from(vecparam[0]);
-            let mut var1: f64;
-            match variables.get(&var1name) {
-                Some(Variable::Float(value)) => var1=*value,
-                Some(_) => return println!("Function or requiers float"),
-                _ => return println!("Variable {} doesn't exist", var1name),
-            }
-            let var2name = String::from(vecparam[1]);
-            let var2: f64;
-            match variables.get(&var2name) {
-                Some(Variable::Float(value)) => var2=*value,
-                Some(_) => return println!("Function or requiers float"),
-                _ => return println!("Variable {} doesn't exist", var2name),
-            }
+            let var1name = if let Param::Variable(name) = &params[0] {
+                name.to_string()
+            } else {
+                return eprintln!("First parameter should be variable name");
+            };
+            let var2name = if let Param::Variable(name) = &params[1] {
+                name.to_string()
+            } else {
+                return eprintln!("Second parameter should be variable name");
+            };
+            let mut var1 = match variables.get(&var1name) {
+                Some(Variable::Float(value)) => *value,
+                Some(_) => return eprintln!("Function or requiers float"),
+                _ => return eprintln!("Variable {} doesn't exist", var1name),
+            };
+            let var2 = match variables.get(&var2name) {
+                Some(Variable::Float(value)) => *value,
+                Some(_) => return eprintln!("Function or requiers float"),
+                _ => return eprintln!("Variable {} doesn't exist", var2name),
+            };
             var1=var1.abs()+var2.abs();
             variables.insert(var1name, Variable::Float(var1));
         }));
-        variables.insert(String::from("not"), Variable::Function(|variables, param|{
-            let vecparam: Vec<&str> = param.split(' ').collect();
-            if vecparam.len()!=1{
-                return println!("Function not requiers 1 argument")
+        variables.insert(String::from("not"), Variable::Function(|variables, params|{
+            if params.len()!=1{
+                return eprintln!("Function not requiers 1 argument")
             }
-            let var1name = String::from(vecparam[0]);
-            let mut var1: f64;
-            match variables.get(&var1name) {
-                Some(Variable::Float(value)) => var1=*value,
-                Some(_) => return println!("Function not requiers float"),
-                _ => return println!("Variable {} doesn't exist", var1name),
-            }
-            var1=if var1==0.0 { 1.0 } else { 0.0 };
-            variables.insert(var1name, Variable::Float(var1));
+            let var_name = if let Param::Variable(name) = &params[0] {
+                name.to_string()
+            } else {
+                return eprintln!("Parameter should be variable name");
+            };
+            let mut var = match variables.get(&var_name) {
+                Some(Variable::Float(value)) => *value,
+                Some(_) => return eprintln!("Function not requiers float"),
+                _ => return eprintln!("Variable {} doesn't exist", var_name),
+            };
+            var = if var == 0.0 { 1.0 } else { 0.0 };
+            variables.insert(var_name, Variable::Float(var));
         }));
-        variables.insert(String::from("if"), Variable::Function(|variables, param|{
-            let vecparam: Vec<&str> = param.splitn(2, ' ').collect();
-            let var1name = String::from(vecparam[0]);
-            let var1: f64;
-            match variables.get(&var1name) {
-                Some(Variable::Float(value)) => var1=*value,
-                Some(_) => return println!("Function if requiers float"),
-                _ => return println!("Variable {} doesn't exist", var1name),
+        variables.insert(String::from("if"), Variable::Function(|variables, params|{
+            if params.len()<2{
+                return eprintln!("Function if requiers at least 2 arguments")
             }
-            if var1 != 0.0 {
-                let var2 = String::from(vecparam[1]);
-                let vecvar2: Vec<&str> = var2.splitn(2, ' ').collect();
-                let execvarname = String::from(vecvar2[0]);
-                let param = if vecvar2.len() == 2 {
-                    String::from(vecvar2[1])
-                }   else {
-                    String::new()
-                };
-                match variables.get(&execvarname) {
-                    Some(Variable::Function(function)) => function(variables, param),
-                    Some(_) => println!("Not the function"),
-                    _ => println!("Variable doesn't exist"),
-                }
-            }
+            let condition = match &params[0]{
+                Param::Float(value) => *value,
+                Param::Variable(name) => match variables.get(name) {
+                        Some(Variable::Float(value)) => *value,
+                        Some(_) => return eprintln!("First argument to function if should be float"),
+                        _ => return eprintln!("Variable {} doesn't exist", name),
+                    }
+                _ => return eprintln!("First argument to function if should be float")
+            };
+            if condition == 0.0 { return };
+            let function = match &params[1]{
+                Param::Variable(name) => match variables.get(name) {
+                        Some(Variable::Function(func)) => *func,
+                        Some(_) => return eprintln!("Second argument to function if should be function"),
+                        _ => return eprintln!("Variable {} doesn't exist", name),
+                    }
+                _ => return eprintln!("Second argument to function if should be function")
+            };
+            let function_params = if let Some(fparams) = params.get(2..) { fparams.to_vec() }
+                                  else { ParamVec::new() };
+            function(variables, function_params);
         }));
-        variables.insert(String::from("while"), Variable::Function(|variables, param|{
-            let vecparam: Vec<&str> = param.splitn(2, ' ').collect();
-            let var1name = String::from(vecparam[0]);
+        variables.insert(String::from("while"), Variable::Function(|variables, params|{
             loop{
-                let var1: f64;
-                match variables.get(&var1name) {
-                    Some(Variable::Float(value)) => var1=*value,
-                    Some(_) => return println!("Function if requiers float"),
-                    _ => return println!("Variable {} doesn't exist", var1name),
-                }
-                if var1 == 0.0 { break };
-                let var2 = String::from(vecparam[1]);
-                let vecvar2: Vec<&str> = var2.splitn(2, ' ').collect();
-                let execvarname = String::from(vecvar2[0]);
-                let param = if vecvar2.len() == 2 {
-                    String::from(vecvar2[1])
-                }   else {
-                    String::new()
+                let condition = match &params[0]{
+                    Param::Float(value) => *value,
+                    Param::Variable(name) => match variables.get(name) {
+                            Some(Variable::Float(value)) => *value,
+                            Some(_) => return eprintln!("First argument to function while should be float"),
+                            _ => return eprintln!("Variable {} doesn't exist", name),
+                        }
+                    _ => return eprintln!("First argument to function while should be float")
                 };
-                match variables.get(&execvarname) {
-                    Some(Variable::Function(function)) => function(variables, param),
-                    Some(_) => println!("Not the function"),
-                    _ => println!("Variable doesn't exist"),
-                }
-            }
-        }));
-        variables.insert(String::from("foreach"), Variable::Function(|variables, param|{
-            let vecparam: Vec<&str> = param.splitn(4, ' ').collect();
-            if vecparam.len()!=4 {
-                return println!("Function foreach requires 4 arguments");
-            }
-            let varnameprefix = String::from(vecparam[0]);
-            let mvarname = String::from(vecparam[1]);
-            let nvarname = String::from(vecparam[2]);
-            let sfunction = String::from(vecparam[3]);
-            let n: i64;
-            match variables.get(&nvarname) {
-                Some(Variable::Float(value)) => n=value.floor() as i64,
-                Some(_) => return println!("Variable {} must be float", nvarname),
-                _ => return println!("Variable {} doesn't exist", nvarname),
-            }
-            let m: i64;
-            match variables.get(&mvarname) {
-                Some(Variable::Float(value)) => m=value.floor() as i64,
-                Some(_) => return println!("Variable {} must be float", nvarname),
-                _ => return println!("Variable {} doesn't exist", nvarname),
-            }
-            for i in m..n{
-                let varname = String::from(&varnameprefix)+&i.to_string();
-                let vecfunction: Vec<&str> = sfunction.splitn(2, ' ').collect();
-                let execvarname = String::from(vecfunction[0]);
-                let mut param = if vecfunction.len() == 2 {
-                    String::from(vecfunction[1])
-                }   else {
-                    String::new()
+                if condition == 0.0 { break };
+                let function = match &params[1]{
+                    Param::Variable(name) => match variables.get(name) {
+                            Some(Variable::Function(func)) => *func,
+                            Some(_) => return eprintln!("Second argument to function if should be function"),
+                            _ => return eprintln!("Variable {} doesn't exist", name),
+                        }
+                    _ => return eprintln!("Second argument to function if should be function")
                 };
-                param = param.replace("%", &varname);
-                match variables.get(&execvarname) {
-                    Some(Variable::Function(function)) => function(variables, param),
-                    Some(_) => println!("Not the function"),
-                    _ => println!("Variable doesn't exist"),
-                }
+                let function_params = if let Some(fparams) = params.get(2..) { fparams.to_vec() }
+                                      else { ParamVec::new() };
+                function(variables, function_params);
             }
         }));
         Intepreter{variables}
     }
     pub fn exec(&mut self, line: String){
-        let vecline: Vec<&str> = line.splitn(2, ' ').collect();
-        let varname = String::from(vecline[0]);
-        let param = if vecline.len() == 2 {
-            String::from(vecline[1])
-        }   else {
-            String::new()
+        let vecline = ParamVec::parse(line);
+        if vecline.len()<1 { return }
+        let function = match &vecline[0]{
+            Param::Variable(name) => match self.variables.get(name) {
+                    Some(Variable::Function(func)) => *func,
+                    Some(_) => return eprintln!("First element in line should be function"),
+                    _ => return eprintln!("Variable {} doesn't exist", name),
+                }
+            _ => return eprintln!("First element in line should be function")
         };
-        match self.variables.get(&varname) {
-            Some(Variable::Function(function)) => function(&mut self.variables, param),
-            Some(_) => println!("Not the function"),
-            _ => println!("Variable doesn't exist"),
-        }
-    }
-}
-
-fn print_variable(variable: &Variable){
-    match variable{
-        Variable::Float(number) => println!("{}", number),
-        Variable::Text(text) => println!("{}", text),
-        Variable::Function(_) => println!("Function")
+        let params = if let Some(fparams) = vecline.get(1..) { fparams.to_vec() }
+                     else { ParamVec::new() };
+        function(&mut self.variables, params);
     }
 }
