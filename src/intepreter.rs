@@ -4,6 +4,7 @@ use crate::params::*;
 
 type Function = fn(&mut VariableMap, ParamVec);
 
+#[derive(Clone)]
 enum Variable{
     Float(f64),
     Text(String),
@@ -223,6 +224,25 @@ impl Intepreter{
                                       else { ParamVec::new() };
                 function(variables, function_params);
             }
+        }));
+        variables.insert(String::from("move"), Variable::Function(|variables, params|{
+            if params.len()!=2{
+                return eprintln!("Function move requieres exactly 2 arguments");
+            }
+            let var1 = if let Param::Variable(name) = &params[0] {
+                name.clone()
+            } else {
+                return eprintln!("First argument to function move should be variable");
+            };
+            let var2 = match &params[1]{
+                Param::Float(value) => Variable::Float(*value),
+                Param::Text(value) => Variable::Text(String::from(value)),
+                Param::Variable(name) => match variables.get(name) {
+                    Some(variable) => variable.clone(),
+                    _ => return eprintln!("Variable {} does not exist", name)
+                }
+            };
+            variables.insert(var1, var2);
         }));
         Intepreter{variables}
     }
