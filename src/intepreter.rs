@@ -58,20 +58,19 @@ impl Intepreter{
             } else {
                 return eprintln!("First parameter should be variable name");
             };
-            let var2name = if let Param::Variable(name) = &params[1] {
-                name.to_string()
-            } else {
-                return eprintln!("Second parameter should be variable name");
-            };
             let mut var1 = match variables.get(&var1name) {
                 Some(Variable::Float(value)) => *value,
-                Some(_) => return println!("Function add requiers float"),
-                _ => return println!("Variable {} doesn't exist", var1name),
+                Some(_) => return eprintln!("Function add requiers float"),
+                _ => return eprintln!("Variable {} doesn't exist", var1name),
             };
-            let var2 = match variables.get(&var2name) {
-                Some(Variable::Float(value)) => *value,
-                Some(_) => return println!("Function add requiers float"),
-                _ => return println!("Variable {} doesn't exist", var2name),
+            let var2 = match &params[1]{
+                Param::Float(value) => *value,
+                Param::Variable(name) => match variables.get(name) {
+                    Some(Variable::Float(value)) => *value,
+                    Some(_) => return eprintln!("Function add requiers float"),
+                    _ => return eprintln!("Variable {} doesn't exist", name),
+                },
+                _ => return eprintln!("Function add requiers float")
             };
             var1+=var2;
             variables.insert(var1name, Variable::Float(var1));
@@ -85,20 +84,19 @@ impl Intepreter{
             } else {
                 return eprintln!("First parameter should be variable name");
             };
-            let var2name = if let Param::Variable(name) = &params[1] {
-                name.to_string()
-            } else {
-                return eprintln!("Second parameter should be variable name");
-            };
             let mut var1 = match variables.get(&var1name) {
                 Some(Variable::Float(value)) => *value,
-                Some(_) => return println!("Function multiply requiers float"),
-                _ => return println!("Variable {} doesn't exist", var1name),
+                Some(_) => return eprintln!("Function multipy requiers float"),
+                _ => return eprintln!("Variable {} doesn't exist", var1name),
             };
-            let var2 = match variables.get(&var2name) {
-                Some(Variable::Float(value)) => *value,
-                Some(_) => return println!("Function multiply requiers float"),
-                _ => return println!("Variable {} doesn't exist", var2name),
+            let var2 = match &params[1]{
+                Param::Float(value) => *value,
+                Param::Variable(name) => match variables.get(name) {
+                    Some(Variable::Float(value)) => *value,
+                    Some(_) => return eprintln!("Function multiply requiers float"),
+                    _ => return eprintln!("Variable {} doesn't exist", name),
+                },
+                _ => return eprintln!("Function add requiers float")
             };
             var1*=var2;
             variables.insert(var1name, Variable::Float(var1));
@@ -112,20 +110,19 @@ impl Intepreter{
             } else {
                 return eprintln!("First parameter should be variable name");
             };
-            let var2name = if let Param::Variable(name) = &params[1] {
-                name.to_string()
-            } else {
-                return eprintln!("Second parameter should be variable name");
-            };
             let mut var1 = match variables.get(&var1name) {
                 Some(Variable::Float(value)) => *value,
-                Some(_) => return println!("Function divide requiers float"),
-                _ => return println!("Variable {} doesn't exist", var1name),
+                Some(_) => return eprintln!("Function divide requiers float"),
+                _ => return eprintln!("Variable {} doesn't exist", var1name),
             };
-            let var2 = match variables.get(&var2name) {
-                Some(Variable::Float(value)) => *value,
-                Some(_) => return println!("Function divide requiers float"),
-                _ => return println!("Variable {} doesn't exist", var2name),
+            let var2 = match &params[1]{
+                Param::Float(value) => *value,
+                Param::Variable(name) => match variables.get(name) {
+                    Some(Variable::Float(value)) => *value,
+                    Some(_) => return eprintln!("Function divide requiers float"),
+                    _ => return eprintln!("Variable {} doesn't exist", name),
+                },
+                _ => return eprintln!("Function divide requiers float")
             };
             var1/=var2;
             variables.insert(var1name, Variable::Float(var1));
