@@ -27,7 +27,10 @@ impl Intepreter{
         Intepreter{variables}
     }
     pub fn exec(&mut self, line: String) -> Result<Variable, String>{
-        let vecline = ParamVec::parse(line);
+        let vecline = match ParamVec::parse(line) {
+            Ok(value) => value,
+            Err(e) => return Err(e)
+        };
         if vecline.len()<1 { return Ok(Variable::Null) }
         let function = match &vecline[0]{
             Param::Variable(name) => match self.variables.get(name) {

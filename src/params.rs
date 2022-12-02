@@ -8,11 +8,11 @@ pub enum Param{
 }
 
 pub trait Parse {
-    fn parse(text: String) -> Self;
+    fn parse(text: String) -> Result<Self, String> where Self: Sized;
 }
 
 impl Parse for ParamVec {
-    fn parse(mut text: String) -> ParamVec {
+    fn parse(mut text: String) -> Result<ParamVec, String> {
         let mut vec = ParamVec::new();
         while text.len()>0 {
             text = text.trim().to_string();
@@ -22,14 +22,12 @@ impl Parse for ParamVec {
                 if let Some((begin, rest)) = text.split_once("\" "){
                     let value = String::from(begin);
                     if value.contains("\""){
-                        eprintln!("Incorrect syntax");
-                        return ParamVec::new();
+                        return Err(String::from("Incorrect syntax"));
                     }
                     text = String::from(rest);
                     Param::Text(value)
                 } else {
-                    eprintln!("Incorrect syntax");
-                    return ParamVec::new();
+                    return Err(String::from("Incorrect syntax"));
                 }
             } else {
                 let param_s;
@@ -46,8 +44,7 @@ impl Parse for ParamVec {
                     match param_s.parse::<f64>(){
                         Ok(value) => Param::Float(value),
                         _ => {
-                            eprintln!("Incorrect syntax");
-                            return ParamVec::new();
+                            return Err(String::from("Incorrect syntax"));
                         }
                     }
                 } else {
@@ -56,6 +53,6 @@ impl Parse for ParamVec {
             };
             vec.push(param);
         }
-        vec
+        Ok(vec)
     }
 }
