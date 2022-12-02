@@ -4,6 +4,8 @@ use std::io::Write;
 mod intepreter;
 use intepreter::Intepreter;
 mod params;
+mod iofunctions;
+mod stdfunctions;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
