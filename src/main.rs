@@ -23,7 +23,9 @@ fn run_shell(){
         io::stdin().read_line(&mut input).expect("Unable to read user input");
         input = input.replace("\n", "");
         if !input.is_empty(){
-            intepreter.exec(input);
+            if let Err(error) = intepreter.exec(input){
+                eprintln!("{}", error);
+            }
         }
     }
 }
