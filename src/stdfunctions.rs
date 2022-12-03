@@ -167,24 +167,4 @@ pub fn add_std_functions(variables: &mut VariableMap){
         }
         return Ok(Variable::Null)
     }));
-    variables.insert(String::from("move"), Variable::Function(|variables, params|{
-        if params.len()!=2{
-            return Err(String::from("Function move requieres exactly 2 arguments"));
-        }
-        let var1 = if let Param::Variable(name) = &params[0] {
-            name.clone()
-        } else {
-            return Err(String::from("First argument to function move should be variable"));
-        };
-        let var2 = match &params[1]{
-            Param::Float(value) => Variable::Float(*value),
-            Param::Text(value) => Variable::Text(String::from(value)),
-            Param::Variable(name) => match variables.get(name) {
-                Some(variable) => variable.clone(),
-                _ => return Err(format!("Variable {} does not exist", name))
-            }
-        };
-        variables.insert(var1, var2);
-        Ok(Variable::Null)
-    }));
 }
