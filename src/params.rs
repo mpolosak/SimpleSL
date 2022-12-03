@@ -8,11 +8,30 @@ pub enum Param{
 }
 
 pub trait Parse {
-    fn parse(text: String) -> Result<Self, String> where Self: Sized;
+    fn parse(text: String) -> Result<(Option<String>,Self), String> where Self: Sized;
 }
 
 impl Parse for ParamVec {
-    fn parse(mut text: String) -> Result<ParamVec, String> {
+    fn parse(mut text: String) -> Result<(Option<String>, ParamVec), String> {
+        let result_var;
+        if let Some((before, after)) = text.split_once("=") {
+            if after.contains("="){
+                return Err(String::from("Too many = in one line"))
+            }
+            let before_s = before.trim().to_string();
+            if before_s.contains(" ") || before_s.is_empty() {
+                return Err(String::from("Before = should be exactly one variable"))
+            }
+            if before_s.contains("\"") ||  before_s.starts_with(
+                &['-', '0', '1', '2', '3', '4',
+                '5', '6', '7', '8', '9']){
+                return Err(format!("{} isn't correct variable name", before_s))
+            }
+            result_var = Some(before_s);
+            text = String::from(after);
+        } else {
+            result_var = None
+        }
         let mut vec = ParamVec::new();
         while text.len()>0 {
             text = text.trim().to_string();
@@ -53,6 +72,6 @@ impl Parse for ParamVec {
             };
             vec.push(param);
         }
-        Ok(vec)
+        Ok((result_var, vec))
     }
 }

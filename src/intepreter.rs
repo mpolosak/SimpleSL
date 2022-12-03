@@ -27,21 +27,36 @@ impl Intepreter{
         Intepreter{variables}
     }
     pub fn exec(&mut self, line: String) -> Result<Variable, String>{
-        let vecline = match ParamVec::parse(line) {
+        let (result_var, vecline) = match ParamVec::parse(line) {
             Ok(value) => value,
             Err(e) => return Err(e)
         };
         if vecline.len()<1 { return Ok(Variable::Null) }
-        let function = match &vecline[0]{
+        let result = match &vecline[0]{
             Param::Variable(name) => match self.variables.get(name) {
-                    Some(Variable::Function(func)) => *func,
-                    Some(_) => return Err(String::from("First element in line should be function")),
-                    _ => return Err(format!("Variable {} doesn't exist", name)),
-                }
-            _ => return Err(String::from("First element in line should be function"))
+                Some(Variable::Function(function)) => {
+                    let params = if let Some(fparams) = vecline.get(1..) { fparams.to_vec() }
+                                 else { ParamVec::new() };
+                    function(&mut self.variables, params)
+                },
+                Some(value) => Ok(value.clone()),
+                _ => return Err(format!("Variable {} doesn't exist", name)),
+            }
+            Param::Text(value) => Ok(Variable::Text(value.clone())),
+            Param::Float(value) => Ok(Variable::Float(*value))
         };
-        let params = if let Some(fparams) = vecline.get(1..) { fparams.to_vec() }
-                     else { ParamVec::new() };
-        return function(&mut self.variables, params);
+        
+        match result_var {
+            Some(var) => {
+                match result {
+                    Ok(value) => {
+                        self.variables.insert(var, value);
+                        Ok(Variable::Null)
+                    },
+                    Err(e) => Err(e),
+                }
+            }
+            None => result,
+        }
     }
 }
