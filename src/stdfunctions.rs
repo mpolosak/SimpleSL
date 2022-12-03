@@ -26,6 +26,30 @@ pub fn add_std_functions(variables: &mut VariableMap){
         };
         Ok(Variable::Float(var1+var2))
     }));
+    variables.insert(String::from("subtract"), Variable::Function(|variables, params|{
+        if params.len()!=2{
+            return Err(String::from("Function subtract requiers 2 arguments"));
+        }
+        let var1 = match &params[0]{
+            Param::Float(value) => *value,
+            Param::Variable(name) => match variables.get(name) {
+                Some(Variable::Float(value)) => *value,
+                Some(_) => return Err(String::from("Function subtract requiers float")),
+                _ => return Err(format!("Variable {} doesn't exist", name)),
+            },
+            _ => return Err(String::from("Function subtract requiers float"))
+        };
+        let var2 = match &params[1]{
+            Param::Float(value) => *value,
+            Param::Variable(name) => match variables.get(name) {
+                Some(Variable::Float(value)) => *value,
+                Some(_) => return Err(String::from("Function subtract requiers float")),
+                _ => return Err(format!("Variable {} doesn't exist", name)),
+            },
+            _ => return Err(String::from("Function subtract requiers float"))
+        };
+        Ok(Variable::Float(var1-var2))
+    }));
     variables.insert(String::from("multiply"), Variable::Function(|variables, params|{
         if params.len()!=2{
             return Err(String::from("Function multiply requiers 2 arguments"));
@@ -73,6 +97,32 @@ pub fn add_std_functions(variables: &mut VariableMap){
             _ => return Err(String::from("Function divide requiers float"))
         };
         Ok(Variable::Float(var1/var2))
+    }));
+    variables.insert(String::from("modulo"), Variable::Function(|variables, params|{
+        if params.len()!=2{
+            return Err(String::from("Function modulo requiers 2 arguments"));
+        }
+        let var1 = match &params[0]{
+            Param::Float(value) => *value,
+            Param::Variable(name) => match variables.get(name) {
+                Some(Variable::Float(value)) => *value,
+                Some(_) => return Err(String::from("Function modulo requiers float")),
+                _ => return Err(format!("Variable {} doesn't exist", name)),
+            },
+            _ => return Err(String::from("Function modulo requiers float"))
+        };
+        let var2 = match &params[1]{
+            Param::Float(value) => *value,
+            Param::Variable(name) => match variables.get(name) {
+                Some(Variable::Float(value)) => *value,
+                Some(_) => return Err(String::from("Function modulo requiers float")),
+                _ => return Err(format!("Variable {} doesn't exist", name)),
+            },
+            _ => return Err(String::from("Function modulo requiers float"))
+        };
+        let divided = var1/var2;
+        let result = var1 - var2*divided.floor();
+        Ok(Variable::Float(result))
     }));
     variables.insert(String::from("or"), Variable::Function(|variables, params|{
         if params.len()!=2{
