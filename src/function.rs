@@ -6,18 +6,39 @@ macro_rules! get_vars{
         }
         let mut i = 0;
         $(
-            let $var = match &$params[i]{
-                Param::$type(value) => *value,
-                Param::Variable(name) => match $variables.get(name) {
-                    Some(Variable::$type(value)) => *value,
-                    Some(_) => return Err(format!("Function {} requiers float", $function_name)),
-                    _ => return Err(format!("Variable {} doesn't exist", name)),
-                },
-                _ => return Err(format!("Function {} requiers float", $function_name))
-            };
+            let $var = get_var!($function_name, $variables, $params, i, $type);
             i+=1;
         )*
     }
+}
+
+#[macro_export]
+macro_rules! get_var{
+    ($function_name: expr, $variables: expr, $params: expr, $i: expr, Function)=>{
+        {
+            match &$params[$i]{
+                Param::Variable(name) => match $variables.get(name) {
+                    Some(Variable::Function(func)) => *func,
+                    Some(_) => return Err(format!("{} argument to {} should be function", $i+1, $function_name)),
+                    _ => return Err(format!("Variable {} doesn't exist", name)),
+                },
+                _ => return Err(format!("{} argument to {} should be function", $i+1, $function_name))
+            }
+        }
+    };
+    ($function_name: expr, $variables: expr, $params: expr, $i: expr, $type: ident)=>{
+        {
+            match &$params[$i]{
+                Param::$type(value) => *value,
+                Param::Variable(name) => match $variables.get(name) {
+                    Some(Variable::$type(value)) => *value,
+                    Some(_) => return Err(format!("{} argument to {} should be {}", $i+1, $function_name, stringify!($type))),
+                    _ => return Err(format!("Variable {} doesn't exist", name)),
+                },
+                _ => return Err(format!("{} argument to {} should be {}", $i+1, $function_name, stringify!($type)))
+            }
+        }
+    };
 }
 
 #[macro_export]

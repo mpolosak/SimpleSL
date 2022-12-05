@@ -37,48 +37,18 @@ pub fn add_std_functions(variables: &mut VariableMap){
         if params.len()<2{
             return Err(String::from("Function if requiers at least 2 arguments"));
         }
-        let condition = match &params[0]{
-            Param::Float(value) => *value,
-            Param::Variable(name) => match variables.get(name) {
-                    Some(Variable::Float(value)) => *value,
-                    Some(_) => return Err(String::from("First argument to function if should be float")),
-                    _ => return Err(format!("Variable {} doesn't exist", name)),
-                }
-            _ => return Err(String::from("First argument to function if should be float"))
-        };
+        let condition = get_var!("if", variables, params, 0, Float);
         if condition == 0.0 { return Ok(Variable::Null)};
-        let function = match &params[1]{
-            Param::Variable(name) => match variables.get(name) {
-                    Some(Variable::Function(func)) => *func,
-                    Some(_) => return Err(String::from("Second argument to function if should be function")),
-                    _ => return Err(format!("Variable {} doesn't exist", name)),
-                }
-            _ => return Err(String::from("Second argument to function if should be function"))
-        };
+        let function = get_var!("if", variables, params, 1, Function);
         let function_params = if let Some(fparams) = params.get(2..) { fparams.to_vec() }
                               else { ParamVec::new() };
         return function(variables, function_params);
     }));
     variables.insert(String::from("while"), Variable::Function(|variables, params|{
         loop{
-            let condition = match &params[0]{
-                Param::Float(value) => *value,
-                Param::Variable(name) => match variables.get(name) {
-                        Some(Variable::Float(value)) => *value,
-                        Some(_) => return Err(String::from("First argument to function while should be float")),
-                        _ => return Err(format!("Variable {} doesn't exist", name)),
-                    }
-                _ => return Err(String::from("First argument to function while should be float"))
-            };
+            let condition = get_var!("while", variables, params, 0, Float);
             if condition == 0.0 { break };
-            let function = match &params[1]{
-                Param::Variable(name) => match variables.get(name) {
-                        Some(Variable::Function(func)) => *func,
-                        Some(_) => return Err(String::from("Second argument to function if should be function")),
-                        _ => return Err(format!("Variable {} doesn't exist", name)),
-                    }
-                _ => return Err(String::from("Second argument to function if should be function"))
-            };
+            let function = get_var!("while", variables, params, 0, Float);
             let function_params = if let Some(fparams) = params.get(2..) { fparams.to_vec() }
                                   else { ParamVec::new() };
             if let Err(error) = function(variables, function_params){
