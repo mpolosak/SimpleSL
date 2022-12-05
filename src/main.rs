@@ -6,6 +6,7 @@ use intepreter::Intepreter;
 mod params;
 mod iofunctions;
 mod stdfunctions;
+mod function;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
