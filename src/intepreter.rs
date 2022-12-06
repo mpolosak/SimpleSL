@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use crate::params::*;
 use crate::stdfunctions::*;
 use crate::iofunctions::*;
+use crate::*;
 
 type Function = fn(&mut VariableMap, ParamVec) -> Result<Variable, String>;
 
@@ -32,18 +33,13 @@ impl Intepreter{
             Err(e) => return Err(e)
         };
         if vecline.len()<1 { return Ok(Variable::Null) }
-        let result = match &vecline[0]{
-            Param::Variable(name) => match self.variables.get(name) {
-                Some(Variable::Function(function)) => {
-                    let params = if let Some(fparams) = vecline.get(1..) { fparams.to_vec() }
-                                 else { ParamVec::new() };
-                    function(&mut self.variables, params)
-                },
-                Some(value) => Ok(value.clone()),
-                _ => return Err(format!("Variable {} doesn't exist", name)),
-            }
-            Param::Text(value) => Ok(Variable::Text(value.clone())),
-            Param::Float(value) => Ok(Variable::Float(*value))
+        let result = match get_var!(self.variables, vecline[0]){
+            Variable::Function(function) => {
+                let params = if let Some(fparams) = vecline.get(1..) { fparams.to_vec() }
+                             else { ParamVec::new() };
+                function(&mut self.variables, params)
+            },
+            value => Ok(value.clone()),
         };
         
         match result_var {
