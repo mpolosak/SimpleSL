@@ -42,6 +42,21 @@ macro_rules! get_var{
 }
 
 #[macro_export]
+macro_rules! add_function{
+    ($function_name: expr, $variables: ident, $params: ident, $function: expr)=>{
+        $variables.insert(String::from($function_name), Variable::Function(|$variables, $params|{
+            $function
+        }));
+    };
+    ($function_name: expr, $variables: ident, $params: ident, ($($var: ident: $type: ident), +,) $function: expr)=>{
+        $variables.insert(String::from($function_name), Variable::Function(|$variables, $params|{
+            get_vars!($function_name, $variables, $params, $($var: $type), +);
+            $function
+        }));
+    }
+}
+
+#[macro_export]
 macro_rules! count {
     ($h:expr) => (1);
     ($h:expr, $($t:expr),*) =>

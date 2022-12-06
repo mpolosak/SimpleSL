@@ -1,9 +1,10 @@
 use std::io;
 use crate::intepreter::*;
 use crate::params::*;
+use crate::*;
 
 pub fn add_io_functions(variables: &mut VariableMap){
-    variables.insert(String::from("print"), Variable::Function(|variables, params|{
+    add_function!("print", variables, params, {
         let mut text = String::new();
         for param in params {
             match param {
@@ -19,11 +20,11 @@ pub fn add_io_functions(variables: &mut VariableMap){
         }
         println!("{}", text);
         Ok(Variable::Null)
-    }));
-    variables.insert(String::from("cgetline"), Variable::Function(|_variables, _params|{
+    });
+    add_function!("cgetline", variables, _params, {
         let mut input = String::new();
         io::stdin().read_line(&mut input).expect("Unable to read user input");
         input = input.replace("\n", "");
         Ok(Variable::Text(input))
-    }));
+    });
 }
