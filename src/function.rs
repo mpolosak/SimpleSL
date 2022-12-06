@@ -39,6 +39,18 @@ macro_rules! get_var{
             }
         }
     };
+    ($variables: expr, $param: expr)=>{
+        {
+            match &$param{
+                Param::Float(value) => Variable::Float(*value),
+                Param::Text(value) => Variable::Text(value.clone()),
+                Param::Variable(name) => match $variables.get(name) {
+                    Some(variable) => variable.clone(),
+                    _ => return Err(format!("Variable {} doesn't exist", name)),
+                },
+            }
+        }
+    };
 }
 
 #[macro_export]

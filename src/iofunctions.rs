@@ -7,16 +7,11 @@ pub fn add_io_functions(variables: &mut VariableMap){
     add_function!("print", variables, params, {
         let mut text = String::new();
         for param in params {
-            match param {
-                Param::Float(value) => text+=&value.to_string(),
-                Param::Text(value) => text+=&value,
-                Param::Variable(name) => match variables.get(&name){
-                    Some(Variable::Float(value)) => text+=&value.to_string(),
-                    Some(Variable::Text(value)) => text+=&value,
-                    Some(Variable::Function(_)) => text+="Function",
-                    Some(Variable::Null)=>text+="Null",
-                    None => return Err(format!("Variable {} doesn't exist", name))
-                }
+            match get_var!(variables, param) {
+                Variable::Float(value) => text+=&value.to_string(),
+                Variable::Text(value) => text+=&value,
+                Variable::Function(_) => text+="Function",
+                Variable::Null=>text+="Null",
             };
         }
         println!("{}", text);
