@@ -14,7 +14,8 @@ pub fn add_io_functions(variables: &mut VariableMap){
                     Some(Variable::Float(value)) => text+=&value.to_string(),
                     Some(Variable::Text(value)) => text+=&value,
                     Some(Variable::Function(_)) => text+="Function",
-                    _ => return Err(format!("Variable {} doesn't exist", name))
+                    Some(Variable::Null)=>text+="Null",
+                    None => return Err(format!("Variable {} doesn't exist", name))
                 }
             };
         }
