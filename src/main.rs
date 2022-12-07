@@ -7,6 +7,7 @@ mod params;
 mod iofunctions;
 mod stdfunctions;
 mod function;
+mod variable;
 
 fn main() {
     let args: Vec<String> = env::args().collect();

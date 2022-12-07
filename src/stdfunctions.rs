@@ -1,5 +1,5 @@
-use crate::intepreter::*;
 use crate::params::*;
+use crate::variable::*;
 use crate::*;
 
 pub fn add_std_functions(variables: &mut VariableMap){

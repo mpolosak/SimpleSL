@@ -1,20 +1,8 @@
-use std::collections::HashMap;
 use crate::params::*;
 use crate::stdfunctions::*;
 use crate::iofunctions::*;
+use crate::variable::*;
 use crate::*;
-
-type Function = fn(&mut VariableMap, ParamVec) -> Result<Variable, String>;
-
-#[derive(Clone)]
-pub enum Variable{
-    Float(f64),
-    Text(String),
-    Function(Function),
-    Null
-}
-
-pub type VariableMap = HashMap<String, Variable>;
 
 pub struct Intepreter{
     variables:  VariableMap
