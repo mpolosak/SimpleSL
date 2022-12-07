@@ -11,6 +11,7 @@ pub enum Variable{
     Text(String),
     Function(Function),
     Array(Array),
+    Referance(String),
     Null
 }
 
@@ -30,6 +31,7 @@ impl fmt::Display for Variable {
                 }
                 Ok(())
             }
+            Variable::Referance(value) => write!(f, "&{}", value),
             Variable::Null=>write!(f, "Null"),
         }
     }
