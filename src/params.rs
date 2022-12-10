@@ -1,3 +1,5 @@
+use crate::variable::is_correct_variable_name;
+
 pub type ParamVec = Vec<Param>;
 
 #[derive(Clone, Debug)]
@@ -22,10 +24,8 @@ impl Parse for ParamVec {
             if before_s.contains(" ") || before_s.is_empty() {
                 return Err(String::from("Before = should be exactly one variable"))
             }
-            if before_s.contains("\"") ||  before_s.starts_with(
-                &['-', '0', '1', '2', '3', '4',
-                '5', '6', '7', '8', '9']){
-                return Err(format!("{} isn't correct variable name", before_s))
+            if !is_correct_variable_name(&before_s){
+                return Err(format!("{} isn't correct variable name", before_s));
             }
             result_var = Some(before_s);
             text = String::from(after);
@@ -57,17 +57,12 @@ impl Parse for ParamVec {
                     param_s = text;
                     text = String::new();
                 };
-                if param_s.starts_with(
-                    &['-', '0', '1', '2', '3', '4',
-                    '5', '6', '7', '8', '9']){
-                    match param_s.parse::<f64>(){
-                        Ok(value) => Param::Float(value),
-                        _ => {
-                            return Err(String::from("Incorrect syntax"));
-                        }
-                    }
-                } else {
+                if is_correct_variable_name(&param_s){
                     Param::Variable(param_s)
+                } else if let Ok(value) = param_s.parse::<f64>(){
+                    Param::Float(value)
+                } else {
+                    return Err(format!("{} isn't correct variable name", param_s))
                 }
             };
             vec.push(param);
