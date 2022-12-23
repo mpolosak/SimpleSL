@@ -3,7 +3,7 @@ use std::io;
 use std::io::Write;
 mod intepreter;
 use intepreter::Intepreter;
-mod params;
+mod parse;
 mod iofunctions;
 mod stdfunctions;
 mod function;

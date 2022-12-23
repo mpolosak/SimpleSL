@@ -3,10 +3,10 @@ use std::fmt;
 use lazy_static::lazy_static;
 use regex::Regex;
 use std::str::FromStr;
-use crate::params::{ParamVec, get_text};
+use crate::parse::get_text;
 
-type Function = fn(&mut VariableMap, ParamVec) -> Result<Variable, String>;
-type Array = Vec<Variable>;
+type Function = fn(&mut VariableMap, Array) -> Result<Variable, String>;
+pub type Array = Vec<Variable>;
 
 #[derive(Clone)]
 pub enum Variable{

@@ -1,4 +1,4 @@
-use crate::params::*;
+use crate::parse::*;
 use crate::stdfunctions::*;
 use crate::iofunctions::*;
 use crate::variable::*;
@@ -21,16 +21,16 @@ impl Intepreter{
             Err(e) => return Err(e)
         };
 
-        let vecline = match ParamVec::parse(line) {
+        let vecline = match parse(line, &self.variables) {
             Ok(value) => value,
             Err(e) => return Err(e)
         };
 
         if vecline.len()<1 { return Ok(Variable::Null) }
-        let result = match get_var!(self.variables, vecline[0]){
+        let result = match &vecline[0]{
             Variable::Function(function) => {
                 let params = if let Some(fparams) = vecline.get(1..) { fparams.to_vec() }
-                             else { ParamVec::new() };
+                             else { Array::new() };
                 function(&mut self.variables, params)
             },
             value => Ok(value.clone()),

@@ -1,52 +1,42 @@
-use crate::variable::is_correct_variable_name;
+use crate::variable::*;
+use std::str::FromStr;
 
-pub type ParamVec = Vec<Param>;
-
-#[derive(Clone, Debug)]
-pub enum Param{
-    Float(f64),
-    Text(String),
-    Variable(String)
-}
-
-pub trait Parse {
-    fn parse(text: String) -> Result<Self, String> where Self: Sized;
-}
-
-impl Parse for ParamVec {
-    fn parse(mut text: String) -> Result<ParamVec, String> {
-        let mut vec = ParamVec::new();
-        while text.len()>0 {
-            text = text.trim().to_string();
-            let param = if text.starts_with('"') {
-                let string = match get_text(&mut text){
-                    Ok(value) => value,
-                    Err(e) => {
-                        return Err(e)
-                    },
-                };
-                Param::Text(string)
-            } else {
-                let param_s;
-                if let Some((begin, rest)) = text.split_once(" "){
-                    param_s = String::from(begin);
-                    text = String::from(rest);
-                } else {
-                    param_s = text;
-                    text = String::new();
-                };
-                if is_correct_variable_name(&param_s){
-                    Param::Variable(param_s)
-                } else if let Ok(value) = param_s.parse::<f64>(){
-                    Param::Float(value)
-                } else {
-                    return Err(format!("{} isn't correct variable name", param_s))
-                }
+pub fn parse(mut text: String, variables: &VariableMap) -> Result<Array, String> {
+    let mut vec = Array::new();
+    while text.len()>0 {
+        text = text.trim().to_string();
+        let param = if text.starts_with('"') {
+            let string = match get_text(&mut text){
+                Ok(value) => value,
+                Err(e) => {
+                    return Err(e)
+                },
             };
-            vec.push(param);
-        }
-        Ok(vec)
+            Variable::Text(string)
+        } else {
+            let param_s;
+            if let Some((begin, rest)) = text.split_once(" "){
+                param_s = String::from(begin);
+                text = String::from(rest);
+            } else {
+                param_s = text;
+                text = String::new();
+            };
+            if is_correct_variable_name(&param_s){
+                match variables.get(&param_s) {
+                    Some(variable) => variable.clone(),
+                    _ => return Err(format!("Variable {} doesn't exist", param_s)),
+                }
+            } else {
+                match Variable::from_str(&param_s){
+                    Ok(variable) => variable,
+                    Err(e) => return Err(e),
+                }
+            }
+        };
+        vec.push(param);
     }
+    Ok(vec)
 }
 
 pub fn get_result_var(text: &mut String) -> Result<Option<String>, String>{
