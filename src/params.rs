@@ -24,18 +24,13 @@ impl Parse for ParamVec {
         while text.len()>0 {
             text = text.trim().to_string();
             let param = if text.starts_with('"') {
-                text.remove(0);
-                text.push(' ');
-                if let Some((begin, rest)) = text.split_once("\" "){
-                    let value = String::from(begin);
-                    if value.contains("\""){
-                        return Err(String::from("Incorrect syntax"));
-                    }
-                    text = String::from(rest);
-                    Param::Text(value)
-                } else {
-                    return Err(String::from("Incorrect syntax"));
-                }
+                let string = match get_text(&mut text){
+                    Ok(value) => value,
+                    Err(e) => {
+                        return Err(e)
+                    },
+                };
+                Param::Text(string)
             } else {
                 let param_s;
                 if let Some((begin, rest)) = text.split_once(" "){
@@ -76,6 +71,49 @@ fn get_result_var(text: &mut String) -> Result<Option<String>, String>{
     } else { Ok(None) }
 }
 
+pub fn get_text(text: &mut String) -> Result<String, String>{
+    text.remove(0);
+    let mut result = String::new();
+    loop{
+        if text.len() == 0 {
+            return Err(String::from("Mismatching quotation marks"))
+        };
+        match text.remove(0) {
+            '\\' => {
+                if text.len() == 0 {
+                    return Err(String::from("Mismatching quotation marks"))
+                };
+                match text.remove(0) {
+                    '\\' => {
+                        result.push('\\');
+                    }
+                    '"' => {
+                        result.push('"');
+                    }
+                    'n' => {
+                        result.push('\n');
+                    }
+                    _ => {
+                        return Err(String::from("Incorrect syntax"));
+                    }
+                }
+            }
+            '"' => {
+                if text.len()==0 {
+                    return Ok(result);
+                };
+                if text.remove(0) != ' ' {
+                    return Err(String::from("Incorrect syntax"));
+                }
+                return Ok(result);
+            }
+            other => {
+                result.push(other);
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[test]
@@ -91,5 +129,26 @@ mod tests {
         text = String::from(" 7 = 6");
         assert_eq!(get_result_var(&mut text),
             Err(String::from("7 isn't correct variable name")));
+    }
+    #[test]
+    fn check_get_text() {
+        use crate::params::get_text;
+        let mut text = String::from(r#""print""#);
+        assert_eq!(get_text(&mut text), Ok(String::from("print")));
+        text = String::from(r#""print" "#);
+        assert_eq!(get_text(&mut text), Ok(String::from("print")));
+        text = String::from(r#""print\n""#);
+        assert_eq!(get_text(&mut text), Ok(String::from("print\n")));
+        text = String::from(r#""print\\n""#);
+        assert_eq!(get_text(&mut text), Ok(String::from("print\\n")));
+        text = String::from(r#""print\"""#);
+        assert_eq!(get_text(&mut text), Ok(String::from("print\"")));
+        text = String::from(r#""print\r""#);
+        assert_eq!(get_text(&mut text), Err(String::from("Incorrect syntax")));
+        text = String::from(r#""print"s"#);
+        assert_eq!(get_text(&mut text), Err(String::from("Incorrect syntax")));
+        text = String::from(r#""print"#);
+        assert_eq!(get_text(&mut text),
+            Err(String::from("Mismatching quotation marks")));
     }
 }

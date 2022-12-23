@@ -3,7 +3,7 @@ use std::fmt;
 use lazy_static::lazy_static;
 use regex::Regex;
 use std::str::FromStr;
-use crate::params::ParamVec;
+use crate::params::{ParamVec, get_text};
 
 type Function = fn(&mut VariableMap, ParamVec) -> Result<Variable, String>;
 type Array = Vec<Variable>;
@@ -79,19 +79,14 @@ impl FromStr for Variable {
         } else if let Ok(value) = s.parse::<f64>(){
             Ok(Variable::Float(value))
         } else if s.starts_with("\"") {
-            s.remove(0);
-            if !s.ends_with("\""){
-                return Err(String::from("Mismatching quotation marks"));
+            let result = match get_text(&mut s) {
+                Ok(value) => value,
+                Err(e) => return Err(e),
+            };
+            if s.len() != 0 {
+                return Err(String::from("String contains more than one variable"));
             }
-            s.pop();
-            lazy_static! {
-                static ref RE: Regex = Regex::new(r#"[^\\]""#).unwrap();
-            }
-            if let Some(_) = RE.captures(&s) {
-                return Err(String::from("Mismatching quotation marks"));
-            }
-            s = s.replace("\\\"", "\"");
-            Ok(Variable::Text(s))
+            Ok(Variable::Text(result))
         } else {
             Err(format!("{} cannot be parsed to variable", s))
         }
@@ -171,7 +166,8 @@ mod tests {
         assert_eq!(Variable::from_str("Null"), Ok(Variable::Null));
         assert_eq!(Variable::from_str("&print "), Ok(Variable::Referance(String::from("print"))));
         assert_eq!(Variable::from_str(r#""print \"""#), Ok(Variable::Text(String::from("print \""))));
-        assert_eq!(Variable::from_str(r#""print" """#), Err(String::from("Mismatching quotation marks")));
+        assert_eq!(Variable::from_str(r#""print" """#),
+            Err(String::from("String contains more than one variable")));
         assert_eq!(Variable::from_str("\"print"), Err(String::from("Mismatching quotation marks")));
     }
 }
