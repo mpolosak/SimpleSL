@@ -15,11 +15,17 @@ impl Intepreter{
         add_std_functions(&mut variables);
         Intepreter{variables}
     }
-    pub fn exec(&mut self, line: String) -> Result<Variable, String>{
-        let (result_var, vecline) = match ParamVec::parse(line) {
+    pub fn exec(&mut self, mut line: String) -> Result<Variable, String>{
+        let result_var = match get_result_var(&mut line) {
             Ok(value) => value,
             Err(e) => return Err(e)
         };
+
+        let vecline = match ParamVec::parse(line) {
+            Ok(value) => value,
+            Err(e) => return Err(e)
+        };
+
         if vecline.len()<1 { return Ok(Variable::Null) }
         let result = match get_var!(self.variables, vecline[0]){
             Variable::Function(function) => {

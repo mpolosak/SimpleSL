@@ -10,16 +10,11 @@ pub enum Param{
 }
 
 pub trait Parse {
-    fn parse(text: String) -> Result<(Option<String>,Self), String> where Self: Sized;
+    fn parse(text: String) -> Result<Self, String> where Self: Sized;
 }
 
 impl Parse for ParamVec {
-    fn parse(mut text: String) -> Result<(Option<String>, ParamVec), String> {
-        let result_var = match get_result_var(&mut text) {
-            Ok(value) => value,
-            Err(e) => return Err(e)
-        };
-
+    fn parse(mut text: String) -> Result<ParamVec, String> {
         let mut vec = ParamVec::new();
         while text.len()>0 {
             text = text.trim().to_string();
@@ -50,11 +45,11 @@ impl Parse for ParamVec {
             };
             vec.push(param);
         }
-        Ok((result_var, vec))
+        Ok(vec)
     }
 }
 
-fn get_result_var(text: &mut String) -> Result<Option<String>, String>{
+pub fn get_result_var(text: &mut String) -> Result<Option<String>, String>{
     if let Some((before, after)) = text.split_once("=") {
         if after.contains("="){
             return Err(String::from("Too many = in one line"))
