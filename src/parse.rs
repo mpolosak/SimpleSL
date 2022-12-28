@@ -13,6 +13,16 @@ pub fn parse(mut text: String, variables: &VariableMap) -> Result<Array, String>
                 },
             };
             Variable::Text(string)
+        } else if text.starts_with('{') {
+            let array_text = match get_array_literal(&mut text) {
+                Ok(value) => value,
+                Err(e) => return Err(e)
+            };
+            let array = match parse(array_text, &variables) {
+                Ok(value) => value,
+                Err(e) => return Err(e)
+            };
+            Variable::Array(array)
         } else {
             let param_s;
             if let Some((begin, rest)) = text.split_once(" "){
@@ -99,11 +109,45 @@ pub fn get_text(text: &mut String) -> Result<String, String>{
     }
 }
 
+fn get_array_literal(text: &mut String) -> Result<String, String> {
+    text.remove(0);
+    let mut result = String::new();
+    let mut level = 1;
+    loop{
+        if text.len() == 0 {
+            return Err(String::from("Mismatching array brackets"));
+        }
+        match text.remove(0) {
+            '{' => {
+                level += 1;
+                result.push('{');
+            }
+            '}' => {
+                level-=1;
+                if level > 0 {
+                    result.push('}'); 
+                    continue
+                }
+                if text.len()==0 {
+                    return Ok(result);
+                };
+                if text.remove(0) != ' ' {
+                    return Err(String::from("Incorrect syntax"));
+                }
+                return Ok(result);
+            }
+            ch => {
+                result.push(ch);
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[test]
     fn check_get_result_var() {
-        use crate::params::get_result_var;
+        use crate::parse::get_result_var;
         let mut text = String::from(" x = 14");
         assert_eq!(get_result_var(&mut text), Ok(Some(String::from("x"))));
         text = String::from(" x = 5 = 6");
@@ -117,7 +161,7 @@ mod tests {
     }
     #[test]
     fn check_get_text() {
-        use crate::params::get_text;
+        use crate::parse::get_text;
         let mut text = String::from(r#""print""#);
         assert_eq!(get_text(&mut text), Ok(String::from("print")));
         text = String::from(r#""print" "#);
@@ -135,5 +179,17 @@ mod tests {
         text = String::from(r#""print"#);
         assert_eq!(get_text(&mut text),
             Err(String::from("Mismatching quotation marks")));
+    }
+    #[test]
+    fn check_get_array_literal(){
+        use crate::parse::get_array_literal;
+        let mut text = String::from(r#"{x 45} addd fg"#);
+        assert_eq!(get_array_literal(&mut text), Ok(String::from("x 45")));
+        text = String::from(r#"{x {45 {6}}} addd fg"#);
+        assert_eq!(get_array_literal(&mut text), Ok(String::from("x {45 {6}}")));
+        text = String::from(r#"{x {45 {6} addd fg"#);
+        assert_eq!(get_array_literal(&mut text), Err(String::from("Mismatching array brackets")));
+        text = String::from(r#"{x {45 {6}}}c addd fg"#);
+        assert_eq!(get_array_literal(&mut text), Err(String::from("Incorrect syntax")));
     }
 }

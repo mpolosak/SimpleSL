@@ -27,12 +27,13 @@ impl fmt::Display for Variable {
             Variable::Text(value)=>write!(f, "{}", value),
             Variable::Function(_)=>write!(f, "Function"),
             Variable::Array(array)=>{
+                write!(f, "{{");
                 for value in array{
-                    if let Err(e) = write!(f, "{}", value){
+                    if let Err(e) = write!(f, "{} ", value){
                         return Err(e);
                     }
                 }
-                Ok(())
+                write!(f, "}}")
             }
             Variable::Referance(value) => write!(f, "&{}", value),
             Variable::Null=>write!(f, "Null"),
