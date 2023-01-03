@@ -6,15 +6,16 @@ use std::fs::File;
 use std::io::{BufReader, BufRead};
 
 pub struct Intepreter{
-    variables:  VariableMap
+    pub variables:  VariableMap
 }
 
 impl Intepreter{
     pub fn new() -> Intepreter{ 
         let mut variables = VariableMap::new();
-        add_io_functions(&mut variables);
-        add_std_functions(&mut variables);
-        Intepreter{variables}
+        let mut intepreter = Intepreter{variables};
+        add_io_functions(&mut intepreter);
+        add_std_functions(&mut intepreter);
+        intepreter
     }
 
     pub fn exec(&mut self, mut line: String) -> Result<Variable, String>{
@@ -23,7 +24,7 @@ impl Intepreter{
             Err(e) => return Err(e)
         };
 
-        let result = match parse(line, &mut self.variables) {
+        let result = match parse(line, self) {
             Ok(value) => value,
             Err(e) => return Err(e)
         };

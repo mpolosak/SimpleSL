@@ -14,13 +14,13 @@ macro_rules! get_vars{
 
 #[macro_export]
 macro_rules! add_function{
-    ($function_name: expr, $variables: ident, $params: ident, $function: expr)=>{
-        $variables.insert(String::from($function_name), Variable::Function(|$variables, $params|{
+    ($function_name: expr, $intepreter: ident, $params: ident, $function: expr)=>{
+        $intepreter.variables.insert(String::from($function_name), Variable::Function(|$intepreter, $params|{
             $function
         }));
     };
-    ($function_name: expr, $variables: ident, $params: ident, ($($var: ident: $type: ident), +,) $function: expr)=>{
-        $variables.insert(String::from($function_name), Variable::Function(|$variables, mut $params|{
+    ($function_name: expr, $intepreter: ident, $params: ident, ($($var: ident: $type: ident), +,) $function: expr)=>{
+        $intepreter.variables.insert(String::from($function_name), Variable::Function(|$intepreter, mut $params|{
             if $params.len()<count!($($var),*){
                 return Err(format!("Function {} requiers at least {} arguments", $function_name, count!($($var),*)));
             }
@@ -28,8 +28,8 @@ macro_rules! add_function{
             $function
         }));
     };
-    ($function_name: expr, $variables: ident, $params: ident, only ($($var: ident: $type: ident), +,) $function: expr)=>{
-        $variables.insert(String::from($function_name), Variable::Function(|$variables, mut $params|{
+    ($function_name: expr, $intepreter: ident, $params: ident, only ($($var: ident: $type: ident), +,) $function: expr)=>{
+        $intepreter.variables.insert(String::from($function_name), Variable::Function(|$intepreter, mut $params|{
             if $params.len()!=count!($($var),*){
                 return Err(format!("Function {} requiers {} arguments", $function_name, count!($($var),*)));
             }

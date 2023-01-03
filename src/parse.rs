@@ -1,10 +1,11 @@
 use crate::variable::*;
 use std::str::FromStr;
+use crate::Intepreter;
 
-pub fn parse(mut text: String, variables: &mut VariableMap) -> Result<Variable, String> {
+pub fn parse(mut text: String, intepreter: &mut Intepreter) -> Result<Variable, String> {
     text = text.trim().to_string();
     if text.starts_with('{') || (!text.starts_with('"') && text.contains('(')) {
-        let result = match get_var(&mut text, variables){
+        let result = match get_var(&mut text, intepreter){
             Ok(value) => value,
             Err(e) => {
                 return Err(e);
@@ -17,7 +18,7 @@ pub fn parse(mut text: String, variables: &mut VariableMap) -> Result<Variable, 
             Err(String::from("Syntax error"))
         }
     } else if is_correct_variable_name(&text){
-        match variables.get(&text) {
+        match intepreter.variables.get(&text) {
             Some(variable) => Ok(variable.clone()),
             _ => return Err(format!("Variable {} doesn't exist", text)),
         }
@@ -154,7 +155,7 @@ fn get_args_string(text: &mut String) -> Result<String, String> {
     }
 }
 
-fn get_var(text: &mut String, variables: &mut VariableMap)->Result<Variable, String>{
+fn get_var(text: &mut String, intepreter: &mut Intepreter)->Result<Variable, String>{
     if text.starts_with('"'){
         match get_text(text) {
             Ok(value) => Ok(Variable::Text(value)),
@@ -166,7 +167,7 @@ fn get_var(text: &mut String, variables: &mut VariableMap)->Result<Variable, Str
             Err(e) => return Err(e)
         };
 
-        let mut array = match get_all_vars(array_text, variables){
+        let mut array = match get_all_vars(array_text, intepreter){
             Ok(value) => value,
             Err(e) => {
                 return Err(e);
@@ -187,7 +188,7 @@ fn get_var(text: &mut String, variables: &mut VariableMap)->Result<Variable, Str
         if var_s.contains('('){
             *text = format!("{} {}", var_s,  text);
             if let Some((function_name, rest)) = text.split_once("("){
-                let function = match variables.get(&String::from(function_name)) {
+                let function = match intepreter.variables.get(&String::from(function_name)) {
                     Some(Variable::Function(func)) => func.clone(),
                     Some(_) => return Err(format!("Variable {} isn't function", function_name)),
                     _ => return Err(format!("Variable {} doesn't exist", function_name)),
@@ -202,19 +203,19 @@ fn get_var(text: &mut String, variables: &mut VariableMap)->Result<Variable, Str
                     }
                 };
 
-                let args = match get_all_vars(args_string, variables){
+                let args = match get_all_vars(args_string, intepreter){
                     Ok(value) => value,
                     Err(e) => {
                         return Err(e);
                     }
                 };
 
-                function(variables, args)
+                function(intepreter, args)
             } else {
                 Err(String::from("Syntax error"))
             }
         } else if is_correct_variable_name(&var_s){
-            match variables.get(&var_s) {
+            match intepreter.variables.get(&var_s) {
                 Some(variable) => Ok(variable.clone()),
                 _ => return Err(format!("Variable {} doesn't exist", text)),
             }
@@ -224,10 +225,10 @@ fn get_var(text: &mut String, variables: &mut VariableMap)->Result<Variable, Str
     }
 }
 
-fn get_all_vars(mut text: String, variables: &mut VariableMap)->Result<Array, String>{
+fn get_all_vars(mut text: String, intepreter: &mut Intepreter)->Result<Array, String>{
     let mut vars = Array::new();
     while !text.is_empty() {
-        match get_var(&mut text, variables){
+        match get_var(&mut text, intepreter){
             Ok(var) => {
                 vars.push(var);
             }

@@ -4,8 +4,9 @@ use lazy_static::lazy_static;
 use regex::Regex;
 use std::str::FromStr;
 use crate::parse::get_text;
+use crate::Intepreter;
 
-type Function = fn(&mut VariableMap, Array) -> Result<Variable, String>;
+type Function = fn(&mut Intepreter, Array) -> Result<Variable, String>;
 pub type Array = Vec<Variable>;
 
 #[derive(Clone)]
