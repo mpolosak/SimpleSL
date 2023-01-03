@@ -1,0 +1,6 @@
+print("Hello world!")
+x = 5
+y = 6
+print(x "+" y " " add(x y))
+array = {y multiply(x 7) {54.5} "text"}
+print(array)

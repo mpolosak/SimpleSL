@@ -13,8 +13,8 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     match &args[..]{
         [_] => run_shell(),
-        [_, file] => run_from_file(file),
-        _ => print!("Too many arguments")
+        [_, file] => run_from_file(file.clone()),
+        _ => println!("Too many arguments")
     }
 }
 
@@ -34,6 +34,7 @@ fn run_shell(){
     }
 }
 
-fn run_from_file(_path: &String){
-
+fn run_from_file(path: String) {
+    let mut intepreter = Intepreter::new();
+    intepreter.load_and_exec(path).unwrap();
 }
