@@ -5,13 +5,7 @@ use crate::Intepreter;
 pub fn parse(mut text: String, intepreter: &mut Intepreter) -> Result<Variable, String> {
     text = text.trim().to_string();
     if text.starts_with('{') || (!text.starts_with('"') && text.contains('(')) {
-        let result = match get_var(&mut text, intepreter){
-            Ok(value) => value,
-            Err(e) => {
-                return Err(e);
-            }
-        };
-
+        let result = get_var(&mut text, intepreter)?;
         if text.is_empty() {
             Ok(result)
         } else {
@@ -157,23 +151,11 @@ fn get_args_string(text: &mut String) -> Result<String, String> {
 
 fn get_var(text: &mut String, intepreter: &mut Intepreter)->Result<Variable, String>{
     if text.starts_with('"'){
-        match get_text(text) {
-            Ok(value) => Ok(Variable::Text(value)),
-            Err(e) => Err(e)
-        }
+        let result = get_text(text)?;
+        Ok(Variable::Text(result))
     } else if text.starts_with('{'){
-        let mut array_text = match get_array_literal(text) {
-            Ok(value) => value,
-            Err(e) => return Err(e)
-        };
-
-        let mut array = match get_all_vars(array_text, intepreter){
-            Ok(value) => value,
-            Err(e) => {
-                return Err(e);
-            }
-        };
-
+        let mut array_text = get_array_literal(text)?;
+        let mut array = get_all_vars(array_text, intepreter)?;
         Ok(Variable::Array(array))
     } else {
         let var_s;
@@ -196,19 +178,8 @@ fn get_var(text: &mut String, intepreter: &mut Intepreter)->Result<Variable, Str
 
                 *text = "(".to_owned()+rest;
 
-                let args_string = match get_args_string(text){
-                    Ok(value) => value,
-                    Err(e) => {
-                        return Err(e);
-                    }
-                };
-
-                let args = match get_all_vars(args_string, intepreter){
-                    Ok(value) => value,
-                    Err(e) => {
-                        return Err(e);
-                    }
-                };
+                let args_string = get_args_string(text)?;
+                let args = get_all_vars(args_string, intepreter)?;
 
                 function(intepreter, args)
             } else {
@@ -228,14 +199,8 @@ fn get_var(text: &mut String, intepreter: &mut Intepreter)->Result<Variable, Str
 fn get_all_vars(mut text: String, intepreter: &mut Intepreter)->Result<Array, String>{
     let mut vars = Array::new();
     while !text.is_empty() {
-        match get_var(&mut text, intepreter){
-            Ok(var) => {
-                vars.push(var);
-            }
-            Err(e) => {
-                return Err(e);
-            }
-        }
+        let var = get_var(&mut text, intepreter)?;
+        vars.push(var);
         text = text.trim().to_string();
     }
     Ok(vars)

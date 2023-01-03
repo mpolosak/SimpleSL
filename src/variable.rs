@@ -81,10 +81,7 @@ impl FromStr for Variable {
         } else if let Ok(value) = s.parse::<f64>(){
             Ok(Variable::Float(value))
         } else if s.starts_with("\"") {
-            let result = match get_text(&mut s) {
-                Ok(value) => value,
-                Err(e) => return Err(e),
-            };
+            let result = get_text(&mut s)?;
             if s.len() != 0 {
                 return Err(String::from("String contains more than one variable"));
             }

@@ -19,15 +19,8 @@ impl Intepreter{
     }
 
     pub fn exec(&mut self, mut line: String) -> Result<Variable, String>{
-        let result_var = match get_result_var(&mut line) {
-            Ok(value) => value,
-            Err(e) => return Err(e)
-        };
-
-        let result = match parse(line, self) {
-            Ok(value) => value,
-            Err(e) => return Err(e)
-        };
+        let result_var = get_result_var(&mut line)?;
+        let result = parse(line, self)?;
         
         if let Some(var) = result_var {
             self.variables.insert(var, result);
