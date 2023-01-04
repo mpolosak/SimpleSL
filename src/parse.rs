@@ -63,13 +63,14 @@ pub fn get_text(text: &mut String) -> Result<String, String>{
                 }
             }
             '"' => {
-                if text.len()==0 {
-                    return Ok(result);
-                };
-                if text.remove(0) != ' ' {
-                    return Err(String::from("Incorrect syntax"));
+                return if text.len()==0 || text.starts_with("}") || text.starts_with(")"){
+                    Ok(result)
+                } else if text.starts_with(" "){ 
+                    text.remove(0);
+                    Ok(result)
+                } else {
+                    Err(String::from("Incorrect syntax"))
                 }
-                return Ok(result);
             }
             other => {
                 result.push(other);
@@ -86,6 +87,9 @@ fn get_array_literal(text: &mut String) -> Result<String, String> {
         if text.len() == 0 {
             return Err(String::from("Mismatching array brackets"));
         }
+        if text.starts_with('"'){
+            result = format!(r#"{}"{}""#, result, get_text(text)?);
+        }
         match text.remove(0) {
             '{' => {
                 level += 1;
@@ -99,7 +103,7 @@ fn get_array_literal(text: &mut String) -> Result<String, String> {
                 }
                 if text.len()==0 {
                     return Ok(result);
-                };
+                }
                 if text.remove(0) != ' ' {
                     return Err(String::from("Incorrect syntax"));
                 }
@@ -120,6 +124,9 @@ fn get_args_string(text: &mut String) -> Result<String, String> {
         if text.len() == 0 {
             return Err(String::from("Mismatching brackets"));
         }
+        if text.starts_with('"'){
+            result = format!(r#"{}"{}""#, result, get_text(text)?);
+        }
         match text.remove(0) {
             '(' => {
                 level += 1;
@@ -133,7 +140,7 @@ fn get_args_string(text: &mut String) -> Result<String, String> {
                 }
                 if text.len()==0 {
                     return Ok(result);
-                };
+                }
                 if text.remove(0) != ' ' {
                     return Err(String::from("Incorrect syntax"));
                 }
