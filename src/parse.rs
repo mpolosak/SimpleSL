@@ -210,14 +210,13 @@ mod tests {
         use crate::parse::get_result_var;
         let mut text = String::from(" x = 14");
         assert_eq!(get_result_var(&mut text), Ok(Some(String::from("x"))));
-        text = String::from(" x = 5 = 6");
-        assert_eq!(get_result_var(&mut text), Err(String::from("Too many = in one line")));
-        text = String::from(" x y = 6");
+        text = String::from("  = 6");
         assert_eq!(get_result_var(&mut text),
-            Err(String::from("Before = should be exactly one variable")));
-        text = String::from(" 7 = 6");
-        assert_eq!(get_result_var(&mut text),
-            Err(String::from("7 isn't correct variable name")));
+            Err(String::from("Before = should be variable name")));
+        text = String::from(r#""x=7""#);
+        assert_eq!(get_result_var(&mut text), Ok(None));
+        text = String::from("print(5)");
+        assert_eq!(get_result_var(&mut text), Ok(None));
     }
     #[test]
     fn check_get_text() {
