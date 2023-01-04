@@ -28,11 +28,9 @@ impl fmt::Display for Variable {
             Variable::Text(value)=>write!(f, "{}", value),
             Variable::Function(_)=>write!(f, "Function"),
             Variable::Array(array)=>{
-                write!(f, "{{");
+                write!(f, "{{")?;
                 for value in array{
-                    if let Err(e) = write!(f, "{} ", value){
-                        return Err(e);
-                    }
+                    write!(f, "{} ", value)?;
                 }
                 write!(f, "}}")
             }
@@ -50,11 +48,9 @@ impl fmt::Debug for Variable {
             Variable::Text(value)=>write!(f, "Variable::Text(\"{}\")", value),
             Variable::Function(_)=>write!(f, "Variable::Function"),
             Variable::Array(array)=>{
-                write!(f, "Variable::Array(");
+                write!(f, "Variable::Array(")?;
                 for value in array{
-                    if let Err(e) = write!(f, "{}", value){
-                        return Err(e);
-                    }
+                    write!(f, "{}", value)?;
                 }
                 write!(f, ")")
             }

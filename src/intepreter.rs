@@ -11,7 +11,7 @@ pub struct Intepreter{
 
 impl Intepreter{
     pub fn new() -> Intepreter{ 
-        let mut variables = VariableMap::new();
+        let variables = VariableMap::new();
         let mut intepreter = Intepreter{variables};
         add_io_functions(&mut intepreter);
         add_std_functions(&mut intepreter);
@@ -32,7 +32,7 @@ impl Intepreter{
 
     pub fn load_and_exec(&mut self, path: String) -> Result<Variable, String>{
         let file = File::open(path).unwrap();
-        let mut buf_reader = BufReader::new(file);
+        let buf_reader = BufReader::new(file);
         let mut result = Variable::Null;
         for line in buf_reader.lines() {
             let text = line.unwrap();

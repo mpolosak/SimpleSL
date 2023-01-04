@@ -151,8 +151,8 @@ fn get_var(text: &mut String, intepreter: &mut Intepreter)->Result<Variable, Str
         let result = get_text(text)?;
         Ok(Variable::Text(result))
     } else if text.starts_with('{'){
-        let mut array_text = get_array_literal(text)?;
-        let mut array = get_all_vars(array_text, intepreter)?;
+        let array_text = get_array_literal(text)?;
+        let array = get_all_vars(array_text, intepreter)?;
         Ok(Variable::Array(array))
     } else {
         let var_s;
