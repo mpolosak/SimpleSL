@@ -23,18 +23,15 @@ pub fn parse(mut text: String, intepreter: &mut Intepreter) -> Result<Variable, 
 
 pub fn get_result_var(text: &mut String) -> Result<Option<String>, String>{
     if let Some((before, after)) = text.split_once("=") {
-        if after.contains("="){
-            return Err(String::from("Too many = in one line"))
-        }
         let before_s = before.trim().to_string();
-        if before_s.contains(" ") || before_s.is_empty() {
-            return Err(String::from("Before = should be exactly one variable"))
+        if before_s.is_empty() {
+            Err(String::from("Before = should be variable name"))
+        } else if is_correct_variable_name(&before_s){
+            *text = String::from(after);
+            Ok(Some(before_s))
+        } else {
+            Ok(None)
         }
-        if !is_correct_variable_name(&before_s){
-            return Err(format!("{} isn't correct variable name", before_s));
-        }
-        *text = String::from(after);
-        Ok(Some(before_s))
     } else { Ok(None) }
 }
 
