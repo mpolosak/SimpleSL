@@ -30,7 +30,7 @@ pub fn add_std_functions(intepreter: &mut Intepreter){
     });
     add_function!("if", intepreter, args, (condition: Float, function: Function,){
         if condition == 0.0 { return Ok(Variable::Null)};
-        return function(intepreter, args);
+        function(intepreter, args)
     });
     // add_function!("while", intepreter, args, {
     //     loop{

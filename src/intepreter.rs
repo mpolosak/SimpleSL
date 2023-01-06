@@ -20,8 +20,13 @@ impl Intepreter{
 
     pub fn exec(&mut self, mut line: String) -> Result<Variable, String>{
         let result_var = get_result_var(&mut line)?;
-        let result = parse(line, self)?;
-        
+
+        line = line.trim().to_string();
+        let result = get_var(&mut line, self)?;
+        if !line.is_empty() {
+            return Err(String::from("Syntax error"))
+        }
+
         if let Some(var) = result_var {
             self.variables.insert(var, result);
             Ok(Variable::Null)
@@ -39,5 +44,12 @@ impl Intepreter{
             result = self.exec(text)?;
         }
         Ok(result)
+    }
+
+    pub fn get_variable(&self, name: String) -> Result<Variable, String>{
+        match self.variables.get(&name) {
+            Some(variable) => Ok(variable.clone()),
+            _ => Err(format!("Variable {} doesn't exist", name)),
+        }
     }
 }

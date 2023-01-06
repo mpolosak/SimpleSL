@@ -2,25 +2,6 @@ use crate::variable::*;
 use std::str::FromStr;
 use crate::Intepreter;
 
-pub fn parse(mut text: String, intepreter: &mut Intepreter) -> Result<Variable, String> {
-    text = text.trim().to_string();
-    if text.starts_with('{') || (!text.starts_with('"') && text.contains('(')) {
-        let result = get_var(&mut text, intepreter)?;
-        if text.is_empty() {
-            Ok(result)
-        } else {
-            Err(String::from("Syntax error"))
-        }
-    } else if is_correct_variable_name(&text){
-        match intepreter.variables.get(&text) {
-            Some(variable) => Ok(variable.clone()),
-            _ => return Err(format!("Variable {} doesn't exist", text)),
-        }
-    } else {
-        Variable::from_str(&text)
-    }
-}
-
 pub fn get_result_var(text: &mut String) -> Result<Option<String>, String>{
     if let Some((before, after)) = text.split_once("=") {
         let before_s = before.trim().to_string();
@@ -153,7 +134,7 @@ fn get_args_string(text: &mut String) -> Result<String, String> {
     }
 }
 
-fn get_var(text: &mut String, intepreter: &mut Intepreter)->Result<Variable, String>{
+pub fn get_var(text: &mut String, intepreter: &mut Intepreter)->Result<Variable, String>{
     if text.starts_with('"'){
         let result = get_text(text)?;
         Ok(Variable::Text(result))
@@ -173,27 +154,23 @@ fn get_var(text: &mut String, intepreter: &mut Intepreter)->Result<Variable, Str
 
         if var_s.contains('('){
             *text = format!("{} {}", var_s,  text);
-            if let Some((function_name, rest)) = text.split_once("("){
-                let function = match intepreter.variables.get(&String::from(function_name)) {
-                    Some(Variable::Function(func)) => func.clone(),
-                    Some(_) => return Err(format!("Variable {} isn't function", function_name)),
-                    _ => return Err(format!("Variable {} doesn't exist", function_name)),
-                };
+            let Some((function_name, rest)) = text.split_once("(") else {
+                return Err(String::from("Syntax error"))
+            };
 
-                *text = "(".to_owned()+rest;
+            let Variable::Function(function)
+                = intepreter.get_variable(String::from(function_name))? else {
+                return Err(format!("Variable {} isn't function", function_name));
+            };
 
-                let args_string = get_args_string(text)?;
-                let args = get_all_vars(args_string, intepreter)?;
+            *text = "(".to_owned()+rest;
 
-                function(intepreter, args)
-            } else {
-                Err(String::from("Syntax error"))
-            }
+            let args_string = get_args_string(text)?;
+            let args = get_all_vars(args_string, intepreter)?;
+
+            function(intepreter, args)
         } else if is_correct_variable_name(&var_s){
-            match intepreter.variables.get(&var_s) {
-                Some(variable) => Ok(variable.clone()),
-                _ => return Err(format!("Variable {} doesn't exist", text)),
-            }
+            intepreter.get_variable(var_s)
         } else {
             Variable::from_str(&var_s)
         }
