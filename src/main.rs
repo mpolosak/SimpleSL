@@ -8,6 +8,8 @@ mod iofunctions;
 mod stdfunctions;
 mod function;
 mod variable;
+use rustyline::error::ReadlineError;
+use rustyline::{Editor, Result};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -20,15 +22,25 @@ fn main() {
 
 fn run_shell(){
     let mut intepreter = Intepreter::new();
-    loop{
-        print!("> ");
-        io::stdout().flush().unwrap();
-        let mut input = String::new();
-        io::stdin().read_line(&mut input).expect("Unable to read user input");
-        input = input.replace("\n", "");
-        if !input.is_empty(){
-            if let Err(error) = intepreter.exec(input){
-                eprintln!("{}", error);
+    let mut rl = Editor::<()>::new().expect("Unable to read user input");
+    loop {
+        let readline = rl.readline("> ");
+        match readline {
+            Ok(mut line) => {
+                rl.add_history_entry(line.as_str());
+                line = line.replace("\n", "");
+                if !line.is_empty(){
+                    if let Err(error) = intepreter.exec(line){
+                        eprintln!("{}", error);
+                    }
+                }
+            },
+            Err(ReadlineError::Interrupted) | Err(ReadlineError::Eof)  => {
+                break
+            },
+            Err(err) => {
+                eprintln!("Error: {:?}", err);
+                break
             }
         }
     }
