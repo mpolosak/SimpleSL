@@ -1,238 +1,39 @@
-use crate::variable::*;
-use std::str::FromStr;
-use crate::Intepreter;
+use pest::iterators::Pair;
+use crate::variable::{Variable, Array};
 
-pub fn get_result_var(text: &mut String) -> Result<Option<String>, String>{
-    if let Some((before, after)) = text.split_once("=") {
-        let before_s = before.trim().to_string();
-        if before_s.is_empty() {
-            Err(String::from("Before = should be variable name"))
-        } else if is_correct_variable_name(&before_s){
-            *text = String::from(after);
-            Ok(Some(before_s))
-        } else {
-            Ok(None)
-        }
-    } else { Ok(None) }
-}
+#[derive(Parser)]
+#[grammar = "simplesl.pest"]
+pub struct SimpleSLParser;
 
-pub fn get_text(text: &mut String) -> Result<String, String>{
-    text.remove(0);
-    let mut result = String::new();
-    loop{
-        if text.len() == 0 {
-            return Err(String::from("Mismatching quotation marks"))
-        };
-        match text.remove(0) {
-            '\\' => {
-                if text.len() == 0 {
-                    return Err(String::from("Mismatching quotation marks"))
-                };
-                match text.remove(0) {
-                    '\\' => {
-                        result.push('\\');
-                    }
-                    '"' => {
-                        result.push('"');
-                    }
-                    'n' => {
-                        result.push('\n');
-                    }
-                    _ => {
-                        return Err(String::from("Incorrect syntax"));
-                    }
-                }
-            }
-            '"' => {
-                return if text.len()==0 || text.starts_with("}") || text.starts_with(")"){
-                    Ok(result)
-                } else if text.starts_with(" "){ 
-                    text.remove(0);
-                    Ok(result)
-                } else {
-                    Err(String::from("Incorrect syntax"))
-                }
-            }
-            other => {
-                result.push(other);
-            }
-        }
-    }
-}
-
-fn get_array_literal(text: &mut String) -> Result<String, String> {
-    text.remove(0);
-    let mut result = String::new();
-    let mut level = 1;
-    loop{
-        if text.len() == 0 {
-            return Err(String::from("Mismatching array brackets"));
-        }
-        if text.starts_with('"'){
-            result = format!(r#"{}"{}""#, result, get_text(text)?);
-        }
-        match text.remove(0) {
-            '{' => {
-                level += 1;
-                result.push('{');
-            }
-            '}' => {
-                level-=1;
-                if level > 0 {
-                    result.push('}'); 
-                    continue
-                }
-                if text.len()==0 {
-                    return Ok(result);
-                }
-                if text.remove(0) != ' ' {
-                    return Err(String::from("Incorrect syntax"));
-                }
-                return Ok(result);
-            }
-            ch => {
-                result.push(ch);
-            }
-        }
-    }
-}
-
-fn get_args_string(text: &mut String) -> Result<String, String> {
-    text.remove(0);
-    let mut result = String::new();
-    let mut level = 1;
-    loop{
-        if text.len() == 0 {
-            return Err(String::from("Mismatching brackets"));
-        }
-        if text.starts_with('"'){
-            result = format!(r#"{}"{}""#, result, get_text(text)?);
-        }
-        match text.remove(0) {
-            '(' => {
-                level += 1;
-                result.push('(');
-            }
-            ')' => {
-                level-=1;
-                if level > 0 {
-                    result.push(')'); 
-                    continue
-                }
-                if text.len()==0 {
-                    return Ok(result);
-                }
-                if text.remove(0) != ' ' {
-                    return Err(String::from("Incorrect syntax"));
-                }
-                return Ok(result);
-            }
-            ch => {
-                result.push(ch);
-            }
-        }
-    }
-}
-
-pub fn get_var(text: &mut String, intepreter: &mut Intepreter)->Result<Variable, String>{
-    if text.starts_with('"'){
-        let result = get_text(text)?;
-        Ok(Variable::Text(result))
-    } else if text.starts_with('{'){
-        let array_text = get_array_literal(text)?;
-        let array = get_all_vars(array_text, intepreter)?;
-        Ok(Variable::Array(array))
-    } else {
-        let var_s;
-        if let Some((begin, rest)) = text.split_once(" "){
-            var_s = String::from(begin);
-            *text = String::from(rest);
-        } else {
-            var_s = text.clone();
-            *text = String::new();
-        };
-
-        if var_s.contains('('){
-            *text = format!("{} {}", var_s,  text);
-            let Some((function_name, rest)) = text.split_once("(") else {
-                return Err(String::from("Syntax error"))
+pub fn variable_from_pair(pair: Pair<Rule>) -> Result<Variable, String>{
+    return match pair.as_rule() {
+        Rule::num => {
+            let Ok(value) = pair.as_str().parse::<f64>() else {
+                return Err(String::from("Something strange happened"))
             };
-
-            let Variable::Function(function)
-                = intepreter.get_variable(String::from(function_name))? else {
-                return Err(format!("Variable {} isn't function", function_name));
+            Ok(Variable::Float(value))
+        },
+        Rule::text => {
+            let Some(ident) = pair.into_inner().next() else {
+                return Err(String::from("Something strange happened"))
             };
-
-            *text = "(".to_owned()+rest;
-
-            let args_string = get_args_string(text)?;
-            let args = get_all_vars(args_string, intepreter)?;
-
-            function(intepreter, args)
-        } else if is_correct_variable_name(&var_s){
-            intepreter.get_variable(var_s)
-        } else {
-            Variable::from_str(&var_s)
-        }
-    }
-}
-
-fn get_all_vars(mut text: String, intepreter: &mut Intepreter)->Result<Array, String>{
-    let mut vars = Array::new();
-    while !text.is_empty() {
-        let var = get_var(&mut text, intepreter)?;
-        vars.push(var);
-        text = text.trim().to_string();
-    }
-    Ok(vars)
-}
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn check_get_result_var() {
-        use crate::parse::get_result_var;
-        let mut text = String::from(" x = 14");
-        assert_eq!(get_result_var(&mut text), Ok(Some(String::from("x"))));
-        text = String::from("  = 6");
-        assert_eq!(get_result_var(&mut text),
-            Err(String::from("Before = should be variable name")));
-        text = String::from(r#""x=7""#);
-        assert_eq!(get_result_var(&mut text), Ok(None));
-        text = String::from("print(5)");
-        assert_eq!(get_result_var(&mut text), Ok(None));
-    }
-    #[test]
-    fn check_get_text() {
-        use crate::parse::get_text;
-        let mut text = String::from(r#""print""#);
-        assert_eq!(get_text(&mut text), Ok(String::from("print")));
-        text = String::from(r#""print" "#);
-        assert_eq!(get_text(&mut text), Ok(String::from("print")));
-        text = String::from(r#""print\n""#);
-        assert_eq!(get_text(&mut text), Ok(String::from("print\n")));
-        text = String::from(r#""print\\n""#);
-        assert_eq!(get_text(&mut text), Ok(String::from("print\\n")));
-        text = String::from(r#""print\"""#);
-        assert_eq!(get_text(&mut text), Ok(String::from("print\"")));
-        text = String::from(r#""print\r""#);
-        assert_eq!(get_text(&mut text), Err(String::from("Incorrect syntax")));
-        text = String::from(r#""print"s"#);
-        assert_eq!(get_text(&mut text), Err(String::from("Incorrect syntax")));
-        text = String::from(r#""print"#);
-        assert_eq!(get_text(&mut text),
-            Err(String::from("Mismatching quotation marks")));
-    }
-    #[test]
-    fn check_get_array_literal(){
-        use crate::parse::get_array_literal;
-        let mut text = String::from(r#"{x 45} addd fg"#);
-        assert_eq!(get_array_literal(&mut text), Ok(String::from("x 45")));
-        text = String::from(r#"{x {45 {6}}} addd fg"#);
-        assert_eq!(get_array_literal(&mut text), Ok(String::from("x {45 {6}}")));
-        text = String::from(r#"{x {45 {6} addd fg"#);
-        assert_eq!(get_array_literal(&mut text), Err(String::from("Mismatching array brackets")));
-        text = String::from(r#"{x {45 {6}}}c addd fg"#);
-        assert_eq!(get_array_literal(&mut text), Err(String::from("Incorrect syntax")));
+            let value = String::from(ident.as_str());
+            Ok(Variable::Text(value))
+        },
+        Rule::array => {
+            let mut array = Array::new();
+            for element in pair.into_inner() {
+                array.push(variable_from_pair(element)?);
+            }
+            Ok(Variable::Array(array))
+        },
+        Rule::referance => {
+            let Some(ident) = pair.into_inner().next() else {
+                return Err(String::from("Something strange happened"))
+            };
+            let value = String::from(ident.as_str());
+            Ok(Variable::Referance(value))
+        },
+        _ => Err(String::from("This cannot be parsed to variable"))
     }
 }

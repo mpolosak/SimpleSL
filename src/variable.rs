@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 use std::fmt;
-use lazy_static::lazy_static;
-use regex::Regex;
 use std::str::FromStr;
-use crate::parse::get_text;
 use crate::Intepreter;
+use crate::pest::Parser;
+use pest::iterators::Pair;
+use crate::parse::*;
 
 type Function = fn(&mut Intepreter, Array) -> Result<Variable, String>;
 pub type Array = Vec<Variable>;
@@ -64,26 +64,15 @@ impl FromStr for Variable {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut s = String::from(s.trim());
-        if s.starts_with("&"){
-            s.remove(0);
-            if !is_correct_variable_name(&s){
-                Err(format!("{} isn't correct variable name", s))
-            } else {
-                Ok(Variable::Referance(s))
-            }
-        } else if s == "Null" {
-            Ok(Variable::Null)
-        } else if let Ok(value) = s.parse::<f64>(){
-            Ok(Variable::Float(value))
-        } else if s.starts_with("\"") {
-            let result = get_text(&mut s)?;
-            if s.len() != 0 {
-                return Err(String::from("String contains more than one variable"));
-            }
-            Ok(Variable::Text(result))
+        let s = s.trim();
+        let Ok(parse) = SimpleSLParser::parse(Rule::var, s) else {
+            return Err(format!("{} cannot be parsed to variable", s))
+        };
+        if parse.as_str() != s {
+            Err(String::from("String contains more than one variable"))
         } else {
-            Err(format!("{} cannot be parsed to variable", s))
+            let pair_vec: Vec<Pair<Rule>> = parse.collect();
+            variable_from_pair(pair_vec[0].clone())
         }
     }
 }
@@ -131,11 +120,10 @@ impl PartialEq for Variable {
 }
 
 pub fn is_correct_variable_name(name: &str)->bool{
-    lazy_static! {
-        static ref RE: Regex = Regex::new("[A-z_][0-9A-z_]*").unwrap();
-    }
-    let Some(caps) = RE.captures(name) else { return false };
-    caps[0]==*name
+    let Ok(parse) = SimpleSLParser::parse(Rule::ident, name) else {
+        return false
+    };
+    parse.as_str() == name
 }
 
 #[cfg(test)]

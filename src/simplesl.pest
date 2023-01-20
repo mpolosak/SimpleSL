@@ -1,0 +1,20 @@
+num = @{ int ~ ("." ~ ASCII_DIGIT*)?}
+	int = { ("+" | "-")? ~ ASCII_DIGIT+ }
+ident = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC|"_")* }
+referance = ${ "&" ~ ident }
+function_call = ${ ident ~ args }
+	args = !{"("~expression_list~")"}
+var = _{ referance | num | array | text }
+expression = _{ function_call | ident | var }
+expression_list = _{ (expression ~ ("," ~ expression)*)?}
+array = {"{" ~ expression_list ~ "}"}
+text = ${ "\"" ~ inner ~ "\"" }
+  inner = @{ char* }
+  char = {
+      !("\"" | "\\") ~ ANY
+      | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
+      | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
+  }
+line = _{ (return_variable~"=")? ~ expression }
+return_variable = @{ident}
+WHITESPACE = _{ " " | "\t" }

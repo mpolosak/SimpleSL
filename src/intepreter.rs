@@ -4,6 +4,8 @@ use crate::iofunctions::*;
 use crate::variable::*;
 use std::fs::File;
 use std::io::{BufReader, BufRead};
+use crate::pest::Parser;
+use pest::iterators::Pair;
 
 pub struct Intepreter{
     pub variables:  VariableMap
@@ -19,19 +21,78 @@ impl Intepreter{
     }
 
     pub fn exec(&mut self, mut line: String) -> Result<Variable, String>{
-        let result_var = get_result_var(&mut line)?;
-
         line = line.trim().to_string();
-        let result = get_var(&mut line, self)?;
-        if !line.is_empty() {
-            return Err(String::from("Syntax error"))
+        if line.is_empty() {
+            return Ok(Variable::Null)
         }
-
-        if let Some(var) = result_var {
+        let Ok(parse) = SimpleSLParser::parse(Rule::line, &line) else {
+            return Err(String::from("Syntax error"));
+        };
+        let pair_vec: Vec<Pair<Rule>> = parse.collect();
+        if pair_vec.len()==2{
+            let var = String::from(pair_vec[0].as_str());
+            let result = self.exec_expression(&pair_vec[1])?;
             self.variables.insert(var, result);
             Ok(Variable::Null)
         } else {
-            Ok(result)
+            self.exec_expression(&pair_vec[0])
+        }
+    }
+
+    pub fn exec_expression(&mut self, expression: &Pair<Rule>) -> Result<Variable, String>{
+        return match expression.as_rule() { 
+            Rule::function_call=>{
+                let mut inter = expression.clone().into_inner();
+                let Some(ident) = inter.next() else {
+                    return Err(String::from("Something strange happened"))
+                };
+                let var_name = String::from(ident.as_str());
+                let Variable::Function(function) = self.get_variable(var_name.clone())? else {
+                    return Err(format!("{} should be function", var_name))
+                };
+                let mut array = Array::new();
+                let Some(args) = inter.next() else {
+                    return Err(String::from("Something strange happened"))
+                };
+                for arg in args.into_inner() {
+                    array.push(self.exec_expression(&arg)?);
+                }
+                function(self, array)
+            },
+            Rule::num => {
+                let Ok(value) = expression.as_str().parse::<f64>() else {
+                    return Err(String::from("Something strange happened"))
+                };
+                Ok(Variable::Float(value))
+            },
+            Rule::ident => {
+                let var_name = String::from(expression.as_str());
+                let value = self.get_variable(var_name)?;
+                Ok(value)
+            },
+            Rule::referance => {
+                let Some(ident) = expression.clone().into_inner().next() else {
+                    return Err(String::from("Something strange happened"))
+                };
+                let value = String::from(ident.as_str());
+                Ok(Variable::Referance(value))
+            },
+            Rule::text => {
+                let Some(ident) = expression.clone().into_inner().next() else {
+                    return Err(String::from("Something strange happened"))
+                };
+                let value = String::from(ident.as_str());
+                Ok(Variable::Text(value))
+            },
+            Rule::array => {
+                let inter = expression.clone().into_inner();
+                let mut array = Array::new();
+                for element in inter {
+                    array.push(self.exec_expression(&element)?);
+                }
+                Ok(Variable::Array(array))
+            },
+            _ => Err(String::from("Something strange happened"))
         }
     }
 

@@ -1,6 +1,4 @@
 use std::env;
-use std::io;
-use std::io::Write;
 mod intepreter;
 use intepreter::Intepreter;
 mod parse;
@@ -9,7 +7,10 @@ mod stdfunctions;
 mod function;
 mod variable;
 use rustyline::error::ReadlineError;
-use rustyline::{Editor, Result};
+use rustyline::Editor;
+extern crate pest;
+#[macro_use]
+extern crate pest_derive;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
