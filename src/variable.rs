@@ -35,7 +35,7 @@ impl fmt::Display for Variable {
                 write!(f, "}}")
             }
             Variable::Referance(value) => write!(f, "&{}", value),
-            Variable::Null=>write!(f, "Null"),
+            Variable::Null=>write!(f, "NULL"),
         }
     }
 }

@@ -92,6 +92,7 @@ impl Intepreter{
                 }
                 Ok(Variable::Array(array))
             },
+            Rule::null => Ok(Variable::Null),
             _ => Err(String::from("Something strange happened"))
         }
     }

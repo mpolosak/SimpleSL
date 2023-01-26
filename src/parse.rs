@@ -34,6 +34,7 @@ pub fn variable_from_pair(pair: Pair<Rule>) -> Result<Variable, String>{
             let value = String::from(ident.as_str());
             Ok(Variable::Referance(value))
         },
+        Rule::null => Ok(Variable::Null),
         _ => Err(String::from("This cannot be parsed to variable"))
     }
 }
