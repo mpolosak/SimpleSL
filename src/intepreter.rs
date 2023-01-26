@@ -29,7 +29,7 @@ impl Intepreter{
             return Err(String::from("Syntax error"));
         };
         let pair_vec: Vec<Pair<Rule>> = parse.collect();
-        if pair_vec.len()==2{
+        if pair_vec.len()==3{
             let var = String::from(pair_vec[0].as_str());
             let result = self.exec_expression(&pair_vec[1])?;
             self.variables.insert(var, result);

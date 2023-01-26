@@ -16,6 +16,7 @@ text = ${ "\"" ~ inner ~ "\"" }
       | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
   }
 null = {"NULL"}
-line = _{ (return_variable~"=")? ~ expression }
+line = _{ (return_variable~"=")? ~ expression ~  line_end }
+	line_end = @{ EOI | NEWLINE }
 return_variable = @{ident}
 WHITESPACE = _{ " " | "\t" }
