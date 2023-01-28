@@ -1,3 +1,4 @@
+use crate::array::add_array_functions;
 use crate::parse::*;
 use crate::stdfunctions::*;
 use crate::iofunctions::*;
@@ -18,6 +19,7 @@ impl Intepreter{
         let mut intepreter = Intepreter{variables};
         add_io_functions(&mut intepreter);
         add_std_functions(&mut intepreter);
+        add_array_functions(&mut intepreter);
         intepreter
     }
 

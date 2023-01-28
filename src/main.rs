@@ -6,6 +6,7 @@ mod iofunctions;
 mod stdfunctions;
 mod function;
 mod variable;
+mod array;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 extern crate pest;
