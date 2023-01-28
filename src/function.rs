@@ -1,47 +1,57 @@
-#[macro_export]
-macro_rules! get_vars{
-    ($function_name: expr, $args: expr, $($var: ident: $type: ident), *)=>{
-        let mut i = 0;
-        $(
-            let Variable::$type($var) = $args.remove(0) else {
-                return Err(format!("{}. argument to function {} should be {}",
-                    i, $function_name, stringify!($type)));
-            };
-            i+=1;
-        )*
+use crate::variable::*;
+use crate::intepreter::Intepreter;
+use std::vec::Vec;
+use std::iter::zip;
+
+#[derive(Clone)]
+pub struct Param {
+    pub name: String,
+    pub type_name: String,
+}
+
+impl Param {
+    pub fn new(name: &str, type_name: &str) -> Self {
+        Param {
+            name: String::from(name),
+            type_name: String::from(type_name)
+        }
     }
 }
 
-#[macro_export]
-macro_rules! add_function{
-    ($function_name: expr, $intepreter: ident, $args: ident, $function: expr)=>{
-        $intepreter.variables.insert(String::from($function_name), Variable::Function(|$intepreter, $args|{
-            $function
-        }));
-    };
-    ($function_name: expr, $intepreter: ident, $args: ident, ($($var: ident: $type: ident), +,) $function: expr)=>{
-        $intepreter.variables.insert(String::from($function_name), Variable::Function(|$intepreter, mut $args|{
-            if $args.len()<count!($($var),*){
-                return Err(format!("Function {} requiers at least {} arguments", $function_name, count!($($var),*)));
+pub trait Function{
+    fn exec(&self, name: String, intepreter: &mut Intepreter, args: Array)
+        -> Result<Variable, String>{
+        let mut args_map = VariableMap::new();
+        let params = self.get_params();
+        if args.len() != params.len() {
+            return Err(format!("{name} requires {} args", params.len()))
+        }
+        for (arg, param) in zip(args, params) {
+            if arg.type_name() == param.type_name {
+                args_map.insert(param.name.clone(), arg);
+            } else {
+                return Err(format!("{} should be {}", param.name, param.type_name))
             }
-            get_vars!($function_name, $args, $($var: $type), +);
-            $function
-        }));
-    };
-    ($function_name: expr, $intepreter: ident, $args: ident, only ($($var: ident: $type: ident), +,) $function: expr)=>{
-        $intepreter.variables.insert(String::from($function_name), Variable::Function(|$intepreter, mut $args|{
-            if $args.len()!=count!($($var),*){
-                return Err(format!("Function {} requiers {} arguments", $function_name, count!($($var),*)));
-            }
-            get_vars!($function_name, $args, $($var: $type), +);
-            $function
-        }));
+        }
+        self.exec_intern(name, intepreter, args_map)
     }
+    fn exec_intern(&self, name: String, intepreter: &mut Intepreter,
+        args: VariableMap) -> Result<Variable, String>;
+    fn get_params(&self) -> &Vec<Param>;
 }
 
-#[macro_export]
-macro_rules! count {
-    ($h:expr) => (1);
-    ($h:expr, $($t:expr),*) =>
-        (1 + count!($($t),*));
+#[derive(Clone)]
+pub struct NativeFunction {
+    pub params: Vec<Param>,
+    pub body: fn(String, &mut Intepreter, VariableMap) -> Result<Variable, String>,
+}
+
+impl Function for NativeFunction {
+    fn exec_intern(&self, name: String, intepreter: &mut Intepreter,
+        args: VariableMap) -> Result<Variable, String>{
+        (self.body)(name, intepreter, args)
+    }
+    fn get_params(&self) -> &Vec<Param> {
+        &self.params
+    }
 }

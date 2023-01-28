@@ -1,25 +1,37 @@
 use std::collections::HashMap;
 use std::fmt;
 use std::str::FromStr;
-use crate::Intepreter;
 use crate::pest::Parser;
 use pest::iterators::Pair;
 use crate::parse::*;
+use crate::function::NativeFunction;
 
-type Function = fn(&mut Intepreter, Array) -> Result<Variable, String>;
 pub type Array = Vec<Variable>;
 
 #[derive(Clone)]
 pub enum Variable{
     Float(f64),
     Text(String),
-    Function(Function),
+    Function(NativeFunction),
     Array(Array),
     Referance(String),
     Null
 }
 
 pub type VariableMap = HashMap<String, Variable>;
+
+impl Variable {
+    pub fn type_name(&self) -> String {
+        match self {
+            Variable::Float(_) => String::from("Float"),
+            Variable::Text(_) => String::from("Text"),
+            Variable::Function(_) => String::from("Function"),
+            Variable::Array(_) => String::from("Array"),
+            Variable::Referance(_) => String::from("Referance"),
+            Variable::Null => String::from("Null"),
+        }
+    }
+}
 
 impl fmt::Display for Variable {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

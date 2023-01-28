@@ -1,37 +1,159 @@
 use crate::variable::*;
-use crate::*;
+use crate::function::{Function, NativeFunction, Param};
+use crate::intepreter::Intepreter;
 
 pub fn add_std_functions(intepreter: &mut Intepreter){
-    add_function!("import", intepreter, args, only (path: Text,) {
-        intepreter.load_and_exec(path)
+    intepreter.add_function("import", NativeFunction{
+        params: vec!(Param::new("path", "Text")),
+        body: |_name, intepreter, args|{
+            let Some(Variable::Text(path)) = args.get(
+                &String::from("path")) else {
+                return Err(String::from("Something strange happend"))
+            };
+            intepreter.load_and_exec(path)
+        }
     });
-    add_function!("add", intepreter, args, only (var1: Float, var2: Float,) {
-        Ok(Variable::Float(var1+var2))
+    intepreter.add_function("add", NativeFunction{
+        params: vec!(
+            Param::new("a", "Float"),
+            Param::new("b", "Float")
+        ),
+        body: |_name, _intepreter, args|{
+            let Some(Variable::Float(a)) = args.get(
+                &String::from("a")) else {
+                return Err(String::from("Something strange happend"))
+            };
+            let Some(Variable::Float(b)) = args.get(
+                &String::from("b")) else {
+                return Err(String::from("Something strange happend"))
+            };
+            Ok(Variable::Float(a+b))
+        }
     });
-    add_function!("subtract", intepreter, args, only (var1: Float, var2: Float,){
-        Ok(Variable::Float(var1-var2))
+    intepreter.add_function("subtract", NativeFunction{
+        params: vec!(
+            Param::new("a", "Float"),
+            Param::new("b", "Float")
+        ),
+        body: |_name, _intepreter, args|{
+            let Some(Variable::Float(a)) = args.get(
+                &String::from("a")) else {
+                return Err(String::from("Something strange happend"))
+            };
+            let Some(Variable::Float(b)) = args.get(
+                &String::from("b")) else {
+                return Err(String::from("Something strange happend"))
+            };
+            Ok(Variable::Float(a-b))
+        }
     });
-    add_function!("multiply", intepreter, args, only (var1: Float, var2: Float,){
-        Ok(Variable::Float(var1*var2))
+    intepreter.add_function("multiply", NativeFunction{
+        params: vec!(
+            Param::new("a", "Float"),
+            Param::new("b", "Float")
+        ),
+        body: |_name, _intepreter, args|{
+            let Some(Variable::Float(a)) = args.get(
+                &String::from("a")) else {
+                return Err(String::from("Something strange happend"))
+            };
+            let Some(Variable::Float(b)) = args.get(
+                &String::from("b")) else {
+                return Err(String::from("Something strange happend"))
+            };
+            Ok(Variable::Float(a*b))
+        }
     });
-    add_function!("divide", intepreter, args, only (var1: Float, var2: Float,){
-        Ok(Variable::Float(var1/var2))
+    intepreter.add_function("divide", NativeFunction{
+        params: vec!(
+            Param::new("a", "Float"),
+            Param::new("b", "Float")
+        ),
+        body: |_name, _intepreter, args|{
+            let Some(Variable::Float(a)) = args.get(
+                &String::from("a")) else {
+                return Err(String::from("Something strange happend"))
+            };
+            let Some(Variable::Float(b)) = args.get(
+                &String::from("b")) else {
+                return Err(String::from("Something strange happend"))
+            };
+            Ok(Variable::Float(a/b))
+        }
     });
-    add_function!("modulo", intepreter, args, only (var1: Float, var2: Float,){
-        let divided = var1/var2;
-        let result = var1 - var2*divided.floor();
-        Ok(Variable::Float(result))
+    intepreter.add_function("modulo", NativeFunction{
+        params: vec!(
+            Param::new("a", "Float"),
+            Param::new("b", "Float")
+        ),
+        body: |_name, _intepreter, args|{
+            let Some(Variable::Float(a)) = args.get(
+                &String::from("a")) else {
+                return Err(String::from("Something strange happend"))
+            };
+            let Some(Variable::Float(b)) = args.get(
+                &String::from("b")) else {
+                return Err(String::from("Something strange happend"))
+            };
+            let divided = a/b;
+            let result = a - b*divided.floor();
+            Ok(Variable::Float(result))
+        }
     });
-    add_function!("or", intepreter, args, only (var1: Float, var2: Float,){
-        Ok(Variable::Float(var1.abs()+var2.abs()))
+    intepreter.add_function("or", NativeFunction{
+        params: vec!(
+            Param::new("a", "Float"),
+            Param::new("b", "Float")
+        ),
+        body: |_name, _intepreter, args|{
+            let Some(Variable::Float(a)) = args.get(
+                &String::from("a")) else {
+                return Err(String::from("Something strange happend"))
+            };
+            let Some(Variable::Float(b)) = args.get(
+                &String::from("b")) else {
+                return Err(String::from("Something strange happend"))
+            };
+            Ok(Variable::Float(a.abs()+b.abs()))
+        }
     });
-    add_function!("not", intepreter, args, only (var: Float,){
-        Ok(Variable::Float(if var==0.0{1.0}else{0.0}))
+    intepreter.add_function("not", NativeFunction{
+        params: vec!(
+            Param::new("a", "Float"),
+        ),
+        body: |_name, _intepreter, args|{
+            let Some(Variable::Float(a)) = args.get(
+                &String::from("a")) else {
+                return Err(String::from("Something strange happend"))
+            };
+            Ok(Variable::Float(if *a==0.0{1.0}else{0.0}))
+        }
     });
-    add_function!("if", intepreter, args, (condition: Float, function: Function,){
-        if condition == 0.0 { return Ok(Variable::Null)};
-        function(intepreter, args)
+    intepreter.add_function("if", NativeFunction{
+        params: vec!(
+            Param::new("condition", "Float"),
+            Param::new("function", "Function")
+        ),
+        body: |_name, intepreter, args|{
+            let Some(Variable::Float(condition)) = args.get(
+                &String::from("condition")) else {
+                return Err(String::from("Something strange happend"))
+            };
+            let Some(Variable::Function(function)) = args.get(
+                &String::from("function")) else {
+                return Err(String::from("Something strange happend"))
+            };
+            if *condition == 0.0 {
+                Ok(Variable::Null)
+            } else {
+                function.exec(String::from("function"), intepreter, Array::new())
+            }
+        }
     });
+    // add_function!("if", intepreter, args, (condition: Float, function: Function,){
+    //     if condition == 0.0 { return Ok(Variable::Null)};
+    //     function(intepreter, args)
+    // });
     // add_function!("while", intepreter, args, {
     //     loop{
     //         let condition = get_var!("while", intepreter, args, 0, Float);

@@ -6,6 +6,7 @@ use std::fs::File;
 use std::io::{BufReader, BufRead};
 use crate::pest::Parser;
 use pest::iterators::Pair;
+use crate::function::{Function, NativeFunction};
 
 pub struct Intepreter{
     pub variables:  VariableMap
@@ -57,7 +58,7 @@ impl Intepreter{
                 for arg in args.into_inner() {
                     array.push(self.exec_expression(&arg)?);
                 }
-                function(self, array)
+                function.exec(var_name, self, array)
             },
             Rule::num => {
                 let Ok(value) = expression.as_str().parse::<f64>() else {
@@ -97,7 +98,7 @@ impl Intepreter{
         }
     }
 
-    pub fn load_and_exec(&mut self, path: String) -> Result<Variable, String>{
+    pub fn load_and_exec(&mut self, path: &String) -> Result<Variable, String>{
         let file = File::open(path).unwrap();
         let buf_reader = BufReader::new(file);
         let mut result = Variable::Null;
@@ -113,5 +114,9 @@ impl Intepreter{
             Some(variable) => Ok(variable.clone()),
             _ => Err(format!("Variable {} doesn't exist", name)),
         }
+    }
+
+    pub fn add_function(&mut self, name: &str, function: NativeFunction){
+        self.variables.insert(String::from(name), Variable::Function(function));
     }
 }
