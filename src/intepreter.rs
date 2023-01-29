@@ -50,7 +50,7 @@ impl Intepreter{
                     return Err(String::from("Something strange happened"))
                 };
                 let var_name = String::from(ident.as_str());
-                let Variable::Function(function) = self.get_variable(var_name.clone())? else {
+                let Variable::Function(function) = self.get_variable(&var_name)? else {
                     return Err(format!("{} should be function", var_name))
                 };
                 let mut array = Array::new();
@@ -70,7 +70,7 @@ impl Intepreter{
             },
             Rule::ident => {
                 let var_name = String::from(expression.as_str());
-                let value = self.get_variable(var_name)?;
+                let value = self.get_variable(&var_name)?;
                 Ok(value)
             },
             Rule::referance => {
@@ -111,8 +111,8 @@ impl Intepreter{
         Ok(result)
     }
 
-    pub fn get_variable(&self, name: String) -> Result<Variable, String>{
-        match self.variables.get(&name) {
+    pub fn get_variable(&self, name: &str) -> Result<Variable, String>{
+        match self.variables.get(name) {
             Some(variable) => Ok(variable.clone()),
             _ => Err(format!("Variable {} doesn't exist", name)),
         }
