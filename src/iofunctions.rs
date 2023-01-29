@@ -9,8 +9,7 @@ pub fn add_io_functions(intepreter: &mut Intepreter){
             Param::new("vars", "..."),
         ),
         body: |_name, _intepreter, args|{
-            let Some(Variable::Array(args)) = args.get(
-                &String::from("vars")) else {
+            let Some(Variable::Array(args)) = args.get("vars") else {
                 return Err(String::from("Something strange happend"))
             };
             let mut text = String::new();

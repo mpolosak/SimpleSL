@@ -9,12 +9,10 @@ pub fn add_array_functions(intepreter: &mut Intepreter){
             Param::new("index", "Float"),
         ),
         body: |_name, _intepreter, args|{
-            let Some(Variable::Array(array)) = args.get(
-                &String::from("array")) else {
+            let Some(Variable::Array(array)) = args.get("array") else {
                 return Err(String::from("Something strange happend"))
             };
-            let Some(Variable::Float(findex)) = args.get(
-                &String::from("index")) else {
+            let Some(Variable::Float(findex)) = args.get("index") else {
                 return Err(String::from("Something strange happend"))
             };
             if findex.fract()!=0.0{

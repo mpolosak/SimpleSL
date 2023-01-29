@@ -6,8 +6,7 @@ pub fn add_std_functions(intepreter: &mut Intepreter){
     intepreter.add_function("import", NativeFunction{
         params: vec!(Param::new("path", "Text")),
         body: |_name, intepreter, args|{
-            let Some(Variable::Text(path)) = args.get(
-                &String::from("path")) else {
+            let Some(Variable::Text(path)) = args.get("path") else {
                 return Err(String::from("Something strange happend"))
             };
             intepreter.load_and_exec(path)
@@ -19,12 +18,10 @@ pub fn add_std_functions(intepreter: &mut Intepreter){
             Param::new("b", "Float")
         ),
         body: |_name, _intepreter, args|{
-            let Some(Variable::Float(a)) = args.get(
-                &String::from("a")) else {
+            let Some(Variable::Float(a)) = args.get("a") else {
                 return Err(String::from("Something strange happend"))
             };
-            let Some(Variable::Float(b)) = args.get(
-                &String::from("b")) else {
+            let Some(Variable::Float(b)) = args.get("b") else {
                 return Err(String::from("Something strange happend"))
             };
             Ok(Variable::Float(a+b))
@@ -36,12 +33,10 @@ pub fn add_std_functions(intepreter: &mut Intepreter){
             Param::new("b", "Float")
         ),
         body: |_name, _intepreter, args|{
-            let Some(Variable::Float(a)) = args.get(
-                &String::from("a")) else {
+            let Some(Variable::Float(a)) = args.get("a") else {
                 return Err(String::from("Something strange happend"))
             };
-            let Some(Variable::Float(b)) = args.get(
-                &String::from("b")) else {
+            let Some(Variable::Float(b)) = args.get("b") else {
                 return Err(String::from("Something strange happend"))
             };
             Ok(Variable::Float(a-b))
@@ -53,12 +48,10 @@ pub fn add_std_functions(intepreter: &mut Intepreter){
             Param::new("b", "Float")
         ),
         body: |_name, _intepreter, args|{
-            let Some(Variable::Float(a)) = args.get(
-                &String::from("a")) else {
+            let Some(Variable::Float(a)) = args.get("a") else {
                 return Err(String::from("Something strange happend"))
             };
-            let Some(Variable::Float(b)) = args.get(
-                &String::from("b")) else {
+            let Some(Variable::Float(b)) = args.get("b") else {
                 return Err(String::from("Something strange happend"))
             };
             Ok(Variable::Float(a*b))
@@ -70,12 +63,10 @@ pub fn add_std_functions(intepreter: &mut Intepreter){
             Param::new("b", "Float")
         ),
         body: |_name, _intepreter, args|{
-            let Some(Variable::Float(a)) = args.get(
-                &String::from("a")) else {
+            let Some(Variable::Float(a)) = args.get("a") else {
                 return Err(String::from("Something strange happend"))
             };
-            let Some(Variable::Float(b)) = args.get(
-                &String::from("b")) else {
+            let Some(Variable::Float(b)) = args.get("b") else {
                 return Err(String::from("Something strange happend"))
             };
             Ok(Variable::Float(a/b))
@@ -87,12 +78,10 @@ pub fn add_std_functions(intepreter: &mut Intepreter){
             Param::new("b", "Float")
         ),
         body: |_name, _intepreter, args|{
-            let Some(Variable::Float(a)) = args.get(
-                &String::from("a")) else {
+            let Some(Variable::Float(a)) = args.get("a") else {
                 return Err(String::from("Something strange happend"))
             };
-            let Some(Variable::Float(b)) = args.get(
-                &String::from("b")) else {
+            let Some(Variable::Float(b)) = args.get("b") else {
                 return Err(String::from("Something strange happend"))
             };
             let divided = a/b;
@@ -106,12 +95,10 @@ pub fn add_std_functions(intepreter: &mut Intepreter){
             Param::new("b", "Float")
         ),
         body: |_name, _intepreter, args|{
-            let Some(Variable::Float(a)) = args.get(
-                &String::from("a")) else {
+            let Some(Variable::Float(a)) = args.get("a") else {
                 return Err(String::from("Something strange happend"))
             };
-            let Some(Variable::Float(b)) = args.get(
-                &String::from("b")) else {
+            let Some(Variable::Float(b)) = args.get("b") else {
                 return Err(String::from("Something strange happend"))
             };
             Ok(Variable::Float(a.abs()+b.abs()))
@@ -122,8 +109,7 @@ pub fn add_std_functions(intepreter: &mut Intepreter){
             Param::new("a", "Float"),
         ),
         body: |_name, _intepreter, args|{
-            let Some(Variable::Float(a)) = args.get(
-                &String::from("a")) else {
+            let Some(Variable::Float(a)) = args.get("a") else {
                 return Err(String::from("Something strange happend"))
             };
             Ok(Variable::Float(if *a==0.0{1.0}else{0.0}))
@@ -135,12 +121,10 @@ pub fn add_std_functions(intepreter: &mut Intepreter){
             Param::new("function", "Function")
         ),
         body: |_name, intepreter, args|{
-            let Some(Variable::Float(condition)) = args.get(
-                &String::from("condition")) else {
+            let Some(Variable::Float(condition)) = args.get("condition") else {
                 return Err(String::from("Something strange happend"))
             };
-            let Some(Variable::Function(function)) = args.get(
-                &String::from("function")) else {
+            let Some(Variable::Function(function)) = args.get("function") else {
                 return Err(String::from("Something strange happend"))
             };
             if *condition == 0.0 {

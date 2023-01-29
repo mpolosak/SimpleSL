@@ -21,14 +21,14 @@ pub enum Variable{
 pub type VariableMap = HashMap<String, Variable>;
 
 impl Variable {
-    pub fn type_name(&self) -> String {
+    pub fn type_name(&self) -> &str {
         match self {
-            Variable::Float(_) => String::from("Float"),
-            Variable::Text(_) => String::from("Text"),
-            Variable::Function(_) => String::from("Function"),
-            Variable::Array(_) => String::from("Array"),
-            Variable::Referance(_) => String::from("Referance"),
-            Variable::Null => String::from("Null"),
+            Variable::Float(_) => "Float",
+            Variable::Text(_) => "Text",
+            Variable::Function(_) => "Function",
+            Variable::Array(_) => "Array",
+            Variable::Referance(_) => "Referance",
+            Variable::Null => "Null",
         }
     }
 }
@@ -93,32 +93,28 @@ impl PartialEq for Variable {
     fn eq(&self, other: &Self) -> bool {
         match self {
             Variable::Float(value1) => {
-                if let Variable::Float(value2) = other {
-                    value1 == value2
-                } else {
-                    false
+                match other {
+                    Variable::Float(value2) => value1 == value2,
+                    _ => false
                 } 
             }
             Variable::Text(value1) => {
-                if let Variable::Text(value2) = other {
-                    value1 == value2
-                } else {
-                    false
+                match other {
+                    Variable::Text(value2) => value1 == value2,
+                    _ => false
                 }
             }
             Variable::Function(_) => false,
             Variable::Array(array1) => {
-                if let Variable::Array(array2) = other {
-                    array1 == array2
-                } else {
-                    false
+                match  other {
+                    Variable::Array(array2) => array1 == array2,
+                    _ => false
                 }
             }
             Variable::Referance(value1)=>{
-                if let Variable::Referance(value2) = other {
-                    value1 == value2
-                } else {
-                    false
+                match other {
+                    Variable::Referance(value2) => value1 == value2,
+                    _ => false
                 }
             }
             Variable::Null => {

@@ -100,7 +100,7 @@ impl Intepreter{
         }
     }
 
-    pub fn load_and_exec(&mut self, path: &String) -> Result<Variable, String>{
+    pub fn load_and_exec(&mut self, path: &str) -> Result<Variable, String>{
         let file = File::open(path).unwrap();
         let buf_reader = BufReader::new(file);
         let mut result = Variable::Null;

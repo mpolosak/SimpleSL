@@ -29,7 +29,7 @@ fn run_shell(){
         let readline = rl.readline("> ");
         match readline {
             Ok(mut line) => {
-                rl.add_history_entry(line.as_str());
+                rl.add_history_entry(&line);
                 line = line.replace("\n", "");
                 if !line.is_empty(){
                     if let Err(error) = intepreter.exec(line){
@@ -48,7 +48,7 @@ fn run_shell(){
     }
 }
 
-fn run_from_file(path: &String) {
+fn run_from_file(path: &str) {
     let mut intepreter = Intepreter::new();
     intepreter.load_and_exec(path).unwrap();
 }
