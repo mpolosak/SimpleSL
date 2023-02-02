@@ -4,7 +4,7 @@ ident = @{ !null ~ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC|"_")* }
 referance = ${ "&" ~ ident }
 function_call = ${ ident ~ args }
 	args = !{"("~expression_list~")"}
-var = _{ referance | num | array | text | null}
+var = _{ referance | num | array | text | null | function }
 expression = _{ function_call | ident | var }
 expression_list = _{ (expression ~ ("," ~ expression)*)?}
 array = {"{" ~ expression_list ~ "}"}
@@ -17,6 +17,18 @@ text = ${ "\"" ~ inner ~ "\"" }
   }
 null = {"NULL"}
 line = _{ (return_variable~"=")? ~ expression ~  line_end }
-	line_end = @{ EOI | NEWLINE }
+	line_end = { ";" }
 return_variable = @{ident}
-WHITESPACE = _{ " " | "\t" }
+function = {params~"{"~line*~"}"}
+	param = {ident ~ ":" ~ type}
+	params_list = _{ (param ~ ("," ~ param)*)?}
+    params = {"(" ~ params_list? ~ ")"}
+type = _{float_type | text_type | null_type
+	| referance_type | function_type | array_type}
+  float_type = {"float"}
+  text_type = {"text"}
+  null_type = {"NULL"}
+  referance_type = {"referance"}
+  function_type = {"function"}
+  array_type = {"array"}
+WHITESPACE = _{ " " | "\t"| NEWLINE }
