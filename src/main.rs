@@ -1,5 +1,6 @@
 use std::env;
 mod intepreter;
+mod error;
 use intepreter::Intepreter;
 mod parse;
 mod iofunctions;
@@ -50,5 +51,7 @@ fn run_shell(){
 
 fn run_from_file(path: &str) {
     let mut intepreter = Intepreter::new();
-    intepreter.load_and_exec(path).unwrap();
+    if let Err(error) = intepreter.load_and_exec(path){
+        println!("{error}")
+    }
 }

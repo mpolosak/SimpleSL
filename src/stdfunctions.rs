@@ -1,3 +1,4 @@
+use crate::error::Error;
 use crate::variable::*;
 use crate::function::{Function, NativeFunction, Param};
 use crate::intepreter::VariableMap;
@@ -5,9 +6,9 @@ use crate::intepreter::VariableMap;
 pub fn add_std_functions(variables: &mut VariableMap){
     variables.add_native_function("import", NativeFunction{
         params: vec!(Param::new("path", "Text")),
-        body: |name, intepreter, args|{
+        body: |_name, intepreter, args|{
             let Variable::Text(path) = args.get("path")? else {
-                return Err(format!("{name}: Something strange happend"))
+                return Err(Error::SomethingStrange)
             };
             intepreter.load_and_exec(&path)
         }
@@ -17,12 +18,12 @@ pub fn add_std_functions(variables: &mut VariableMap){
             Param::new("a", "Float"),
             Param::new("b", "Float")
         ),
-        body: |name, _intepreter, args|{
+        body: |_name, _intepreter, args|{
             let Variable::Float(a) = args.get("a")? else {
-                return Err(format!("{name}: Something strange happend"))
+                return Err(Error::SomethingStrange)
             };
             let Variable::Float(b) = args.get("b")? else {
-                return Err(format!("{name}: Something strange happend"))
+                return Err(Error::SomethingStrange)
             };
             Ok(Variable::Float(a+b))
         }
@@ -32,12 +33,12 @@ pub fn add_std_functions(variables: &mut VariableMap){
             Param::new("a", "Float"),
             Param::new("b", "Float")
         ),
-        body: |name, _intepreter, args|{
+        body: |_name, _intepreter, args|{
             let Variable::Float(a) = args.get("a")? else {
-                return Err(format!("{name}: Something strange happend"))
+                return Err(Error::SomethingStrange)
             };
             let Variable::Float(b) = args.get("b")? else {
-                return Err(format!("{name}: Something strange happend"))
+                return Err(Error::SomethingStrange)
             };
             Ok(Variable::Float(a-b))
         }
@@ -47,12 +48,12 @@ pub fn add_std_functions(variables: &mut VariableMap){
             Param::new("a", "Float"),
             Param::new("b", "Float")
         ),
-        body: |name, _intepreter, args|{
+        body: |_name, _intepreter, args|{
             let Variable::Float(a) = args.get("a")? else {
-                return Err(format!("{name}: Something strange happend"))
+                return Err(Error::SomethingStrange)
             };
             let Variable::Float(b) = args.get("b")? else {
-                return Err(format!("{name}: Something strange happend"))
+                return Err(Error::SomethingStrange)
             };
             Ok(Variable::Float(a*b))
         }
@@ -62,12 +63,12 @@ pub fn add_std_functions(variables: &mut VariableMap){
             Param::new("a", "Float"),
             Param::new("b", "Float")
         ),
-        body: |name, _intepreter, args|{
+        body: |_name, _intepreter, args|{
             let Variable::Float(a) = args.get("a")? else {
-                return Err(format!("{name}: Something strange happend"))
+                return Err(Error::SomethingStrange)
             };
             let Variable::Float(b) = args.get("b")? else {
-                return Err(format!("{name}: Something strange happend"))
+                return Err(Error::SomethingStrange)
             };
             Ok(Variable::Float(a/b))
         }
@@ -77,12 +78,12 @@ pub fn add_std_functions(variables: &mut VariableMap){
             Param::new("a", "Float"),
             Param::new("b", "Float")
         ),
-        body: |name, _intepreter, args|{
+        body: |_name, _intepreter, args|{
             let Variable::Float(a) = args.get("a")? else {
-                return Err(format!("{name}: Something strange happend"))
+                return Err(Error::SomethingStrange)
             };
             let Variable::Float(b) = args.get("b")? else {
-                return Err(format!("{name}: Something strange happend"))
+                return Err(Error::SomethingStrange)
             };
             let divided = a/b;
             let result = a - b*divided.floor();
@@ -94,12 +95,12 @@ pub fn add_std_functions(variables: &mut VariableMap){
             Param::new("a", "Float"),
             Param::new("b", "Float")
         ),
-        body: |name, _intepreter, args|{
+        body: |_name, _intepreter, args|{
             let Variable::Float(a) = args.get("a")? else {
-                return Err(format!("{name}: Something strange happend"))
+                return Err(Error::SomethingStrange)
             };
             let Variable::Float(b) = args.get("b")? else {
-                return Err(format!("{name}: Something strange happend"))
+                return Err(Error::SomethingStrange)
             };
             Ok(Variable::Float(a.abs()+b.abs()))
         }
@@ -108,9 +109,9 @@ pub fn add_std_functions(variables: &mut VariableMap){
         params: vec!(
             Param::new("a", "Float"),
         ),
-        body: |name, _intepreter, args|{
+        body: |_name, _intepreter, args|{
             let Variable::Float(a) = args.get("a")? else {
-                return Err(format!("{name}: Something strange happend"))
+                return Err(Error::SomethingStrange)
             };
             Ok(Variable::Float(if a==0.0{1.0}else{0.0}))
         }
@@ -120,12 +121,12 @@ pub fn add_std_functions(variables: &mut VariableMap){
             Param::new("condition", "Float"),
             Param::new("function", "Function")
         ),
-        body: |name, intepreter, args|{
+        body: |_name, intepreter, args|{
             let Variable::Float(condition) = args.get("condition")? else {
-                return Err(format!("{name}: Something strange happend"))
+                return Err(Error::SomethingStrange)
             };
             let Variable::Function(function) = args.get("function")? else {
-                return Err(format!("{name}: Something strange happend"))
+                return Err(Error::SomethingStrange)
             };
             if condition == 0.0 {
                 Ok(Variable::Null)

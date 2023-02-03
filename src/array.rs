@@ -1,3 +1,4 @@
+use crate::error::Error;
 use crate::function::{NativeFunction, Param};
 use crate::intepreter::VariableMap;
 use crate::variable::Variable;
@@ -8,22 +9,22 @@ pub fn add_array_functions(variables: &mut VariableMap){
             Param::new("array", "Array"),
             Param::new("index", "Float"),
         ),
-        body: |name, _intepreter, args|{
+        body: |_name, _intepreter, args|{
             let Variable::Array(array) = args.get("array")? else {
-                return Err(format!("{name}: Something strange happend"))
+                return Err(Error::SomethingStrange)
             };
             let Variable::Float(findex) = args.get("index")? else {
-                return Err(format!("{name}: Something strange happend"))
+                return Err(Error::SomethingStrange)
             };
             if findex.fract()!=0.0{
-                return Err(String::from("Index must be integer"))
+                return Err(Error::Other(String::from("Index must be integer")))
             }
             if findex<0.0 {
-                return Err(String::from("Index must be higher than 0"))
+                return Err(Error::Other(String::from("Index must be higher than 0")))
             }
             let index = findex as usize;
             if index>=array.len(){
-                Err(String::from("Index must be lower than array size"))
+                Err(Error::Other(String::from("Index must be lower than array size")))
             } else {
                 Ok(array[index].clone())
             }

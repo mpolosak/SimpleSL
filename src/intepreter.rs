@@ -9,6 +9,7 @@ use std::io::{BufReader, BufRead};
 use crate::pest::Parser;
 use pest::iterators::Pair;
 use crate::function::{Function, NativeFunction};
+use crate::error::*;
 
 pub struct Intepreter{
     pub variables:  VariableMap
@@ -24,14 +25,12 @@ impl Intepreter{
         intepreter
     }
 
-    pub fn exec(&mut self, mut line: String) -> Result<Variable, String>{
+    pub fn exec(&mut self, mut line: String) -> Result<Variable, Error>{
         line = line.trim().to_string();
         if line.is_empty() {
             return Ok(Variable::Null)
         }
-        let Ok(parse) = SimpleSLParser::parse(Rule::line, &line) else {
-            return Err(String::from("Syntax error"));
-        };
+        let parse = SimpleSLParser::parse(Rule::line, &line)?;
         let pair_vec: Vec<Pair<Rule>> = parse.collect();
         if pair_vec.len()==3{
             let var = pair_vec[0].as_str();
@@ -43,18 +42,18 @@ impl Intepreter{
         }
     }
 
-    pub fn exec_expression(&mut self, expression: &Pair<Rule>) -> Result<Variable, String>{
+    pub fn exec_expression(&mut self, expression: &Pair<Rule>) -> Result<Variable, Error>{
         return match expression.as_rule() { 
             Rule::function_call=>{
                 let mut inter = expression.clone().into_inner();
                 let Some(ident) = inter.next() else {
-                    return Err(String::from("Something strange happened"))
+                    return Err(Error::SomethingStrange)
                 };
                 let var_name = ident.as_str();
                 let function = self.variables.get_function(var_name)?;
                 let mut array = Array::new();
                 let Some(args) = inter.next() else {
-                    return Err(String::from("Something strange happened"))
+                    return Err(Error::SomethingStrange)
                 };
                 for arg in args.into_inner() {
                     array.push(self.exec_expression(&arg)?);
@@ -63,7 +62,7 @@ impl Intepreter{
             },
             Rule::num => {
                 let Ok(value) = expression.as_str().parse::<f64>() else {
-                    return Err(String::from("Something strange happened"))
+                    return Err(Error::SomethingStrange)
                 };
                 Ok(Variable::Float(value))
             },
@@ -74,14 +73,14 @@ impl Intepreter{
             },
             Rule::referance => {
                 let Some(ident) = expression.clone().into_inner().next() else {
-                    return Err(String::from("Something strange happened"))
+                    return Err(Error::SomethingStrange)
                 };
                 let value = String::from(ident.as_str());
                 Ok(Variable::Referance(value))
             },
             Rule::text => {
                 let Some(ident) = expression.clone().into_inner().next() else {
-                    return Err(String::from("Something strange happened"))
+                    return Err(Error::SomethingStrange)
                 };
                 let value = String::from(ident.as_str());
                 Ok(Variable::Text(value))
@@ -95,11 +94,11 @@ impl Intepreter{
                 Ok(Variable::Array(array))
             },
             Rule::null => Ok(Variable::Null),
-            _ => Err(String::from("Something strange happened"))
+            _ => Err(Error::SomethingStrange)
         }
     }
 
-    pub fn load_and_exec(&mut self, path: &str) -> Result<Variable, String>{
+    pub fn load_and_exec(&mut self, path: &str) -> Result<Variable, Error>{
         let file = File::open(path).unwrap();
         let buf_reader = BufReader::new(file);
         let mut result = Variable::Null;
@@ -119,17 +118,17 @@ impl VariableMap{
     pub fn new() -> Self {
         VariableMap { hash_map: HashMap::new() }
     }
-    pub fn get(&self, name: &str) -> Result<Variable, String>{
+    pub fn get(&self, name: &str) -> Result<Variable, Error>{
         match self.hash_map.get(name) {
             Some(variable) => Ok(variable.clone()),
-            _ => Err(format!("Variable {} doesn't exist", name)),
+            _ => Err(Error::VariableDoesntExist(String::from(name))),
         }
     }
-    pub fn get_function(&self, name: &str) -> Result<Box<dyn Function>, String>{
+    pub fn get_function(&self, name: &str) -> Result<Box<dyn Function>, Error>{
         return match self.get(name)?{
             Variable::Function(function) => Ok(Box::new(function)),
             Variable::NativeFunction(function) => Ok(Box::new(function)),
-            _ => Err(format!("{} should be function", name))
+            _ => Err(Error::WrongType(String::from(name), String::from("function")))
         }
     }
     pub fn insert(&mut self, name: &str, variable: Variable){
