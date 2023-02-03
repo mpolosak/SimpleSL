@@ -1,133 +1,133 @@
 use crate::variable::*;
 use crate::function::{Function, NativeFunction, Param};
-use crate::intepreter::Intepreter;
+use crate::intepreter::VariableMap;
 
-pub fn add_std_functions(intepreter: &mut Intepreter){
-    intepreter.add_function("import", NativeFunction{
+pub fn add_std_functions(variables: &mut VariableMap){
+    variables.add_native_function("import", NativeFunction{
         params: vec!(Param::new("path", "Text")),
-        body: |_name, intepreter, args|{
-            let Some(Variable::Text(path)) = args.get("path") else {
-                return Err(String::from("Something strange happend"))
+        body: |name, intepreter, args|{
+            let Variable::Text(path) = args.get("path")? else {
+                return Err(format!("{name}: Something strange happend"))
             };
-            intepreter.load_and_exec(path)
+            intepreter.load_and_exec(&path)
         }
     });
-    intepreter.add_function("add", NativeFunction{
+    variables.add_native_function("add", NativeFunction{
         params: vec!(
             Param::new("a", "Float"),
             Param::new("b", "Float")
         ),
-        body: |_name, _intepreter, args|{
-            let Some(Variable::Float(a)) = args.get("a") else {
-                return Err(String::from("Something strange happend"))
+        body: |name, _intepreter, args|{
+            let Variable::Float(a) = args.get("a")? else {
+                return Err(format!("{name}: Something strange happend"))
             };
-            let Some(Variable::Float(b)) = args.get("b") else {
-                return Err(String::from("Something strange happend"))
+            let Variable::Float(b) = args.get("b")? else {
+                return Err(format!("{name}: Something strange happend"))
             };
             Ok(Variable::Float(a+b))
         }
     });
-    intepreter.add_function("subtract", NativeFunction{
+    variables.add_native_function("subtract", NativeFunction{
         params: vec!(
             Param::new("a", "Float"),
             Param::new("b", "Float")
         ),
-        body: |_name, _intepreter, args|{
-            let Some(Variable::Float(a)) = args.get("a") else {
-                return Err(String::from("Something strange happend"))
+        body: |name, _intepreter, args|{
+            let Variable::Float(a) = args.get("a")? else {
+                return Err(format!("{name}: Something strange happend"))
             };
-            let Some(Variable::Float(b)) = args.get("b") else {
-                return Err(String::from("Something strange happend"))
+            let Variable::Float(b) = args.get("b")? else {
+                return Err(format!("{name}: Something strange happend"))
             };
             Ok(Variable::Float(a-b))
         }
     });
-    intepreter.add_function("multiply", NativeFunction{
+    variables.add_native_function("multiply", NativeFunction{
         params: vec!(
             Param::new("a", "Float"),
             Param::new("b", "Float")
         ),
-        body: |_name, _intepreter, args|{
-            let Some(Variable::Float(a)) = args.get("a") else {
-                return Err(String::from("Something strange happend"))
+        body: |name, _intepreter, args|{
+            let Variable::Float(a) = args.get("a")? else {
+                return Err(format!("{name}: Something strange happend"))
             };
-            let Some(Variable::Float(b)) = args.get("b") else {
-                return Err(String::from("Something strange happend"))
+            let Variable::Float(b) = args.get("b")? else {
+                return Err(format!("{name}: Something strange happend"))
             };
             Ok(Variable::Float(a*b))
         }
     });
-    intepreter.add_function("divide", NativeFunction{
+    variables.add_native_function("divide", NativeFunction{
         params: vec!(
             Param::new("a", "Float"),
             Param::new("b", "Float")
         ),
-        body: |_name, _intepreter, args|{
-            let Some(Variable::Float(a)) = args.get("a") else {
-                return Err(String::from("Something strange happend"))
+        body: |name, _intepreter, args|{
+            let Variable::Float(a) = args.get("a")? else {
+                return Err(format!("{name}: Something strange happend"))
             };
-            let Some(Variable::Float(b)) = args.get("b") else {
-                return Err(String::from("Something strange happend"))
+            let Variable::Float(b) = args.get("b")? else {
+                return Err(format!("{name}: Something strange happend"))
             };
             Ok(Variable::Float(a/b))
         }
     });
-    intepreter.add_function("modulo", NativeFunction{
+    variables.add_native_function("modulo", NativeFunction{
         params: vec!(
             Param::new("a", "Float"),
             Param::new("b", "Float")
         ),
-        body: |_name, _intepreter, args|{
-            let Some(Variable::Float(a)) = args.get("a") else {
-                return Err(String::from("Something strange happend"))
+        body: |name, _intepreter, args|{
+            let Variable::Float(a) = args.get("a")? else {
+                return Err(format!("{name}: Something strange happend"))
             };
-            let Some(Variable::Float(b)) = args.get("b") else {
-                return Err(String::from("Something strange happend"))
+            let Variable::Float(b) = args.get("b")? else {
+                return Err(format!("{name}: Something strange happend"))
             };
             let divided = a/b;
             let result = a - b*divided.floor();
             Ok(Variable::Float(result))
         }
     });
-    intepreter.add_function("or", NativeFunction{
+    variables.add_native_function("or", NativeFunction{
         params: vec!(
             Param::new("a", "Float"),
             Param::new("b", "Float")
         ),
-        body: |_name, _intepreter, args|{
-            let Some(Variable::Float(a)) = args.get("a") else {
-                return Err(String::from("Something strange happend"))
+        body: |name, _intepreter, args|{
+            let Variable::Float(a) = args.get("a")? else {
+                return Err(format!("{name}: Something strange happend"))
             };
-            let Some(Variable::Float(b)) = args.get("b") else {
-                return Err(String::from("Something strange happend"))
+            let Variable::Float(b) = args.get("b")? else {
+                return Err(format!("{name}: Something strange happend"))
             };
             Ok(Variable::Float(a.abs()+b.abs()))
         }
     });
-    intepreter.add_function("not", NativeFunction{
+    variables.add_native_function("not", NativeFunction{
         params: vec!(
             Param::new("a", "Float"),
         ),
-        body: |_name, _intepreter, args|{
-            let Some(Variable::Float(a)) = args.get("a") else {
-                return Err(String::from("Something strange happend"))
+        body: |name, _intepreter, args|{
+            let Variable::Float(a) = args.get("a")? else {
+                return Err(format!("{name}: Something strange happend"))
             };
-            Ok(Variable::Float(if *a==0.0{1.0}else{0.0}))
+            Ok(Variable::Float(if a==0.0{1.0}else{0.0}))
         }
     });
-    intepreter.add_function("if", NativeFunction{
+    variables.add_native_function("if", NativeFunction{
         params: vec!(
             Param::new("condition", "Float"),
             Param::new("function", "Function")
         ),
-        body: |_name, intepreter, args|{
-            let Some(Variable::Float(condition)) = args.get("condition") else {
-                return Err(String::from("Something strange happend"))
+        body: |name, intepreter, args|{
+            let Variable::Float(condition) = args.get("condition")? else {
+                return Err(format!("{name}: Something strange happend"))
             };
-            let Some(Variable::Function(function)) = args.get("function") else {
-                return Err(String::from("Something strange happend"))
+            let Variable::Function(function) = args.get("function")? else {
+                return Err(format!("{name}: Something strange happend"))
             };
-            if *condition == 0.0 {
+            if condition == 0.0 {
                 Ok(Variable::Null)
             } else {
                 function.exec(String::from("function"), intepreter, Array::new())

@@ -1,16 +1,16 @@
 use std::io;
 use crate::function::{NativeFunction, Param};
+use crate::intepreter::VariableMap;
 use crate::variable::*;
-use crate::*;
 
-pub fn add_io_functions(intepreter: &mut Intepreter){
-    intepreter.add_function("print", NativeFunction{
+pub fn add_io_functions(variables: &mut VariableMap){
+    variables.add_native_function("print", NativeFunction{
         params: vec!(
             Param::new("vars", "..."),
         ),
-        body: |_name, _intepreter, args|{
-            let Some(Variable::Array(args)) = args.get("vars") else {
-                return Err(String::from("Something strange happend"))
+        body: |name, _intepreter, args|{
+            let Variable::Array(args) = args.get("vars")? else {
+                return Err(format!("{name}: Something strange happend"))
             };
             let mut text = String::new();
             for arg in args {
@@ -20,7 +20,7 @@ pub fn add_io_functions(intepreter: &mut Intepreter){
             Ok(Variable::Null)
         }
     });
-    intepreter.add_function("cgetline", NativeFunction{
+    variables.add_native_function("cgetline", NativeFunction{
         params: Vec::new(),
         body: |_name, _intepreter, _params|{
             let mut input = String::new();

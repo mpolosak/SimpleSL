@@ -1,10 +1,9 @@
-use std::collections::HashMap;
 use std::fmt;
 use std::str::FromStr;
 use crate::pest::Parser;
 use pest::iterators::Pair;
 use crate::parse::*;
-use crate::function::NativeFunction;
+use crate::function::{NativeFunction, LangFunction};
 
 pub type Array = Vec<Variable>;
 
@@ -12,13 +11,12 @@ pub type Array = Vec<Variable>;
 pub enum Variable{
     Float(f64),
     Text(String),
-    Function(NativeFunction),
+    Function(LangFunction),
+    NativeFunction(NativeFunction),
     Array(Array),
     Referance(String),
     Null
 }
-
-pub type VariableMap = HashMap<String, Variable>;
 
 impl Variable {
     pub fn type_name(&self) -> &str {
@@ -26,6 +24,7 @@ impl Variable {
             Variable::Float(_) => "Float",
             Variable::Text(_) => "Text",
             Variable::Function(_) => "Function",
+            Variable::NativeFunction(_) => "Function",
             Variable::Array(_) => "Array",
             Variable::Referance(_) => "Referance",
             Variable::Null => "Null",
@@ -39,6 +38,7 @@ impl fmt::Display for Variable {
             Variable::Float(value)=>write!(f, "{}", value),
             Variable::Text(value)=>write!(f, "{}", value),
             Variable::Function(_)=>write!(f, "Function"),
+            Variable::NativeFunction(_)=>write!(f, "Function"),
             Variable::Array(array)=>{
                 write!(f, "{{")?;
                 for value in array{
@@ -59,6 +59,7 @@ impl fmt::Debug for Variable {
             Variable::Float(value)=>write!(f, "Variable::Float({})", value),
             Variable::Text(value)=>write!(f, "Variable::Text(\"{}\")", value),
             Variable::Function(_)=>write!(f, "Variable::Function"),
+            Variable::NativeFunction(_)=>write!(f, "Variable::NativeFunction"),
             Variable::Array(array)=>{
                 write!(f, "Variable::Array(")?;
                 for value in array{
@@ -105,6 +106,7 @@ impl PartialEq for Variable {
                 }
             }
             Variable::Function(_) => false,
+            Variable::NativeFunction(_) => false,
             Variable::Array(array1) => {
                 match  other {
                     Variable::Array(array2) => array1 == array2,

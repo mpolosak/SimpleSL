@@ -1,7 +1,9 @@
 use crate::variable::*;
-use crate::intepreter::Intepreter;
+use crate::intepreter::{Intepreter, VariableMap};
 use std::vec::Vec;
 use std::iter::zip;
+use pest::iterators::Pair;
+use crate::parse::Rule;
 
 #[derive(Clone)]
 pub struct Param {
@@ -27,7 +29,7 @@ pub trait Function{
             if *type_name == String::from("..."){
                 let from = params.len()-1;
                 let rest: Array = args.drain(from..).collect();
-                args_map.insert(param_name.clone(), Variable::Array(rest));
+                args_map.insert(param_name, Variable::Array(rest));
             } else if args.len() != params.len() {
                 return Err(format!("{name} requires {} args", params.len()))
             }
@@ -37,7 +39,7 @@ pub trait Function{
 
         for (arg, param) in zip(args, params) {
             if arg.type_name() == param.type_name {
-                args_map.insert(param.name.clone(), arg);
+                args_map.insert(&param.name, arg);
             } else {
                 return Err(format!("{} should be {}", param.name, param.type_name))
             }
@@ -59,6 +61,22 @@ impl Function for NativeFunction {
     fn exec_intern(&self, name: String, intepreter: &mut Intepreter,
         args: VariableMap) -> Result<Variable, String>{
         (self.body)(name, intepreter, args)
+    }
+    fn get_params(&self) -> &Vec<Param> {
+        &self.params
+    }
+}
+
+#[derive(Clone)]
+pub struct LangFunction {
+    pub params: Vec<Param>,
+    pub body: Pair<'static, Rule>
+}
+
+impl Function for LangFunction {
+    fn exec_intern(&self, _name: String, intepreter: &mut Intepreter,
+            _args: VariableMap) -> Result<Variable, String> {
+        intepreter.exec_expression(&self.body)
     }
     fn get_params(&self) -> &Vec<Param> {
         &self.params

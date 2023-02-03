@@ -3,6 +3,7 @@ use crate::parse::*;
 use crate::stdfunctions::*;
 use crate::iofunctions::*;
 use crate::variable::*;
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufReader, BufRead};
 use crate::pest::Parser;
@@ -17,9 +18,9 @@ impl Intepreter{
     pub fn new() -> Intepreter{ 
         let variables = VariableMap::new();
         let mut intepreter = Intepreter{variables};
-        add_io_functions(&mut intepreter);
-        add_std_functions(&mut intepreter);
-        add_array_functions(&mut intepreter);
+        add_io_functions(&mut intepreter.variables);
+        add_std_functions(&mut intepreter.variables);
+        add_array_functions(&mut intepreter.variables);
         intepreter
     }
 
@@ -33,7 +34,7 @@ impl Intepreter{
         };
         let pair_vec: Vec<Pair<Rule>> = parse.collect();
         if pair_vec.len()==3{
-            let var = String::from(pair_vec[0].as_str());
+            let var = pair_vec[0].as_str();
             let result = self.exec_expression(&pair_vec[1])?;
             self.variables.insert(var, result);
             Ok(Variable::Null)
@@ -49,10 +50,8 @@ impl Intepreter{
                 let Some(ident) = inter.next() else {
                     return Err(String::from("Something strange happened"))
                 };
-                let var_name = String::from(ident.as_str());
-                let Variable::Function(function) = self.get_variable(&var_name)? else {
-                    return Err(format!("{} should be function", var_name))
-                };
+                let var_name = ident.as_str();
+                let function = self.variables.get_function(var_name)?;
                 let mut array = Array::new();
                 let Some(args) = inter.next() else {
                     return Err(String::from("Something strange happened"))
@@ -60,7 +59,7 @@ impl Intepreter{
                 for arg in args.into_inner() {
                     array.push(self.exec_expression(&arg)?);
                 }
-                function.exec(var_name, self, array)
+                function.exec(String::from(var_name), self, array)
             },
             Rule::num => {
                 let Ok(value) = expression.as_str().parse::<f64>() else {
@@ -70,7 +69,7 @@ impl Intepreter{
             },
             Rule::ident => {
                 let var_name = String::from(expression.as_str());
-                let value = self.get_variable(&var_name)?;
+                let value = self.variables.get(&var_name)?;
                 Ok(value)
             },
             Rule::referance => {
@@ -110,15 +109,33 @@ impl Intepreter{
         }
         Ok(result)
     }
+}
 
-    pub fn get_variable(&self, name: &str) -> Result<Variable, String>{
-        match self.variables.get(name) {
+pub struct VariableMap {
+    hash_map: HashMap<String, Variable>
+}
+
+impl VariableMap{
+    pub fn new() -> Self {
+        VariableMap { hash_map: HashMap::new() }
+    }
+    pub fn get(&self, name: &str) -> Result<Variable, String>{
+        match self.hash_map.get(name) {
             Some(variable) => Ok(variable.clone()),
             _ => Err(format!("Variable {} doesn't exist", name)),
         }
     }
-
-    pub fn add_function(&mut self, name: &str, function: NativeFunction){
-        self.variables.insert(String::from(name), Variable::Function(function));
+    pub fn get_function(&self, name: &str) -> Result<Box<dyn Function>, String>{
+        return match self.get(name)?{
+            Variable::Function(function) => Ok(Box::new(function)),
+            Variable::NativeFunction(function) => Ok(Box::new(function)),
+            _ => Err(format!("{} should be function", name))
+        }
+    }
+    pub fn insert(&mut self, name: &str, variable: Variable){
+        self.hash_map.insert(String::from(name), variable);
+    }
+    pub fn add_native_function(&mut self, name: &str, function: NativeFunction){
+        self.insert(name, Variable::NativeFunction(function))
     }
 }
