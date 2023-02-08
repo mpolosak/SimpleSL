@@ -6,6 +6,7 @@ pub enum Error {
     SomethingStrange,
     VariableDoesntExist(String),
     WrongType(String, String),
+    WrongNumberOfArguments(String, usize),
     Other(String)
 }
 
@@ -19,6 +20,10 @@ impl fmt::Display for Error {
                 => write!(f, "{var_name} doesn't exist"),
             Self::WrongType(var_name, type_name)
                 => write!(f,"{var_name} should be {type_name}"),
+            Self::WrongNumberOfArguments(name, 0)
+                => write!(f, "{name} requires no arguments but some passed"),
+            Self::WrongNumberOfArguments(name, num)
+                => write!(f, "{name} requires {num} args"),
             Self::Other(value) => write!(f, "{value}")
         }
     }

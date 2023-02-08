@@ -32,17 +32,17 @@ pub trait Function{
                 let rest: Array = args.drain(from..).collect();
                 args_map.insert(param_name, Variable::Array(rest));
             } else if args.len() != params.len() {
-                return Err(Error::Other(format!("{name} requires {} args", params.len())))
+                return Err(Error::WrongNumberOfArguments(name, params.len()))
             }
         } else if args.len()!=0 {
-            return Err(Error::Other(format!("{name} requires no arguments but some passed")))
+            return Err(Error::WrongNumberOfArguments(name, 0))
         }
 
         for (arg, param) in zip(args, params) {
             if arg.type_name() == param.type_name {
                 args_map.insert(&param.name, arg);
             } else {
-                return Err(Error::Other(format!("{} should be {}", param.name, param.type_name)))
+                return Err(Error::WrongType(param.name.clone(), param.type_name.clone()))
             }
         }
         self.exec_intern(name, intepreter, args_map)
