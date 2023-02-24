@@ -2,8 +2,8 @@ use std::fmt;
 use std::str::FromStr;
 use crate::pest::Parser;
 use pest::iterators::Pair;
-use crate::parse::*;
-use crate::function::{NativeFunction, LangFunction};
+use crate::{parse::*, function};
+use crate::function::{NativeFunction, LangFunction, Function};
 
 pub type Array = Vec<Variable>;
 
@@ -37,8 +37,8 @@ impl fmt::Display for Variable {
         match self {
             Variable::Float(value)=>write!(f, "{}", value),
             Variable::Text(value)=>write!(f, "{}", value),
-            Variable::Function(_)=>write!(f, "Function"),
-            Variable::NativeFunction(_)=>write!(f, "Function"),
+            Variable::Function(function)=>write!(f, "{}", function as &dyn Function),
+            Variable::NativeFunction(function)=>write!(f, "{}", function as &dyn Function),
             Variable::Array(array)=>{
                 write!(f, "{{")?;
                 for value in array{

@@ -1,12 +1,13 @@
 use crate::error::Error;
 use crate::variable::*;
 use crate::intepreter::{Intepreter, VariableMap};
+use std::fmt;
 use std::vec::Vec;
 use std::iter::zip;
 use pest::iterators::Pair;
 use crate::parse::Rule;
 
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub struct Param {
     pub name: String,
     pub type_name: String,
@@ -18,6 +19,12 @@ impl Param {
             name: String::from(name),
             type_name: String::from(type_name)
         }
+    }
+}
+
+impl fmt::Display for Param {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}:{}", self.name, self.type_name)
     }
 }
 
@@ -50,6 +57,16 @@ pub trait Function{
     fn exec_intern(&self, name: String, intepreter: &mut Intepreter,
         args: VariableMap) -> Result<Variable, Error>;
     fn get_params(&self) -> &Vec<Param>;
+}
+
+impl fmt::Display for dyn Function {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "function(")?;
+        for param in self.get_params(){
+            write!(f, "{param}, ")?;
+        }
+        write!(f, ")")
+    }
 }
 
 #[derive(Clone)]
