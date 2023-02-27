@@ -6,9 +6,10 @@ use crate::variable::*;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufReader, BufRead};
+use std::rc::Rc;
 use crate::pest::Parser;
 use pest::iterators::Pair;
-use crate::function::{Function, NativeFunction};
+use crate::function::NativeFunction;
 use crate::error::*;
 
 pub struct Intepreter{
@@ -50,7 +51,9 @@ impl Intepreter{
                     return Err(Error::SomethingStrange)
                 };
                 let var_name = ident.as_str();
-                let function = self.variables.get_function(var_name)?;
+                let Variable::Function(function) = self.variables.get(var_name)? else {
+                    return Err(Error::WrongType(String::from(var_name), String::from("Function")));
+                };
                 let mut array = Array::new();
                 let Some(args) = inter.next() else {
                     return Err(Error::SomethingStrange)
@@ -124,17 +127,10 @@ impl VariableMap{
             _ => Err(Error::VariableDoesntExist(String::from(name))),
         }
     }
-    pub fn get_function(&self, name: &str) -> Result<Box<dyn Function>, Error>{
-        match self.get(name)?{
-            Variable::Function(function) => Ok(Box::new(function)),
-            Variable::NativeFunction(function) => Ok(Box::new(function)),
-            _ => Err(Error::WrongType(String::from(name), String::from("function")))
-        }
-    }
     pub fn insert(&mut self, name: &str, variable: Variable){
         self.hash_map.insert(String::from(name), variable);
     }
     pub fn add_native_function(&mut self, name: &str, function: NativeFunction){
-        self.insert(name, Variable::NativeFunction(function))
+        self.insert(name, Variable::Function(Rc::new(function)))
     }
 }

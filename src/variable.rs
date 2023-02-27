@@ -1,9 +1,10 @@
 use std::fmt::{self};
+use std::rc::Rc;
 use std::str::FromStr;
 use crate::pest::Parser;
 use pest::iterators::Pair;
 use crate::parse::*;
-use crate::function::{NativeFunction, LangFunction, Function};
+use crate::function::Function;
 
 pub type Array = Vec<Variable>;
 
@@ -11,8 +12,7 @@ pub type Array = Vec<Variable>;
 pub enum Variable{
     Float(f64),
     Text(String),
-    Function(LangFunction),
-    NativeFunction(NativeFunction),
+    Function(Rc<dyn Function>),
     Array(Array),
     Referance(String),
     Null
@@ -24,7 +24,6 @@ impl Variable {
             Variable::Float(_) => "Float",
             Variable::Text(_) => "Text",
             Variable::Function(_) => "Function",
-            Variable::NativeFunction(_) => "Function",
             Variable::Array(_) => "Array",
             Variable::Referance(_) => "Referance",
             Variable::Null => "Null",
@@ -37,8 +36,7 @@ impl fmt::Display for Variable {
         match self {
             Variable::Float(value)=>write!(f, "{value}"),
             Variable::Text(value)=>write!(f, "{value}"),
-            Variable::Function(function)=>write!(f, "{}", function as &dyn Function),
-            Variable::NativeFunction(function)=>write!(f, "{}", function as &dyn Function),
+            Variable::Function(function)=>write!(f, "{function}"),
             Variable::Array(array)=>{
                 write!(f, "{{")?;
                 if let [elements @ .., last] = &array[..] {
@@ -63,16 +61,6 @@ impl fmt::Debug for Variable {
             Variable::Text(value)=>write!(f, "Variable::Text(\"{value}\")"),
             Variable::Function(function)=>{
                 write!(f, "Variable::Function(")?;
-                if let [params @ .., last] = &function.get_params()[..] {
-                    for param in params{
-                        write!(f, "{param}, ")?;
-                    }
-                    write!(f, "{last}")?;
-                }
-                write!(f, ")")
-            },
-            Variable::NativeFunction(function)=>{
-                write!(f, "Variable::NativeFunction(")?;
                 if let [params @ .., last] = &function.get_params()[..] {
                     for param in params{
                         write!(f, "{param}, ")?;
@@ -129,8 +117,10 @@ impl PartialEq for Variable {
                     _ => false
                 }
             }
-            Variable::Function(_) => false,
-            Variable::NativeFunction(_) => false,
+            Variable::Function(value1) => match other{
+                Variable::Function(value2) => std::ptr::eq(value1, value2),
+                _ => false
+            },
             Variable::Array(array1) => {
                 match  other {
                     Variable::Array(array2) => array1 == array2,

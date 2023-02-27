@@ -1,6 +1,6 @@
 use crate::error::Error;
 use crate::variable::*;
-use crate::function::{Function, NativeFunction, Param};
+use crate::function::{NativeFunction, Param};
 use crate::intepreter::VariableMap;
 
 pub fn add_std_functions(variables: &mut VariableMap){
