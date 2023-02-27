@@ -1,4 +1,4 @@
-use std::fmt;
+use std::fmt::{self};
 use std::str::FromStr;
 use crate::pest::Parser;
 use pest::iterators::Pair;
@@ -41,8 +41,11 @@ impl fmt::Display for Variable {
             Variable::NativeFunction(function)=>write!(f, "{}", function as &dyn Function),
             Variable::Array(array)=>{
                 write!(f, "{{")?;
-                for value in array{
-                    write!(f, "{value} ")?;
+                if let [elements @ .., last] = &array[..] {
+                    for var in elements{
+                        write!(f, "{var}, ")?;
+                    }
+                    write!(f, "{last}")?
                 }
                 write!(f, "}}")
             }
@@ -58,14 +61,35 @@ impl fmt::Debug for Variable {
         match self {
             Variable::Float(value)=>write!(f, "Variable::Float({value})"),
             Variable::Text(value)=>write!(f, "Variable::Text(\"{value}\")"),
-            Variable::Function(_)=>write!(f, "Variable::Function"),
-            Variable::NativeFunction(_)=>write!(f, "Variable::NativeFunction"),
-            Variable::Array(array)=>{
-                write!(f, "Variable::Array(")?;
-                for value in array{
-                    write!(f, "{value}")?;
+            Variable::Function(function)=>{
+                write!(f, "Variable::Function(")?;
+                if let [params @ .., last] = &function.get_params()[..] {
+                    for param in params{
+                        write!(f, "{param}, ")?;
+                    }
+                    write!(f, "{last}")?;
                 }
                 write!(f, ")")
+            },
+            Variable::NativeFunction(function)=>{
+                write!(f, "Variable::NativeFunction(")?;
+                if let [params @ .., last] = &function.get_params()[..] {
+                    for param in params{
+                        write!(f, "{param}, ")?;
+                    }
+                    write!(f, "{last}")?;
+                }
+                write!(f, ")")
+            },
+            Variable::Array(array)=>{
+                write!(f, "Variable({{")?;
+                if let [elements @ .., last] = &array[..] {
+                    for var in elements{
+                        write!(f, "{var:?}, ")?;
+                    }
+                    write!(f, "{last:?}")?
+                }
+                write!(f, "}})")
             }
             Variable::Referance(value) => write!(f, "Variable::Referance(\"{value}\")"),
             Variable::Null=>write!(f, "Variable::Null"),

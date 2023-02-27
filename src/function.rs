@@ -24,7 +24,11 @@ impl Param {
 
 impl fmt::Display for Param {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}:{}", self.name, self.type_name)
+        if self.type_name == "..." {
+            write!(f, "{}...", self.name)
+        } else {
+            write!(f, "{}:{}", self.name, self.type_name)
+        }
     }
 }
 
@@ -62,8 +66,11 @@ pub trait Function{
 impl fmt::Display for dyn Function {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "function(")?;
-        for param in self.get_params(){
-            write!(f, "{param}, ")?;
+        if let [params @ .., last] = &self.get_params()[..] {
+            for param in params{
+                write!(f, "{param}, ")?;
+            }
+            write!(f, "{last}")?;
         }
         write!(f, ")")
     }
