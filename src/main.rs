@@ -31,10 +31,10 @@ fn run_shell(){
         match readline {
             Ok(mut line) => {
                 rl.add_history_entry(&line);
-                line = line.replace("\n", "");
+                line = line.replace('\n', "");
                 if !line.is_empty(){
                     if let Err(error) = intepreter.exec(line){
-                        eprintln!("{}", error);
+                        eprintln!("{error}");
                     }
                 }
             },
@@ -42,7 +42,7 @@ fn run_shell(){
                 break
             },
             Err(err) => {
-                eprintln!("Error: {:?}", err);
+                eprintln!("Error: {err:?}");
                 break
             }
         }

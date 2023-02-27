@@ -125,7 +125,7 @@ impl VariableMap{
         }
     }
     pub fn get_function(&self, name: &str) -> Result<Box<dyn Function>, Error>{
-        return match self.get(name)?{
+        match self.get(name)?{
             Variable::Function(function) => Ok(Box::new(function)),
             Variable::NativeFunction(function) => Ok(Box::new(function)),
             _ => Err(Error::WrongType(String::from(name), String::from("function")))

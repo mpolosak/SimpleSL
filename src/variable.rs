@@ -2,7 +2,7 @@ use std::fmt;
 use std::str::FromStr;
 use crate::pest::Parser;
 use pest::iterators::Pair;
-use crate::{parse::*, function};
+use crate::parse::*;
 use crate::function::{NativeFunction, LangFunction, Function};
 
 pub type Array = Vec<Variable>;
@@ -35,18 +35,18 @@ impl Variable {
 impl fmt::Display for Variable {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Variable::Float(value)=>write!(f, "{}", value),
-            Variable::Text(value)=>write!(f, "{}", value),
+            Variable::Float(value)=>write!(f, "{value}"),
+            Variable::Text(value)=>write!(f, "{value}"),
             Variable::Function(function)=>write!(f, "{}", function as &dyn Function),
             Variable::NativeFunction(function)=>write!(f, "{}", function as &dyn Function),
             Variable::Array(array)=>{
                 write!(f, "{{")?;
                 for value in array{
-                    write!(f, "{} ", value)?;
+                    write!(f, "{value} ")?;
                 }
                 write!(f, "}}")
             }
-            Variable::Referance(value) => write!(f, "&{}", value),
+            Variable::Referance(value) => write!(f, "&{value}"),
             Variable::Null=>write!(f, "NULL"),
         }
     }
@@ -56,18 +56,18 @@ impl fmt::Display for Variable {
 impl fmt::Debug for Variable {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Variable::Float(value)=>write!(f, "Variable::Float({})", value),
-            Variable::Text(value)=>write!(f, "Variable::Text(\"{}\")", value),
+            Variable::Float(value)=>write!(f, "Variable::Float({value})"),
+            Variable::Text(value)=>write!(f, "Variable::Text(\"{value}\")"),
             Variable::Function(_)=>write!(f, "Variable::Function"),
             Variable::NativeFunction(_)=>write!(f, "Variable::NativeFunction"),
             Variable::Array(array)=>{
                 write!(f, "Variable::Array(")?;
                 for value in array{
-                    write!(f, "{}", value)?;
+                    write!(f, "{value}")?;
                 }
                 write!(f, ")")
             }
-            Variable::Referance(value) => write!(f, "Variable::Referance(\"{}\")", value),
+            Variable::Referance(value) => write!(f, "Variable::Referance(\"{value}\")"),
             Variable::Null=>write!(f, "Variable::Null"),
         }
     }
@@ -79,7 +79,7 @@ impl FromStr for Variable {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let s = s.trim();
         let Ok(parse) = SimpleSLParser::parse(Rule::var, s) else {
-            return Err(format!("{} cannot be parsed to variable", s))
+            return Err(format!("{s} cannot be parsed to variable"))
         };
         if parse.as_str() != s {
             Err(String::from("String contains more than one variable"))
@@ -120,10 +120,7 @@ impl PartialEq for Variable {
                 }
             }
             Variable::Null => {
-                match other {
-                    Variable::Null => true,
-                    _ => false
-                }
+                matches!(other, Variable::Null)
             }
         }
     }

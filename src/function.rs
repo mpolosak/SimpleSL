@@ -34,14 +34,14 @@ pub trait Function{
         let mut args_map = VariableMap::new();
         let params = self.get_params();
         if let Some(Param {name: param_name, type_name}) = &params.last(){
-            if *type_name == String::from("..."){
+            if *type_name == "..."{
                 let from = params.len()-1;
                 let rest: Array = args.drain(from..).collect();
                 args_map.insert(param_name, Variable::Array(rest));
             } else if args.len() != params.len() {
                 return Err(Error::WrongNumberOfArguments(name, params.len()))
             }
-        } else if args.len()!=0 {
+        } else if !args.is_empty() {
             return Err(Error::WrongNumberOfArguments(name, 0))
         }
 

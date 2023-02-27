@@ -17,7 +17,7 @@ pub fn add_io_functions(variables: &mut VariableMap){
             for arg in args {
                 text+=&arg.to_string();
             }
-            println!("{}", text);
+            println!("{text}");
             Ok(Variable::Null)
         }
     });
@@ -26,7 +26,7 @@ pub fn add_io_functions(variables: &mut VariableMap){
         body: |_name, _intepreter, _params|{
             let mut input = String::new();
             io::stdin().read_line(&mut input).expect("Unable to read user input");
-            input = input.replace("\n", "");
+            input = input.replace('\n', "");
             Ok(Variable::Text(input))
         }
     });
