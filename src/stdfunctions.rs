@@ -116,6 +116,17 @@ pub fn add_std_functions(variables: &mut VariableMap){
             Ok(Variable::Float(if a==0.0{1.0}else{0.0}))
         }
     });
+    variables.add_native_function("equals", NativeFunction{
+        params: vec!(
+            Param::new("a", "any"),
+            Param::new("b", "any")
+        ),
+        body: |_name, _intepreter, args|{
+            let a = args.get("a")?;
+            let b = args.get("b")?;
+            Ok(Variable::Float(if a==b {1.0}  else {0.0}))
+        }
+    });
     variables.add_native_function("if", NativeFunction{
         params: vec!(
             Param::new("condition", "Float"),

@@ -50,7 +50,7 @@ pub trait Function{
         }
 
         for (arg, param) in zip(args, params) {
-            if arg.type_name() == param.type_name {
+            if param.type_name == "any" || arg.type_name() == param.type_name {
                 args_map.insert(&param.name, arg);
             } else {
                 return Err(Error::WrongType(param.name.clone(), param.type_name.clone()))
