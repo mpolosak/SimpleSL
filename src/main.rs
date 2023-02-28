@@ -8,6 +8,7 @@ mod stdfunctions;
 mod function;
 mod variable;
 mod array;
+mod function_macros;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 extern crate pest;

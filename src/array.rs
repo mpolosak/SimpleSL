@@ -2,13 +2,11 @@ use crate::error::Error;
 use crate::function::{NativeFunction, Param};
 use crate::intepreter::VariableMap;
 use crate::variable::Variable;
+use crate::params;
 
 pub fn add_array_functions(variables: &mut VariableMap){
     variables.add_native_function("array_at", NativeFunction{
-        params: vec!(
-            Param::new("array", "Array"),
-            Param::new("index", "Float"),
-        ),
+        params: params!("array":"Array", "index":"Float"),
         body: |_name, _intepreter, args|{
             let Variable::Array(array) = args.get("array")? else {
                 return Err(Error::SomethingStrange)
