@@ -118,7 +118,7 @@ impl PartialEq for Variable {
                 }
             }
             Variable::Function(value1) => match other{
-                Variable::Function(value2) => std::ptr::eq(value1, value2),
+                Variable::Function(value2) => Rc::ptr_eq(value1, value2),
                 _ => false
             },
             Variable::Array(array1) => {
