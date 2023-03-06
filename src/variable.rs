@@ -11,7 +11,7 @@ pub type Array = Vec<Variable>;
 #[derive(Clone)]
 pub enum Variable{
     Float(f64),
-    Text(Rc<String>),
+    Text(Rc<str>),
     Function(Rc<dyn Function>),
     Array(Rc<Array>),
     Null

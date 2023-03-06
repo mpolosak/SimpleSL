@@ -18,8 +18,8 @@ pub fn variable_from_pair(pair: Pair<Rule>) -> Result<Variable, String>{
             let Some(ident) = pair.into_inner().next() else {
                 return Err(String::from("Something strange happened"))
             };
-            let value = String::from(ident.as_str());
-            Ok(Variable::Text(Rc::new(value)))
+            let value = ident.as_str();
+            Ok(Variable::Text(value.into()))
         },
         Rule::array => {
             let mut array = Array::new();

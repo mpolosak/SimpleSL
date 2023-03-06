@@ -78,8 +78,8 @@ impl Intepreter{
                 let Some(ident) = expression.clone().into_inner().next() else {
                     return Err(Error::SomethingStrange)
                 };
-                let value = String::from(ident.as_str());
-                Ok(Variable::Text(Rc::new(value)))
+                let value = ident.as_str();
+                Ok(Variable::Text(value.into()))
             },
             Rule::array => {
                 let inter = expression.clone().into_inner();
