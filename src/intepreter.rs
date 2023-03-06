@@ -1,7 +1,4 @@
-use crate::array::add_array_functions;
 use crate::parse::*;
-use crate::stdfunctions::*;
-use crate::iofunctions::*;
 use crate::variable::*;
 use std::collections::HashMap;
 use std::fs::File;
@@ -11,7 +8,7 @@ use crate::pest::Parser;
 use pest::iterators::Pair;
 use crate::function::NativeFunction;
 use crate::error::*;
-
+use crate::stdlib::add_std_lib;
 pub struct Intepreter{
     pub variables:  VariableMap
 }
@@ -20,9 +17,7 @@ impl Intepreter{
     pub fn new() -> Intepreter{ 
         let variables = VariableMap::new();
         let mut intepreter = Intepreter{variables};
-        add_io_functions(&mut intepreter.variables);
-        add_std_functions(&mut intepreter.variables);
-        add_array_functions(&mut intepreter.variables);
+        add_std_lib(&mut intepreter.variables);
         intepreter
     }
 
