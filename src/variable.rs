@@ -14,7 +14,6 @@ pub enum Variable{
     Text(String),
     Function(Rc<dyn Function>),
     Array(Array),
-    Referance(String),
     Null
 }
 
@@ -25,7 +24,6 @@ impl Variable {
             Variable::Text(_) => "Text",
             Variable::Function(_) => "Function",
             Variable::Array(_) => "Array",
-            Variable::Referance(_) => "Referance",
             Variable::Null => "Null",
         }
     }
@@ -46,8 +44,7 @@ impl fmt::Display for Variable {
                     write!(f, "{last}")?
                 }
                 write!(f, "}}")
-            }
-            Variable::Referance(value) => write!(f, "&{value}"),
+            },
             Variable::Null=>write!(f, "NULL"),
         }
     }
@@ -78,8 +75,7 @@ impl fmt::Debug for Variable {
                     write!(f, "{last:?}")?
                 }
                 write!(f, "}})")
-            }
-            Variable::Referance(value) => write!(f, "Variable::Referance(\"{value}\")"),
+            },
             Variable::Null=>write!(f, "Variable::Null"),
         }
     }
@@ -126,13 +122,7 @@ impl PartialEq for Variable {
                     Variable::Array(array2) => array1 == array2,
                     _ => false
                 }
-            }
-            Variable::Referance(value1)=>{
-                match other {
-                    Variable::Referance(value2) => value1 == value2,
-                    _ => false
-                }
-            }
+            },
             Variable::Null => {
                 matches!(other, Variable::Null)
             }

@@ -27,13 +27,6 @@ pub fn variable_from_pair(pair: Pair<Rule>) -> Result<Variable, String>{
             }
             Ok(Variable::Array(array))
         },
-        Rule::referance => {
-            let Some(ident) = pair.into_inner().next() else {
-                return Err(String::from("Something strange happened"))
-            };
-            let value = String::from(ident.as_str());
-            Ok(Variable::Referance(value))
-        },
         Rule::null => Ok(Variable::Null),
         _ => Err(String::from("This cannot be parsed to variable"))
     }

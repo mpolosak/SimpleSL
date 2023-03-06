@@ -1,10 +1,9 @@
 num = @{ int ~ ("." ~ ASCII_DIGIT*)?}
 	int = { ("+" | "-")? ~ ASCII_DIGIT+ }
 ident = @{ !null ~ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC|"_")* }
-referance = ${ "&" ~ ident }
 function_call = ${ ident ~ args }
 	args = !{"("~expression_list~")"}
-var = _{ referance | num | array | text | null | function }
+var = _{ num | array | text | null | function }
 expression = _{ function_call | ident | var }
 expression_list = _{ (expression ~ ("," ~ expression)*)?}
 array = {"{" ~ expression_list ~ "}"}
@@ -23,12 +22,10 @@ function = {params~"{"~line*~"}"}
 	param = {ident ~ ":" ~ type}
 	params_list = _{ (param ~ ("," ~ param)*)?}
     params = {"(" ~ params_list? ~ ")"}
-type = _{float_type | text_type | null_type
-	| referance_type | function_type | array_type}
+type = _{float_type | text_type | null_type | function_type | array_type}
   float_type = {"float"}
   text_type = {"text"}
   null_type = {"NULL"}
-  referance_type = {"referance"}
   function_type = {"function"}
   array_type = {"array"}
 WHITESPACE = _{ " " | "\t"| NEWLINE }

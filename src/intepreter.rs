@@ -74,13 +74,6 @@ impl Intepreter{
                 let value = self.variables.get(&var_name)?;
                 Ok(value)
             },
-            Rule::referance => {
-                let Some(ident) = expression.clone().into_inner().next() else {
-                    return Err(Error::SomethingStrange)
-                };
-                let value = String::from(ident.as_str());
-                Ok(Variable::Referance(value))
-            },
             Rule::text => {
                 let Some(ident) = expression.clone().into_inner().next() else {
                     return Err(Error::SomethingStrange)
