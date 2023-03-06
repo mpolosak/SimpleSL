@@ -8,7 +8,7 @@ pub fn add_std_functions(variables: &mut VariableMap){
     variables.add_native_function("import", NativeFunction{
         params: params!("path":"Text"),
         body: |_name, intepreter, args|{
-            let Variable::Text(path) = args.get("path")? else {
+            let Variable::String(path) = args.get("path")? else {
                 return Err(Error::SomethingStrange)
             };
             intepreter.load_and_exec(&path)

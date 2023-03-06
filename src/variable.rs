@@ -11,7 +11,7 @@ pub type Array = Vec<Variable>;
 #[derive(Clone)]
 pub enum Variable{
     Float(f64),
-    Text(Rc<str>),
+    String(Rc<str>),
     Function(Rc<dyn Function>),
     Array(Rc<Array>),
     Null
@@ -21,7 +21,7 @@ impl Variable {
     pub fn type_name(&self) -> &str {
         match self {
             Variable::Float(_) => "Float",
-            Variable::Text(_) => "Text",
+            Variable::String(_) => "Text",
             Variable::Function(_) => "Function",
             Variable::Array(_) => "Array",
             Variable::Null => "Null",
@@ -33,7 +33,7 @@ impl fmt::Display for Variable {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Variable::Float(value)=>write!(f, "{value}"),
-            Variable::Text(value)=>write!(f, "{value}"),
+            Variable::String(value)=>write!(f, "{value}"),
             Variable::Function(function)=>write!(f, "{function}"),
             Variable::Array(array)=>{
                 write!(f, "{{")?;
@@ -55,7 +55,7 @@ impl fmt::Debug for Variable {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Variable::Float(value)=>write!(f, "Variable::Float({value})"),
-            Variable::Text(value)=>write!(f, "Variable::Text(\"{value}\")"),
+            Variable::String(value)=>write!(f, "Variable::Text(\"{value}\")"),
             Variable::Function(function)=>{
                 write!(f, "Variable::Function(")?;
                 if let [params @ .., last] = &function.get_params()[..] {
@@ -107,9 +107,9 @@ impl PartialEq for Variable {
                     _ => false
                 } 
             }
-            Variable::Text(value1) => {
+            Variable::String(value1) => {
                 match other {
-                    Variable::Text(value2) => value1 == value2,
+                    Variable::String(value2) => value1 == value2,
                     _ => false
                 }
             }
@@ -158,7 +158,7 @@ mod tests {
         use crate::variable::Variable;
         assert_eq!(Variable::from_str(" 15"), Ok(Variable::Float(15.0)));
         assert_eq!(Variable::from_str("NULL"), Ok(Variable::Null));
-        assert_eq!(Variable::from_str(r#""print \"""#), Ok(Variable::Text(String::from("print \"").into())));
+        assert_eq!(Variable::from_str(r#""print \"""#), Ok(Variable::String(String::from("print \"").into())));
         assert_eq!(Variable::from_str(r#""print" """#),
             Err(String::from("String contains more than one variable")));
         assert_eq!(Variable::from_str("\"print"), Err(String::from("Mismatching quotation marks")));

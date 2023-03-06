@@ -74,12 +74,12 @@ impl Intepreter{
                 let value = self.variables.get(&var_name)?;
                 Ok(value)
             },
-            Rule::text => {
+            Rule::string => {
                 let Some(ident) = expression.clone().into_inner().next() else {
                     return Err(Error::SomethingStrange)
                 };
                 let value = ident.as_str();
-                Ok(Variable::Text(value.into()))
+                Ok(Variable::String(value.into()))
             },
             Rule::array => {
                 let inter = expression.clone().into_inner();

@@ -14,12 +14,12 @@ pub fn variable_from_pair(pair: Pair<Rule>) -> Result<Variable, String>{
             };
             Ok(Variable::Float(value))
         },
-        Rule::text => {
+        Rule::string => {
             let Some(ident) = pair.into_inner().next() else {
                 return Err(String::from("Something strange happened"))
             };
             let value = ident.as_str();
-            Ok(Variable::Text(value.into()))
+            Ok(Variable::String(value.into()))
         },
         Rule::array => {
             let mut array = Array::new();
