@@ -157,9 +157,8 @@ mod tests {
         use std::str::FromStr;
         use crate::variable::Variable;
         assert_eq!(Variable::from_str(" 15"), Ok(Variable::Float(15.0)));
-        assert_eq!(Variable::from_str("Null"), Ok(Variable::Null));
-        assert_eq!(Variable::from_str("&print "), Ok(Variable::Referance(String::from("print"))));
-        assert_eq!(Variable::from_str(r#""print \"""#), Ok(Variable::Text(String::from("print \""))));
+        assert_eq!(Variable::from_str("NULL"), Ok(Variable::Null));
+        assert_eq!(Variable::from_str(r#""print \"""#), Ok(Variable::Text(String::from("print \"").into())));
         assert_eq!(Variable::from_str(r#""print" """#),
             Err(String::from("String contains more than one variable")));
         assert_eq!(Variable::from_str("\"print"), Err(String::from("Mismatching quotation marks")));
