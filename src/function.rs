@@ -41,7 +41,7 @@ pub trait Function{
             if *type_name == "..."{
                 let from = params.len()-1;
                 let rest: Array = args.drain(from..).collect();
-                args_map.insert(param_name, Variable::Array(rest));
+                args_map.insert(param_name, Variable::Array(rest.into()));
             } else if args.len() != params.len() {
                 return Err(Error::WrongNumberOfArguments(name, params.len()))
             }

@@ -1,3 +1,4 @@
+use std::rc::Rc;
 use pest::iterators::Pair;
 use crate::variable::{Variable, Array};
 
@@ -18,14 +19,14 @@ pub fn variable_from_pair(pair: Pair<Rule>) -> Result<Variable, String>{
                 return Err(String::from("Something strange happened"))
             };
             let value = String::from(ident.as_str());
-            Ok(Variable::Text(value))
+            Ok(Variable::Text(Rc::new(value)))
         },
         Rule::array => {
             let mut array = Array::new();
             for element in pair.into_inner() {
                 array.push(variable_from_pair(element)?);
             }
-            Ok(Variable::Array(array))
+            Ok(Variable::Array(Rc::new(array)))
         },
         Rule::null => Ok(Variable::Null),
         _ => Err(String::from("This cannot be parsed to variable"))

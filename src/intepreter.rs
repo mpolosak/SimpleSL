@@ -79,7 +79,7 @@ impl Intepreter{
                     return Err(Error::SomethingStrange)
                 };
                 let value = String::from(ident.as_str());
-                Ok(Variable::Text(value))
+                Ok(Variable::Text(Rc::new(value)))
             },
             Rule::array => {
                 let inter = expression.clone().into_inner();
@@ -87,7 +87,7 @@ impl Intepreter{
                 for element in inter {
                     array.push(self.exec_expression(&element)?);
                 }
-                Ok(Variable::Array(array))
+                Ok(Variable::Array(array.into()))
             },
             Rule::null => Ok(Variable::Null),
             _ => Err(Error::SomethingStrange)

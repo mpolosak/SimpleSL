@@ -1,4 +1,5 @@
 use std::io;
+use std::rc::Rc;
 use crate::error::Error;
 use crate::function::{NativeFunction, Param};
 use crate::intepreter::VariableMap;
@@ -13,7 +14,7 @@ pub fn add_io_functions(variables: &mut VariableMap){
                 return Err(Error::SomethingStrange)
             };
             let mut text = String::new();
-            for arg in args {
+            for arg in args.iter() {
                 text+=&arg.to_string();
             }
             println!("{text}");
@@ -26,7 +27,7 @@ pub fn add_io_functions(variables: &mut VariableMap){
             let mut input = String::new();
             io::stdin().read_line(&mut input).expect("Unable to read user input");
             input = input.replace('\n', "");
-            Ok(Variable::Text(input))
+            Ok(Variable::Text(Rc::new(input)))
         }
     });
 }
