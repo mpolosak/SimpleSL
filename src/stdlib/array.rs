@@ -14,15 +14,15 @@ pub fn add_array_functions(variables: &mut VariableMap){
             let Variable::Float(findex) = args.get("index")? else {
                 return Err(Error::SomethingStrange)
             };
-            if findex.fract()!=0.0{
-                return Err(Error::Other(String::from("Index must be integer")))
-            }
-            if findex<0.0 {
-                return Err(Error::Other(String::from("Index must be higher than 0")))
+            if findex.fract()!=0.0 || findex<0.0 {
+                return Err(Error::WrongType(
+                    String::from("index"),
+                    String::from("natural")
+                ));
             }
             let index = findex as usize;
             if index>=array.len(){
-                Err(Error::Other(String::from("Index must be lower than array size")))
+                Err(Error::IndexToBig)
             } else {
                 Ok(array[index].clone())
             }

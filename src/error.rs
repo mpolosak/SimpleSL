@@ -7,6 +7,7 @@ pub enum Error {
     VariableDoesntExist(String),
     WrongType(String, String),
     WrongNumberOfArguments(String, usize),
+    IndexToBig,
     Other(String)
 }
 
@@ -24,6 +25,7 @@ impl fmt::Display for Error {
                 => write!(f, "{name} requires no arguments but some passed"),
             Self::WrongNumberOfArguments(name, num)
                 => write!(f, "{name} requires {num} args"),
+            Self::IndexToBig => write!(f, "index must be lower than array size"),
             Self::Other(value) => write!(f, "{value}")
         }
     }
