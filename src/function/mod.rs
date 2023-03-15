@@ -1,3 +1,5 @@
+mod macros;
+mod langfunction;
 use crate::error::Error;
 use crate::variable::*;
 use crate::intepreter::{Intepreter, VariableMap};
