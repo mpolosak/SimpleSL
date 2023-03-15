@@ -4,6 +4,7 @@ mod error;
 use intepreter::Intepreter;
 mod parse;
 mod function;
+mod langfunction;
 mod variable;
 mod function_macros;
 mod stdlib;

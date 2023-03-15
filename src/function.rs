@@ -4,8 +4,6 @@ use crate::intepreter::{Intepreter, VariableMap};
 use std::fmt;
 use std::vec::Vec;
 use std::iter::zip;
-use pest::iterators::Pair;
-use crate::parse::Rule;
 
 #[derive(Clone,Debug)]
 pub struct Param {
@@ -86,22 +84,6 @@ impl Function for NativeFunction {
     fn exec_intern(&self, name: String, intepreter: &mut Intepreter,
         args: VariableMap) -> Result<Variable, Error>{
         (self.body)(name, intepreter, args)
-    }
-    fn get_params(&self) -> &Vec<Param> {
-        &self.params
-    }
-}
-
-#[derive(Clone)]
-pub struct LangFunction {
-    pub params: Vec<Param>,
-    pub body: Pair<'static, Rule>
-}
-
-impl Function for LangFunction {
-    fn exec_intern(&self, _name: String, intepreter: &mut Intepreter,
-            _args: VariableMap) -> Result<Variable, Error> {
-        intepreter.exec_expression(&self.body)
     }
     fn get_params(&self) -> &Vec<Param> {
         &self.params
