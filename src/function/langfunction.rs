@@ -1,9 +1,11 @@
 use std::fmt;
 use std::rc::Rc;
+use pest::iterators::Pair;
 use crate::function::{Function, Param};
 use crate::intepreter::{Intepreter, VariableMap};
 use crate::variable::Variable;
 use crate::error::Error;
+use crate::parse::Rule;
 
 #[derive(Clone)]
 pub struct LangFunction {
@@ -21,6 +23,21 @@ impl Function for LangFunction {
     }
     fn get_params(&self) -> &Vec<Param> {
         &self.params
+    }
+}
+
+impl From<Pair<'_, Rule>> for LangFunction{
+    fn from(value: Pair<Rule>) -> Self {
+        let mut inner = value.into_inner();
+        let params_pair = inner.next().unwrap();
+        let mut params = Vec::<Param>::new();
+        for pair in params_pair.into_inner() {
+            params.push(Param::from(pair));
+        }
+        for pair in inner {
+            println!("{pair:?}");
+        }
+        LangFunction { params: Vec::new(), body: Vec::new() }
     }
 }
 

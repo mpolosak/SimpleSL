@@ -1,11 +1,14 @@
 mod macros;
 mod langfunction;
+use pest::iterators::Pair;
+use crate::parse::Rule;
 use crate::error::Error;
 use crate::variable::*;
 use crate::intepreter::{Intepreter, VariableMap};
 use std::fmt;
 use std::vec::Vec;
 use std::iter::zip;
+pub use crate::function::langfunction::LangFunction;
 
 #[derive(Clone,Debug)]
 pub struct Param {
@@ -29,6 +32,13 @@ impl fmt::Display for Param {
         } else {
             write!(f, "{}:{}", self.name, self.type_name)
         }
+    }
+}
+
+impl From<Pair<'_, Rule>> for Param {
+    fn from(value: Pair<'_, Rule>) -> Self {
+        println!("{value:?}");
+        Self::new("name", "Float")
     }
 }
 

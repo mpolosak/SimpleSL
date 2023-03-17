@@ -6,7 +6,7 @@ use std::io::{BufReader, BufRead};
 use std::rc::Rc;
 use crate::pest::Parser;
 use pest::iterators::Pair;
-use crate::function::NativeFunction;
+use crate::function::{NativeFunction, LangFunction};
 use crate::error::*;
 use crate::stdlib::add_std_lib;
 pub struct Intepreter{
@@ -85,6 +85,10 @@ impl Intepreter{
                 Ok(Variable::Array(array.into()))
             },
             Rule::null => Ok(Variable::Null),
+            Rule::function => {
+                let function = LangFunction::from(expression.clone());
+                Ok(Variable::Function(Rc::new(function)))
+            }
             _ => Err(Error::SomethingStrange)
         }
     }
