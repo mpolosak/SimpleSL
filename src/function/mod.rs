@@ -1,46 +1,14 @@
 mod macros;
 mod langfunction;
-use pest::iterators::Pair;
-use crate::parse::Rule;
+mod param;
+mod nativefunction;
 use crate::error::Error;
 use crate::variable::*;
 use crate::intepreter::{Intepreter, VariableMap};
-use std::fmt;
-use std::vec::Vec;
-use std::iter::zip;
+use std::{fmt,vec::Vec, iter::zip};
 pub use crate::function::langfunction::LangFunction;
-
-#[derive(Clone,Debug)]
-pub struct Param {
-    pub name: String,
-    pub type_name: String,
-}
-
-impl Param {
-    pub fn new(name: &str, type_name: &str) -> Self {
-        Param {
-            name: String::from(name),
-            type_name: String::from(type_name)
-        }
-    }
-}
-
-impl fmt::Display for Param {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.type_name == "..." {
-            write!(f, "{}...", self.name)
-        } else {
-            write!(f, "{}:{}", self.name, self.type_name)
-        }
-    }
-}
-
-impl From<Pair<'_, Rule>> for Param {
-    fn from(value: Pair<'_, Rule>) -> Self {
-        println!("{value:?}");
-        Self::new("name", "Float")
-    }
-}
+pub use crate::function::param::Param;
+pub use crate::function::nativefunction::NativeFunction;
 
 pub trait Function{
     fn exec(&self, name: String, intepreter: &mut Intepreter, mut args: Array)
@@ -83,21 +51,5 @@ impl fmt::Display for dyn Function {
             write!(f, "{last}")?;
         }
         write!(f, ")")
-    }
-}
-
-#[derive(Clone)]
-pub struct NativeFunction {
-    pub params: Vec<Param>,
-    pub body: fn(String, &mut Intepreter, VariableMap) -> Result<Variable, Error>,
-}
-
-impl Function for NativeFunction {
-    fn exec_intern(&self, name: String, intepreter: &mut Intepreter,
-        args: VariableMap) -> Result<Variable, Error>{
-        (self.body)(name, intepreter, args)
-    }
-    fn get_params(&self) -> &Vec<Param> {
-        &self.params
     }
 }
