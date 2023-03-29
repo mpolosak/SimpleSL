@@ -86,7 +86,7 @@ impl Intepreter{
             },
             Rule::null => Ok(Variable::Null),
             Rule::function => {
-                let function = LangFunction::from(expression.clone());
+                let function = LangFunction::new(&self.variables, expression.clone())?;
                 Ok(Variable::Function(Rc::new(function)))
             }
             _ => Err(Error::SomethingStrange)
