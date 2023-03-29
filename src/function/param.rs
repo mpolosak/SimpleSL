@@ -29,7 +29,7 @@ impl fmt::Display for Param {
 
 impl From<Pair<'_, Rule>> for Param {
     fn from(value: Pair<'_, Rule>) -> Self {
-        println!("{value:?}");
-        Self::new("name", "Float")
+        let mut inner = value.into_inner();
+        Self::new(inner.next().unwrap().as_str(), inner.next().unwrap().as_str())
     }
 }

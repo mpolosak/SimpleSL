@@ -37,7 +37,7 @@ impl From<Pair<'_, Rule>> for LangFunction{
         for pair in inner {
             println!("{pair:?}");
         }
-        LangFunction { params: Vec::new(), body: Vec::new() }
+        LangFunction { params: params, body: Vec::new() }
     }
 }
 
