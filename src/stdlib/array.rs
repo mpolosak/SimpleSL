@@ -9,10 +9,10 @@ pub fn add_array_functions(variables: &mut VariableMap){
         params: params!("array":"array", "index":"float"),
         body: |_name, _intepreter, args|{
             let Variable::Array(array) = args.get("array")? else {
-                return Err(Error::SomethingStrange)
+                panic!();
             };
             let Variable::Float(findex) = args.get("index")? else {
-                return Err(Error::SomethingStrange)
+                panic!();
             };
             if findex.fract()!=0.0 || findex<0.0 {
                 return Err(Error::WrongType(

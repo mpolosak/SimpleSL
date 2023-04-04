@@ -1,4 +1,3 @@
-use crate::error::Error;
 use crate::variable::*;
 use crate::function::{NativeFunction, Param};
 use crate::intepreter::VariableMap;
@@ -9,7 +8,7 @@ pub fn add_std_functions(variables: &mut VariableMap){
         params: params!("path":"string"),
         body: |_name, intepreter, args|{
             let Variable::String(path) = args.get("path")? else {
-                return Err(Error::SomethingStrange)
+                panic!()
             };
             intepreter.load_and_exec(&path)
         }
@@ -18,10 +17,10 @@ pub fn add_std_functions(variables: &mut VariableMap){
         params: params!("a":"float", "b":"float"),
         body: |_name, _intepreter, args|{
             let Variable::Float(a) = args.get("a")? else {
-                return Err(Error::SomethingStrange)
+                panic!()
             };
             let Variable::Float(b) = args.get("b")? else {
-                return Err(Error::SomethingStrange)
+                panic!()
             };
             Ok(Variable::Float(a+b))
         }
@@ -30,10 +29,10 @@ pub fn add_std_functions(variables: &mut VariableMap){
         params: params!("a":"float", "b":"float"),
         body: |_name, _intepreter, args|{
             let Variable::Float(a) = args.get("a")? else {
-                return Err(Error::SomethingStrange)
+                panic!()
             };
             let Variable::Float(b) = args.get("b")? else {
-                return Err(Error::SomethingStrange)
+                panic!()
             };
             Ok(Variable::Float(a-b))
         }
@@ -42,10 +41,10 @@ pub fn add_std_functions(variables: &mut VariableMap){
         params: params!("a":"float", "b":"float"),
         body: |_name, _intepreter, args|{
             let Variable::Float(a) = args.get("a")? else {
-                return Err(Error::SomethingStrange)
+                panic!()
             };
             let Variable::Float(b) = args.get("b")? else {
-                return Err(Error::SomethingStrange)
+                panic!()
             };
             Ok(Variable::Float(a*b))
         }
@@ -54,10 +53,10 @@ pub fn add_std_functions(variables: &mut VariableMap){
         params: params!("a":"float", "b":"float"),
         body: |_name, _intepreter, args|{
             let Variable::Float(a) = args.get("a")? else {
-                return Err(Error::SomethingStrange)
+                panic!()
             };
             let Variable::Float(b) = args.get("b")? else {
-                return Err(Error::SomethingStrange)
+                panic!()
             };
             Ok(Variable::Float(a/b))
         }
@@ -66,10 +65,10 @@ pub fn add_std_functions(variables: &mut VariableMap){
         params: params!("a":"float", "b":"float"),
         body: |_name, _intepreter, args|{
             let Variable::Float(a) = args.get("a")? else {
-                return Err(Error::SomethingStrange)
+                panic!()
             };
             let Variable::Float(b) = args.get("b")? else {
-                return Err(Error::SomethingStrange)
+                panic!()
             };
             let divided = a/b;
             let result = a - b*divided.floor();
@@ -80,10 +79,10 @@ pub fn add_std_functions(variables: &mut VariableMap){
         params: params!("a":"float", "b":"float"),
         body: |_name, _intepreter, args|{
             let Variable::Float(a) = args.get("a")? else {
-                return Err(Error::SomethingStrange)
+                panic!()
             };
             let Variable::Float(b) = args.get("b")? else {
-                return Err(Error::SomethingStrange)
+                panic!()
             };
             Ok(Variable::Float(a.abs()+b.abs()))
         }
@@ -92,7 +91,7 @@ pub fn add_std_functions(variables: &mut VariableMap){
         params: params!("a":"float"),
         body: |_name, _intepreter, args|{
             let Variable::Float(a) = args.get("a")? else {
-                return Err(Error::SomethingStrange)
+                panic!()
             };
             Ok(Variable::Float(if a==0.0{1.0}else{0.0}))
         }
@@ -109,10 +108,10 @@ pub fn add_std_functions(variables: &mut VariableMap){
         params: params!("condition":"float", "function":"function"),
         body: |_name, intepreter, args|{
             let Variable::Float(condition) = args.get("condition")? else {
-                return Err(Error::SomethingStrange)
+                panic!()
             };
             let Variable::Function(function) = args.get("function")? else {
-                return Err(Error::SomethingStrange)
+                panic!()
             };
             if condition == 0.0 {
                 Ok(Variable::Null)

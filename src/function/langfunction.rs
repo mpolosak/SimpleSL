@@ -89,14 +89,10 @@ impl Instruction {
         return match pair.as_rule(){
             Rule::function_call => {
                 let mut inter = pair.clone().into_inner();
-                let Some(ident) = inter.next() else {
-                    return Err(Error::SomethingStrange)
-                };
+                let ident = inter.next().unwrap();
                 let var_name = ident.as_str();
                 let mut array = Vec::<Instruction>::new();
-                let Some(args) = inter.next() else {
-                    return Err(Error::SomethingStrange)
-                };
+                let args = inter.next().unwrap();
                 for arg in args.into_inner() {
                     array.push(Self::new(&variables, arg, &local_variables)?);
                 }
@@ -114,9 +110,7 @@ impl Instruction {
                 }
             },
             Rule::num => {
-                let Ok(value) = pair.as_str().parse::<f64>() else {
-                    return Err(Error::SomethingStrange)
-                };
+                let value = pair.as_str().parse::<f64>().unwrap();
                 Ok(Self::Variable(Variable::Float(value)))
             },
             Rule::ident => {
@@ -129,10 +123,7 @@ impl Instruction {
                 }
             },
             Rule::string => {
-                let Some(ident)
-                    = pair.clone().into_inner().next() else {
-                    return Err(Error::SomethingStrange)
-                };
+                let ident = pair.clone().into_inner().next().unwrap();
                 let value = ident.as_str();
                 let variable = Variable::String(value.into());
                 Ok(Self::Variable(variable))
@@ -178,7 +169,7 @@ impl Instruction {
                 Ok(Self::Function(params, body))
             },
             Rule::null => Ok(Self::Variable(Variable::Null)),
-            _ => Err(Error::SomethingStrange)
+            _ => panic!()
         }
     }
     fn exec(&self, mut intepreter: &mut Intepreter, local_variables: &VariableMap)

@@ -1,5 +1,4 @@
 use std::io;
-use crate::error::Error;
 use crate::function::{NativeFunction, Param};
 use crate::intepreter::VariableMap;
 use crate::variable::*;
@@ -10,7 +9,7 @@ pub fn add_io_functions(variables: &mut VariableMap){
         params: params!("vars":"..."),
         body: |_name, _intepreter, args|{
             let Variable::Array(args) = args.get("vars")? else {
-                return Err(Error::SomethingStrange)
+                panic!();
             };
             let mut text = String::new();
             for arg in args.iter() {

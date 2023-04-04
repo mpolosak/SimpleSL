@@ -42,26 +42,20 @@ impl Intepreter{
         return match expression.as_rule() { 
             Rule::function_call=>{
                 let mut inter = expression.clone().into_inner();
-                let Some(ident) = inter.next() else {
-                    return Err(Error::SomethingStrange)
-                };
+                let ident = inter.next().unwrap();
                 let var_name = ident.as_str();
                 let Variable::Function(function) = self.variables.get(var_name)? else {
                     return Err(Error::WrongType(String::from(var_name), String::from("Function")));
                 };
                 let mut array = Array::new();
-                let Some(args) = inter.next() else {
-                    return Err(Error::SomethingStrange)
-                };
+                let args = inter.next().unwrap();
                 for arg in args.into_inner() {
                     array.push(self.exec_expression(&arg)?);
                 }
                 function.exec(String::from(var_name), self, array)
             },
             Rule::num => {
-                let Ok(value) = expression.as_str().parse::<f64>() else {
-                    return Err(Error::SomethingStrange)
-                };
+                let value = expression.as_str().parse::<f64>().unwrap();
                 Ok(Variable::Float(value))
             },
             Rule::ident => {
@@ -70,9 +64,7 @@ impl Intepreter{
                 Ok(value)
             },
             Rule::string => {
-                let Some(ident) = expression.clone().into_inner().next() else {
-                    return Err(Error::SomethingStrange)
-                };
+                let ident = expression.clone().into_inner().next().unwrap();
                 let value = ident.as_str();
                 Ok(Variable::String(value.into()))
             },
@@ -89,7 +81,7 @@ impl Intepreter{
                 let function = LangFunction::new(&self.variables, expression.clone())?;
                 Ok(Variable::Function(Rc::new(function)))
             }
-            _ => Err(Error::SomethingStrange)
+            _ => panic!()
         }
     }
 
