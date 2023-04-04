@@ -4,7 +4,7 @@ use std::rc::Rc;
 use pest::iterators::Pair;
 use crate::function::{Function, Param};
 use crate::intepreter::{Intepreter, VariableMap};
-use crate::variable::Variable;
+use crate::variable::{Variable, Array};
 use crate::error::Error;
 use crate::parse::Rule;
 
@@ -48,12 +48,18 @@ impl LangFunction{
 
 
 impl Function for LangFunction {
-    fn exec_intern(&self, _name: String, intepreter: &mut Intepreter,
-            _args: VariableMap) -> Result<Variable, Error> {
-        for instruction in &self.body{
-            println!("{instruction:?}");
+    fn exec_intern(&self, _name: String, mut intepreter: &mut Intepreter,
+            mut args: VariableMap) -> Result<Variable, Error> {
+        let mut to_return = Variable::Null;
+        for Line{result_var, instruction} in &self.body{
+            let result = instruction.exec(&mut intepreter, &args)?;
+            if let Some(var) = result_var{
+                args.insert(&var, result);
+            } else {
+                to_return = result;
+            }
         }
-        Ok(Variable::Null)
+        Ok(to_return)
     }
     fn get_params(&self) -> &Vec<Param> {
         &self.params
@@ -140,6 +146,41 @@ impl Instruction {
             },
             Rule::null => Ok(Self::Variable(Variable::Null)),
             _ => Err(Error::SomethingStrange)
+        }
+    }
+    fn exec(&self, mut intepreter: &mut Intepreter, local_variables: &VariableMap)
+        -> Result<Variable, Error> {
+        return match &self {
+            Self::FunctionCall(function, instructions) => {
+                let mut args = Array::new();
+                for instruction in instructions {
+                    args.push(instruction.exec(&mut intepreter, &local_variables)?);
+                }
+                function.exec(String::from("name"), &mut intepreter, args)
+            }
+            Self::LocalFunctionCall(name, instructions) => {
+                let mut args = Array::new();
+                for instruction in instructions {
+                    args.push(instruction.exec(&mut intepreter, &local_variables)?);
+                }
+                let Variable::Function(function)
+                    = local_variables.get(&name)? else {
+                    return Err(Error::WrongType(name.clone(), String::from("function")));
+                };
+                function.exec(name.clone(), &mut intepreter, args)
+            }
+            Self::Variable(var) => Ok(var.clone()),
+            Self::LocalVariable(name) => local_variables.get(name),
+            Self::Array(instructions) => {
+                let mut array = Array::new();
+                for instruction in instructions {
+                    array.push(instruction.exec(&mut intepreter, &local_variables)?);
+                }
+                Ok(Variable::Array(array.into()))
+            }
+            Self::Function(_params, _instructions) => {
+                todo!()
+            }
         }
     }
 }
