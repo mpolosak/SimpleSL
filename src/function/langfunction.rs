@@ -23,6 +23,9 @@ impl LangFunction{
             params.push(Param::from(pair));
         }
         let mut local_variables=HashSet::<String>::new();
+        for Param{name, type_name: _} in &params{
+            local_variables.insert(name.clone());
+        }
         let mut result_var=Option::<String>::None;
         let mut body = Vec::<Line>::new();
         for pair in inner {
@@ -37,7 +40,10 @@ impl LangFunction{
                     if let Some(var) = result_var.clone(){
                         local_variables.insert(var);
                     }
-                    body.push(Line{result_var: result_var, instruction: instruction});
+                    body.push(Line{
+                        result_var: result_var,
+                        instruction: instruction
+                    });
                     result_var = None;
                 }
             }
