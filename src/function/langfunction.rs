@@ -31,31 +31,28 @@ impl LangFunction{
                 Rule::line_end => (),
                 _ => {
                     let instruction
-                        = Instruction::new(&variables, pair, &local_variables)?;
+                        = Instruction::new(variables, pair, &local_variables)?;
                     if let Some(var) = result_var.clone(){
                         local_variables.insert(var);
                     }
-                    body.push(Line{
-                        result_var: result_var,
-                        instruction: instruction
-                    });
+                    body.push(Line{result_var, instruction});
                     result_var = None;
                 }
             }
         }
-        Ok(Self{ params: params, body: body})
+        Ok(Self{params, body})
     }
 }
 
 
 impl Function for LangFunction {
-    fn exec_intern(&self, _name: String, mut intepreter: &mut Intepreter,
+    fn exec_intern(&self, _name: String, intepreter: &mut Intepreter,
             mut args: VariableMap) -> Result<Variable, Error> {
         let mut to_return = Variable::Null;
         for Line{result_var, instruction} in &self.body{
-            let result = instruction.exec(&mut intepreter, &args)?;
+            let result = instruction.exec(intepreter, &args)?;
             if let Some(var) = result_var{
-                args.insert(&var, result);
+                args.insert(var, result);
             } else {
                 to_return = result;
             }
@@ -86,7 +83,7 @@ enum Instruction{
 impl Instruction {
     pub fn new(variables: &VariableMap, pair: Pair<Rule>,
         local_variables: &HashSet<String>) -> Result<Self, Error>{
-        return match pair.as_rule(){
+        match pair.as_rule(){
             Rule::function_call => {
                 let mut inter = pair.clone().into_inner();
                 let ident = inter.next().unwrap();
@@ -94,7 +91,7 @@ impl Instruction {
                 let mut array = Vec::<Instruction>::new();
                 let args = inter.next().unwrap();
                 for arg in args.into_inner() {
-                    array.push(Self::new(&variables, arg, &local_variables)?);
+                    array.push(Self::new(variables, arg, local_variables)?);
                 }
                 if local_variables.contains(var_name) {
                     Ok(Self::LocalFunctionCall(String::from(var_name), array))
@@ -154,14 +151,11 @@ impl Instruction {
                         Rule::line_end => (),
                         _ => {
                             let instruction
-                                = Instruction::new(&variables, pair, &local_variables)?;
+                                = Instruction::new(variables, pair, &local_variables)?;
                             if let Some(var) = result_var.clone(){
                                 local_variables.insert(var);
                             }
-                            body.push(Line{
-                                result_var: result_var,
-                                instruction: instruction
-                            });
+                            body.push(Line{result_var, instruction});
                             result_var = None;
                         }
                     }
@@ -172,33 +166,32 @@ impl Instruction {
             _ => panic!()
         }
     }
-    fn exec(&self, mut intepreter: &mut Intepreter, local_variables: &VariableMap)
+    fn exec(&self, intepreter: &mut Intepreter, local_variables: &VariableMap)
         -> Result<Variable, Error> {
-        return match &self {
+        match &self {
             Self::FunctionCall(function, instructions) => {
                 let mut args = Array::new();
                 for instruction in instructions {
-                    args.push(instruction.exec(&mut intepreter, &local_variables)?);
+                    args.push(instruction.exec(intepreter, local_variables)?);
                 }
-                function.exec(String::from("name"), &mut intepreter, args)
+                function.exec(String::from("name"), intepreter, args)
             }
             Self::LocalFunctionCall(name, instructions) => {
                 let mut args = Array::new();
                 for instruction in instructions {
-                    args.push(instruction.exec(&mut intepreter, &local_variables)?);
+                    args.push(instruction.exec(intepreter, local_variables)?);
                 }
-                let Variable::Function(function)
-                    = local_variables.get(&name)? else {
+                let Variable::Function(function) = local_variables.get(name)? else {
                     return Err(Error::WrongType(name.clone(), String::from("function")));
                 };
-                function.exec(name.clone(), &mut intepreter, args)
+                function.exec(name.clone(), intepreter, args)
             }
             Self::Variable(var) => Ok(var.clone()),
             Self::LocalVariable(name) => local_variables.get(name),
             Self::Array(instructions) => {
                 let mut array = Array::new();
                 for instruction in instructions {
-                    array.push(instruction.exec(&mut intepreter, &local_variables)?);
+                    array.push(instruction.exec(intepreter, local_variables)?);
                 }
                 Ok(Variable::Array(array.into()))
             }
@@ -218,7 +211,7 @@ impl Instruction {
         }
     }
     fn recreate(&self, local_variables: &HashSet<String>, args: &VariableMap) -> Result<Self, Error>{
-        return Ok(match self {
+        Ok(match self {
             Self::LocalFunctionCall(name, instructions) => {
                 let mut new_instuctions = Vec::<Instruction>::new();
                 for instruction in instructions {
@@ -274,12 +267,12 @@ impl Instruction {
                 Self::Function(params.clone(), new_instructions)
             }
             _ => self.clone()
-        });
+        })
     }
 }
 
 impl fmt::Debug for Instruction{
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, _f: &mut fmt::Formatter<'_>) -> fmt::Result {
         todo!()
     }
 }
