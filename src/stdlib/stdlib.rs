@@ -6,7 +6,7 @@ use crate::params;
 
 pub fn add_std_functions(variables: &mut VariableMap){
     variables.add_native_function("import", NativeFunction{
-        params: params!("path":"Text"),
+        params: params!("path":"string"),
         body: |_name, intepreter, args|{
             let Variable::String(path) = args.get("path")? else {
                 return Err(Error::SomethingStrange)
@@ -15,7 +15,7 @@ pub fn add_std_functions(variables: &mut VariableMap){
         }
     });
     variables.add_native_function("add", NativeFunction{
-        params: params!("a":"Float", "b":"Float"),
+        params: params!("a":"float", "b":"float"),
         body: |_name, _intepreter, args|{
             let Variable::Float(a) = args.get("a")? else {
                 return Err(Error::SomethingStrange)
@@ -27,7 +27,7 @@ pub fn add_std_functions(variables: &mut VariableMap){
         }
     });
     variables.add_native_function("subtract", NativeFunction{
-        params: params!("a":"Float", "b":"Float"),
+        params: params!("a":"float", "b":"float"),
         body: |_name, _intepreter, args|{
             let Variable::Float(a) = args.get("a")? else {
                 return Err(Error::SomethingStrange)
@@ -39,7 +39,7 @@ pub fn add_std_functions(variables: &mut VariableMap){
         }
     });
     variables.add_native_function("multiply", NativeFunction{
-        params: params!("a":"Float", "b":"Float"),
+        params: params!("a":"float", "b":"float"),
         body: |_name, _intepreter, args|{
             let Variable::Float(a) = args.get("a")? else {
                 return Err(Error::SomethingStrange)
@@ -51,7 +51,7 @@ pub fn add_std_functions(variables: &mut VariableMap){
         }
     });
     variables.add_native_function("divide", NativeFunction{
-        params: params!("a":"Float", "b":"Float"),
+        params: params!("a":"float", "b":"float"),
         body: |_name, _intepreter, args|{
             let Variable::Float(a) = args.get("a")? else {
                 return Err(Error::SomethingStrange)
@@ -63,7 +63,7 @@ pub fn add_std_functions(variables: &mut VariableMap){
         }
     });
     variables.add_native_function("modulo", NativeFunction{
-        params: params!("a":"Float", "b":"Float"),
+        params: params!("a":"float", "b":"float"),
         body: |_name, _intepreter, args|{
             let Variable::Float(a) = args.get("a")? else {
                 return Err(Error::SomethingStrange)
@@ -77,7 +77,7 @@ pub fn add_std_functions(variables: &mut VariableMap){
         }
     });
     variables.add_native_function("or", NativeFunction{
-        params: params!("a":"Float", "b":"Float"),
+        params: params!("a":"float", "b":"float"),
         body: |_name, _intepreter, args|{
             let Variable::Float(a) = args.get("a")? else {
                 return Err(Error::SomethingStrange)
@@ -89,7 +89,7 @@ pub fn add_std_functions(variables: &mut VariableMap){
         }
     });
     variables.add_native_function("not", NativeFunction{
-        params: params!("a":"Float"),
+        params: params!("a":"float"),
         body: |_name, _intepreter, args|{
             let Variable::Float(a) = args.get("a")? else {
                 return Err(Error::SomethingStrange)
@@ -106,7 +106,7 @@ pub fn add_std_functions(variables: &mut VariableMap){
         }
     });
     variables.add_native_function("if", NativeFunction{
-        params: params!("condition":"Float", "function":"Function"),
+        params: params!("condition":"float", "function":"function"),
         body: |_name, intepreter, args|{
             let Variable::Float(condition) = args.get("condition")? else {
                 return Err(Error::SomethingStrange)

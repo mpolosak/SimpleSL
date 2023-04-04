@@ -20,11 +20,11 @@ pub enum Variable{
 impl Variable {
     pub fn type_name(&self) -> &str {
         match self {
-            Variable::Float(_) => "Float",
-            Variable::String(_) => "Text",
-            Variable::Function(_) => "Function",
-            Variable::Array(_) => "Array",
-            Variable::Null => "Null",
+            Variable::Float(_) => "float",
+            Variable::String(_) => "string",
+            Variable::Function(_) => "function",
+            Variable::Array(_) => "array",
+            Variable::Null => "null",
         }
     }
 }

@@ -6,7 +6,7 @@ use crate::params;
 
 pub fn add_array_functions(variables: &mut VariableMap){
     variables.add_native_function("array_at", NativeFunction{
-        params: params!("array":"Array", "index":"Float"),
+        params: params!("array":"array", "index":"float"),
         body: |_name, _intepreter, args|{
             let Variable::Array(array) = args.get("array")? else {
                 return Err(Error::SomethingStrange)
