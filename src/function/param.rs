@@ -33,3 +33,11 @@ impl From<Pair<'_, Rule>> for Param {
         Self::new(inner.next().unwrap().as_str(), inner.next().unwrap().as_str())
     }
 }
+
+pub fn param_from_pair(params_pair: Pair<Rule>) -> Vec<Param>{
+    let mut params = Vec::new();
+    for pair in params_pair.into_inner() {
+        params.push(Param::from(pair));
+    }
+    params
+}
