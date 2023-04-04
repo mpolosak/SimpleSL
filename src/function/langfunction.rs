@@ -216,7 +216,7 @@ impl Instruction {
                 let mut fn_local_variables = hashset_from_params(params);
                 for Line{instruction, result_var} in instructions {
                     let instruction= instruction.recreate(
-                        &fn_local_variables,local_variables);
+                        &fn_local_variables,local_variables)?;
                     body.push(Line{result_var: result_var.clone(), instruction});
                     if let Some(var) = result_var {
                         fn_local_variables.insert(var.clone());
@@ -226,19 +226,19 @@ impl Instruction {
             }
         }
     }
-    fn recreate(&self, local_variables: &HashSet<String>, args: &VariableMap) -> Self{
-        return match self {
+    fn recreate(&self, local_variables: &HashSet<String>, args: &VariableMap) -> Result<Self, Error>{
+        return Ok(match self {
             Self::LocalFunctionCall(name, instructions) => {
                 let mut new_instuctions = Vec::<Instruction>::new();
                 for instruction in instructions {
-                    new_instuctions.push(instruction.recreate(local_variables, args));
+                    new_instuctions.push(instruction.recreate(local_variables, args)?);
                 }
                 if local_variables.contains(name) {
                     Self::LocalFunctionCall(name.clone(), new_instuctions)
                 } else {
                     let Variable::Function(function)
                         = args.get(name).unwrap() else {
-                            panic!();
+                            return Err(Error::WrongType(name.clone(), String::from("function")));
                     };
                     Self::FunctionCall(function, new_instuctions)
                 }
@@ -246,7 +246,7 @@ impl Instruction {
             Self::FunctionCall(function, instructions) => {
                 let mut new_instuctions = Vec::<Instruction>::new();
                 for instruction in instructions {
-                    new_instuctions.push(instruction.recreate(local_variables, args));
+                    new_instuctions.push(instruction.recreate(local_variables, args)?);
                 }
                 Self::FunctionCall(function.clone(), new_instuctions)
             }
@@ -261,7 +261,7 @@ impl Instruction {
             Self::Array(instructions) => {
                 let mut new_instructions = Vec::<Instruction>::new();
                 for instruction in instructions {
-                    new_instructions.push(instruction.recreate(local_variables, args));
+                    new_instructions.push(instruction.recreate(local_variables, args)?);
                 }
                 Self::Array(new_instructions)
             }
@@ -274,7 +274,7 @@ impl Instruction {
                 for Line{result_var, instruction}in lines {
                     new_instructions.push(Line{
                         result_var: result_var.clone(),
-                        instruction: instruction.recreate(&local_variables, args)
+                        instruction: instruction.recreate(&local_variables, args)?
                     });
                     if let Some(var) = result_var {
                         local_variables.insert(var.clone());
@@ -283,7 +283,7 @@ impl Instruction {
                 Self::Function(params.clone(), new_instructions)
             }
             _ => self.clone()
-        };
+        });
     }
 }
 
