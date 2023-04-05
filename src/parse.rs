@@ -1,23 +1,19 @@
 use std::rc::Rc;
 use pest::iterators::Pair;
-use crate::variable::{Variable, Array};
+use crate::{variable::{Variable, Array}, error::Error};
 
 #[derive(Parser)]
 #[grammar = "simplesl.pest"]
 pub struct SimpleSLParser;
 
-pub fn variable_from_pair(pair: Pair<Rule>) -> Result<Variable, String>{
+pub fn variable_from_pair(pair: Pair<Rule>) -> Result<Variable, Error>{
     return match pair.as_rule() {
         Rule::num => {
-            let Ok(value) = pair.as_str().parse::<f64>() else {
-                return Err(String::from("Something strange happened"))
-            };
+            let value = pair.as_str().parse::<f64>().unwrap();
             Ok(Variable::Float(value))
         },
         Rule::string => {
-            let Some(ident) = pair.into_inner().next() else {
-                return Err(String::from("Something strange happened"))
-            };
+            let ident = pair.into_inner().next().unwrap();
             let value = ident.as_str();
             Ok(Variable::String(value.into()))
         },
@@ -29,6 +25,6 @@ pub fn variable_from_pair(pair: Pair<Rule>) -> Result<Variable, String>{
             Ok(Variable::Array(Rc::new(array)))
         },
         Rule::null => Ok(Variable::Null),
-        _ => Err(String::from("This cannot be parsed to variable"))
+        _ => Err(Error::CannotBeParsed(pair.as_str().into()))
     }
 }

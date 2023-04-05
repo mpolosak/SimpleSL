@@ -1,12 +1,14 @@
 use std::fmt;
 use crate::parse::Rule;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Error {
     VariableDoesntExist(String),
     WrongType(String, String),
     WrongNumberOfArguments(String, usize),
     IndexToBig,
+    CannotBeParsed(String),
+    TooManyVariables,
     Other(String)
 }
 
@@ -24,6 +26,10 @@ impl fmt::Display for Error {
             Self::WrongNumberOfArguments(name, num)
                 => write!(f, "{name} requires {num} args"),
             Self::IndexToBig => write!(f, "index must be lower than array size"),
+            Self::CannotBeParsed(text)
+                => write!(f, "{text} cannot be parsed to variable"),
+            Self::TooManyVariables
+                => write!(f, "String contains more than one variable"),
             Self::Other(value) => write!(f, "{value}")
         }
     }

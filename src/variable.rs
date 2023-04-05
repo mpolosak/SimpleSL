@@ -1,6 +1,7 @@
 use std::fmt::{self};
 use std::rc::Rc;
 use std::str::FromStr;
+use crate::error::Error;
 use crate::pest::Parser;
 use pest::iterators::Pair;
 use crate::parse::*;
@@ -82,15 +83,13 @@ impl fmt::Debug for Variable {
 }
 
 impl FromStr for Variable {
-    type Err = String;
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let s = s.trim();
-        let Ok(parse) = SimpleSLParser::parse(Rule::var, s) else {
-            return Err(format!("{s} cannot be parsed to variable"))
-        };
+        let parse = SimpleSLParser::parse(Rule::var, s)?;
         if parse.as_str() != s {
-            Err(String::from("String contains more than one variable"))
+            Err(Error::TooManyVariables)
         } else {
             let pair_vec: Vec<Pair<Rule>> = parse.collect();
             variable_from_pair(pair_vec[0].clone())
@@ -156,11 +155,12 @@ mod tests {
     fn check_variable_from_str(){
         use std::str::FromStr;
         use crate::variable::Variable;
+        use crate::error::Error;
         assert_eq!(Variable::from_str(" 15"), Ok(Variable::Float(15.0)));
         assert_eq!(Variable::from_str("NULL"), Ok(Variable::Null));
-        assert_eq!(Variable::from_str(r#""print \"""#), Ok(Variable::String(String::from("print \"").into())));
-        assert_eq!(Variable::from_str(r#""print" """#),
-            Err(String::from("String contains more than one variable")));
-        assert_eq!(Variable::from_str("\"print"), Err(String::from("Mismatching quotation marks")));
+        assert_eq!(Variable::from_str(r#""print \"""#), 
+            Ok(Variable::String(String::from("print \"").into())));
+        assert_eq!(Variable::from_str(r#""print" """#), 
+            Err(Error::TooManyVariables));
     }
 }
