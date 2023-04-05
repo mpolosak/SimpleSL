@@ -1,14 +1,7 @@
-use crate::parse::*;
-use crate::variable::*;
-use std::collections::HashMap;
-use std::fs::File;
-use std::io::{BufReader, BufRead};
-use std::rc::Rc;
-use crate::pest::Parser;
+use std::{collections::HashMap,fs::File,rc::Rc,io::{BufReader, BufRead}};
 use pest::iterators::Pair;
 use crate::function::{NativeFunction, LangFunction};
-use crate::error::*;
-use crate::stdlib::add_std_lib;
+use crate::{parse::*,variable::*,error::Error,pest::Parser,stdlib::add_std_lib};
 pub struct Intepreter{
     pub variables:  VariableMap
 }

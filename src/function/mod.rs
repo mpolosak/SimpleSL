@@ -1,14 +1,14 @@
 mod macros;
 mod langfunction;
+mod instruction;
 mod param;
 mod nativefunction;
-use crate::error::Error;
-use crate::variable::*;
-use crate::intepreter::{Intepreter, VariableMap};
 use std::{fmt,vec::Vec, iter::zip};
-pub use crate::function::langfunction::LangFunction;
-pub use crate::function::param::Param;
-pub use crate::function::nativefunction::NativeFunction;
+use crate::error::Error;
+use crate::variable::{Variable,Array};
+use crate::intepreter::{Intepreter, VariableMap};
+pub use self::{langfunction::LangFunction,
+    param::Param, nativefunction::NativeFunction};
 
 pub trait Function{
     fn exec(&self, name: String, intepreter: &mut Intepreter, mut args: Array)

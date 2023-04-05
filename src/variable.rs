@@ -1,11 +1,6 @@
-use std::fmt::{self};
-use std::rc::Rc;
-use std::str::FromStr;
-use crate::error::Error;
-use crate::pest::Parser;
+use std::{fmt, rc::Rc, str::FromStr};
 use pest::iterators::Pair;
-use crate::parse::*;
-use crate::function::Function;
+use crate::{error::Error,pest::Parser,parse::*,function::Function};
 
 pub type Array = Vec<Variable>;
 

@@ -1,7 +1,6 @@
-use crate::function::{Function,Param};
-use crate::intepreter::{Intepreter,VariableMap};
-use crate::variable::Variable;
-use crate::error::Error;
+use super::{Function,Param};
+use crate::intepreter::{Intepreter, VariableMap};
+use crate::{variable::Variable, error::Error};
 
 #[derive(Clone)]
 pub struct NativeFunction {

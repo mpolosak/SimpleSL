@@ -1,7 +1,5 @@
-use crate::variable::*;
 use crate::function::{NativeFunction, Param};
-use crate::intepreter::VariableMap;
-use crate::params;
+use crate::{intepreter::VariableMap,params,variable::*};
 
 pub fn add_std_functions(variables: &mut VariableMap){
     variables.add_native_function("import", NativeFunction{

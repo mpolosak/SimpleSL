@@ -1,8 +1,5 @@
-use crate::error::Error;
 use crate::function::{NativeFunction, Param};
-use crate::intepreter::VariableMap;
-use crate::variable::Variable;
-use crate::params;
+use crate::{intepreter::VariableMap, variable::Variable, error::Error, params};
 
 pub fn add_array_functions(variables: &mut VariableMap){
     variables.add_native_function("array_at", NativeFunction{

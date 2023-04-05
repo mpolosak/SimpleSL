@@ -1,13 +1,12 @@
-use std::env;
 mod intepreter;
 mod error;
-use intepreter::Intepreter;
 mod parse;
 mod variable;
 mod stdlib;
 mod function;
-use rustyline::error::ReadlineError;
-use rustyline::Editor;
+use std::env;
+use intepreter::Intepreter;
+use rustyline::{error::ReadlineError,Editor};
 extern crate pest;
 #[macro_use]
 extern crate pest_derive;

@@ -1,8 +1,6 @@
 use std::io;
 use crate::function::{NativeFunction, Param};
-use crate::intepreter::VariableMap;
-use crate::variable::*;
-use crate::params;
+use crate::{intepreter::VariableMap,variable::*,params};
 
 pub fn add_io_functions(variables: &mut VariableMap){
     variables.add_native_function("print", NativeFunction{
