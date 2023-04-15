@@ -7,8 +7,8 @@ use std::{fmt,vec::Vec, iter::zip};
 use crate::error::Error;
 use crate::variable::{Variable,Array};
 use crate::intepreter::{Intepreter, VariableMap};
-pub use self::{langfunction::LangFunction,
-    param::Param, nativefunction::NativeFunction};
+pub use self::{langfunction::LangFunction, param::Param,
+    nativefunction::NativeFunction, instruction::Instruction};
 
 pub trait Function{
     fn exec(&self, name: String, intepreter: &mut Intepreter, mut args: Array)
