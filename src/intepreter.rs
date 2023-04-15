@@ -79,11 +79,11 @@ impl Intepreter{
     }
 
     pub fn load_and_exec(&mut self, path: &str) -> Result<Variable, Error>{
-        let file = File::open(path).unwrap();
+        let file = File::open(path)?;
         let buf_reader = BufReader::new(file);
         let mut result = Variable::Null;
         for line in buf_reader.lines() {
-            let text = line.unwrap();
+            let text = line?;
             result = self.exec(text)?;
         }
         Ok(result)

@@ -1,7 +1,7 @@
 use std::fmt;
 use crate::parse::Rule;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub enum Error {
     VariableDoesntExist(String),
     WrongType(String, String),
@@ -9,6 +9,7 @@ pub enum Error {
     IndexToBig,
     CannotBeParsed(String),
     TooManyVariables,
+    IO(std::io::Error),
     Other(String)
 }
 
@@ -30,13 +31,26 @@ impl fmt::Display for Error {
                 => write!(f, "{text} cannot be parsed to variable"),
             Self::TooManyVariables
                 => write!(f, "String contains more than one variable"),
+            Self::IO(error) =>write!(f, "{error}"),
             Self::Other(value) => write!(f, "{value}")
         }
     }
 }
 
-impl From<pest::error::Error<Rule>> for Error{
+impl From<pest::error::Error<Rule>> for Error {
     fn from(value: pest::error::Error<Rule>) -> Self {
         Error::Other(value.to_string())
+    }
+}
+
+impl From<std::io::Error> for Error {
+    fn from(value: std::io::Error) -> Self {
+        Self::IO(value)
+    }
+}
+
+impl PartialEq for Error {
+    fn eq(&self, other: &Self) -> bool {
+        self.to_string() == other.to_string()
     }
 }
