@@ -21,7 +21,7 @@ pub fn add_io_functions(variables: &mut VariableMap){
         params: params!(),
         body: |_name, _intepreter, _params|{
             let mut input = String::new();
-            io::stdin().read_line(&mut input).expect("Unable to read user input");
+            io::stdin().read_line(&mut input)?;
             input = input.replace('\n', "");
             Ok(Variable::String(input.into()))
         }
