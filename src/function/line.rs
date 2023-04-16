@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 use pest::iterators::Pair;
 use crate::{error::Error, intepreter::{VariableMap, Intepreter},
-    parse::Rule, variable::{Variable, Array}};
+    parse::Rule, variable::Variable};
 use super::Instruction;
 
 #[derive(Clone, Debug)]
@@ -17,11 +17,11 @@ impl Line {
         if pair_vec.len() == 3 {
             let result_var = Some(pair_vec[0].as_str().to_string());
             let instruction= Instruction::new(
-                variables, pair_vec[1].clone(),&local_variables)?;
+                variables, pair_vec[1].clone(), local_variables)?;
             Ok(Self{result_var, instruction})
         } else {
             let instruction= Instruction::new(
-                variables, pair_vec[0].clone(),&local_variables)?;
+                variables, pair_vec[0].clone(), local_variables)?;
             Ok(Self{result_var: None, instruction})
         }
     }

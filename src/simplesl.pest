@@ -29,4 +29,5 @@ type = _{float_type | string_type | null_type | function_type | array_type | any
   function_type = {"function"}
   array_type = {"array"}
   any = {"any"}
+input = _{ line* ~ EOI}
 WHITESPACE = _{ " " | "\t"| NEWLINE }

@@ -1,5 +1,4 @@
 use std::{collections::{HashMap, HashSet},fs::File,rc::Rc,io::{BufReader, BufRead}};
-use pest::iterators::Pair;
 use crate::function::{NativeFunction, Line};
 use crate::{parse::*,variable::*,error::Error,pest::Parser,stdlib::add_std_lib};
 pub struct Intepreter{
@@ -14,15 +13,28 @@ impl Intepreter{
         intepreter
     }
 
-    pub fn exec(&mut self, mut line: String) -> Result<Variable, Error>{
-        line = line.trim().to_string();
-        if line.is_empty() {
+    pub fn exec(&mut self, mut input: String) -> Result<Variable, Error>{
+        input = input.trim().to_string();
+        if input.is_empty() {
             return Ok(Variable::Null)
         }
-        let parse = SimpleSLParser::parse(Rule::line, &line)?;
-        let pair_vec: Vec<Pair<Rule>> = parse.collect();
-        let line = Line::new(&self.variables, pair_vec[0].clone(),&mut HashSet::new())?;
-        line.exec_global(self)
+        let parse = SimpleSLParser::parse(Rule::input, &input)?;
+        let mut lines = Vec::<Line>::new();
+        for line_pair in parse {
+            if line_pair.as_rule() == Rule::EOI {
+                break;
+            }
+            let line = Line::new(
+                &self.variables, line_pair,
+                &mut HashSet::new()
+            )?;
+            lines.push(line);
+        }
+        let mut result = Variable::Null;
+        for line in lines {
+            result = line.exec_global(self)?;
+        }
+        Ok(result)
     }
 
     pub fn load_and_exec(&mut self, path: &str) -> Result<Variable, Error>{
