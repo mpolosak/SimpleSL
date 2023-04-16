@@ -15,10 +15,11 @@ impl Line {
         local_variables: &mut HashSet<String>) -> Result<Line, Error>{
         let pair_vec: Vec<Pair<Rule>> = pair.into_inner().collect();
         if pair_vec.len() == 3 {
-            let result_var = Some(pair_vec[0].as_str().to_string());
+            let result_var = pair_vec[0].as_str().to_string();
+            local_variables.insert(result_var.clone());
             let instruction= Instruction::new(
                 variables, pair_vec[1].clone(), local_variables)?;
-            Ok(Self{result_var, instruction})
+            Ok(Self{result_var: Some(result_var), instruction})
         } else {
             let instruction= Instruction::new(
                 variables, pair_vec[0].clone(), local_variables)?;

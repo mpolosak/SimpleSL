@@ -97,13 +97,18 @@ impl Instruction {
                 for instruction in instructions {
                     args.push(instruction.exec(intepreter, local_variables)?);
                 }
-                let Variable::Function(function) = local_variables.get(name)? else {
-                    return Err(Error::WrongType(name.clone(), String::from("function")));
+                let Variable::Function(function)
+                    = local_variables.get(name).or(
+                        intepreter.variables.get(name))? else {
+                    return Err(
+                        Error::WrongType(name.clone(), String::from("function"))
+                    );
                 };
                 function.exec(name.clone(), intepreter, args)
             }
             Self::Variable(var) => Ok(var.clone()),
-            Self::LocalVariable(name) => local_variables.get(name),
+            Self::LocalVariable(name)
+                => local_variables.get(name).or(intepreter.variables.get(name)),
             Self::Array(instructions) => {
                 let mut array = Array::new();
                 for instruction in instructions {

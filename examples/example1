@@ -7,4 +7,4 @@ print(array);
 example_function = (name:string){
     print("Hello ", name, "!");
 };
-example_function("world")
+example_function("world");

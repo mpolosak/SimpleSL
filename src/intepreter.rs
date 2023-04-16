@@ -1,4 +1,4 @@
-use std::{collections::{HashMap, HashSet},fs::File,rc::Rc,io::{BufReader, BufRead}};
+use std::{collections::{HashMap, HashSet},fs::File,rc::Rc,io::{BufReader, Read}};
 use crate::function::{NativeFunction, Line};
 use crate::{parse::*,variable::*,error::Error,pest::Parser,stdlib::add_std_lib};
 pub struct Intepreter{
@@ -20,13 +20,14 @@ impl Intepreter{
         }
         let parse = SimpleSLParser::parse(Rule::input, &input)?;
         let mut lines = Vec::<Line>::new();
+        let mut local_variables = HashSet::<String>::new();
         for line_pair in parse {
             if line_pair.as_rule() == Rule::EOI {
                 break;
             }
             let line = Line::new(
                 &self.variables, line_pair,
-                &mut HashSet::new()
+                &mut local_variables
             )?;
             lines.push(line);
         }
@@ -39,13 +40,10 @@ impl Intepreter{
 
     pub fn load_and_exec(&mut self, path: &str) -> Result<Variable, Error>{
         let file = File::open(path)?;
-        let buf_reader = BufReader::new(file);
-        let mut result = Variable::Null;
-        for line in buf_reader.lines() {
-            let text = line?;
-            result = self.exec(text)?;
-        }
-        Ok(result)
+        let mut buf_reader = BufReader::new(file);
+        let mut contents = String::new();
+        buf_reader.read_to_string(&mut contents)?;
+        self.exec(contents)
     }
 }
 
