@@ -15,7 +15,7 @@ string = ${ "\"" ~ inner ~ "\"" }
       | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
   }
 null = {"NULL"}
-line = _{ (return_variable~"=")? ~ expression ~  line_end }
+line = { (return_variable~"=")? ~ expression ~  line_end }
 	line_end = { ";" }
 return_variable = @{ident}
 function = {params~"{"~line*~"}"}

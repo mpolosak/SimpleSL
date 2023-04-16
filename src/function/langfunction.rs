@@ -1,5 +1,4 @@
-use super::{Function, Param};
-use super::instruction::Line;
+use super::{Function, Param, Line};
 use crate::intepreter::{Intepreter, VariableMap};
 use crate::{variable::Variable,error::Error};
 
@@ -13,13 +12,8 @@ impl Function for LangFunction {
     fn exec_intern(&self, _name: String, intepreter: &mut Intepreter,
             mut args: VariableMap) -> Result<Variable, Error> {
         let mut to_return = Variable::Null;
-        for Line{result_var, instruction} in &self.body{
-            let result = instruction.exec(intepreter, &args)?;
-            if let Some(var) = result_var{
-                args.insert(var, result);
-            } else {
-                to_return = result;
-            }
+        for line in &self.body{
+            to_return = line.exec(intepreter, &mut args)?;
         }
         Ok(to_return)
     }

@@ -3,11 +3,12 @@ mod langfunction;
 mod instruction;
 mod param;
 mod nativefunction;
+mod line;
 use std::{fmt,vec::Vec, iter::zip};
 use crate::error::Error;
 use crate::variable::{Variable,Array};
 use crate::intepreter::{Intepreter, VariableMap};
-pub use self::{langfunction::LangFunction, param::Param,
+pub use self::{langfunction::LangFunction, param::Param, line::Line,
     nativefunction::NativeFunction, instruction::Instruction};
 
 pub trait Function{

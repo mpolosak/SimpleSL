@@ -1,6 +1,6 @@
 use std::{collections::{HashMap, HashSet},fs::File,rc::Rc,io::{BufReader, BufRead}};
 use pest::iterators::Pair;
-use crate::function::{NativeFunction, Instruction};
+use crate::function::{NativeFunction, Line};
 use crate::{parse::*,variable::*,error::Error,pest::Parser,stdlib::add_std_lib};
 pub struct Intepreter{
     pub variables:  VariableMap
@@ -21,22 +21,8 @@ impl Intepreter{
         }
         let parse = SimpleSLParser::parse(Rule::line, &line)?;
         let pair_vec: Vec<Pair<Rule>> = parse.collect();
-        if pair_vec.len()==3{
-            let var = pair_vec[0].as_str();
-            let instruction = Instruction::new(
-                &self.variables, pair_vec[1].clone(), 
-                &HashSet::new()
-            )?;
-            let result = instruction.exec(self, &VariableMap::new())?;
-            self.variables.insert(var, result);
-            Ok(Variable::Null)
-        } else {
-            let instruction = Instruction::new(
-                &self.variables, pair_vec[0].clone(),
-            &HashSet::new()
-            )?;
-            instruction.exec(self, &VariableMap::new())
-        }
+        let line = Line::new(&self.variables, pair_vec[0].clone(),&mut HashSet::new())?;
+        line.exec_global(self)
     }
 
     pub fn load_and_exec(&mut self, path: &str) -> Result<Variable, Error>{

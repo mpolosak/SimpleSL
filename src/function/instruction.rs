@@ -2,13 +2,7 @@ use std::{rc::Rc, collections::HashSet, fmt};
 use pest::iterators::Pair;
 use crate::{intepreter::{VariableMap, Intepreter}, parse::Rule, error::Error};
 use crate::variable::{Variable,Array};
-use super::{Function, Param, param::param_from_pair, LangFunction};
-
-#[derive(Clone, Debug)]
-pub struct Line{
-    pub result_var: Option<String>,
-    pub instruction: Instruction
-}
+use super::{Function, Param, param::param_from_pair, LangFunction, Line};
 
 #[derive(Clone)]
 pub enum Instruction{
@@ -78,24 +72,9 @@ impl Instruction {
                 let params_pair = inner.next().unwrap();
                 let params = param_from_pair(params_pair);
                 let mut local_variables= hashset_from_params(&params);
-                let mut result_var=Option::<String>::None;
                 let mut body = Vec::<Line>::new();
                 for pair in inner {
-                    match pair.as_rule(){
-                        Rule::return_variable => {
-                            result_var = Some(pair.as_str().to_string())
-                        },
-                        Rule::line_end => (),
-                        _ => {
-                            let instruction
-                                = Instruction::new(variables, pair, &local_variables)?;
-                            if let Some(var) = result_var.clone(){
-                                local_variables.insert(var);
-                            }
-                            body.push(Line{result_var, instruction});
-                            result_var = None;
-                        }
-                    }
+                    body.push(Line::new(variables,pair,&mut local_variables)?);
                 }
                 Ok(Self::Function(params, body))
             },
