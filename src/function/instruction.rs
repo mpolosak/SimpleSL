@@ -71,7 +71,10 @@ impl Instruction {
                 let mut inner = pair.clone().into_inner();
                 let params_pair = inner.next().unwrap();
                 let params = param_from_pair(params_pair);
-                let mut local_variables= hashset_from_params(&params);
+                let mut local_variables = local_variables.clone();
+                for Param{name, type_name: _} in &params{
+                    local_variables.insert(name.clone());
+                }
                 let mut body = Vec::<Line>::new();
                 for pair in inner {
                     body.push(Line::new(variables,pair,&mut local_variables)?);
@@ -99,7 +102,7 @@ impl Instruction {
                 }
                 let Variable::Function(function)
                     = local_variables.get(name).or(
-                        intepreter.variables.get(name))? else {
+                        intepreter.variables.get(name)).unwrap() else {
                     return Err(
                         Error::WrongType(name.clone(), String::from("function"))
                     );
@@ -108,7 +111,7 @@ impl Instruction {
             }
             Self::Variable(var) => Ok(var.clone()),
             Self::LocalVariable(name)
-                => local_variables.get(name).or(intepreter.variables.get(name)),
+                => Ok(local_variables.get(name).or(intepreter.variables.get(name)).unwrap()),
             Self::Array(instructions) => {
                 let mut array = Array::new();
                 for instruction in instructions {
