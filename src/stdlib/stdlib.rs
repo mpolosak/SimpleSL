@@ -118,21 +118,27 @@ pub fn add_std_functions(variables: &mut VariableMap){
             }
         }
     });
-    // add_function!("if", intepreter, args, (condition: Float, function: Function,){
-    //     if condition == 0.0 { return Ok(Variable::Null)};
-    //     function(intepreter, args)
-    // });
-    // add_function!("while", intepreter, args, {
-    //     loop{
-    //         let condition = get_var!("while", intepreter, args, 0, Float);
-    //         if condition == 0.0 { break };
-    //         let function = get_var!("while", intepreter, args, 1, Function);
-    //         let function_args = if let Some(fargs) = args.get(2..) { fargs.to_vec() }
-    //                               else { Array::new() };
-    //         if let Err(error) = function(intepreter, function_args){
-    //             return Err(error)
-    //         }
-    //     }
-    //     return Ok(Variable::Null)
-    // });
+    variables.add_native_function("if_else", NativeFunction{
+        params: params!(
+            "condition":"float",
+            "function":"function",
+            "else":"function"
+        ),
+        body: |_name, intepreter, args|{
+            let Variable::Float(condition) = args.get("condition")? else {
+                panic!()
+            };
+            let Variable::Function(function) = args.get("function")? else {
+                panic!()
+            };
+            let Variable::Function(else_function) = args.get("else")? else {
+                panic!()
+            };
+            if condition == 0.0 {
+                else_function.exec(String::from("else"), intepreter, Array::new())
+            } else {
+                function.exec(String::from("function"), intepreter, Array::new())
+            }
+        }
+    });
 }
