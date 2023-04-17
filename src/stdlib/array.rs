@@ -42,6 +42,15 @@ pub fn add_array_functions(variables: &mut VariableMap){
             Ok(Variable::Array(new_array.into()))
         }
     });
+    variables.add_native_function("array_len", NativeFunction {
+        params: params!("array":"array"),
+        body: |_name, _intepreter, args|{
+            let Variable::Array(array) = args.get("array")? else {
+                panic!()
+            };
+            Ok(Variable::Float(array.len() as f64))
+        }
+    });
     variables.add_native_function("for_each", NativeFunction {
         params: params!("array":"array", "function":"function"),
         body: |_name, intepreter, args|{
