@@ -3,6 +3,27 @@ use crate::{intepreter::VariableMap, variable::{Variable,Array},
     error::Error, params};
 
 pub fn add_array_functions(variables: &mut VariableMap){
+    variables.add_native_function("new_array", NativeFunction {
+        params: params!("length":"float", "value":"any"),
+        body: |_name, _intepreter, args| {
+            let Variable::Float(flen) = args.get("length")? else {
+                panic!();
+            };
+            if flen.fract()!=0.0 || flen<0.0 {
+                return Err(Error::WrongType(
+                    String::from("lenght"),
+                    String::from("natural")
+                ));
+            }
+            let len = flen as usize;
+            let value = args.get("value")?;
+            let mut array = Array::new();
+            for _ in 0..len {
+                array.push(value.clone());
+            }
+            Ok(Variable::Array(array.into()))
+        }
+    });
     variables.add_native_function("array_at", NativeFunction{
         params: params!("array":"array", "index":"float"),
         body: |_name, _intepreter, args|{
