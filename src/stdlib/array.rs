@@ -68,4 +68,23 @@ pub fn add_array_functions(variables: &mut VariableMap){
             Ok(Variable::Array(new_array.into()))
         }
     });
+    variables.add_native_function("filter", NativeFunction {
+        params: params!("array":"array", "function":"function"),
+        body: |_name, interpreter, args| {
+            let Variable::Array(array) = args.get("array")? else {
+                panic!()
+            };
+            let Variable::Function(function) = args.get("function")? else {
+                panic!()
+            };
+            let mut new_array = Array::new();
+            for element in array.iter() {
+                if function.exec(String::from("function"), interpreter,
+                    vec![element.clone()])? != Variable::Float(0.0){
+                        new_array.push(element.clone());
+                }
+            }
+            Ok(Variable::Array(new_array.into()))
+        }
+    });
 }
