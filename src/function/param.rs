@@ -1,8 +1,8 @@
-use pest::iterators::Pair;
 use crate::parse::Rule;
+use pest::iterators::Pair;
 use std::fmt;
 
-#[derive(Clone,Debug)]
+#[derive(Clone, Debug)]
 pub struct Param {
     pub name: String,
     pub type_name: String,
@@ -12,7 +12,7 @@ impl Param {
     pub fn new(name: &str, type_name: &str) -> Self {
         Param {
             name: String::from(name),
-            type_name: String::from(type_name)
+            type_name: String::from(type_name),
         }
     }
 }
@@ -30,11 +30,14 @@ impl fmt::Display for Param {
 impl From<Pair<'_, Rule>> for Param {
     fn from(value: Pair<'_, Rule>) -> Self {
         let mut inner = value.into_inner();
-        Self::new(inner.next().unwrap().as_str(), inner.next().unwrap().as_str())
+        Self::new(
+            inner.next().unwrap().as_str(),
+            inner.next().unwrap().as_str(),
+        )
     }
 }
 
-pub fn param_from_pair(params_pair: Pair<Rule>) -> Vec<Param>{
+pub fn param_from_pair(params_pair: Pair<Rule>) -> Vec<Param> {
     let mut params = Vec::new();
     for pair in params_pair.into_inner() {
         params.push(Param::from(pair));

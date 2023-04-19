@@ -1,18 +1,22 @@
-use super::{Function, Param, Line};
+use super::{Function, Line, Param};
 use crate::intepreter::{Intepreter, VariableMap};
-use crate::{variable::Variable,error::Error};
+use crate::{error::Error, variable::Variable};
 
 #[derive(Clone)]
 pub struct LangFunction {
     pub params: Vec<Param>,
-    pub body: Vec<Line>
+    pub body: Vec<Line>,
 }
 
 impl Function for LangFunction {
-    fn exec_intern(&self, _name: String, intepreter: &mut Intepreter,
-            mut args: VariableMap) -> Result<Variable, Error> {
+    fn exec_intern(
+        &self,
+        _name: String,
+        intepreter: &mut Intepreter,
+        mut args: VariableMap,
+    ) -> Result<Variable, Error> {
         let mut to_return = Variable::Null;
-        for line in &self.body{
+        for line in &self.body {
             to_return = line.exec(intepreter, &mut args)?;
         }
         Ok(to_return)

@@ -1,6 +1,6 @@
-use super::{Function,Param};
+use super::{Function, Param};
 use crate::intepreter::{Intepreter, VariableMap};
-use crate::{variable::Variable, error::Error};
+use crate::{error::Error, variable::Variable};
 
 #[derive(Clone)]
 pub struct NativeFunction {
@@ -9,8 +9,12 @@ pub struct NativeFunction {
 }
 
 impl Function for NativeFunction {
-    fn exec_intern(&self, name: String, intepreter: &mut Intepreter,
-        args: VariableMap) -> Result<Variable, Error>{
+    fn exec_intern(
+        &self,
+        name: String,
+        intepreter: &mut Intepreter,
+        args: VariableMap,
+    ) -> Result<Variable, Error> {
         (self.body)(name, intepreter, args)
     }
     fn get_params(&self) -> &Vec<Param> {
