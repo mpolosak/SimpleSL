@@ -8,8 +8,8 @@ pub fn add_std_functions(variables: &mut VariableMap) {
             params: params!("path":"string"),
             body: |_name, intepreter, args| {
                 let Variable::String(path) = args.get("path")? else {
-                panic!()
-            };
+                    panic!()
+                };
                 intepreter.load_and_exec(&path)
             },
         },
@@ -20,11 +20,11 @@ pub fn add_std_functions(variables: &mut VariableMap) {
             params: params!("a":"float", "b":"float"),
             body: |_name, _intepreter, args| {
                 let Variable::Float(a) = args.get("a")? else {
-                panic!()
-            };
+                    panic!()
+                };
                 let Variable::Float(b) = args.get("b")? else {
-                panic!()
-            };
+                    panic!()
+                };
                 Ok(Variable::Float(a + b))
             },
         },
@@ -35,11 +35,11 @@ pub fn add_std_functions(variables: &mut VariableMap) {
             params: params!("a":"float", "b":"float"),
             body: |_name, _intepreter, args| {
                 let Variable::Float(a) = args.get("a")? else {
-                panic!()
-            };
+                    panic!()
+                };
                 let Variable::Float(b) = args.get("b")? else {
-                panic!()
-            };
+                    panic!()
+                };
                 Ok(Variable::Float(a - b))
             },
         },
@@ -50,11 +50,11 @@ pub fn add_std_functions(variables: &mut VariableMap) {
             params: params!("a":"float", "b":"float"),
             body: |_name, _intepreter, args| {
                 let Variable::Float(a) = args.get("a")? else {
-                panic!()
-            };
+                    panic!()
+                };
                 let Variable::Float(b) = args.get("b")? else {
-                panic!()
-            };
+                    panic!()
+                };
                 Ok(Variable::Float(a * b))
             },
         },
@@ -65,11 +65,11 @@ pub fn add_std_functions(variables: &mut VariableMap) {
             params: params!("a":"float", "b":"float"),
             body: |_name, _intepreter, args| {
                 let Variable::Float(a) = args.get("a")? else {
-                panic!()
-            };
+                    panic!()
+                };
                 let Variable::Float(b) = args.get("b")? else {
-                panic!()
-            };
+                    panic!()
+                };
                 Ok(Variable::Float(a / b))
             },
         },
@@ -80,11 +80,11 @@ pub fn add_std_functions(variables: &mut VariableMap) {
             params: params!("a":"float", "b":"float"),
             body: |_name, _intepreter, args| {
                 let Variable::Float(a) = args.get("a")? else {
-                panic!()
-            };
+                    panic!()
+                };
                 let Variable::Float(b) = args.get("b")? else {
-                panic!()
-            };
+                    panic!()
+                };
                 let divided = a / b;
                 let result = a - b * divided.floor();
                 Ok(Variable::Float(result))
@@ -97,11 +97,11 @@ pub fn add_std_functions(variables: &mut VariableMap) {
             params: params!("a":"float", "b":"float"),
             body: |_name, _intepreter, args| {
                 let Variable::Float(a) = args.get("a")? else {
-                panic!()
-            };
+                    panic!()
+                };
                 let Variable::Float(b) = args.get("b")? else {
-                panic!()
-            };
+                    panic!()
+                };
                 Ok(Variable::Float(a.abs() + b.abs()))
             },
         },
@@ -112,8 +112,8 @@ pub fn add_std_functions(variables: &mut VariableMap) {
             params: params!("a":"float"),
             body: |_name, _intepreter, args| {
                 let Variable::Float(a) = args.get("a")? else {
-                panic!()
-            };
+                    panic!()
+                };
                 Ok(Variable::Float(if a == 0.0 { 1.0 } else { 0.0 }))
             },
         },
@@ -135,11 +135,11 @@ pub fn add_std_functions(variables: &mut VariableMap) {
             params: params!("condition":"float", "function":"function"),
             body: |_name, intepreter, args| {
                 let Variable::Float(condition) = args.get("condition")? else {
-                panic!()
-            };
+                    panic!()
+                };
                 let Variable::Function(function) = args.get("function")? else {
-                panic!()
-            };
+                    panic!()
+                };
                 if condition == 0.0 {
                     Ok(Variable::Null)
                 } else {
@@ -158,14 +158,14 @@ pub fn add_std_functions(variables: &mut VariableMap) {
             ),
             body: |_name, intepreter, args| {
                 let Variable::Float(condition) = args.get("condition")? else {
-                panic!()
-            };
+                    panic!()
+                };
                 let Variable::Function(function) = args.get("function")? else {
-                panic!()
-            };
+                    panic!()
+                };
                 let Variable::Function(else_function) = args.get("else")? else {
-                panic!()
-            };
+                    panic!()
+                };
                 if condition == 0.0 {
                     else_function.exec("else", intepreter, Array::new())
                 } else {

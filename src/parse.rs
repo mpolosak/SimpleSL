@@ -16,15 +16,14 @@ pub fn variable_from_pair(pair: Pair<Rule>) -> Result<Variable, Error> {
             Ok(Variable::Float(value))
         }
         Rule::string => {
-            let ident = pair.into_inner().next().unwrap();
-            let value = ident.as_str();
+            let value = pair.into_inner().next().unwrap().as_str();
             Ok(Variable::String(value.into()))
         }
         Rule::array => {
-            let mut array = Array::new();
-            for element in pair.into_inner() {
-                array.push(variable_from_pair(element)?);
-            }
+            let array = pair
+                .into_inner()
+                .map(variable_from_pair)
+                .collect::<Result<Array, Error>>()?;
             Ok(Variable::Array(Rc::new(array)))
         }
         Rule::null => Ok(Variable::Null),

@@ -13,8 +13,8 @@ pub fn add_array_functions(variables: &mut VariableMap) {
             params: params!("length":"float", "value":"any"),
             body: |_name, _intepreter, args| {
                 let Variable::Float(flen) = args.get("length")? else {
-                panic!();
-            };
+                    panic!();
+                };
                 if flen.fract() != 0.0 || flen < 0.0 {
                     return Err(Error::WrongType(
                         String::from("lenght"),
@@ -37,11 +37,11 @@ pub fn add_array_functions(variables: &mut VariableMap) {
             params: params!("array":"array", "index":"float"),
             body: |_name, _intepreter, args| {
                 let Variable::Array(array) = args.get("array")? else {
-                panic!();
-            };
+                    panic!();
+                };
                 let Variable::Float(findex) = args.get("index")? else {
-                panic!();
-            };
+                    panic!();
+                };
                 if findex.fract() != 0.0 || findex < 0.0 {
                     return Err(Error::WrongType(
                         String::from("index"),
@@ -49,10 +49,10 @@ pub fn add_array_functions(variables: &mut VariableMap) {
                     ));
                 }
                 let index = findex as usize;
-                if index >= array.len() {
-                    Err(Error::IndexToBig)
-                } else {
+                if index < array.len() {
                     Ok(array[index].clone())
+                } else {
+                    Err(Error::IndexToBig)
                 }
             },
         },
@@ -63,11 +63,11 @@ pub fn add_array_functions(variables: &mut VariableMap) {
             params: params!("array1":"array","array2":"array"),
             body: |_name, _intepreter, args| {
                 let Variable::Array(array1) = args.get("array1")? else {
-                panic!()
-            };
+                    panic!()
+                };
                 let Variable::Array(array2) = args.get("array2")? else {
-                panic!()
-            };
+                    panic!()
+                };
                 let mut new_array = (*array1).clone();
                 for element in array2.iter() {
                     new_array.push(element.clone());
@@ -82,8 +82,8 @@ pub fn add_array_functions(variables: &mut VariableMap) {
             params: params!("array":"array"),
             body: |_name, _intepreter, args| {
                 let Variable::Array(array) = args.get("array")? else {
-                panic!()
-            };
+                    panic!()
+                };
                 Ok(Variable::Float(array.len() as f64))
             },
         },
@@ -94,11 +94,11 @@ pub fn add_array_functions(variables: &mut VariableMap) {
             params: params!("array":"array", "function":"function"),
             body: |_name, intepreter, args| {
                 let Variable::Array(array) = args.get("array")? else {
-                panic!()
-            };
+                    panic!()
+                };
                 let Variable::Function(function) = args.get("function")? else {
-                panic!()
-            };
+                    panic!()
+                };
                 let mut new_array = Array::new();
                 for var in array.iter() {
                     new_array.push(function.exec("function", intepreter, vec![var.clone()])?);
@@ -113,11 +113,11 @@ pub fn add_array_functions(variables: &mut VariableMap) {
             params: params!("array":"array", "function":"function"),
             body: |_name, interpreter, args| {
                 let Variable::Array(array) = args.get("array")? else {
-                panic!()
-            };
+                    panic!()
+                };
                 let Variable::Function(function) = args.get("function")? else {
-                panic!()
-            };
+                    panic!()
+                };
                 let mut new_array = Array::new();
                 for element in array.iter() {
                     if function.exec("function", interpreter, vec![element.clone()])?

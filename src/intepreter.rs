@@ -12,17 +12,12 @@ pub struct Intepreter {
 
 impl Intepreter {
     pub fn new() -> Intepreter {
-        let variables = VariableMap::new();
-        let mut intepreter = Intepreter { variables };
-        add_std_lib(&mut intepreter.variables);
-        intepreter
+        let mut variables = VariableMap::new();
+        add_std_lib(&mut variables);
+        Intepreter { variables }
     }
 
-    pub fn exec(&mut self, mut input: String) -> Result<Variable, Error> {
-        input = input.trim().to_string();
-        if input.is_empty() {
-            return Ok(Variable::Null);
-        }
+    pub fn exec(&mut self, input: String) -> Result<Variable, Error> {
         let parse = SimpleSLParser::parse(Rule::input, &input)?;
         let mut lines = Vec::<Line>::new();
         let mut local_variables = HashSet::<String>::new();

@@ -11,10 +11,9 @@ pub fn add_io_functions(variables: &mut VariableMap) {
                 let Variable::Array(args) = args.get("vars")? else {
                 panic!();
             };
-                let mut text = String::new();
-                for arg in args.iter() {
-                    text += &arg.to_string();
-                }
+                let text = args
+                    .iter()
+                    .fold(String::new(), |acc, arg| acc + &arg.to_string());
                 println!("{text}");
                 Ok(Variable::Null)
             },
