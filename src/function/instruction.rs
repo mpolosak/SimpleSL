@@ -1,4 +1,4 @@
-use super::{param::param_from_pair, Function, LangFunction, Line, Param};
+use super::{Function, LangFunction, Line, Param};
 use crate::variable::Variable;
 use crate::{
     error::Error,
@@ -26,16 +26,16 @@ impl Instruction {
     ) -> Result<Self, Error> {
         match pair.as_rule() {
             Rule::function_call => {
-                let mut inter = pair.clone().into_inner();
-                let ident = inter.next().unwrap();
-                let var_name = ident.as_str();
-                let args = inter.next().unwrap();
-                let array = args
+                let mut inner = pair.clone().into_inner();
+                let var_name = inner.next().unwrap().as_str();
+                let args = inner
+                    .next()
+                    .unwrap()
                     .into_inner()
-                    .map(|arg| Self::new(variables, arg, local_variables))
+                    .map(|pair| Self::new(variables, pair, local_variables))
                     .collect::<Result<Vec<_>, _>>()?;
                 if local_variables.contains(var_name) {
-                    Ok(Self::LocalFunctionCall(String::from(var_name), array))
+                    Ok(Self::LocalFunctionCall(String::from(var_name), args))
                 } else {
                     let Variable::Function(function)
                         = variables.get(var_name)? else {
@@ -44,7 +44,7 @@ impl Instruction {
                             String::from("Function")
                         ));
                     };
-                    Ok(Self::FunctionCall(function, array))
+                    Ok(Self::FunctionCall(function, args))
                 }
             }
             Rule::num => {
@@ -61,14 +61,13 @@ impl Instruction {
                 }
             }
             Rule::string => {
-                let ident = pair.clone().into_inner().next().unwrap();
-                let value = ident.as_str();
+                let value = pair.clone().into_inner().next().unwrap().as_str();
                 let variable = Variable::String(value.into());
                 Ok(Self::Variable(variable))
             }
             Rule::array => {
-                let inter = pair.clone().into_inner();
-                let array = inter
+                let inner = pair.clone().into_inner();
+                let array = inner
                     .map(|arg| Self::new(variables, arg, local_variables))
                     .collect::<Result<Vec<_>, _>>()?;
                 Ok(Self::Array(array))
@@ -76,7 +75,7 @@ impl Instruction {
             Rule::function => {
                 let mut inner = pair.clone().into_inner();
                 let params_pair = inner.next().unwrap();
-                let params = param_from_pair(params_pair);
+                let params: Vec<Param> = params_pair.into_inner().map(Param::from).collect();
                 let mut local_variables = local_variables.clone();
                 for Param { name, type_name: _ } in &params {
                     local_variables.insert(name.clone());
@@ -207,12 +206,13 @@ impl Instruction {
                              result_var,
                              instruction,
                          }| {
+                            let instruction = instruction.recreate(&local_variables, args)?;
                             if let Some(var) = result_var {
                                 local_variables.insert(var.clone());
                             }
                             Ok(Line {
                                 result_var: result_var.clone(),
-                                instruction: instruction.recreate(&local_variables, args)?,
+                                instruction,
                             })
                         },
                     )
