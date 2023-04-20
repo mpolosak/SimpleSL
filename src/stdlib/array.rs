@@ -5,6 +5,7 @@ use crate::{
     params,
     variable::{Array, Variable},
 };
+use std::iter::zip;
 
 pub fn add_array_functions(variables: &mut VariableMap) {
     variables.add_native_function(
@@ -145,6 +146,26 @@ pub fn add_array_functions(variables: &mut VariableMap) {
                 array.iter().try_fold(initial_value, |acc, current| {
                     function.exec("function", intepreter, vec![acc, current.clone()])
                 })
+            },
+        },
+    );
+    variables.add_native_function(
+        "zip",
+        NativeFunction {
+            params: params!("array1":"array", "array2":"array"),
+            body: |_name, _intepreter, args| {
+                let Variable::Array(array1) = args.get("array1")? else {
+                    panic!()
+                };
+                let Variable::Array(array2) = args.get("array2")? else {
+                    panic!()
+                };
+                let new_array: Array = zip(array1.iter(), array2.iter())
+                    .map(|(element1, element2)| {
+                        Variable::Array(vec![element1.clone(), element2.clone()].into())
+                    })
+                    .collect();
+                Ok(Variable::Array(new_array.into()))
             },
         },
     );
