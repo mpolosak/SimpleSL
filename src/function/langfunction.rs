@@ -11,7 +11,7 @@ pub struct LangFunction {
 impl Function for LangFunction {
     fn exec_intern(
         &self,
-        _name: String,
+        _name: &str,
         intepreter: &mut Intepreter,
         mut args: VariableMap,
     ) -> Result<Variable, Error> {

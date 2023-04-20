@@ -5,13 +5,13 @@ use crate::{error::Error, variable::Variable};
 #[derive(Clone)]
 pub struct NativeFunction {
     pub params: Vec<Param>,
-    pub body: fn(String, &mut Intepreter, VariableMap) -> Result<Variable, Error>,
+    pub body: fn(&str, &mut Intepreter, VariableMap) -> Result<Variable, Error>,
 }
 
 impl Function for NativeFunction {
     fn exec_intern(
         &self,
-        name: String,
+        name: &str,
         intepreter: &mut Intepreter,
         args: VariableMap,
     ) -> Result<Variable, Error> {

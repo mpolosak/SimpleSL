@@ -143,7 +143,7 @@ pub fn add_std_functions(variables: &mut VariableMap) {
                 if condition == 0.0 {
                     Ok(Variable::Null)
                 } else {
-                    function.exec(String::from("function"), intepreter, Array::new())
+                    function.exec("function", intepreter, Array::new())
                 }
             },
         },
@@ -167,9 +167,9 @@ pub fn add_std_functions(variables: &mut VariableMap) {
                 panic!()
             };
                 if condition == 0.0 {
-                    else_function.exec(String::from("else"), intepreter, Array::new())
+                    else_function.exec("else", intepreter, Array::new())
                 } else {
-                    function.exec(String::from("function"), intepreter, Array::new())
+                    function.exec("function", intepreter, Array::new())
                 }
             },
         },

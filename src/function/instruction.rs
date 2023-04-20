@@ -103,7 +103,7 @@ impl Instruction {
                 for instruction in instructions {
                     args.push(instruction.exec(intepreter, local_variables)?);
                 }
-                function.exec(String::from("name"), intepreter, args)
+                function.exec("name", intepreter, args)
             }
             Self::LocalFunctionCall(name, instructions) => {
                 let mut args = Array::new();
@@ -117,7 +117,7 @@ impl Instruction {
                         Error::WrongType(name.clone(), String::from("function"))
                     );
                 };
-                function.exec(name.clone(), intepreter, args)
+                function.exec(name, intepreter, args)
             }
             Self::Variable(var) => Ok(var.clone()),
             Self::LocalVariable(name) => Ok(local_variables

@@ -16,7 +16,7 @@ use std::{fmt, iter::zip, vec::Vec};
 pub trait Function {
     fn exec(
         &self,
-        name: String,
+        name: &str,
         intepreter: &mut Intepreter,
         mut args: Array,
     ) -> Result<Variable, Error> {
@@ -32,10 +32,13 @@ pub trait Function {
                 let rest: Array = args.drain(from..).collect();
                 args_map.insert(param_name, Variable::Array(rest.into()));
             } else if args.len() != params.len() {
-                return Err(Error::WrongNumberOfArguments(name, params.len()));
+                return Err(Error::WrongNumberOfArguments(
+                    String::from(name),
+                    params.len(),
+                ));
             }
         } else if !args.is_empty() {
-            return Err(Error::WrongNumberOfArguments(name, 0));
+            return Err(Error::WrongNumberOfArguments(String::from(name), 0));
         }
 
         for (arg, param) in zip(args, params) {
@@ -52,7 +55,7 @@ pub trait Function {
     }
     fn exec_intern(
         &self,
-        name: String,
+        name: &str,
         intepreter: &mut Intepreter,
         args: VariableMap,
     ) -> Result<Variable, Error>;

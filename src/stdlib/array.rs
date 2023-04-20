@@ -101,11 +101,7 @@ pub fn add_array_functions(variables: &mut VariableMap) {
             };
                 let mut new_array = Array::new();
                 for var in array.iter() {
-                    new_array.push(function.exec(
-                        String::from("function"),
-                        intepreter,
-                        vec![var.clone()],
-                    )?);
+                    new_array.push(function.exec("function", intepreter, vec![var.clone()])?);
                 }
                 Ok(Variable::Array(new_array.into()))
             },
@@ -124,11 +120,8 @@ pub fn add_array_functions(variables: &mut VariableMap) {
             };
                 let mut new_array = Array::new();
                 for element in array.iter() {
-                    if function.exec(
-                        String::from("function"),
-                        interpreter,
-                        vec![element.clone()],
-                    )? != Variable::Float(0.0)
+                    if function.exec("function", interpreter, vec![element.clone()])?
+                        != Variable::Float(0.0)
                     {
                         new_array.push(element.clone());
                     }
