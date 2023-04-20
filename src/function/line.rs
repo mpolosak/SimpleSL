@@ -49,6 +49,10 @@ impl Line {
         Ok(result)
     }
     pub fn exec_global(&self, intepreter: &mut Intepreter) -> Result<Variable, Error> {
-        self.exec(intepreter, &mut VariableMap::new())
+        let result = self.instruction.exec(intepreter, &VariableMap::new())?;
+        if let Some(var) = &self.result_var {
+            intepreter.variables.insert(var, result.clone());
+        }
+        Ok(result)
     }
 }
