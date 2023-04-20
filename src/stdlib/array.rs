@@ -130,4 +130,22 @@ pub fn add_array_functions(variables: &mut VariableMap) {
             },
         },
     );
+    variables.add_native_function(
+        "reduce",
+        NativeFunction {
+            params: params!("array":"array", "initial_value":"any", "function":"function"),
+            body: |_name, intepreter, args| {
+                let Variable::Array(array) = args.get("array")? else {
+                    panic!()
+                };
+                let initial_value = args.get("initial_value")?;
+                let Variable::Function(function) = args.get("function")? else {
+                    panic!()
+                };
+                array.iter().try_fold(initial_value, |acc, current| {
+                    function.exec("function", intepreter, vec![acc, current.clone()])
+                })
+            },
+        },
+    );
 }
