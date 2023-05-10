@@ -203,5 +203,36 @@ pub fn add_array_functions(variables: &mut VariableMap) {
             let n = f_n as usize;
             recsub(intepreter, n, array, function)
         }
-    })
+    });
+    variables.add_native_function("arecsub", NativeFunction {
+        params: params!("array":"array", "function":"function", "n":"float"),
+        body: |_name, intepreter, args|{
+            let Variable::Array(array) = args.get("array")? else {
+                panic!()
+            };
+            let Variable::Function(function) = args.get("function")? else {
+                panic!()
+            };
+            let Variable::Float(f_n) = args.get("n")? else {
+                panic!();
+            };
+            if f_n.fract() != 0.0 || f_n < 0.0 {
+                return Err(Error::WrongType(
+                    String::from("index"),
+                    String::from("natural"),
+                ));
+            }
+            let n = f_n as usize;
+            if array.len() > n {
+                let new_array: Array = (*array).clone().into_iter().take(n).collect();
+                Ok(Variable::Array(new_array.into()))
+            } else {
+                let mut new_array = (*array).clone();
+                for _ in 0..n-array.len() {
+                    new_array.push(function.exec("function", intepreter, vec![Variable::Array(Rc::new(new_array.clone()))].into())?);
+                }
+                Ok(Variable::Array(new_array.into()))
+            }
+        }
+    });
 }
