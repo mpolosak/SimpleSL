@@ -96,17 +96,11 @@ impl Instruction {
     ) -> Result<Variable, Error> {
         match &self {
             Self::FunctionCall(function, instructions) => {
-                let args = instructions
-                    .iter()
-                    .map(|instruction| instruction.exec(intepreter, local_variables))
-                    .collect::<Result<Vec<_>, _>>()?;
+                let args = exec_instructions(instructions, intepreter, local_variables)?;
                 function.exec("name", intepreter, args)
             }
             Self::LocalFunctionCall(name, instructions) => {
-                let args = instructions
-                    .iter()
-                    .map(|instruction| instruction.exec(intepreter, local_variables))
-                    .collect::<Result<Vec<_>, _>>()?;
+                let args = exec_instructions(instructions, intepreter, local_variables)?;
                 let Variable::Function(function)
                     = local_variables.get(name).or(
                         intepreter.variables.get(name)).unwrap() else {
@@ -122,10 +116,7 @@ impl Instruction {
                 .or(intepreter.variables.get(name))
                 .unwrap()),
             Self::Array(instructions) => {
-                let array = instructions
-                    .iter()
-                    .map(|instruction| instruction.exec(intepreter, local_variables))
-                    .collect::<Result<Vec<_>, _>>()?;
+                let array = exec_instructions(instructions, intepreter, local_variables)?;
                 Ok(Variable::Array(array.into()))
             }
             Self::Function(params, lines) => {
@@ -133,25 +124,7 @@ impl Instruction {
                     .iter()
                     .map(|Param { name, type_name: _ }| name.clone())
                     .collect();
-                let body = lines
-                    .iter()
-                    .map(
-                        |Line {
-                             instruction,
-                             result_var,
-                         }| {
-                            let instruction =
-                                instruction.recreate(&fn_local_variables, local_variables)?;
-                            if let Some(var) = result_var {
-                                fn_local_variables.insert(var.clone());
-                            }
-                            Ok(Line {
-                                result_var: result_var.clone(),
-                                instruction,
-                            })
-                        },
-                    )
-                    .collect::<Result<Vec<Line>, Error>>()?;
+                let body = recreate_lines(lines, &mut fn_local_variables, local_variables)?;
                 Ok(Variable::Function(Rc::new(LangFunction {
                     params: params.clone(),
                     body,
@@ -159,7 +132,7 @@ impl Instruction {
             }
         }
     }
-    fn recreate(
+    pub fn recreate(
         &self,
         local_variables: &HashSet<String>,
         args: &VariableMap,
@@ -199,24 +172,7 @@ impl Instruction {
                 for Param { name, type_name: _ } in params {
                     local_variables.insert(name.clone());
                 }
-                let new_lines = lines
-                    .iter()
-                    .map(
-                        |Line {
-                             result_var,
-                             instruction,
-                         }| {
-                            let instruction = instruction.recreate(&local_variables, args)?;
-                            if let Some(var) = result_var {
-                                local_variables.insert(var.clone());
-                            }
-                            Ok(Line {
-                                result_var: result_var.clone(),
-                                instruction,
-                            })
-                        },
-                    )
-                    .collect::<Result<Vec<Line>, Error>>()?;
+                let new_lines = recreate_lines(lines, &mut local_variables, args)?;
                 Self::Function(params.clone(), new_lines)
             }
             _ => self.clone(),
@@ -239,4 +195,26 @@ pub fn recreate_instructions(
         .iter()
         .map(|instruction| instruction.recreate(local_variables, args))
         .collect()
+}
+
+pub fn recreate_lines(
+    lines: &[Line],
+    local_variables: &mut HashSet<String>,
+    args: &VariableMap,
+) -> Result<Vec<Line>, Error> {
+    lines
+        .iter()
+        .map(|line| line.recreate(local_variables, args))
+        .collect::<Result<Vec<Line>, Error>>()
+}
+
+pub fn exec_instructions(
+    instructions: &[Instruction],
+    intepreter: &mut Intepreter,
+    local_variables: &VariableMap,
+) -> Result<Vec<Variable>, Error> {
+    instructions
+        .iter()
+        .map(|instruction| instruction.exec(intepreter, local_variables))
+        .collect::<Result<Vec<_>, _>>()
 }

@@ -55,4 +55,18 @@ impl Line {
         }
         Ok(result)
     }
+    pub fn recreate(
+        &self,
+        local_variables: &mut HashSet<String>,
+        args: &VariableMap,
+    ) -> Result<Self, Error> {
+        let instruction = self.instruction.recreate(local_variables, args)?;
+        if let Some(var) = &self.result_var {
+            local_variables.insert(var.clone());
+        }
+        Ok(Self {
+            result_var: self.result_var.clone(),
+            instruction,
+        })
+    }
 }
