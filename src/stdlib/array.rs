@@ -15,16 +15,16 @@ pub fn add_array_functions(variables: &mut VariableMap) {
         NativeFunction {
             params: params!("length":"float", "value":"any"),
             body: |_name, _intepreter, args| {
-                let Variable::Float(flen) = args.get("length")? else {
+                let Variable::Float(len) = args.get("length")? else {
                     panic!();
                 };
-                if flen.fract() != 0.0 || flen < 0.0 {
+                if !is_natural(len) {
                     return Err(Error::WrongType(
                         String::from("lenght"),
                         String::from("natural"),
                     ));
                 }
-                let len = flen as usize;
+                let len = len as usize;
                 let value = args.get("value")?;
                 let mut array = Array::new();
                 for _ in 0..len {
@@ -42,16 +42,16 @@ pub fn add_array_functions(variables: &mut VariableMap) {
                 let Variable::Array(array) = args.get("array")? else {
                     panic!();
                 };
-                let Variable::Float(findex) = args.get("index")? else {
+                let Variable::Float(index) = args.get("index")? else {
                     panic!();
                 };
-                if findex.fract() != 0.0 || findex < 0.0 {
+                if !is_natural(index) {
                     return Err(Error::WrongType(
                         String::from("index"),
                         String::from("natural"),
                     ));
                 }
-                let index = findex as usize;
+                let index = index as usize;
                 if index < array.len() {
                     Ok(array[index].clone())
                 } else {
@@ -198,16 +198,13 @@ pub fn add_array_functions(variables: &mut VariableMap) {
                 let Variable::Function(function) = args.get("function")? else {
                     panic!()
                 };
-                let Variable::Float(f_n) = args.get("n")? else {
+                let Variable::Float(n) = args.get("n")? else {
                     panic!();
                 };
-                if f_n.fract() != 0.0 || f_n < 0.0 {
-                    return Err(Error::WrongType(
-                        String::from("index"),
-                        String::from("natural"),
-                    ));
+                if !is_natural(n) {
+                    return Err(Error::WrongType(String::from("n"), String::from("natural")));
                 }
-                let n = f_n as usize;
+                let n = n as usize;
                 recsub(intepreter, n, array, function)
             },
         },
@@ -223,16 +220,13 @@ pub fn add_array_functions(variables: &mut VariableMap) {
                 let Variable::Function(function) = args.get("function")? else {
                     panic!()
                 };
-                let Variable::Float(f_n) = args.get("n")? else {
+                let Variable::Float(n) = args.get("n")? else {
                     panic!();
                 };
-                if f_n.fract() != 0.0 || f_n < 0.0 {
-                    return Err(Error::WrongType(
-                        String::from("index"),
-                        String::from("natural"),
-                    ));
+                if !is_natural(n) {
+                    return Err(Error::WrongType(String::from("n"), String::from("natural")));
                 }
-                let n = f_n as usize;
+                let n = n as usize;
                 if array.len() > n {
                     let new_array: Array = (*array).clone().into_iter().take(n).collect();
                     Ok(Variable::Array(new_array.into()))
@@ -250,4 +244,8 @@ pub fn add_array_functions(variables: &mut VariableMap) {
             },
         },
     );
+}
+
+fn is_natural(f: f64) -> bool {
+    f.fract() != 0.0 && f >= 0.0
 }

@@ -9,8 +9,8 @@ pub fn add_io_functions(variables: &mut VariableMap) {
             params: params!("vars":"..."),
             body: |_name, _intepreter, args| {
                 let Variable::Array(args) = args.get("vars")? else {
-                panic!();
-            };
+                    panic!();
+                };
                 let text = args
                     .iter()
                     .fold(String::new(), |acc, arg| acc + &arg.to_string());
