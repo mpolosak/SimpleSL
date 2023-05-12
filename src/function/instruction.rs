@@ -6,6 +6,7 @@ use crate::{
     parse::Rule,
 };
 use pest::iterators::Pair;
+use std::iter::zip;
 use std::{collections::HashSet, fmt, rc::Rc};
 
 #[derive(Clone)]
@@ -44,6 +45,8 @@ impl Instruction {
                             String::from("Function")
                         ));
                     };
+                    let params = function.get_params();
+                    check_args(var_name, params, &args)?;
                     Ok(Self::FunctionCall(function, args))
                 }
             }
@@ -184,6 +187,40 @@ impl fmt::Debug for Instruction {
     fn fmt(&self, _f: &mut fmt::Formatter<'_>) -> fmt::Result {
         todo!()
     }
+}
+
+pub fn check_args(
+    var_name: &str,
+    params: &Vec<Param>,
+    args: &Vec<Instruction>,
+) -> Result<(), Error> {
+    if let Some(Param { name: _, type_name }) = &params.last() {
+        if *type_name != "..." && args.len() != params.len() {
+            return Err(Error::WrongNumberOfArguments(
+                String::from(var_name),
+                params.len(),
+            ));
+        }
+    } else if !args.is_empty() {
+        return Err(Error::WrongNumberOfArguments(String::from(var_name), 0));
+    }
+    for (arg, Param { type_name, name }) in zip(args, params) {
+        if type_name != "any" && type_name != "..." {
+            match arg {
+                Instruction::Variable(variable) if variable.type_name() != type_name => {
+                    return Err(Error::WrongType(name.clone(), type_name.clone()))
+                }
+                Instruction::Array(_) if type_name != "array" => {
+                    return Err(Error::WrongType(name.clone(), type_name.clone()))
+                }
+                Instruction::Function(_, _) if type_name != "function" => {
+                    return Err(Error::WrongType(name.clone(), type_name.clone()))
+                }
+                _ => (),
+            }
+        }
+    }
+    Ok(())
 }
 
 pub fn recreate_instructions(
