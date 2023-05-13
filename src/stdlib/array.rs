@@ -247,5 +247,5 @@ pub fn add_array_functions(variables: &mut VariableMap) {
 }
 
 fn is_natural(f: f64) -> bool {
-    f.fract() != 0.0 && f >= 0.0
+    f.fract() == 0.0 && f >= 0.0
 }
