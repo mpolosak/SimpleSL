@@ -18,6 +18,21 @@ fizzbuzz = (number:float){
     result;
 };
 
-array = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15};
+/*
+Returns array filled whith increasing values, starting with value
+Length of returned array equals size
+*/
+iota = (value:float, size:float){
+    arecsub({value}, (array:array){
+        len = array_len(array);
+        last = array_at(
+            array, 
+            subtract(len,1)
+        );
+        add(last,1);
+    },size);
+};
+
+array = iota(1, 15);
 array = for_each(array, fizzbuzz);
 for_each(array, print);
