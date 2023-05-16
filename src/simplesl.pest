@@ -15,7 +15,7 @@ string = ${ "\"" ~ inner ~ "\"" }
       | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
   }
 null = {"NULL"}
-line = { (return_variable~"=")? ~ expression ~  line_end }
+line = { COMMENT* ~(return_variable~"=")? ~ expression ~  line_end }
 	line_end = { ";" }
 return_variable = @{ident}
 function = {params~"{"~line*~"}"}
@@ -30,4 +30,7 @@ type = _{float_type | string_type | null_type | function_type | array_type | any
   array_type = {"array"}
   any = {"any"}
 input = _{ line* ~ EOI}
+block_comment = _{"/*" ~ (!"*/" ~ ANY)* ~ "*/"}
+line_comment = _{"//"~(!NEWLINE ~ ANY)*}
+COMMENT = _{block_comment|line_comment}
 WHITESPACE = _{ " " | "\t"| NEWLINE }
