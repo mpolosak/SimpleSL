@@ -1,5 +1,6 @@
 use super::{Function, LangFunction, Line, Param};
 use crate::variable::Variable;
+use crate::variable_type::Type;
 use crate::{
     error::Error,
     intepreter::{Intepreter, VariableMap},
@@ -42,7 +43,7 @@ impl Instruction {
                         = variables.get(var_name)? else {
                         return Err(Error::WrongType(
                             String::from(var_name),
-                            String::from("Function")
+                            Type::Function
                         ));
                     };
                     let params = function.get_params();
@@ -80,8 +81,8 @@ impl Instruction {
                 let params_pair = inner.next().unwrap();
                 let params: Vec<Param> = params_pair.into_inner().map(Param::from).collect();
                 let mut local_variables = local_variables.clone();
-                for Param { name, type_name: _ } in &params {
-                    local_variables.insert(name.clone());
+                for param in &params {
+                    local_variables.insert(param.get_name().to_owned());
                 }
                 let body = inner
                     .map(|arg| Line::new(variables, arg, &mut local_variables))
@@ -108,7 +109,7 @@ impl Instruction {
                     = local_variables.get(name).or(
                         intepreter.variables.get(name)).unwrap() else {
                     return Err(
-                        Error::WrongType(name.clone(), String::from("function"))
+                        Error::WrongType(name.clone(), Type::Function)
                     );
                 };
                 function.exec(name, intepreter, args)
@@ -125,7 +126,7 @@ impl Instruction {
             Self::Function(params, lines) => {
                 let mut fn_local_variables = params
                     .iter()
-                    .map(|Param { name, type_name: _ }| name.clone())
+                    .map(|param| param.get_name().to_owned())
                     .collect();
                 let body = recreate_lines(lines, &mut fn_local_variables, local_variables)?;
                 Ok(Variable::Function(Rc::new(LangFunction {
@@ -149,7 +150,7 @@ impl Instruction {
                     let Variable::Function(function)
                         = args.get(name).unwrap() else {
                             return Err(Error::WrongType(
-                                name.clone(), String::from("function")));
+                                name.clone(), Type::Function));
                     };
                     Self::FunctionCall(function, instructions)
                 }
@@ -172,14 +173,22 @@ impl Instruction {
             }
             Self::Function(params, lines) => {
                 let mut local_variables = local_variables.clone();
-                for Param { name, type_name: _ } in params {
-                    local_variables.insert(name.clone());
+                for param in params {
+                    local_variables.insert(param.get_name().to_owned());
                 }
                 let new_lines = recreate_lines(lines, &mut local_variables, args)?;
                 Self::Function(params.clone(), new_lines)
             }
             _ => self.clone(),
         })
+    }
+    pub fn get_type(&self) -> Type {
+        match self {
+            Instruction::Variable(variable) => variable.get_type(),
+            Instruction::Array(_) => Type::Array,
+            Instruction::Function(_, _) => Type::Function,
+            _ => Type::Any,
+        }
     }
 }
 
@@ -194,30 +203,28 @@ pub fn check_args(
     params: &Vec<Param>,
     args: &Vec<Instruction>,
 ) -> Result<(), Error> {
-    if let Some(Param { name: _, type_name }) = &params.last() {
-        if *type_name != "..." && args.len() != params.len() {
-            return Err(Error::WrongNumberOfArguments(
-                String::from(var_name),
-                params.len(),
-            ));
+    if let Some(param) = params.last() {
+        if let Param::CatchRest(_) = param {
+            if args.len() != params.len() {
+                return Err(Error::WrongNumberOfArguments(
+                    String::from(var_name),
+                    params.len(),
+                ));
+            }
         }
     } else if !args.is_empty() {
         return Err(Error::WrongNumberOfArguments(String::from(var_name), 0));
     }
-    for (arg, Param { type_name, name }) in zip(args, params) {
-        if type_name != "any" && type_name != "..." {
-            match arg {
-                Instruction::Variable(variable) if variable.type_name() != type_name => {
-                    return Err(Error::WrongType(name.clone(), type_name.clone()))
-                }
-                Instruction::Array(_) if type_name != "array" => {
-                    return Err(Error::WrongType(name.clone(), type_name.clone()))
-                }
-                Instruction::Function(_, _) if type_name != "function" => {
-                    return Err(Error::WrongType(name.clone(), type_name.clone()))
-                }
-                _ => (),
+    for (arg, param) in zip(args, params) {
+        match param {
+            Param::Standard(name, var_type)
+                if *var_type != arg.get_type()
+                    && arg.get_type() != Type::Any
+                    && *var_type != Type::Any =>
+            {
+                return Err(Error::WrongType(name.clone(), *var_type))
             }
+            _ => (),
         }
     }
     Ok(())

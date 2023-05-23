@@ -1,10 +1,10 @@
-use crate::parse::Rule;
+use crate::{parse::Rule, variable_type::Type};
 use std::fmt;
 
 #[derive(Debug)]
 pub enum Error {
     VariableDoesntExist(String),
-    WrongType(String, String),
+    WrongType(String, Type),
     WrongNumberOfArguments(String, usize),
     IndexToBig,
     CannotBeParsed(String),
@@ -21,8 +21,8 @@ impl fmt::Display for Error {
             Self::VariableDoesntExist(var_name) => {
                 write!(f, "{var_name} doesn't exist")
             }
-            Self::WrongType(var_name, type_name) => {
-                write!(f, "{var_name} should be {type_name}")
+            Self::WrongType(var_name, var_type) => {
+                write!(f, "{var_name} should be {var_type}")
             }
             Self::WrongNumberOfArguments(name, 0) => {
                 write!(f, "{name} requires no arguments but some passed")

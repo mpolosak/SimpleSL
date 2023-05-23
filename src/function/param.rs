@@ -1,28 +1,26 @@
-use crate::parse::Rule;
+use crate::{parse::Rule, variable_type::Type};
 use pest::iterators::Pair;
 use std::fmt;
 
 #[derive(Clone, Debug)]
-pub struct Param {
-    pub name: String,
-    pub type_name: String,
+pub enum Param {
+    Standard(String, Type),
+    CatchRest(String),
 }
 
 impl Param {
-    pub fn new(name: &str, type_name: &str) -> Self {
-        Param {
-            name: String::from(name),
-            type_name: String::from(type_name),
+    pub fn get_name(&self) -> &str {
+        match self {
+            Self::Standard(name, _) | Self::CatchRest(name) => name,
         }
     }
 }
 
 impl fmt::Display for Param {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.type_name == "..." {
-            write!(f, "{}...", self.name)
-        } else {
-            write!(f, "{}:{}", self.name, self.type_name)
+        match self {
+            Self::Standard(name, var_type) => write!(f, "{name}:{var_type}"),
+            Self::CatchRest(name) => write!(f, "{name}..."),
         }
     }
 }
@@ -30,9 +28,9 @@ impl fmt::Display for Param {
 impl From<Pair<'_, Rule>> for Param {
     fn from(value: Pair<'_, Rule>) -> Self {
         let mut inner = value.into_inner();
-        Self::new(
-            inner.next().unwrap().as_str(),
-            inner.next().unwrap().as_str(),
+        Self::Standard(
+            String::from(inner.next().unwrap().as_str()),
+            Type::from(inner.next().unwrap()),
         )
     }
 }

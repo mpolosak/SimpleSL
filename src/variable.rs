@@ -1,4 +1,4 @@
-use crate::{error::Error, function::Function, parse::*, pest::Parser};
+use crate::{error::Error, function::Function, parse::*, pest::Parser, variable_type::Type};
 use pest::iterators::Pair;
 use std::{fmt, rc::Rc, str::FromStr};
 
@@ -14,13 +14,13 @@ pub enum Variable {
 }
 
 impl Variable {
-    pub fn type_name(&self) -> &str {
+    pub fn get_type(&self) -> Type {
         match self {
-            Variable::Float(_) => "float",
-            Variable::String(_) => "string",
-            Variable::Function(_) => "function",
-            Variable::Array(_) => "array",
-            Variable::Null => "null",
+            Variable::Float(_) => Type::Float,
+            Variable::String(_) => Type::String,
+            Variable::Function(_) => Type::Function,
+            Variable::Array(_) => Type::Array,
+            Variable::Null => Type::Null,
         }
     }
 }

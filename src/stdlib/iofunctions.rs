@@ -6,7 +6,7 @@ pub fn add_io_functions(variables: &mut VariableMap) {
     variables.add_native_function(
         "print",
         NativeFunction {
-            params: params!("vars":"..."),
+            params: vec![Param::CatchRest(String::from("vars"))],
             body: |_name, _intepreter, args| {
                 let Variable::Array(args) = args.get("vars")? else {
                     panic!();

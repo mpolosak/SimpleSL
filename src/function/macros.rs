@@ -1,9 +1,9 @@
 #[macro_export]
 macro_rules! params {
-    ($($name: literal: $type_name: literal),*)=>{
+    ($($name: literal: $type_name: expr),*)=>{
         vec!(
             $(
-                Param::new($name, $type_name),
+                Param::Standard(String::from($name), $type_name),
             )*
         )
     }

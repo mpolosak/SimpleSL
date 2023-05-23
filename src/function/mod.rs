@@ -11,6 +11,7 @@ pub use self::{
 use crate::error::Error;
 use crate::intepreter::{Intepreter, VariableMap};
 use crate::variable::{Array, Variable};
+use crate::variable_type::Type;
 use std::{fmt, iter::zip, vec::Vec};
 
 pub trait Function {
@@ -22,33 +23,35 @@ pub trait Function {
     ) -> Result<Variable, Error> {
         let mut args_map = VariableMap::new();
         let params = self.get_params();
-        if let Some(Param {
-            name: param_name,
-            type_name,
-        }) = &params.last()
-        {
-            if *type_name == "..." {
+        match &params.last() {
+            Some(Param::CatchRest(param_name)) => {
                 let from = params.len() - 1;
                 let rest: Array = args.drain(from..).collect();
                 args_map.insert(param_name, Variable::Array(rest.into()));
-            } else if args.len() != params.len() {
+            }
+            Some(_) if args.len() != params.len() => {
                 return Err(Error::WrongNumberOfArguments(
                     String::from(name),
                     params.len(),
                 ));
             }
-        } else if !args.is_empty() {
-            return Err(Error::WrongNumberOfArguments(String::from(name), 0));
+            None if !args.is_empty() => {
+                return Err(Error::WrongNumberOfArguments(String::from(name), 0));
+            }
+            _ => (),
         }
 
         for (arg, param) in zip(args, params) {
-            if param.type_name == "any" || arg.type_name() == param.type_name {
-                args_map.insert(&param.name, arg);
-            } else {
-                return Err(Error::WrongType(
-                    param.name.clone(),
-                    param.type_name.clone(),
-                ));
+            match param {
+                Param::Standard(name, var_type)
+                    if *var_type == Type::Any || *var_type == arg.get_type() =>
+                {
+                    args_map.insert(name, arg)
+                }
+                Param::Standard(name, var_type) => {
+                    return Err(Error::WrongType(name.clone(), *var_type))
+                }
+                _ => (),
             }
         }
         self.exec_intern(name, intepreter, args_map)

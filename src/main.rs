@@ -4,6 +4,7 @@ mod intepreter;
 mod parse;
 mod stdlib;
 mod variable;
+mod variable_type;
 use intepreter::Intepreter;
 use rustyline::{error::ReadlineError, Editor};
 use std::env;
