@@ -204,17 +204,10 @@ pub fn check_args(
     params: &Vec<Param>,
     args: &Vec<Instruction>,
 ) -> Result<(), Error> {
-    if let Some(param) = params.last() {
-        if let Param::CatchRest(_) = param {
-            if args.len() != params.len() {
-                return Err(Error::WrongNumberOfArguments(
-                    String::from(var_name),
-                    params.len(),
-                ));
-            }
-        }
-    } else if !args.is_empty() {
-        return Err(Error::WrongNumberOfArguments(String::from(var_name), 0));
+    match params.last() {
+        Some(Param::CatchRest(_)) if args.len() != params.len()-1 => todo!(),
+        None if !args.is_empty() => return Err(Error::WrongNumberOfArguments(String::from(var_name), 0)),
+        _ => ()
     }
     for (arg, param) in zip(args, params) {
         match param {
