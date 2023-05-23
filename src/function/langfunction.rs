@@ -1,5 +1,6 @@
 use super::{Function, Line, Param};
 use crate::intepreter::{Intepreter, VariableMap};
+use crate::variable_type::Type;
 use crate::{error::Error, variable::Variable};
 
 #[derive(Clone)]
@@ -23,5 +24,14 @@ impl Function for LangFunction {
     }
     fn get_params(&self) -> &Vec<Param> {
         &self.params
+    }
+    fn get_return_type(&self) -> Type {
+        match self.body.last() {
+            Some(Line {
+                result_var: _,
+                instruction,
+            }) => instruction.get_type(),
+            None => Type::Null,
+        }
     }
 }

@@ -63,6 +63,7 @@ pub trait Function {
         args: VariableMap,
     ) -> Result<Variable, Error>;
     fn get_params(&self) -> &Vec<Param>;
+    fn get_return_type(&self) -> Type;
 }
 
 impl fmt::Display for dyn Function {

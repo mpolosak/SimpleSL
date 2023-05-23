@@ -187,6 +187,7 @@ impl Instruction {
             Instruction::Variable(variable) => variable.get_type(),
             Instruction::Array(_) => Type::Array,
             Instruction::Function(_, _) => Type::Function,
+            Instruction::FunctionCall(function, _) => function.get_return_type(),
             _ => Type::Any,
         }
     }

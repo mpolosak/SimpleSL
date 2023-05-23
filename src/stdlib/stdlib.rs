@@ -7,6 +7,7 @@ pub fn add_std_functions(variables: &mut VariableMap) {
         "import",
         NativeFunction {
             params: params!("path": Type::String),
+            return_type: Type::Any,
             body: |_name, intepreter, args| {
                 let Variable::String(path) = args.get("path")? else {
                     panic!()
@@ -19,6 +20,7 @@ pub fn add_std_functions(variables: &mut VariableMap) {
         "add",
         NativeFunction {
             params: params!("a": Type::Float, "b": Type::Float),
+            return_type: Type::Float,
             body: |_name, _intepreter, args| {
                 let Variable::Float(a) = args.get("a")? else {
                     panic!()
@@ -34,6 +36,7 @@ pub fn add_std_functions(variables: &mut VariableMap) {
         "subtract",
         NativeFunction {
             params: params!("a": Type::Float, "b": Type::Float),
+            return_type: Type::Float,
             body: |_name, _intepreter, args| {
                 let Variable::Float(a) = args.get("a")? else {
                     panic!()
@@ -49,6 +52,7 @@ pub fn add_std_functions(variables: &mut VariableMap) {
         "multiply",
         NativeFunction {
             params: params!("a": Type::Float, "b": Type::Float),
+            return_type: Type::Float,
             body: |_name, _intepreter, args| {
                 let Variable::Float(a) = args.get("a")? else {
                     panic!()
@@ -64,6 +68,7 @@ pub fn add_std_functions(variables: &mut VariableMap) {
         "divide",
         NativeFunction {
             params: params!("a": Type::Float, "b": Type::Float),
+            return_type: Type::Float,
             body: |_name, _intepreter, args| {
                 let Variable::Float(a) = args.get("a")? else {
                     panic!()
@@ -79,6 +84,7 @@ pub fn add_std_functions(variables: &mut VariableMap) {
         "modulo",
         NativeFunction {
             params: params!("a": Type::Float, "b": Type::Float),
+            return_type: Type::Float,
             body: |_name, _intepreter, args| {
                 let Variable::Float(a) = args.get("a")? else {
                     panic!()
@@ -96,6 +102,7 @@ pub fn add_std_functions(variables: &mut VariableMap) {
         "or",
         NativeFunction {
             params: params!("a": Type::Float, "b": Type::Float),
+            return_type: Type::Float,
             body: |_name, _intepreter, args| {
                 let Variable::Float(a) = args.get("a")? else {
                     panic!()
@@ -111,6 +118,7 @@ pub fn add_std_functions(variables: &mut VariableMap) {
         "not",
         NativeFunction {
             params: params!("a": Type::Float),
+            return_type: Type::Float,
             body: |_name, _intepreter, args| {
                 let Variable::Float(a) = args.get("a")? else {
                     panic!()
@@ -123,6 +131,7 @@ pub fn add_std_functions(variables: &mut VariableMap) {
         "equals",
         NativeFunction {
             params: params!("a": Type::Any, "b": Type::Any),
+            return_type: Type::Float,
             body: |_name, _intepreter, args| {
                 let a = args.get("a")?;
                 let b = args.get("b")?;
@@ -134,6 +143,7 @@ pub fn add_std_functions(variables: &mut VariableMap) {
         "if",
         NativeFunction {
             params: params!("condition": Type::Float, "function": Type::Function),
+            return_type: Type::Any,
             body: |_name, intepreter, args| {
                 let Variable::Float(condition) = args.get("condition")? else {
                     panic!()
@@ -157,6 +167,7 @@ pub fn add_std_functions(variables: &mut VariableMap) {
                 "function": Type::Function,
                 "else": Type::Function
             ),
+            return_type: Type::Any,
             body: |_name, intepreter, args| {
                 let Variable::Float(condition) = args.get("condition")? else {
                     panic!()

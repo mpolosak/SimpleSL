@@ -2,7 +2,7 @@ use crate::parse::Rule;
 use pest::iterators::Pair;
 use std::fmt::{Debug, Display};
 
-#[derive(Copy,Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq)]
 pub enum Type {
     Float,
     String,

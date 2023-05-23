@@ -1,4 +1,5 @@
 use crate::function::{NativeFunction, Param};
+use crate::variable_type::Type;
 use crate::{intepreter::VariableMap, params, variable::*};
 use std::io;
 
@@ -7,6 +8,7 @@ pub fn add_io_functions(variables: &mut VariableMap) {
         "print",
         NativeFunction {
             params: vec![Param::CatchRest(String::from("vars"))],
+            return_type: Type::Null,
             body: |_name, _intepreter, args| {
                 let Variable::Array(args) = args.get("vars")? else {
                     panic!();
@@ -23,6 +25,7 @@ pub fn add_io_functions(variables: &mut VariableMap) {
         "cgetline",
         NativeFunction {
             params: params!(),
+            return_type: Type::String,
             body: |_name, _intepreter, _params| {
                 let mut input = String::new();
                 io::stdin().read_line(&mut input)?;
