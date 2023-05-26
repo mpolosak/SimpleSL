@@ -23,6 +23,6 @@ impl Function for NativeFunction {
         &self.params
     }
     fn get_return_type(&self) -> Type {
-        self.return_type
+        self.return_type.clone()
     }
 }

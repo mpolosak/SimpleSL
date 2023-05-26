@@ -1,7 +1,8 @@
 use crate::function::{Line, NativeFunction};
+use crate::variable_type::Type;
 use crate::{error::Error, parse::*, pest::Parser, stdlib::add_std_lib, variable::*};
 use std::{
-    collections::{HashMap, HashSet},
+    collections::HashMap,
     fs::File,
     io::{BufReader, Read},
     rc::Rc,
@@ -20,7 +21,7 @@ impl Intepreter {
     pub fn exec(&mut self, input: String) -> Result<Variable, Error> {
         let parse = SimpleSLParser::parse(Rule::input, &input)?;
         let mut lines = Vec::<Line>::new();
-        let mut local_variables = HashSet::<String>::new();
+        let mut local_variables = HashMap::<String, Type>::new();
         for line_pair in parse {
             if line_pair.as_rule() == Rule::EOI {
                 break;
@@ -44,6 +45,7 @@ impl Intepreter {
     }
 }
 
+#[derive(Debug)]
 pub struct VariableMap {
     hash_map: HashMap<String, Variable>,
 }

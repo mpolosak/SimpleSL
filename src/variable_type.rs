@@ -2,14 +2,36 @@ use crate::parse::Rule;
 use pest::iterators::Pair;
 use std::fmt::{Debug, Display};
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub enum Type {
     Float,
     String,
-    Function,
+    Function(Box<Type>),
     Array,
     Null,
     Any,
+}
+
+impl Type {
+    pub fn matches(&self, other: &Self) -> bool {
+        match self {
+            Self::Function(return_type) => {
+                if let Self::Function(return_type2) = other {
+                    return_type.matches(return_type2)
+                } else {
+                    false
+                }
+            }
+            Self::Any => true,
+            _ => {
+                if let Self::Any = other {
+                    true
+                } else {
+                    self == other
+                }
+            }
+        }
+    }
 }
 
 impl Debug for Type {
@@ -17,7 +39,7 @@ impl Debug for Type {
         match self {
             Self::Float => write!(f, "float"),
             Self::String => write!(f, "string"),
-            Self::Function => write!(f, "function"),
+            Self::Function(var_type) => write!(f, "function->{var_type}"),
             Self::Array => write!(f, "array"),
             Self::Null => write!(f, "null"),
             Self::Any => write!(f, "any"),
@@ -30,7 +52,7 @@ impl Display for Type {
         match self {
             Self::Float => write!(f, "float"),
             Self::String => write!(f, "string"),
-            Self::Function => write!(f, "function"),
+            Self::Function(var_type) => write!(f, "function->{var_type}"),
             Self::Array => write!(f, "array"),
             Self::Null => write!(f, "null"),
             Self::Any => write!(f, "any"),
@@ -44,7 +66,7 @@ impl From<Pair<'_, Rule>> for Type {
             Rule::float_type => Self::Float,
             Rule::string_type => Self::String,
             Rule::null_type => Self::Null,
-            Rule::function_type => Self::Function,
+            Rule::function_type => Self::Function(Self::Any.into()),
             Rule::array_type => Self::Array,
             Rule::any => Self::Any,
             _ => panic!(),

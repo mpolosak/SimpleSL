@@ -99,7 +99,7 @@ pub fn add_array_functions(variables: &mut VariableMap) {
     variables.add_native_function(
         "for_each",
         NativeFunction {
-            params: params!("array": Type::Array, "function": Type::Function),
+            params: params!("array": Type::Array, "function": Type::Function(Type::Any.into())),
             return_type: Type::Array,
             body: |_name, intepreter, args| {
                 let Variable::Array(array) = args.get("array")? else {
@@ -119,7 +119,7 @@ pub fn add_array_functions(variables: &mut VariableMap) {
     variables.add_native_function(
         "filter",
         NativeFunction {
-            params: params!("array": Type::Array, "function": Type::Function),
+            params: params!("array": Type::Array, "function": Type::Function(Type::Float.into())),
             return_type: Type::Array,
             body: |_name, interpreter, args| {
                 let Variable::Array(array) = args.get("array")? else {
@@ -146,7 +146,7 @@ pub fn add_array_functions(variables: &mut VariableMap) {
             params: params!(
                 "array": Type::Array,
                 "initial_value": Type::Any,
-                "function": Type::Function
+                "function": Type::Function(Type::Any.into())
             ),
             return_type: Type::Any,
             body: |_name, intepreter, args| {
@@ -205,7 +205,7 @@ pub fn add_array_functions(variables: &mut VariableMap) {
         NativeFunction {
             params: params!(
                 "array": Type::Array,
-                "function": Type::Function,
+                "function": Type::Function(Type::Any.into()),
                 "n": Type::Float
             ),
             return_type: Type::Any,
@@ -235,7 +235,7 @@ pub fn add_array_functions(variables: &mut VariableMap) {
         NativeFunction {
             params: params!(
                 "array": Type::Array,
-                "function": Type::Function,
+                "function": Type::Function(Type::Any.into()),
                 "n": Type::Float
             ),
             return_type: Type::Array,

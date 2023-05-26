@@ -42,16 +42,13 @@ pub trait Function {
         }
 
         for (arg, param) in zip(args, params) {
-            match param {
-                Param::Standard(name, var_type)
-                    if *var_type == Type::Any || *var_type == arg.get_type() =>
-                {
-                    args_map.insert(name, arg)
-                }
-                Param::Standard(name, var_type) => {
-                    return Err(Error::WrongType(name.clone(), *var_type))
-                }
-                _ => (),
+            if param.get_type().matches(&arg.get_type()) {
+                args_map.insert(param.get_name(), arg);
+            } else {
+                return Err(Error::WrongType(
+                    param.get_name().to_owned(),
+                    param.get_type(),
+                ));
             }
         }
         self.exec_intern(name, intepreter, args_map)

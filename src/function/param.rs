@@ -14,6 +14,12 @@ impl Param {
             Self::Standard(name, _) | Self::CatchRest(name) => name,
         }
     }
+    pub fn get_type(&self) -> Type {
+        match self {
+            Self::Standard(_, var_type) => var_type.clone(),
+            Self::CatchRest(_) => Type::Array,
+        }
+    }
 }
 
 impl fmt::Display for Param {

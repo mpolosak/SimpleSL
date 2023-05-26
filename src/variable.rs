@@ -18,7 +18,7 @@ impl Variable {
         match self {
             Variable::Float(_) => Type::Float,
             Variable::String(_) => Type::String,
-            Variable::Function(_) => Type::Function,
+            Variable::Function(function) => Type::Function(function.get_return_type().into()),
             Variable::Array(_) => Type::Array,
             Variable::Null => Type::Null,
         }
@@ -50,7 +50,7 @@ impl fmt::Debug for Variable {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Variable::Float(value) => write!(f, "Variable::Float({value})"),
-            Variable::String(value) => write!(f, "Variable::Text(\"{value}\")"),
+            Variable::String(value) => write!(f, "Variable::String(\"{value}\")"),
             Variable::Function(function) => {
                 write!(f, "Variable::Function(")?;
                 if let [params @ .., last] = &function.get_params()[..] {
