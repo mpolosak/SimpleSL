@@ -14,22 +14,10 @@ pub enum Type {
 
 impl Type {
     pub fn matches(&self, other: &Self) -> bool {
-        match self {
-            Self::Function(return_type) => {
-                if let Self::Function(return_type2) = other {
-                    return_type.matches(return_type2)
-                } else {
-                    false
-                }
-            }
-            Self::Any => true,
-            _ => {
-                if let Self::Any = other {
-                    true
-                } else {
-                    self == other
-                }
-            }
+        match (self, other) {
+            (Self::Function(return_type), Self::Function(return_type2)) => return_type.matches(return_type2),
+            (Self::Any, Self::Any)|(_, Self::Any)|(Self::Any, _) => true,
+            _ => self == other
         }
     }
 }
