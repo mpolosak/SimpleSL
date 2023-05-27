@@ -66,7 +66,13 @@ impl From<Pair<'_, Rule>> for Type {
             Rule::float_type => Self::Float,
             Rule::string_type => Self::String,
             Rule::null_type => Self::Null,
-            Rule::function_type => Self::Function(Self::Any.into()),
+            Rule::function_type => {
+                if let Some(return_pair) = pair.into_inner().next() {
+                    Self::Function(Box::new(Type::from(return_pair)))
+                } else {
+                    Self::Function(Self::Any.into())
+                }
+            },
             Rule::array_type => Self::Array,
             Rule::any => Self::Any,
             _ => panic!(),
