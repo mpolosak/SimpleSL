@@ -72,6 +72,20 @@ impl fmt::Display for dyn Function {
             }
             write!(f, "{last}")?;
         }
-        write!(f, ")")
+        write!(f, ")->{}", self.get_return_type())
+    }
+}
+
+impl fmt::Debug for dyn Function {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "dyn Function(")?;
+        write!(f, "params: [")?;
+        if let [params @ .., last] = &self.get_params()[..] {
+            for param in params {
+                write!(f, "{param:?}, ")?;
+            }
+            write!(f, "{last}")?;
+        }
+        write!(f, "], return_type: {:?})", self.get_return_type())
     }
 }

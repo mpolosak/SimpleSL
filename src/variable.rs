@@ -51,16 +51,7 @@ impl fmt::Debug for Variable {
         match self {
             Variable::Float(value) => write!(f, "Variable::Float({value})"),
             Variable::String(value) => write!(f, "Variable::String(\"{value}\")"),
-            Variable::Function(function) => {
-                write!(f, "Variable::Function(")?;
-                if let [params @ .., last] = &function.get_params()[..] {
-                    for param in params {
-                        write!(f, "{param}, ")?;
-                    }
-                    write!(f, "{last}")?;
-                }
-                write!(f, ")")
-            }
+            Variable::Function(function) => write!(f, "Variable::Function({function:?})"),
             Variable::Array(array) => {
                 write!(f, "Variable({{")?;
                 if let [elements @ .., last] = &array[..] {
