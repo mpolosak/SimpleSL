@@ -1,4 +1,6 @@
-use crate::{error::Error, function::Function, parse::*, pest::Parser, variable_type::Type};
+use crate::{
+    error::Error, function::Function, join, join_debug, parse::*, pest::Parser, variable_type::Type,
+};
 use pest::iterators::Pair;
 use std::{fmt, rc::Rc, str::FromStr};
 
@@ -31,16 +33,7 @@ impl fmt::Display for Variable {
             Variable::Float(value) => write!(f, "{value}"),
             Variable::String(value) => write!(f, "{value}"),
             Variable::Function(function) => write!(f, "{function}"),
-            Variable::Array(array) => {
-                write!(f, "{{")?;
-                if let [elements @ .., last] = &array[..] {
-                    for var in elements {
-                        write!(f, "{var}, ")?;
-                    }
-                    write!(f, "{last}")?
-                }
-                write!(f, "}}")
-            }
+            Variable::Array(array) => write!(f, "{{{}}}", join(array, ", ")),
             Variable::Null => write!(f, "NULL"),
         }
     }
@@ -52,16 +45,7 @@ impl fmt::Debug for Variable {
             Variable::Float(value) => write!(f, "Variable::Float({value})"),
             Variable::String(value) => write!(f, "Variable::String(\"{value}\")"),
             Variable::Function(function) => write!(f, "Variable::Function({function:?})"),
-            Variable::Array(array) => {
-                write!(f, "Variable({{")?;
-                if let [elements @ .., last] = &array[..] {
-                    for var in elements {
-                        write!(f, "{var:?}, ")?;
-                    }
-                    write!(f, "{last:?}")?
-                }
-                write!(f, "}})")
-            }
+            Variable::Array(array) => write!(f, "Variable({{{}}})", join_debug(array, ", ")),
             Variable::Null => write!(f, "Variable::Null"),
         }
     }

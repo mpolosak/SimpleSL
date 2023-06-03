@@ -15,9 +15,11 @@ pub enum Type {
 impl Type {
     pub fn matches(&self, other: &Self) -> bool {
         match (self, other) {
-            (Self::Function(return_type), Self::Function(return_type2)) => return_type.matches(return_type2),
-            (Self::Any, Self::Any)|(_, Self::Any)|(Self::Any, _) => true,
-            _ => self == other
+            (Self::Function(return_type), Self::Function(return_type2)) => {
+                return_type.matches(return_type2)
+            }
+            (Self::Any, Self::Any) | (_, Self::Any) | (Self::Any, _) => true,
+            _ => self == other,
         }
     }
 }
@@ -60,7 +62,7 @@ impl From<Pair<'_, Rule>> for Type {
                 } else {
                     Self::Function(Self::Any.into())
                 }
-            },
+            }
             Rule::array_type => Self::Array,
             Rule::any => Self::Any,
             _ => panic!(),
