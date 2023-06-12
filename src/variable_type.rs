@@ -94,12 +94,17 @@ impl From<Pair<'_, Rule>> for Type {
             Rule::string_type => Self::String,
             Rule::null_type => Self::Null,
             Rule::function_type => {
-                // if let Some(return_pair) = pair.into_inner().next() {
-                //     Self::Function(Box::new(Type::from(return_pair)))
-                // } else {
-                //     Self::Function(Self::Any.into())
-                // }
-                todo!()
+                let mut return_type = Self::Any;
+                let mut params_types = Vec::new();
+                let catch_rest = false;
+                for pair in pair.into_inner() {
+                    if pair.as_rule() == Rule::function_type_params {
+                        params_types = pair.into_inner().map(Type::from).collect();
+                    } else {
+                        return_type = Type::from(pair);
+                    }
+                }
+                Self::Function(Box::new(return_type), params_types, catch_rest)
             }
             Rule::array_type => Self::Array,
             Rule::any => Self::Any,
