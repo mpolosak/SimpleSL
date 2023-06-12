@@ -40,7 +40,7 @@ impl fmt::Display for Params {
             Self {
                 standard,
                 catch_rest: Some(catch_rest),
-            } if standard.is_empty() => write!(f, "{}, {catch_rest}...", join(standard, ", ")),
+            } if standard.is_empty() => write!(f, "{catch_rest}..."),
             Self {
                 standard,
                 catch_rest: Some(catch_rest),
