@@ -22,9 +22,7 @@ impl Type {
                 Self::Function(return_type, param_types, catch_rest),
                 Self::Function(return_type2, param_types2, catch_rest2),
             ) => {
-                if *catch_rest2 && !catch_rest {
-                    false
-                } else if param_types.len() != param_types2.len() && !catch_rest {
+                if (*catch_rest2 || param_types.len() != param_types2.len()) && !catch_rest {
                     false
                 } else {
                     for (type1, type2) in zip(param_types, param_types2) {
@@ -32,7 +30,7 @@ impl Type {
                             return false;
                         }
                     }
-                    return_type.matches(&return_type2)
+                    return_type.matches(return_type2)
                 }
             }
             (_, Self::Any) => true,

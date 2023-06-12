@@ -38,8 +38,8 @@ pub trait Function {
         }
 
         for (arg, Param { var_type, name }) in zip(args, &params.standard) {
-            if arg.get_type().matches(&var_type) {
-                args_map.insert(&name, arg);
+            if arg.get_type().matches(var_type) {
+                args_map.insert(name, arg);
             } else {
                 return Err(Error::WrongType(name.clone(), var_type.clone()));
             }
