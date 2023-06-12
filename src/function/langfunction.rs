@@ -1,6 +1,6 @@
 use super::{Function, Line, Param};
 use crate::intepreter::{Intepreter, VariableMap};
-use crate::variable_type::Type;
+use crate::variable_type::{GetType, Type};
 use crate::{error::Error, variable::Variable};
 
 #[derive(Clone)]

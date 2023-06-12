@@ -1,6 +1,6 @@
 use super::{Function, LangFunction, Line, Param};
 use crate::variable::Variable;
-use crate::variable_type::Type;
+use crate::variable_type::{GetType, Type};
 use crate::{
     error::Error,
     intepreter::{Intepreter, VariableMap},
@@ -37,26 +37,29 @@ impl Instruction {
                     .map(|pair| Self::new(variables, pair, local_variables))
                     .collect::<Result<Vec<_>, _>>()?;
                 match local_variables.get(var_name) {
-                    Some(Type::Function(return_type)) => Ok(Self::LocalFunctionCall(
-                        String::from(var_name),
-                        args,
-                        *return_type.clone(),
-                    )),
+                    Some(Type::Function(return_type, _param_types, _catch_rest)) => Ok(
+                        // todo: check if arguments match params
+                        Self::LocalFunctionCall(String::from(var_name), args, *return_type.clone()),
+                    ),
                     Some(Type::Any) => Ok(Self::LocalFunctionCall(
                         String::from(var_name),
                         args,
                         Type::Any,
                     )),
-                    Some(_) => Err(Error::WrongType(
-                        var_name.to_owned(),
-                        Type::Function(Type::Any.into()),
-                    )),
+                    Some(_) => {
+                        let param_types = args.iter().map(Instruction::get_type).collect();
+                        Err(Error::WrongType(
+                            var_name.to_owned(),
+                            Type::Function(Type::Any.into(), param_types, false),
+                        ))
+                    }
                     None => {
                         let Variable::Function(function)
                         = variables.get(var_name)? else {
+                            let param_types = args.iter().map(Instruction::get_type).collect();
                             return Err(Error::WrongType(
                                 String::from(var_name),
-                                Type::Function(Type::Any.into())
+                                Type::Function(Type::Any.into(), param_types, false)
                             ));
                         };
                         let params = function.get_params();
@@ -122,8 +125,9 @@ impl Instruction {
                 let Variable::Function(function)
                     = local_variables.get(name).or(
                         intepreter.variables.get(name)).unwrap() else {
+                    let param_types = args.iter().map(Variable::get_type).collect();
                     return Err(
-                        Error::WrongType(name.clone(), Type::Function(Type::Any.into()))
+                        Error::WrongType(name.clone(), Type::Function(Type::Any.into(), param_types, false))
                     );
                 };
                 function.exec(name, intepreter, args)
@@ -163,8 +167,9 @@ impl Instruction {
                 } else {
                     let Variable::Function(function)
                         = args.get(name).unwrap() else {
+                            let param_types = instructions.iter().map(Instruction::get_type).collect();
                             return Err(Error::WrongType(
-                                name.clone(), Type::Function(Type::Any.into())));
+                                name.clone(), Type::Function(Type::Any.into(), param_types, false)));
                     };
                     Self::FunctionCall(function, instructions)
                 }
@@ -196,27 +201,40 @@ impl Instruction {
             _ => self.clone(),
         })
     }
-    pub fn get_type(&self) -> Type {
-        match self {
-            Instruction::Variable(variable) => variable.get_type(),
-            Instruction::Array(_) => Type::Array,
-            Instruction::Function(_, lines) => match lines.last() {
-                Some(Line {
-                    result_var: _,
-                    instruction,
-                }) => Type::Function(instruction.get_type().into()),
-                None => Type::Null,
-            },
-            Instruction::FunctionCall(function, _) => function.get_return_type(),
-            Instruction::LocalFunctionCall(_, _, var_type) => var_type.clone(),
-            Instruction::LocalVariable(_, var_type) => var_type.clone(),
-        }
-    }
 }
 
 impl fmt::Debug for Instruction {
     fn fmt(&self, _f: &mut fmt::Formatter<'_>) -> fmt::Result {
         todo!()
+    }
+}
+
+impl GetType for Instruction {
+    fn get_type(&self) -> Type {
+        match self {
+            Instruction::Variable(variable) => variable.get_type(),
+            Instruction::Array(_) => Type::Array,
+            Instruction::Function(params, lines) => {
+                let mut param_types = Vec::new();
+                let mut catch_rest = false;
+                for param in params {
+                    match param {
+                        Param::Standard(_, param_type) => param_types.push(param_type.clone()),
+                        Param::CatchRest(_) => catch_rest = true,
+                    }
+                }
+                match lines.last() {
+                    Some(Line {
+                        result_var: _,
+                        instruction,
+                    }) => Type::Function(instruction.get_type().into(), param_types, catch_rest),
+                    None => Type::Function(Box::new(Type::Null), param_types, catch_rest),
+                }
+            }
+            Instruction::FunctionCall(function, _) => function.get_return_type(),
+            Instruction::LocalFunctionCall(_, _, var_type) => var_type.clone(),
+            Instruction::LocalVariable(_, var_type) => var_type.clone(),
+        }
     }
 }
 
@@ -239,7 +257,7 @@ pub fn check_args(
     }
     for (arg, param) in zip(args, params) {
         match param {
-            Param::Standard(name, var_type) if !var_type.matches(&arg.get_type()) => {
+            Param::Standard(name, var_type) if !arg.get_type().matches(var_type) => {
                 return Err(Error::WrongType(name.clone(), var_type.clone()));
             }
             _ => (),

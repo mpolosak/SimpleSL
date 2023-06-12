@@ -1,5 +1,10 @@
 use crate::{
-    error::Error, function::Function, join, join_debug, parse::*, pest::Parser, variable_type::Type,
+    error::Error,
+    function::Function,
+    join, join_debug,
+    parse::*,
+    pest::Parser,
+    variable_type::{GetType, Type},
 };
 use pest::iterators::Pair;
 use std::{fmt, rc::Rc, str::FromStr};
@@ -15,12 +20,12 @@ pub enum Variable {
     Null,
 }
 
-impl Variable {
-    pub fn get_type(&self) -> Type {
+impl GetType for Variable {
+    fn get_type(&self) -> Type {
         match self {
             Variable::Float(_) => Type::Float,
             Variable::String(_) => Type::String,
-            Variable::Function(function) => Type::Function(function.get_return_type().into()),
+            Variable::Function(function) => function.get_type(),
             Variable::Array(_) => Type::Array,
             Variable::Null => Type::Null,
         }

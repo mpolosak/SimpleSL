@@ -4,7 +4,7 @@ use crate::{
     intepreter::{Intepreter, VariableMap},
     parse::Rule,
     variable::Variable,
-    variable_type::Type,
+    variable_type::{GetType, Type},
 };
 use pest::iterators::Pair;
 use std::collections::HashMap;

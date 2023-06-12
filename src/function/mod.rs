@@ -11,7 +11,7 @@ pub use self::{
 use crate::error::Error;
 use crate::intepreter::{Intepreter, VariableMap};
 use crate::variable::{Array, Variable};
-use crate::variable_type::Type;
+use crate::variable_type::{GetType, Type};
 use std::{fmt, iter::zip, vec::Vec};
 
 pub trait Function {
@@ -42,7 +42,7 @@ pub trait Function {
         }
 
         for (arg, param) in zip(args, params) {
-            if param.get_type().matches(&arg.get_type()) {
+            if arg.get_type().matches(&param.get_type()) {
                 args_map.insert(param.get_name(), arg);
             } else {
                 return Err(Error::WrongType(
@@ -87,5 +87,19 @@ impl fmt::Debug for dyn Function {
             write!(f, "{last}")?;
         }
         write!(f, "], return_type: {:?})", self.get_return_type())
+    }
+}
+
+impl GetType for dyn Function {
+    fn get_type(&self) -> Type {
+        let mut param_types = Vec::new();
+        let mut catch_rest = false;
+        for param in self.get_params() {
+            match param {
+                Param::Standard(_, param_type) => param_types.push(param_type.clone()),
+                Param::CatchRest(_) => catch_rest = true,
+            }
+        }
+        Type::Function(Box::new(self.get_return_type()), param_types, catch_rest)
     }
 }
