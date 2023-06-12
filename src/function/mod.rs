@@ -5,14 +5,17 @@ mod macros;
 mod nativefunction;
 mod param;
 pub use self::{
-    instruction::Instruction, langfunction::LangFunction, line::Line,
-    nativefunction::NativeFunction, param::Param,
+    instruction::Instruction,
+    langfunction::LangFunction,
+    line::Line,
+    nativefunction::NativeFunction,
+    param::{Param, Params},
 };
 use crate::error::Error;
 use crate::intepreter::{Intepreter, VariableMap};
 use crate::variable::{Array, Variable};
 use crate::variable_type::{GetType, Type};
-use std::{fmt, iter::zip, vec::Vec};
+use std::{fmt, iter::zip};
 
 pub trait Function {
     fn exec(
@@ -23,32 +26,22 @@ pub trait Function {
     ) -> Result<Variable, Error> {
         let mut args_map = VariableMap::new();
         let params = self.get_params();
-        match &params.last() {
-            Some(Param::CatchRest(param_name)) => {
-                let from = params.len() - 1;
-                let rest: Array = args.drain(from..).collect();
-                args_map.insert(param_name, Variable::Array(rest.into()));
-            }
-            Some(_) if args.len() != params.len() => {
-                return Err(Error::WrongNumberOfArguments(
-                    String::from(name),
-                    params.len(),
-                ));
-            }
-            None if !args.is_empty() => {
-                return Err(Error::WrongNumberOfArguments(String::from(name), 0));
-            }
-            _ => (),
+        if let Some(param_name) = &params.catch_rest {
+            let from = params.standard.len();
+            let rest: Array = args.drain(from..).collect();
+            args_map.insert(param_name, Variable::Array(rest.into()));
+        } else if args.len() != params.standard.len() {
+            return Err(Error::WrongNumberOfArguments(
+                String::from(name),
+                params.standard.len(),
+            ));
         }
 
-        for (arg, param) in zip(args, params) {
-            if arg.get_type().matches(&param.get_type()) {
-                args_map.insert(param.get_name(), arg);
+        for (arg, Param { var_type, name }) in zip(args, &params.standard) {
+            if arg.get_type().matches(&var_type) {
+                args_map.insert(&name, arg);
             } else {
-                return Err(Error::WrongType(
-                    param.get_name().to_owned(),
-                    param.get_type(),
-                ));
+                return Err(Error::WrongType(name.clone(), var_type.clone()));
             }
         }
         self.exec_intern(name, intepreter, args_map)
@@ -59,47 +52,39 @@ pub trait Function {
         intepreter: &mut Intepreter,
         args: VariableMap,
     ) -> Result<Variable, Error>;
-    fn get_params(&self) -> &Vec<Param>;
+    fn get_params(&self) -> &Params;
     fn get_return_type(&self) -> Type;
 }
 
 impl fmt::Display for dyn Function {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "function(")?;
-        if let [params @ .., last] = &self.get_params()[..] {
-            for param in params {
-                write!(f, "{param}, ")?;
-            }
-            write!(f, "{last}")?;
-        }
-        write!(f, ")->{}", self.get_return_type())
+        let params = self.get_params();
+        let return_type = self.get_return_type();
+        write!(f, "function({params})->{return_type}")
     }
 }
 
 impl fmt::Debug for dyn Function {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "dyn Function(")?;
-        write!(f, "params: [")?;
-        if let [params @ .., last] = &self.get_params()[..] {
-            for param in params {
-                write!(f, "{param:?}, ")?;
-            }
-            write!(f, "{last}")?;
-        }
-        write!(f, "], return_type: {:?})", self.get_return_type())
+        let params = self.get_params();
+        let return_type = self.get_return_type();
+        write!(
+            f,
+            "dyn Function(params: [{params}], return_type: {return_type:?})"
+        )
     }
 }
 
 impl GetType for dyn Function {
     fn get_type(&self) -> Type {
-        let mut param_types = Vec::new();
-        let mut catch_rest = false;
-        for param in self.get_params() {
-            match param {
-                Param::Standard(_, param_type) => param_types.push(param_type.clone()),
-                Param::CatchRest(_) => catch_rest = true,
-            }
-        }
-        Type::Function(Box::new(self.get_return_type()), param_types, catch_rest)
+        let params = self.get_params();
+        let param_types = params
+            .standard
+            .iter()
+            .map(|Param { name: _, var_type }| var_type.clone())
+            .collect();
+        let catch_rest = params.catch_rest.is_some();
+        let return_type = self.get_return_type();
+        Type::Function(Box::new(return_type), param_types, catch_rest)
     }
 }

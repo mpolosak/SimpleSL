@@ -1,4 +1,4 @@
-use crate::function::{Function, NativeFunction, Param};
+use crate::function::{Function, NativeFunction, Param, Params};
 use crate::intepreter::Intepreter;
 use crate::variable_type::Type;
 use crate::{
@@ -14,7 +14,10 @@ pub fn add_array_functions(variables: &mut VariableMap) {
     variables.add_native_function(
         "new_array",
         NativeFunction {
-            params: params!("length": Type::Float, "value": Type::Any),
+            params: Params {
+                standard: params!("length": Type::Float, "value": Type::Any),
+                catch_rest: None,
+            },
             return_type: Type::Array,
             body: |_name, _intepreter, args| {
                 let Variable::Float(len) = args.get("length")? else {
@@ -39,7 +42,10 @@ pub fn add_array_functions(variables: &mut VariableMap) {
     variables.add_native_function(
         "array_at",
         NativeFunction {
-            params: params!("array": Type::Array, "index": Type::Float),
+            params: Params {
+                standard: params!("array": Type::Array, "index": Type::Float),
+                catch_rest: None,
+            },
             return_type: Type::Any,
             body: |_name, _intepreter, args| {
                 let Variable::Array(array) = args.get("array")? else {
@@ -66,7 +72,10 @@ pub fn add_array_functions(variables: &mut VariableMap) {
     variables.add_native_function(
         "array_concat",
         NativeFunction {
-            params: params!("array1": Type::Array, "array2": Type::Array),
+            params: Params {
+                standard: params!("array1": Type::Array, "array2": Type::Array),
+                catch_rest: None,
+            },
             return_type: Type::Array,
             body: |_name, _intepreter, args| {
                 let Variable::Array(array1) = args.get("array1")? else {
@@ -86,7 +95,10 @@ pub fn add_array_functions(variables: &mut VariableMap) {
     variables.add_native_function(
         "array_len",
         NativeFunction {
-            params: params!("array": Type::Array),
+            params: Params {
+                standard: params!("array": Type::Array),
+                catch_rest: None,
+            },
             return_type: Type::Float,
             body: |_name, _intepreter, args| {
                 let Variable::Array(array) = args.get("array")? else {
@@ -99,7 +111,10 @@ pub fn add_array_functions(variables: &mut VariableMap) {
     variables.add_native_function(
         "for_each",
         NativeFunction {
-            params: params!("array": Type::Array, "function": Type::Function(Type::Any.into(), vec![Type::Any], false)),
+            params: Params {
+                standard: params!("array": Type::Array, "function": Type::Function(Type::Any.into(), vec![Type::Any], false)),
+                catch_rest: None
+            },
             return_type: Type::Array,
             body: |_name, intepreter, args| {
                 let Variable::Array(array) = args.get("array")? else {
@@ -119,7 +134,10 @@ pub fn add_array_functions(variables: &mut VariableMap) {
     variables.add_native_function(
         "filter",
         NativeFunction {
-            params: params!("array": Type::Array, "function": Type::Function(Type::Float.into(), vec![Type::Any], false)),
+            params: Params{
+                standard: params!("array": Type::Array, "function": Type::Function(Type::Float.into(), vec![Type::Any], false)),
+                catch_rest: None
+            },
             return_type: Type::Array,
             body: |_name, interpreter, args| {
                 let Variable::Array(array) = args.get("array")? else {
@@ -143,11 +161,14 @@ pub fn add_array_functions(variables: &mut VariableMap) {
     variables.add_native_function(
         "reduce",
         NativeFunction {
-            params: params!(
-                "array": Type::Array,
-                "initial_value": Type::Any,
-                "function": Type::Function(Type::Any.into(), vec![Type::Any, Type::Any], false)
-            ),
+            params: Params {
+                standard: params!(
+                    "array": Type::Array,
+                    "initial_value": Type::Any,
+                    "function": Type::Function(Type::Any.into(), vec![Type::Any, Type::Any], false)
+                ),
+                catch_rest: None,
+            },
             return_type: Type::Any,
             body: |_name, intepreter, args| {
                 let Variable::Array(array) = args.get("array")? else {
@@ -166,7 +187,10 @@ pub fn add_array_functions(variables: &mut VariableMap) {
     variables.add_native_function(
         "zip",
         NativeFunction {
-            params: params!("array1": Type::Array, "array2": Type::Array),
+            params: Params {
+                standard: params!("array1": Type::Array, "array2": Type::Array),
+                catch_rest: None,
+            },
             return_type: Type::Array,
             body: |_name, _intepreter, args| {
                 let Variable::Array(array1) = args.get("array1")? else {
@@ -203,11 +227,14 @@ pub fn add_array_functions(variables: &mut VariableMap) {
     variables.add_native_function(
         "recsub",
         NativeFunction {
-            params: params!(
-                "array": Type::Array,
-                "function": Type::Function(Type::Any.into(), vec![Type::Any], false),
-                "n": Type::Float
-            ),
+            params: Params {
+                standard: params!(
+                    "array": Type::Array,
+                    "function": Type::Function(Type::Any.into(), vec![Type::Any], false),
+                    "n": Type::Float
+                ),
+                catch_rest: None,
+            },
             return_type: Type::Any,
             body: |_name, intepreter, args| {
                 let Variable::Array(array) = args.get("array")? else {
@@ -233,11 +260,14 @@ pub fn add_array_functions(variables: &mut VariableMap) {
     variables.add_native_function(
         "arecsub",
         NativeFunction {
-            params: params!(
-                "array": Type::Array,
-                "function": Type::Function(Type::Any.into(), vec![Type::Array], false),
-                "n": Type::Float
-            ),
+            params: Params {
+                standard: params!(
+                    "array": Type::Array,
+                    "function": Type::Function(Type::Any.into(), vec![Type::Array], false),
+                    "n": Type::Float
+                ),
+                catch_rest: None,
+            },
             return_type: Type::Array,
             body: |_name, intepreter, args| {
                 let Variable::Array(array) = args.get("array")? else {

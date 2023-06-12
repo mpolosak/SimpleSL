@@ -3,7 +3,7 @@ macro_rules! params {
     ($($name: literal: $type_name: expr),*)=>{
         vec!(
             $(
-                Param::Standard(String::from($name), $type_name),
+                Param{name: String::from($name), var_type: $type_name},
             )*
         )
     }

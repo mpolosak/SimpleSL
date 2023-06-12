@@ -1,11 +1,11 @@
-use super::{Function, Param};
+use super::{Function, Params};
 use crate::intepreter::{Intepreter, VariableMap};
 use crate::variable_type::Type;
 use crate::{error::Error, variable::Variable};
 
 #[derive(Clone)]
 pub struct NativeFunction {
-    pub params: Vec<Param>,
+    pub params: Params,
     pub return_type: Type,
     pub body: fn(&str, &mut Intepreter, VariableMap) -> Result<Variable, Error>,
 }
@@ -19,7 +19,7 @@ impl Function for NativeFunction {
     ) -> Result<Variable, Error> {
         (self.body)(name, intepreter, args)
     }
-    fn get_params(&self) -> &Vec<Param> {
+    fn get_params(&self) -> &Params {
         &self.params
     }
     fn get_return_type(&self) -> Type {

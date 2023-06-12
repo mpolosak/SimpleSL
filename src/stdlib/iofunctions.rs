@@ -1,13 +1,16 @@
-use crate::function::{NativeFunction, Param};
+use crate::function::{NativeFunction, Params};
 use crate::variable_type::Type;
-use crate::{intepreter::VariableMap, params, variable::*};
+use crate::{intepreter::VariableMap, variable::*};
 use std::io;
 
 pub fn add_io_functions(variables: &mut VariableMap) {
     variables.add_native_function(
         "print",
         NativeFunction {
-            params: vec![Param::CatchRest(String::from("vars"))],
+            params: Params {
+                standard: Vec::new(),
+                catch_rest: Some(String::from("vars")),
+            },
             return_type: Type::Null,
             body: |_name, _intepreter, args| {
                 let Variable::Array(args) = args.get("vars")? else {
@@ -24,7 +27,10 @@ pub fn add_io_functions(variables: &mut VariableMap) {
     variables.add_native_function(
         "cgetline",
         NativeFunction {
-            params: params!(),
+            params: Params {
+                standard: Vec::new(),
+                catch_rest: None,
+            },
             return_type: Type::String,
             body: |_name, _intepreter, _params| {
                 let mut input = String::new();

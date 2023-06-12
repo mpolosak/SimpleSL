@@ -1,42 +1,50 @@
-use crate::{parse::Rule, variable_type::Type};
+use crate::{join, parse::Rule, variable_type::Type};
 use pest::iterators::Pair;
 use std::fmt;
 
 #[derive(Clone, Debug)]
-pub enum Param {
-    Standard(String, Type),
-    CatchRest(String),
-}
-
-impl Param {
-    pub fn get_name(&self) -> &str {
-        match self {
-            Self::Standard(name, _) | Self::CatchRest(name) => name,
-        }
-    }
-    pub fn get_type(&self) -> Type {
-        match self {
-            Self::Standard(_, var_type) => var_type.clone(),
-            Self::CatchRest(_) => Type::Array,
-        }
-    }
+pub struct Param {
+    pub name: String,
+    pub var_type: Type,
 }
 
 impl fmt::Display for Param {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Standard(name, var_type) => write!(f, "{name}:{var_type}"),
-            Self::CatchRest(name) => write!(f, "{name}..."),
-        }
+        write!(f, "{}:{}", self.name, self.var_type)
     }
 }
 
 impl From<Pair<'_, Rule>> for Param {
     fn from(value: Pair<'_, Rule>) -> Self {
         let mut inner = value.into_inner();
-        Self::Standard(
-            String::from(inner.next().unwrap().as_str()),
-            Type::from(inner.next().unwrap()),
-        )
+        Self {
+            name: String::from(inner.next().unwrap().as_str()),
+            var_type: Type::from(inner.next().unwrap()),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct Params {
+    pub standard: Vec<Param>,
+    pub catch_rest: Option<String>,
+}
+
+impl fmt::Display for Params {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self {
+                standard: params,
+                catch_rest: None,
+            } => write!(f, "{}", join(params, ", ")),
+            Self {
+                standard,
+                catch_rest: Some(catch_rest),
+            } if standard.is_empty() => write!(f, "{}, {catch_rest}...", join(standard, ", ")),
+            Self {
+                standard,
+                catch_rest: Some(catch_rest),
+            } => write!(f, "{}, {catch_rest}...", join(standard, ", ")),
+        }
     }
 }
