@@ -1,6 +1,8 @@
 use crate::function::{NativeFunction, Param, Params};
 use crate::variable_type::Type;
 use crate::{intepreter::VariableMap, params, variable::*};
+extern crate simplesl_macros;
+use simplesl_macros::export_function_of_two_floats;
 
 pub fn add_std_functions(variables: &mut VariableMap) {
     variables.add_native_function(
@@ -19,122 +21,38 @@ pub fn add_std_functions(variables: &mut VariableMap) {
             },
         },
     );
-    variables.add_native_function(
-        "add",
-        NativeFunction {
-            params: Params {
-                standard: params!("a": Type::Float, "b": Type::Float),
-                catch_rest: None,
-            },
-            return_type: Type::Float,
-            body: |_name, _intepreter, args| {
-                let Variable::Float(a) = args.get("a")? else {
-                    panic!()
-                };
-                let Variable::Float(b) = args.get("b")? else {
-                    panic!()
-                };
-                Ok(Variable::Float(a + b))
-            },
-        },
-    );
-    variables.add_native_function(
-        "subtract",
-        NativeFunction {
-            params: Params {
-                standard: params!("a": Type::Float, "b": Type::Float),
-                catch_rest: None,
-            },
-            return_type: Type::Float,
-            body: |_name, _intepreter, args| {
-                let Variable::Float(a) = args.get("a")? else {
-                    panic!()
-                };
-                let Variable::Float(b) = args.get("b")? else {
-                    panic!()
-                };
-                Ok(Variable::Float(a - b))
-            },
-        },
-    );
-    variables.add_native_function(
-        "multiply",
-        NativeFunction {
-            params: Params {
-                standard: params!("a": Type::Float, "b": Type::Float),
-                catch_rest: None,
-            },
-            return_type: Type::Float,
-            body: |_name, _intepreter, args| {
-                let Variable::Float(a) = args.get("a")? else {
-                    panic!()
-                };
-                let Variable::Float(b) = args.get("b")? else {
-                    panic!()
-                };
-                Ok(Variable::Float(a * b))
-            },
-        },
-    );
-    variables.add_native_function(
-        "divide",
-        NativeFunction {
-            params: Params {
-                standard: params!("a": Type::Float, "b": Type::Float),
-                catch_rest: None,
-            },
-            return_type: Type::Float,
-            body: |_name, _intepreter, args| {
-                let Variable::Float(a) = args.get("a")? else {
-                    panic!()
-                };
-                let Variable::Float(b) = args.get("b")? else {
-                    panic!()
-                };
-                Ok(Variable::Float(a / b))
-            },
-        },
-    );
-    variables.add_native_function(
-        "modulo",
-        NativeFunction {
-            params: Params {
-                standard: params!("a": Type::Float, "b": Type::Float),
-                catch_rest: None,
-            },
-            return_type: Type::Float,
-            body: |_name, _intepreter, args| {
-                let Variable::Float(a) = args.get("a")? else {
-                    panic!()
-                };
-                let Variable::Float(b) = args.get("b")? else {
-                    panic!()
-                };
-                let divided = a / b;
-                let result = a - b * divided.floor();
-                Ok(Variable::Float(result))
-            },
-        },
-    );
-    variables.add_native_function(
-        "or",
-        NativeFunction {
-            params: Params {
-                standard: params!("a": Type::Float, "b": Type::Float),
-                catch_rest: None,
-            },
-            return_type: Type::Float,
-            body: |_name, _intepreter, args| {
-                let Variable::Float(a) = args.get("a")? else {
-                    panic!()
-                };
-                let Variable::Float(b) = args.get("b")? else {
-                    panic!()
-                };
-                Ok(Variable::Float(a.abs() + b.abs()))
-            },
-        },
-    );
+
+    #[export_function_of_two_floats]
+    fn add(a: f64, b: f64) -> f64 {
+        a + b
+    }
+
+    #[export_function_of_two_floats]
+    fn subtract(a: f64, b: f64) -> f64 {
+        a - b
+    }
+
+    #[export_function_of_two_floats]
+    fn multiply(a: f64, b: f64) -> f64 {
+        a * b
+    }
+
+    #[export_function_of_two_floats]
+    fn divide(a: f64, b: f64) -> f64 {
+        a / b
+    }
+
+    #[export_function_of_two_floats]
+    fn modulo(a: f64, b: f64) -> f64 {
+        let divided = a / b;
+        a - b * divided.floor()
+    }
+
+    #[export_function_of_two_floats]
+    fn or(a: f64, b: f64) -> f64 {
+        a.abs() + b.abs()
+    }
+
     variables.add_native_function(
         "not",
         NativeFunction {
