@@ -7,6 +7,7 @@ use std::{
     io::{BufReader, Read},
     rc::Rc,
 };
+
 pub struct Intepreter {
     pub variables: VariableMap,
 }
@@ -45,7 +46,13 @@ impl Intepreter {
     }
 }
 
-#[derive(Debug)]
+impl Default for Intepreter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[derive(Debug, Default)]
 pub struct VariableMap {
     hash_map: HashMap<String, Variable>,
 }

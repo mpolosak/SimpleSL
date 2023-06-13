@@ -1,16 +1,6 @@
-mod error;
-mod function;
-mod intepreter;
-mod parse;
-mod stdlib;
-mod variable;
-mod variable_type;
-use intepreter::Intepreter;
 use rustyline::{error::ReadlineError, Editor};
-use std::{env, fmt::Debug, fmt::Display};
-extern crate pest;
-#[macro_use]
-extern crate pest_derive;
+use simplesl::intepreter::Intepreter;
+use std::env;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -22,7 +12,7 @@ fn main() {
 }
 
 fn run_shell() {
-    let mut intepreter = Intepreter::new();
+    let mut intepreter = Intepreter::default();
     let mut rl = Editor::<()>::new().expect("Unable to read user input");
     loop {
         let readline = rl.readline("> ");
@@ -50,26 +40,4 @@ fn run_from_file(path: &str) {
     if let Err(error) = intepreter.load_and_exec(path) {
         println!("{error}")
     }
-}
-
-pub fn join(array: &[impl Display], separator: &str) -> String {
-    let mut result = String::new();
-    if let [elements @ .., last] = array {
-        for var in elements {
-            result += &format!("{var}{separator}");
-        }
-        result += &format!("{last}");
-    }
-    result
-}
-
-pub fn join_debug(array: &[impl Debug], separator: &str) -> String {
-    let mut result = String::new();
-    if let [elements @ .., last] = array {
-        for var in elements {
-            result += &format!("{var:?}{separator}");
-        }
-        result += &format!("{last:?}");
-    }
-    result
 }
