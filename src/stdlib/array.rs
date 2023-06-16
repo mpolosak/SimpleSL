@@ -112,8 +112,9 @@ pub fn add_array_functions(variables: &mut VariableMap) {
         "for_each",
         NativeFunction {
             params: Params {
-                standard: params!("array": Type::Array, "function": Type::Function(Type::Any.into(), vec![Type::Any], false)),
-                catch_rest: None
+                standard: params!("array": Type::Array, "function": Type::Function{ 
+                    return_type: Type::Any.into(), params: vec![Type::Any], catch_rest: false}),
+                catch_rest: None,
             },
             return_type: Type::Array,
             body: |_name, intepreter, args| {
@@ -135,7 +136,7 @@ pub fn add_array_functions(variables: &mut VariableMap) {
         "filter",
         NativeFunction {
             params: Params{
-                standard: params!("array": Type::Array, "function": Type::Function(Type::Float.into(), vec![Type::Any], false)),
+                standard: params!("array": Type::Array, "function": Type::Function{return_type:Type::Float.into(), params: vec![Type::Any], catch_rest: false}),
                 catch_rest: None
             },
             return_type: Type::Array,
@@ -165,7 +166,11 @@ pub fn add_array_functions(variables: &mut VariableMap) {
                 standard: params!(
                     "array": Type::Array,
                     "initial_value": Type::Any,
-                    "function": Type::Function(Type::Any.into(), vec![Type::Any, Type::Any], false)
+                    "function": Type::Function{
+                        return_type: Type::Any.into(),
+                        params: vec![Type::Any, Type::Any],
+                        catch_rest: false
+                    }
                 ),
                 catch_rest: None,
             },
@@ -230,7 +235,11 @@ pub fn add_array_functions(variables: &mut VariableMap) {
             params: Params {
                 standard: params!(
                     "array": Type::Array,
-                    "function": Type::Function(Type::Any.into(), vec![Type::Any], false),
+                    "function": Type::Function{
+                        return_type: Type::Any.into(),
+                        params: vec![Type::Any],
+                        catch_rest: false
+                    },
                     "n": Type::Float
                 ),
                 catch_rest: None,
@@ -263,7 +272,11 @@ pub fn add_array_functions(variables: &mut VariableMap) {
             params: Params {
                 standard: params!(
                     "array": Type::Array,
-                    "function": Type::Function(Type::Any.into(), vec![Type::Array], false),
+                    "function": Type::Function{
+                        return_type: Type::Any.into(),
+                        params: vec![Type::Array],
+                        catch_rest: false
+                    },
                     "n": Type::Float
                 ),
                 catch_rest: None,

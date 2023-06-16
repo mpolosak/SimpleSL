@@ -81,8 +81,15 @@ pub fn add_std_functions(variables: &mut VariableMap) {
         "if",
         NativeFunction {
             params: Params {
-                standard: params!("condition": Type::Float, "function": Type::Function(Type::Any.into(), vec![], false)),
-                catch_rest: None
+                standard: params!(
+                    "condition": Type::Float,
+                    "function": Type::Function{
+                        return_type: Type::Any.into(),
+                        params: vec![],
+                        catch_rest: false
+                    }
+                ),
+                catch_rest: None,
             },
             return_type: Type::Any,
             body: |_name, intepreter, args| {
@@ -106,8 +113,16 @@ pub fn add_std_functions(variables: &mut VariableMap) {
             params: Params {
                 standard: params!(
                     "condition": Type::Float,
-                    "function": Type::Function(Type::Any.into(), vec![], false),
-                    "else": Type::Function(Type::Any.into(), vec![], false)
+                    "function": Type::Function{
+                        return_type: Type::Any.into(),
+                        params: vec![],
+                        catch_rest: false
+                    },
+                    "else": Type::Function{
+                        return_type: Type::Any.into(),
+                        params: vec![],
+                        catch_rest: false
+                    }
                 ),
                 catch_rest: None,
             },

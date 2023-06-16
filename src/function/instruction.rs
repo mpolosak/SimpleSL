@@ -12,12 +12,22 @@ use std::{collections::HashMap, fmt, rc::Rc};
 
 #[derive(Clone)]
 pub enum Instruction {
-    FunctionCall(Rc<dyn Function>, Vec<Instruction>),
-    LocalFunctionCall(String, Vec<Instruction>, Type),
+    FunctionCall {
+        function: Rc<dyn Function>,
+        args: Vec<Instruction>,
+    },
+    LocalFunctionCall {
+        ident: String,
+        args: Vec<Instruction>,
+        return_type: Type,
+    },
     Variable(Variable),
     LocalVariable(String, Type),
     Array(Vec<Instruction>),
-    Function(Params, Vec<Line>),
+    Function {
+        params: Params,
+        body: Vec<Line>,
+    },
 }
 
 impl Instruction {
@@ -37,34 +47,42 @@ impl Instruction {
                     .map(|pair| Self::new(variables, pair, local_variables))
                     .collect::<Result<Vec<_>, _>>()?;
                 match local_variables.get(var_name) {
-                    Some(Type::Function(return_type, _param_types, _catch_rest)) => Ok(
+                    Some(Type::Function { return_type, .. }) => Ok(
                         // todo: check if arguments match params
-                        Self::LocalFunctionCall(String::from(var_name), args, *return_type.clone()),
+                        Self::LocalFunctionCall {
+                            ident: String::from(var_name),
+                            args,
+                            return_type: *return_type.clone(),
+                        },
                     ),
-                    Some(Type::Any) => Ok(Self::LocalFunctionCall(
-                        String::from(var_name),
+                    Some(Type::Any) => Ok(Self::LocalFunctionCall {
+                        ident: String::from(var_name),
                         args,
-                        Type::Any,
-                    )),
+                        return_type: Type::Any,
+                    }),
                     Some(_) => {
-                        let param_types = args.iter().map(Instruction::get_type).collect();
+                        let params = args.iter().map(Instruction::get_type).collect();
                         Err(Error::WrongType(
                             var_name.to_owned(),
-                            Type::Function(Type::Any.into(), param_types, false),
+                            Type::Function {
+                                return_type: Type::Any.into(),
+                                params,
+                                catch_rest: false,
+                            },
                         ))
                     }
                     None => {
                         let Variable::Function(function)
                         = variables.get(var_name)? else {
-                            let param_types = args.iter().map(Instruction::get_type).collect();
+                            let params = args.iter().map(Instruction::get_type).collect();
                             return Err(Error::WrongType(
                                 String::from(var_name),
-                                Type::Function(Type::Any.into(), param_types, false)
+                                Type::Function{return_type: Type::Any.into(), params, catch_rest: false}
                             ));
                         };
                         let params = function.get_params();
                         check_args(var_name, params, &args)?;
-                        Ok(Self::FunctionCall(function, args))
+                        Ok(Self::FunctionCall { function, args })
                     }
                 }
             }
@@ -108,7 +126,7 @@ impl Instruction {
                 let body = inner
                     .map(|arg| Line::new(variables, arg, &mut local_variables))
                     .collect::<Result<Vec<_>, _>>()?;
-                Ok(Self::Function(params, body))
+                Ok(Self::Function { params, body })
             }
             Rule::null => Ok(Self::Variable(Variable::Null)),
             _ => panic!(),
@@ -120,21 +138,21 @@ impl Instruction {
         local_variables: &VariableMap,
     ) -> Result<Variable, Error> {
         match &self {
-            Self::FunctionCall(function, instructions) => {
-                let args = exec_instructions(instructions, intepreter, local_variables)?;
+            Self::FunctionCall { function, args } => {
+                let args = exec_instructions(args, intepreter, local_variables)?;
                 function.exec("name", intepreter, args)
             }
-            Self::LocalFunctionCall(name, instructions, _) => {
-                let args = exec_instructions(instructions, intepreter, local_variables)?;
+            Self::LocalFunctionCall { ident, args, .. } => {
+                let args = exec_instructions(args, intepreter, local_variables)?;
                 let Variable::Function(function)
-                    = local_variables.get(name).or(
-                        intepreter.variables.get(name)).unwrap() else {
-                    let param_types = args.iter().map(Variable::get_type).collect();
+                    = local_variables.get(ident).or(
+                        intepreter.variables.get(ident)).unwrap() else {
+                    let params = args.iter().map(Variable::get_type).collect();
                     return Err(
-                        Error::WrongType(name.clone(), Type::Function(Type::Any.into(), param_types, false))
+                        Error::WrongType(ident.clone(), Type::Function{return_type: Type::Any.into(), params, catch_rest: false})
                     );
                 };
-                function.exec(name, intepreter, args)
+                function.exec(ident, intepreter, args)
             }
             Self::Variable(var) => Ok(var.clone()),
             Self::LocalVariable(name, _) => Ok(local_variables
@@ -145,7 +163,7 @@ impl Instruction {
                 let array = exec_instructions(instructions, intepreter, local_variables)?;
                 Ok(Variable::Array(array.into()))
             }
-            Self::Function(params, lines) => {
+            Self::Function { params, body } => {
                 let mut fn_local_variables: HashMap<String, Type> = params
                     .standard
                     .iter()
@@ -154,7 +172,7 @@ impl Instruction {
                 if let Some(name) = &params.catch_rest {
                     fn_local_variables.insert(name.clone(), Type::Array);
                 }
-                let body = recreate_lines(lines, &mut fn_local_variables, local_variables)?;
+                let body = recreate_lines(body, &mut fn_local_variables, local_variables)?;
                 Ok(Variable::Function(Rc::new(LangFunction {
                     params: params.clone(),
                     body,
@@ -168,23 +186,40 @@ impl Instruction {
         args: &VariableMap,
     ) -> Result<Self, Error> {
         Ok(match self {
-            Self::LocalFunctionCall(name, instructions, var_type) => {
+            Self::LocalFunctionCall {
+                ident,
+                args: instructions,
+                return_type,
+            } => {
                 let instructions = recreate_instructions(instructions, local_variables, args)?;
-                if local_variables.contains_key(name) {
-                    Self::LocalFunctionCall(name.clone(), instructions, var_type.clone())
+                if local_variables.contains_key(ident) {
+                    Self::LocalFunctionCall {
+                        ident: ident.clone(),
+                        args: instructions,
+                        return_type: return_type.clone(),
+                    }
                 } else {
                     let Variable::Function(function)
-                        = args.get(name).unwrap() else {
-                            let param_types = instructions.iter().map(Instruction::get_type).collect();
-                            return Err(Error::WrongType(
-                                name.clone(), Type::Function(Type::Any.into(), param_types, false)));
+                        = args.get(ident).unwrap() else {
+                            let params = instructions.iter().map(Instruction::get_type).collect();
+                            return Err(Error::WrongType(ident.clone(), Type::Function{
+                                    return_type: Type::Any.into(), params, catch_rest: false}));
                     };
-                    Self::FunctionCall(function, instructions)
+                    Self::FunctionCall {
+                        function,
+                        args: instructions,
+                    }
                 }
             }
-            Self::FunctionCall(function, instructions) => {
+            Self::FunctionCall {
+                function,
+                args: instructions,
+            } => {
                 let instructions = recreate_instructions(instructions, local_variables, args)?;
-                Self::FunctionCall(function.clone(), instructions)
+                Self::FunctionCall {
+                    function: function.clone(),
+                    args: instructions,
+                }
             }
             Self::LocalVariable(name, var_type) => {
                 if local_variables.contains_key(name) {
@@ -198,13 +233,16 @@ impl Instruction {
                 let instructions = recreate_instructions(instructions, local_variables, args)?;
                 Self::Array(instructions)
             }
-            Self::Function(params, lines) => {
+            Self::Function { params, body } => {
                 let mut local_variables = local_variables.clone();
                 for Param { name, var_type } in params.standard.clone() {
                     local_variables.insert(name, var_type);
                 }
-                let new_lines = recreate_lines(lines, &mut local_variables, args)?;
-                Self::Function(params.clone(), new_lines)
+                let body = recreate_lines(body, &mut local_variables, args)?;
+                Self::Function {
+                    params: params.clone(),
+                    body,
+                }
             }
             _ => self.clone(),
         })
@@ -222,24 +260,28 @@ impl GetType for Instruction {
         match self {
             Instruction::Variable(variable) => variable.get_type(),
             Instruction::Array(_) => Type::Array,
-            Instruction::Function(params, lines) => {
-                let param_types = params
+            Instruction::Function { params, body } => {
+                let params_types: Vec<Type> = params
                     .standard
                     .iter()
                     .map(|Param { name: _, var_type }| var_type.clone())
                     .collect();
                 let catch_rest = params.catch_rest.is_some();
-                let return_type = match lines.last() {
+                let return_type = match body.last() {
                     Some(Line {
                         result_var: _,
                         instruction,
                     }) => instruction.get_type(),
                     None => Type::Any,
                 };
-                Type::Function(Box::new(return_type), param_types, catch_rest)
+                Type::Function {
+                    return_type: Box::new(return_type),
+                    params: params_types,
+                    catch_rest,
+                }
             }
-            Instruction::FunctionCall(function, _) => function.get_return_type(),
-            Instruction::LocalFunctionCall(_, _, var_type) => var_type.clone(),
+            Instruction::FunctionCall { function, .. } => function.get_return_type(),
+            Instruction::LocalFunctionCall { return_type, .. } => return_type.clone(),
             Instruction::LocalVariable(_, var_type) => var_type.clone(),
         }
     }

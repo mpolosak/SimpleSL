@@ -78,13 +78,17 @@ impl fmt::Debug for dyn Function {
 impl GetType for dyn Function {
     fn get_type(&self) -> Type {
         let params = self.get_params();
-        let param_types = params
+        let params_types: Vec<Type> = params
             .standard
             .iter()
             .map(|Param { name: _, var_type }| var_type.clone())
             .collect();
         let catch_rest = params.catch_rest.is_some();
-        let return_type = self.get_return_type();
-        Type::Function(Box::new(return_type), param_types, catch_rest)
+        let return_type = self.get_return_type().into();
+        Type::Function {
+            return_type,
+            params: params_types,
+            catch_rest,
+        }
     }
 }
