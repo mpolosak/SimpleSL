@@ -29,6 +29,7 @@ iota = (value:float, size:float){
             array, 
             subtract(len,1)
         );
+        last = float(last, 0);
         add(last,1);
     },size);
 };
