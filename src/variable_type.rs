@@ -7,6 +7,7 @@ use std::{
 
 #[derive(Clone, PartialEq)]
 pub enum Type {
+    Int,
     Float,
     String,
     Function {
@@ -54,6 +55,7 @@ impl Type {
 impl Debug for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::Int => write!(f, "int"),
             Self::Float => write!(f, "float"),
             Self::String => write!(f, "string"),
             Self::Function {
@@ -84,6 +86,7 @@ impl Debug for Type {
 impl Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::Int => write!(f, "int"),
             Self::Float => write!(f, "float"),
             Self::String => write!(f, "string"),
             Self::Function {
@@ -110,6 +113,7 @@ impl Display for Type {
 impl From<Pair<'_, Rule>> for Type {
     fn from(pair: Pair<'_, Rule>) -> Self {
         match pair.as_rule() {
+            Rule::int_type => Self::Int,
             Rule::float_type => Self::Float,
             Rule::string_type => Self::String,
             Rule::null_type => Self::Null,

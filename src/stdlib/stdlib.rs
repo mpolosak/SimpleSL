@@ -69,11 +69,11 @@ pub fn add_std_functions(variables: &mut VariableMap) {
                 standard: params!("a": Type::Any, "b": Type::Any),
                 catch_rest: None,
             },
-            return_type: Type::Float,
+            return_type: Type::Int,
             body: |_name, _intepreter, args| {
                 let a = args.get("a")?;
                 let b = args.get("b")?;
-                Ok(Variable::Float(if a == b { 1.0 } else { 0.0 }))
+                Ok(Variable::Int(if a == b { 1 } else { 0 }))
             },
         },
     );
@@ -82,7 +82,7 @@ pub fn add_std_functions(variables: &mut VariableMap) {
         NativeFunction {
             params: Params {
                 standard: params!(
-                    "condition": Type::Float,
+                    "condition": Type::Int,
                     "function": Type::Function{
                         return_type: Type::Any.into(),
                         params: vec![],
@@ -93,13 +93,13 @@ pub fn add_std_functions(variables: &mut VariableMap) {
             },
             return_type: Type::Any,
             body: |_name, intepreter, args| {
-                let Variable::Float(condition) = args.get("condition")? else {
+                let Variable::Int(condition) = args.get("condition")? else {
                     panic!()
                 };
                 let Variable::Function(function) = args.get("function")? else {
                     panic!()
                 };
-                if condition == 0.0 {
+                if condition == 0 {
                     Ok(Variable::Null)
                 } else {
                     function.exec("function", intepreter, Array::new())
@@ -112,7 +112,7 @@ pub fn add_std_functions(variables: &mut VariableMap) {
         NativeFunction {
             params: Params {
                 standard: params!(
-                    "condition": Type::Float,
+                    "condition": Type::Int,
                     "function": Type::Function{
                         return_type: Type::Any.into(),
                         params: vec![],
@@ -128,7 +128,7 @@ pub fn add_std_functions(variables: &mut VariableMap) {
             },
             return_type: Type::Any,
             body: |_name, intepreter, args| {
-                let Variable::Float(condition) = args.get("condition")? else {
+                let Variable::Int(condition) = args.get("condition")? else {
                     panic!()
                 };
                 let Variable::Function(function) = args.get("function")? else {
@@ -137,7 +137,7 @@ pub fn add_std_functions(variables: &mut VariableMap) {
                 let Variable::Function(else_function) = args.get("else")? else {
                     panic!()
                 };
-                if condition == 0.0 {
+                if condition == 0 {
                     else_function.exec("else", intepreter, Array::new())
                 } else {
                     function.exec("function", intepreter, Array::new())

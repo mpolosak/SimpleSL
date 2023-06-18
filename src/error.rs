@@ -7,6 +7,7 @@ pub enum Error {
     WrongType(String, Type),
     WrongNumberOfArguments(String, usize),
     IndexToBig,
+    CannotBeNegative(String),
     CannotBeParsed(String),
     TooManyVariables,
     IO(std::io::Error),
@@ -31,6 +32,7 @@ impl fmt::Display for Error {
                 write!(f, "{name} requires {num} args")
             }
             Self::IndexToBig => write!(f, "index must be lower than array size"),
+            Self::CannotBeNegative(ident) => write!(f, "{ident} cannot be negative"),
             Self::CannotBeParsed(text) => {
                 write!(f, "{text} cannot be parsed to variable")
             }

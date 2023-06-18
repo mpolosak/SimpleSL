@@ -7,6 +7,25 @@ use crate::{
 
 pub fn add_types_functions(variables: &mut VariableMap) {
     variables.add_native_function(
+        "int",
+        NativeFunction {
+            params: Params {
+                standard: params!("value": Type::Any, "fallback": Type::Int),
+                catch_rest: None,
+            },
+            return_type: Type::Float,
+            body: |_name, _intepreter, args| {
+                let value = args.get("value")?;
+                let fallback = args.get("fallback")?;
+                if value.get_type() == Type::Int {
+                    Ok(value)
+                } else {
+                    Ok(fallback)
+                }
+            },
+        },
+    );
+    variables.add_native_function(
         "float",
         NativeFunction {
             params: Params {

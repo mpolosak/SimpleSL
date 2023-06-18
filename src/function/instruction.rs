@@ -86,7 +86,11 @@ impl Instruction {
                     }
                 }
             }
-            Rule::num => {
+            Rule::int => {
+                let value = pair.as_str().parse::<i64>().unwrap();
+                Ok(Self::Variable(Variable::Int(value)))
+            }
+            Rule::float => {
                 let value = pair.as_str().parse::<f64>().unwrap();
                 Ok(Self::Variable(Variable::Float(value)))
             }

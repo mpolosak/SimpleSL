@@ -11,7 +11,11 @@ pub struct SimpleSLParser;
 
 pub fn variable_from_pair(pair: Pair<Rule>) -> Result<Variable, Error> {
     return match pair.as_rule() {
-        Rule::num => {
+        Rule::int => {
+            let value = pair.as_str().parse::<f64>().unwrap();
+            Ok(Variable::Float(value))
+        }
+        Rule::float => {
             let value = pair.as_str().parse::<f64>().unwrap();
             Ok(Variable::Float(value))
         }

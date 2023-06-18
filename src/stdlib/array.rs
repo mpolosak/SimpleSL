@@ -15,21 +15,17 @@ pub fn add_array_functions(variables: &mut VariableMap) {
         "new_array",
         NativeFunction {
             params: Params {
-                standard: params!("length": Type::Float, "value": Type::Any),
+                standard: params!("length": Type::Int, "value": Type::Any),
                 catch_rest: None,
             },
             return_type: Type::Array,
             body: |_name, _intepreter, args| {
-                let Variable::Float(len) = args.get("length")? else {
+                let Variable::Int(len) = args.get("length")? else {
                     panic!();
                 };
-                if !is_natural(len) {
-                    return Err(Error::WrongType(
-                        String::from("lenght"),
-                        /*Fix it later String::from("natural")*/ Type::Float,
-                    ));
+                if len < 0 {
+                    return Err(Error::CannotBeNegative(String::from("lenght")));
                 }
-                let len = len as usize;
                 let value = args.get("value")?;
                 let mut array = Array::new();
                 for _ in 0..len {
@@ -43,7 +39,7 @@ pub fn add_array_functions(variables: &mut VariableMap) {
         "array_at",
         NativeFunction {
             params: Params {
-                standard: params!("array": Type::Array, "index": Type::Float),
+                standard: params!("array": Type::Array, "index": Type::Int),
                 catch_rest: None,
             },
             return_type: Type::Any,
@@ -51,14 +47,11 @@ pub fn add_array_functions(variables: &mut VariableMap) {
                 let Variable::Array(array) = args.get("array")? else {
                     panic!();
                 };
-                let Variable::Float(index) = args.get("index")? else {
+                let Variable::Int(index) = args.get("index")? else {
                     panic!();
                 };
-                if !is_natural(index) {
-                    return Err(Error::WrongType(
-                        String::from("index"),
-                        /*Fix it later String::from("natural")*/ Type::Float,
-                    ));
+                if index < 0 {
+                    return Err(Error::CannotBeNegative(String::from("index")));
                 }
                 let index = index as usize;
                 if index < array.len() {
@@ -99,12 +92,12 @@ pub fn add_array_functions(variables: &mut VariableMap) {
                 standard: params!("array": Type::Array),
                 catch_rest: None,
             },
-            return_type: Type::Float,
+            return_type: Type::Int,
             body: |_name, _intepreter, args| {
                 let Variable::Array(array) = args.get("array")? else {
                     panic!()
                 };
-                Ok(Variable::Float(array.len() as f64))
+                Ok(Variable::Int(array.len() as i64))
             },
         },
     );
@@ -135,9 +128,16 @@ pub fn add_array_functions(variables: &mut VariableMap) {
     variables.add_native_function(
         "filter",
         NativeFunction {
-            params: Params{
-                standard: params!("array": Type::Array, "function": Type::Function{return_type:Type::Float.into(), params: vec![Type::Any], catch_rest: false}),
-                catch_rest: None
+            params: Params {
+                standard: params!(
+                    "array": Type::Array,
+                    "function": Type::Function{
+                        return_type:Type::Int.into(),
+                        params: vec![Type::Any],
+                        catch_rest: false
+                    }
+                ),
+                catch_rest: None,
             },
             return_type: Type::Array,
             body: |_name, interpreter, args| {
@@ -150,7 +150,7 @@ pub fn add_array_functions(variables: &mut VariableMap) {
                 let mut new_array = Array::new();
                 for element in array.iter() {
                     if function.exec("function", interpreter, vec![element.clone()])?
-                        != Variable::Float(0.0)
+                        != Variable::Int(0)
                     {
                         new_array.push(element.clone());
                     }
@@ -240,7 +240,7 @@ pub fn add_array_functions(variables: &mut VariableMap) {
                         params: vec![Type::Any],
                         catch_rest: false
                     },
-                    "n": Type::Float
+                    "n": Type::Int
                 ),
                 catch_rest: None,
             },
@@ -252,14 +252,11 @@ pub fn add_array_functions(variables: &mut VariableMap) {
                 let Variable::Function(function) = args.get("function")? else {
                     panic!()
                 };
-                let Variable::Float(n) = args.get("n")? else {
+                let Variable::Int(n) = args.get("n")? else {
                     panic!();
                 };
-                if !is_natural(n) {
-                    return Err(Error::WrongType(
-                        String::from("n"),
-                        /*Fix it later String::from("natural")*/ Type::Float,
-                    ));
+                if n < 0 {
+                    return Err(Error::CannotBeNegative(String::from("n")));
                 }
                 let n = n as usize;
                 recsub(intepreter, n, array, function)
@@ -277,7 +274,7 @@ pub fn add_array_functions(variables: &mut VariableMap) {
                         params: vec![Type::Array],
                         catch_rest: false
                     },
-                    "n": Type::Float
+                    "n": Type::Int
                 ),
                 catch_rest: None,
             },
@@ -289,14 +286,11 @@ pub fn add_array_functions(variables: &mut VariableMap) {
                 let Variable::Function(function) = args.get("function")? else {
                     panic!()
                 };
-                let Variable::Float(n) = args.get("n")? else {
+                let Variable::Int(n) = args.get("n")? else {
                     panic!();
                 };
-                if !is_natural(n) {
-                    return Err(Error::WrongType(
-                        String::from("n"),
-                        /*Fix it later String::from("natural")*/ Type::Float,
-                    ));
+                if n < 0 {
+                    return Err(Error::CannotBeNegative(String::from("n")));
                 }
                 let n = n as usize;
                 if array.len() > n {
@@ -316,8 +310,4 @@ pub fn add_array_functions(variables: &mut VariableMap) {
             },
         },
     );
-}
-
-fn is_natural(f: f64) -> bool {
-    f.fract() == 0.0 && f >= 0.0
 }

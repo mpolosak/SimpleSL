@@ -13,6 +13,7 @@ pub type Array = Vec<Variable>;
 
 #[derive(Clone)]
 pub enum Variable {
+    Int(i64),
     Float(f64),
     String(Rc<str>),
     Function(Rc<dyn Function>),
@@ -23,6 +24,7 @@ pub enum Variable {
 impl GetType for Variable {
     fn get_type(&self) -> Type {
         match self {
+            Variable::Int(_) => Type::Int,
             Variable::Float(_) => Type::Float,
             Variable::String(_) => Type::String,
             Variable::Function(function) => function.get_type(),
@@ -35,6 +37,7 @@ impl GetType for Variable {
 impl fmt::Display for Variable {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Variable::Int(value) => write!(f, "{value}"),
             Variable::Float(value) => write!(f, "{value}"),
             Variable::String(value) => write!(f, "{value}"),
             Variable::Function(function) => write!(f, "{function}"),
@@ -47,6 +50,7 @@ impl fmt::Display for Variable {
 impl fmt::Debug for Variable {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Variable::Int(value) => write!(f, "Variable::Float({value})"),
             Variable::Float(value) => write!(f, "Variable::Float({value})"),
             Variable::String(value) => write!(f, "Variable::String(\"{value}\")"),
             Variable::Function(function) => write!(f, "Variable::Function({function:?})"),
@@ -74,6 +78,10 @@ impl FromStr for Variable {
 impl PartialEq for Variable {
     fn eq(&self, other: &Self) -> bool {
         match self {
+            Variable::Int(value1) => match other {
+                Variable::Int(value2) => value1 == value2,
+                _ => false,
+            },
             Variable::Float(value1) => match other {
                 Variable::Float(value2) => value1 == value2,
                 _ => false,
