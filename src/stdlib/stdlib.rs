@@ -1,6 +1,7 @@
 use crate::function::{NativeFunction, Param, Params};
 use crate::variable_type::Type;
 use crate::{intepreter::VariableMap, params, variable::*};
+use simplesl_macros::export_function;
 extern crate simplesl_macros;
 
 pub fn add_std_functions(variables: &mut VariableMap) {
@@ -21,21 +22,15 @@ pub fn add_std_functions(variables: &mut VariableMap) {
         },
     );
 
-    variables.add_native_function(
-        "equals",
-        NativeFunction {
-            params: Params {
-                standard: params!("a": Type::Any, "b": Type::Any),
-                catch_rest: None,
-            },
-            return_type: Type::Int,
-            body: |_name, _intepreter, args| {
-                let a = args.get("a")?;
-                let b = args.get("b")?;
-                Ok(Variable::Int(if a == b { 1 } else { 0 }))
-            },
-        },
-    );
+    #[export_function]
+    fn equals(a: Variable, b: Variable) -> i64 {
+        if a == b {
+            1
+        } else {
+            0
+        }
+    }
+
     variables.add_native_function(
         "if",
         NativeFunction {

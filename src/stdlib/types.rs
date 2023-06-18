@@ -2,86 +2,46 @@ use crate::{
     function::{NativeFunction, Param, Params},
     intepreter::VariableMap,
     params,
-    variable_type::{GetType, Type},
+    variable::{Array, Variable},
+    variable_type::Type,
 };
+use simplesl_macros::export_function;
+use std::rc::Rc;
 
 pub fn add_types_functions(variables: &mut VariableMap) {
-    variables.add_native_function(
-        "int",
-        NativeFunction {
-            params: Params {
-                standard: params!("value": Type::Any, "fallback": Type::Int),
-                catch_rest: None,
-            },
-            return_type: Type::Float,
-            body: |_name, _intepreter, args| {
-                let value = args.get("value")?;
-                let fallback = args.get("fallback")?;
-                if value.get_type() == Type::Int {
-                    Ok(value)
-                } else {
-                    Ok(fallback)
-                }
-            },
-        },
-    );
-    variables.add_native_function(
-        "float",
-        NativeFunction {
-            params: Params {
-                standard: params!("value": Type::Any, "fallback": Type::Float),
-                catch_rest: None,
-            },
-            return_type: Type::Float,
-            body: |_name, _intepreter, args| {
-                let value = args.get("value")?;
-                let fallback = args.get("fallback")?;
-                if value.get_type() == Type::Float {
-                    Ok(value)
-                } else {
-                    Ok(fallback)
-                }
-            },
-        },
-    );
+    #[export_function]
+    fn int(value: Variable, fallback: i64) -> i64 {
+        if let Variable::Int(value) = value {
+            value
+        } else {
+            fallback
+        }
+    }
 
-    variables.add_native_function(
-        "string",
-        NativeFunction {
-            params: Params {
-                standard: params!("value": Type::Any, "fallback": Type::String),
-                catch_rest: None,
-            },
-            return_type: Type::String,
-            body: |_name, _intepreter, args| {
-                let value = args.get("value")?;
-                let fallback = args.get("fallback")?;
-                if value.get_type() == Type::String {
-                    Ok(value)
-                } else {
-                    Ok(fallback)
-                }
-            },
-        },
-    );
+    #[export_function]
+    fn float(value: Variable, fallback: f64) -> f64 {
+        if let Variable::Float(value) = value {
+            value
+        } else {
+            fallback
+        }
+    }
 
-    variables.add_native_function(
-        "array",
-        NativeFunction {
-            params: Params {
-                standard: params!("value": Type::Any, "fallback": Type::Array),
-                catch_rest: None,
-            },
-            return_type: Type::Array,
-            body: |_name, _intepreter, args| {
-                let value = args.get("value")?;
-                let fallback = args.get("fallback")?;
-                if value.get_type() == Type::Array {
-                    Ok(value)
-                } else {
-                    Ok(fallback)
-                }
-            },
-        },
-    );
+    #[export_function]
+    fn string(value: Variable, fallback: Rc<str>) -> Rc<str> {
+        if let Variable::String(value) = value {
+            value
+        } else {
+            fallback
+        }
+    }
+
+    #[export_function]
+    fn array(value: Variable, fallback: Rc<Array>) -> Rc<Array> {
+        if let Variable::Array(value) = value {
+            value
+        } else {
+            fallback
+        }
+    }
 }

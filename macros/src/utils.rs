@@ -1,4 +1,4 @@
-use syn::{Ident, ItemFn, PatIdent, PatType};
+use syn::{Ident, ItemFn, PatIdent, PatType, ReturnType};
 extern crate quote;
 use quote::{__private::TokenStream, quote};
 
@@ -51,8 +51,24 @@ fn arg_import_from_function_param(
                 panic!()
             };
         )
+    } else if param_type == "Rc < str >" {
+        quote!(
+            let Variable::String(#ident) = args.get(#ident_str)? else {
+                panic!()
+            };
+        )
+    } else if param_type == "Rc < Array >" {
+        quote!(
+            let Variable::Array(#ident) = args.get(#ident_str)? else {
+                panic!()
+            };
+        )
+    } else if param_type == "Variable" {
+        quote!(
+            let #ident = args.get(#ident_str)?;
+        )
     } else {
-        panic!("f64 and i64 types only allowed")
+        panic!("{param_type} type isn't allowed")
     }
 }
 
@@ -76,20 +92,38 @@ fn param_from_function_param(
         quote!(#ident: Type::Int)
     } else if param_type == "f64" {
         quote!(#ident: Type::Float)
+    } else if param_type == "Rc < str >" {
+        quote!(#ident: Type::String)
+    } else if param_type == "Rc < Array >" {
+        quote!(#ident: Type::Array)
+    } else if param_type == "Variable" {
+        quote!(#ident: Type::Any)
     } else {
-        panic!("f64 and i64 types only allowed")
+        panic!("{param_type} type isn't allowed")
     }
 }
 
 pub fn return_type_from_function(function: ItemFn) -> TokenStream {
     let return_type = function.sig.output;
-    let return_type = quote!(#return_type).to_string();
-    if return_type == "-> i64" {
-        quote!(Type::Int)
-    } else if return_type == "-> f64" {
-        quote!(Type::Float)
+    let return_type = if let ReturnType::Type(_, return_type) = return_type {
+        quote!(#return_type).to_string()
     } else {
-        panic!("f64 and i64 types only allowed")
+        String::from("")
+    };
+    if return_type == "i64" {
+        quote!(Type::Int)
+    } else if return_type == "f64" {
+        quote!(Type::Float)
+    } else if return_type == "Rc < str >" {
+        quote!(Type::String)
+    } else if return_type == "Rc < Array >" {
+        quote!(Type::Array)
+    } else if return_type.is_empty() {
+        quote!(Type::Null)
+    } else if return_type == "Variable" {
+        quote!(Type::Any)
+    } else {
+        panic!("{return_type} type isn't allowed")
     }
 }
 
@@ -99,6 +133,17 @@ pub fn get_body(return_type: &TokenStream, ident: Ident, args: TokenStream) -> T
         quote!(Ok(Variable::Int(#ident(#args))))
     } else if return_type == "Type :: Float" {
         quote!(Ok(Variable::Float(#ident(#args))))
+    } else if return_type == "Type :: String" {
+        quote!(Ok(Variable::String(#ident(#args))))
+    } else if return_type == "Type :: Array" {
+        quote!(Ok(Variable::Array(#ident(#args))))
+    } else if return_type == "Type :: Any" {
+        quote!(Ok(#ident(#args)))
+    } else if return_type == "Type :: Null" {
+        quote!(
+            #ident(#args);
+            Ok(Variable::Null)
+        )
     } else {
         panic!()
     }

@@ -1,3 +1,5 @@
+use simplesl_macros::export_function;
+
 use crate::function::{Function, NativeFunction, Param, Params};
 use crate::intepreter::Intepreter;
 use crate::variable_type::Type;
@@ -35,6 +37,7 @@ pub fn add_array_functions(variables: &mut VariableMap) {
             },
         },
     );
+
     variables.add_native_function(
         "array_at",
         NativeFunction {
@@ -62,45 +65,21 @@ pub fn add_array_functions(variables: &mut VariableMap) {
             },
         },
     );
-    variables.add_native_function(
-        "array_concat",
-        NativeFunction {
-            params: Params {
-                standard: params!("array1": Type::Array, "array2": Type::Array),
-                catch_rest: None,
-            },
-            return_type: Type::Array,
-            body: |_name, _intepreter, args| {
-                let Variable::Array(array1) = args.get("array1")? else {
-                    panic!()
-                };
-                let Variable::Array(array2) = args.get("array2")? else {
-                    panic!()
-                };
-                let mut new_array = (*array1).clone();
-                for element in array2.iter() {
-                    new_array.push(element.clone());
-                }
-                Ok(Variable::Array(new_array.into()))
-            },
-        },
-    );
-    variables.add_native_function(
-        "array_len",
-        NativeFunction {
-            params: Params {
-                standard: params!("array": Type::Array),
-                catch_rest: None,
-            },
-            return_type: Type::Int,
-            body: |_name, _intepreter, args| {
-                let Variable::Array(array) = args.get("array")? else {
-                    panic!()
-                };
-                Ok(Variable::Int(array.len() as i64))
-            },
-        },
-    );
+
+    #[export_function]
+    fn array_concat(array1: Rc<Array>, array2: Rc<Array>) -> Rc<Array> {
+        let mut new_array = (*array1).clone();
+        for element in array2.iter() {
+            new_array.push(element.clone());
+        }
+        new_array.into()
+    }
+
+    #[export_function]
+    fn array_len(array: Rc<Array>) -> i64 {
+        array.len() as i64
+    }
+
     variables.add_native_function(
         "for_each",
         NativeFunction {
@@ -189,30 +168,17 @@ pub fn add_array_functions(variables: &mut VariableMap) {
             },
         },
     );
-    variables.add_native_function(
-        "zip",
-        NativeFunction {
-            params: Params {
-                standard: params!("array1": Type::Array, "array2": Type::Array),
-                catch_rest: None,
-            },
-            return_type: Type::Array,
-            body: |_name, _intepreter, args| {
-                let Variable::Array(array1) = args.get("array1")? else {
-                    panic!()
-                };
-                let Variable::Array(array2) = args.get("array2")? else {
-                    panic!()
-                };
-                let new_array: Array = zip(array1.iter(), array2.iter())
-                    .map(|(element1, element2)| {
-                        Variable::Array(vec![element1.clone(), element2.clone()].into())
-                    })
-                    .collect();
-                Ok(Variable::Array(new_array.into()))
-            },
-        },
-    );
+
+    #[export_function("zip")]
+    fn array_zip(array1: Rc<Array>, array2: Rc<Array>) -> Rc<Array> {
+        let new_array: Array = zip(array1.iter(), array2.iter())
+            .map(|(element1, element2)| {
+                Variable::Array(vec![element1.clone(), element2.clone()].into())
+            })
+            .collect();
+        new_array.into()
+    }
+
     fn recsub(
         intepreter: &mut Intepreter,
         n: usize,
@@ -229,6 +195,7 @@ pub fn add_array_functions(variables: &mut VariableMap) {
             recsub(intepreter, n - 1, new_array.into(), function)
         }
     }
+
     variables.add_native_function(
         "recsub",
         NativeFunction {

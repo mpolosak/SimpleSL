@@ -10,7 +10,7 @@ use utils::{
 };
 
 #[proc_macro_attribute]
-pub fn export_math_function(attr: TokenStream, function: TokenStream) -> TokenStream {
+pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream {
     let function = parse_macro_input!(function as ItemFn);
     let ident = function.sig.ident.clone();
     let ident_str = if attr.is_empty() {
