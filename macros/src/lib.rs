@@ -5,7 +5,8 @@ use quote::quote;
 use syn::{parse_macro_input, ItemFn, LitStr};
 mod utils;
 use utils::{
-    args_from_idents, args_importing_from_idents, param_idents_from_function, params_from_idents,
+    args_from_function_params, args_import_from_function_params, function_params_from_itemfn,
+    get_body, params_from_function_params, return_type_from_function,
 };
 
 #[proc_macro_attribute]
@@ -17,10 +18,12 @@ pub fn export_math_function(attr: TokenStream, function: TokenStream) -> TokenSt
     } else {
         parse_macro_input!(attr as LitStr).value()
     };
-    let params = param_idents_from_function(function.clone());
-    let args_importing = args_importing_from_idents(&params);
-    let args = args_from_idents(&params);
-    let params = params_from_idents(&params);
+    let params = function_params_from_itemfn(function.clone());
+    let args_importing = args_import_from_function_params(&params);
+    let args = args_from_function_params(&params);
+    let params = params_from_function_params(&params);
+    let return_type = return_type_from_function(function.clone());
+    let body = get_body(&return_type, ident, args);
     quote!(
         #function
         variables.add_native_function(
@@ -30,10 +33,10 @@ pub fn export_math_function(attr: TokenStream, function: TokenStream) -> TokenSt
                     standard: params!(#params),
                     catch_rest: None,
                 },
-                return_type: Type::Float,
+                return_type: #return_type,
                 body: |_name, _intepreter, args| {
                     #args_importing
-                    Ok(Variable::Float(#ident(#args)))
+                    #body
                 },
             },
         );
