@@ -105,6 +105,42 @@ impl PartialEq for Variable {
     }
 }
 
+impl From<i64> for Variable {
+    fn from(value: i64) -> Self {
+        Self::Int(value)
+    }
+}
+
+impl From<f64> for Variable {
+    fn from(value: f64) -> Self {
+        Self::Float(value)
+    }
+}
+
+impl From<Rc<str>> for Variable {
+    fn from(value: Rc<str>) -> Self {
+        Self::String(value)
+    }
+}
+
+impl From<Rc<dyn Function>> for Variable {
+    fn from(value: Rc<dyn Function>) -> Self {
+        Self::Function(value)
+    }
+}
+
+impl From<Rc<Array>> for Variable {
+    fn from(value: Rc<Array>) -> Self {
+        Self::Array(value)
+    }
+}
+
+impl From<()> for Variable {
+    fn from(_value: ()) -> Self {
+        Self::Null
+    }
+}
+
 pub fn is_correct_variable_name(name: &str) -> bool {
     let Ok(parse) = SimpleSLParser::parse(Rule::ident, name) else {
         return false

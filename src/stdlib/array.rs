@@ -13,58 +13,30 @@ use std::iter::zip;
 use std::rc::Rc;
 
 pub fn add_array_functions(variables: &mut VariableMap) {
-    variables.add_native_function(
-        "new_array",
-        NativeFunction {
-            params: Params {
-                standard: params!("length": Type::Int, "value": Type::Any),
-                catch_rest: None,
-            },
-            return_type: Type::Array,
-            body: |_name, _intepreter, args| {
-                let Variable::Int(len) = args.get("length")? else {
-                    panic!();
-                };
-                if len < 0 {
-                    return Err(Error::CannotBeNegative(String::from("lenght")));
-                }
-                let value = args.get("value")?;
-                let mut array = Array::new();
-                for _ in 0..len {
-                    array.push(value.clone());
-                }
-                Ok(Variable::Array(array.into()))
-            },
-        },
-    );
+    #[export_function]
+    fn new_array(length: i64, value: Variable) -> Result<Rc<Array>, Error> {
+        if length < 0 {
+            return Err(Error::CannotBeNegative(String::from("length")));
+        }
+        let mut array = Array::new();
+        for _ in 0..length {
+            array.push(value.clone());
+        }
+        Ok(array.into())
+    }
 
-    variables.add_native_function(
-        "array_at",
-        NativeFunction {
-            params: Params {
-                standard: params!("array": Type::Array, "index": Type::Int),
-                catch_rest: None,
-            },
-            return_type: Type::Any,
-            body: |_name, _intepreter, args| {
-                let Variable::Array(array) = args.get("array")? else {
-                    panic!();
-                };
-                let Variable::Int(index) = args.get("index")? else {
-                    panic!();
-                };
-                if index < 0 {
-                    return Err(Error::CannotBeNegative(String::from("index")));
-                }
-                let index = index as usize;
-                if index < array.len() {
-                    Ok(array[index].clone())
-                } else {
-                    Err(Error::IndexToBig)
-                }
-            },
-        },
-    );
+    #[export_function]
+    fn array_at(array: Rc<Array>, index: i64) -> Result<Variable, Error> {
+        if index < 0 {
+            return Err(Error::CannotBeNegative(String::from("index")));
+        }
+        let index = index as usize;
+        if index < array.len() {
+            Ok(array[index].clone())
+        } else {
+            Err(Error::IndexToBig)
+        }
+    }
 
     #[export_function]
     fn array_concat(array1: Rc<Array>, array2: Rc<Array>) -> Rc<Array> {

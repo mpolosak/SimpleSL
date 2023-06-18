@@ -73,6 +73,9 @@ fn arg_import_from_function_param(
 }
 
 pub fn params_from_function_params(fnparams: &[(Ident, String)]) -> TokenStream {
+    if fnparams.is_empty() {
+        return quote!();
+    }
     let params = fnparams
         .iter()
         .take(fnparams.len() - 1)
@@ -103,48 +106,55 @@ fn param_from_function_param(
     }
 }
 
-pub fn return_type_from_function(function: ItemFn) -> TokenStream {
-    let return_type = function.sig.output;
-    let return_type = if let ReturnType::Type(_, return_type) = return_type {
-        quote!(#return_type).to_string()
-    } else {
-        String::from("")
-    };
-    if return_type == "i64" {
+pub fn return_type_from_str(return_type: &str) -> TokenStream {
+    if return_type == "i64" || return_type == "Result < i64, Error >" {
         quote!(Type::Int)
-    } else if return_type == "f64" {
+    } else if return_type == "f64" || return_type == "Result < f64, Error >" {
         quote!(Type::Float)
-    } else if return_type == "Rc < str >" {
+    } else if return_type == "Rc < str >" || return_type == "Result < Rc < str >, Error >" {
         quote!(Type::String)
-    } else if return_type == "Rc < Array >" {
+    } else if return_type == "Rc < Array >" || return_type == "Result < Rc < Array >, Error >" {
         quote!(Type::Array)
     } else if return_type.is_empty() {
         quote!(Type::Null)
-    } else if return_type == "Variable" {
+    } else if return_type == "Variable" || return_type == "Result < Variable, Error >" {
         quote!(Type::Any)
     } else {
         panic!("{return_type} type isn't allowed")
     }
 }
 
-pub fn get_body(return_type: &TokenStream, ident: Ident, args: TokenStream) -> TokenStream {
+pub fn get_body(return_type: &str, ident: Ident, args: TokenStream) -> TokenStream {
     let return_type = return_type.to_string();
-    if return_type == "Type :: Int" {
-        quote!(Ok(Variable::Int(#ident(#args))))
-    } else if return_type == "Type :: Float" {
-        quote!(Ok(Variable::Float(#ident(#args))))
-    } else if return_type == "Type :: String" {
-        quote!(Ok(Variable::String(#ident(#args))))
-    } else if return_type == "Type :: Array" {
-        quote!(Ok(Variable::Array(#ident(#args))))
-    } else if return_type == "Type :: Any" {
+    if return_type == "i64"
+        || return_type == "f64"
+        || return_type == "Rc < str >"
+        || return_type == "Rc < Array >"
+    {
+        quote!(Ok(#ident(#args).into()))
+    } else if return_type == "Variable" {
         quote!(Ok(#ident(#args)))
-    } else if return_type == "Type :: Null" {
+    } else if return_type.is_empty() {
         quote!(
             #ident(#args);
             Ok(Variable::Null)
         )
+    } else if return_type == "Result < Variable, Error >"
+        || return_type == "Result < i64, Error >"
+        || return_type == "Result < f64, Error >"
+        || return_type == "Result < Rc < str >, Error >"
+        || return_type == "Result < Rc < Array >, Error >"
+    {
+        quote!(Ok(#ident(#args)?.into()))
     } else {
         panic!()
+    }
+}
+
+pub fn return_type_to_str(function: &ItemFn) -> String {
+    if let ReturnType::Type(_, return_type) = &function.sig.output {
+        quote!(#return_type).to_string()
+    } else {
+        String::from("")
     }
 }

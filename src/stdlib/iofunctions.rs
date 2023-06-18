@@ -1,6 +1,9 @@
+use crate::error::Error;
 use crate::function::{NativeFunction, Params};
+use crate::params;
 use crate::variable_type::Type;
 use crate::{intepreter::VariableMap, variable::*};
+use simplesl_macros::export_function;
 use std::io;
 
 pub fn add_io_functions(variables: &mut VariableMap) {
@@ -24,20 +27,12 @@ pub fn add_io_functions(variables: &mut VariableMap) {
             },
         },
     );
-    variables.add_native_function(
-        "cgetline",
-        NativeFunction {
-            params: Params {
-                standard: Vec::new(),
-                catch_rest: None,
-            },
-            return_type: Type::String,
-            body: |_name, _intepreter, _params| {
-                let mut input = String::new();
-                io::stdin().read_line(&mut input)?;
-                input = input.replace('\n', "");
-                Ok(Variable::String(input.into()))
-            },
-        },
-    );
+
+    #[export_function]
+    fn cgetline() -> Result<Variable, Error> {
+        let mut input = String::new();
+        io::stdin().read_line(&mut input)?;
+        input = input.replace('\n', "");
+        Ok(Variable::String(input.into()))
+    }
 }
