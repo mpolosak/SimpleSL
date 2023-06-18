@@ -2,7 +2,6 @@ use crate::function::{NativeFunction, Param, Params};
 use crate::variable_type::Type;
 use crate::{intepreter::VariableMap, params, variable::*};
 extern crate simplesl_macros;
-use simplesl_macros::export_math_function;
 
 pub fn add_std_functions(variables: &mut VariableMap) {
     variables.add_native_function(
@@ -21,46 +20,6 @@ pub fn add_std_functions(variables: &mut VariableMap) {
             },
         },
     );
-
-    #[export_math_function]
-    fn add(a: f64, b: f64) -> f64 {
-        a + b
-    }
-
-    #[export_math_function]
-    fn subtract(a: f64, b: f64) -> f64 {
-        a - b
-    }
-
-    #[export_math_function]
-    fn multiply(a: f64, b: f64) -> f64 {
-        a * b
-    }
-
-    #[export_math_function]
-    fn divide(a: f64, b: f64) -> f64 {
-        a / b
-    }
-
-    #[export_math_function]
-    fn modulo(a: f64, b: f64) -> f64 {
-        let divided = a / b;
-        a - b * divided.floor()
-    }
-
-    #[export_math_function]
-    fn or(a: f64, b: f64) -> f64 {
-        a.abs() + b.abs()
-    }
-
-    #[export_math_function]
-    fn not(a: f64) -> f64 {
-        if a == 0.0 {
-            1.0
-        } else {
-            0.0
-        }
-    }
 
     variables.add_native_function(
         "equals",
