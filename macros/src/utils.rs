@@ -23,9 +23,7 @@ pub fn args_from_function_params(params: &[(Ident, String)]) -> quote::__private
         .fold(quote!(), |acc, (ident, _)| quote!(#acc #ident,))
 }
 
-pub fn args_import_from_function_params(
-    params: &[(Ident, String)],
-) -> quote::__private::TokenStream {
+pub fn args_import_from_function_params(params: &[(Ident, String)]) -> TokenStream {
     params.iter().fold(quote!(), |acc, param| {
         let import = arg_import_from_function_param(param);
         quote!(
@@ -67,6 +65,8 @@ fn arg_import_from_function_param(
         quote!(
             let #ident = args.get(#ident_str)?;
         )
+    } else if param_type == "& mut Intepreter" {
+        quote!()
     } else {
         panic!("{param_type} type isn't allowed")
     }
@@ -80,8 +80,12 @@ pub fn params_from_function_params(fnparams: &[(Ident, String)]) -> TokenStream 
         .iter()
         .take(fnparams.len() - 1)
         .fold(quote!(), |acc, param| {
-            let param = param_from_function_param(param);
-            quote!(#acc #param,)
+            if param.1 != "& mut Intepreter" {
+                let param = param_from_function_param(param);
+                quote!(#acc #param,)
+            } else {
+                quote!()
+            }
         });
     let last = param_from_function_param(fnparams.last().unwrap());
     quote!(#params #last)

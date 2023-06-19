@@ -1,26 +1,18 @@
+use std::rc::Rc;
+
+use crate::error::Error;
 use crate::function::{NativeFunction, Param, Params};
+use crate::intepreter::Intepreter;
 use crate::variable_type::Type;
 use crate::{intepreter::VariableMap, params, variable::*};
 use simplesl_macros::export_function;
 extern crate simplesl_macros;
 
 pub fn add_std_functions(variables: &mut VariableMap) {
-    variables.add_native_function(
-        "import",
-        NativeFunction {
-            params: Params {
-                standard: params!("path": Type::String),
-                catch_rest: None,
-            },
-            return_type: Type::Any,
-            body: |_name, intepreter, args| {
-                let Variable::String(path) = args.get("path")? else {
-                    panic!()
-                };
-                intepreter.load_and_exec(&path)
-            },
-        },
-    );
+    #[export_function]
+    fn import(intepreter: &mut Intepreter, path: Rc<str>) -> Result<Variable, Error> {
+        intepreter.load_and_exec(&path)
+    }
 
     #[export_function]
     fn equals(a: Variable, b: Variable) -> i64 {
