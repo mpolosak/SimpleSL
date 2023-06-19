@@ -1,0 +1,8 @@
+fib = (n:int){
+    recsub({0,1}, (array:array){
+        len = array_len(array);
+        a = array_at(array, subtract(len, 1));
+        b = array_at(array, subtract(len, 2));
+        add(int(a, 0), int(b, 0));
+    }, n);
+};

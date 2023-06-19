@@ -1,6 +1,6 @@
 use simplesl_macros::export_function;
 
-use crate::function::{self, Function, NativeFunction, Param, Params};
+use crate::function::{Function, NativeFunction, Param, Params};
 use crate::intepreter::Intepreter;
 use crate::variable_type::Type;
 use crate::{
