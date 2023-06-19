@@ -14,19 +14,19 @@ use utils::{
 #[proc_macro_attribute]
 pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream {
     let attr = Attributes::parse(attr);
-    let function = parse_macro_input!(function as ItemFn);
+    let mut function = parse_macro_input!(function as ItemFn);
     let ident = function.sig.ident.clone();
     let ident_str = if let Some(value) = attr.name {
         value
     } else {
         ident.to_string()
     };
-    let mut params = function_params_from_itemfn(function.clone());
+    let mut params = function_params_from_itemfn(&mut function);
     let args = args_from_function_params(&params);
     let args_importing = args_import_from_function_params(&params);
     let catch_rest = if attr.catch_rest {
         match params.pop() {
-            Some((ident, type_str)) if type_str == "Rc < Array >" => {
+            Some((ident, _, type_str)) if type_str == "Rc < Array >" => {
                 let ident = ident.to_string();
                 quote!(Some(String::from(#ident)))
             }

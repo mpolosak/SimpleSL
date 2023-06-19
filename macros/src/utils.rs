@@ -1,29 +1,33 @@
-use syn::{Ident, ItemFn, PatIdent, PatType, ReturnType};
+use syn::{Attribute, Ident, ItemFn, MetaList, PatIdent, PatType, ReturnType};
 extern crate quote;
 use quote::{__private::TokenStream, quote};
 
-pub fn function_params_from_itemfn(function: ItemFn) -> Vec<(Ident, String)> {
-    function
-        .sig
-        .inputs
-        .into_iter()
-        .map(|param| match param {
+pub fn function_params_from_itemfn(function: &mut ItemFn) -> Vec<(Ident, Vec<Attribute>, String)> {
+    let mut result = Vec::new();
+    for param in &mut function.sig.inputs {
+        match param {
             syn::FnArg::Receiver(_) => panic!(),
-            syn::FnArg::Typed(PatType { pat, ty, .. }) => match *pat {
-                syn::Pat::Ident(PatIdent { ident, .. }) => (ident, quote!(#ty).to_string()),
+            syn::FnArg::Typed(PatType { pat, ty, attrs, .. }) => match *pat.clone() {
+                syn::Pat::Ident(PatIdent { ident, .. }) => {
+                    result.push((ident, attrs.clone(), quote!(#ty).to_string()));
+                    *attrs = Vec::new();
+                }
                 _ => panic!(),
             },
-        })
-        .collect()
+        }
+    }
+    result
 }
 
-pub fn args_from_function_params(params: &[(Ident, String)]) -> quote::__private::TokenStream {
+pub fn args_from_function_params(
+    params: &[(Ident, Vec<Attribute>, String)],
+) -> quote::__private::TokenStream {
     params
         .iter()
-        .fold(quote!(), |acc, (ident, _)| quote!(#acc #ident,))
+        .fold(quote!(), |acc, (ident, ..)| quote!(#acc #ident,))
 }
 
-pub fn args_import_from_function_params(params: &[(Ident, String)]) -> TokenStream {
+pub fn args_import_from_function_params(params: &[(Ident, Vec<Attribute>, String)]) -> TokenStream {
     params.iter().fold(quote!(), |acc, param| {
         let import = arg_import_from_function_param(param);
         quote!(
@@ -34,8 +38,8 @@ pub fn args_import_from_function_params(params: &[(Ident, String)]) -> TokenStre
 }
 
 fn arg_import_from_function_param(
-    (ident, param_type): &(Ident, String),
-) -> quote::__private::TokenStream {
+    (ident, _attrs, param_type): &(Ident, Vec<Attribute>, String),
+) -> TokenStream {
     let ident_str = ident.to_string();
     if param_type == "i64" {
         quote!(
@@ -61,6 +65,12 @@ fn arg_import_from_function_param(
                 panic!()
             };
         )
+    } else if param_type == "Rc < dyn Function >" {
+        quote!(
+            let Variable::Function(#ident) = args.get(#ident_str)? else {
+                panic!()
+            };
+        )
     } else if param_type == "Variable" {
         quote!(
             let #ident = args.get(#ident_str)?;
@@ -72,7 +82,7 @@ fn arg_import_from_function_param(
     }
 }
 
-pub fn params_from_function_params(fnparams: &[(Ident, String)]) -> TokenStream {
+pub fn params_from_function_params(fnparams: &[(Ident, Vec<Attribute>, String)]) -> TokenStream {
     if fnparams.is_empty() {
         return quote!();
     }
@@ -80,7 +90,7 @@ pub fn params_from_function_params(fnparams: &[(Ident, String)]) -> TokenStream 
         .iter()
         .take(fnparams.len() - 1)
         .fold(quote!(), |acc, param| {
-            if param.1 != "& mut Intepreter" {
+            if param.2 != "& mut Intepreter" {
                 let param = param_from_function_param(param);
                 quote!(#acc #param,)
             } else {
@@ -92,7 +102,7 @@ pub fn params_from_function_params(fnparams: &[(Ident, String)]) -> TokenStream 
 }
 
 fn param_from_function_param(
-    (ident, param_type): &(Ident, String),
+    (ident, attrs, param_type): &(Ident, Vec<Attribute>, String),
 ) -> quote::__private::TokenStream {
     let ident = ident.to_string();
     if param_type == "i64" {
@@ -103,6 +113,23 @@ fn param_from_function_param(
         quote!(#ident: Type::String)
     } else if param_type == "Rc < Array >" {
         quote!(#ident: Type::Array)
+    } else if param_type == "Rc < dyn Function >" {
+        if attrs.is_empty() {
+            panic!("Argument of type function must be precede by function attribute")
+        }
+        for attr in attrs {
+            match &attr.meta {
+                syn::Meta::List(MetaList { path, tokens, .. })
+                    if quote!(#path).to_string() == "function" =>
+                {
+                    return quote!(#ident: Type::Function{
+                        #tokens
+                    })
+                }
+                _ => (),
+            };
+        }
+        panic!("Argument of type function must be precede by function attribute")
     } else if param_type == "Variable" {
         quote!(#ident: Type::Any)
     } else {
