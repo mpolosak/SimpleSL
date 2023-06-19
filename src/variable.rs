@@ -77,30 +77,14 @@ impl FromStr for Variable {
 
 impl PartialEq for Variable {
     fn eq(&self, other: &Self) -> bool {
-        match self {
-            Variable::Int(value1) => match other {
-                Variable::Int(value2) => value1 == value2,
-                _ => false,
-            },
-            Variable::Float(value1) => match other {
-                Variable::Float(value2) => value1 == value2,
-                _ => false,
-            },
-            Variable::String(value1) => match other {
-                Variable::String(value2) => value1 == value2,
-                _ => false,
-            },
-            Variable::Function(value1) => match other {
-                Variable::Function(value2) => Rc::ptr_eq(value1, value2),
-                _ => false,
-            },
-            Variable::Array(array1) => match other {
-                Variable::Array(array2) => array1 == array2,
-                _ => false,
-            },
-            Variable::Null => {
-                matches!(other, Variable::Null)
-            }
+        match (self, other) {
+            (Variable::Int(value1), Variable::Int(value2)) => value1 == value2,
+            (Variable::Float(value1), Variable::Float(value2)) => value1 == value2,
+            (Variable::String(value1), Variable::String(value2)) => value1 == value2,
+            (Variable::Function(value1), Variable::Function(value2)) => Rc::ptr_eq(value1, value2),
+            (Variable::Array(value1), Variable::Array(value2)) => value1 == value2,
+            (Variable::Null, Variable::Null) => true,
+            _ => false,
         }
     }
 }
