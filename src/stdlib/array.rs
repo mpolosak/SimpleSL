@@ -141,7 +141,7 @@ pub fn add_array_functions(variables: &mut VariableMap) {
         },
     );
 
-    #[export_function("zip")]
+    #[export_function(name = "zip")]
     fn array_zip(array1: Rc<Array>, array2: Rc<Array>) -> Rc<Array> {
         let new_array: Array = zip(array1.iter(), array2.iter())
             .map(|(element1, element2)| {
