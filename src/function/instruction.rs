@@ -1,4 +1,4 @@
-use super::{Function, LangFunction, Line, Param, Params};
+use super::{Function, LangFunction, Line, LocalVariable, LocalVariableMap, Param, Params};
 use crate::variable::Variable;
 use crate::variable_type::{GetType, Type};
 use crate::{
@@ -8,7 +8,7 @@ use crate::{
 };
 use pest::iterators::Pair;
 use std::iter::zip;
-use std::{collections::HashMap, fmt, rc::Rc};
+use std::{fmt, rc::Rc};
 
 #[derive(Clone)]
 pub enum Instruction {
@@ -22,7 +22,7 @@ pub enum Instruction {
         return_type: Type,
     },
     Variable(Variable),
-    LocalVariable(String, Type),
+    LocalVariable(String, LocalVariable),
     Array(Vec<Instruction>),
     Function {
         params: Params,
@@ -34,7 +34,7 @@ impl Instruction {
     pub fn new(
         variables: &VariableMap,
         pair: Pair<Rule>,
-        local_variables: &HashMap<String, Type>,
+        local_variables: &LocalVariableMap,
     ) -> Result<Self, Error> {
         match pair.as_rule() {
             Rule::function_call => Self::create_function_call(&pair, variables, local_variables),
@@ -104,7 +104,7 @@ impl Instruction {
                 Ok(Variable::Array(array.into()))
             }
             Self::Function { params, body } => {
-                let mut fn_local_variables = HashMap::from(params);
+                let mut fn_local_variables = LocalVariableMap::from(params);
                 let body = recreate_lines(body, &mut fn_local_variables, local_variables)?;
                 Ok(Variable::Function(Rc::new(LangFunction {
                     params: params.clone(),
@@ -115,7 +115,7 @@ impl Instruction {
     }
     pub fn recreate(
         &self,
-        local_variables: &HashMap<String, Type>,
+        local_variables: &LocalVariableMap,
         args: &VariableMap,
     ) -> Result<Self, Error> {
         Ok(match self {
@@ -166,7 +166,7 @@ impl Instruction {
             }
             Self::Function { params, body } => {
                 let mut local_variables = local_variables.clone();
-                local_variables.extend(HashMap::from(params));
+                local_variables.extend(LocalVariableMap::from(params));
                 let body = recreate_lines(body, &mut local_variables, args)?;
                 Self::Function {
                     params: params.clone(),
@@ -179,7 +179,7 @@ impl Instruction {
     fn create_function_call(
         pair: &Pair<'_, Rule>,
         variables: &VariableMap,
-        local_variables: &HashMap<String, Type>,
+        local_variables: &LocalVariableMap,
     ) -> Result<Instruction, Error> {
         let mut inner = pair.clone().into_inner();
         let var_name = inner.next().unwrap().as_str();
@@ -190,14 +190,14 @@ impl Instruction {
             .map(|pair| Self::new(variables, pair, local_variables))
             .collect::<Result<Vec<_>, _>>()?;
         match local_variables.get(var_name) {
-            Some(Type::Function { return_type, .. }) => Ok(
-                // todo: check if arguments match params
-                Self::LocalFunctionCall {
+            Some(LocalVariable::Function(params, return_type, ..)) => {
+                check_args(var_name, params, &args)?;
+                Ok(Self::LocalFunctionCall {
                     ident: String::from(var_name),
                     args,
-                    return_type: *return_type.clone(),
-                },
-            ),
+                    return_type: return_type.clone(),
+                })
+            }
             Some(_) => Err(error_wrong_type(&args, var_name)),
             None => {
                 let Variable::Function(function) = variables.get(var_name)? else {
@@ -211,7 +211,7 @@ impl Instruction {
     }
     fn create_function(
         pair: Pair<'_, Rule>,
-        local_variables: &HashMap<String, Type>,
+        local_variables: &LocalVariableMap,
         variables: &VariableMap,
     ) -> Result<Instruction, Error> {
         let mut inner = pair.clone().into_inner();
@@ -222,7 +222,7 @@ impl Instruction {
             catch_rest: None,
         };
         let mut local_variables = local_variables.clone();
-        local_variables.extend(HashMap::from(&params));
+        local_variables.extend(LocalVariableMap::from(&params));
         let body = inner
             .map(|arg| Line::new(variables, arg, &mut local_variables))
             .collect::<Result<Vec<_>, _>>()?;
@@ -263,7 +263,7 @@ impl GetType for Instruction {
             }
             Instruction::FunctionCall { function, .. } => function.get_return_type(),
             Instruction::LocalFunctionCall { return_type, .. } => return_type.clone(),
-            Instruction::LocalVariable(_, var_type) => var_type.clone(),
+            Instruction::LocalVariable(_, var_type) => var_type.clone().into(),
         }
     }
 }
@@ -295,7 +295,7 @@ pub fn check_args(var_name: &str, params: &Params, args: &Vec<Instruction>) -> R
 
 pub fn recreate_instructions(
     instructions: &[Instruction],
-    local_variables: &HashMap<String, Type>,
+    local_variables: &LocalVariableMap,
     args: &VariableMap,
 ) -> Result<Vec<Instruction>, Error> {
     instructions
@@ -306,7 +306,7 @@ pub fn recreate_instructions(
 
 pub fn recreate_lines(
     lines: &[Line],
-    local_variables: &mut HashMap<String, Type>,
+    local_variables: &mut LocalVariableMap,
     args: &VariableMap,
 ) -> Result<Vec<Line>, Error> {
     lines

@@ -1,4 +1,8 @@
-use crate::{join, join_debug, parse::Rule};
+use crate::{
+    function::{LocalVariable, Param, Params},
+    join, join_debug,
+    parse::Rule,
+};
 use pest::iterators::Pair;
 use std::{
     fmt::{Debug, Display},
@@ -142,6 +146,30 @@ impl From<Pair<'_, Rule>> for Type {
     }
 }
 
+impl From<LocalVariable> for Type {
+    fn from(value: LocalVariable) -> Self {
+        match value {
+            LocalVariable::Function(
+                Params {
+                    standard,
+                    catch_rest,
+                },
+                return_type,
+            ) => {
+                let params = standard
+                    .into_iter()
+                    .map(|Param { var_type, .. }| var_type)
+                    .collect();
+                Self::Function {
+                    return_type: Box::new(return_type),
+                    params,
+                    catch_rest: catch_rest.is_some(),
+                }
+            }
+            LocalVariable::Other(var_type) => var_type,
+        }
+    }
+}
 pub trait GetType {
     fn get_type(&self) -> Type;
 }

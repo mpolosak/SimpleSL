@@ -1,5 +1,4 @@
-use crate::function::{Line, NativeFunction};
-use crate::variable_type::Type;
+use crate::function::{Line, LocalVariableMap, NativeFunction};
 use crate::{error::Error, parse::*, pest::Parser, stdlib::add_std_lib, variable::*};
 use std::{
     collections::HashMap,
@@ -39,7 +38,7 @@ impl Interpreter {
     fn parse_input(&self, input: String) -> Result<Vec<Line>, Error> {
         let parse = SimpleSLParser::parse(Rule::input, &input)?;
         let mut lines = Vec::<Line>::new();
-        let mut local_variables = HashMap::<String, Type>::new();
+        let mut local_variables = LocalVariableMap::new();
         for line_pair in parse {
             if line_pair.as_rule() == Rule::EOI {
                 break;
