@@ -37,50 +37,7 @@ impl Instruction {
         local_variables: &HashMap<String, Type>,
     ) -> Result<Self, Error> {
         match pair.as_rule() {
-            Rule::function_call => {
-                let mut inner = pair.clone().into_inner();
-                let var_name = inner.next().unwrap().as_str();
-                let args = inner
-                    .next()
-                    .unwrap()
-                    .into_inner()
-                    .map(|pair| Self::new(variables, pair, local_variables))
-                    .collect::<Result<Vec<_>, _>>()?;
-                match local_variables.get(var_name) {
-                    Some(Type::Function { return_type, .. }) => Ok(
-                        // todo: check if arguments match params
-                        Self::LocalFunctionCall {
-                            ident: String::from(var_name),
-                            args,
-                            return_type: *return_type.clone(),
-                        },
-                    ),
-                    Some(_) => {
-                        let params = args.iter().map(Instruction::get_type).collect();
-                        Err(Error::WrongType(
-                            var_name.to_owned(),
-                            Type::Function {
-                                return_type: Type::Any.into(),
-                                params,
-                                catch_rest: false,
-                            },
-                        ))
-                    }
-                    None => {
-                        let Variable::Function(function)
-                        = variables.get(var_name)? else {
-                            let params = args.iter().map(Instruction::get_type).collect();
-                            return Err(Error::WrongType(
-                                String::from(var_name),
-                                Type::Function{return_type: Type::Any.into(), params, catch_rest: false}
-                            ));
-                        };
-                        let params = function.get_params();
-                        check_args(var_name, params, &args)?;
-                        Ok(Self::FunctionCall { function, args })
-                    }
-                }
-            }
+            Rule::function_call => Self::create_function_call(&pair, variables, local_variables),
             Rule::int => {
                 let value = pair.as_str().parse::<i64>().unwrap();
                 Ok(Self::Variable(Variable::Int(value)))
@@ -110,21 +67,7 @@ impl Instruction {
                     .collect::<Result<Vec<_>, _>>()?;
                 Ok(Self::Array(array))
             }
-            Rule::function => {
-                let mut inner = pair.clone().into_inner();
-                let params_pair = inner.next().unwrap();
-                let params: Vec<Param> = params_pair.into_inner().map(Param::from).collect();
-                let params = Params {
-                    standard: params,
-                    catch_rest: None,
-                };
-                let mut local_variables = local_variables.clone();
-                local_variables.extend(HashMap::from(&params));
-                let body = inner
-                    .map(|arg| Line::new(variables, arg, &mut local_variables))
-                    .collect::<Result<Vec<_>, _>>()?;
-                Ok(Self::Function { params, body })
-            }
+            Rule::function => Self::create_function(pair, local_variables, variables),
             Rule::null => Ok(Self::Variable(Variable::Null)),
             _ => panic!(),
         }
@@ -139,15 +82,15 @@ impl Instruction {
                 let args = exec_instructions(args, intepreter, local_variables)?;
                 function.exec("name", intepreter, args)
             }
-            Self::LocalFunctionCall { ident, args, .. } => {
-                let args = exec_instructions(args, intepreter, local_variables)?;
-                let Variable::Function(function)
-                    = local_variables.get(ident).or(
+            Self::LocalFunctionCall {
+                ident,
+                args: instructions,
+                ..
+            } => {
+                let args = exec_instructions(instructions, intepreter, local_variables)?;
+                let Variable::Function(function) = local_variables.get(ident).or(
                         intepreter.variables.get(ident)).unwrap() else {
-                    let params = args.iter().map(Variable::get_type).collect();
-                    return Err(
-                        Error::WrongType(ident.clone(), Type::Function{return_type: Type::Any.into(), params, catch_rest: false})
-                    );
+                    return Err(error_wrong_type(instructions, ident));
                 };
                 function.exec(ident, intepreter, args)
             }
@@ -191,9 +134,7 @@ impl Instruction {
                 } else {
                     let Variable::Function(function)
                         = args.get(ident).unwrap() else {
-                            let params = instructions.iter().map(Instruction::get_type).collect();
-                            return Err(Error::WrongType(ident.clone(), Type::Function{
-                                    return_type: Type::Any.into(), params, catch_rest: false}));
+                        return Err(error_wrong_type(&instructions, ident));
                     };
                     Self::FunctionCall {
                         function,
@@ -234,6 +175,58 @@ impl Instruction {
             }
             _ => self.clone(),
         })
+    }
+    fn create_function_call(
+        pair: &Pair<'_, Rule>,
+        variables: &VariableMap,
+        local_variables: &HashMap<String, Type>,
+    ) -> Result<Instruction, Error> {
+        let mut inner = pair.clone().into_inner();
+        let var_name = inner.next().unwrap().as_str();
+        let args = inner
+            .next()
+            .unwrap()
+            .into_inner()
+            .map(|pair| Self::new(variables, pair, local_variables))
+            .collect::<Result<Vec<_>, _>>()?;
+        match local_variables.get(var_name) {
+            Some(Type::Function { return_type, .. }) => Ok(
+                // todo: check if arguments match params
+                Self::LocalFunctionCall {
+                    ident: String::from(var_name),
+                    args,
+                    return_type: *return_type.clone(),
+                },
+            ),
+            Some(_) => Err(error_wrong_type(&args, var_name)),
+            None => {
+                let Variable::Function(function) = variables.get(var_name)? else {
+                    return Err(error_wrong_type(&args, var_name));
+                };
+                let params = function.get_params();
+                check_args(var_name, params, &args)?;
+                Ok(Self::FunctionCall { function, args })
+            }
+        }
+    }
+    fn create_function(
+        pair: Pair<'_, Rule>,
+        local_variables: &HashMap<String, Type>,
+        variables: &VariableMap,
+    ) -> Result<Instruction, Error> {
+        let mut inner = pair.clone().into_inner();
+        let params_pair = inner.next().unwrap();
+        let params: Vec<Param> = params_pair.into_inner().map(Param::from).collect();
+        let params = Params {
+            standard: params,
+            catch_rest: None,
+        };
+        let mut local_variables = local_variables.clone();
+        local_variables.extend(HashMap::from(&params));
+        let body = inner
+            .map(|arg| Line::new(variables, arg, &mut local_variables))
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(Self::Function { params, body })
     }
 }
 
@@ -331,4 +324,16 @@ pub fn exec_instructions(
         .iter()
         .map(|instruction| instruction.exec(intepreter, local_variables))
         .collect::<Result<Vec<_>, _>>()
+}
+
+fn error_wrong_type(args: &[Instruction], var_name: &str) -> Error {
+    let params = args.iter().map(Instruction::get_type).collect();
+    Error::WrongType(
+        var_name.to_owned(),
+        Type::Function {
+            return_type: Type::Any.into(),
+            params,
+            catch_rest: false,
+        },
+    )
 }
