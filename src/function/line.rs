@@ -47,13 +47,7 @@ impl Line {
         }
         Ok(result)
     }
-    pub fn exec_global(&self, intepreter: &mut Interpreter) -> Result<Variable, Error> {
-        let result = self.instruction.exec(intepreter, &VariableMap::new())?;
-        if let Some(var) = &self.result_var {
-            intepreter.variables.insert(var, result.clone());
-        }
-        Ok(result)
-    }
+
     pub fn recreate(&self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Self {
         let instruction = self.instruction.recreate(local_variables, args);
         if let Some(var) = &self.result_var {

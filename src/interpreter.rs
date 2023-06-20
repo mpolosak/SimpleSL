@@ -20,10 +20,12 @@ impl Interpreter {
 
     pub fn exec(&mut self, input: String) -> Result<Variable, Error> {
         let lines = self.parse_input(input)?;
+        let mut variables = VariableMap::new();
         let mut result = Variable::Null;
         for line in lines {
-            result = line.exec_global(self)?;
+            result = line.exec(self, &mut variables)?;
         }
+        self.variables.extend(variables);
         Ok(result)
     }
 
@@ -78,5 +80,8 @@ impl VariableMap {
     }
     pub fn add_native_function(&mut self, name: &str, function: NativeFunction) {
         self.insert(name, Variable::Function(Rc::new(function)))
+    }
+    pub fn extend(&mut self, other: VariableMap) {
+        self.hash_map.extend(other.hash_map)
     }
 }

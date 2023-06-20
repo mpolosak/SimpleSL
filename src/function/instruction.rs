@@ -88,17 +88,13 @@ impl Instruction {
                 ..
             } => {
                 let args = exec_instructions(instructions, intepreter, local_variables)?;
-                let Variable::Function(function) = local_variables.get(ident).or(
-                        intepreter.variables.get(ident)).unwrap() else {
+                let Variable::Function(function) = local_variables.get(ident).unwrap() else {
                     return Err(error_wrong_type(instructions, ident));
                 };
                 function.exec(ident, intepreter, args)
             }
             Self::Variable(var) => Ok(var.clone()),
-            Self::LocalVariable(name, _) => Ok(local_variables
-                .get(name)
-                .or(intepreter.variables.get(name))
-                .unwrap()),
+            Self::LocalVariable(name, _) => Ok(local_variables.get(name).unwrap()),
             Self::Array(instructions) => {
                 let array = exec_instructions(instructions, intepreter, local_variables)?;
                 Ok(Variable::Array(array.into()))
