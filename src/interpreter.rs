@@ -20,16 +20,7 @@ impl Interpreter {
     }
 
     pub fn exec(&mut self, input: String) -> Result<Variable, Error> {
-        let parse = SimpleSLParser::parse(Rule::input, &input)?;
-        let mut lines = Vec::<Line>::new();
-        let mut local_variables = HashMap::<String, Type>::new();
-        for line_pair in parse {
-            if line_pair.as_rule() == Rule::EOI {
-                break;
-            }
-            let line = Line::new(&self.variables, line_pair, &mut local_variables)?;
-            lines.push(line);
-        }
+        let lines = self.parse_input(input)?;
         let mut result = Variable::Null;
         for line in lines {
             result = line.exec_global(self)?;
@@ -43,6 +34,20 @@ impl Interpreter {
         let mut contents = String::new();
         buf_reader.read_to_string(&mut contents)?;
         self.exec(contents)
+    }
+
+    fn parse_input(&self, input: String) -> Result<Vec<Line>, Error> {
+        let parse = SimpleSLParser::parse(Rule::input, &input)?;
+        let mut lines = Vec::<Line>::new();
+        let mut local_variables = HashMap::<String, Type>::new();
+        for line_pair in parse {
+            if line_pair.as_rule() == Rule::EOI {
+                break;
+            }
+            let line = Line::new(&self.variables, line_pair, &mut local_variables)?;
+            lines.push(line);
+        }
+        Ok(lines)
     }
 }
 
