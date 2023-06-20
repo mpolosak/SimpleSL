@@ -8,15 +8,15 @@ use std::{
     rc::Rc,
 };
 
-pub struct Intepreter {
+pub struct Interpreter {
     pub variables: VariableMap,
 }
 
-impl Intepreter {
-    pub fn new() -> Intepreter {
+impl Interpreter {
+    pub fn new() -> Interpreter {
         let mut variables = VariableMap::new();
         add_std_lib(&mut variables);
-        Intepreter { variables }
+        Interpreter { variables }
     }
 
     pub fn exec(&mut self, input: String) -> Result<Variable, Error> {
@@ -46,7 +46,7 @@ impl Intepreter {
     }
 }
 
-impl Default for Intepreter {
+impl Default for Interpreter {
     fn default() -> Self {
         Self::new()
     }

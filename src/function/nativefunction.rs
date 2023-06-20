@@ -1,5 +1,5 @@
 use super::{Function, Params};
-use crate::intepreter::{Intepreter, VariableMap};
+use crate::interpreter::{Interpreter, VariableMap};
 use crate::variable_type::Type;
 use crate::{error::Error, variable::Variable};
 
@@ -7,14 +7,14 @@ use crate::{error::Error, variable::Variable};
 pub struct NativeFunction {
     pub params: Params,
     pub return_type: Type,
-    pub body: fn(&str, &mut Intepreter, VariableMap) -> Result<Variable, Error>,
+    pub body: fn(&str, &mut Interpreter, VariableMap) -> Result<Variable, Error>,
 }
 
 impl Function for NativeFunction {
     fn exec_intern(
         &self,
         name: &str,
-        intepreter: &mut Intepreter,
+        intepreter: &mut Interpreter,
         args: VariableMap,
     ) -> Result<Variable, Error> {
         (self.body)(name, intepreter, args)

@@ -1,6 +1,6 @@
 use crate::{
     function::{NativeFunction, Param, Params},
-    intepreter::VariableMap,
+    interpreter::VariableMap,
     params,
     variable::{Array, Variable},
     variable_type::Type,

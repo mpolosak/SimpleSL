@@ -1,6 +1,6 @@
 pub mod error;
 pub mod function;
-pub mod intepreter;
+pub mod interpreter;
 mod parse;
 pub mod stdlib;
 pub mod variable;

@@ -1,5 +1,5 @@
 use super::{Function, Line, Params};
-use crate::intepreter::{Intepreter, VariableMap};
+use crate::interpreter::{Interpreter, VariableMap};
 use crate::variable_type::{GetType, Type};
 use crate::{error::Error, variable::Variable};
 
@@ -13,7 +13,7 @@ impl Function for LangFunction {
     fn exec_intern(
         &self,
         _name: &str,
-        intepreter: &mut Intepreter,
+        intepreter: &mut Interpreter,
         mut args: VariableMap,
     ) -> Result<Variable, Error> {
         let mut to_return = Variable::Null;

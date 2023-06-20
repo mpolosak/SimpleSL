@@ -75,7 +75,7 @@ fn arg_import_from_function_param(
         quote!(
             let #ident = args.get(#ident_str)?;
         )
-    } else if param_type == "& mut Intepreter" {
+    } else if param_type == "& mut Interpreter" {
         quote!()
     } else {
         panic!("{param_type} type isn't allowed")
@@ -90,7 +90,7 @@ pub fn params_from_function_params(fnparams: &[(Ident, Vec<Attribute>, String)])
         .iter()
         .take(fnparams.len() - 1)
         .fold(quote!(), |acc, param| {
-            if param.2 != "& mut Intepreter" {
+            if param.2 != "& mut Interpreter" {
                 let param = param_from_function_param(param);
                 quote!(#acc #param,)
             } else {

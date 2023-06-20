@@ -1,5 +1,5 @@
 use rustyline::{error::ReadlineError, Editor};
-use simplesl::intepreter::Intepreter;
+use simplesl::interpreter::Interpreter;
 use std::env;
 
 fn main() {
@@ -12,7 +12,7 @@ fn main() {
 }
 
 fn run_shell() {
-    let mut intepreter = Intepreter::default();
+    let mut intepreter = Interpreter::default();
     let mut rl = Editor::<()>::new().expect("Unable to read user input");
     loop {
         let readline = rl.readline("> ");
@@ -36,7 +36,7 @@ fn run_shell() {
 }
 
 fn run_from_file(path: &str) {
-    let mut intepreter = Intepreter::new();
+    let mut intepreter = Interpreter::new();
     if let Err(error) = intepreter.load_and_exec(path) {
         println!("{error}")
     }

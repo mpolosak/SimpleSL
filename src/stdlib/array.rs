@@ -1,11 +1,11 @@
 use simplesl_macros::export_function;
 
 use crate::function::{Function, NativeFunction, Param, Params};
-use crate::intepreter::Intepreter;
+use crate::interpreter::Interpreter;
 use crate::variable_type::Type;
 use crate::{
     error::Error,
-    intepreter::VariableMap,
+    interpreter::VariableMap,
     params,
     variable::{Array, Variable},
 };
@@ -54,7 +54,7 @@ pub fn add_array_functions(variables: &mut VariableMap) {
 
     #[export_function]
     fn for_each(
-        intepreter: &mut Intepreter,
+        interpreter: &mut Interpreter,
         array: Rc<Array>,
         #[function(
             return_type: Type::Any.into(),
@@ -65,14 +65,14 @@ pub fn add_array_functions(variables: &mut VariableMap) {
     ) -> Result<Rc<Array>, Error> {
         let mut new_array = Array::new();
         for var in array.iter() {
-            new_array.push(function.exec("function", intepreter, vec![var.clone()])?);
+            new_array.push(function.exec("function", interpreter, vec![var.clone()])?);
         }
         Ok(new_array.into())
     }
 
     #[export_function]
     fn filter(
-        intepreter: &mut Intepreter,
+        interpreter: &mut Interpreter,
         array: Rc<Array>,
         #[function(
             return_type:Type::Int.into(),
@@ -83,7 +83,7 @@ pub fn add_array_functions(variables: &mut VariableMap) {
     ) -> Result<Rc<Array>, Error> {
         let mut new_array = Array::new();
         for element in array.iter() {
-            if function.exec("function", intepreter, vec![element.clone()])? != Variable::Int(0) {
+            if function.exec("function", interpreter, vec![element.clone()])? != Variable::Int(0) {
                 new_array.push(element.clone());
             }
         }
@@ -92,7 +92,7 @@ pub fn add_array_functions(variables: &mut VariableMap) {
 
     #[export_function]
     fn reduce(
-        intepreter: &mut Intepreter,
+        interpreter: &mut Interpreter,
         array: Rc<Array>,
         initial_value: Variable,
         #[function(
@@ -103,7 +103,7 @@ pub fn add_array_functions(variables: &mut VariableMap) {
         function: Rc<dyn Function>,
     ) -> Result<Variable, Error> {
         array.iter().try_fold(initial_value, |acc, current| {
-            function.exec("function", intepreter, vec![acc, current.clone()])
+            function.exec("function", interpreter, vec![acc, current.clone()])
         })
     }
 
@@ -119,7 +119,7 @@ pub fn add_array_functions(variables: &mut VariableMap) {
 
     #[export_function]
     fn recsub(
-        intepreter: &mut Intepreter,
+        interpreter: &mut Interpreter,
         array: Rc<Array>,
         #[function(
             return_type: Type::Any.into(),
@@ -141,7 +141,7 @@ pub fn add_array_functions(variables: &mut VariableMap) {
             for _ in 0..n - array.len() {
                 new_array.push(function.exec(
                     "function",
-                    intepreter,
+                    interpreter,
                     vec![Variable::Array(Rc::new(new_array.clone()))],
                 )?);
             }

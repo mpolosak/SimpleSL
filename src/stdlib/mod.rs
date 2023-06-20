@@ -3,7 +3,7 @@ mod iofunctions;
 mod math;
 mod stdlib;
 mod types;
-use crate::intepreter::VariableMap;
+use crate::interpreter::VariableMap;
 use {
     array::add_array_functions, iofunctions::add_io_functions, math::add_math_functions,
     stdlib::add_std_functions, types::add_types_functions,

@@ -12,7 +12,7 @@ pub use self::{
     param::{Param, Params},
 };
 use crate::error::Error;
-use crate::intepreter::{Intepreter, VariableMap};
+use crate::interpreter::{Interpreter, VariableMap};
 use crate::variable::{Array, Variable};
 use crate::variable_type::{GetType, Type};
 use std::{fmt, iter::zip};
@@ -21,7 +21,7 @@ pub trait Function {
     fn exec(
         &self,
         name: &str,
-        intepreter: &mut Intepreter,
+        intepreter: &mut Interpreter,
         mut args: Array,
     ) -> Result<Variable, Error> {
         let mut args_map = VariableMap::new();
@@ -49,7 +49,7 @@ pub trait Function {
     fn exec_intern(
         &self,
         name: &str,
-        intepreter: &mut Intepreter,
+        intepreter: &mut Interpreter,
         args: VariableMap,
     ) -> Result<Variable, Error>;
     fn get_params(&self) -> &Params;

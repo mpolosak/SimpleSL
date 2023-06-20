@@ -3,7 +3,7 @@ use crate::variable::Variable;
 use crate::variable_type::{GetType, Type};
 use crate::{
     error::Error,
-    intepreter::{Intepreter, VariableMap},
+    interpreter::{Interpreter, VariableMap},
     parse::Rule,
 };
 use pest::iterators::Pair;
@@ -138,7 +138,7 @@ impl Instruction {
     }
     pub fn exec(
         &self,
-        intepreter: &mut Intepreter,
+        intepreter: &mut Interpreter,
         local_variables: &VariableMap,
     ) -> Result<Variable, Error> {
         match &self {
@@ -340,7 +340,7 @@ pub fn recreate_lines(
 
 pub fn exec_instructions(
     instructions: &[Instruction],
-    intepreter: &mut Intepreter,
+    intepreter: &mut Interpreter,
     local_variables: &VariableMap,
 ) -> Result<Vec<Variable>, Error> {
     instructions

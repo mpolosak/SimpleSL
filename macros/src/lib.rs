@@ -51,7 +51,7 @@ pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream 
                     catch_rest: #catch_rest,
                 },
                 return_type: #return_type,
-                body: |_name, intepreter, args| {
+                body: |_name, interpreter, args| {
                     #args_importing
                     #body
                 },

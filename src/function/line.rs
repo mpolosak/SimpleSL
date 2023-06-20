@@ -1,7 +1,7 @@
 use super::Instruction;
 use crate::{
     error::Error,
-    intepreter::{Intepreter, VariableMap},
+    interpreter::{Interpreter, VariableMap},
     parse::Rule,
     variable::Variable,
     variable_type::{GetType, Type},
@@ -40,7 +40,7 @@ impl Line {
     }
     pub fn exec(
         &self,
-        intepreter: &mut Intepreter,
+        intepreter: &mut Interpreter,
         local_variables: &mut VariableMap,
     ) -> Result<Variable, Error> {
         let result = self.instruction.exec(intepreter, local_variables)?;
@@ -49,7 +49,7 @@ impl Line {
         }
         Ok(result)
     }
-    pub fn exec_global(&self, intepreter: &mut Intepreter) -> Result<Variable, Error> {
+    pub fn exec_global(&self, intepreter: &mut Interpreter) -> Result<Variable, Error> {
         let result = self.instruction.exec(intepreter, &VariableMap::new())?;
         if let Some(var) = &self.result_var {
             intepreter.variables.insert(var, result.clone());

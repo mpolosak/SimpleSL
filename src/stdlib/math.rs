@@ -1,5 +1,5 @@
 use crate::function::{NativeFunction, Param, Params};
-use crate::intepreter::VariableMap;
+use crate::interpreter::VariableMap;
 use crate::{params, variable::Variable, variable_type::Type};
 use simplesl_macros::export_function;
 
