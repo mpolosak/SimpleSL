@@ -68,7 +68,7 @@ impl FromStr for Variable {
         let parse = SimpleSLParser::parse(Rule::var, s)?;
         if parse.as_str() == s {
             let pair_vec: Vec<Pair<Rule>> = parse.collect();
-            variable_from_pair(pair_vec[0].clone())
+            Self::try_from(pair_vec[0].clone())
         } else {
             Err(Error::TooManyVariables)
         }
@@ -85,6 +85,36 @@ impl PartialEq for Variable {
             (Variable::Array(value1), Variable::Array(value2)) => value1 == value2,
             (Variable::Null, Variable::Null) => true,
             _ => false,
+        }
+    }
+}
+
+impl TryFrom<Pair<'_, Rule>> for Variable {
+    type Error = Error;
+
+    fn try_from(pair: Pair<Rule>) -> Result<Self, Self::Error> {
+        match pair.as_rule() {
+            Rule::int => {
+                let value = pair.as_str().parse::<i64>().unwrap();
+                Ok(Variable::Int(value))
+            }
+            Rule::float => {
+                let value = pair.as_str().parse::<f64>().unwrap();
+                Ok(Variable::Float(value))
+            }
+            Rule::string => {
+                let value = pair.into_inner().next().unwrap().as_str();
+                Ok(Variable::String(value.into()))
+            }
+            Rule::array => {
+                let array = pair
+                    .into_inner()
+                    .map(Self::try_from)
+                    .collect::<Result<Array, Error>>()?;
+                Ok(Variable::Array(Rc::new(array)))
+            }
+            Rule::null => Ok(Variable::Null),
+            _ => Err(Error::CannotBeParsed(pair.as_str().into())),
         }
     }
 }
