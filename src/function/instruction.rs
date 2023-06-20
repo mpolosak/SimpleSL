@@ -55,11 +55,6 @@ impl Instruction {
                             return_type: *return_type.clone(),
                         },
                     ),
-                    Some(Type::Any) => Ok(Self::LocalFunctionCall {
-                        ident: String::from(var_name),
-                        args,
-                        return_type: Type::Any,
-                    }),
                     Some(_) => {
                         let params = args.iter().map(Instruction::get_type).collect();
                         Err(Error::WrongType(
