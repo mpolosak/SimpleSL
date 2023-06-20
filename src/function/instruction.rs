@@ -105,7 +105,7 @@ impl Instruction {
             }
             Self::Function { params, body } => {
                 let mut fn_local_variables = LocalVariableMap::from(params);
-                let body = recreate_lines(body, &mut fn_local_variables, local_variables)?;
+                let body = recreate_lines(body, &mut fn_local_variables, local_variables);
                 Ok(Variable::Function(Rc::new(LangFunction {
                     params: params.clone(),
                     body,
@@ -113,18 +113,14 @@ impl Instruction {
             }
         }
     }
-    pub fn recreate(
-        &self,
-        local_variables: &LocalVariableMap,
-        args: &VariableMap,
-    ) -> Result<Self, Error> {
-        Ok(match self {
+    pub fn recreate(&self, local_variables: &LocalVariableMap, args: &VariableMap) -> Self {
+        match self {
             Self::LocalFunctionCall {
                 ident,
                 args: instructions,
                 return_type,
             } => {
-                let instructions = recreate_instructions(instructions, local_variables, args)?;
+                let instructions = recreate_instructions(instructions, local_variables, args);
                 if local_variables.contains_key(ident) {
                     Self::LocalFunctionCall {
                         ident: ident.clone(),
@@ -132,9 +128,8 @@ impl Instruction {
                         return_type: return_type.clone(),
                     }
                 } else {
-                    let Variable::Function(function)
-                        = args.get(ident).unwrap() else {
-                        return Err(error_wrong_type(&instructions, ident));
+                    let Variable::Function(function) = args.get(ident).unwrap() else {
+                        panic!()
                     };
                     Self::FunctionCall {
                         function,
@@ -146,7 +141,7 @@ impl Instruction {
                 function,
                 args: instructions,
             } => {
-                let instructions = recreate_instructions(instructions, local_variables, args)?;
+                let instructions = recreate_instructions(instructions, local_variables, args);
                 Self::FunctionCall {
                     function: function.clone(),
                     args: instructions,
@@ -161,20 +156,20 @@ impl Instruction {
                 }
             }
             Self::Array(instructions) => {
-                let instructions = recreate_instructions(instructions, local_variables, args)?;
+                let instructions = recreate_instructions(instructions, local_variables, args);
                 Self::Array(instructions)
             }
             Self::Function { params, body } => {
                 let mut local_variables = local_variables.clone();
                 local_variables.extend(LocalVariableMap::from(params));
-                let body = recreate_lines(body, &mut local_variables, args)?;
+                let body = recreate_lines(body, &mut local_variables, args);
                 Self::Function {
                     params: params.clone(),
                     body,
                 }
             }
             _ => self.clone(),
-        })
+        }
     }
     fn create_function_call(
         pair: &Pair<'_, Rule>,
@@ -297,7 +292,7 @@ pub fn recreate_instructions(
     instructions: &[Instruction],
     local_variables: &LocalVariableMap,
     args: &VariableMap,
-) -> Result<Vec<Instruction>, Error> {
+) -> Vec<Instruction> {
     instructions
         .iter()
         .map(|instruction| instruction.recreate(local_variables, args))
@@ -308,11 +303,11 @@ pub fn recreate_lines(
     lines: &[Line],
     local_variables: &mut LocalVariableMap,
     args: &VariableMap,
-) -> Result<Vec<Line>, Error> {
+) -> Vec<Line> {
     lines
         .iter()
         .map(|line| line.recreate(local_variables, args))
-        .collect::<Result<Vec<Line>, Error>>()
+        .collect()
 }
 
 pub fn exec_instructions(

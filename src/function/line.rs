@@ -54,18 +54,14 @@ impl Line {
         }
         Ok(result)
     }
-    pub fn recreate(
-        &self,
-        local_variables: &mut LocalVariableMap,
-        args: &VariableMap,
-    ) -> Result<Self, Error> {
-        let instruction = self.instruction.recreate(local_variables, args)?;
+    pub fn recreate(&self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Self {
+        let instruction = self.instruction.recreate(local_variables, args);
         if let Some(var) = &self.result_var {
             local_variables.insert(var.clone(), instruction.clone().into());
         }
-        Ok(Self {
+        Self {
             result_var: self.result_var.clone(),
             instruction,
-        })
+        }
     }
 }
