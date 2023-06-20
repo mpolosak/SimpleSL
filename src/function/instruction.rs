@@ -119,14 +119,12 @@ impl Instruction {
                 let mut inner = pair.clone().into_inner();
                 let params_pair = inner.next().unwrap();
                 let params: Vec<Param> = params_pair.into_inner().map(Param::from).collect();
-                let mut local_variables = local_variables.clone();
-                for Param { name, var_type } in &params {
-                    local_variables.insert(name.to_owned(), var_type.clone());
-                }
                 let params = Params {
                     standard: params,
                     catch_rest: None,
                 };
+                let mut local_variables = local_variables.clone();
+                local_variables.extend(HashMap::from(&params));
                 let body = inner
                     .map(|arg| Line::new(variables, arg, &mut local_variables))
                     .collect::<Result<Vec<_>, _>>()?;
@@ -168,14 +166,7 @@ impl Instruction {
                 Ok(Variable::Array(array.into()))
             }
             Self::Function { params, body } => {
-                let mut fn_local_variables: HashMap<String, Type> = params
-                    .standard
-                    .iter()
-                    .map(|Param { name, var_type }| (name.to_owned(), var_type.clone()))
-                    .collect();
-                if let Some(name) = &params.catch_rest {
-                    fn_local_variables.insert(name.clone(), Type::Array);
-                }
+                let mut fn_local_variables = HashMap::from(params);
                 let body = recreate_lines(body, &mut fn_local_variables, local_variables)?;
                 Ok(Variable::Function(Rc::new(LangFunction {
                     params: params.clone(),
@@ -239,9 +230,7 @@ impl Instruction {
             }
             Self::Function { params, body } => {
                 let mut local_variables = local_variables.clone();
-                for Param { name, var_type } in params.standard.clone() {
-                    local_variables.insert(name, var_type);
-                }
+                local_variables.extend(HashMap::from(params));
                 let body = recreate_lines(body, &mut local_variables, args)?;
                 Self::Function {
                     params: params.clone(),

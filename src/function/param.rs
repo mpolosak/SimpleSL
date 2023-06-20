@@ -1,6 +1,6 @@
 use crate::{join, parse::Rule, variable_type::Type};
 use pest::iterators::Pair;
-use std::fmt;
+use std::{collections::HashMap, fmt};
 
 #[derive(Clone, Debug)]
 pub struct Param {
@@ -46,5 +46,19 @@ impl fmt::Display for Params {
                 catch_rest: Some(catch_rest),
             } => write!(f, "{}, {catch_rest}...", join(standard, ", ")),
         }
+    }
+}
+
+impl From<&Params> for HashMap<String, Type> {
+    fn from(params: &Params) -> Self {
+        let mut result: Self = params
+            .standard
+            .iter()
+            .map(|Param { name, var_type }| (name.clone(), var_type.clone()))
+            .collect();
+        if let Some(catch_rest) = params.catch_rest.clone() {
+            result.insert(catch_rest, Type::Array);
+        }
+        result
     }
 }
