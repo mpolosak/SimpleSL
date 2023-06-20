@@ -23,7 +23,7 @@ Returns array filled whith increasing values, starting with value
 Length of returned array equals size
 */
 iota = (value: int, size: int){
-    arecsub({value}, (array: array){
+    recsub({value}, (array: array){
         len = array_len(array);
         last = array_at(
             array, 
