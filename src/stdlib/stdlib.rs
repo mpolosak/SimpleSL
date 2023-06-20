@@ -4,7 +4,7 @@ use crate::error::Error;
 use crate::function::{Function, NativeFunction, Param, Params};
 use crate::interpreter::Interpreter;
 use crate::variable_type::Type;
-use crate::{interpreter::VariableMap, params, variable::*};
+use crate::{interpreter::VariableMap, variable::*};
 use simplesl_macros::export_function;
 extern crate simplesl_macros;
 

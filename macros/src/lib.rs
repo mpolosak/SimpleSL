@@ -47,7 +47,7 @@ pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream 
             #ident_str,
             NativeFunction {
                 params: Params {
-                    standard: params!(#params),
+                    standard: vec![#params],
                     catch_rest: #catch_rest,
                 },
                 return_type: #return_type,

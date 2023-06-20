@@ -1,6 +1,6 @@
 use crate::function::{NativeFunction, Param, Params};
 use crate::interpreter::VariableMap;
-use crate::{params, variable::Variable, variable_type::Type};
+use crate::{variable::Variable, variable_type::Type};
 use simplesl_macros::export_function;
 
 pub fn add_math_functions(variables: &mut VariableMap) {

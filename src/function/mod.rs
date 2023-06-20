@@ -2,7 +2,6 @@ mod instruction;
 mod langfunction;
 mod line;
 mod local_variable;
-mod macros;
 mod nativefunction;
 mod param;
 pub use self::{

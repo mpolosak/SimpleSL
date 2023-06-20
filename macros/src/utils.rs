@@ -82,23 +82,15 @@ fn arg_import_from_function_param(
     }
 }
 
-pub fn params_from_function_params(fnparams: &[(Ident, Vec<Attribute>, String)]) -> TokenStream {
-    if fnparams.is_empty() {
-        return quote!();
-    }
-    let params = fnparams
-        .iter()
-        .take(fnparams.len() - 1)
-        .fold(quote!(), |acc, param| {
-            if param.2 != "& mut Interpreter" {
-                let param = param_from_function_param(param);
-                quote!(#acc #param,)
-            } else {
-                quote!()
-            }
-        });
-    let last = param_from_function_param(fnparams.last().unwrap());
-    quote!(#params #last)
+pub fn params_from_function_params(params: &[(Ident, Vec<Attribute>, String)]) -> TokenStream {
+    params.iter().fold(quote!(), |acc, param| {
+        if param.2 != "& mut Interpreter" {
+            let param = param_from_function_param(param);
+            quote!(#acc #param,)
+        } else {
+            quote!()
+        }
+    })
 }
 
 fn param_from_function_param(
@@ -106,13 +98,33 @@ fn param_from_function_param(
 ) -> quote::__private::TokenStream {
     let ident = ident.to_string();
     if param_type == "i64" {
-        quote!(#ident: Type::Int)
+        quote!(
+            Param {
+                name: String::from(#ident),
+                var_type: Type::Int,
+            }
+        )
     } else if param_type == "f64" {
-        quote!(#ident: Type::Float)
+        quote!(
+            Param {
+                name: String::from(#ident),
+                var_type: Type::Float,
+            }
+        )
     } else if param_type == "Rc < str >" {
-        quote!(#ident: Type::String)
+        quote!(
+            Param {
+                name: String::from(#ident),
+                var_type: Type::String,
+            }
+        )
     } else if param_type == "Rc < Array >" {
-        quote!(#ident: Type::Array)
+        quote!(
+            Param {
+                name: String::from(#ident),
+                var_type: Type::Array,
+            }
+        )
     } else if param_type == "Rc < dyn Function >" {
         if attrs.is_empty() {
             panic!("Argument of type function must be precede by function attribute")
@@ -122,16 +134,26 @@ fn param_from_function_param(
                 syn::Meta::List(MetaList { path, tokens, .. })
                     if quote!(#path).to_string() == "function" =>
                 {
-                    return quote!(#ident: Type::Function{
-                        #tokens
-                    })
+                    return quote!(
+                        Param {
+                            name: String::from(#ident),
+                            var_type: Type::Function{
+                                #tokens
+                            },
+                        }
+                    )
                 }
                 _ => (),
             };
         }
         panic!("Argument of type function must be precede by function attribute")
     } else if param_type == "Variable" {
-        quote!(#ident: Type::Any)
+        quote!(
+            Param {
+                name: String::from(#ident),
+                var_type: Type::Any,
+            }
+        )
     } else {
         panic!("{param_type} type isn't allowed")
     }

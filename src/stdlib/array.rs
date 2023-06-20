@@ -1,14 +1,12 @@
-use simplesl_macros::export_function;
-
 use crate::function::{Function, NativeFunction, Param, Params};
 use crate::interpreter::Interpreter;
-use crate::variable_type::Type;
 use crate::{
     error::Error,
     interpreter::VariableMap,
-    params,
     variable::{Array, Variable},
+    variable_type::Type,
 };
+use simplesl_macros::export_function;
 use std::iter::zip;
 use std::rc::Rc;
 
