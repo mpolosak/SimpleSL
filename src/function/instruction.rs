@@ -114,7 +114,8 @@ impl Instruction {
             }
             Self::Function { params, body } => {
                 let mut fn_local_variables = LocalVariableMap::from(params);
-                let body = recreate_instructions(body, &mut fn_local_variables, local_variables);
+                let body =
+                    recreate_instructions(body.clone(), &mut fn_local_variables, local_variables);
                 Ok(Variable::Function(Rc::new(LangFunction {
                     params: params.clone(),
                     body,
@@ -127,7 +128,7 @@ impl Instruction {
             }
         }
     }
-    pub fn recreate(&self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Self {
+    pub fn recreate(self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Self {
         match self {
             Self::LocalFunctionCall {
                 ident,
@@ -135,14 +136,14 @@ impl Instruction {
                 return_type,
             } => {
                 let instructions = recreate_instructions(instructions, local_variables, args);
-                if local_variables.contains_key(ident) {
+                if local_variables.contains_key(&ident) {
                     Self::LocalFunctionCall {
-                        ident: ident.clone(),
+                        ident,
                         args: instructions,
-                        return_type: return_type.clone(),
+                        return_type,
                     }
                 } else {
-                    let Variable::Function(function) = args.get(ident).unwrap() else {
+                    let Variable::Function(function) = args.get(&ident).unwrap() else {
                         panic!()
                     };
                     Self::FunctionCall {
@@ -157,15 +158,15 @@ impl Instruction {
             } => {
                 let instructions = recreate_instructions(instructions, local_variables, args);
                 Self::FunctionCall {
-                    function: function.clone(),
+                    function,
                     args: instructions,
                 }
             }
             Self::LocalVariable(name, var_type) => {
-                if local_variables.contains_key(name) {
-                    Self::LocalVariable(name.clone(), var_type.clone())
+                if local_variables.contains_key(&name) {
+                    Self::LocalVariable(name, var_type)
                 } else {
-                    let variable = args.get(name).unwrap();
+                    let variable = args.get(&name).unwrap();
                     Self::Variable(variable)
                 }
             }
@@ -175,19 +176,16 @@ impl Instruction {
             }
             Self::Function { params, body } => {
                 let mut local_variables = local_variables.clone();
-                local_variables.extend(LocalVariableMap::from(params));
+                local_variables.extend(LocalVariableMap::from(&params));
                 let body = recreate_instructions(body, &mut local_variables, args);
-                Self::Function {
-                    params: params.clone(),
-                    body,
-                }
+                Self::Function { params, body }
             }
             Self::Set(ident, instruction) => {
                 let instruction = instruction.recreate(local_variables, args);
                 local_variables.insert(ident.clone(), instruction.clone().into());
-                Self::Set(ident.clone(), instruction.into())
+                Self::Set(ident, instruction.into())
             }
-            _ => self.clone(),
+            _ => self,
         }
     }
     fn create_function_call(
@@ -306,12 +304,12 @@ pub fn check_args(var_name: &str, params: &Params, args: &Vec<Instruction>) -> R
 }
 
 pub fn recreate_instructions(
-    instructions: &[Instruction],
+    instructions: Vec<Instruction>,
     local_variables: &mut LocalVariableMap,
     args: &VariableMap,
 ) -> Vec<Instruction> {
     instructions
-        .iter()
+        .into_iter()
         .map(|instruction| instruction.recreate(local_variables, args))
         .collect()
 }
