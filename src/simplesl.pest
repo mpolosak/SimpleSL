@@ -15,7 +15,8 @@ string = ${ "\"" ~ inner ~ "\"" }
       | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
   }
 null = {"NULL"}
-line = { COMMENT* ~(return_variable~"=")? ~ expression ~  line_end }
+set = { return_variable ~ "=" ~ expression }
+line = { COMMENT* ~ (set | expression) ~  line_end }
 	line_end = { ";" }
 return_variable = @{ident}
 function = {params~"{"~line*~"}"}

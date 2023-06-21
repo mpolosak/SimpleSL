@@ -1,13 +1,11 @@
 mod instruction;
 mod langfunction;
-mod line;
 mod local_variable;
 mod nativefunction;
 mod param;
 pub use self::{
     instruction::Instruction,
     langfunction::LangFunction,
-    line::Line,
     local_variable::{LocalVariable, LocalVariableMap},
     nativefunction::NativeFunction,
     param::{Param, Params},

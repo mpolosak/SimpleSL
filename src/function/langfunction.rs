@@ -1,4 +1,4 @@
-use super::{Function, Line, Params};
+use super::{Function, Instruction, Params};
 use crate::interpreter::{Interpreter, VariableMap};
 use crate::variable_type::{GetType, Type};
 use crate::{error::Error, variable::Variable};
@@ -6,7 +6,7 @@ use crate::{error::Error, variable::Variable};
 #[derive(Clone)]
 pub struct LangFunction {
     pub params: Params,
-    pub body: Vec<Line>,
+    pub body: Vec<Instruction>,
 }
 
 impl Function for LangFunction {
@@ -27,10 +27,7 @@ impl Function for LangFunction {
     }
     fn get_return_type(&self) -> Type {
         match self.body.last() {
-            Some(Line {
-                result_var: _,
-                instruction,
-            }) => instruction.get_type(),
+            Some(instruction) => instruction.get_type(),
             None => Type::Null,
         }
     }
