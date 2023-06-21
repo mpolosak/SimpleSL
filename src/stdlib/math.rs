@@ -72,4 +72,69 @@ pub fn add_math_functions(variables: &mut VariableMap) {
     fn float_to_int(value: f64) -> i64 {
         value as i64
     }
+
+    #[export_function]
+    fn greater(a: i64, b: i64) -> i64 {
+        if a > b {
+            1
+        } else {
+            0
+        }
+    }
+
+    #[export_function]
+    fn greaterf(a: f64, b: f64) -> i64 {
+        if a > b {
+            1
+        } else {
+            0
+        }
+    }
+
+    #[export_function]
+    fn ge(a: i64, b: i64) -> i64 {
+        if a >= b {
+            1
+        } else {
+            0
+        }
+    }
+
+    #[export_function]
+    fn gef(a: f64, b: f64) -> i64 {
+        if a >= b {
+            1
+        } else {
+            0
+        }
+    }
+
+    #[export_function]
+    fn bin_not(a: i64) -> i64 {
+        !a
+    }
+
+    #[export_function]
+    fn bin_and(a: i64, b: i64) -> i64 {
+        a & b
+    }
+
+    #[export_function]
+    fn bin_or(a: i64, b: i64) -> i64 {
+        a | b
+    }
+
+    #[export_function]
+    fn xor(a: i64, b: i64) -> i64 {
+        a ^ b
+    }
+
+    #[export_function]
+    fn shift(a: i64, bits: i64) -> i64 {
+        if bits > 0 {
+            a << bits
+        } else {
+            a >> -bits
+        }
+    }
 }
