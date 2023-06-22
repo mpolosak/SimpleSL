@@ -64,6 +64,6 @@ pub fn add_functions(variables: &mut VariableMap) {
 
     #[export_function]
     fn to_uppercase(string: &str) -> Rc<str> {
-        string.to_lowercase().into()
+        string.to_uppercase().into()
     }
 }
