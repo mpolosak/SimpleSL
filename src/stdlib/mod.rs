@@ -2,6 +2,7 @@ mod array;
 mod iofunctions;
 mod math;
 mod stdlib;
+mod string;
 mod types;
 use crate::interpreter::VariableMap;
 use {
@@ -15,4 +16,5 @@ pub fn add_std_lib(variables: &mut VariableMap) {
     add_io_functions(variables);
     add_types_functions(variables);
     add_math_functions(variables);
+    string::add_functions(variables);
 }

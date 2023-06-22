@@ -59,6 +59,13 @@ fn arg_import_from_function_param(
                 panic!()
             };
         )
+    } else if param_type == "& str" {
+        quote!(
+            let Variable::String(#ident) = args.get(#ident_str)? else {
+                panic!()
+            };
+            let #ident = #ident.as_ref();
+        )
     } else if param_type == "Rc < Array >" {
         quote!(
             let Variable::Array(#ident) = args.get(#ident_str)? else {
@@ -111,7 +118,7 @@ fn param_from_function_param(
                 var_type: Type::Float,
             }
         )
-    } else if param_type == "Rc < str >" {
+    } else if param_type == "Rc < str >" || param_type == "& str" {
         quote!(
             Param {
                 name: String::from(#ident),
