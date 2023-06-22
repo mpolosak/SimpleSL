@@ -114,7 +114,7 @@ impl Instruction {
                 Ok(Variable::Array(array.into()))
             }
             Self::Function { params, body } => {
-                let mut fn_local_variables = LocalVariableMap::from(params);
+                let mut fn_local_variables = LocalVariableMap::from(params.clone());
                 let body =
                     recreate_instructions(body.clone(), &mut fn_local_variables, local_variables);
                 Ok(Variable::Function(Rc::new(LangFunction {
@@ -177,7 +177,7 @@ impl Instruction {
             }
             Self::Function { params, body } => {
                 let mut local_variables = local_variables.clone();
-                local_variables.extend(LocalVariableMap::from(&params));
+                local_variables.extend(LocalVariableMap::from(params.clone()));
                 let body = recreate_instructions(body, &mut local_variables, args);
                 Self::Function { params, body }
             }
@@ -235,7 +235,7 @@ impl Instruction {
             catch_rest: None,
         };
         let mut local_variables = local_variables.clone();
-        local_variables.extend(LocalVariableMap::from(&params));
+        local_variables.extend(LocalVariableMap::from(params.clone()));
         let body = inner
             .map(|arg| Instruction::new(variables, arg, &mut local_variables))
             .collect::<Result<Vec<_>, _>>()?;

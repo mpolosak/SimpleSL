@@ -51,14 +51,14 @@ impl fmt::Display for Params {
     }
 }
 
-impl From<&Params> for LocalVariableMap {
-    fn from(params: &Params) -> Self {
+impl From<Params> for LocalVariableMap {
+    fn from(params: Params) -> Self {
         let mut result: Self = params
             .standard
-            .iter()
-            .map(|Param { name, var_type }| (name.clone(), var_type.clone().into()))
+            .into_iter()
+            .map(|Param { name, var_type }| (name, var_type.into()))
             .collect();
-        if let Some(catch_rest) = params.catch_rest.clone() {
+        if let Some(catch_rest) = params.catch_rest {
             result.insert(catch_rest, Type::Array.into());
         }
         result
