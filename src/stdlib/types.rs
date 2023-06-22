@@ -7,7 +7,7 @@ use crate::{
 use simplesl_macros::export_function;
 use std::rc::Rc;
 
-pub fn add_types_functions(variables: &mut VariableMap) {
+pub fn add_functions(variables: &mut VariableMap) {
     #[export_function]
     fn int(value: Variable, fallback: i64) -> i64 {
         if let Variable::Int(value) = value {

@@ -3,7 +3,7 @@ use crate::interpreter::VariableMap;
 use crate::{variable::Variable, variable_type::Type};
 use simplesl_macros::export_function;
 
-pub fn add_math_functions(variables: &mut VariableMap) {
+pub fn add_functions(variables: &mut VariableMap) {
     #[export_function]
     fn add(a: i64, b: i64) -> i64 {
         a + b

@@ -6,7 +6,7 @@ use simplesl_macros::export_function;
 use std::io;
 use std::rc::Rc;
 
-pub fn add_io_functions(variables: &mut VariableMap) {
+pub fn add_functions(variables: &mut VariableMap) {
     #[export_function(catch_rest = true)]
     fn print(vars: Rc<Array>) {
         let text = vars

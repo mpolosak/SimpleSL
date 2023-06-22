@@ -8,7 +8,7 @@ use crate::{interpreter::VariableMap, variable::*};
 use simplesl_macros::export_function;
 extern crate simplesl_macros;
 
-pub fn add_std_functions(variables: &mut VariableMap) {
+pub fn add_functions(variables: &mut VariableMap) {
     #[export_function]
     fn import(interpreter: &mut Interpreter, path: Rc<str>) -> Result<Variable, Error> {
         interpreter.load_and_exec(&path)

@@ -10,7 +10,7 @@ use simplesl_macros::export_function;
 use std::iter::zip;
 use std::rc::Rc;
 
-pub fn add_array_functions(variables: &mut VariableMap) {
+pub fn add_functions(variables: &mut VariableMap) {
     #[export_function]
     fn new_array(length: i64, value: Variable) -> Result<Rc<Array>, Error> {
         if length < 0 {
