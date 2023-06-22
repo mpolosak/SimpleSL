@@ -9,6 +9,7 @@ use crate::{
 use pest::iterators::Pair;
 use std::iter::zip;
 use std::{fmt, rc::Rc};
+use unescaper::unescape;
 
 #[derive(Clone)]
 pub enum Instruction {
@@ -69,7 +70,7 @@ impl Instruction {
                 }
             }
             Rule::string => {
-                let value = pair.into_inner().next().unwrap().as_str();
+                let value = unescape(pair.into_inner().next().unwrap().as_str()).unwrap();
                 let variable = Variable::String(value.into());
                 Ok(Self::Variable(variable))
             }

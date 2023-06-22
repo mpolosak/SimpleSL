@@ -11,4 +11,5 @@ edition = "2021"
 rustyline = "10.0.0"
 pest = "2.0"
 pest_derive = "2.0"
+unescaper = "0.1.0"
 simplesl_macros = { path="macros" }
