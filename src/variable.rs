@@ -137,6 +137,18 @@ impl From<Rc<str>> for Variable {
     }
 }
 
+impl From<&str> for Variable {
+    fn from(value: &str) -> Self {
+        Self::String(value.into())
+    }
+}
+
+impl From<String> for Variable {
+    fn from(value: String) -> Self {
+        Self::String(value.into())
+    }
+}
+
 impl From<Rc<dyn Function>> for Variable {
     fn from(value: Rc<dyn Function>) -> Self {
         Self::Function(value)

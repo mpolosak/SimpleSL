@@ -178,7 +178,13 @@ pub fn return_type_from_str(return_type: &str) -> TokenStream {
         quote!(Type::Int)
     } else if return_type == "f64" || return_type == "Result < f64, Error >" {
         quote!(Type::Float)
-    } else if return_type == "Rc < str >" || return_type == "Result < Rc < str >, Error >" {
+    } else if return_type == "Rc < str >"
+        || return_type == "Result < Rc < str >, Error >"
+        || return_type == "String"
+        || return_type == "Result < String, Error >"
+        || return_type == "& str"
+        || return_type == "Result < & str, Error >"
+    {
         quote!(Type::String)
     } else if return_type == "Rc < Array >"
         || return_type == "Array"
@@ -202,6 +208,8 @@ pub fn get_body(return_type: &str, ident: Ident, args: TokenStream) -> TokenStre
         || return_type == "Rc < str >"
         || return_type == "Rc < Array >"
         || return_type == "Array"
+        || return_type == "String"
+        || return_type == "& str"
     {
         quote!(Ok(#ident(#args).into()))
     } else if return_type == "Variable" {
@@ -217,6 +225,8 @@ pub fn get_body(return_type: &str, ident: Ident, args: TokenStream) -> TokenStre
         || return_type == "Result < Rc < str >, Error >"
         || return_type == "Result < Rc < Array >, Error >"
         || return_type == "Result < Array, Error >"
+        || return_type == "Result < String, Error >"
+        || return_type == "Result < & str, Error >"
     {
         quote!(Ok(#ident(#args)?.into()))
     } else {

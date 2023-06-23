@@ -4,7 +4,6 @@ use crate::variable_type::Type;
 use crate::{interpreter::VariableMap, variable::*};
 use simplesl_macros::export_function;
 use std::io;
-use std::rc::Rc;
 
 pub fn add_functions(variables: &mut VariableMap) {
     #[export_function(catch_rest = true)]
@@ -16,10 +15,10 @@ pub fn add_functions(variables: &mut VariableMap) {
     }
 
     #[export_function]
-    fn cgetline() -> Result<Rc<str>, Error> {
+    fn cgetline() -> Result<String, Error> {
         let mut input = String::new();
         io::stdin().read_line(&mut input)?;
         input = input.replace('\n', "");
-        Ok(input.into())
+        Ok(input)
     }
 }

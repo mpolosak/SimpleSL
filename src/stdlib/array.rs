@@ -106,19 +106,18 @@ pub fn add_functions(variables: &mut VariableMap) {
     }
 
     #[export_function(name = "zip")]
-    fn array_zip(array1: Rc<Array>, array2: Rc<Array>) -> Array {
-        let new_array: Array = zip(array1.iter(), array2.iter())
+    fn array_zip(array1: &Array, array2: &Array) -> Array {
+        zip(array1.iter(), array2.iter())
             .map(|(element1, element2)| {
                 Variable::Array(vec![element1.clone(), element2.clone()].into())
             })
-            .collect();
-        new_array
+            .collect()
     }
 
     #[export_function]
     fn recsub(
         interpreter: &mut Interpreter,
-        array: Rc<Array>,
+        array: &Array,
         #[function(
             return_type: Type::Any.into(),
             params: vec![Type::Array],
@@ -132,10 +131,10 @@ pub fn add_functions(variables: &mut VariableMap) {
         }
         let n = n as usize;
         if array.len() > n {
-            let new_array: Array = (*array).clone().into_iter().take(n).collect();
+            let new_array: Array = array.clone().into_iter().take(n).collect();
             Ok(new_array)
         } else {
-            let mut new_array = (*array).clone();
+            let mut new_array = array.clone();
             for _ in 0..n - array.len() {
                 new_array.push(function.exec(
                     "function",

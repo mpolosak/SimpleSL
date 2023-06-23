@@ -8,8 +8,8 @@ use std::rc::Rc;
 
 pub fn add_functions(variables: &mut VariableMap) {
     #[export_function]
-    fn string_concat(string1: &str, string2: &str) -> Rc<str> {
-        format!("{string1}{string2}").into()
+    fn string_concat(string1: &str, string2: &str) -> String {
+        format!("{string1}{string2}")
     }
 
     #[export_function]
@@ -18,29 +18,28 @@ pub fn add_functions(variables: &mut VariableMap) {
     }
 
     #[export_function]
-    fn string_at(string: &str, index: i64) -> Result<Rc<str>, Error> {
+    fn string_at(string: &str, index: i64) -> Result<&str, Error> {
         if index < 0 {
             Err(Error::CannotBeNegative(String::from("index")))
         } else if index as usize > string.len() {
             Err(Error::IndexToBig)
         } else {
             let index = index as usize;
-            Ok(string.get(index..index).unwrap().into())
+            Ok(string.get(index..index).unwrap())
         }
     }
 
     #[export_function]
-    fn split(string: &str, pat: &str) -> Rc<Array> {
+    fn split(string: &str, pat: &str) -> Array {
         string
             .split(pat)
             .map(|slice| Variable::String(Rc::from(slice)))
-            .collect::<Array>()
-            .into()
+            .collect()
     }
 
     #[export_function]
-    fn replace(string: &str, from: &str, to: &str) -> Rc<str> {
-        string.replace(from, to.as_ref()).into()
+    fn replace(string: &str, from: &str, to: &str) -> String {
+        string.replace(from, to.as_ref())
     }
 
     #[export_function]
@@ -57,12 +56,12 @@ pub fn add_functions(variables: &mut VariableMap) {
     }
 
     #[export_function]
-    fn to_lowercase(string: &str) -> Rc<str> {
-        string.to_lowercase().into()
+    fn to_lowercase(string: &str) -> String {
+        string.to_lowercase()
     }
 
     #[export_function]
-    fn to_uppercase(string: &str) -> Rc<str> {
-        string.to_uppercase().into()
+    fn to_uppercase(string: &str) -> String {
+        string.to_uppercase()
     }
 }
