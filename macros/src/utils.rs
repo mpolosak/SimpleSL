@@ -174,7 +174,13 @@ fn param_from_function_param(
 }
 
 pub fn return_type_from_str(return_type: &str) -> TokenStream {
-    if return_type == "i64" || return_type == "Result < i64, Error >" {
+    if return_type == "i64"
+        || return_type == "Result < i64, Error >"
+        || return_type == "bool"
+        || return_type == "Result < bool, Error >"
+        || return_type == "usize"
+        || return_type == "Result < usize, Error >"
+    {
         quote!(Type::Int)
     } else if return_type == "f64" || return_type == "Result < f64, Error >" {
         quote!(Type::Float)
@@ -210,6 +216,8 @@ pub fn get_body(return_type: &str, ident: Ident, args: TokenStream) -> TokenStre
         || return_type == "Array"
         || return_type == "String"
         || return_type == "& str"
+        || return_type == "bool"
+        || return_type == "usize"
     {
         quote!(Ok(#ident(#args).into()))
     } else if return_type == "Variable" {
@@ -227,6 +235,8 @@ pub fn get_body(return_type: &str, ident: Ident, args: TokenStream) -> TokenStre
         || return_type == "Result < Array, Error >"
         || return_type == "Result < String, Error >"
         || return_type == "Result < & str, Error >"
+        || return_type == "Result < bool, Error >"
+        || return_type == "Result < usize, Error >"
     {
         quote!(Ok(#ident(#args)?.into()))
     } else {

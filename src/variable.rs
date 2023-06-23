@@ -125,6 +125,18 @@ impl From<i64> for Variable {
     }
 }
 
+impl From<bool> for Variable {
+    fn from(value: bool) -> Self {
+        Self::Int(value.into())
+    }
+}
+
+impl From<usize> for Variable {
+    fn from(value: usize) -> Self {
+        Self::Int(value as i64)
+    }
+}
+
 impl From<f64> for Variable {
     fn from(value: f64) -> Self {
         Self::Float(value)

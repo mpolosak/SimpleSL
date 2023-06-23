@@ -13,8 +13,8 @@ pub fn add_functions(variables: &mut VariableMap) {
     }
 
     #[export_function]
-    fn string_len(string: &str) -> i64 {
-        string.len() as i64
+    fn string_len(string: &str) -> usize {
+        string.len()
     }
 
     #[export_function]
@@ -43,8 +43,8 @@ pub fn add_functions(variables: &mut VariableMap) {
     }
 
     #[export_function]
-    fn string_contains(string: &str, pat: &str) -> i64 {
-        string.contains(pat).into()
+    fn string_contains(string: &str, pat: &str) -> bool {
+        string.contains(pat)
     }
 
     #[export_function]

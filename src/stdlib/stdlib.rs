@@ -15,12 +15,8 @@ pub fn add_functions(variables: &mut VariableMap) {
     }
 
     #[export_function]
-    fn equals(a: Variable, b: Variable) -> i64 {
-        if a == b {
-            1
-        } else {
-            0
-        }
+    fn equals(a: Variable, b: Variable) -> bool {
+        a == b
     }
 
     #[export_function(name = "if")]

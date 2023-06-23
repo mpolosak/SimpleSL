@@ -46,8 +46,8 @@ pub fn add_functions(variables: &mut VariableMap) {
     }
 
     #[export_function]
-    fn array_len(array: &Array) -> i64 {
-        array.len() as i64
+    fn array_len(array: &Array) -> usize {
+        array.len()
     }
 
     #[export_function]
