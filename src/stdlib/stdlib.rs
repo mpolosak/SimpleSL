@@ -10,8 +10,8 @@ extern crate simplesl_macros;
 
 pub fn add_functions(variables: &mut VariableMap) {
     #[export_function]
-    fn import(interpreter: &mut Interpreter, path: Rc<str>) -> Result<Variable, Error> {
-        interpreter.load_and_exec(&path)
+    fn import(interpreter: &mut Interpreter, path: &str) -> Result<Variable, Error> {
+        interpreter.load_and_exec(path)
     }
 
     #[export_function]

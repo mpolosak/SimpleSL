@@ -149,6 +149,12 @@ impl From<Rc<Array>> for Variable {
     }
 }
 
+impl From<Array> for Variable {
+    fn from(value: Array) -> Self {
+        Self::Array(value.into())
+    }
+}
+
 impl From<()> for Variable {
     fn from(_value: ()) -> Self {
         Self::Null

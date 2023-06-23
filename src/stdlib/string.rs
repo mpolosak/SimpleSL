@@ -49,12 +49,11 @@ pub fn add_functions(variables: &mut VariableMap) {
     }
 
     #[export_function]
-    fn chars(string: &str) -> Rc<Array> {
+    fn chars(string: &str) -> Array {
         string
             .chars()
             .map(|char| Variable::String(char.to_string().into()))
-            .collect::<Array>()
-            .into()
+            .collect()
     }
 
     #[export_function]

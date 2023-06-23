@@ -8,7 +8,7 @@ use std::rc::Rc;
 
 pub fn add_functions(variables: &mut VariableMap) {
     #[export_function(catch_rest = true)]
-    fn print(vars: Rc<Array>) {
+    fn print(vars: &Array) {
         let text = vars
             .iter()
             .fold(String::new(), |acc, arg| acc + &arg.to_string());
@@ -16,10 +16,10 @@ pub fn add_functions(variables: &mut VariableMap) {
     }
 
     #[export_function]
-    fn cgetline() -> Result<Variable, Error> {
+    fn cgetline() -> Result<Rc<str>, Error> {
         let mut input = String::new();
         io::stdin().read_line(&mut input)?;
         input = input.replace('\n', "");
-        Ok(Variable::String(input.into()))
+        Ok(input.into())
     }
 }
