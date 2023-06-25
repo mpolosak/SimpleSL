@@ -85,11 +85,6 @@ pub fn add_functions(variables: &mut VariableMap) {
     }
 
     #[export_function]
-    fn bin_not(a: i64) -> i64 {
-        !a
-    }
-
-    #[export_function]
     fn bin_and(a: i64, b: i64) -> i64 {
         a & b
     }

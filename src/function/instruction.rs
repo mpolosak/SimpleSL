@@ -31,6 +31,7 @@ pub enum Instruction {
     },
     Set(String, Box<Instruction>),
     Not(Box<Instruction>),
+    BinNot(Box<Instruction>),
 }
 
 impl Instruction {
@@ -56,10 +57,22 @@ impl Instruction {
                 let pair = pair.into_inner().next().unwrap();
                 let instruction = Instruction::new(variables, pair, local_variables)?;
                 if instruction.get_type() == Type::Int {
-                    Ok(instruction.into())
+                    Ok(Self::Not(instruction.into()))
                 } else {
                     Err(Error::WrongType(
                         String::from("Variable after '!' operator"),
+                        Type::Int,
+                    ))
+                }
+            }
+            Rule::bin_not => {
+                let pair = pair.into_inner().next().unwrap();
+                let instruction = Instruction::new(variables, pair, local_variables)?;
+                if instruction.get_type() == Type::Int {
+                    Ok(Self::BinNot(instruction.into()))
+                } else {
+                    Err(Error::WrongType(
+                        String::from("Variable after '~' operator"),
                         Type::Int,
                     ))
                 }
@@ -146,6 +159,12 @@ impl Instruction {
                 };
                 Ok((result == 0).into())
             }
+            Self::BinNot(instruction) => {
+                let Variable::Int(result) = instruction.exec(intepreter, local_variables)? else {
+                    panic!()
+                };
+                Ok(Variable::Int(!result))
+            }
         }
     }
     pub fn recreate(self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Self {
@@ -208,6 +227,10 @@ impl Instruction {
             Self::Not(instruction) => {
                 let instruction = instruction.recreate(local_variables, args);
                 Self::Not(instruction.into())
+            }
+            Self::BinNot(instruction) => {
+                let instruction = instruction.recreate(local_variables, args);
+                Self::BinNot(instruction.into())
             }
             _ => self,
         }
@@ -298,7 +321,7 @@ impl GetType for Instruction {
             Instruction::LocalFunctionCall { return_type, .. } => return_type.clone(),
             Instruction::LocalVariable(_, var_type) => var_type.clone().into(),
             Instruction::Set(_, instruction) => instruction.get_type(),
-            Instruction::Not(_) => Type::Int,
+            Instruction::Not(_) | Instruction::BinNot(_) => Type::Int,
         }
     }
 }
