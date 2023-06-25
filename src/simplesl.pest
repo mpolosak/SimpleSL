@@ -11,7 +11,13 @@ equal = { equal_arg ~ "==" ~ equal_arg }
 not_equal = { equal_arg ~ "!=" ~ equal_arg }
   equal_arg = _{ not | bin_not | function_call | ident | var }
   equal_in_brackit = _{ "(" ~ equal ~ ")" }
-expression = _{ equal | not_equal | not | bin_not | function_call | ident | var }
+greater = { greater_arg ~ ">" ~ greater_arg }
+greater_equal = { greater_arg ~ ">=" ~ greater_arg }
+lower = { greater_arg ~ "<" ~ greater_arg }
+lower_equal = { greater_arg ~ "<=" ~ greater_arg }
+    greater_arg = _{ float | not_arg }
+comparasion = _{ equal | not_equal | greater | greater_equal | lower | lower_equal }
+expression = _{ comparasion | not | bin_not | function_call | ident | var }
 expression_list = _{ (expression ~ ("," ~ expression)*)?}
 array = {"{" ~ expression_list ~ "}"}
 string = ${ "\"" ~ inner ~ "\"" }
