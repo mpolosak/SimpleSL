@@ -88,11 +88,11 @@ impl Instruction {
             }
             Rule::function_call => Self::create_function_call(pair, variables, local_variables),
             Rule::int => {
-                let value = pair.as_str().parse::<i64>().unwrap();
+                let value = pair.as_str().trim().parse::<i64>().unwrap();
                 Ok(Self::Variable(Variable::Int(value)))
             }
             Rule::float => {
-                let value = pair.as_str().parse::<f64>().unwrap();
+                let value = pair.as_str().trim().parse::<f64>().unwrap();
                 Ok(Self::Variable(Variable::Float(value)))
             }
             Rule::ident => {
