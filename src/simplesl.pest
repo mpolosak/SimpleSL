@@ -6,7 +6,8 @@ function_call = ${ ident ~ args }
 var = _{ float | int | array | string | null | function }
 not = { "!" ~ ( function_call | ident | int )}
 bin_not = { "~" ~ ( function_call | ident | int )}
-expression = _{ not | bin_not | function_call | ident | var }
+equal = { ( not | bin_not | function_call | ident | var ) ~ "==" ~ ( not | bin_not | function_call | ident | var ) }
+expression = _{ equal | not | bin_not | function_call | ident | var }
 expression_list = _{ (expression ~ ("," ~ expression)*)?}
 array = {"{" ~ expression_list ~ "}"}
 string = ${ "\"" ~ inner ~ "\"" }

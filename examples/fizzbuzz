@@ -1,18 +1,18 @@
 fizzbuzz = (number: int){
-    result = if(equals(modulo(number, 15), 0), (){
+    result = if(modulo(number, 15)==0, (){
         "FizzBuzz";
     });
-    result = if_else(equals(result, NULL), (){
-        if(equals(modulo(number, 3), 0), (){
+    result = if_else(result==NULL, (){
+        if(modulo(number, 3)==0, (){
             "Fizz";
         });
     },(){result;});
-    result = if_else(equals(result, NULL), (){
-        if(equals(modulo(number, 5), 0), (){
+    result = if_else(result==NULL, (){
+        if(modulo(number, 5)==0, (){
             "Buzz";
         });
     },(){result;});
-    result = if_else(equals(result, NULL), (){
+    result = if_else(result==NULL, (){
         number;
     },(){result;});
     result;

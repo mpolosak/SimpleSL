@@ -14,11 +14,6 @@ pub fn add_functions(variables: &mut VariableMap) {
         interpreter.load_and_exec(path)
     }
 
-    #[export_function]
-    fn equals(a: Variable, b: Variable) -> bool {
-        a == b
-    }
-
     #[export_function(name = "if")]
     fn function_if(
         interpreter: &mut Interpreter,

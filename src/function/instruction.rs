@@ -32,6 +32,7 @@ pub enum Instruction {
     Set(String, Box<Instruction>),
     Not(Box<Instruction>),
     BinNot(Box<Instruction>),
+    Equal(Box<Instruction>, Box<Instruction>),
 }
 
 impl Instruction {
@@ -76,6 +77,14 @@ impl Instruction {
                         Type::Int,
                     ))
                 }
+            }
+            Rule::equal => {
+                let mut inner = pair.into_inner();
+                let pair = inner.next().unwrap();
+                let instruction = Instruction::new(variables, pair, local_variables)?;
+                let pair = inner.next().unwrap();
+                let instruction2 = Instruction::new(variables, pair, local_variables)?;
+                Ok(Self::Equal(instruction.into(), instruction2.into()))
             }
             Rule::function_call => Self::create_function_call(pair, variables, local_variables),
             Rule::int => {
@@ -165,6 +174,11 @@ impl Instruction {
                 };
                 Ok(Variable::Int(!result))
             }
+            Self::Equal(instruction1, instruction2) => {
+                let result1 = instruction1.exec(intepreter, local_variables)?;
+                let result2 = instruction2.exec(intepreter, local_variables)?;
+                Ok((result1 == result2).into())
+            }
         }
     }
     pub fn recreate(self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Self {
@@ -231,6 +245,11 @@ impl Instruction {
             Self::BinNot(instruction) => {
                 let instruction = instruction.recreate(local_variables, args);
                 Self::BinNot(instruction.into())
+            }
+            Self::Equal(instruction1, instruction2) => {
+                let instruction1 = instruction1.recreate(local_variables, args);
+                let instruction2 = instruction2.recreate(local_variables, args);
+                Self::Equal(instruction1.into(), instruction2.into())
             }
             _ => self,
         }
@@ -321,7 +340,7 @@ impl GetType for Instruction {
             Instruction::LocalFunctionCall { return_type, .. } => return_type.clone(),
             Instruction::LocalVariable(_, var_type) => var_type.clone().into(),
             Instruction::Set(_, instruction) => instruction.get_type(),
-            Instruction::Not(_) | Instruction::BinNot(_) => Type::Int,
+            Instruction::Not(_) | Instruction::BinNot(_) | Instruction::Equal(..) => Type::Int,
         }
     }
 }
