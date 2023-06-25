@@ -8,9 +8,10 @@ not = { "!" ~ ( not_arg )}
 bin_not = { "~" ~ not_arg }
   not_arg = _{ equal_in_brackit | function_call | ident | int }
 equal = { equal_arg ~ "==" ~ equal_arg }
+not_equal = { equal_arg ~ "!=" ~ equal_arg }
   equal_arg = _{ not | bin_not | function_call | ident | var }
   equal_in_brackit = _{ "(" ~ equal ~ ")" }
-expression = _{ equal | not | bin_not | function_call | ident | var }
+expression = _{ equal | not_equal | not | bin_not | function_call | ident | var }
 expression_list = _{ (expression ~ ("," ~ expression)*)?}
 array = {"{" ~ expression_list ~ "}"}
 string = ${ "\"" ~ inner ~ "\"" }

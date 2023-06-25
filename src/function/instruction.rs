@@ -86,6 +86,16 @@ impl Instruction {
                 let instruction2 = Instruction::new(variables, pair, local_variables)?;
                 Ok(Self::Equal(instruction.into(), instruction2.into()))
             }
+            Rule::not_equal => {
+                let mut inner = pair.into_inner();
+                let pair = inner.next().unwrap();
+                let instruction = Instruction::new(variables, pair, local_variables)?;
+                let pair = inner.next().unwrap();
+                let instruction2 = Instruction::new(variables, pair, local_variables)?;
+                Ok(Self::Not(
+                    Self::Equal(instruction.into(), instruction2.into()).into(),
+                ))
+            }
             Rule::function_call => Self::create_function_call(pair, variables, local_variables),
             Rule::int => {
                 let value = pair.as_str().trim().parse::<i64>().unwrap();
