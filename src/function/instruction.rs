@@ -30,6 +30,7 @@ pub enum Instruction {
         body: Vec<Instruction>,
     },
     Set(String, Box<Instruction>),
+    Not(Box<Instruction>),
 }
 
 impl Instruction {
@@ -50,6 +51,18 @@ impl Instruction {
                     Instruction::new(variables, inner.next().unwrap(), local_variables)?;
                 local_variables.insert(ident.clone(), instruction.clone().into());
                 Ok(Self::Set(ident, Box::new(instruction)))
+            }
+            Rule::not => {
+                let pair = pair.into_inner().next().unwrap();
+                let instruction = Instruction::new(variables, pair, local_variables)?;
+                if instruction.get_type() == Type::Int {
+                    Ok(instruction.into())
+                } else {
+                    Err(Error::WrongType(
+                        String::from("Variable after '!' operator"),
+                        Type::Int,
+                    ))
+                }
             }
             Rule::function_call => Self::create_function_call(pair, variables, local_variables),
             Rule::int => {
@@ -127,6 +140,12 @@ impl Instruction {
                 local_variables.insert(ident, result.clone());
                 Ok(result)
             }
+            Self::Not(instruction) => {
+                let Variable::Int(result) = instruction.exec(intepreter, local_variables)? else {
+                    panic!()
+                };
+                Ok((result == 0).into())
+            }
         }
     }
     pub fn recreate(self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Self {
@@ -185,6 +204,10 @@ impl Instruction {
                 let instruction = instruction.recreate(local_variables, args);
                 local_variables.insert(ident.clone(), instruction.clone().into());
                 Self::Set(ident, instruction.into())
+            }
+            Self::Not(instruction) => {
+                let instruction = instruction.recreate(local_variables, args);
+                Self::Not(instruction.into())
             }
             _ => self,
         }
@@ -275,6 +298,7 @@ impl GetType for Instruction {
             Instruction::LocalFunctionCall { return_type, .. } => return_type.clone(),
             Instruction::LocalVariable(_, var_type) => var_type.clone().into(),
             Instruction::Set(_, instruction) => instruction.get_type(),
+            Instruction::Not(_) => Type::Int,
         }
     }
 }

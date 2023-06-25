@@ -35,11 +35,6 @@ pub fn add_functions(variables: &mut VariableMap) {
     }
 
     #[export_function]
-    fn not(a: i64) -> bool {
-        a == 0
-    }
-
-    #[export_function]
     fn addf(a: f64, b: f64) -> f64 {
         a + b
     }
