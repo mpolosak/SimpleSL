@@ -4,9 +4,12 @@ ident = @{ !null ~ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC|"_")* }
 function_call = ${ ident ~ args }
 	args = !{"("~expression_list~")"}
 var = _{ float | int | array | string | null | function }
-not = { "!" ~ ( function_call | ident | int )}
-bin_not = { "~" ~ ( function_call | ident | int )}
-equal = { ( not | bin_not | function_call | ident | var ) ~ "==" ~ ( not | bin_not | function_call | ident | var ) }
+not = { "!" ~ ( not_arg )}
+bin_not = { "~" ~ not_arg }
+  not_arg = _{ equal_in_brackit | function_call | ident | int }
+equal = { equal_arg ~ "==" ~ equal_arg }
+  equal_arg = _{ not | bin_not | function_call | ident | var }
+  equal_in_brackit = _{ "(" ~ equal ~ ")" }
 expression = _{ equal | not | bin_not | function_call | ident | var }
 expression_list = _{ (expression ~ ("," ~ expression)*)?}
 array = {"{" ~ expression_list ~ "}"}
