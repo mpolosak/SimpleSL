@@ -9,7 +9,6 @@ use crate::{
 use pest::iterators::Pair;
 use std::iter::zip;
 use std::{fmt, rc::Rc};
-use unescaper::unescape;
 
 #[derive(Clone)]
 pub enum Instruction {
@@ -159,13 +158,9 @@ impl Instruction {
                 }
             }
             Rule::function_call => Self::create_function_call(pair, variables, local_variables),
-            Rule::int => {
-                let value = pair.as_str().trim().parse::<i64>().unwrap();
-                Ok(Self::Variable(Variable::Int(value)))
-            }
-            Rule::float => {
-                let value = pair.as_str().trim().parse::<f64>().unwrap();
-                Ok(Self::Variable(Variable::Float(value)))
+            Rule::int | Rule::float | Rule::string | Rule::null => {
+                let variable = Variable::try_from(pair).unwrap();
+                Ok(Self::Variable(variable))
             }
             Rule::ident => {
                 let var_name = pair.as_str();
@@ -176,11 +171,6 @@ impl Instruction {
                     Ok(Self::Variable(value))
                 }
             }
-            Rule::string => {
-                let value = unescape(pair.into_inner().next().unwrap().as_str()).unwrap();
-                let variable = Variable::String(value.into());
-                Ok(Self::Variable(variable))
-            }
             Rule::array => {
                 let inner = pair.into_inner();
                 let array = inner
@@ -189,7 +179,6 @@ impl Instruction {
                 Ok(Self::Array(array))
             }
             Rule::function => Self::create_function(pair, local_variables, variables),
-            Rule::null => Ok(Self::Variable(Variable::Null)),
             _ => panic!(),
         }
     }
