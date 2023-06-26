@@ -95,15 +95,16 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
     fn try_from(pair: Pair<Rule>) -> Result<Self, Self::Error> {
         match pair.as_rule() {
             Rule::int => {
-                let value = pair.as_str().parse::<i64>().unwrap();
+                let value = pair.as_str().trim().parse::<i64>().unwrap();
                 Ok(Variable::Int(value))
             }
             Rule::float => {
-                let value = pair.as_str().parse::<f64>().unwrap();
+                let value = pair.as_str().trim().parse::<f64>().unwrap();
                 Ok(Variable::Float(value))
             }
             Rule::string => {
                 let value = pair.into_inner().next().unwrap().as_str();
+                let value = unescaper::unescape(value).unwrap();
                 Ok(Variable::String(value.into()))
             }
             Rule::array => {
@@ -211,7 +212,8 @@ mod tests {
         use crate::error::Error;
         use crate::variable::Variable;
         use std::str::FromStr;
-        assert_eq!(Variable::from_str(" 15"), Ok(Variable::Float(15.0)));
+        assert_eq!(Variable::from_str(" 15"), Ok(Variable::Int(15)));
+        assert_eq!(Variable::from_str(" 7.5 "), Ok(Variable::Float(7.5)));
         assert_eq!(Variable::from_str("NULL"), Ok(Variable::Null));
         assert_eq!(
             Variable::from_str(r#""print \"""#),
