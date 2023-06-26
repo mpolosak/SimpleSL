@@ -1,5 +1,6 @@
 pub mod error;
 pub mod function;
+pub mod instruction;
 pub mod interpreter;
 mod parse;
 pub mod stdlib;

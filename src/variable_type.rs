@@ -1,5 +1,6 @@
 use crate::{
-    function::{LocalVariable, Param, Params},
+    function::{Param, Params},
+    instruction::local_variable::LocalVariable,
     join, join_debug,
     parse::Rule,
 };

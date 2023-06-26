@@ -1,7 +1,7 @@
-use super::{Function, Instruction, Params};
+use super::{Function, Params};
 use crate::interpreter::{Interpreter, VariableMap};
 use crate::variable_type::{GetType, Type};
-use crate::{error::Error, variable::Variable};
+use crate::{error::Error, instruction::Instruction, variable::Variable};
 
 #[derive(Clone)]
 pub struct LangFunction {

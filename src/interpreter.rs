@@ -1,5 +1,9 @@
-use crate::function::{Instruction, LocalVariableMap, NativeFunction};
-use crate::{error::Error, parse::*, pest::Parser, stdlib::add_std_lib, variable::*};
+use crate::function::NativeFunction;
+use crate::instruction::local_variable::LocalVariableMap;
+use crate::{
+    error::Error, instruction::Instruction, parse::*, pest::Parser, stdlib::add_std_lib,
+    variable::*,
+};
 use std::{
     collections::HashMap,
     fs::File,

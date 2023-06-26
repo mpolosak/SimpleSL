@@ -1,8 +1,8 @@
-use crate::{join, parse::Rule, variable_type::Type};
+use crate::{
+    instruction::local_variable::LocalVariableMap, join, parse::Rule, variable_type::Type,
+};
 use pest::iterators::Pair;
 use std::fmt;
-
-use super::LocalVariableMap;
 
 #[derive(Clone, Debug)]
 pub struct Param {
