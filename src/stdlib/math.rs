@@ -30,11 +30,6 @@ pub fn add_functions(variables: &mut VariableMap) {
     }
 
     #[export_function]
-    fn or(a: i64, b: i64) -> i64 {
-        a.abs() + b.abs()
-    }
-
-    #[export_function]
     fn addf(a: f64, b: f64) -> f64 {
         a + b
     }

@@ -38,6 +38,8 @@ pub enum Instruction {
     Equal(Box<Instruction>, Box<Instruction>),
     Greater(Box<Instruction>, Box<Instruction>),
     GreaterOrEqual(Box<Instruction>, Box<Instruction>),
+    And(Box<Instruction>, Box<Instruction>),
+    Or(Box<Instruction>, Box<Instruction>),
 }
 
 impl Instruction {
@@ -166,6 +168,36 @@ impl Instruction {
                     ))),
                 }
             }
+            Rule::and => {
+                let mut inner = pair.into_inner();
+                let pair = inner.next().unwrap();
+                let instruction = Instruction::new(variables, pair, local_variables)?;
+                let pair = inner.next().unwrap();
+                let instruction2 = Instruction::new(variables, pair, local_variables)?;
+                match (
+                    instruction.get_return_type(),
+                    instruction2.get_return_type(),
+                ) {
+                    (Type::Int, Type::Int) => {
+                        Ok(Self::And(instruction2.into(), instruction.into()))
+                    }
+                    _ => Err(Error::WrongType(String::from("Argument of && "), Type::Int)),
+                }
+            }
+            Rule::or => {
+                let mut inner = pair.into_inner();
+                let pair = inner.next().unwrap();
+                let instruction = Instruction::new(variables, pair, local_variables)?;
+                let pair = inner.next().unwrap();
+                let instruction2 = Instruction::new(variables, pair, local_variables)?;
+                match (
+                    instruction.get_return_type(),
+                    instruction2.get_return_type(),
+                ) {
+                    (Type::Int, Type::Int) => Ok(Self::Or(instruction2.into(), instruction.into())),
+                    _ => Err(Error::WrongType(String::from("Argument of || "), Type::Int)),
+                }
+            }
             Rule::function_call => Self::create_function_call(pair, variables, local_variables),
             Rule::int | Rule::float | Rule::string | Rule::null => {
                 let variable = Variable::try_from(pair).unwrap();
@@ -263,6 +295,24 @@ impl Exec for Instruction {
                     _ => panic!(),
                 }
             }
+            Self::And(instruction1, instruction2) => {
+                let result1 = instruction1.exec(interpreter, local_variables)?;
+                let result2 = instruction2.exec(interpreter, local_variables)?;
+                match (result1, result2) {
+                    (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 * value2).into()),
+                    _ => panic!(),
+                }
+            }
+            Self::Or(instruction1, instruction2) => {
+                let result1 = instruction1.exec(interpreter, local_variables)?;
+                let result2 = instruction2.exec(interpreter, local_variables)?;
+                match (result1, result2) {
+                    (Variable::Int(value1), Variable::Int(value2)) => {
+                        Ok((value1 != 0 || value2 != 0).into())
+                    }
+                    _ => panic!(),
+                }
+            }
         }
     }
 }
@@ -306,6 +356,16 @@ impl Recreate for Instruction {
                 let instruction2 = instruction2.recreate(local_variables, args);
                 Self::GreaterOrEqual(instruction1.into(), instruction2.into())
             }
+            Self::And(instruction1, instruction2) => {
+                let instruction1 = instruction1.recreate(local_variables, args);
+                let instruction2 = instruction2.recreate(local_variables, args);
+                Self::GreaterOrEqual(instruction1.into(), instruction2.into())
+            }
+            Self::Or(instruction1, instruction2) => {
+                let instruction1 = instruction1.recreate(local_variables, args);
+                let instruction2 = instruction2.recreate(local_variables, args);
+                Self::GreaterOrEqual(instruction1.into(), instruction2.into())
+            }
             _ => self,
         }
     }
@@ -320,18 +380,20 @@ impl fmt::Debug for Instruction {
 impl GetReturnType for Instruction {
     fn get_return_type(&self) -> Type {
         match self {
-            Instruction::Variable(variable) => variable.get_type(),
-            Instruction::Array(_) => Type::Array,
-            Instruction::Function(function) => function.get_return_type(),
-            Instruction::FunctionCall(function_call) => function_call.get_return_type(),
-            Instruction::LocalFunctionCall(function_call) => function_call.get_return_type(),
-            Instruction::LocalVariable(_, var_type) => var_type.clone().into(),
-            Instruction::Set(set) => set.get_return_type(),
-            Instruction::Not(_)
-            | Instruction::BinNot(_)
-            | Instruction::Equal(..)
-            | Instruction::Greater(..)
-            | Instruction::GreaterOrEqual(..) => Type::Int,
+            Self::Variable(variable) => variable.get_type(),
+            Self::Array(_) => Type::Array,
+            Self::Function(function) => function.get_return_type(),
+            Self::FunctionCall(function_call) => function_call.get_return_type(),
+            Self::LocalFunctionCall(function_call) => function_call.get_return_type(),
+            Self::LocalVariable(_, var_type) => var_type.clone().into(),
+            Self::Set(set) => set.get_return_type(),
+            Self::Not(_)
+            | Self::BinNot(_)
+            | Self::Equal(..)
+            | Self::Greater(..)
+            | Self::GreaterOrEqual(..)
+            | Self::And(..)
+            | Self::Or(..) => Type::Int,
         }
     }
 }

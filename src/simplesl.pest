@@ -4,20 +4,22 @@ ident = @{ !null ~ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC|"_")* }
 function_call = ${ ident ~ args }
 	args = !{"("~expression_list~")"}
 var = _{ float | int | array | string | null | function }
-not = { "!" ~ ( not_arg )}
-bin_not = { "~" ~ not_arg }
-  not_arg = _{ equal_in_brackit | function_call | ident | int }
+not = { "!" ~ ( logic_arg )}
+bin_not = { "~" ~ logic_arg }
+logic_arg = _{ exp_in_brackets | function_call | ident | int }
 equal = { equal_arg ~ "==" ~ equal_arg }
 not_equal = { equal_arg ~ "!=" ~ equal_arg }
   equal_arg = _{ not | bin_not | function_call | ident | var }
-  equal_in_brackit = _{ "(" ~ equal ~ ")" }
+exp_in_brackets = _{ "(" ~ ( equal | not_equal | and | or ) ~ ")" }
+and = { logic_arg ~ "&&" ~ logic_arg }
+or = { logic_arg ~ "||" ~ logic_arg }
 greater = { greater_arg ~ ">" ~ greater_arg }
 greater_equal = { greater_arg ~ ">=" ~ greater_arg }
 lower = { greater_arg ~ "<" ~ greater_arg }
 lower_equal = { greater_arg ~ "<=" ~ greater_arg }
-    greater_arg = _{ float | not_arg }
+    greater_arg = _{ float | logic_arg }
 comparasion = _{ equal | not_equal | greater | greater_equal | lower | lower_equal }
-expression = _{ comparasion | not | bin_not | function_call | ident | var }
+expression = _{ exp_in_brackets | comparasion | not | bin_not | and | or | not | function_call | ident | var }
 expression_list = _{ (expression ~ ("," ~ expression)*)?}
 array = {"{" ~ expression_list ~ "}"}
 string = ${ "\"" ~ inner ~ "\"" }
