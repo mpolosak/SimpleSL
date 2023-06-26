@@ -11,6 +11,7 @@ pub enum Error {
     CannotBeParsed(String),
     TooManyVariables,
     IO(std::io::Error),
+    Parsing(Box<pest::error::Error<Rule>>),
     Other(String),
 }
 
@@ -40,6 +41,7 @@ impl fmt::Display for Error {
                 write!(f, "String contains more than one variable")
             }
             Self::IO(error) => write!(f, "{error}"),
+            Self::Parsing(error) => write!(f, "{error}"),
             Self::Other(value) => write!(f, "{value}"),
         }
     }
@@ -47,7 +49,7 @@ impl fmt::Display for Error {
 
 impl From<pest::error::Error<Rule>> for Error {
     fn from(value: pest::error::Error<Rule>) -> Self {
-        Error::Other(value.to_string())
+        Error::Parsing(value.into())
     }
 }
 
