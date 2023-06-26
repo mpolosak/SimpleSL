@@ -1,5 +1,6 @@
 use crate::function::NativeFunction;
 use crate::instruction::local_variable::LocalVariableMap;
+use crate::instruction::Exec;
 use crate::{
     error::Error, instruction::Instruction, parse::*, pest::Parser, stdlib::add_std_lib,
     variable::*,
@@ -23,11 +24,11 @@ impl Interpreter {
     }
 
     pub fn exec(&mut self, input: &str) -> Result<Variable, Error> {
-        let lines = self.parse_input(input)?;
+        let instructions = self.parse_input(input)?;
         let mut variables = VariableMap::new();
         let mut result = Variable::Null;
-        for line in lines {
-            result = line.exec(self, &mut variables)?;
+        for instruction in instructions {
+            result = instruction.exec(self, &mut variables)?;
         }
         self.variables.extend(variables);
         Ok(result)
@@ -43,16 +44,16 @@ impl Interpreter {
 
     fn parse_input(&self, input: &str) -> Result<Vec<Instruction>, Error> {
         let parse = SimpleSLParser::parse(Rule::input, input)?;
-        let mut lines = Vec::new();
+        let mut instructions = Vec::new();
         let mut local_variables = LocalVariableMap::new();
         for line_pair in parse {
             if line_pair.as_rule() == Rule::EOI {
                 break;
             }
-            let line = Instruction::new(&self.variables, line_pair, &mut local_variables)?;
-            lines.push(line);
+            let instruction = Instruction::new(&self.variables, line_pair, &mut local_variables)?;
+            instructions.push(instruction);
         }
-        Ok(lines)
+        Ok(instructions)
     }
 }
 

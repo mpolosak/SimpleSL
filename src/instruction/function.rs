@@ -7,7 +7,7 @@ use super::{
 use crate::{
     error::Error,
     function::{LangFunction, Param, Params},
-    interpreter::VariableMap,
+    interpreter::{Interpreter, VariableMap},
     parse::Rule,
     variable::Variable,
     variable_type::{GetReturnType, Type},
@@ -46,9 +46,9 @@ impl Function {
 impl Exec for Function {
     fn exec(
         &self,
-        _interpreter: &mut crate::interpreter::Interpreter,
-        local_variables: &mut crate::interpreter::VariableMap,
-    ) -> Result<crate::variable::Variable, crate::error::Error> {
+        _interpreter: &mut Interpreter,
+        local_variables: &mut VariableMap,
+    ) -> Result<Variable, Error> {
         let mut fn_local_variables = LocalVariableMap::from(self.params.clone());
         let body =
             recreate_instructions(self.body.clone(), &mut fn_local_variables, local_variables);
@@ -60,11 +60,7 @@ impl Exec for Function {
 }
 
 impl Recreate for Function {
-    fn recreate(
-        self,
-        local_variables: &mut LocalVariableMap,
-        args: &crate::interpreter::VariableMap,
-    ) -> Instruction {
+    fn recreate(self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Instruction {
         let mut local_variables = local_variables.clone();
         local_variables.extend(LocalVariableMap::from(self.params.clone()));
         let body = recreate_instructions(self.body, &mut local_variables, args);

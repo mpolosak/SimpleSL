@@ -12,7 +12,7 @@ use self::function_call::FunctionCall;
 use self::local_function_call::LocalFunctionCall;
 use self::local_variable::{LocalVariable, LocalVariableMap};
 use self::set::Set;
-use self::traits::{Exec, Recreate};
+pub use self::traits::{Exec, Recreate};
 use crate::variable::Variable;
 use crate::variable_type::{GetReturnType, GetType, Type};
 use crate::{
@@ -185,7 +185,31 @@ impl Instruction {
             _ => panic!(),
         }
     }
-    pub fn exec(
+    fn create_function_call(
+        pair: Pair<'_, Rule>,
+        variables: &VariableMap,
+        local_variables: &mut LocalVariableMap,
+    ) -> Result<Instruction, Error> {
+        let mut inner = pair.into_inner();
+        let var_name = inner.next().unwrap().as_str();
+        let args = inner
+            .next()
+            .unwrap()
+            .into_inner()
+            .map(|pair| Self::new(variables, pair, local_variables))
+            .collect::<Result<Vec<_>, _>>()?;
+        match local_variables.get(var_name) {
+            Some(LocalVariable::Function(params, return_type, ..)) => {
+                Ok(LocalFunctionCall::new(var_name, params, args, return_type.clone())?.into())
+            }
+            Some(_) => Err(error_wrong_type(&args, var_name)),
+            None => Ok(FunctionCall::new(var_name, variables, args)?.into()),
+        }
+    }
+}
+
+impl Exec for Instruction {
+    fn exec(
         &self,
         interpreter: &mut Interpreter,
         local_variables: &mut VariableMap,
@@ -241,7 +265,10 @@ impl Instruction {
             }
         }
     }
-    pub fn recreate(self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Self {
+}
+
+impl Recreate for Instruction {
+    fn recreate(self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Instruction {
         match self {
             Self::LocalFunctionCall(function_call) => function_call.recreate(local_variables, args),
             Self::FunctionCall(function_call) => function_call.recreate(local_variables, args),
@@ -280,27 +307,6 @@ impl Instruction {
                 Self::GreaterOrEqual(instruction1.into(), instruction2.into())
             }
             _ => self,
-        }
-    }
-    fn create_function_call(
-        pair: Pair<'_, Rule>,
-        variables: &VariableMap,
-        local_variables: &mut LocalVariableMap,
-    ) -> Result<Instruction, Error> {
-        let mut inner = pair.into_inner();
-        let var_name = inner.next().unwrap().as_str();
-        let args = inner
-            .next()
-            .unwrap()
-            .into_inner()
-            .map(|pair| Self::new(variables, pair, local_variables))
-            .collect::<Result<Vec<_>, _>>()?;
-        match local_variables.get(var_name) {
-            Some(LocalVariable::Function(params, return_type, ..)) => {
-                Ok(LocalFunctionCall::new(var_name, params, args, return_type.clone())?.into())
-            }
-            Some(_) => Err(error_wrong_type(&args, var_name)),
-            None => Ok(FunctionCall::new(var_name, variables, args)?.into()),
         }
     }
 }
