@@ -18,7 +18,7 @@ impl Interpreter {
         Interpreter { variables }
     }
 
-    pub fn exec(&mut self, input: String) -> Result<Variable, Error> {
+    pub fn exec(&mut self, input: &str) -> Result<Variable, Error> {
         let lines = self.parse_input(input)?;
         let mut variables = VariableMap::new();
         let mut result = Variable::Null;
@@ -34,11 +34,11 @@ impl Interpreter {
         let mut buf_reader = BufReader::new(file);
         let mut contents = String::new();
         buf_reader.read_to_string(&mut contents)?;
-        self.exec(contents)
+        self.exec(&contents)
     }
 
-    fn parse_input(&self, input: String) -> Result<Vec<Instruction>, Error> {
-        let parse = SimpleSLParser::parse(Rule::input, &input)?;
+    fn parse_input(&self, input: &str) -> Result<Vec<Instruction>, Error> {
+        let parse = SimpleSLParser::parse(Rule::input, input)?;
         let mut lines = Vec::new();
         let mut local_variables = LocalVariableMap::new();
         for line_pair in parse {

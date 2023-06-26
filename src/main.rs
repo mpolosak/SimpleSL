@@ -21,7 +21,7 @@ fn run_shell() {
                 rl.add_history_entry(&line);
                 line = line.replace('\n', "");
                 if !line.is_empty() {
-                    if let Err(error) = intepreter.exec(line) {
+                    if let Err(error) = intepreter.exec(&line) {
                         eprintln!("{error}");
                     }
                 }
