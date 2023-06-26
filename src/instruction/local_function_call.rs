@@ -11,7 +11,7 @@ use crate::{
     function::Params,
     interpreter::{Interpreter, VariableMap},
     variable::Variable,
-    variable_type::{GetType, Type},
+    variable_type::{GetReturnType, Type},
 };
 
 #[derive(Clone)]
@@ -80,8 +80,8 @@ impl From<LocalFunctionCall> for Instruction {
     }
 }
 
-impl GetType for LocalFunctionCall {
-    fn get_type(&self) -> Type {
+impl GetReturnType for LocalFunctionCall {
+    fn get_return_type(&self) -> Type {
         self.return_type.clone()
     }
 }

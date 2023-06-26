@@ -1,6 +1,6 @@
 use crate::function::Params;
 use crate::instruction::Instruction;
-use crate::variable_type::{GetType, Type};
+use crate::variable_type::{GetReturnType, Type};
 use std::collections::HashMap;
 
 use super::function::Function;
@@ -21,7 +21,7 @@ impl From<Type> for LocalVariable {
 
 impl From<Instruction> for LocalVariable {
     fn from(value: Instruction) -> Self {
-        let var_type = value.get_type();
+        let var_type = value.get_return_type();
         match (value, var_type) {
             (
                 Instruction::Function(Function { params, .. }),

@@ -7,13 +7,13 @@ pub use self::{
     nativefunction::NativeFunction,
     param::{Param, Params},
 };
-use crate::error::Error;
 use crate::interpreter::{Interpreter, VariableMap};
 use crate::variable::{Array, Variable};
 use crate::variable_type::{GetType, Type};
+use crate::{error::Error, variable_type::GetReturnType};
 use std::{fmt, iter::zip};
 
-pub trait Function {
+pub trait Function: GetReturnType {
     fn exec(
         &self,
         name: &str,
@@ -49,7 +49,6 @@ pub trait Function {
         args: VariableMap,
     ) -> Result<Variable, Error>;
     fn get_params(&self) -> &Params;
-    fn get_return_type(&self) -> Type;
 }
 
 impl fmt::Display for dyn Function {

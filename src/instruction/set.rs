@@ -7,7 +7,7 @@ use crate::{
     error::Error,
     interpreter::VariableMap,
     parse::Rule,
-    variable_type::{GetType, Type},
+    variable_type::{GetReturnType, Type},
 };
 use pest::iterators::Pair;
 
@@ -64,8 +64,8 @@ impl From<Set> for Instruction {
     }
 }
 
-impl GetType for Set {
-    fn get_type(&self) -> Type {
-        self.instruction.get_type()
+impl GetReturnType for Set {
+    fn get_return_type(&self) -> Type {
+        self.instruction.get_return_type()
     }
 }

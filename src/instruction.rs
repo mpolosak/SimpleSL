@@ -14,7 +14,7 @@ use self::local_variable::{LocalVariable, LocalVariableMap};
 use self::set::Set;
 use self::traits::{Exec, Recreate};
 use crate::variable::Variable;
-use crate::variable_type::{GetType, Type};
+use crate::variable_type::{GetReturnType, GetType, Type};
 use crate::{
     error::Error,
     interpreter::{Interpreter, VariableMap},
@@ -55,7 +55,7 @@ impl Instruction {
             Rule::not => {
                 let pair = pair.into_inner().next().unwrap();
                 let instruction = Instruction::new(variables, pair, local_variables)?;
-                if instruction.get_type() == Type::Int {
+                if instruction.get_return_type() == Type::Int {
                     Ok(Self::Not(instruction.into()))
                 } else {
                     Err(Error::WrongType(
@@ -67,7 +67,7 @@ impl Instruction {
             Rule::bin_not => {
                 let pair = pair.into_inner().next().unwrap();
                 let instruction = Instruction::new(variables, pair, local_variables)?;
-                if instruction.get_type() == Type::Int {
+                if instruction.get_return_type() == Type::Int {
                     Ok(Self::BinNot(instruction.into()))
                 } else {
                     Err(Error::WrongType(
@@ -100,7 +100,10 @@ impl Instruction {
                 let instruction = Instruction::new(variables, pair, local_variables)?;
                 let pair = inner.next().unwrap();
                 let instruction2 = Instruction::new(variables, pair, local_variables)?;
-                match (instruction.get_type(), instruction2.get_type()) {
+                match (
+                    instruction.get_return_type(),
+                    instruction2.get_return_type(),
+                ) {
                     (Type::Int, Type::Int) | (Type::Float, Type::Float) => {
                         Ok(Self::Greater(instruction.into(), instruction2.into()))
                     }
@@ -115,7 +118,10 @@ impl Instruction {
                 let instruction = Instruction::new(variables, pair, local_variables)?;
                 let pair = inner.next().unwrap();
                 let instruction2 = Instruction::new(variables, pair, local_variables)?;
-                match (instruction.get_type(), instruction2.get_type()) {
+                match (
+                    instruction.get_return_type(),
+                    instruction2.get_return_type(),
+                ) {
                     (Type::Int, Type::Int) | (Type::Float, Type::Float) => Ok(
                         Self::GreaterOrEqual(instruction.into(), instruction2.into()),
                     ),
@@ -130,7 +136,10 @@ impl Instruction {
                 let instruction = Instruction::new(variables, pair, local_variables)?;
                 let pair = inner.next().unwrap();
                 let instruction2 = Instruction::new(variables, pair, local_variables)?;
-                match (instruction.get_type(), instruction2.get_type()) {
+                match (
+                    instruction.get_return_type(),
+                    instruction2.get_return_type(),
+                ) {
                     (Type::Int, Type::Int) | (Type::Float, Type::Float) => {
                         Ok(Self::Greater(instruction2.into(), instruction.into()))
                     }
@@ -145,7 +154,10 @@ impl Instruction {
                 let instruction = Instruction::new(variables, pair, local_variables)?;
                 let pair = inner.next().unwrap();
                 let instruction2 = Instruction::new(variables, pair, local_variables)?;
-                match (instruction.get_type(), instruction2.get_type()) {
+                match (
+                    instruction.get_return_type(),
+                    instruction2.get_return_type(),
+                ) {
                     (Type::Int, Type::Int) | (Type::Float, Type::Float) => Ok(
                         Self::GreaterOrEqual(instruction2.into(), instruction.into()),
                     ),
@@ -299,16 +311,16 @@ impl fmt::Debug for Instruction {
     }
 }
 
-impl GetType for Instruction {
-    fn get_type(&self) -> Type {
+impl GetReturnType for Instruction {
+    fn get_return_type(&self) -> Type {
         match self {
             Instruction::Variable(variable) => variable.get_type(),
             Instruction::Array(_) => Type::Array,
-            Instruction::Function(function) => function.get_type(),
-            Instruction::FunctionCall(function_call) => function_call.get_type(),
-            Instruction::LocalFunctionCall(function_call) => function_call.get_type(),
+            Instruction::Function(function) => function.get_return_type(),
+            Instruction::FunctionCall(function_call) => function_call.get_return_type(),
+            Instruction::LocalFunctionCall(function_call) => function_call.get_return_type(),
             Instruction::LocalVariable(_, var_type) => var_type.clone().into(),
-            Instruction::Set(set) => set.get_type(),
+            Instruction::Set(set) => set.get_return_type(),
             Instruction::Not(_)
             | Instruction::BinNot(_)
             | Instruction::Equal(..)
@@ -341,7 +353,7 @@ pub fn exec_instructions(
 }
 
 fn error_wrong_type(args: &[Instruction], var_name: &str) -> Error {
-    let params = args.iter().map(Instruction::get_type).collect();
+    let params = args.iter().map(Instruction::get_return_type).collect();
     Error::WrongType(
         var_name.to_owned(),
         Type::Function {

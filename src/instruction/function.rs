@@ -10,7 +10,7 @@ use crate::{
     interpreter::VariableMap,
     parse::Rule,
     variable::Variable,
-    variable_type::{GetType, Type},
+    variable_type::{GetReturnType, Type},
 };
 use pest::iterators::Pair;
 use std::rc::Rc;
@@ -78,8 +78,8 @@ impl From<Function> for Instruction {
     }
 }
 
-impl GetType for Function {
-    fn get_type(&self) -> Type {
+impl GetReturnType for Function {
+    fn get_return_type(&self) -> Type {
         let params_types: Vec<Type> = self
             .params
             .standard
@@ -88,7 +88,7 @@ impl GetType for Function {
             .collect();
         let catch_rest = self.params.catch_rest.is_some();
         let return_type = match self.body.last() {
-            Some(instruction) => instruction.get_type(),
+            Some(instruction) => instruction.get_return_type(),
             None => Type::Any,
         };
         Type::Function {

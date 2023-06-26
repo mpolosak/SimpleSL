@@ -11,7 +11,7 @@ use crate::{
     function::Function,
     interpreter::{Interpreter, VariableMap},
     variable::Variable,
-    variable_type::GetType,
+    variable_type::GetReturnType,
 };
 use std::rc::Rc;
 
@@ -63,8 +63,8 @@ impl From<FunctionCall> for Instruction {
     }
 }
 
-impl GetType for FunctionCall {
-    fn get_type(&self) -> crate::variable_type::Type {
+impl GetReturnType for FunctionCall {
+    fn get_return_type(&self) -> crate::variable_type::Type {
         self.function.get_return_type()
     }
 }

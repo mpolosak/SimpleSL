@@ -1,6 +1,6 @@
 use super::{Function, Params};
 use crate::interpreter::{Interpreter, VariableMap};
-use crate::variable_type::Type;
+use crate::variable_type::{GetReturnType, Type};
 use crate::{error::Error, variable::Variable};
 
 #[derive(Clone)]
@@ -22,6 +22,9 @@ impl Function for NativeFunction {
     fn get_params(&self) -> &Params {
         &self.params
     }
+}
+
+impl GetReturnType for NativeFunction {
     fn get_return_type(&self) -> Type {
         self.return_type.clone()
     }

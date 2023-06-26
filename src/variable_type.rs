@@ -174,3 +174,7 @@ impl From<LocalVariable> for Type {
 pub trait GetType {
     fn get_type(&self) -> Type;
 }
+
+pub trait GetReturnType {
+    fn get_return_type(&self) -> Type;
+}
