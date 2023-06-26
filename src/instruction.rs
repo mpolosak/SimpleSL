@@ -40,6 +40,10 @@ pub enum Instruction {
     GreaterOrEqual(Box<Instruction>, Box<Instruction>),
     And(Box<Instruction>, Box<Instruction>),
     Or(Box<Instruction>, Box<Instruction>),
+    Multiply(Box<Instruction>, Box<Instruction>),
+    Divide(Box<Instruction>, Box<Instruction>),
+    Add(Box<Instruction>, Box<Instruction>),
+    Subtract(Box<Instruction>, Box<Instruction>),
 }
 
 impl Instruction {
@@ -179,7 +183,7 @@ impl Instruction {
                     instruction2.get_return_type(),
                 ) {
                     (Type::Int, Type::Int) => {
-                        Ok(Self::And(instruction2.into(), instruction.into()))
+                        Ok(Self::And(instruction.into(), instruction2.into()))
                     }
                     _ => Err(Error::WrongType(String::from("Argument of && "), Type::Int)),
                 }
@@ -194,8 +198,80 @@ impl Instruction {
                     instruction.get_return_type(),
                     instruction2.get_return_type(),
                 ) {
-                    (Type::Int, Type::Int) => Ok(Self::Or(instruction2.into(), instruction.into())),
+                    (Type::Int, Type::Int) => Ok(Self::Or(instruction.into(), instruction2.into())),
                     _ => Err(Error::WrongType(String::from("Argument of || "), Type::Int)),
+                }
+            }
+            Rule::multiply => {
+                let mut inner = pair.into_inner();
+                let pair = inner.next().unwrap();
+                let instruction = Instruction::new(variables, pair, local_variables)?;
+                let pair = inner.next().unwrap();
+                let instruction2 = Instruction::new(variables, pair, local_variables)?;
+                match (
+                    instruction.get_return_type(),
+                    instruction2.get_return_type(),
+                ) {
+                    (Type::Int, Type::Int) | (Type::Float, Type::Float) => {
+                        Ok(Self::Multiply(instruction.into(), instruction2.into()))
+                    }
+                    _ => Err(Error::Other(String::from(
+                        "Arguments of * operator must be both int or both float",
+                    ))),
+                }
+            }
+            Rule::divide => {
+                let mut inner = pair.into_inner();
+                let pair = inner.next().unwrap();
+                let instruction = Instruction::new(variables, pair, local_variables)?;
+                let pair = inner.next().unwrap();
+                let instruction2 = Instruction::new(variables, pair, local_variables)?;
+                match (
+                    instruction.get_return_type(),
+                    instruction2.get_return_type(),
+                ) {
+                    (Type::Int, Type::Int) | (Type::Float, Type::Float) => {
+                        Ok(Self::Divide(instruction.into(), instruction2.into()))
+                    }
+                    _ => Err(Error::Other(String::from(
+                        "Arguments of / operator must be both int or both float",
+                    ))),
+                }
+            }
+            Rule::add => {
+                let mut inner = pair.into_inner();
+                let pair = inner.next().unwrap();
+                let instruction = Instruction::new(variables, pair, local_variables)?;
+                let pair = inner.next().unwrap();
+                let instruction2 = Instruction::new(variables, pair, local_variables)?;
+                match (
+                    instruction.get_return_type(),
+                    instruction2.get_return_type(),
+                ) {
+                    (Type::Int, Type::Int) | (Type::Float, Type::Float) => {
+                        Ok(Self::Add(instruction.into(), instruction2.into()))
+                    }
+                    _ => Err(Error::Other(String::from(
+                        "Arguments of + operator must be both int or both float",
+                    ))),
+                }
+            }
+            Rule::subtract => {
+                let mut inner = pair.into_inner();
+                let pair = inner.next().unwrap();
+                let instruction = Instruction::new(variables, pair, local_variables)?;
+                let pair = inner.next().unwrap();
+                let instruction2 = Instruction::new(variables, pair, local_variables)?;
+                match (
+                    instruction.get_return_type(),
+                    instruction2.get_return_type(),
+                ) {
+                    (Type::Int, Type::Int) | (Type::Float, Type::Float) => {
+                        Ok(Self::Subtract(instruction.into(), instruction2.into()))
+                    }
+                    _ => Err(Error::Other(String::from(
+                        "Arguments of - operator must be both int or both float",
+                    ))),
                 }
             }
             Rule::function_call => Self::create_function_call(pair, variables, local_variables),
@@ -313,6 +389,50 @@ impl Exec for Instruction {
                     _ => panic!(),
                 }
             }
+            Self::Multiply(instruction1, instruction2) => {
+                let result1 = instruction1.exec(interpreter, local_variables)?;
+                let result2 = instruction2.exec(interpreter, local_variables)?;
+                match (result1, result2) {
+                    (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 * value2).into()),
+                    (Variable::Float(value1), Variable::Float(value2)) => {
+                        Ok((value1 * value2).into())
+                    }
+                    _ => panic!(),
+                }
+            }
+            Self::Divide(instruction1, instruction2) => {
+                let result1 = instruction1.exec(interpreter, local_variables)?;
+                let result2 = instruction2.exec(interpreter, local_variables)?;
+                match (result1, result2) {
+                    (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 / value2).into()),
+                    (Variable::Float(value1), Variable::Float(value2)) => {
+                        Ok((value1 / value2).into())
+                    }
+                    _ => panic!(),
+                }
+            }
+            Self::Add(instruction1, instruction2) => {
+                let result1 = instruction1.exec(interpreter, local_variables)?;
+                let result2 = instruction2.exec(interpreter, local_variables)?;
+                match (result1, result2) {
+                    (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 + value2).into()),
+                    (Variable::Float(value1), Variable::Float(value2)) => {
+                        Ok((value1 + value2).into())
+                    }
+                    _ => panic!(),
+                }
+            }
+            Self::Subtract(instruction1, instruction2) => {
+                let result1 = instruction1.exec(interpreter, local_variables)?;
+                let result2 = instruction2.exec(interpreter, local_variables)?;
+                match (result1, result2) {
+                    (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 - value2).into()),
+                    (Variable::Float(value1), Variable::Float(value2)) => {
+                        Ok((value1 - value2).into())
+                    }
+                    _ => panic!(),
+                }
+            }
         }
     }
 }
@@ -359,12 +479,32 @@ impl Recreate for Instruction {
             Self::And(instruction1, instruction2) => {
                 let instruction1 = instruction1.recreate(local_variables, args);
                 let instruction2 = instruction2.recreate(local_variables, args);
-                Self::GreaterOrEqual(instruction1.into(), instruction2.into())
+                Self::And(instruction1.into(), instruction2.into())
             }
             Self::Or(instruction1, instruction2) => {
                 let instruction1 = instruction1.recreate(local_variables, args);
                 let instruction2 = instruction2.recreate(local_variables, args);
-                Self::GreaterOrEqual(instruction1.into(), instruction2.into())
+                Self::Or(instruction1.into(), instruction2.into())
+            }
+            Self::Multiply(instruction1, instruction2) => {
+                let instruction1 = instruction1.recreate(local_variables, args);
+                let instruction2 = instruction2.recreate(local_variables, args);
+                Self::Multiply(instruction1.into(), instruction2.into())
+            }
+            Self::Divide(instruction1, instruction2) => {
+                let instruction1 = instruction1.recreate(local_variables, args);
+                let instruction2 = instruction2.recreate(local_variables, args);
+                Self::Divide(instruction1.into(), instruction2.into())
+            }
+            Self::Add(instruction1, instruction2) => {
+                let instruction1 = instruction1.recreate(local_variables, args);
+                let instruction2 = instruction2.recreate(local_variables, args);
+                Self::Add(instruction1.into(), instruction2.into())
+            }
+            Self::Subtract(instruction1, instruction2) => {
+                let instruction1 = instruction1.recreate(local_variables, args);
+                let instruction2 = instruction2.recreate(local_variables, args);
+                Self::Subtract(instruction1.into(), instruction2.into())
             }
             _ => self,
         }
@@ -394,6 +534,10 @@ impl GetReturnType for Instruction {
             | Self::GreaterOrEqual(..)
             | Self::And(..)
             | Self::Or(..) => Type::Int,
+            Self::Multiply(instruction, _)
+            | Self::Divide(instruction, _)
+            | Self::Add(instruction, _)
+            | Self::Subtract(instruction, _) => instruction.get_return_type(),
         }
     }
 }

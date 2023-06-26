@@ -27,10 +27,10 @@ iota = (value: int, size: int){
         len = array_len(array);
         last = array_at(
             array, 
-            subtract(len,1)
+            len-1
         );
         last = int(last, 0);
-        add(last,1);
+        last+1;
     },size);
 };
 
