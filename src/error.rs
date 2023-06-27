@@ -5,6 +5,9 @@ use std::fmt;
 pub enum Error {
     VariableDoesntExist(String),
     WrongType(String, Type),
+    OperandsMustBeBothIntOrBothFloat(&'static str),
+    BothOperandsMustBeInt(&'static str),
+    OperandMustBeInt(&'static str),
     WrongNumberOfArguments(String, usize),
     IndexToBig,
     CannotBeNegative(String),
@@ -25,6 +28,18 @@ impl fmt::Display for Error {
             }
             Self::WrongType(var_name, var_type) => {
                 write!(f, "{var_name} should be {var_type}")
+            }
+            Self::OperandsMustBeBothIntOrBothFloat(operator) => {
+                write!(
+                    f,
+                    "Arguments of {operator} operator must be both int or both float",
+                )
+            }
+            Self::BothOperandsMustBeInt(operator) => {
+                write!(f, "Both arguments of {operator} operator must be int",)
+            }
+            Self::OperandMustBeInt(operator) => {
+                write!(f, "Argument of {operator} operator must be int",)
             }
             Self::WrongNumberOfArguments(name, 0) => {
                 write!(f, "{name} requires no arguments but some passed")

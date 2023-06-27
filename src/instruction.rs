@@ -71,10 +71,7 @@ impl Instruction {
                 if instruction.get_return_type() == Type::Int {
                     Ok(Self::Not(instruction.into()))
                 } else {
-                    Err(Error::WrongType(
-                        String::from("Variable after '!' operator"),
-                        Type::Int,
-                    ))
+                    Err(Error::OperandMustBeInt("!"))
                 }
             }
             Rule::bin_not => {
@@ -83,10 +80,7 @@ impl Instruction {
                 if instruction.get_return_type() == Type::Int {
                     Ok(Self::BinNot(instruction.into()))
                 } else {
-                    Err(Error::WrongType(
-                        String::from("Variable after '~' operator"),
-                        Type::Int,
-                    ))
+                    Err(Error::OperandMustBeInt("~"))
                 }
             }
             Rule::equal => Ok(Equal::new(variables, pair, local_variables)?.into()),
@@ -112,7 +106,7 @@ impl Instruction {
                     (Type::Int, Type::Int) => {
                         Ok(Self::And(instruction.into(), instruction2.into()))
                     }
-                    _ => Err(Error::WrongType(String::from("Argument of && "), Type::Int)),
+                    _ => Err(Error::BothOperandsMustBeInt("&&")),
                 }
             }
             Rule::or => {
@@ -126,7 +120,7 @@ impl Instruction {
                     instruction2.get_return_type(),
                 ) {
                     (Type::Int, Type::Int) => Ok(Self::Or(instruction.into(), instruction2.into())),
-                    _ => Err(Error::WrongType(String::from("Argument of || "), Type::Int)),
+                    _ => Err(Error::BothOperandsMustBeInt("||")),
                 }
             }
             Rule::multiply => {
@@ -142,9 +136,7 @@ impl Instruction {
                     (Type::Int, Type::Int) | (Type::Float, Type::Float) => {
                         Ok(Self::Multiply(instruction.into(), instruction2.into()))
                     }
-                    _ => Err(Error::Other(String::from(
-                        "Arguments of * operator must be both int or both float",
-                    ))),
+                    _ => Err(Error::OperandsMustBeBothIntOrBothFloat("*")),
                 }
             }
             Rule::divide => {
@@ -160,9 +152,7 @@ impl Instruction {
                     (Type::Int, Type::Int) | (Type::Float, Type::Float) => {
                         Ok(Self::Divide(instruction.into(), instruction2.into()))
                     }
-                    _ => Err(Error::Other(String::from(
-                        "Arguments of / operator must be both int or both float",
-                    ))),
+                    _ => Err(Error::OperandsMustBeBothIntOrBothFloat("/")),
                 }
             }
             Rule::add => {
@@ -178,9 +168,7 @@ impl Instruction {
                     (Type::Int, Type::Int) | (Type::Float, Type::Float) => {
                         Ok(Self::Add(instruction.into(), instruction2.into()))
                     }
-                    _ => Err(Error::Other(String::from(
-                        "Arguments of + operator must be both int or both float",
-                    ))),
+                    _ => Err(Error::OperandsMustBeBothIntOrBothFloat("+")),
                 }
             }
             Rule::subtract => {
@@ -196,9 +184,7 @@ impl Instruction {
                     (Type::Int, Type::Int) | (Type::Float, Type::Float) => {
                         Ok(Self::Subtract(instruction.into(), instruction2.into()))
                     }
-                    _ => Err(Error::Other(String::from(
-                        "Arguments of - operator must be both int or both float",
-                    ))),
+                    _ => Err(Error::OperandsMustBeBothIntOrBothFloat("-")),
                 }
             }
             Rule::modulo => {
@@ -214,7 +200,7 @@ impl Instruction {
                     (Type::Int, Type::Int) => {
                         Ok(Self::Modulo(instruction.into(), instruction2.into()))
                     }
-                    _ => Err(Error::WrongType(String::from("Argument of % "), Type::Int)),
+                    _ => Err(Error::BothOperandsMustBeInt("%")),
                 }
             }
             Rule::function_call => Self::create_function_call(pair, variables, local_variables),

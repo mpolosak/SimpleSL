@@ -41,12 +41,8 @@ impl GreaterOrEqual {
                 lhs: instruction2.into(),
                 rhs: instruction.into(),
             }),
-            (_, _, Rule::greater) => Err(Error::Other(String::from(
-                "Arguments of >= operator must be both int or both float",
-            ))),
-            _ => Err(Error::Other(String::from(
-                "Arguments of <= operator must be both int or both float",
-            ))),
+            (_, _, Rule::greater_equal) => Err(Error::OperandsMustBeBothIntOrBothFloat(">=")),
+            _ => Err(Error::OperandsMustBeBothIntOrBothFloat("<=")),
         }
     }
 }
