@@ -1,14 +1,20 @@
 mod array;
 mod check_args;
+mod equal;
 mod function;
 mod function_call;
+mod greater;
+mod greater_or_equal;
 mod local_function_call;
 pub mod local_variable;
 mod set;
 mod traits;
 use self::array::Array;
+use self::equal::Equal;
 use self::function::Function;
 use self::function_call::FunctionCall;
+use self::greater::Greater;
+use self::greater_or_equal::GreaterOrEqual;
 use self::local_function_call::LocalFunctionCall;
 use self::local_variable::{LocalVariable, LocalVariableMap};
 use self::set::Set;
@@ -35,9 +41,9 @@ pub enum Instruction {
     Set(Set),
     Not(Box<Instruction>),
     BinNot(Box<Instruction>),
-    Equal(Box<Instruction>, Box<Instruction>),
-    Greater(Box<Instruction>, Box<Instruction>),
-    GreaterOrEqual(Box<Instruction>, Box<Instruction>),
+    Equal(Equal),
+    Greater(Greater),
+    GreaterOrEqual(GreaterOrEqual),
     And(Box<Instruction>, Box<Instruction>),
     Or(Box<Instruction>, Box<Instruction>),
     Multiply(Box<Instruction>, Box<Instruction>),
@@ -83,95 +89,15 @@ impl Instruction {
                     ))
                 }
             }
-            Rule::equal => {
-                let mut inner = pair.into_inner();
-                let pair = inner.next().unwrap();
-                let instruction = Instruction::new(variables, pair, local_variables)?;
-                let pair = inner.next().unwrap();
-                let instruction2 = Instruction::new(variables, pair, local_variables)?;
-                Ok(Self::Equal(instruction.into(), instruction2.into()))
+            Rule::equal => Ok(Equal::new(variables, pair, local_variables)?.into()),
+            Rule::not_equal => Ok(Self::Not(Box::new(
+                Equal::new(variables, pair, local_variables)?.into(),
+            ))),
+            Rule::greater | Rule::lower => {
+                Ok(Greater::new(variables, pair, local_variables)?.into())
             }
-            Rule::not_equal => {
-                let mut inner = pair.into_inner();
-                let pair = inner.next().unwrap();
-                let instruction = Instruction::new(variables, pair, local_variables)?;
-                let pair = inner.next().unwrap();
-                let instruction2 = Instruction::new(variables, pair, local_variables)?;
-                Ok(Self::Not(
-                    Self::Equal(instruction.into(), instruction2.into()).into(),
-                ))
-            }
-            Rule::greater => {
-                let mut inner = pair.into_inner();
-                let pair = inner.next().unwrap();
-                let instruction = Instruction::new(variables, pair, local_variables)?;
-                let pair = inner.next().unwrap();
-                let instruction2 = Instruction::new(variables, pair, local_variables)?;
-                match (
-                    instruction.get_return_type(),
-                    instruction2.get_return_type(),
-                ) {
-                    (Type::Int, Type::Int) | (Type::Float, Type::Float) => {
-                        Ok(Self::Greater(instruction.into(), instruction2.into()))
-                    }
-                    _ => Err(Error::Other(String::from(
-                        "Arguments of > operator must be both int or both float",
-                    ))),
-                }
-            }
-            Rule::greater_equal => {
-                let mut inner = pair.into_inner();
-                let pair = inner.next().unwrap();
-                let instruction = Instruction::new(variables, pair, local_variables)?;
-                let pair = inner.next().unwrap();
-                let instruction2 = Instruction::new(variables, pair, local_variables)?;
-                match (
-                    instruction.get_return_type(),
-                    instruction2.get_return_type(),
-                ) {
-                    (Type::Int, Type::Int) | (Type::Float, Type::Float) => Ok(
-                        Self::GreaterOrEqual(instruction.into(), instruction2.into()),
-                    ),
-                    _ => Err(Error::Other(String::from(
-                        "Arguments of >= operator must be both int or both float",
-                    ))),
-                }
-            }
-            Rule::lower => {
-                let mut inner = pair.into_inner();
-                let pair = inner.next().unwrap();
-                let instruction = Instruction::new(variables, pair, local_variables)?;
-                let pair = inner.next().unwrap();
-                let instruction2 = Instruction::new(variables, pair, local_variables)?;
-                match (
-                    instruction.get_return_type(),
-                    instruction2.get_return_type(),
-                ) {
-                    (Type::Int, Type::Int) | (Type::Float, Type::Float) => {
-                        Ok(Self::Greater(instruction2.into(), instruction.into()))
-                    }
-                    _ => Err(Error::Other(String::from(
-                        "Arguments of < operator must be both int or both float",
-                    ))),
-                }
-            }
-            Rule::lower_equal => {
-                let mut inner = pair.into_inner();
-                let pair = inner.next().unwrap();
-                let instruction = Instruction::new(variables, pair, local_variables)?;
-                let pair = inner.next().unwrap();
-                let instruction2 = Instruction::new(variables, pair, local_variables)?;
-                match (
-                    instruction.get_return_type(),
-                    instruction2.get_return_type(),
-                ) {
-                    (Type::Int, Type::Int) | (Type::Float, Type::Float) => Ok(
-                        Self::GreaterOrEqual(instruction2.into(), instruction.into()),
-                    ),
-                    _ => Err(Error::Other(String::from(
-                        "Arguments of <= operator must be both int or both float",
-                    ))),
-                }
+            Rule::greater_equal | Rule::lower_equal => {
+                Ok(GreaterOrEqual::new(variables, pair, local_variables)?.into())
             }
             Rule::and => {
                 let mut inner = pair.into_inner();
@@ -361,32 +287,10 @@ impl Exec for Instruction {
                 };
                 Ok(Variable::Int(!result))
             }
-            Self::Equal(instruction1, instruction2) => {
-                let result1 = instruction1.exec(interpreter, local_variables)?;
-                let result2 = instruction2.exec(interpreter, local_variables)?;
-                Ok((result1 == result2).into())
-            }
-            Self::Greater(instruction1, instruction2) => {
-                let result1 = instruction1.exec(interpreter, local_variables)?;
-                let result2 = instruction2.exec(interpreter, local_variables)?;
-                match (result1, result2) {
-                    (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 > value2).into()),
-                    (Variable::Float(value1), Variable::Float(value2)) => {
-                        Ok((value1 > value2).into())
-                    }
-                    _ => panic!(),
-                }
-            }
-            Self::GreaterOrEqual(instruction1, instruction2) => {
-                let result1 = instruction1.exec(interpreter, local_variables)?;
-                let result2 = instruction2.exec(interpreter, local_variables)?;
-                match (result1, result2) {
-                    (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 >= value2).into()),
-                    (Variable::Float(value1), Variable::Float(value2)) => {
-                        Ok((value1 >= value2).into())
-                    }
-                    _ => panic!(),
-                }
+            Self::Equal(equal) => equal.exec(interpreter, local_variables),
+            Self::Greater(greater) => greater.exec(interpreter, local_variables),
+            Self::GreaterOrEqual(greater_or_equal) => {
+                greater_or_equal.exec(interpreter, local_variables)
             }
             Self::And(instruction1, instruction2) => {
                 let result1 = instruction1.exec(interpreter, local_variables)?;
@@ -486,20 +390,10 @@ impl Recreate for Instruction {
                 let instruction = instruction.recreate(local_variables, args);
                 Self::BinNot(instruction.into())
             }
-            Self::Equal(instruction1, instruction2) => {
-                let instruction1 = instruction1.recreate(local_variables, args);
-                let instruction2 = instruction2.recreate(local_variables, args);
-                Self::Equal(instruction1.into(), instruction2.into())
-            }
-            Self::Greater(instruction1, instruction2) => {
-                let instruction1 = instruction1.recreate(local_variables, args);
-                let instruction2 = instruction2.recreate(local_variables, args);
-                Self::Greater(instruction1.into(), instruction2.into())
-            }
-            Self::GreaterOrEqual(instruction1, instruction2) => {
-                let instruction1 = instruction1.recreate(local_variables, args);
-                let instruction2 = instruction2.recreate(local_variables, args);
-                Self::GreaterOrEqual(instruction1.into(), instruction2.into())
+            Self::Equal(equal) => equal.recreate(local_variables, args),
+            Self::Greater(greater) => greater.recreate(local_variables, args),
+            Self::GreaterOrEqual(greater_or_equal) => {
+                greater_or_equal.recreate(local_variables, args)
             }
             Self::And(instruction1, instruction2) => {
                 let instruction1 = instruction1.recreate(local_variables, args);
