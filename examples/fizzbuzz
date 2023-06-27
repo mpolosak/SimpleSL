@@ -1,14 +1,14 @@
 fizzbuzz = (number: int){
-    result = if(modulo(number, 15)==0, (){
+    result = if(number%15==0, (){
         "FizzBuzz";
     });
     result = if_else(result==NULL, (){
-        if(modulo(number, 3)==0, (){
+        if(number%3==0, (){
             "Fizz";
         });
     },(){result;});
     result = if_else(result==NULL, (){
-        if(modulo(number, 5)==0, (){
+        if(number%5==0, (){
             "Buzz";
         });
     },(){result;});

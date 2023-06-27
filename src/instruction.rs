@@ -44,6 +44,7 @@ pub enum Instruction {
     Divide(Box<Instruction>, Box<Instruction>),
     Add(Box<Instruction>, Box<Instruction>),
     Subtract(Box<Instruction>, Box<Instruction>),
+    Modulo(Box<Instruction>, Box<Instruction>),
 }
 
 impl Instruction {
@@ -274,6 +275,22 @@ impl Instruction {
                     ))),
                 }
             }
+            Rule::modulo => {
+                let mut inner = pair.into_inner();
+                let pair = inner.next().unwrap();
+                let instruction = Instruction::new(variables, pair, local_variables)?;
+                let pair = inner.next().unwrap();
+                let instruction2 = Instruction::new(variables, pair, local_variables)?;
+                match (
+                    instruction.get_return_type(),
+                    instruction2.get_return_type(),
+                ) {
+                    (Type::Int, Type::Int) => {
+                        Ok(Self::Modulo(instruction.into(), instruction2.into()))
+                    }
+                    _ => Err(Error::WrongType(String::from("Argument of % "), Type::Int)),
+                }
+            }
             Rule::function_call => Self::create_function_call(pair, variables, local_variables),
             Rule::int | Rule::float | Rule::string | Rule::null => {
                 let variable = Variable::try_from(pair).unwrap();
@@ -433,6 +450,14 @@ impl Exec for Instruction {
                     _ => panic!(),
                 }
             }
+            Self::Modulo(instruction1, instruction2) => {
+                let result1 = instruction1.exec(interpreter, local_variables)?;
+                let result2 = instruction2.exec(interpreter, local_variables)?;
+                match (result1, result2) {
+                    (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 % value2).into()),
+                    _ => panic!(),
+                }
+            }
         }
     }
 }
@@ -506,6 +531,11 @@ impl Recreate for Instruction {
                 let instruction2 = instruction2.recreate(local_variables, args);
                 Self::Subtract(instruction1.into(), instruction2.into())
             }
+            Self::Modulo(instruction1, instruction2) => {
+                let instruction1 = instruction1.recreate(local_variables, args);
+                let instruction2 = instruction2.recreate(local_variables, args);
+                Self::Modulo(instruction1.into(), instruction2.into())
+            }
             _ => self,
         }
     }
@@ -533,7 +563,8 @@ impl GetReturnType for Instruction {
             | Self::Greater(..)
             | Self::GreaterOrEqual(..)
             | Self::And(..)
-            | Self::Or(..) => Type::Int,
+            | Self::Or(..)
+            | Self::Modulo(..) => Type::Int,
             Self::Multiply(instruction, _)
             | Self::Divide(instruction, _)
             | Self::Add(instruction, _)

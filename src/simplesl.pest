@@ -9,8 +9,8 @@ bin_not = { "~" ~ logic_arg }
 logic_arg = _{ exp_in_brackets | function_call | ident | int }
 equal = { equal_arg ~ "==" ~ equal_arg }
 not_equal = { equal_arg ~ "!=" ~ equal_arg }
-  equal_arg = _{ not | bin_not | function_call | ident | var }
-exp_in_brackets = _{ "(" ~ ( math_arg | equal | not_equal | and | or ) ~ ")" }
+  equal_arg = _{ math_operations | not | bin_not | exp_in_brackets | function_call | var | ident }
+exp_in_brackets = _{ "(" ~ ( math_operations | math_arg | equal | not_equal | and | or ) ~ ")" }
 and = { logic_arg ~ "&&" ~ logic_arg }
 or = { logic_arg ~ "||" ~ logic_arg }
 greater = { math_arg ~ ">" ~ math_arg }
@@ -22,8 +22,10 @@ multiply = { math_arg ~ "*" ~ math_arg }
 divide = { math_arg ~ "/" ~ math_arg }
 add = { math_arg ~ "+" ~ math_arg }
 subtract = { math_arg ~ "-" ~ math_arg }
+modulo = { logic_arg ~ "%" ~ logic_arg }
 comparasion = _{ equal | not_equal | greater | greater_equal | lower | lower_equal }
-expression = _{ exp_in_brackets | multiply | divide | add | subtract | comparasion | not | bin_not | and | or | not | function_call | ident | var }
+math_operations = _{ modulo | multiply | divide | add | subtract }
+expression = _{ exp_in_brackets | comparasion | math_operations | not | bin_not | and | or | not | function_call | ident | var }
 expression_list = _{ (expression ~ ("," ~ expression)*)?}
 array = {"{" ~ expression_list ~ "}"}
 string = ${ "\"" ~ inner ~ "\"" }

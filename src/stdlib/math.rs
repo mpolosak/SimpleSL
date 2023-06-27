@@ -5,11 +5,6 @@ use simplesl_macros::export_function;
 
 pub fn add_functions(variables: &mut VariableMap) {
     #[export_function]
-    fn modulo(a: i64, b: i64) -> i64 {
-        a % b
-    }
-
-    #[export_function]
     fn int_to_float(value: i64) -> f64 {
         value as f64
     }
