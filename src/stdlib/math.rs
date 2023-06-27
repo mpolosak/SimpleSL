@@ -13,13 +13,4 @@ pub fn add_functions(variables: &mut VariableMap) {
     fn float_to_int(value: f64) -> i64 {
         value as i64
     }
-
-    #[export_function]
-    fn shift(a: i64, bits: i64) -> i64 {
-        if bits > 0 {
-            a << bits
-        } else {
-            a >> -bits
-        }
-    }
 }

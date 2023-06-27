@@ -54,6 +54,8 @@ pub enum Instruction {
     BinAnd(Box<Instruction>, Box<Instruction>),
     BinOr(Box<Instruction>, Box<Instruction>),
     XOR(Box<Instruction>, Box<Instruction>),
+    LShift(Box<Instruction>, Box<Instruction>),
+    RShift(Box<Instruction>, Box<Instruction>),
 }
 
 impl Instruction {
@@ -254,6 +256,38 @@ impl Instruction {
                     _ => Err(Error::BothOperandsMustBeInt("^")),
                 }
             }
+            Rule::lshift => {
+                let mut inner = pair.into_inner();
+                let pair = inner.next().unwrap();
+                let instruction = Instruction::new(variables, pair, local_variables)?;
+                let pair = inner.next().unwrap();
+                let instruction2 = Instruction::new(variables, pair, local_variables)?;
+                match (
+                    instruction.get_return_type(),
+                    instruction2.get_return_type(),
+                ) {
+                    (Type::Int, Type::Int) => {
+                        Ok(Self::LShift(instruction.into(), instruction2.into()))
+                    }
+                    _ => Err(Error::BothOperandsMustBeInt("<<")),
+                }
+            }
+            Rule::rshift => {
+                let mut inner = pair.into_inner();
+                let pair = inner.next().unwrap();
+                let instruction = Instruction::new(variables, pair, local_variables)?;
+                let pair = inner.next().unwrap();
+                let instruction2 = Instruction::new(variables, pair, local_variables)?;
+                match (
+                    instruction.get_return_type(),
+                    instruction2.get_return_type(),
+                ) {
+                    (Type::Int, Type::Int) => {
+                        Ok(Self::RShift(instruction.into(), instruction2.into()))
+                    }
+                    _ => Err(Error::BothOperandsMustBeInt(">>")),
+                }
+            }
             Rule::function_call => Self::create_function_call(pair, variables, local_variables),
             Rule::int | Rule::float | Rule::string | Rule::null => {
                 let variable = Variable::try_from(pair).unwrap();
@@ -423,6 +457,22 @@ impl Exec for Instruction {
                     _ => panic!(),
                 }
             }
+            Self::LShift(instruction1, instruction2) => {
+                let result1 = instruction1.exec(interpreter, local_variables)?;
+                let result2 = instruction2.exec(interpreter, local_variables)?;
+                match (result1, result2) {
+                    (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 << value2).into()),
+                    _ => panic!(),
+                }
+            }
+            Self::RShift(instruction1, instruction2) => {
+                let result1 = instruction1.exec(interpreter, local_variables)?;
+                let result2 = instruction2.exec(interpreter, local_variables)?;
+                match (result1, result2) {
+                    (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 >> value2).into()),
+                    _ => panic!(),
+                }
+            }
         }
     }
 }
@@ -506,6 +556,16 @@ impl Recreate for Instruction {
                 let instruction2 = instruction2.recreate(local_variables, args);
                 Self::XOR(instruction1.into(), instruction2.into())
             }
+            Self::LShift(instruction1, instruction2) => {
+                let instruction1 = instruction1.recreate(local_variables, args);
+                let instruction2 = instruction2.recreate(local_variables, args);
+                Self::XOR(instruction1.into(), instruction2.into())
+            }
+            Self::RShift(instruction1, instruction2) => {
+                let instruction1 = instruction1.recreate(local_variables, args);
+                let instruction2 = instruction2.recreate(local_variables, args);
+                Self::XOR(instruction1.into(), instruction2.into())
+            }
             _ => self,
         }
     }
@@ -537,7 +597,9 @@ impl GetReturnType for Instruction {
             | Self::Modulo(..)
             | Self::BinAnd(..)
             | Self::BinOr(..)
-            | Self::XOR(..) => Type::Int,
+            | Self::XOR(..)
+            | Self::LShift(..)
+            | Self::RShift(..) => Type::Int,
             Self::Multiply(instruction, _)
             | Self::Divide(instruction, _)
             | Self::Add(instruction, _)
