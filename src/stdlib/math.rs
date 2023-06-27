@@ -15,21 +15,6 @@ pub fn add_functions(variables: &mut VariableMap) {
     }
 
     #[export_function]
-    fn bin_and(a: i64, b: i64) -> i64 {
-        a & b
-    }
-
-    #[export_function]
-    fn bin_or(a: i64, b: i64) -> i64 {
-        a | b
-    }
-
-    #[export_function]
-    fn xor(a: i64, b: i64) -> i64 {
-        a ^ b
-    }
-
-    #[export_function]
     fn shift(a: i64, bits: i64) -> i64 {
         if bits > 0 {
             a << bits

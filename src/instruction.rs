@@ -51,6 +51,9 @@ pub enum Instruction {
     Add(Box<Instruction>, Box<Instruction>),
     Subtract(Box<Instruction>, Box<Instruction>),
     Modulo(Box<Instruction>, Box<Instruction>),
+    BinAnd(Box<Instruction>, Box<Instruction>),
+    BinOr(Box<Instruction>, Box<Instruction>),
+    XOR(Box<Instruction>, Box<Instruction>),
 }
 
 impl Instruction {
@@ -203,6 +206,54 @@ impl Instruction {
                     _ => Err(Error::BothOperandsMustBeInt("%")),
                 }
             }
+            Rule::bin_and => {
+                let mut inner = pair.into_inner();
+                let pair = inner.next().unwrap();
+                let instruction = Instruction::new(variables, pair, local_variables)?;
+                let pair = inner.next().unwrap();
+                let instruction2 = Instruction::new(variables, pair, local_variables)?;
+                match (
+                    instruction.get_return_type(),
+                    instruction2.get_return_type(),
+                ) {
+                    (Type::Int, Type::Int) => {
+                        Ok(Self::BinAnd(instruction.into(), instruction2.into()))
+                    }
+                    _ => Err(Error::BothOperandsMustBeInt("&")),
+                }
+            }
+            Rule::bin_or => {
+                let mut inner = pair.into_inner();
+                let pair = inner.next().unwrap();
+                let instruction = Instruction::new(variables, pair, local_variables)?;
+                let pair = inner.next().unwrap();
+                let instruction2 = Instruction::new(variables, pair, local_variables)?;
+                match (
+                    instruction.get_return_type(),
+                    instruction2.get_return_type(),
+                ) {
+                    (Type::Int, Type::Int) => {
+                        Ok(Self::BinOr(instruction.into(), instruction2.into()))
+                    }
+                    _ => Err(Error::BothOperandsMustBeInt("|")),
+                }
+            }
+            Rule::xor => {
+                let mut inner = pair.into_inner();
+                let pair = inner.next().unwrap();
+                let instruction = Instruction::new(variables, pair, local_variables)?;
+                let pair = inner.next().unwrap();
+                let instruction2 = Instruction::new(variables, pair, local_variables)?;
+                match (
+                    instruction.get_return_type(),
+                    instruction2.get_return_type(),
+                ) {
+                    (Type::Int, Type::Int) => {
+                        Ok(Self::XOR(instruction.into(), instruction2.into()))
+                    }
+                    _ => Err(Error::BothOperandsMustBeInt("^")),
+                }
+            }
             Rule::function_call => Self::create_function_call(pair, variables, local_variables),
             Rule::int | Rule::float | Rule::string | Rule::null => {
                 let variable = Variable::try_from(pair).unwrap();
@@ -348,6 +399,30 @@ impl Exec for Instruction {
                     _ => panic!(),
                 }
             }
+            Self::BinAnd(instruction1, instruction2) => {
+                let result1 = instruction1.exec(interpreter, local_variables)?;
+                let result2 = instruction2.exec(interpreter, local_variables)?;
+                match (result1, result2) {
+                    (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 & value2).into()),
+                    _ => panic!(),
+                }
+            }
+            Self::BinOr(instruction1, instruction2) => {
+                let result1 = instruction1.exec(interpreter, local_variables)?;
+                let result2 = instruction2.exec(interpreter, local_variables)?;
+                match (result1, result2) {
+                    (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 | value2).into()),
+                    _ => panic!(),
+                }
+            }
+            Self::XOR(instruction1, instruction2) => {
+                let result1 = instruction1.exec(interpreter, local_variables)?;
+                let result2 = instruction2.exec(interpreter, local_variables)?;
+                match (result1, result2) {
+                    (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 ^ value2).into()),
+                    _ => panic!(),
+                }
+            }
         }
     }
 }
@@ -416,6 +491,21 @@ impl Recreate for Instruction {
                 let instruction2 = instruction2.recreate(local_variables, args);
                 Self::Modulo(instruction1.into(), instruction2.into())
             }
+            Self::BinAnd(instruction1, instruction2) => {
+                let instruction1 = instruction1.recreate(local_variables, args);
+                let instruction2 = instruction2.recreate(local_variables, args);
+                Self::BinAnd(instruction1.into(), instruction2.into())
+            }
+            Self::BinOr(instruction1, instruction2) => {
+                let instruction1 = instruction1.recreate(local_variables, args);
+                let instruction2 = instruction2.recreate(local_variables, args);
+                Self::BinOr(instruction1.into(), instruction2.into())
+            }
+            Self::XOR(instruction1, instruction2) => {
+                let instruction1 = instruction1.recreate(local_variables, args);
+                let instruction2 = instruction2.recreate(local_variables, args);
+                Self::XOR(instruction1.into(), instruction2.into())
+            }
             _ => self,
         }
     }
@@ -444,7 +534,10 @@ impl GetReturnType for Instruction {
             | Self::GreaterOrEqual(..)
             | Self::And(..)
             | Self::Or(..)
-            | Self::Modulo(..) => Type::Int,
+            | Self::Modulo(..)
+            | Self::BinAnd(..)
+            | Self::BinOr(..)
+            | Self::XOR(..) => Type::Int,
             Self::Multiply(instruction, _)
             | Self::Divide(instruction, _)
             | Self::Add(instruction, _)
