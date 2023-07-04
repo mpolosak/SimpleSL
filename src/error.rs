@@ -10,6 +10,7 @@ pub enum Error {
     OperandMustBeInt(&'static str),
     WrongNumberOfArguments(String, usize),
     IndexToBig,
+    CannotAdd(Type, Type),
     CannotBeNegative(String),
     CannotBeParsed(String),
     TooManyVariables,
@@ -48,6 +49,7 @@ impl fmt::Display for Error {
                 write!(f, "{name} requires {num} args")
             }
             Self::IndexToBig => write!(f, "index must be lower than array size"),
+            Self::CannotAdd(type1, type2) => write!(f, "Cannot add {type1} and {type2}"),
             Self::CannotBeNegative(ident) => write!(f, "{ident} cannot be negative"),
             Self::CannotBeParsed(text) => {
                 write!(f, "{text} cannot be parsed to variable")

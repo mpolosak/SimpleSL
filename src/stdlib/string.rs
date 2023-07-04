@@ -8,11 +8,6 @@ use std::rc::Rc;
 
 pub fn add_functions(variables: &mut VariableMap) {
     #[export_function]
-    fn string_concat(string1: &str, string2: &str) -> String {
-        format!("{string1}{string2}")
-    }
-
-    #[export_function]
     fn string_len(string: &str) -> usize {
         string.len()
     }

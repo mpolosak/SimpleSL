@@ -1,3 +1,4 @@
+mod add;
 mod array;
 mod check_args;
 mod equal;
@@ -26,6 +27,7 @@ use crate::{
     interpreter::{Interpreter, VariableMap},
     parse::Rule,
 };
+use add::Add;
 use check_args::check_args;
 use pest::iterators::Pair;
 use std::fmt;
@@ -48,7 +50,7 @@ pub enum Instruction {
     Or(Box<Instruction>, Box<Instruction>),
     Multiply(Box<Instruction>, Box<Instruction>),
     Divide(Box<Instruction>, Box<Instruction>),
-    Add(Box<Instruction>, Box<Instruction>),
+    Add(Add),
     Subtract(Box<Instruction>, Box<Instruction>),
     Modulo(Box<Instruction>, Box<Instruction>),
     BinAnd(Box<Instruction>, Box<Instruction>),
@@ -160,22 +162,7 @@ impl Instruction {
                     _ => Err(Error::OperandsMustBeBothIntOrBothFloat("/")),
                 }
             }
-            Rule::add => {
-                let mut inner = pair.into_inner();
-                let pair = inner.next().unwrap();
-                let instruction = Instruction::new(variables, pair, local_variables)?;
-                let pair = inner.next().unwrap();
-                let instruction2 = Instruction::new(variables, pair, local_variables)?;
-                match (
-                    instruction.get_return_type(),
-                    instruction2.get_return_type(),
-                ) {
-                    (Type::Int, Type::Int) | (Type::Float, Type::Float) => {
-                        Ok(Self::Add(instruction.into(), instruction2.into()))
-                    }
-                    _ => Err(Error::OperandsMustBeBothIntOrBothFloat("+")),
-                }
-            }
+            Rule::add => Ok(Add::new(variables, pair, local_variables)?.into()),
             Rule::subtract => {
                 let mut inner = pair.into_inner();
                 let pair = inner.next().unwrap();
@@ -403,17 +390,7 @@ impl Exec for Instruction {
                     _ => panic!(),
                 }
             }
-            Self::Add(instruction1, instruction2) => {
-                let result1 = instruction1.exec(interpreter, local_variables)?;
-                let result2 = instruction2.exec(interpreter, local_variables)?;
-                match (result1, result2) {
-                    (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 + value2).into()),
-                    (Variable::Float(value1), Variable::Float(value2)) => {
-                        Ok((value1 + value2).into())
-                    }
-                    _ => panic!(),
-                }
-            }
+            Self::Add(add) => add.exec(interpreter, local_variables),
             Self::Subtract(instruction1, instruction2) => {
                 let result1 = instruction1.exec(interpreter, local_variables)?;
                 let result2 = instruction2.exec(interpreter, local_variables)?;
@@ -526,11 +503,7 @@ impl Recreate for Instruction {
                 let instruction2 = instruction2.recreate(local_variables, args);
                 Self::Divide(instruction1.into(), instruction2.into())
             }
-            Self::Add(instruction1, instruction2) => {
-                let instruction1 = instruction1.recreate(local_variables, args);
-                let instruction2 = instruction2.recreate(local_variables, args);
-                Self::Add(instruction1.into(), instruction2.into())
-            }
+            Self::Add(add) => add.recreate(local_variables, args),
             Self::Subtract(instruction1, instruction2) => {
                 let instruction1 = instruction1.recreate(local_variables, args);
                 let instruction2 = instruction2.recreate(local_variables, args);
@@ -587,6 +560,7 @@ impl GetReturnType for Instruction {
             Self::LocalFunctionCall(function_call) => function_call.get_return_type(),
             Self::LocalVariable(_, var_type) => var_type.clone().into(),
             Self::Set(set) => set.get_return_type(),
+            Self::Add(add) => add.get_return_type(),
             Self::Not(_)
             | Self::BinNot(_)
             | Self::Equal(..)
@@ -602,7 +576,6 @@ impl GetReturnType for Instruction {
             | Self::RShift(..) => Type::Int,
             Self::Multiply(instruction, _)
             | Self::Divide(instruction, _)
-            | Self::Add(instruction, _)
             | Self::Subtract(instruction, _) => instruction.get_return_type(),
         }
     }
