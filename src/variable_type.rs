@@ -21,6 +21,10 @@ pub enum Type {
         catch_rest: bool,
     },
     Array,
+    Result {
+        ok: Box<Type>,
+        error: Box<Type>,
+    },
     Null,
     Any,
 }
@@ -51,6 +55,13 @@ impl Type {
                     return_type.matches(return_type2)
                 }
             }
+            (
+                Self::Result { ok, error },
+                Self::Result {
+                    ok: ok2,
+                    error: error2,
+                },
+            ) => ok.matches(ok2) || error.matches(error2),
             (_, Self::Any) => true,
             _ => self == other,
         }
@@ -82,6 +93,7 @@ impl Debug for Type {
                 )
             }
             Self::Array => write!(f, "array"),
+            Self::Result { ok, error } => write!(f, "result<{ok:?}, {error:?}>"),
             Self::Null => write!(f, "null"),
             Self::Any => write!(f, "any"),
         }
@@ -109,6 +121,7 @@ impl Display for Type {
                 write!(f, "function({},...)->{return_type}", join(params, ", "))
             }
             Self::Array => write!(f, "array"),
+            Self::Result { ok, error } => write!(f, "result<{ok:?}, {error:?}>"),
             Self::Null => write!(f, "null"),
             Self::Any => write!(f, "any"),
         }

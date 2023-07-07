@@ -15,10 +15,14 @@ pub fn add_functions(variables: &mut VariableMap) {
     }
 
     #[export_function]
-    fn cgetline() -> Result<String, Error> {
+    fn cgetline() -> Result<String, String> {
         let mut input = String::new();
-        io::stdin().read_line(&mut input)?;
-        input = input.replace('\n', "");
-        Ok(input)
+        match io::stdin().read_line(&mut input) {
+            Ok(_) => {
+                input.pop();
+                Ok(input)
+            }
+            Err(error) => Err(Error::from(error).to_string()),
+        }
     }
 }
