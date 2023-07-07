@@ -1,5 +1,6 @@
 mod add;
 mod array;
+mod block;
 mod check_args;
 mod equal;
 mod function;
@@ -28,6 +29,7 @@ use crate::{
     parse::Rule,
 };
 use add::Add;
+use block::Block;
 use check_args::check_args;
 use pest::iterators::Pair;
 use std::fmt;
@@ -58,6 +60,7 @@ pub enum Instruction {
     XOR(Box<Instruction>, Box<Instruction>),
     LShift(Box<Instruction>, Box<Instruction>),
     RShift(Box<Instruction>, Box<Instruction>),
+    Block(Block),
 }
 
 impl Instruction {
@@ -291,6 +294,7 @@ impl Instruction {
             }
             Rule::array => Ok(Array::new(variables, pair, local_variables)?.into()),
             Rule::function => Ok(Function::new(pair, local_variables, variables)?.into()),
+            Rule::block => Ok(Block::new(pair, local_variables, variables)?.into()),
             _ => panic!(),
         }
     }
@@ -450,6 +454,7 @@ impl Exec for Instruction {
                     _ => panic!(),
                 }
             }
+            Self::Block(block) => block.exec(interpreter, local_variables),
         }
     }
 }
@@ -539,6 +544,7 @@ impl Recreate for Instruction {
                 let instruction2 = instruction2.recreate(local_variables, args);
                 Self::XOR(instruction1.into(), instruction2.into())
             }
+            Self::Block(block) => block.recreate(local_variables, args),
             _ => self,
         }
     }
@@ -561,6 +567,7 @@ impl GetReturnType for Instruction {
             Self::LocalVariable(_, var_type) => var_type.clone().into(),
             Self::Set(set) => set.get_return_type(),
             Self::Add(add) => add.get_return_type(),
+            Self::Block(block) => block.get_return_type(),
             Self::Not(_)
             | Self::BinNot(_)
             | Self::Equal(..)

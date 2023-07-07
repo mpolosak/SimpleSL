@@ -63,7 +63,7 @@ impl Default for Interpreter {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct VariableMap {
     hash_map: HashMap<String, Variable>,
 }

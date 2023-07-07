@@ -31,7 +31,8 @@ subtract = { math_arg ~ "-" ~ math_arg }
 modulo = { logic_arg ~ "%" ~ logic_arg }
 comparasion = _{ equal | not_equal | greater | greater_equal | lower | lower_equal }
 math_operations = _{ modulo | multiply | divide | add | subtract }
-expression = _{ exp_in_brackets | comparasion | math_operations | not | bin_not | and | or | bin_and | bin_or | xor | shift | function_call | ident | var }
+block = { "{" ~ line* ~ "}" }
+expression = _{ exp_in_brackets | comparasion | math_operations | not | bin_not | and | or | bin_and | bin_or | xor | shift | function_call | ident | var | block}
 expression_list = _{ (expression ~ ("," ~ expression)*)?}
 array = {"{" ~ expression_list ~ "}"}
 string = ${ "\"" ~ inner ~ "\"" }
@@ -43,7 +44,7 @@ string = ${ "\"" ~ inner ~ "\"" }
   }
 null = {"NULL"}
 set = { return_variable ~ "=" ~ expression }
-line = { COMMENT* ~ (set | expression) ~  line_end }
+line = { COMMENT* ~ ( ( ( set | expression ) ~  line_end) | block ) }
 	line_end = { ";" }
 return_variable = @{ident}
 function = {params~"{"~line*~"}"}
