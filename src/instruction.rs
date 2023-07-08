@@ -7,6 +7,7 @@ mod function;
 mod function_call;
 mod greater;
 mod greater_or_equal;
+mod if_else;
 mod local_function_call;
 pub mod local_variable;
 mod set;
@@ -17,6 +18,7 @@ use self::function::Function;
 use self::function_call::FunctionCall;
 use self::greater::Greater;
 use self::greater_or_equal::GreaterOrEqual;
+use self::if_else::IfElse;
 use self::local_function_call::LocalFunctionCall;
 use self::local_variable::{LocalVariable, LocalVariableMap};
 use self::set::Set;
@@ -61,6 +63,7 @@ pub enum Instruction {
     LShift(Box<Instruction>, Box<Instruction>),
     RShift(Box<Instruction>, Box<Instruction>),
     Block(Block),
+    IfElse(IfElse),
 }
 
 impl Instruction {
@@ -295,6 +298,9 @@ impl Instruction {
             Rule::array => Ok(Array::new(variables, pair, local_variables)?.into()),
             Rule::function => Ok(Function::new(pair, local_variables, variables)?.into()),
             Rule::block => Ok(Block::new(pair, local_variables, variables)?.into()),
+            Rule::if_else | Rule::if_stm => {
+                Ok(IfElse::new(pair, local_variables, variables)?.into())
+            }
             _ => panic!(),
         }
     }
@@ -455,6 +461,7 @@ impl Exec for Instruction {
                 }
             }
             Self::Block(block) => block.exec(interpreter, local_variables),
+            Self::IfElse(if_else) => if_else.exec(interpreter, local_variables),
         }
     }
 }
@@ -545,6 +552,7 @@ impl Recreate for Instruction {
                 Self::XOR(instruction1.into(), instruction2.into())
             }
             Self::Block(block) => block.recreate(local_variables, args),
+            Self::IfElse(if_else) => if_else.recreate(local_variables, args),
             _ => self,
         }
     }
@@ -568,6 +576,7 @@ impl GetReturnType for Instruction {
             Self::Set(set) => set.get_return_type(),
             Self::Add(add) => add.get_return_type(),
             Self::Block(block) => block.get_return_type(),
+            Self::IfElse(if_else) => if_else.get_return_type(),
             Self::Not(_)
             | Self::BinNot(_)
             | Self::Equal(..)

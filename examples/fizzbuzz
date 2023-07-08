@@ -1,21 +1,13 @@
 fizzbuzz = (number: int){
-    result = if(number%15==0, (){
+    if number%15==0 {
         "FizzBuzz";
-    });
-    result = if_else(result==NULL, (){
-        if(number%3==0, (){
-            "Fizz";
-        });
-    },(){result;});
-    result = if_else(result==NULL, (){
-        if(number%5==0, (){
-            "Buzz";
-        });
-    },(){result;});
-    result = if_else(result==NULL, (){
+    } else if number%3==0 {
+        "Fizz";
+    } else if number%5==0 {
+        "Buzz";
+    } else {
         number;
-    },(){result;});
-    result;
+    };
 };
 
 /*

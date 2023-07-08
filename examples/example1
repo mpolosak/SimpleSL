@@ -2,7 +2,7 @@ print("Hello world!");
 x = 5;
 y = 6;
 print(x, "+", y, "=", x+y);
-array = {y, x*7, {54.5}, "text", x, if};
+array = {y, x*7, {54.5}, "text", x, import};
 print(array);
 example_function = (name:string){
     print("Hello ", name, "!");
