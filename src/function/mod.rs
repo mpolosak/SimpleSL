@@ -26,6 +26,25 @@ pub trait Function: GetReturnType {
             let from = params.standard.len();
             let rest: Array = args.drain(from..).collect();
             args_map.insert(param_name, Variable::Array(rest.into()));
+        }
+
+        for (arg, Param { var_type: _, name }) in zip(args, &params.standard) {
+            args_map.insert(name, arg);
+        }
+        self.exec_intern(name, intepreter, args_map)
+    }
+    fn check_args_and_exec(
+        &self,
+        name: &str,
+        intepreter: &mut Interpreter,
+        mut args: Array,
+    ) -> Result<Variable, Error> {
+        let mut args_map = VariableMap::new();
+        let params = self.get_params();
+        if let Some(param_name) = &params.catch_rest {
+            let from = params.standard.len();
+            let rest: Array = args.drain(from..).collect();
+            args_map.insert(param_name, Variable::Array(rest.into()));
         } else if args.len() != params.standard.len() {
             return Err(Error::WrongNumberOfArguments(
                 String::from(name),
