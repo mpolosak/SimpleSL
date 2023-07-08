@@ -15,20 +15,6 @@ pub struct IfElse {
     if_false: Box<Instruction>,
 }
 
-impl Exec for IfElse {
-    fn exec(
-        &self,
-        interpreter: &mut crate::interpreter::Interpreter,
-        local_variables: &mut crate::interpreter::VariableMap,
-    ) -> Result<crate::variable::Variable, crate::error::Error> {
-        if self.condition.exec(interpreter, local_variables)? == Variable::Int(0) {
-            self.if_false.exec(interpreter, local_variables)
-        } else {
-            self.if_true.exec(interpreter, local_variables)
-        }
-    }
-}
-
 impl IfElse {
     pub fn new(
         pair: Pair<Rule>,
@@ -38,7 +24,14 @@ impl IfElse {
         let rule = pair.as_rule();
         let mut inner = pair.into_inner();
         let condition_pair = inner.next().unwrap();
-        let condition = Instruction::new(variables, condition_pair, local_variables)?.into();
+        let condition = Box::new(Instruction::new(
+            variables,
+            condition_pair,
+            local_variables,
+        )?);
+        if condition.get_return_type() != Type::Int {
+            return Err(Error::WrongType("condition".to_owned(), Type::Int));
+        }
         let true_pair = inner.next().unwrap();
         let if_true = Instruction::new(variables, true_pair, local_variables)?.into();
         let if_false = if rule == Rule::if_else {
@@ -53,6 +46,20 @@ impl IfElse {
             if_true,
             if_false,
         })
+    }
+}
+
+impl Exec for IfElse {
+    fn exec(
+        &self,
+        interpreter: &mut crate::interpreter::Interpreter,
+        local_variables: &mut crate::interpreter::VariableMap,
+    ) -> Result<crate::variable::Variable, crate::error::Error> {
+        if self.condition.exec(interpreter, local_variables)? == Variable::Int(0) {
+            self.if_false.exec(interpreter, local_variables)
+        } else {
+            self.if_true.exec(interpreter, local_variables)
+        }
     }
 }
 
