@@ -1,8 +1,10 @@
-use crate::error::Error;
-use crate::function::{NativeFunction, Param, Params};
-use crate::interpreter::VariableMap;
-use crate::variable::{Array, Variable};
-use crate::variable_type::Type;
+use crate::{
+    error::Error,
+    function::{NativeFunction, Param, Params},
+    interpreter::VariableMap,
+    variable::{Array, Variable},
+    variable_type::Type,
+};
 use simplesl_macros::export_function;
 use std::rc::Rc;
 

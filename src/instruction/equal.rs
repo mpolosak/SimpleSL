@@ -10,15 +10,15 @@ pub struct Equal {
 
 impl Equal {
     pub fn new(
-        variables: &VariableMap,
         pair: Pair<Rule>,
+        variables: &VariableMap,
         local_variables: &mut LocalVariableMap,
     ) -> Result<Self, Error> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
-        let lhs = Instruction::new(variables, pair, local_variables)?.into();
+        let lhs = Instruction::new(pair, variables, local_variables)?.into();
         let pair = inner.next().unwrap();
-        let rhs = Instruction::new(variables, pair, local_variables)?.into();
+        let rhs = Instruction::new(pair, variables, local_variables)?.into();
         Ok(Self { lhs, rhs })
     }
 }

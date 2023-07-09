@@ -1,7 +1,10 @@
 use super::{Function, Params};
-use crate::interpreter::{Interpreter, VariableMap};
-use crate::variable_type::{GetReturnType, Type};
-use crate::{error::Error, variable::Variable};
+use crate::{
+    error::Error,
+    interpreter::{Interpreter, VariableMap},
+    variable::Variable,
+    variable_type::{GetReturnType, Type},
+};
 
 #[derive(Clone)]
 pub struct NativeFunction {
@@ -14,10 +17,10 @@ impl Function for NativeFunction {
     fn exec_intern(
         &self,
         name: &str,
-        intepreter: &mut Interpreter,
+        interpreter: &mut Interpreter,
         args: VariableMap,
     ) -> Result<Variable, Error> {
-        (self.body)(name, intepreter, args)
+        (self.body)(name, interpreter, args)
     }
     fn get_params(&self) -> &Params {
         &self.params

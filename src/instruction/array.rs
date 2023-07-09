@@ -15,13 +15,13 @@ pub struct Array {
 
 impl Array {
     pub fn new(
-        variables: &VariableMap,
         pair: Pair<Rule>,
+        variables: &VariableMap,
         local_variables: &mut LocalVariableMap,
     ) -> Result<Self, Error> {
         let inner = pair.into_inner();
         let instructions = inner
-            .map(|arg| Instruction::new(variables, arg, local_variables))
+            .map(|arg| Instruction::new(arg, variables, local_variables))
             .collect::<Result<Vec<_>, _>>()?;
         Ok(Self { instructions })
     }

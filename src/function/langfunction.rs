@@ -1,8 +1,11 @@
 use super::{Function, Params};
-use crate::instruction::Exec;
-use crate::interpreter::{Interpreter, VariableMap};
-use crate::variable_type::{GetReturnType, Type};
-use crate::{error::Error, instruction::Instruction, variable::Variable};
+use crate::{
+    error::Error,
+    instruction::{Exec, Instruction},
+    interpreter::{Interpreter, VariableMap},
+    variable::Variable,
+    variable_type::{GetReturnType, Type},
+};
 
 #[derive(Clone)]
 pub struct LangFunction {
@@ -14,14 +17,14 @@ impl Function for LangFunction {
     fn exec_intern(
         &self,
         _name: &str,
-        intepreter: &mut Interpreter,
+        interpreter: &mut Interpreter,
         mut args: VariableMap,
     ) -> Result<Variable, Error> {
-        let mut to_return = Variable::Null;
+        let mut result = Variable::Null;
         for instruction in &self.body {
-            to_return = instruction.exec(intepreter, &mut args)?;
+            result = instruction.exec(interpreter, &mut args)?;
         }
-        Ok(to_return)
+        Ok(result)
     }
     fn get_params(&self) -> &Params {
         &self.params

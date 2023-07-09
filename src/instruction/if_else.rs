@@ -18,25 +18,25 @@ pub struct IfElse {
 impl IfElse {
     pub fn new(
         pair: Pair<Rule>,
-        local_variables: &mut LocalVariableMap,
         variables: &VariableMap,
+        local_variables: &mut LocalVariableMap,
     ) -> Result<Self, Error> {
         let rule = pair.as_rule();
         let mut inner = pair.into_inner();
         let condition_pair = inner.next().unwrap();
         let condition = Box::new(Instruction::new(
-            variables,
             condition_pair,
+            variables,
             local_variables,
         )?);
         if condition.get_return_type() != Type::Int {
             return Err(Error::WrongType("condition".to_owned(), Type::Int));
         }
         let true_pair = inner.next().unwrap();
-        let if_true = Instruction::new(variables, true_pair, local_variables)?.into();
+        let if_true = Instruction::new(true_pair, variables, local_variables)?.into();
         let if_false = if rule == Rule::if_else {
             let false_pair = inner.next().unwrap();
-            Instruction::new(variables, false_pair, local_variables)?
+            Instruction::new(false_pair, variables, local_variables)?
         } else {
             Instruction::Variable(Variable::Null)
         }

@@ -1,14 +1,12 @@
-use crate::function::{Function, NativeFunction, Param, Params};
-use crate::interpreter::Interpreter;
 use crate::{
     error::Error,
-    interpreter::VariableMap,
+    function::{Function, NativeFunction, Param, Params},
+    interpreter::{Interpreter, VariableMap},
     variable::{Array, Variable},
     variable_type::Type,
 };
 use simplesl_macros::export_function;
-use std::iter::zip;
-use std::rc::Rc;
+use std::{iter::zip, rc::Rc};
 
 pub fn add_functions(variables: &mut VariableMap) {
     #[export_function]

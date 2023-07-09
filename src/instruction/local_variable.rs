@@ -1,9 +1,9 @@
-use crate::function::Params;
-use crate::instruction::Instruction;
-use crate::variable_type::{GetReturnType, Type};
+use super::{function::Function, Instruction};
+use crate::{
+    function::Params,
+    variable_type::{GetReturnType, Type},
+};
 use std::collections::HashMap;
-
-use super::function::Function;
 
 pub type LocalVariableMap = HashMap<String, LocalVariable>;
 

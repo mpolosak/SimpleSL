@@ -12,7 +12,7 @@ fn main() {
 }
 
 fn run_shell() {
-    let mut intepreter = Interpreter::default();
+    let mut interpreter = Interpreter::default();
     let mut rl = Editor::<()>::new().expect("Unable to read user input");
     loop {
         let readline = rl.readline("> ");
@@ -21,7 +21,7 @@ fn run_shell() {
                 rl.add_history_entry(&line);
                 line = line.replace('\n', "");
                 if !line.is_empty() {
-                    if let Err(error) = intepreter.exec(&line) {
+                    if let Err(error) = interpreter.exec(&line) {
                         eprintln!("{error}");
                     }
                 }
@@ -36,8 +36,8 @@ fn run_shell() {
 }
 
 fn run_from_file(path: &str) {
-    let mut intepreter = Interpreter::new();
-    if let Err(error) = intepreter.load_and_exec(path) {
+    let mut interpreter = Interpreter::new();
+    if let Err(error) = interpreter.load_and_exec(path) {
         println!("{error}")
     }
 }

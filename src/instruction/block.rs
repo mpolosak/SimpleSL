@@ -22,7 +22,7 @@ impl Block {
         let mut local_variables = local_variables.clone();
         let instructions = pair
             .into_inner()
-            .map(|pair| Instruction::new(variables, pair, &mut local_variables))
+            .map(|pair| Instruction::new(pair, variables, &mut local_variables))
             .collect::<Result<Vec<Instruction>, Error>>()?;
         Ok(Self { instructions })
     }

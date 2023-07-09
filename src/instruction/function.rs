@@ -37,7 +37,7 @@ impl Function {
         let mut local_variables = local_variables.clone();
         local_variables.extend(LocalVariableMap::from(params.clone()));
         let body = inner
-            .map(|arg| Instruction::new(variables, arg, &mut local_variables))
+            .map(|arg| Instruction::new(arg, variables, &mut local_variables))
             .collect::<Result<Vec<_>, _>>()?;
         Ok(Self { params, body })
     }

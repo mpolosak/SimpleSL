@@ -1,7 +1,9 @@
 use super::Instruction;
-use crate::error::Error;
-use crate::function::{Param, Params};
-use crate::variable_type::GetReturnType;
+use crate::{
+    error::Error,
+    function::{Param, Params},
+    variable_type::GetReturnType,
+};
 use std::iter::zip;
 
 pub fn check_args(var_name: &str, params: &Params, args: &Vec<Instruction>) -> Result<(), Error> {

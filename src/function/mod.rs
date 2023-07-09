@@ -1,5 +1,4 @@
 mod langfunction;
-
 mod nativefunction;
 mod param;
 pub use self::{
@@ -7,17 +6,19 @@ pub use self::{
     nativefunction::NativeFunction,
     param::{Param, Params},
 };
-use crate::interpreter::{Interpreter, VariableMap};
-use crate::variable::{Array, Variable};
-use crate::variable_type::{GetType, Type};
-use crate::{error::Error, variable_type::GetReturnType};
+use crate::{
+    error::Error,
+    interpreter::{Interpreter, VariableMap},
+    variable::{Array, Variable},
+    variable_type::{GetReturnType, GetType, Type},
+};
 use std::{fmt, iter::zip};
 
 pub trait Function: GetReturnType {
     fn exec(
         &self,
         name: &str,
-        intepreter: &mut Interpreter,
+        interpreter: &mut Interpreter,
         mut args: Array,
     ) -> Result<Variable, Error> {
         let mut args_map = VariableMap::new();
@@ -31,12 +32,12 @@ pub trait Function: GetReturnType {
         for (arg, Param { var_type: _, name }) in zip(args, &params.standard) {
             args_map.insert(name, arg);
         }
-        self.exec_intern(name, intepreter, args_map)
+        self.exec_intern(name, interpreter, args_map)
     }
     fn check_args_and_exec(
         &self,
         name: &str,
-        intepreter: &mut Interpreter,
+        interpreter: &mut Interpreter,
         mut args: Array,
     ) -> Result<Variable, Error> {
         let mut args_map = VariableMap::new();
@@ -59,12 +60,12 @@ pub trait Function: GetReturnType {
                 return Err(Error::WrongType(name.clone(), var_type.clone()));
             }
         }
-        self.exec_intern(name, intepreter, args_map)
+        self.exec_intern(name, interpreter, args_map)
     }
     fn exec_intern(
         &self,
         name: &str,
-        intepreter: &mut Interpreter,
+        interpreter: &mut Interpreter,
         args: VariableMap,
     ) -> Result<Variable, Error>;
     fn get_params(&self) -> &Params;

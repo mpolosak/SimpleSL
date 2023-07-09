@@ -16,16 +16,16 @@ pub struct Greater {
 
 impl Greater {
     pub fn new(
-        variables: &VariableMap,
         pair: Pair<Rule>,
+        variables: &VariableMap,
         local_variables: &mut LocalVariableMap,
     ) -> Result<Self, Error> {
         let rule = pair.as_rule();
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
-        let instruction = Instruction::new(variables, pair, local_variables)?;
+        let instruction = Instruction::new(pair, variables, local_variables)?;
         let pair = inner.next().unwrap();
-        let instruction2 = Instruction::new(variables, pair, local_variables)?;
+        let instruction2 = Instruction::new(pair, variables, local_variables)?;
         match (
             instruction.get_return_type(),
             instruction2.get_return_type(),
