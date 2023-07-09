@@ -80,11 +80,7 @@ impl GetReturnType for IfElse {
     fn get_return_type(&self) -> crate::variable_type::Type {
         let true_return_type = self.if_true.get_return_type();
         let false_return_type = self.if_false.get_return_type();
-        if true_return_type == false_return_type {
-            true_return_type
-        } else {
-            Type::Any
-        }
+        true_return_type.concat(false_return_type)
     }
 }
 

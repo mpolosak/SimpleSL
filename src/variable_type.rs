@@ -1,4 +1,4 @@
-mod type_set;
+pub mod type_set;
 use crate::{
     function::{Param, Params},
     instruction::local_variable::LocalVariable,
@@ -7,6 +7,7 @@ use crate::{
 };
 use pest::iterators::Pair;
 use std::{
+    collections::HashSet,
     fmt::{Debug, Display},
     hash::Hash,
     iter::zip,
@@ -70,6 +71,24 @@ impl Type {
             ) => ok.matches(ok2) || error.matches(error2),
             (_, Self::Any) => true,
             _ => self == other,
+        }
+    }
+    pub fn concat(self, other: Self) -> Self {
+        match (self, other) {
+            (Type::Any, _) | (_, Type::Any) => Type::Any,
+            (first, second) if first == second => first,
+            (Type::Multi(TypeSet { mut types }), Type::Multi(TypeSet { types: types2 })) => {
+                types.extend(types2);
+                Type::Multi(TypeSet { types })
+            }
+            (Type::Multi(TypeSet { mut types }), var_type)
+            | (var_type, Type::Multi(TypeSet { mut types })) => {
+                types.insert(var_type);
+                Type::Multi(TypeSet { types })
+            }
+            (first, second) => Type::Multi(TypeSet {
+                types: HashSet::from([first, second]),
+            }),
         }
     }
 }
