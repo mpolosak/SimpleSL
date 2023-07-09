@@ -523,7 +523,7 @@ impl GetReturnType for Instruction {
     fn get_return_type(&self) -> Type {
         match self {
             Self::Variable(variable) => variable.get_type(),
-            Self::Array(_) => Type::Array,
+            Self::Array(array) => array.get_return_type(),
             Self::Function(function) => function.get_return_type(),
             Self::FunctionCall(function_call) => function_call.get_return_type(),
             Self::LocalFunctionCall(function_call) => function_call.get_return_type(),

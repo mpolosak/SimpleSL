@@ -59,7 +59,7 @@ impl From<Params> for LocalVariableMap {
             .map(|Param { name, var_type }| (name, var_type.into()))
             .collect();
         if let Some(catch_rest) = params.catch_rest {
-            result.insert(catch_rest, Type::Array.into());
+            result.insert(catch_rest, Type::Array(Type::Any.into()).into());
         }
         result
     }

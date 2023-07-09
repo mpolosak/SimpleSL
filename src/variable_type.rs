@@ -24,7 +24,8 @@ pub enum Type {
         params: Vec<Type>,
         catch_rest: bool,
     },
-    Array,
+    Array(Box<Type>),
+    EmptyArray,
     Null,
     Multi(TypeSet),
     Any,
@@ -58,7 +59,10 @@ impl Type {
             }
             (Self::Multi(types), Self::Multi(types2)) => types.types.is_subset(&types2.types),
             (_, Self::Multi(types)) => types.types.contains(self),
-            (_, Self::Any) => true,
+            (_, Self::Any) | (Self::EmptyArray, Self::Array(_)) => true,
+            (Self::Array(element_type), Self::Array(element_type2)) => {
+                element_type.matches(&element_type2)
+            }
             _ => self == other,
         }
     }
@@ -106,7 +110,8 @@ impl Debug for Type {
                     join_debug(params, ", ")
                 )
             }
-            Self::Array => write!(f, "array"),
+            Self::Array(var_type) => write!(f, "[{var_type:?}]"),
+            Self::EmptyArray => write!(f, "[]"),
             Self::Null => write!(f, "null"),
             Self::Multi(types) => write!(f, "{types}"),
             Self::Any => write!(f, "any"),
@@ -134,7 +139,8 @@ impl Display for Type {
             } => {
                 write!(f, "function({},...)->{return_type}", join(params, ", "))
             }
-            Self::Array => write!(f, "array"),
+            Self::Array(var_type) => write!(f, "[{var_type:?}]"),
+            Self::EmptyArray => write!(f, "[]"),
             Self::Null => write!(f, "null"),
             Self::Multi(types) => write!(f, "{types}"),
             Self::Any => write!(f, "any"),
@@ -167,7 +173,11 @@ impl From<Pair<'_, Rule>> for Type {
                     catch_rest,
                 }
             }
-            Rule::array_type => Self::Array,
+            Rule::array_type => {
+                let pair = pair.into_inner().next().unwrap();
+                Self::Array(Self::from(pair).into())
+            }
+
             Rule::multi => {
                 let types = pair.into_inner().map(|pair| Type::from(pair)).collect();
                 Type::Multi(types)

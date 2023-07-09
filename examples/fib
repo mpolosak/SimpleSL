@@ -1,5 +1,5 @@
 fib = (n:int){
-    recsub({0,1}, (array:array){
+    recsub({0,1}, (array:[any]){
         len = array_len(array);
         a = array_at(array, len-1);
         b = array_at(array, len-2);

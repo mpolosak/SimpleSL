@@ -26,7 +26,7 @@ pub trait Function: GetReturnType {
         if let Some(param_name) = &params.catch_rest {
             let from = params.standard.len();
             let rest: Array = args.drain(from..).collect();
-            args_map.insert(param_name, Variable::Array(rest.into()));
+            args_map.insert(param_name, Variable::from(rest));
         }
 
         for (arg, Param { var_type: _, name }) in zip(args, &params.standard) {
@@ -45,7 +45,7 @@ pub trait Function: GetReturnType {
         if let Some(param_name) = &params.catch_rest {
             let from = params.standard.len();
             let rest: Array = args.drain(from..).collect();
-            args_map.insert(param_name, Variable::Array(rest.into()));
+            args_map.insert(param_name, Variable::from(rest));
         } else if args.len() != params.standard.len() {
             return Err(Error::WrongNumberOfArguments(
                 String::from(name),

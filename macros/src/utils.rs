@@ -68,13 +68,13 @@ fn arg_import_from_function_param(
         )
     } else if param_type == "Rc < Array >" {
         quote!(
-            let Variable::Array(#ident) = args.get(#ident_str)? else {
+            let Variable::Array(#ident, _) = args.get(#ident_str)? else {
                 panic!()
             };
         )
     } else if param_type == "& Array" {
         quote!(
-            let Variable::Array(#ident) = args.get(#ident_str)? else {
+            let Variable::Array(#ident, _) = args.get(#ident_str)? else {
                 panic!()
             };
             let #ident = #ident.as_ref();
@@ -136,7 +136,7 @@ fn param_from_function_param(
         quote!(
             Param {
                 name: String::from(#ident),
-                var_type: Type::Array,
+                var_type: Type::Array(Type::Any.into()),
             }
         )
     } else if param_type == "Rc < dyn Function >" {
@@ -197,7 +197,7 @@ pub fn return_type_from_str(return_type: &str) -> TokenStream {
         || return_type == "Result < Rc < Array >, Error >"
         || return_type == "Result < Array, Error >"
     {
-        quote!(Type::Array)
+        quote!(Type::Array(Type::Any.into()))
     } else if return_type.is_empty() {
         quote!(Type::Null)
     } else if return_type == "Variable" || return_type == "Result < Variable, Error >" {

@@ -37,7 +37,7 @@ pub fn add_functions(variables: &mut VariableMap) {
 
     #[export_function]
     fn array(value: Variable, fallback: Rc<Array>) -> Rc<Array> {
-        if let Variable::Array(value) = value {
+        if let Variable::Array(value, _) = value {
             value
         } else {
             fallback

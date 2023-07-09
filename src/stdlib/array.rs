@@ -106,9 +106,7 @@ pub fn add_functions(variables: &mut VariableMap) {
     #[export_function(name = "zip")]
     fn array_zip(array1: &Array, array2: &Array) -> Array {
         zip(array1.iter(), array2.iter())
-            .map(|(element1, element2)| {
-                Variable::Array(vec![element1.clone(), element2.clone()].into())
-            })
+            .map(|(element1, element2)| vec![element1.clone(), element2.clone()].into())
             .collect()
     }
 
@@ -118,7 +116,7 @@ pub fn add_functions(variables: &mut VariableMap) {
         array: &Array,
         #[function(
             return_type: Type::Any.into(),
-            params: vec![Type::Array],
+            params: vec![Type::Array(Type::Any.into())],
             catch_rest: false
         )]
         function: Rc<dyn Function>,

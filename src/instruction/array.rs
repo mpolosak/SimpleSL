@@ -5,12 +5,19 @@ use super::{
     traits::{Exec, Recreate},
     Instruction,
 };
-use crate::{error::Error, interpreter::VariableMap, parse::Rule, variable::Variable};
+use crate::{
+    error::Error,
+    interpreter::VariableMap,
+    parse::Rule,
+    variable::Variable,
+    variable_type::{GetReturnType, Type},
+};
 use pest::iterators::Pair;
 
 #[derive(Clone)]
 pub struct Array {
     instructions: Vec<Instruction>,
+    var_type: Type,
 }
 
 impl Array {
@@ -23,7 +30,20 @@ impl Array {
         let instructions = inner
             .map(|arg| Instruction::new(arg, variables, local_variables))
             .collect::<Result<Vec<_>, _>>()?;
-        Ok(Self { instructions })
+        let mut iter = instructions.iter();
+        let var_type = if let Some(first) = iter.next() {
+            let mut element_type = first.get_return_type();
+            while let Some(instruction) = iter.next() {
+                element_type = element_type.concat(instruction.get_return_type());
+            }
+            Type::Array(element_type.into())
+        } else {
+            Type::EmptyArray
+        };
+        Ok(Self {
+            instructions,
+            var_type,
+        })
     }
 }
 
@@ -34,14 +54,24 @@ impl Exec for Array {
         local_variables: &mut VariableMap,
     ) -> Result<crate::variable::Variable, Error> {
         let array = exec_instructions(&self.instructions, interpreter, local_variables)?;
-        Ok(Variable::Array(array.into()))
+        Ok(Variable::Array(array.into(), self.var_type.clone()))
     }
 }
 
 impl Recreate for Array {
     fn recreate(self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Instruction {
         let instructions = recreate_instructions(self.instructions, local_variables, args);
-        Self { instructions }.into()
+        Self {
+            instructions,
+            var_type: self.var_type,
+        }
+        .into()
+    }
+}
+
+impl GetReturnType for Array {
+    fn get_return_type(&self) -> Type {
+        self.var_type.clone()
     }
 }
 

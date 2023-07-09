@@ -17,7 +17,7 @@ pub enum Variable {
     Float(f64),
     String(Rc<str>),
     Function(Rc<dyn Function>),
-    Array(Rc<Array>),
+    Array(Rc<Array>, Type),
     Null,
 }
 
@@ -28,7 +28,7 @@ impl GetType for Variable {
             Variable::Float(_) => Type::Float,
             Variable::String(_) => Type::String,
             Variable::Function(function) => function.get_type(),
-            Variable::Array(_) => Type::Array,
+            Variable::Array(_, var_type) => var_type.clone(),
             Variable::Null => Type::Null,
         }
     }
@@ -41,7 +41,7 @@ impl fmt::Display for Variable {
             Variable::Float(value) => write!(f, "{value}"),
             Variable::String(value) => write!(f, "{value}"),
             Variable::Function(function) => write!(f, "{function}"),
-            Variable::Array(array) => write!(f, "{{{}}}", join(array, ", ")),
+            Variable::Array(array, _) => write!(f, "{{{}}}", join(array, ", ")),
             Variable::Null => write!(f, "NULL"),
         }
     }
@@ -54,7 +54,7 @@ impl fmt::Debug for Variable {
             Variable::Float(value) => write!(f, "Variable::Float({value})"),
             Variable::String(value) => write!(f, "Variable::String(\"{value}\")"),
             Variable::Function(function) => write!(f, "Variable::Function({function:?})"),
-            Variable::Array(array) => write!(f, "Variable({{{}}})", join_debug(array, ", ")),
+            Variable::Array(array, _) => write!(f, "Variable({{{}}})", join_debug(array, ", ")),
             Variable::Null => write!(f, "Variable::Null"),
         }
     }
@@ -82,7 +82,7 @@ impl PartialEq for Variable {
             (Variable::Float(value1), Variable::Float(value2)) => value1 == value2,
             (Variable::String(value1), Variable::String(value2)) => value1 == value2,
             (Variable::Function(value1), Variable::Function(value2)) => Rc::ptr_eq(value1, value2),
-            (Variable::Array(value1), Variable::Array(value2)) => value1 == value2,
+            (Variable::Array(value1, _), Variable::Array(value2, _)) => value1 == value2,
             (Variable::Null, Variable::Null) => true,
             _ => false,
         }
@@ -112,7 +112,8 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
                     .into_inner()
                     .map(Self::try_from)
                     .collect::<Result<Array, Error>>()?;
-                Ok(Variable::Array(Rc::new(array)))
+
+                Ok(Variable::from(Rc::new(array)))
             }
             Rule::null => Ok(Variable::Null),
             _ => Err(Error::CannotBeParsed(pair.as_str().into())),
@@ -170,13 +171,23 @@ impl From<Rc<dyn Function>> for Variable {
 
 impl From<Rc<Array>> for Variable {
     fn from(value: Rc<Array>) -> Self {
-        Self::Array(value)
+        let mut iter = value.iter();
+        let var_type = if let Some(first) = iter.next() {
+            let mut element_type = first.get_type();
+            while let Some(instruction) = iter.next() {
+                element_type = element_type.concat(instruction.get_type());
+            }
+            Type::Array(element_type.into())
+        } else {
+            Type::EmptyArray
+        };
+        Self::Array(value, var_type)
     }
 }
 
 impl From<Array> for Variable {
     fn from(value: Array) -> Self {
-        Self::Array(value.into())
+        Variable::from(Rc::new(value))
     }
 }
 
