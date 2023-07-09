@@ -202,15 +202,6 @@ pub fn return_type_from_str(return_type: &str) -> TokenStream {
         quote!(Type::Null)
     } else if return_type == "Variable" || return_type == "Result < Variable, Error >" {
         quote!(Type::Any)
-    } else if return_type == "Result < String, String >"
-        || return_type == "Result < & str, String >"
-        || return_type == "Result < String, & str >"
-        || return_type == "Result < & str, & str >"
-    {
-        quote!(Type::Result {
-            ok: Type::String.into(),
-            error: Type::String.into()
-        })
     } else {
         panic!("{return_type} type isn't allowed")
     }
@@ -227,10 +218,6 @@ pub fn get_body(return_type: &str, ident: Ident, args: TokenStream) -> TokenStre
         || return_type == "& str"
         || return_type == "bool"
         || return_type == "usize"
-        || return_type == "Result < String, String >"
-        || return_type == "Result < & str, String >"
-        || return_type == "Result < String, & str >"
-        || return_type == "Result < & str, & str >"
     {
         quote!(Ok(#ident(#args).into()))
     } else if return_type == "Variable" {

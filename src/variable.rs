@@ -18,7 +18,6 @@ pub enum Variable {
     String(Rc<str>),
     Function(Rc<dyn Function>),
     Array(Rc<Array>),
-    Result(Result<Box<Variable>, Box<Variable>>),
     Null,
 }
 
@@ -30,14 +29,6 @@ impl GetType for Variable {
             Variable::String(_) => Type::String,
             Variable::Function(function) => function.get_type(),
             Variable::Array(_) => Type::Array,
-            Variable::Result(Ok(variable)) => Type::Result {
-                ok: variable.get_type().into(),
-                error: Type::Any.into(),
-            },
-            Variable::Result(Err(error)) => Type::Result {
-                ok: Type::Any.into(),
-                error: error.get_type().into(),
-            },
             Variable::Null => Type::Null,
         }
     }
@@ -51,8 +42,6 @@ impl fmt::Display for Variable {
             Variable::String(value) => write!(f, "{value}"),
             Variable::Function(function) => write!(f, "{function}"),
             Variable::Array(array) => write!(f, "{{{}}}", join(array, ", ")),
-            Variable::Result(Ok(variable)) => write!(f, "Ok({variable})"),
-            Variable::Result(Err(error)) => write!(f, "Err({error})"),
             Variable::Null => write!(f, "NULL"),
         }
     }
@@ -66,8 +55,6 @@ impl fmt::Debug for Variable {
             Variable::String(value) => write!(f, "Variable::String(\"{value}\")"),
             Variable::Function(function) => write!(f, "Variable::Function({function:?})"),
             Variable::Array(array) => write!(f, "Variable({{{}}})", join_debug(array, ", ")),
-            Variable::Result(Ok(variable)) => write!(f, "Variable::Result(Ok({variable:?}))"),
-            Variable::Result(Err(error)) => write!(f, "Variable::Result(Err({error:?}))"),
             Variable::Null => write!(f, "Variable::Null"),
         }
     }
@@ -190,15 +177,6 @@ impl From<Rc<Array>> for Variable {
 impl From<Array> for Variable {
     fn from(value: Array) -> Self {
         Self::Array(value.into())
-    }
-}
-
-impl<T: Into<Variable>, S: Into<Variable>> From<Result<T, S>> for Variable {
-    fn from(value: Result<T, S>) -> Self {
-        match value {
-            Ok(variable) => Self::Result(Ok(Box::new(variable.into()))),
-            Err(error) => Self::Result(Err(Box::new(error.into()))),
-        }
     }
 }
 

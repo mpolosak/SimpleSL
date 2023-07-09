@@ -25,10 +25,6 @@ pub enum Type {
         catch_rest: bool,
     },
     Array,
-    Result {
-        ok: Box<Type>,
-        error: Box<Type>,
-    },
     Null,
     Multi(TypeSet),
     Any,
@@ -62,13 +58,6 @@ impl Type {
             }
             (Self::Multi(types), Self::Multi(types2)) => types.types.is_subset(&types2.types),
             (_, Self::Multi(types)) => types.types.contains(self),
-            (
-                Self::Result { ok, error },
-                Self::Result {
-                    ok: ok2,
-                    error: error2,
-                },
-            ) => ok.matches(ok2) || error.matches(error2),
             (_, Self::Any) => true,
             _ => self == other,
         }
@@ -118,7 +107,6 @@ impl Debug for Type {
                 )
             }
             Self::Array => write!(f, "array"),
-            Self::Result { ok, error } => write!(f, "result<{ok:?}, {error:?}>"),
             Self::Null => write!(f, "null"),
             Self::Multi(types) => write!(f, "{types}"),
             Self::Any => write!(f, "any"),
@@ -147,7 +135,6 @@ impl Display for Type {
                 write!(f, "function({},...)->{return_type}", join(params, ", "))
             }
             Self::Array => write!(f, "array"),
-            Self::Result { ok, error } => write!(f, "result<{ok}, {error}>"),
             Self::Null => write!(f, "null"),
             Self::Multi(types) => write!(f, "{types}"),
             Self::Any => write!(f, "any"),
