@@ -1,3 +1,4 @@
+mod type_set;
 use crate::{
     function::{Param, Params},
     instruction::local_variable::LocalVariable,
@@ -7,10 +8,12 @@ use crate::{
 use pest::iterators::Pair;
 use std::{
     fmt::{Debug, Display},
+    hash::Hash,
     iter::zip,
 };
+use type_set::TypeSet;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Hash, Eq, PartialEq)]
 pub enum Type {
     Int,
     Float,
@@ -26,6 +29,7 @@ pub enum Type {
         error: Box<Type>,
     },
     Null,
+    Multi(TypeSet),
     Any,
 }
 
@@ -55,6 +59,8 @@ impl Type {
                     return_type.matches(return_type2)
                 }
             }
+            (Self::Multi(types), Self::Multi(types2)) => types.types.is_subset(&types2.types),
+            (_, Self::Multi(types)) => types.types.contains(self),
             (
                 Self::Result { ok, error },
                 Self::Result {
@@ -95,6 +101,7 @@ impl Debug for Type {
             Self::Array => write!(f, "array"),
             Self::Result { ok, error } => write!(f, "result<{ok:?}, {error:?}>"),
             Self::Null => write!(f, "null"),
+            Self::Multi(types) => write!(f, "{types}"),
             Self::Any => write!(f, "any"),
         }
     }
@@ -121,8 +128,9 @@ impl Display for Type {
                 write!(f, "function({},...)->{return_type}", join(params, ", "))
             }
             Self::Array => write!(f, "array"),
-            Self::Result { ok, error } => write!(f, "result<{ok:?}, {error:?}>"),
+            Self::Result { ok, error } => write!(f, "result<{ok}, {error}>"),
             Self::Null => write!(f, "null"),
+            Self::Multi(types) => write!(f, "{types}"),
             Self::Any => write!(f, "any"),
         }
     }
@@ -154,6 +162,10 @@ impl From<Pair<'_, Rule>> for Type {
                 }
             }
             Rule::array_type => Self::Array,
+            Rule::multi => {
+                let types = pair.into_inner().map(|pair| Type::from(pair)).collect();
+                Type::Multi(types)
+            }
             Rule::any => Self::Any,
             _ => panic!(),
         }
