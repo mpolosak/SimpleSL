@@ -59,11 +59,7 @@ impl Type {
                 }
             }
             (Self::Multi(types), Self::Multi(types2)) => types.types.is_subset(&types2.types),
-            (_, Self::Multi(types)) => types
-                .types
-                .iter()
-                .find(|var_type| self.matches(var_type))
-                .is_some(),
+            (_, Self::Multi(types)) => types.types.iter().any(|var_type| self.matches(var_type)),
             (_, Self::Any) | (Self::EmptyArray, Self::Array(_)) => true,
             (Self::Array(element_type), Self::Array(element_type2)) => {
                 element_type.matches(element_type2)
