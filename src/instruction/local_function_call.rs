@@ -10,8 +10,7 @@ use crate::{
     error::Error,
     function::Params,
     interpreter::{Interpreter, VariableMap},
-    variable::Variable,
-    variable_type::{GetReturnType, Type},
+    variable::{GetReturnType, Type, Variable},
 };
 
 #[derive(Clone)]

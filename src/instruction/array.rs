@@ -9,8 +9,7 @@ use crate::{
     error::Error,
     interpreter::VariableMap,
     parse::Rule,
-    variable::Variable,
-    variable_type::{GetReturnType, Type},
+    variable::{GetReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
 

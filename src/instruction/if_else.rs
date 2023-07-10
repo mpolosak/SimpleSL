@@ -3,8 +3,7 @@ use crate::{
     error::Error,
     interpreter::VariableMap,
     parse::Rule,
-    variable::Variable,
-    variable_type::{GetReturnType, Type},
+    variable::{GetReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
 
@@ -77,7 +76,7 @@ impl Recreate for IfElse {
 }
 
 impl GetReturnType for IfElse {
-    fn get_return_type(&self) -> crate::variable_type::Type {
+    fn get_return_type(&self) -> Type {
         let true_return_type = self.if_true.get_return_type();
         let false_return_type = self.if_false.get_return_type();
         true_return_type.concat(false_return_type)

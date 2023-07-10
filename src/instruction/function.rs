@@ -9,8 +9,7 @@ use crate::{
     function::{LangFunction, Param, Params},
     interpreter::{Interpreter, VariableMap},
     parse::Rule,
-    variable::Variable,
-    variable_type::{GetReturnType, Type},
+    variable::{GetReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
 use std::rc::Rc;

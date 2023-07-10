@@ -9,8 +9,7 @@ pub use self::{
 use crate::{
     error::Error,
     interpreter::{Interpreter, VariableMap},
-    variable::{Array, Variable},
-    variable_type::{GetReturnType, GetType, Type},
+    variable::{Array, GetReturnType, GetType, Type, Variable},
 };
 use std::{fmt, iter::zip};
 

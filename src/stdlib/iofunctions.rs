@@ -3,7 +3,6 @@ use crate::{
     function::{NativeFunction, Params},
     interpreter::VariableMap,
     variable::*,
-    variable_type::Type,
 };
 use simplesl_macros::export_function;
 use std::io;

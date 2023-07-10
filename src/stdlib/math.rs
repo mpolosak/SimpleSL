@@ -1,8 +1,7 @@
 use crate::{
     function::{NativeFunction, Param, Params},
     interpreter::VariableMap,
-    variable::Variable,
-    variable_type::Type,
+    variable::{Type, Variable},
 };
 use simplesl_macros::export_function;
 

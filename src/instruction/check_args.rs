@@ -2,7 +2,7 @@ use super::Instruction;
 use crate::{
     error::Error,
     function::{Param, Params},
-    variable_type::GetReturnType,
+    variable::GetReturnType,
 };
 use std::iter::zip;
 

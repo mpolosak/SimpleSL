@@ -1,13 +1,9 @@
-use crate::{
-    error::Error,
-    function::Function,
-    join, join_debug,
-    parse::*,
-    pest::Parser,
-    variable_type::{GetType, Type},
-};
+pub mod type_set;
+mod variable_type;
+use crate::{error::Error, function::Function, join, join_debug, parse::*, pest::Parser};
 use pest::iterators::Pair;
 use std::{fmt, rc::Rc, str::FromStr};
+pub use variable_type::{GetReturnType, GetType, Type};
 
 pub type Array = Vec<Variable>;
 

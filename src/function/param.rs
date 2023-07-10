@@ -1,6 +1,4 @@
-use crate::{
-    instruction::local_variable::LocalVariableMap, join, parse::Rule, variable_type::Type,
-};
+use crate::{instruction::local_variable::LocalVariableMap, join, parse::Rule, variable::Type};
 use pest::iterators::Pair;
 use std::fmt;
 

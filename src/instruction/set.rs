@@ -7,7 +7,7 @@ use crate::{
     error::Error,
     interpreter::VariableMap,
     parse::Rule,
-    variable_type::{GetReturnType, Type},
+    variable::{GetReturnType, Type},
 };
 use pest::iterators::Pair;
 

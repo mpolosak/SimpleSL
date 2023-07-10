@@ -1,4 +1,4 @@
-use crate::{parse::Rule, variable_type::Type};
+use crate::{parse::Rule, variable::Type};
 use std::fmt;
 
 #[derive(Debug)]

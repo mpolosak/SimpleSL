@@ -18,7 +18,7 @@ use crate::{
     interpreter::{Interpreter, VariableMap},
     parse::Rule,
     variable::Variable,
-    variable_type::{GetReturnType, GetType, Type},
+    variable::{GetReturnType, GetType, Type},
 };
 use pest::iterators::Pair;
 use std::fmt;

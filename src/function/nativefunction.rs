@@ -2,8 +2,7 @@ use super::{Function, Params};
 use crate::{
     error::Error,
     interpreter::{Interpreter, VariableMap},
-    variable::Variable,
-    variable_type::{GetReturnType, Type},
+    variable::{GetReturnType, Type, Variable},
 };
 
 #[derive(Clone)]

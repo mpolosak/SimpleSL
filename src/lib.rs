@@ -5,7 +5,6 @@ pub mod interpreter;
 mod parse;
 pub mod stdlib;
 pub mod variable;
-pub mod variable_type;
 extern crate pest;
 #[macro_use]
 extern crate pest_derive;

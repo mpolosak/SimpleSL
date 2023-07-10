@@ -2,8 +2,7 @@ use crate::{
     error::Error,
     function::{Function, NativeFunction, Param, Params},
     interpreter::{Interpreter, VariableMap},
-    variable::{Array, Variable},
-    variable_type::Type,
+    variable::{Array, Type, Variable},
 };
 use simplesl_macros::export_function;
 use std::{iter::zip, rc::Rc};

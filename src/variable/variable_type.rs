@@ -1,4 +1,4 @@
-pub mod type_set;
+use super::type_set::TypeSet;
 use crate::{
     error::Error,
     function::{Param, Params},
@@ -14,7 +14,6 @@ use std::{
     iter::zip,
     str::FromStr,
 };
-use type_set::TypeSet;
 
 #[derive(Clone, Hash, Eq, PartialEq)]
 pub enum Type {
