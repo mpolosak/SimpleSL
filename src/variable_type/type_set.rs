@@ -1,12 +1,12 @@
 use super::Type;
-use crate::{join, join_debug};
+use crate::join;
 use std::{
     collections::HashSet,
     fmt::{Debug, Display},
     hash::Hash,
 };
 
-#[derive(Clone, Eq)]
+#[derive(Clone, Debug, Eq)]
 pub struct TypeSet {
     pub(crate) types: HashSet<Type>,
 }
@@ -41,12 +41,5 @@ impl Display for TypeSet {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let types = Vec::from(self.clone());
         write!(f, "{}", join(&types, "|"))
-    }
-}
-
-impl Debug for TypeSet {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let types = Vec::from(self.clone());
-        write!(f, "{}", join_debug(&types, "|"))
     }
 }

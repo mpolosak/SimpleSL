@@ -3,7 +3,7 @@ use crate::{
     error::Error,
     function::{Param, Params},
     instruction::local_variable::LocalVariable,
-    join, join_debug,
+    join,
     parse::{Rule, SimpleSLParser},
 };
 use pest::{iterators::Pair, Parser};
@@ -88,39 +88,6 @@ impl Type {
     }
 }
 
-impl Debug for Type {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Int => write!(f, "int"),
-            Self::Float => write!(f, "float"),
-            Self::String => write!(f, "string"),
-            Self::Function {
-                return_type,
-                params,
-                catch_rest: false,
-            } => {
-                write!(f, "function({})->{return_type}", join_debug(params, ", "))
-            }
-            Self::Function {
-                return_type,
-                params,
-                catch_rest: true,
-            } => {
-                write!(
-                    f,
-                    "function({},...)->{return_type}",
-                    join_debug(params, ", ")
-                )
-            }
-            Self::Array(var_type) => write!(f, "[{var_type:?}]"),
-            Self::EmptyArray => write!(f, "[]"),
-            Self::Null => write!(f, "null"),
-            Self::Multi(types) => write!(f, "{types}"),
-            Self::Any => write!(f, "any"),
-        }
-    }
-}
-
 impl Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -146,6 +113,31 @@ impl Display for Type {
             Self::Null => write!(f, "null"),
             Self::Multi(types) => write!(f, "{types}"),
             Self::Any => write!(f, "any"),
+        }
+    }
+}
+
+impl Debug for Type {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Int => write!(f, "Type::Int"),
+            Self::Float => write!(f, "Type::Float"),
+            Self::String => write!(f, "Type::String"),
+            Self::Function {
+                return_type,
+                params,
+                catch_rest,
+            } => f
+                .debug_struct("Type::Function")
+                .field("return_type", return_type)
+                .field("params", params)
+                .field("catch_rest", catch_rest)
+                .finish(),
+            Self::Array(arg0) => f.debug_tuple("Type::Array").field(arg0).finish(),
+            Self::EmptyArray => write!(f, "EmptyArray"),
+            Self::Null => write!(f, "Type::Null"),
+            Self::Multi(arg0) => f.debug_tuple("Type::Multi").field(arg0).finish(),
+            Self::Any => write!(f, "Type::Any"),
         }
     }
 }
