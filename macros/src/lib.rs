@@ -8,7 +8,7 @@ mod utils;
 use attributes::Attributes;
 use utils::{
     args_from_function_params, args_import_from_function_params, function_params_from_itemfn,
-    get_body, params_from_function_params, return_type_from_str, return_type_to_str,
+    get_body, get_return_type, params_from_function_params,
 };
 
 #[proc_macro_attribute]
@@ -38,9 +38,8 @@ pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream 
         quote!(None)
     };
     let params = params_from_function_params(&params);
-    let fnreturn_type = return_type_to_str(&function);
-    let return_type = return_type_from_str(&fnreturn_type);
-    let body = get_body(&fnreturn_type, ident, args);
+    let (return_type, is_result) = get_return_type(&function);
+    let body = get_body(is_result, ident, args);
     quote!(
         #function
         variables.add_native_function(

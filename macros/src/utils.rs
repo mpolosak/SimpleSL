@@ -1,4 +1,4 @@
-use syn::{Attribute, Ident, ItemFn, MetaList, PatIdent, PatType, ReturnType};
+use syn::{Attribute, Ident, ItemFn, MetaList, PatIdent, PatType, ReturnType, Type};
 extern crate quote;
 use quote::{__private::TokenStream, quote};
 
@@ -193,7 +193,8 @@ fn get_type_from_attrs(attrs: &[Attribute]) -> Option<TokenStream> {
     None
 }
 
-pub fn return_type_from_str(return_type: &str) -> TokenStream {
+fn return_type_from_syn_type(return_type: &Type) -> TokenStream {
+    let return_type = quote!(#return_type).to_string();
     if return_type == "i64"
         || return_type == "Result < i64, Error >"
         || return_type == "bool"
@@ -227,47 +228,23 @@ pub fn return_type_from_str(return_type: &str) -> TokenStream {
     }
 }
 
-pub fn get_body(return_type: &str, ident: Ident, args: TokenStream) -> TokenStream {
-    let return_type = return_type.to_string();
-    if return_type == "i64"
-        || return_type == "f64"
-        || return_type == "Rc < str >"
-        || return_type == "Rc < Array >"
-        || return_type == "Array"
-        || return_type == "String"
-        || return_type == "& str"
-        || return_type == "bool"
-        || return_type == "usize"
-    {
-        quote!(Ok(#ident(#args).into()))
-    } else if return_type == "Variable" {
-        quote!(Ok(#ident(#args)))
-    } else if return_type.is_empty() {
-        quote!(
-            #ident(#args);
-            Ok(Variable::Null)
-        )
-    } else if return_type == "Result < Variable, Error >"
-        || return_type == "Result < i64, Error >"
-        || return_type == "Result < f64, Error >"
-        || return_type == "Result < Rc < str >, Error >"
-        || return_type == "Result < Rc < Array >, Error >"
-        || return_type == "Result < Array, Error >"
-        || return_type == "Result < String, Error >"
-        || return_type == "Result < & str, Error >"
-        || return_type == "Result < bool, Error >"
-        || return_type == "Result < usize, Error >"
-    {
+fn is_result(return_type: &Type) -> bool {
+    let return_type = quote!(#return_type).to_string();
+    return_type.starts_with("Result")
+}
+
+pub fn get_body(is_result: bool, ident: Ident, args: TokenStream) -> TokenStream {
+    if is_result {
         quote!(Ok(#ident(#args)?.into()))
     } else {
-        panic!()
+        quote!(Ok(#ident(#args).into()))
     }
 }
 
-pub fn return_type_to_str(function: &ItemFn) -> String {
-    if let ReturnType::Type(_, return_type) = &function.sig.output {
-        quote!(#return_type).to_string()
-    } else {
-        String::from("")
-    }
+pub fn get_return_type(function: &ItemFn) -> (TokenStream, bool) {
+    let ReturnType::Type(_, syn_type) = &function.sig.output else {
+        return (quote!(Type::Null), false)
+    };
+    let return_type = return_type_from_syn_type(&syn_type);
+    (return_type, is_result(syn_type))
 }

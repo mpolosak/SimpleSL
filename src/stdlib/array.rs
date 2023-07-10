@@ -65,7 +65,7 @@ pub fn add_functions(variables: &mut VariableMap) {
     fn filter(
         interpreter: &mut Interpreter,
         array: &Array,
-        #[var_type("function(any)->any")] function: Rc<dyn Function>,
+        #[var_type("function(any)->int")] function: Rc<dyn Function>,
     ) -> Result<Array, Error> {
         let mut new_array = Array::new();
         for element in array.iter() {
