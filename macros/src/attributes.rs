@@ -6,6 +6,7 @@ use syn::{parse::Parser, punctuated::Punctuated, Expr, ExprLit, Lit, MetaNameVal
 pub struct Attributes {
     pub name: Option<String>,
     pub catch_rest: bool,
+    pub return_type: Option<quote::__private::TokenStream>,
 }
 
 impl Attributes {
@@ -29,6 +30,13 @@ impl Attributes {
                         lit: Lit::Bool(lit),
                         ..
                     }) => lit.value(),
+                    _ => panic!("{path} must be bool"),
+                }
+            } else if path == "return_type" {
+                new.return_type = match value {
+                    Expr::Lit(ExprLit {
+                        lit: Lit::Str(lit), ..
+                    }) => Some(quote!({use std::str::FromStr; Type::from_str(#lit).unwrap()})),
                     _ => panic!("{path} must be bool"),
                 }
             }

@@ -38,7 +38,7 @@ pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream 
         quote!(None)
     };
     let params = params_from_function_params(&params);
-    let (return_type, is_result) = get_return_type(&function);
+    let (return_type, is_result) = get_return_type(&function, attr.return_type);
     let body = get_body(is_result, ident, args);
     quote!(
         #function

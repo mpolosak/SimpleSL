@@ -26,7 +26,7 @@ pub fn add_functions(variables: &mut VariableMap) {
         }
     }
 
-    #[export_function]
+    #[export_function(return_type = "[string]")]
     fn split(string: &str, pat: &str) -> Array {
         string
             .split(pat)
@@ -44,7 +44,7 @@ pub fn add_functions(variables: &mut VariableMap) {
         string.contains(pat)
     }
 
-    #[export_function]
+    #[export_function(return_type = "[string]")]
     fn chars(string: &str) -> Array {
         string
             .chars()
