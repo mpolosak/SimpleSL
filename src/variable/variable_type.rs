@@ -107,7 +107,7 @@ impl Display for Type {
             } => {
                 write!(f, "function({},...)->{return_type}", join(params, ", "))
             }
-            Self::Array(var_type) => write!(f, "[{var_type:?}]"),
+            Self::Array(var_type) => write!(f, "[{var_type}]"),
             Self::EmptyArray => write!(f, "[]"),
             Self::Null => write!(f, "null"),
             Self::Multi(types) => write!(f, "{types}"),
