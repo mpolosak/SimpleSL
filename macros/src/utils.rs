@@ -109,69 +109,33 @@ pub fn params_from_function_params(params: &[(Ident, Vec<Attribute>, String)]) -
 
 fn param_from_function_param(
     (ident, attrs, param_type): &(Ident, Vec<Attribute>, String),
-) -> quote::__private::TokenStream {
+) -> TokenStream {
     let ident = ident.to_string();
-    if param_type == "i64" {
-        quote!(
-            Param {
-                name: String::from(#ident),
-                var_type: Type::Int,
-            }
-        )
-    } else if param_type == "f64" {
-        quote!(
-            Param {
-                name: String::from(#ident),
-                var_type: Type::Float,
-            }
-        )
-    } else if param_type == "Rc < str >" || param_type == "& str" {
-        quote!(
-            Param {
-                name: String::from(#ident),
-                var_type: Type::String,
-            }
-        )
-    } else if param_type == "Rc < Array >" || param_type == "& Array" {
-        for attr in attrs {
-            match &attr.meta {
-                syn::Meta::List(MetaList { path, tokens, .. })
-                    if quote!(#path).to_string() == "var_type" =>
-                {
-                    return quote!(
-                        Param {
-                            name: String::from(#ident),
-                            var_type: Type::from_str(#tokens).unwrap(),
-                        }
-                    )
-                }
-                _ => (),
-            };
+    let param_type = type_from_str(attrs, param_type);
+    quote!(
+        Param {
+            name: String::from(#ident),
+            var_type: #param_type,
         }
-        quote!(
-            Param {
-                name: String::from(#ident),
-                var_type: Type::Array(Type::Any.into()),
-            }
-        )
+    )
+}
+
+fn type_from_str(attrs: &[Attribute], param_type: &str) -> TokenStream {
+    if param_type == "i64" {
+        quote!(Type::Int)
+    } else if param_type == "f64" {
+        quote!(Type::Float)
+    } else if param_type == "Rc < str >" || param_type == "& str" {
+        quote!(Type::String)
+    } else if param_type == "Rc < Array >" || param_type == "& Array" {
+        get_type_from_attrs(attrs).unwrap_or(quote!(Type::Array(Type::Any.into())))
     } else if param_type == "Rc < dyn Function >" {
         let Some(var_type) = get_type_from_attrs(attrs) else{
             panic!("Argument of type function must be precede by var_type attribute")
         };
-        quote!(
-            Param {
-                name: String::from(#ident),
-                var_type: #var_type,
-            }
-        )
+        var_type
     } else if param_type == "Variable" {
-        let var_type = get_type_from_attrs(attrs).unwrap_or(quote!(Type::Any));
-        quote!(
-            Param {
-                name: String::from(#ident),
-                var_type: #var_type,
-            }
-        )
+        get_type_from_attrs(attrs).unwrap_or(quote!(Type::Any))
     } else {
         panic!("{param_type} type isn't allowed")
     }
