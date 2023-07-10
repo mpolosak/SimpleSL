@@ -33,7 +33,7 @@ impl Array {
         let mut iter = instructions.iter();
         let var_type = if let Some(first) = iter.next() {
             let mut element_type = first.get_return_type();
-            while let Some(instruction) = iter.next() {
+            for instruction in iter {
                 element_type = element_type.concat(instruction.get_return_type());
             }
             Type::Array(element_type.into())

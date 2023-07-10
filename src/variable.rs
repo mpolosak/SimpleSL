@@ -174,7 +174,7 @@ impl From<Rc<Array>> for Variable {
         let mut iter = value.iter();
         let var_type = if let Some(first) = iter.next() {
             let mut element_type = first.get_type();
-            while let Some(instruction) = iter.next() {
+            for instruction in iter {
                 element_type = element_type.concat(instruction.get_type());
             }
             Type::Array(element_type.into())

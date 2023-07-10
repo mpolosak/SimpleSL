@@ -245,6 +245,6 @@ pub fn get_return_type(function: &ItemFn) -> (TokenStream, bool) {
     let ReturnType::Type(_, syn_type) = &function.sig.output else {
         return (quote!(Type::Null), false)
     };
-    let return_type = return_type_from_syn_type(&syn_type);
+    let return_type = return_type_from_syn_type(syn_type);
     (return_type, is_result(syn_type))
 }

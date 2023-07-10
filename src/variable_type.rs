@@ -63,7 +63,7 @@ impl Type {
             (_, Self::Multi(types)) => types.types.contains(self),
             (_, Self::Any) | (Self::EmptyArray, Self::Array(_)) => true,
             (Self::Array(element_type), Self::Array(element_type2)) => {
-                element_type.matches(&element_type2)
+                element_type.matches(element_type2)
             }
             _ => self == other,
         }
@@ -154,7 +154,7 @@ impl FromStr for Type {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let Some(pair) = SimpleSLParser::parse(Rule::r#type, s)?.into_iter().next() else {
+        let Some(pair) = SimpleSLParser::parse(Rule::r#type, s)?.next() else {
             return Err(Error::Other("Argument doesn't contain type name".to_owned()))
         };
         Ok(Self::from(pair))
@@ -192,7 +192,7 @@ impl From<Pair<'_, Rule>> for Type {
             }
 
             Rule::multi => {
-                let types = pair.into_inner().map(|pair| Type::from(pair)).collect();
+                let types = pair.into_inner().map(Type::from).collect();
                 Type::Multi(types)
             }
             Rule::any => Self::Any,
