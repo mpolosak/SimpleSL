@@ -133,6 +133,21 @@ fn param_from_function_param(
             }
         )
     } else if param_type == "Rc < Array >" || param_type == "& Array" {
+        for attr in attrs {
+            match &attr.meta {
+                syn::Meta::List(MetaList { path, tokens, .. })
+                    if quote!(#path).to_string() == "var_type" =>
+                {
+                    return quote!(
+                        Param {
+                            name: String::from(#ident),
+                            var_type: Type::from_str(#tokens).unwrap(),
+                        }
+                    )
+                }
+                _ => (),
+            };
+        }
         quote!(
             Param {
                 name: String::from(#ident),
@@ -157,11 +172,36 @@ fn param_from_function_param(
                         }
                     )
                 }
+                syn::Meta::List(MetaList { path, tokens, .. })
+                    if quote!(#path).to_string() == "var_type" =>
+                {
+                    return quote!(
+                        Param {
+                            name: String::from(#ident),
+                            var_type: Type::from_str(#tokens).unwrap(),
+                        }
+                    )
+                }
                 _ => (),
             };
         }
         panic!("Argument of type function must be precede by function attribute")
     } else if param_type == "Variable" {
+        for attr in attrs {
+            match &attr.meta {
+                syn::Meta::List(MetaList { path, tokens, .. })
+                    if quote!(#path).to_string() == "var_type" =>
+                {
+                    return quote!(
+                        Param {
+                            name: String::from(#ident),
+                            var_type: Type::from_str(#tokens).unwrap(),
+                        }
+                    )
+                }
+                _ => (),
+            };
+        }
         quote!(
             Param {
                 name: String::from(#ident),
