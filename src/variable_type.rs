@@ -1,16 +1,18 @@
 pub mod type_set;
 use crate::{
+    error::Error,
     function::{Param, Params},
     instruction::local_variable::LocalVariable,
     join, join_debug,
-    parse::Rule,
+    parse::{Rule, SimpleSLParser},
 };
-use pest::iterators::Pair;
+use pest::{iterators::Pair, Parser};
 use std::{
     collections::HashSet,
     fmt::{Debug, Display},
     hash::Hash,
     iter::zip,
+    str::FromStr,
 };
 use type_set::TypeSet;
 
@@ -145,6 +147,17 @@ impl Display for Type {
             Self::Multi(types) => write!(f, "{types}"),
             Self::Any => write!(f, "any"),
         }
+    }
+}
+
+impl FromStr for Type {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let Some(pair) = SimpleSLParser::parse(Rule::r#type, s)?.into_iter().next() else {
+            return Err(Error::Other("Argument doesn't contain type name".to_owned()))
+        };
+        Ok(Self::from(pair))
     }
 }
 
