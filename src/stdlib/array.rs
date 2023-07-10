@@ -52,12 +52,7 @@ pub fn add_functions(variables: &mut VariableMap) {
     fn for_each(
         interpreter: &mut Interpreter,
         array: &Array,
-        #[function(
-            return_type: Type::Any.into(),
-            params: vec![Type::Any],
-            catch_rest: false
-        )]
-        function: Rc<dyn Function>,
+        #[var_type("function(any)->any")] function: Rc<dyn Function>,
     ) -> Result<Array, Error> {
         let mut new_array = Array::new();
         for var in array.iter() {
@@ -70,12 +65,7 @@ pub fn add_functions(variables: &mut VariableMap) {
     fn filter(
         interpreter: &mut Interpreter,
         array: &Array,
-        #[function(
-            return_type:Type::Int.into(),
-            params: vec![Type::Any],
-            catch_rest: false
-        )]
-        function: Rc<dyn Function>,
+        #[var_type("function(any)->any")] function: Rc<dyn Function>,
     ) -> Result<Array, Error> {
         let mut new_array = Array::new();
         for element in array.iter() {
@@ -91,12 +81,7 @@ pub fn add_functions(variables: &mut VariableMap) {
         interpreter: &mut Interpreter,
         array: &Array,
         initial_value: Variable,
-        #[function(
-            return_type: Type::Any.into(),
-            params: vec![Type::Any, Type::Any],
-            catch_rest: false
-        )]
-        function: Rc<dyn Function>,
+        #[var_type("function(any, any)->any")] function: Rc<dyn Function>,
     ) -> Result<Variable, Error> {
         array.iter().try_fold(initial_value, |acc, current| {
             function.exec("function", interpreter, vec![acc, current.clone()])
@@ -114,12 +99,7 @@ pub fn add_functions(variables: &mut VariableMap) {
     fn recsub(
         interpreter: &mut Interpreter,
         array: &Array,
-        #[function(
-            return_type: Type::Any.into(),
-            params: vec![Type::Array(Type::Any.into())],
-            catch_rest: false
-        )]
-        function: Rc<dyn Function>,
+        #[var_type("function([any])->any")] function: Rc<dyn Function>,
         n: i64,
     ) -> Result<Array, Error> {
         if n < 0 {

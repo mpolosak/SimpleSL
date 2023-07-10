@@ -155,62 +155,42 @@ fn param_from_function_param(
             }
         )
     } else if param_type == "Rc < dyn Function >" {
-        if attrs.is_empty() {
-            panic!("Argument of type function must be precede by function attribute")
-        }
-        for attr in attrs {
-            match &attr.meta {
-                syn::Meta::List(MetaList { path, tokens, .. })
-                    if quote!(#path).to_string() == "function" =>
-                {
-                    return quote!(
-                        Param {
-                            name: String::from(#ident),
-                            var_type: Type::Function{
-                                #tokens
-                            },
-                        }
-                    )
-                }
-                syn::Meta::List(MetaList { path, tokens, .. })
-                    if quote!(#path).to_string() == "var_type" =>
-                {
-                    return quote!(
-                        Param {
-                            name: String::from(#ident),
-                            var_type: Type::from_str(#tokens).unwrap(),
-                        }
-                    )
-                }
-                _ => (),
-            };
-        }
-        panic!("Argument of type function must be precede by function attribute")
-    } else if param_type == "Variable" {
-        for attr in attrs {
-            match &attr.meta {
-                syn::Meta::List(MetaList { path, tokens, .. })
-                    if quote!(#path).to_string() == "var_type" =>
-                {
-                    return quote!(
-                        Param {
-                            name: String::from(#ident),
-                            var_type: Type::from_str(#tokens).unwrap(),
-                        }
-                    )
-                }
-                _ => (),
-            };
-        }
+        let Some(var_type) = get_type_from_attrs(attrs) else{
+            panic!("Argument of type function must be precede by var_type attribute")
+        };
         quote!(
             Param {
                 name: String::from(#ident),
-                var_type: Type::Any,
+                var_type: #var_type,
+            }
+        )
+    } else if param_type == "Variable" {
+        let var_type = get_type_from_attrs(attrs).unwrap_or(quote!(Type::Any));
+        quote!(
+            Param {
+                name: String::from(#ident),
+                var_type: #var_type,
             }
         )
     } else {
         panic!("{param_type} type isn't allowed")
     }
+}
+
+fn get_type_from_attrs(attrs: &[Attribute]) -> Option<TokenStream> {
+    for attr in attrs {
+        match &attr.meta {
+            syn::Meta::List(MetaList { path, tokens, .. })
+                if quote!(#path).to_string() == "var_type" =>
+            {
+                return Some(quote!(
+                    {use std::str::FromStr; Type::from_str(#tokens).unwrap()}
+                ))
+            }
+            _ => (),
+        };
+    }
+    None
 }
 
 pub fn return_type_from_str(return_type: &str) -> TokenStream {
