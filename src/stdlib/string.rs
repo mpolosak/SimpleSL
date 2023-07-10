@@ -1,5 +1,4 @@
 use crate::{
-    error::Error,
     function::{NativeFunction, Param, Params},
     interpreter::VariableMap,
     variable::{Array, Variable},
@@ -12,18 +11,6 @@ pub fn add_functions(variables: &mut VariableMap) {
     #[export_function]
     fn string_len(string: &str) -> usize {
         string.len()
-    }
-
-    #[export_function]
-    fn string_at(string: &str, index: i64) -> Result<&str, Error> {
-        if index < 0 {
-            Err(Error::CannotBeNegative(String::from("index")))
-        } else if index as usize > string.len() {
-            Err(Error::IndexToBig)
-        } else {
-            let index = index as usize;
-            Ok(string.get(index..index).unwrap())
-        }
     }
 
     #[export_function(return_type = "[string]")]

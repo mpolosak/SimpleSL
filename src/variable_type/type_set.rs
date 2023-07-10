@@ -8,7 +8,7 @@ use std::{
 
 #[derive(Clone, Debug, Eq)]
 pub struct TypeSet {
-    pub(crate) types: HashSet<Type>,
+    pub types: HashSet<Type>,
 }
 
 impl PartialEq for TypeSet {
@@ -21,6 +21,14 @@ impl Hash for TypeSet {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         let types = Vec::from(self.clone());
         types.hash(state)
+    }
+}
+
+impl From<[Type; 2]> for TypeSet {
+    fn from(value: [Type; 2]) -> Self {
+        Self {
+            types: value.into(),
+        }
     }
 }
 

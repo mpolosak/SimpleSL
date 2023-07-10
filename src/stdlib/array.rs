@@ -22,19 +22,6 @@ pub fn add_functions(variables: &mut VariableMap) {
     }
 
     #[export_function]
-    fn array_at(array: &Array, index: i64) -> Result<Variable, Error> {
-        if index < 0 {
-            return Err(Error::CannotBeNegative(String::from("index")));
-        }
-        let index = index as usize;
-        if index < array.len() {
-            Ok(array[index].clone())
-        } else {
-            Err(Error::IndexToBig)
-        }
-    }
-
-    #[export_function]
     fn array_concat(array1: &Array, array2: &Array) -> Array {
         let mut new_array = array1.clone();
         for element in array2.iter() {

@@ -35,13 +35,10 @@ impl At {
         ) {
             (true, true) => Ok(Self { instruction, index }),
             (true, false) => Err(Error::WrongType("index".into(), Type::Int)),
-            (false, _) => {
-                println!("{}", instruction.get_return_type());
-                Err(Error::WrongType(
-                    "instruction".into(),
-                    required_instruction_type,
-                ))
-            }
+            (false, _) => Err(Error::WrongType(
+                "instruction".into(),
+                required_instruction_type,
+            )),
         }
     }
 }
