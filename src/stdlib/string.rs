@@ -7,11 +7,6 @@ use simplesl_macros::export_function;
 use std::rc::Rc;
 
 pub fn add_functions(variables: &mut VariableMap) {
-    #[export_function]
-    fn string_len(string: &str) -> usize {
-        string.len()
-    }
-
     #[export_function(return_type = "[string]")]
     fn split(string: &str, pat: &str) -> Array {
         string

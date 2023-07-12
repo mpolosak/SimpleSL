@@ -16,7 +16,7 @@ Length of returned array equals size
 */
 iota = (value: int, size: int){
     recsub({value}, (array: [any]){
-        len = array_len(array);
+        len = len(array);
         last = array[len-1];
         last = int(last, 0);
         last+1;

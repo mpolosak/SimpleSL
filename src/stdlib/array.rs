@@ -30,11 +30,6 @@ pub fn add_functions(variables: &mut VariableMap) {
     }
 
     #[export_function]
-    fn array_len(array: &Array) -> usize {
-        array.len()
-    }
-
-    #[export_function]
     fn for_each(
         interpreter: &mut Interpreter,
         array: &Array,

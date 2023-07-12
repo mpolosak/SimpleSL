@@ -24,4 +24,12 @@ pub fn add_std_lib(variables: &mut VariableMap) {
     fn import(interpreter: &mut Interpreter, path: &str) -> Result<Variable, Error> {
         interpreter.load_and_exec(path)
     }
+    #[export_function]
+    fn len(#[var_type("[any]|string")] variable: Variable) -> usize {
+        match variable {
+            Variable::Array(array, _) => array.len(),
+            Variable::String(string) => string.len(),
+            _ => panic!(),
+        }
+    }
 }
