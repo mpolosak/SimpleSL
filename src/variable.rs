@@ -14,6 +14,7 @@ pub enum Variable {
     String(Rc<str>),
     Function(Rc<dyn Function>),
     Array(Rc<Array>, Type),
+    Tuple(Rc<Array>),
     Null,
 }
 
@@ -25,6 +26,10 @@ impl GetType for Variable {
             Variable::String(_) => Type::String,
             Variable::Function(function) => function.get_type(),
             Variable::Array(_, var_type) => var_type.clone(),
+            Variable::Tuple(elements) => {
+                let types = elements.iter().map(Variable::get_type).collect();
+                Type::Tuple(types)
+            }
             Variable::Null => Type::Null,
         }
     }
@@ -38,6 +43,7 @@ impl fmt::Display for Variable {
             Variable::String(value) => write!(f, "{value}"),
             Variable::Function(function) => write!(f, "{function}"),
             Variable::Array(array, _) => write!(f, "{{{}}}", join(array, ", ")),
+            Variable::Tuple(elements) => write!(f, "({})", join(elements, ", ")),
             Variable::Null => write!(f, "NULL"),
         }
     }
@@ -50,7 +56,12 @@ impl fmt::Debug for Variable {
             Variable::Float(value) => write!(f, "Variable::Float({value})"),
             Variable::String(value) => write!(f, "Variable::String(\"{value}\")"),
             Variable::Function(function) => write!(f, "Variable::Function({function:?})"),
-            Variable::Array(array, _) => write!(f, "Variable({{{}}})", join_debug(array, ", ")),
+            Variable::Array(array, _) => {
+                write!(f, "Variable::Array({{{}}})", join_debug(array, ", "))
+            }
+            Variable::Tuple(elements) => {
+                write!(f, "Variable::Tuple(({}))", join_debug(elements, ", "))
+            }
             Variable::Null => write!(f, "Variable::Null"),
         }
     }

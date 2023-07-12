@@ -26,6 +26,7 @@ pub enum Type {
         catch_rest: bool,
     },
     Array(Box<Type>),
+    Tuple(Vec<Type>),
     EmptyArray,
     Null,
     Multi(TypeSet),
@@ -64,6 +65,8 @@ impl Type {
             (Self::Array(element_type), Self::Array(element_type2)) => {
                 element_type.matches(element_type2)
             }
+            (Self::Tuple(types), Self::Tuple(types2)) => zip(types.iter(), types2.iter())
+                .all(|(var_type, var_type2)| var_type.matches(var_type2)),
             _ => self == other,
         }
     }
@@ -109,6 +112,7 @@ impl Display for Type {
             }
             Self::Array(var_type) => write!(f, "[{var_type}]"),
             Self::EmptyArray => write!(f, "[]"),
+            Self::Tuple(types) => write!(f, "({})", join(types, ", ")),
             Self::Null => write!(f, "null"),
             Self::Multi(types) => write!(f, "{types}"),
             Self::Any => write!(f, "any"),
@@ -134,6 +138,7 @@ impl Debug for Type {
                 .finish(),
             Self::Array(arg0) => f.debug_tuple("Type::Array").field(arg0).finish(),
             Self::EmptyArray => write!(f, "EmptyArray"),
+            Self::Tuple(arg0) => f.debug_tuple("Type::Tuple").field(arg0).finish(),
             Self::Null => write!(f, "Type::Null"),
             Self::Multi(arg0) => f.debug_tuple("Type::Multi").field(arg0).finish(),
             Self::Any => write!(f, "Type::Any"),
@@ -181,7 +186,10 @@ impl From<Pair<'_, Rule>> for Type {
                 let pair = pair.into_inner().next().unwrap();
                 Self::Array(Self::from(pair).into())
             }
-
+            Rule::tuple_type => {
+                let types = pair.into_inner().map(Type::from).collect();
+                Self::Tuple(types)
+            }
             Rule::multi => {
                 let types = pair.into_inner().map(Type::from).collect();
                 Type::Multi(types)

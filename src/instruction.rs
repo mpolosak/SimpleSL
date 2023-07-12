@@ -13,6 +13,7 @@ mod local_function_call;
 pub mod local_variable;
 mod set;
 mod traits;
+mod tuple;
 use crate::{
     error::Error,
     interpreter::{Interpreter, VariableMap},
@@ -23,7 +24,6 @@ use crate::{
 use pest::iterators::Pair;
 use std::fmt;
 pub use traits::{Exec, Recreate};
-
 use {
     add::Add,
     array::Array,
@@ -39,6 +39,7 @@ use {
     local_function_call::LocalFunctionCall,
     local_variable::{LocalVariable, LocalVariableMap},
     set::Set,
+    tuple::Tuple,
 };
 
 #[derive(Clone)]
@@ -49,6 +50,7 @@ pub enum Instruction {
     LocalVariable(String, LocalVariable),
     Array(Array),
     Function(Function),
+    Tuple(Tuple),
     Set(Set),
     Not(Box<Instruction>),
     BinNot(Box<Instruction>),
@@ -256,6 +258,7 @@ impl Instruction {
             }
             Rule::array => Ok(Array::new(pair, variables, local_variables)?.into()),
             Rule::function => Ok(Function::new(pair, local_variables, variables)?.into()),
+            Rule::tuple => Ok(Tuple::new(pair, variables, local_variables)?.into()),
             Rule::block => Ok(Block::new(pair, local_variables, variables)?.into()),
             Rule::if_else | Rule::if_stm => {
                 Ok(IfElse::new(pair, variables, local_variables)?.into())
@@ -302,6 +305,7 @@ impl Exec for Instruction {
             Self::LocalVariable(name, _) => Ok(local_variables.get(name).unwrap()),
             Self::Array(array) => array.exec(interpreter, local_variables),
             Self::Function(function) => function.exec(interpreter, local_variables),
+            Self::Tuple(function) => function.exec(interpreter, local_variables),
             Self::Set(set) => set.exec(interpreter, local_variables),
             Self::Not(instruction) => {
                 let Variable::Int(result) = instruction.exec(interpreter, local_variables)? else {
@@ -442,6 +446,7 @@ impl Recreate for Instruction {
             }
             Self::Array(array) => array.recreate(local_variables, args),
             Self::Function(function) => function.recreate(local_variables, args),
+            Self::Tuple(tuple) => tuple.recreate(local_variables, args),
             Self::Set(set) => set.recreate(local_variables, args),
             Self::Not(instruction) => {
                 let instruction = instruction.recreate(local_variables, args);
@@ -535,6 +540,7 @@ impl GetReturnType for Instruction {
             Self::FunctionCall(function_call) => function_call.get_return_type(),
             Self::LocalFunctionCall(function_call) => function_call.get_return_type(),
             Self::LocalVariable(_, var_type) => var_type.clone().into(),
+            Self::Tuple(tuple) => tuple.get_return_type(),
             Self::Set(set) => set.get_return_type(),
             Self::Add(add) => add.get_return_type(),
             Self::Block(block) => block.get_return_type(),
