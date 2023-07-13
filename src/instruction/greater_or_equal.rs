@@ -1,4 +1,4 @@
-use super::{local_variable::LocalVariableMap, Exec, Instruction, Recreate};
+use super::{local_variable::LocalVariableMap, CreateInstruction, Exec, Instruction, Recreate};
 use crate::{
     error::Error,
     interpreter::VariableMap,
@@ -13,8 +13,8 @@ pub struct GreaterOrEqual {
     rhs: Box<Instruction>,
 }
 
-impl GreaterOrEqual {
-    pub fn create_instruction(
+impl CreateInstruction for GreaterOrEqual {
+    fn create_instruction(
         pair: Pair<Rule>,
         variables: &VariableMap,
         local_variables: &mut LocalVariableMap,
@@ -42,6 +42,9 @@ impl GreaterOrEqual {
             _ => Err(Error::OperandsMustBeBothIntOrBothFloat("<=")),
         }
     }
+}
+
+impl GreaterOrEqual {
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         match (lhs, rhs) {
             (
@@ -79,9 +82,9 @@ impl Exec for GreaterOrEqual {
 
 impl Recreate for GreaterOrEqual {
     fn recreate(self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Instruction {
-        let lhs = self.lhs.recreate(local_variables, args).into();
-        let rhs = self.rhs.recreate(local_variables, args).into();
-        Self { lhs, rhs }.into()
+        let lhs = self.lhs.recreate(local_variables, args);
+        let rhs = self.rhs.recreate(local_variables, args);
+        Self::create_from_instructions(lhs, rhs)
     }
 }
 

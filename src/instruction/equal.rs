@@ -1,4 +1,4 @@
-use super::{local_variable::LocalVariableMap, Exec, Instruction, Recreate};
+use super::{local_variable::LocalVariableMap, CreateInstruction, Exec, Instruction, Recreate};
 use crate::{error::Error, interpreter::VariableMap, parse::Rule};
 use pest::iterators::Pair;
 
@@ -8,8 +8,8 @@ pub struct Equal {
     rhs: Box<Instruction>,
 }
 
-impl Equal {
-    pub fn create_instruction(
+impl CreateInstruction for Equal {
+    fn create_instruction(
         pair: Pair<Rule>,
         variables: &VariableMap,
         local_variables: &mut LocalVariableMap,

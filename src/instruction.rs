@@ -1,7 +1,10 @@
 mod add;
+mod and;
 mod array;
 mod at;
+mod bin_and;
 mod bin_not;
+mod bin_or;
 mod block;
 mod check_args;
 mod equal;
@@ -12,10 +15,15 @@ mod greater_or_equal;
 mod if_else;
 mod local_function_call;
 pub mod local_variable;
+mod lshift;
+mod modulo;
 mod not;
+mod or;
+mod rshift;
 mod set;
 mod traits;
 mod tuple;
+mod xor;
 use crate::{
     error::Error,
     interpreter::{Interpreter, VariableMap},
@@ -28,9 +36,12 @@ use std::fmt;
 pub use traits::{CreateInstruction, Exec, Recreate};
 use {
     add::Add,
+    and::And,
     array::Array,
     at::At,
+    bin_and::BinAnd,
     bin_not::BinNot,
+    bin_or::BinOr,
     block::Block,
     check_args::check_args,
     equal::Equal,
@@ -41,9 +52,14 @@ use {
     if_else::IfElse,
     local_function_call::LocalFunctionCall,
     local_variable::{LocalVariable, LocalVariableMap},
+    lshift::LShift,
+    modulo::Modulo,
     not::Not,
+    or::Or,
+    rshift::RShift,
     set::Set,
     tuple::Tuple,
+    xor::Xor,
 };
 
 #[derive(Clone)]
@@ -61,18 +77,18 @@ pub enum Instruction {
     Equal(Equal),
     Greater(Greater),
     GreaterOrEqual(GreaterOrEqual),
-    And(Box<Instruction>, Box<Instruction>),
-    Or(Box<Instruction>, Box<Instruction>),
+    And(And),
+    Or(Or),
     Multiply(Box<Instruction>, Box<Instruction>),
     Divide(Box<Instruction>, Box<Instruction>),
     Add(Add),
     Subtract(Box<Instruction>, Box<Instruction>),
-    Modulo(Box<Instruction>, Box<Instruction>),
-    BinAnd(Box<Instruction>, Box<Instruction>),
-    BinOr(Box<Instruction>, Box<Instruction>),
-    XOR(Box<Instruction>, Box<Instruction>),
-    LShift(Box<Instruction>, Box<Instruction>),
-    RShift(Box<Instruction>, Box<Instruction>),
+    Modulo(Modulo),
+    BinAnd(BinAnd),
+    BinOr(BinOr),
+    Xor(Xor),
+    LShift(LShift),
+    RShift(RShift),
     Block(Block),
     IfElse(IfElse),
     At(At),
@@ -110,28 +126,8 @@ impl Instruction {
             Rule::greater_equal | Rule::lower_equal => {
                 GreaterOrEqual::create_instruction(pair, variables, local_variables)
             }
-            Rule::and => {
-                let mut inner = pair.into_inner();
-                let pair = inner.next().unwrap();
-                let lhs = Instruction::new(pair, variables, local_variables)?;
-                let pair = inner.next().unwrap();
-                let rhs = Instruction::new(pair, variables, local_variables)?;
-                match (lhs.get_return_type(), rhs.get_return_type()) {
-                    (Type::Int, Type::Int) => Ok(Self::And(lhs.into(), rhs.into())),
-                    _ => Err(Error::BothOperandsMustBeInt("&&")),
-                }
-            }
-            Rule::or => {
-                let mut inner = pair.into_inner();
-                let pair = inner.next().unwrap();
-                let lhs = Instruction::new(pair, variables, local_variables)?;
-                let pair = inner.next().unwrap();
-                let rhs = Instruction::new(pair, variables, local_variables)?;
-                match (lhs.get_return_type(), rhs.get_return_type()) {
-                    (Type::Int, Type::Int) => Ok(Self::Or(lhs.into(), rhs.into())),
-                    _ => Err(Error::BothOperandsMustBeInt("||")),
-                }
-            }
+            Rule::and => And::create_instruction(pair, variables, local_variables),
+            Rule::or => Or::create_instruction(pair, variables, local_variables),
             Rule::multiply => {
                 let mut inner = pair.into_inner();
                 let pair = inner.next().unwrap();
@@ -158,7 +154,7 @@ impl Instruction {
                     _ => Err(Error::OperandsMustBeBothIntOrBothFloat("/")),
                 }
             }
-            Rule::add => Ok(Add::parse_add(pair, variables, local_variables)?),
+            Rule::add => Ok(Add::create_instruction(pair, variables, local_variables)?),
             Rule::subtract => {
                 let mut inner = pair.into_inner();
                 let pair = inner.next().unwrap();
@@ -172,72 +168,12 @@ impl Instruction {
                     _ => Err(Error::OperandsMustBeBothIntOrBothFloat("-")),
                 }
             }
-            Rule::modulo => {
-                let mut inner = pair.into_inner();
-                let pair = inner.next().unwrap();
-                let lhs = Instruction::new(pair, variables, local_variables)?;
-                let pair = inner.next().unwrap();
-                let rhs = Instruction::new(pair, variables, local_variables)?;
-                match (lhs.get_return_type(), rhs.get_return_type()) {
-                    (Type::Int, Type::Int) => Ok(Self::Modulo(lhs.into(), rhs.into())),
-                    _ => Err(Error::BothOperandsMustBeInt("%")),
-                }
-            }
-            Rule::bin_and => {
-                let mut inner = pair.into_inner();
-                let pair = inner.next().unwrap();
-                let lhs = Instruction::new(pair, variables, local_variables)?;
-                let pair = inner.next().unwrap();
-                let rhs = Instruction::new(pair, variables, local_variables)?;
-                match (lhs.get_return_type(), rhs.get_return_type()) {
-                    (Type::Int, Type::Int) => Ok(Self::BinAnd(lhs.into(), rhs.into())),
-                    _ => Err(Error::BothOperandsMustBeInt("&")),
-                }
-            }
-            Rule::bin_or => {
-                let mut inner = pair.into_inner();
-                let pair = inner.next().unwrap();
-                let lhs = Instruction::new(pair, variables, local_variables)?;
-                let pair = inner.next().unwrap();
-                let rhs = Instruction::new(pair, variables, local_variables)?;
-                match (lhs.get_return_type(), rhs.get_return_type()) {
-                    (Type::Int, Type::Int) => Ok(Self::BinOr(lhs.into(), rhs.into())),
-                    _ => Err(Error::BothOperandsMustBeInt("|")),
-                }
-            }
-            Rule::xor => {
-                let mut inner = pair.into_inner();
-                let pair = inner.next().unwrap();
-                let lhs = Instruction::new(pair, variables, local_variables)?;
-                let pair = inner.next().unwrap();
-                let rhs = Instruction::new(pair, variables, local_variables)?;
-                match (lhs.get_return_type(), rhs.get_return_type()) {
-                    (Type::Int, Type::Int) => Ok(Self::XOR(lhs.into(), rhs.into())),
-                    _ => Err(Error::BothOperandsMustBeInt("^")),
-                }
-            }
-            Rule::lshift => {
-                let mut inner = pair.into_inner();
-                let pair = inner.next().unwrap();
-                let lhs = Instruction::new(pair, variables, local_variables)?;
-                let pair = inner.next().unwrap();
-                let rhs = Instruction::new(pair, variables, local_variables)?;
-                match (lhs.get_return_type(), rhs.get_return_type()) {
-                    (Type::Int, Type::Int) => Ok(Self::LShift(lhs.into(), rhs.into())),
-                    _ => Err(Error::BothOperandsMustBeInt("<<")),
-                }
-            }
-            Rule::rshift => {
-                let mut inner = pair.into_inner();
-                let pair = inner.next().unwrap();
-                let lhs = Instruction::new(pair, variables, local_variables)?;
-                let pair = inner.next().unwrap();
-                let rhs = Instruction::new(pair, variables, local_variables)?;
-                match (lhs.get_return_type(), rhs.get_return_type()) {
-                    (Type::Int, Type::Int) => Ok(Self::RShift(lhs.into(), rhs.into())),
-                    _ => Err(Error::BothOperandsMustBeInt(">>")),
-                }
-            }
+            Rule::modulo => Modulo::create_instruction(pair, variables, local_variables),
+            Rule::bin_and => BinAnd::create_instruction(pair, variables, local_variables),
+            Rule::bin_or => BinOr::create_instruction(pair, variables, local_variables),
+            Rule::xor => Xor::create_instruction(pair, variables, local_variables),
+            Rule::lshift => RShift::create_instruction(pair, variables, local_variables),
+            Rule::rshift => LShift::create_instruction(pair, variables, local_variables),
             Rule::function_call => Self::create_function_call(pair, variables, local_variables),
             Rule::int | Rule::float | Rule::string | Rule::null => {
                 let variable = Variable::try_from(pair).unwrap();
@@ -257,13 +193,13 @@ impl Instruction {
                 })
             }
             Rule::array => Array::create_instruction(pair, variables, local_variables),
-            Rule::function => Ok(Function::new(pair, local_variables, variables)?.into()),
+            Rule::function => Function::create_instruction(pair, variables, local_variables),
             Rule::tuple => Tuple::create_instruction(pair, variables, local_variables),
-            Rule::block => Ok(Block::new(pair, local_variables, variables)?.into()),
+            Rule::block => Block::create_instruction(pair, variables, local_variables),
             Rule::if_else | Rule::if_stm => {
                 IfElse::create_instruction(pair, variables, local_variables)
             }
-            Rule::at => At::create_instruction(pair, local_variables, variables),
+            Rule::at => At::create_instruction(pair, variables, local_variables),
             _ => panic!(),
         }
     }
@@ -314,24 +250,8 @@ impl Exec for Instruction {
             Self::GreaterOrEqual(greater_or_equal) => {
                 greater_or_equal.exec(interpreter, local_variables)
             }
-            Self::And(lhs, rhs) => {
-                let result1 = lhs.exec(interpreter, local_variables)?;
-                let result2 = rhs.exec(interpreter, local_variables)?;
-                match (result1, result2) {
-                    (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 * value2).into()),
-                    _ => panic!(),
-                }
-            }
-            Self::Or(lhs, rhs) => {
-                let result1 = lhs.exec(interpreter, local_variables)?;
-                let result2 = rhs.exec(interpreter, local_variables)?;
-                match (result1, result2) {
-                    (Variable::Int(value1), Variable::Int(value2)) => {
-                        Ok((value1 != 0 || value2 != 0).into())
-                    }
-                    _ => panic!(),
-                }
-            }
+            Self::And(and) => and.exec(interpreter, local_variables),
+            Self::Or(or) => or.exec(interpreter, local_variables),
             Self::Multiply(lhs, rhs) => {
                 let result1 = lhs.exec(interpreter, local_variables)?;
                 let result2 = rhs.exec(interpreter, local_variables)?;
@@ -366,54 +286,12 @@ impl Exec for Instruction {
                     _ => panic!(),
                 }
             }
-            Self::Modulo(lhs, rhs) => {
-                let result1 = lhs.exec(interpreter, local_variables)?;
-                let result2 = rhs.exec(interpreter, local_variables)?;
-                match (result1, result2) {
-                    (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 % value2).into()),
-                    _ => panic!(),
-                }
-            }
-            Self::BinAnd(lhs, rhs) => {
-                let result1 = lhs.exec(interpreter, local_variables)?;
-                let result2 = rhs.exec(interpreter, local_variables)?;
-                match (result1, result2) {
-                    (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 & value2).into()),
-                    _ => panic!(),
-                }
-            }
-            Self::BinOr(lhs, rhs) => {
-                let result1 = lhs.exec(interpreter, local_variables)?;
-                let result2 = rhs.exec(interpreter, local_variables)?;
-                match (result1, result2) {
-                    (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 | value2).into()),
-                    _ => panic!(),
-                }
-            }
-            Self::XOR(lhs, rhs) => {
-                let result1 = lhs.exec(interpreter, local_variables)?;
-                let result2 = rhs.exec(interpreter, local_variables)?;
-                match (result1, result2) {
-                    (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 ^ value2).into()),
-                    _ => panic!(),
-                }
-            }
-            Self::LShift(lhs, rhs) => {
-                let result1 = lhs.exec(interpreter, local_variables)?;
-                let result2 = rhs.exec(interpreter, local_variables)?;
-                match (result1, result2) {
-                    (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 << value2).into()),
-                    _ => panic!(),
-                }
-            }
-            Self::RShift(lhs, rhs) => {
-                let result1 = lhs.exec(interpreter, local_variables)?;
-                let result2 = rhs.exec(interpreter, local_variables)?;
-                match (result1, result2) {
-                    (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 >> value2).into()),
-                    _ => panic!(),
-                }
-            }
+            Self::Modulo(modulo) => modulo.exec(interpreter, local_variables),
+            Self::BinAnd(bin_and) => bin_and.exec(interpreter, local_variables),
+            Self::BinOr(bin_or) => bin_or.exec(interpreter, local_variables),
+            Self::Xor(xor) => xor.exec(interpreter, local_variables),
+            Self::LShift(lshift) => lshift.exec(interpreter, local_variables),
+            Self::RShift(rshift) => rshift.exec(interpreter, local_variables),
             Self::Block(block) => block.exec(interpreter, local_variables),
             Self::IfElse(if_else) => if_else.exec(interpreter, local_variables),
             Self::At(at) => at.exec(interpreter, local_variables),
@@ -445,16 +323,8 @@ impl Recreate for Instruction {
             Self::GreaterOrEqual(greater_or_equal) => {
                 greater_or_equal.recreate(local_variables, args)
             }
-            Self::And(lhs, rhs) => {
-                let lhs = lhs.recreate(local_variables, args);
-                let rhs = rhs.recreate(local_variables, args);
-                Self::And(lhs.into(), rhs.into())
-            }
-            Self::Or(lhs, rhs) => {
-                let lhs = lhs.recreate(local_variables, args);
-                let rhs = rhs.recreate(local_variables, args);
-                Self::Or(lhs.into(), rhs.into())
-            }
+            Self::And(and) => and.recreate(local_variables, args),
+            Self::Or(or) => or.recreate(local_variables, args),
             Self::Multiply(lhs, rhs) => {
                 let lhs = lhs.recreate(local_variables, args);
                 let rhs = rhs.recreate(local_variables, args);
@@ -471,36 +341,12 @@ impl Recreate for Instruction {
                 let rhs = rhs.recreate(local_variables, args);
                 Self::Subtract(lhs.into(), rhs.into())
             }
-            Self::Modulo(lhs, rhs) => {
-                let lhs = lhs.recreate(local_variables, args);
-                let rhs = rhs.recreate(local_variables, args);
-                Self::Modulo(lhs.into(), rhs.into())
-            }
-            Self::BinAnd(lhs, rhs) => {
-                let lhs = lhs.recreate(local_variables, args);
-                let rhs = rhs.recreate(local_variables, args);
-                Self::BinAnd(lhs.into(), rhs.into())
-            }
-            Self::BinOr(lhs, rhs) => {
-                let lhs = lhs.recreate(local_variables, args);
-                let rhs = rhs.recreate(local_variables, args);
-                Self::BinOr(lhs.into(), rhs.into())
-            }
-            Self::XOR(lhs, rhs) => {
-                let lhs = lhs.recreate(local_variables, args);
-                let rhs = rhs.recreate(local_variables, args);
-                Self::XOR(lhs.into(), rhs.into())
-            }
-            Self::LShift(lhs, rhs) => {
-                let lhs = lhs.recreate(local_variables, args);
-                let rhs = rhs.recreate(local_variables, args);
-                Self::XOR(lhs.into(), rhs.into())
-            }
-            Self::RShift(lhs, rhs) => {
-                let lhs = lhs.recreate(local_variables, args);
-                let rhs = rhs.recreate(local_variables, args);
-                Self::XOR(lhs.into(), rhs.into())
-            }
+            Self::Modulo(modulo) => modulo.recreate(local_variables, args),
+            Self::BinAnd(bin_and) => bin_and.recreate(local_variables, args),
+            Self::BinOr(bin_or) => bin_or.recreate(local_variables, args),
+            Self::Xor(xor) => xor.recreate(local_variables, args),
+            Self::LShift(lshift) => lshift.recreate(local_variables, args),
+            Self::RShift(rshift) => rshift.recreate(local_variables, args),
             Self::Block(block) => block.recreate(local_variables, args),
             Self::IfElse(if_else) => if_else.recreate(local_variables, args),
             Self::At(at) => at.recreate(local_variables, args),
@@ -540,7 +386,7 @@ impl GetReturnType for Instruction {
             | Self::Modulo(..)
             | Self::BinAnd(..)
             | Self::BinOr(..)
-            | Self::XOR(..)
+            | Self::Xor(..)
             | Self::LShift(..)
             | Self::RShift(..) => Type::Int,
             Self::Multiply(instruction, _)

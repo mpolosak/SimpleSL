@@ -1,4 +1,4 @@
-use super::{local_variable::LocalVariableMap, Exec, Instruction, Recreate};
+use super::{local_variable::LocalVariableMap, CreateInstruction, Exec, Instruction, Recreate};
 use crate::{
     error::Error,
     interpreter::{Interpreter, VariableMap},
@@ -13,8 +13,8 @@ pub struct Add {
     rhs: Box<Instruction>,
 }
 
-impl Add {
-    pub fn parse_add(
+impl CreateInstruction for Add {
+    fn create_instruction(
         pair: Pair<Rule>,
         variables: &VariableMap,
         local_variables: &mut LocalVariableMap,

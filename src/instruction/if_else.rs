@@ -1,4 +1,4 @@
-use super::{local_variable::LocalVariableMap, Exec, Instruction, Recreate};
+use super::{local_variable::LocalVariableMap, CreateInstruction, Exec, Instruction, Recreate};
 use crate::{
     error::Error,
     interpreter::VariableMap,
@@ -14,8 +14,8 @@ pub struct IfElse {
     if_false: Box<Instruction>,
 }
 
-impl IfElse {
-    pub fn create_instruction(
+impl CreateInstruction for IfElse {
+    fn create_instruction(
         pair: Pair<Rule>,
         variables: &VariableMap,
         local_variables: &mut LocalVariableMap,
@@ -35,7 +35,16 @@ impl IfElse {
         } else {
             Instruction::Variable(Variable::Null)
         };
-        Ok(match condition {
+        Ok(Self::create_from_instructions(condition, if_false, if_true))
+    }
+}
+impl IfElse {
+    fn create_from_instructions(
+        condition: Instruction,
+        if_false: Instruction,
+        if_true: Instruction,
+    ) -> Instruction {
+        match condition {
             Instruction::Variable(Variable::Int(0)) => if_false,
             Instruction::Variable(Variable::Int(_)) => if_true,
             condition => Self {
@@ -44,7 +53,7 @@ impl IfElse {
                 if_false: if_false.into(),
             }
             .into(),
-        })
+        }
     }
 }
 
@@ -64,14 +73,10 @@ impl Exec for IfElse {
 
 impl Recreate for IfElse {
     fn recreate(self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Instruction {
-        let condition = self.condition.recreate(local_variables, args).into();
-        let if_true = self.if_true.recreate(local_variables, args).into();
-        let if_false = self.if_false.recreate(local_variables, args).into();
-        Instruction::IfElse(Self {
-            condition,
-            if_true,
-            if_false,
-        })
+        let condition = self.condition.recreate(local_variables, args);
+        let if_true = self.if_true.recreate(local_variables, args);
+        let if_false = self.if_false.recreate(local_variables, args);
+        Self::create_from_instructions(condition, if_false, if_true)
     }
 }
 

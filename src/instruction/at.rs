@@ -1,4 +1,4 @@
-use super::{local_variable::LocalVariableMap, Exec, Instruction, Recreate};
+use super::{local_variable::LocalVariableMap, CreateInstruction, Exec, Instruction, Recreate};
 use crate::{
     error::Error,
     interpreter::{Interpreter, VariableMap},
@@ -13,11 +13,11 @@ pub struct At {
     index: Box<Instruction>,
 }
 
-impl At {
-    pub fn create_instruction(
+impl CreateInstruction for At {
+    fn create_instruction(
         pair: Pair<Rule>,
-        local_variables: &mut LocalVariableMap,
         variables: &VariableMap,
+        local_variables: &mut LocalVariableMap,
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();

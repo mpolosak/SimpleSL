@@ -22,17 +22,21 @@ impl CreateInstruction for BinNot {
         let pair = pair.into_inner().next().unwrap();
         let instruction = Instruction::new(pair, variables, local_variables)?;
         if instruction.get_return_type() == Type::Int {
-            match instruction {
-                Instruction::Variable(Variable::Int(value)) => {
-                    Ok(Instruction::Variable((!value).into()))
-                }
-                instruction => Ok(Self {
-                    instruction: instruction.into(),
-                }
-                .into()),
-            }
+            Ok(Self::create_from_instruction(instruction))
         } else {
             Err(Error::OperandMustBeInt("~"))
+        }
+    }
+}
+
+impl BinNot {
+    fn create_from_instruction(instruction: Instruction) -> Instruction {
+        match instruction {
+            Instruction::Variable(Variable::Int(value)) => Instruction::Variable((!value).into()),
+            instruction => Self {
+                instruction: instruction.into(),
+            }
+            .into(),
         }
     }
 }
@@ -52,13 +56,8 @@ impl Exec for BinNot {
 
 impl Recreate for BinNot {
     fn recreate(self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Instruction {
-        match self.instruction.recreate(local_variables, args) {
-            Instruction::Variable(Variable::Int(value)) => Instruction::Variable((!value).into()),
-            instruction => Self {
-                instruction: instruction.into(),
-            }
-            .into(),
-        }
+        let instruction = self.instruction.recreate(local_variables, args);
+        Self::create_from_instruction(instruction)
     }
 }
 

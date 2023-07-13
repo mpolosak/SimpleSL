@@ -2,7 +2,7 @@ use super::{
     local_variable::LocalVariableMap,
     recreate_instructions,
     traits::{Exec, Recreate},
-    Instruction,
+    CreateInstruction, Instruction,
 };
 use crate::{
     error::Error,
@@ -20,12 +20,12 @@ pub struct Function {
     body: Vec<Instruction>,
 }
 
-impl Function {
-    pub fn new(
+impl CreateInstruction for Function {
+    fn create_instruction(
         pair: Pair<Rule>,
-        local_variables: &mut LocalVariableMap,
         variables: &VariableMap,
-    ) -> Result<Self, Error> {
+        local_variables: &mut LocalVariableMap,
+    ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let params_pair = inner.next().unwrap();
         let params: Vec<Param> = params_pair.into_inner().map(Param::from).collect();
@@ -38,7 +38,16 @@ impl Function {
         let body = inner
             .map(|arg| Instruction::new(arg, variables, &mut local_variables))
             .collect::<Result<Vec<_>, _>>()?;
-        Ok(Self { params, body })
+        if body
+            .iter()
+            .all(|instruction| matches!(instruction, Instruction::Variable(_)))
+        {
+            Ok(Instruction::Variable(Variable::Function(Rc::new(
+                LangFunction { params, body },
+            ))))
+        } else {
+            Ok(Self { params, body }.into())
+        }
     }
 }
 
@@ -63,7 +72,17 @@ impl Recreate for Function {
         let mut local_variables = local_variables.clone();
         local_variables.extend(LocalVariableMap::from(self.params.clone()));
         let body = recreate_instructions(self.body, &mut local_variables, args);
-        Self { body, ..self }.into()
+        if body
+            .iter()
+            .all(|instruction| matches!(instruction, Instruction::Variable(_)))
+        {
+            Instruction::Variable(Variable::Function(Rc::new(LangFunction {
+                params: self.params,
+                body,
+            })))
+        } else {
+            Self { body, ..self }.into()
+        }
     }
 }
 

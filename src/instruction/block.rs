@@ -1,4 +1,4 @@
-use super::{local_variable::LocalVariableMap, Exec, Instruction, Recreate};
+use super::{local_variable::LocalVariableMap, CreateInstruction, Exec, Instruction, Recreate};
 use crate::{
     error::Error,
     interpreter::{Interpreter, VariableMap},
@@ -12,18 +12,29 @@ pub struct Block {
     instructions: Vec<Instruction>,
 }
 
-impl Block {
-    pub fn new(
+impl CreateInstruction for Block {
+    fn create_instruction(
         pair: Pair<Rule>,
-        local_variables: &mut LocalVariableMap,
         variables: &VariableMap,
-    ) -> Result<Self, Error> {
+        local_variables: &mut LocalVariableMap,
+    ) -> Result<Instruction, Error> {
         let mut local_variables = local_variables.clone();
         let instructions = pair
             .into_inner()
             .map(|pair| Instruction::new(pair, variables, &mut local_variables))
             .collect::<Result<Vec<Instruction>, Error>>()?;
-        Ok(Self { instructions })
+        if instructions
+            .iter()
+            .all(|instruction| matches!(instruction, Instruction::Variable(_)))
+        {
+            if let Some(Instruction::Variable(variable)) = instructions.last() {
+                Ok(Instruction::Variable(variable.clone()))
+            } else {
+                Ok(Instruction::Variable(Variable::Null))
+            }
+        } else {
+            Ok(Self { instructions }.into())
+        }
     }
 }
 

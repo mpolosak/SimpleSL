@@ -3,7 +3,7 @@ use super::{
     local_variable::LocalVariableMap,
     recreate_instructions,
     traits::{Exec, Recreate},
-    Instruction,
+    CreateInstruction, Instruction,
 };
 use crate::{
     error::Error,
@@ -19,8 +19,8 @@ pub struct Array {
     var_type: Type,
 }
 
-impl Array {
-    pub fn create_instruction(
+impl CreateInstruction for Array {
+    fn create_instruction(
         pair: Pair<Rule>,
         variables: &VariableMap,
         local_variables: &mut LocalVariableMap,
@@ -29,6 +29,11 @@ impl Array {
         let instructions = inner
             .map(|arg| Instruction::new(arg, variables, local_variables))
             .collect::<Result<Vec<_>, _>>()?;
+        Ok(Self::create_from_instructions(instructions))
+    }
+}
+impl Array {
+    fn create_from_instructions(instructions: Vec<Instruction>) -> Instruction {
         let mut iter = instructions.iter();
         if let Some(first) = iter.next() {
             let mut element_type = first.get_return_type();
@@ -41,19 +46,16 @@ impl Array {
                 if let Instruction::Variable(variable) = instruction {
                     array.push(variable.clone());
                 } else {
-                    return Ok(Self {
+                    return Self {
                         instructions,
                         var_type,
                     }
-                    .into());
+                    .into();
                 }
             }
-            Ok(Instruction::Variable(Variable::Array(
-                array.into(),
-                var_type,
-            )))
+            Instruction::Variable(Variable::Array(array.into(), var_type))
         } else {
-            Ok(Instruction::Variable(Vec::new().into()))
+            Instruction::Variable(Vec::new().into())
         }
     }
 }
@@ -72,11 +74,7 @@ impl Exec for Array {
 impl Recreate for Array {
     fn recreate(self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Instruction {
         let instructions = recreate_instructions(self.instructions, local_variables, args);
-        Self {
-            instructions,
-            var_type: self.var_type,
-        }
-        .into()
+        Self::create_from_instructions(instructions)
     }
 }
 

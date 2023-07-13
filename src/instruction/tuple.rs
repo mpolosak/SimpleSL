@@ -1,4 +1,4 @@
-use super::{local_variable::LocalVariableMap, Exec, Instruction, Recreate};
+use super::{local_variable::LocalVariableMap, CreateInstruction, Exec, Instruction, Recreate};
 use crate::{
     error::Error,
     interpreter::{Interpreter, VariableMap},
@@ -12,8 +12,8 @@ pub struct Tuple {
     elements: Vec<Instruction>,
 }
 
-impl Tuple {
-    pub fn create_instruction(
+impl CreateInstruction for Tuple {
+    fn create_instruction(
         pair: Pair<Rule>,
         variables: &VariableMap,
         local_variables: &mut LocalVariableMap,
@@ -22,15 +22,21 @@ impl Tuple {
             .into_inner()
             .map(|pair| Instruction::new(pair, variables, local_variables))
             .collect::<Result<Vec<Instruction>, Error>>()?;
+        Ok(Self::create_from_elements(elements))
+    }
+}
+
+impl Tuple {
+    fn create_from_elements(elements: Vec<Instruction>) -> Instruction {
         let mut array = Vec::new();
         for instruction in &elements {
             if let Instruction::Variable(variable) = instruction {
                 array.push(variable.clone());
             } else {
-                return Ok(Self { elements }.into());
+                return Self { elements }.into();
             }
         }
-        Ok(Instruction::Variable(Variable::Tuple(array.into())))
+        Instruction::Variable(Variable::Tuple(array.into()))
     }
 }
 
@@ -55,7 +61,7 @@ impl Recreate for Tuple {
             .into_iter()
             .map(|instruction| instruction.recreate(local_variables, args))
             .collect();
-        Self { elements }.into()
+        Self::create_from_elements(elements)
     }
 }
 
