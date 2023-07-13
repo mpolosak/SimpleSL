@@ -1,6 +1,7 @@
 mod add;
 mod array;
 mod at;
+mod bin_not;
 mod block;
 mod check_args;
 mod equal;
@@ -11,6 +12,7 @@ mod greater_or_equal;
 mod if_else;
 mod local_function_call;
 pub mod local_variable;
+mod not;
 mod set;
 mod traits;
 mod tuple;
@@ -23,11 +25,12 @@ use crate::{
 };
 use pest::iterators::Pair;
 use std::fmt;
-pub use traits::{Exec, Recreate};
+pub use traits::{CreateInstruction, Exec, Recreate};
 use {
     add::Add,
     array::Array,
     at::At,
+    bin_not::BinNot,
     block::Block,
     check_args::check_args,
     equal::Equal,
@@ -38,6 +41,7 @@ use {
     if_else::IfElse,
     local_function_call::LocalFunctionCall,
     local_variable::{LocalVariable, LocalVariableMap},
+    not::Not,
     set::Set,
     tuple::Tuple,
 };
@@ -52,8 +56,8 @@ pub enum Instruction {
     Function(Function),
     Tuple(Tuple),
     Set(Set),
-    Not(Box<Instruction>),
-    BinNot(Box<Instruction>),
+    Not(Not),
+    BinNot(BinNot),
     Equal(Equal),
     Greater(Greater),
     GreaterOrEqual(GreaterOrEqual),
@@ -86,33 +90,25 @@ impl Instruction {
                 Instruction::new(pair, variables, local_variables)
             }
             Rule::set => Ok(Set::new(pair, variables, local_variables)?.into()),
-            Rule::not => {
-                let pair = pair.into_inner().next().unwrap();
-                let instruction = Instruction::new(pair, variables, local_variables)?;
-                if instruction.get_return_type() == Type::Int {
-                    Ok(Self::Not(instruction.into()))
-                } else {
-                    Err(Error::OperandMustBeInt("!"))
-                }
-            }
-            Rule::bin_not => {
-                let pair = pair.into_inner().next().unwrap();
-                let instruction = Instruction::new(pair, variables, local_variables)?;
-                if instruction.get_return_type() == Type::Int {
-                    Ok(Self::BinNot(instruction.into()))
-                } else {
-                    Err(Error::OperandMustBeInt("~"))
-                }
-            }
-            Rule::equal => Ok(Equal::new(pair, variables, local_variables)?.into()),
-            Rule::not_equal => Ok(Self::Not(Box::new(
-                Equal::new(pair, variables, local_variables)?.into(),
-            ))),
+            Rule::not => Not::create_instruction(pair, variables, local_variables),
+            Rule::bin_not => BinNot::create_instruction(pair, variables, local_variables),
+            Rule::equal => Equal::create_instruction(pair, variables, local_variables),
+            Rule::not_equal => Ok(
+                match Equal::create_instruction(pair, variables, local_variables)? {
+                    Instruction::Variable(Variable::Int(value)) => {
+                        Instruction::Variable((value == 0).into())
+                    }
+                    instruction => Not {
+                        instruction: instruction.into(),
+                    }
+                    .into(),
+                },
+            ),
             Rule::greater | Rule::lower => {
-                Ok(Greater::new(pair, variables, local_variables)?.into())
+                Greater::create_instruction(pair, variables, local_variables)
             }
             Rule::greater_equal | Rule::lower_equal => {
-                Ok(GreaterOrEqual::new(pair, variables, local_variables)?.into())
+                GreaterOrEqual::create_instruction(pair, variables, local_variables)
             }
             Rule::and => {
                 let mut inner = pair.into_inner();
@@ -162,7 +158,7 @@ impl Instruction {
                     _ => Err(Error::OperandsMustBeBothIntOrBothFloat("/")),
                 }
             }
-            Rule::add => Ok(Add::new(pair, variables, local_variables)?.into()),
+            Rule::add => Ok(Add::parse_add(pair, variables, local_variables)?),
             Rule::subtract => {
                 let mut inner = pair.into_inner();
                 let pair = inner.next().unwrap();
@@ -249,21 +245,25 @@ impl Instruction {
             }
             Rule::ident => {
                 let var_name = pair.as_str();
-                if let Some(var_type) = local_variables.get(var_name) {
-                    Ok(Self::LocalVariable(var_name.to_string(), var_type.clone()))
-                } else {
-                    let value = variables.get(var_name)?;
-                    Ok(Self::Variable(value))
-                }
+                Ok(match local_variables.get(var_name) {
+                    Some(LocalVariable::Variable(variable)) => Self::Variable(variable.clone()),
+                    Some(local_variable) => {
+                        Self::LocalVariable(var_name.into(), local_variable.clone())
+                    }
+                    None => {
+                        let value = variables.get(var_name)?;
+                        Self::Variable(value)
+                    }
+                })
             }
-            Rule::array => Ok(Array::new(pair, variables, local_variables)?.into()),
+            Rule::array => Array::create_instruction(pair, variables, local_variables),
             Rule::function => Ok(Function::new(pair, local_variables, variables)?.into()),
-            Rule::tuple => Ok(Tuple::new(pair, variables, local_variables)?.into()),
+            Rule::tuple => Tuple::create_instruction(pair, variables, local_variables),
             Rule::block => Ok(Block::new(pair, local_variables, variables)?.into()),
             Rule::if_else | Rule::if_stm => {
-                Ok(IfElse::new(pair, variables, local_variables)?.into())
+                IfElse::create_instruction(pair, variables, local_variables)
             }
-            Rule::at => Ok(At::new(pair, local_variables, variables)?.into()),
+            Rule::at => At::create_instruction(pair, local_variables, variables),
             _ => panic!(),
         }
     }
@@ -307,18 +307,8 @@ impl Exec for Instruction {
             Self::Function(function) => function.exec(interpreter, local_variables),
             Self::Tuple(function) => function.exec(interpreter, local_variables),
             Self::Set(set) => set.exec(interpreter, local_variables),
-            Self::Not(instruction) => {
-                let Variable::Int(result) = instruction.exec(interpreter, local_variables)? else {
-                    panic!()
-                };
-                Ok((result == 0).into())
-            }
-            Self::BinNot(instruction) => {
-                let Variable::Int(result) = instruction.exec(interpreter, local_variables)? else {
-                    panic!()
-                };
-                Ok(Variable::Int(!result))
-            }
+            Self::Not(not) => not.exec(interpreter, local_variables),
+            Self::BinNot(bin_not) => bin_not.exec(interpreter, local_variables),
             Self::Equal(equal) => equal.exec(interpreter, local_variables),
             Self::Greater(greater) => greater.exec(interpreter, local_variables),
             Self::GreaterOrEqual(greater_or_equal) => {
@@ -448,14 +438,8 @@ impl Recreate for Instruction {
             Self::Function(function) => function.recreate(local_variables, args),
             Self::Tuple(tuple) => tuple.recreate(local_variables, args),
             Self::Set(set) => set.recreate(local_variables, args),
-            Self::Not(instruction) => {
-                let instruction = instruction.recreate(local_variables, args);
-                Self::Not(instruction.into())
-            }
-            Self::BinNot(instruction) => {
-                let instruction = instruction.recreate(local_variables, args);
-                Self::BinNot(instruction.into())
-            }
+            Self::Not(not) => not.recreate(local_variables, args),
+            Self::BinNot(bin_not) => bin_not.recreate(local_variables, args),
             Self::Equal(equal) => equal.recreate(local_variables, args),
             Self::Greater(greater) => greater.recreate(local_variables, args),
             Self::GreaterOrEqual(greater_or_equal) => {
@@ -539,7 +523,7 @@ impl GetReturnType for Instruction {
             Self::Function(function) => function.get_return_type(),
             Self::FunctionCall(function_call) => function_call.get_return_type(),
             Self::LocalFunctionCall(function_call) => function_call.get_return_type(),
-            Self::LocalVariable(_, var_type) => var_type.clone().into(),
+            Self::LocalVariable(_, local_variable) => local_variable.get_type(),
             Self::Tuple(tuple) => tuple.get_return_type(),
             Self::Set(set) => set.get_return_type(),
             Self::Add(add) => add.get_return_type(),
@@ -563,6 +547,12 @@ impl GetReturnType for Instruction {
             | Self::Divide(instruction, _)
             | Self::Subtract(instruction, _) => instruction.get_return_type(),
         }
+    }
+}
+
+impl From<Variable> for Instruction {
+    fn from(value: Variable) -> Self {
+        Self::Variable(value)
     }
 }
 

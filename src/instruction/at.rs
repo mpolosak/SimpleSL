@@ -14,17 +14,16 @@ pub struct At {
 }
 
 impl At {
-    pub fn new(
+    pub fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &mut LocalVariableMap,
         variables: &VariableMap,
-    ) -> Result<Self, Error> {
+    ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
-        let instruction: Box<Instruction> =
-            Instruction::new(pair, variables, local_variables)?.into();
+        let instruction = Instruction::new(pair, variables, local_variables)?;
         let pair = inner.next().unwrap();
-        let index: Box<Instruction> = Instruction::new(pair, variables, local_variables)?.into();
+        let index = Instruction::new(pair, variables, local_variables)?;
         let required_instruction_type = [Type::String, Type::Array(Type::Any.into())].into();
         match (
             instruction
@@ -32,7 +31,16 @@ impl At {
                 .matches(&required_instruction_type),
             index.get_return_type() == Type::Int,
         ) {
-            (true, true) => Ok(Self { instruction, index }),
+            (true, true) => Ok(match (instruction, index) {
+                (Instruction::Variable(variable), Instruction::Variable(index)) => {
+                    at(variable, index)?.into()
+                }
+                (instruction, index) => Self {
+                    instruction: instruction.into(),
+                    index: index.into(),
+                }
+                .into(),
+            }),
             (true, false) => Err(Error::WrongType("index".into(), Type::Int)),
             (false, _) => Err(Error::WrongType(
                 "instruction".into(),
@@ -50,30 +58,7 @@ impl Exec for At {
     ) -> Result<Variable, Error> {
         let result = self.instruction.exec(interpreter, local_variables)?;
         let index = self.index.exec(interpreter, local_variables)?;
-        match (result, index) {
-            (Variable::String(string), Variable::Int(index)) => {
-                if index < 0 {
-                    Err(Error::CannotBeNegative(String::from("index")))
-                } else if index as usize > string.len() {
-                    Err(Error::IndexToBig)
-                } else {
-                    let index = index as usize;
-                    Ok(string.get(index..index).unwrap().into())
-                }
-            }
-            (Variable::Array(array, _), Variable::Int(index)) => {
-                if index < 0 {
-                    return Err(Error::CannotBeNegative(String::from("index")));
-                }
-                let index = index as usize;
-                if index < array.len() {
-                    Ok(array[index].clone())
-                } else {
-                    Err(Error::IndexToBig)
-                }
-            }
-            _ => panic!(),
-        }
+        at(result, index)
     }
 }
 
@@ -99,5 +84,32 @@ impl GetReturnType for At {
 impl From<At> for Instruction {
     fn from(value: At) -> Self {
         Self::At(value)
+    }
+}
+
+fn at(variable: Variable, index: Variable) -> Result<Variable, Error> {
+    match (variable, index) {
+        (Variable::String(string), Variable::Int(index)) => {
+            if index < 0 {
+                Err(Error::CannotBeNegative(String::from("index")))
+            } else if index as usize > string.len() {
+                Err(Error::IndexToBig)
+            } else {
+                let index = index as usize;
+                Ok(string.get(index..index).unwrap().into())
+            }
+        }
+        (Variable::Array(array, _), Variable::Int(index)) => {
+            if index < 0 {
+                return Err(Error::CannotBeNegative(String::from("index")));
+            }
+            let index = index as usize;
+            if index < array.len() {
+                Ok(array[index].clone())
+            } else {
+                Err(Error::IndexToBig)
+            }
+        }
+        _ => panic!(),
     }
 }

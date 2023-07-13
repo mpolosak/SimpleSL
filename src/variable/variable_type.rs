@@ -1,8 +1,6 @@
 use super::type_set::TypeSet;
 use crate::{
     error::Error,
-    function::{Param, Params},
-    instruction::local_variable::LocalVariable,
     join,
     parse::{Rule, SimpleSLParser},
 };
@@ -196,31 +194,6 @@ impl From<Pair<'_, Rule>> for Type {
             }
             Rule::any => Self::Any,
             _ => panic!(),
-        }
-    }
-}
-
-impl From<LocalVariable> for Type {
-    fn from(value: LocalVariable) -> Self {
-        match value {
-            LocalVariable::Function(
-                Params {
-                    standard,
-                    catch_rest,
-                },
-                return_type,
-            ) => {
-                let params = standard
-                    .into_iter()
-                    .map(|Param { var_type, .. }| var_type)
-                    .collect();
-                Self::Function {
-                    return_type: Box::new(return_type),
-                    params,
-                    catch_rest: catch_rest.is_some(),
-                }
-            }
-            LocalVariable::Other(var_type) => var_type,
         }
     }
 }

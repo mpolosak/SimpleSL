@@ -9,17 +9,26 @@ pub struct Equal {
 }
 
 impl Equal {
-    pub fn new(
+    pub fn create_instruction(
         pair: Pair<Rule>,
         variables: &VariableMap,
         local_variables: &mut LocalVariableMap,
-    ) -> Result<Self, Error> {
+    ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
-        let lhs = Instruction::new(pair, variables, local_variables)?.into();
+        let lhs = Instruction::new(pair, variables, local_variables)?;
         let pair = inner.next().unwrap();
-        let rhs = Instruction::new(pair, variables, local_variables)?.into();
-        Ok(Self { lhs, rhs })
+        let rhs = Instruction::new(pair, variables, local_variables)?;
+        Ok(match (lhs, rhs) {
+            (Instruction::Variable(variable), Instruction::Variable(variable2)) => {
+                Instruction::Variable((variable == variable2).into())
+            }
+            (lhs, rhs) => Self {
+                lhs: lhs.into(),
+                rhs: rhs.into(),
+            }
+            .into(),
+        })
     }
 }
 

@@ -14,11 +14,11 @@ pub struct GreaterOrEqual {
 }
 
 impl GreaterOrEqual {
-    pub fn new(
+    pub fn create_instruction(
         pair: Pair<Rule>,
         variables: &VariableMap,
         local_variables: &mut LocalVariableMap,
-    ) -> Result<Self, Error> {
+    ) -> Result<Instruction, Error> {
         let rule = pair.as_rule();
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
@@ -31,17 +31,32 @@ impl GreaterOrEqual {
             rule,
         ) {
             (Type::Int, Type::Int, Rule::greater_equal)
-            | (Type::Float, Type::Float, Rule::greater_equal) => Ok(Self {
-                lhs: instruction.into(),
-                rhs: instruction2.into(),
-            }),
+            | (Type::Float, Type::Float, Rule::greater_equal) => {
+                Ok(Self::create_from_instructions(instruction, instruction2))
+            }
             (Type::Int, Type::Int, Rule::lower_equal)
-            | (Type::Float, Type::Float, Rule::lower_equal) => Ok(Self {
-                lhs: instruction2.into(),
-                rhs: instruction.into(),
-            }),
+            | (Type::Float, Type::Float, Rule::lower_equal) => {
+                Ok(Self::create_from_instructions(instruction2, instruction))
+            }
             (_, _, Rule::greater_equal) => Err(Error::OperandsMustBeBothIntOrBothFloat(">=")),
             _ => Err(Error::OperandsMustBeBothIntOrBothFloat("<=")),
+        }
+    }
+    fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
+        match (lhs, rhs) {
+            (
+                Instruction::Variable(Variable::Int(lhs)),
+                Instruction::Variable(Variable::Int(rhs)),
+            ) => Instruction::Variable((lhs >= rhs).into()),
+            (
+                Instruction::Variable(Variable::Float(lhs)),
+                Instruction::Variable(Variable::Float(rhs)),
+            ) => Instruction::Variable((lhs >= rhs).into()),
+            (lhs, rhs) => Self {
+                lhs: lhs.into(),
+                rhs: rhs.into(),
+            }
+            .into(),
         }
     }
 }

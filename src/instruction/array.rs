@@ -20,29 +20,41 @@ pub struct Array {
 }
 
 impl Array {
-    pub fn new(
+    pub fn create_instruction(
         pair: Pair<Rule>,
         variables: &VariableMap,
         local_variables: &mut LocalVariableMap,
-    ) -> Result<Self, Error> {
+    ) -> Result<Instruction, Error> {
         let inner = pair.into_inner();
         let instructions = inner
             .map(|arg| Instruction::new(arg, variables, local_variables))
             .collect::<Result<Vec<_>, _>>()?;
         let mut iter = instructions.iter();
-        let var_type = if let Some(first) = iter.next() {
+        if let Some(first) = iter.next() {
             let mut element_type = first.get_return_type();
             for instruction in iter {
                 element_type = element_type.concat(instruction.get_return_type());
             }
-            Type::Array(element_type.into())
+            let var_type = Type::Array(element_type.into());
+            let mut array = Vec::new();
+            for instruction in &instructions {
+                if let Instruction::Variable(variable) = instruction {
+                    array.push(variable.clone());
+                } else {
+                    return Ok(Self {
+                        instructions,
+                        var_type,
+                    }
+                    .into());
+                }
+            }
+            Ok(Instruction::Variable(Variable::Array(
+                array.into(),
+                var_type,
+            )))
         } else {
-            Type::EmptyArray
-        };
-        Ok(Self {
-            instructions,
-            var_type,
-        })
+            Ok(Instruction::Variable(Vec::new().into()))
+        }
     }
 }
 

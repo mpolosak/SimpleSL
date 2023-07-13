@@ -14,11 +14,11 @@ pub struct Add {
 }
 
 impl Add {
-    pub fn new(
+    pub fn parse_add(
         pair: Pair<Rule>,
         variables: &VariableMap,
         local_variables: &mut LocalVariableMap,
-    ) -> Result<Self, Error> {
+    ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
         let lhs = Instruction::new(pair, variables, local_variables)?;
@@ -26,10 +26,25 @@ impl Add {
         let rhs = Instruction::new(pair, variables, local_variables)?;
         match (lhs.get_return_type(), rhs.get_return_type()) {
             (Type::Int, Type::Int) | (Type::Float, Type::Float) | (Type::String, Type::String) => {
-                Ok(Self {
-                    lhs: lhs.into(),
-                    rhs: rhs.into(),
-                })
+                match (lhs, rhs) {
+                    (
+                        Instruction::Variable(Variable::Int(value1)),
+                        Instruction::Variable(Variable::Int(value2)),
+                    ) => Ok(Instruction::Variable((value1 + value2).into())),
+                    (
+                        Instruction::Variable(Variable::Float(value1)),
+                        Instruction::Variable(Variable::Float(value2)),
+                    ) => Ok(Instruction::Variable((value1 + value2).into())),
+                    (
+                        Instruction::Variable(Variable::String(value1)),
+                        Instruction::Variable(Variable::String(value2)),
+                    ) => Ok(Instruction::Variable(format!("{value1}{value2}").into())),
+                    (rhs, lhs) => Ok(Self {
+                        rhs: rhs.into(),
+                        lhs: lhs.into(),
+                    }
+                    .into()),
+                }
             }
             (type1, type2) => Err(Error::CannotAdd(type1, type2)),
         }

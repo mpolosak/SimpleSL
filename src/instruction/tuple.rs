@@ -13,16 +13,24 @@ pub struct Tuple {
 }
 
 impl Tuple {
-    pub fn new(
+    pub fn create_instruction(
         pair: Pair<Rule>,
         variables: &VariableMap,
         local_variables: &mut LocalVariableMap,
-    ) -> Result<Self, Error> {
+    ) -> Result<Instruction, Error> {
         let elements = pair
             .into_inner()
             .map(|pair| Instruction::new(pair, variables, local_variables))
             .collect::<Result<Vec<Instruction>, Error>>()?;
-        Ok(Self { elements })
+        let mut array = Vec::new();
+        for instruction in &elements {
+            if let Instruction::Variable(variable) = instruction {
+                array.push(variable.clone());
+            } else {
+                return Ok(Self { elements }.into());
+            }
+        }
+        Ok(Instruction::Variable(Variable::Tuple(array.into())))
     }
 }
 

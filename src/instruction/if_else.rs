@@ -15,35 +15,35 @@ pub struct IfElse {
 }
 
 impl IfElse {
-    pub fn new(
+    pub fn create_instruction(
         pair: Pair<Rule>,
         variables: &VariableMap,
         local_variables: &mut LocalVariableMap,
-    ) -> Result<Self, Error> {
+    ) -> Result<Instruction, Error> {
         let rule = pair.as_rule();
         let mut inner = pair.into_inner();
         let condition_pair = inner.next().unwrap();
-        let condition = Box::new(Instruction::new(
-            condition_pair,
-            variables,
-            local_variables,
-        )?);
+        let condition = Instruction::new(condition_pair, variables, local_variables)?;
         if condition.get_return_type() != Type::Int {
             return Err(Error::WrongType("condition".to_owned(), Type::Int));
         }
         let true_pair = inner.next().unwrap();
-        let if_true = Instruction::new(true_pair, variables, local_variables)?.into();
+        let if_true = Instruction::new(true_pair, variables, local_variables)?;
         let if_false = if rule == Rule::if_else {
             let false_pair = inner.next().unwrap();
             Instruction::new(false_pair, variables, local_variables)?
         } else {
             Instruction::Variable(Variable::Null)
-        }
-        .into();
-        Ok(Self {
-            condition,
-            if_true,
-            if_false,
+        };
+        Ok(match condition {
+            Instruction::Variable(Variable::Int(0)) => if_false,
+            Instruction::Variable(Variable::Int(_)) => if_true,
+            condition => Self {
+                condition: condition.into(),
+                if_true: if_true.into(),
+                if_false: if_false.into(),
+            }
+            .into(),
         })
     }
 }
