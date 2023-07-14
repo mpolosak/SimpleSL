@@ -1,4 +1,6 @@
-use super::{local_variable::LocalVariableMap, CreateInstruction, Exec, Instruction, Recreate};
+use crate::instruction::{
+    local_variable::LocalVariableMap, CreateInstruction, Exec, Instruction, Recreate,
+};
 use crate::{error::Error, interpreter::VariableMap, parse::Rule};
 use pest::iterators::Pair;
 

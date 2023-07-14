@@ -1,29 +1,23 @@
 mod add;
-mod and;
 mod array;
 mod at;
-mod bin_and;
-mod bin_not;
-mod bin_or;
+mod bin;
 mod block;
 mod check_args;
-mod equal;
+mod comp;
+mod divide;
 mod function;
 mod function_call;
-mod greater;
-mod greater_or_equal;
 mod if_else;
 mod local_function_call;
 pub mod local_variable;
-mod lshift;
+mod logic;
 mod modulo;
-mod not;
-mod or;
-mod rshift;
+mod multiply;
 mod set;
+mod subtract;
 mod traits;
 mod tuple;
-mod xor;
 use crate::{
     error::Error,
     interpreter::{Interpreter, VariableMap},
@@ -36,30 +30,24 @@ use std::fmt;
 pub use traits::{CreateInstruction, Exec, Recreate};
 use {
     add::Add,
-    and::And,
     array::Array,
     at::At,
-    bin_and::BinAnd,
-    bin_not::BinNot,
-    bin_or::BinOr,
+    bin::{BinAnd, BinNot, BinOr, LShift, RShift, Xor},
     block::Block,
     check_args::check_args,
-    equal::Equal,
+    comp::{Equal, Greater, GreaterOrEqual},
+    divide::Divide,
     function::Function,
     function_call::FunctionCall,
-    greater::Greater,
-    greater_or_equal::GreaterOrEqual,
     if_else::IfElse,
     local_function_call::LocalFunctionCall,
     local_variable::{LocalVariable, LocalVariableMap},
-    lshift::LShift,
+    logic::{And, Not, Or},
     modulo::Modulo,
-    not::Not,
-    or::Or,
-    rshift::RShift,
+    multiply::Multiply,
     set::Set,
+    subtract::Subtract,
     tuple::Tuple,
-    xor::Xor,
 };
 
 #[derive(Clone)]
@@ -79,10 +67,10 @@ pub enum Instruction {
     GreaterOrEqual(GreaterOrEqual),
     And(And),
     Or(Or),
-    Multiply(Box<Instruction>, Box<Instruction>),
-    Divide(Box<Instruction>, Box<Instruction>),
+    Multiply(Multiply),
+    Divide(Divide),
     Add(Add),
-    Subtract(Box<Instruction>, Box<Instruction>),
+    Subtract(Subtract),
     Modulo(Modulo),
     BinAnd(BinAnd),
     BinOr(BinOr),
@@ -128,46 +116,10 @@ impl Instruction {
             }
             Rule::and => And::create_instruction(pair, variables, local_variables),
             Rule::or => Or::create_instruction(pair, variables, local_variables),
-            Rule::multiply => {
-                let mut inner = pair.into_inner();
-                let pair = inner.next().unwrap();
-                let lhs = Instruction::new(pair, variables, local_variables)?;
-                let pair = inner.next().unwrap();
-                let rhs = Instruction::new(pair, variables, local_variables)?;
-                match (lhs.get_return_type(), rhs.get_return_type()) {
-                    (Type::Int, Type::Int) | (Type::Float, Type::Float) => {
-                        Ok(Self::Multiply(lhs.into(), rhs.into()))
-                    }
-                    _ => Err(Error::OperandsMustBeBothIntOrBothFloat("*")),
-                }
-            }
-            Rule::divide => {
-                let mut inner = pair.into_inner();
-                let pair = inner.next().unwrap();
-                let lhs = Instruction::new(pair, variables, local_variables)?;
-                let pair = inner.next().unwrap();
-                let rhs = Instruction::new(pair, variables, local_variables)?;
-                match (lhs.get_return_type(), rhs.get_return_type()) {
-                    (Type::Int, Type::Int) | (Type::Float, Type::Float) => {
-                        Ok(Self::Divide(lhs.into(), rhs.into()))
-                    }
-                    _ => Err(Error::OperandsMustBeBothIntOrBothFloat("/")),
-                }
-            }
-            Rule::add => Ok(Add::create_instruction(pair, variables, local_variables)?),
-            Rule::subtract => {
-                let mut inner = pair.into_inner();
-                let pair = inner.next().unwrap();
-                let lhs = Instruction::new(pair, variables, local_variables)?;
-                let pair = inner.next().unwrap();
-                let rhs = Instruction::new(pair, variables, local_variables)?;
-                match (lhs.get_return_type(), rhs.get_return_type()) {
-                    (Type::Int, Type::Int) | (Type::Float, Type::Float) => {
-                        Ok(Self::Subtract(lhs.into(), rhs.into()))
-                    }
-                    _ => Err(Error::OperandsMustBeBothIntOrBothFloat("-")),
-                }
-            }
+            Rule::multiply => Multiply::create_instruction(pair, variables, local_variables),
+            Rule::divide => Divide::create_instruction(pair, variables, local_variables),
+            Rule::add => Add::create_instruction(pair, variables, local_variables),
+            Rule::subtract => Subtract::create_instruction(pair, variables, local_variables),
             Rule::modulo => Modulo::create_instruction(pair, variables, local_variables),
             Rule::bin_and => BinAnd::create_instruction(pair, variables, local_variables),
             Rule::bin_or => BinOr::create_instruction(pair, variables, local_variables),
@@ -252,40 +204,10 @@ impl Exec for Instruction {
             }
             Self::And(and) => and.exec(interpreter, local_variables),
             Self::Or(or) => or.exec(interpreter, local_variables),
-            Self::Multiply(lhs, rhs) => {
-                let result1 = lhs.exec(interpreter, local_variables)?;
-                let result2 = rhs.exec(interpreter, local_variables)?;
-                match (result1, result2) {
-                    (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 * value2).into()),
-                    (Variable::Float(value1), Variable::Float(value2)) => {
-                        Ok((value1 * value2).into())
-                    }
-                    _ => panic!(),
-                }
-            }
-            Self::Divide(lhs, rhs) => {
-                let result1 = lhs.exec(interpreter, local_variables)?;
-                let result2 = rhs.exec(interpreter, local_variables)?;
-                match (result1, result2) {
-                    (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 / value2).into()),
-                    (Variable::Float(value1), Variable::Float(value2)) => {
-                        Ok((value1 / value2).into())
-                    }
-                    _ => panic!(),
-                }
-            }
+            Self::Multiply(multiply) => multiply.exec(interpreter, local_variables),
+            Self::Divide(divide) => divide.exec(interpreter, local_variables),
             Self::Add(add) => add.exec(interpreter, local_variables),
-            Self::Subtract(lhs, rhs) => {
-                let result1 = lhs.exec(interpreter, local_variables)?;
-                let result2 = rhs.exec(interpreter, local_variables)?;
-                match (result1, result2) {
-                    (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 - value2).into()),
-                    (Variable::Float(value1), Variable::Float(value2)) => {
-                        Ok((value1 - value2).into())
-                    }
-                    _ => panic!(),
-                }
-            }
+            Self::Subtract(subtract) => subtract.exec(interpreter, local_variables),
             Self::Modulo(modulo) => modulo.exec(interpreter, local_variables),
             Self::BinAnd(bin_and) => bin_and.exec(interpreter, local_variables),
             Self::BinOr(bin_or) => bin_or.exec(interpreter, local_variables),
@@ -304,14 +226,14 @@ impl Recreate for Instruction {
         match self {
             Self::LocalFunctionCall(function_call) => function_call.recreate(local_variables, args),
             Self::FunctionCall(function_call) => function_call.recreate(local_variables, args),
-            Self::LocalVariable(name, var_type) => {
-                if local_variables.contains_key(&name) {
-                    Self::LocalVariable(name, var_type)
-                } else {
+            Self::LocalVariable(name, var_type) => match local_variables.get(&name) {
+                Some(LocalVariable::Variable(variable)) => Self::Variable(variable.clone()),
+                Some(_) => Self::LocalVariable(name, var_type),
+                None => {
                     let variable = args.get(&name).unwrap();
                     Self::Variable(variable)
                 }
-            }
+            },
             Self::Array(array) => array.recreate(local_variables, args),
             Self::Function(function) => function.recreate(local_variables, args),
             Self::Tuple(tuple) => tuple.recreate(local_variables, args),
@@ -325,22 +247,10 @@ impl Recreate for Instruction {
             }
             Self::And(and) => and.recreate(local_variables, args),
             Self::Or(or) => or.recreate(local_variables, args),
-            Self::Multiply(lhs, rhs) => {
-                let lhs = lhs.recreate(local_variables, args);
-                let rhs = rhs.recreate(local_variables, args);
-                Self::Multiply(lhs.into(), rhs.into())
-            }
-            Self::Divide(lhs, rhs) => {
-                let lhs = lhs.recreate(local_variables, args);
-                let rhs = rhs.recreate(local_variables, args);
-                Self::Divide(lhs.into(), rhs.into())
-            }
+            Self::Multiply(multiply) => multiply.recreate(local_variables, args),
+            Self::Divide(divide) => divide.recreate(local_variables, args),
             Self::Add(add) => add.recreate(local_variables, args),
-            Self::Subtract(lhs, rhs) => {
-                let lhs = lhs.recreate(local_variables, args);
-                let rhs = rhs.recreate(local_variables, args);
-                Self::Subtract(lhs.into(), rhs.into())
-            }
+            Self::Subtract(subtract) => subtract.recreate(local_variables, args),
             Self::Modulo(modulo) => modulo.recreate(local_variables, args),
             Self::BinAnd(bin_and) => bin_and.recreate(local_variables, args),
             Self::BinOr(bin_or) => bin_or.recreate(local_variables, args),
@@ -373,6 +283,9 @@ impl GetReturnType for Instruction {
             Self::Tuple(tuple) => tuple.get_return_type(),
             Self::Set(set) => set.get_return_type(),
             Self::Add(add) => add.get_return_type(),
+            Self::Subtract(subtract) => subtract.get_return_type(),
+            Self::Multiply(multiply) => multiply.get_return_type(),
+            Self::Divide(divide) => divide.get_return_type(),
             Self::Block(block) => block.get_return_type(),
             Self::IfElse(if_else) => if_else.get_return_type(),
             Self::At(at) => at.get_return_type(),
@@ -389,9 +302,6 @@ impl GetReturnType for Instruction {
             | Self::Xor(..)
             | Self::LShift(..)
             | Self::RShift(..) => Type::Int,
-            Self::Multiply(instruction, _)
-            | Self::Divide(instruction, _)
-            | Self::Subtract(instruction, _) => instruction.get_return_type(),
         }
     }
 }

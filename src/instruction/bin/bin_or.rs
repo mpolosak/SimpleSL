@@ -1,4 +1,6 @@
-use super::{local_variable::LocalVariableMap, CreateInstruction, Exec, Instruction, Recreate};
+use crate::instruction::{
+    local_variable::LocalVariableMap, CreateInstruction, Exec, Instruction, Recreate,
+};
 use crate::{
     error::Error,
     interpreter::VariableMap,
@@ -8,12 +10,12 @@ use crate::{
 use pest::iterators::Pair;
 
 #[derive(Clone)]
-pub struct RShift {
+pub struct BinOr {
     lhs: Box<Instruction>,
     rhs: Box<Instruction>,
 }
 
-impl CreateInstruction for RShift {
+impl CreateInstruction for BinOr {
     fn create_instruction(
         pair: Pair<Rule>,
         variables: &VariableMap,
@@ -26,17 +28,17 @@ impl CreateInstruction for RShift {
         let rhs = Instruction::new(pair, variables, local_variables)?;
         match (lhs.get_return_type(), rhs.get_return_type()) {
             (Type::Int, Type::Int) => Ok(Self::create_from_instructions(lhs, rhs)),
-            _ => Err(Error::BothOperandsMustBeInt(">>")),
+            _ => Err(Error::BothOperandsMustBeInt("|")),
         }
     }
 }
-impl RShift {
+impl BinOr {
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         match (lhs, rhs) {
             (
                 Instruction::Variable(Variable::Int(lhs)),
                 Instruction::Variable(Variable::Int(rhs)),
-            ) => Instruction::Variable((lhs >> rhs).into()),
+            ) => Instruction::Variable((lhs | rhs).into()),
             (lhs, rhs) => Self {
                 lhs: lhs.into(),
                 rhs: rhs.into(),
@@ -46,7 +48,7 @@ impl RShift {
     }
 }
 
-impl Exec for RShift {
+impl Exec for BinOr {
     fn exec(
         &self,
         interpreter: &mut crate::interpreter::Interpreter,
@@ -55,13 +57,13 @@ impl Exec for RShift {
         let result1 = self.lhs.exec(interpreter, local_variables)?;
         let result2 = self.rhs.exec(interpreter, local_variables)?;
         match (result1, result2) {
-            (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 >> value2).into()),
+            (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 | value2).into()),
             _ => panic!(),
         }
     }
 }
 
-impl Recreate for RShift {
+impl Recreate for BinOr {
     fn recreate(self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Instruction {
         let lhs = self.lhs.recreate(local_variables, args);
         let rhs = self.rhs.recreate(local_variables, args);
@@ -69,8 +71,8 @@ impl Recreate for RShift {
     }
 }
 
-impl From<RShift> for Instruction {
-    fn from(value: RShift) -> Self {
-        Self::RShift(value)
+impl From<BinOr> for Instruction {
+    fn from(value: BinOr) -> Self {
+        Self::BinOr(value)
     }
 }

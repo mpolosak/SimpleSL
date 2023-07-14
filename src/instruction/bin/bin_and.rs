@@ -1,4 +1,6 @@
-use super::{local_variable::LocalVariableMap, CreateInstruction, Exec, Instruction, Recreate};
+use crate::instruction::{
+    local_variable::LocalVariableMap, CreateInstruction, Exec, Instruction, Recreate,
+};
 use crate::{
     error::Error,
     interpreter::VariableMap,
@@ -8,12 +10,12 @@ use crate::{
 use pest::iterators::Pair;
 
 #[derive(Clone)]
-pub struct Or {
+pub struct BinAnd {
     lhs: Box<Instruction>,
     rhs: Box<Instruction>,
 }
 
-impl CreateInstruction for Or {
+impl CreateInstruction for BinAnd {
     fn create_instruction(
         pair: Pair<Rule>,
         variables: &VariableMap,
@@ -26,24 +28,17 @@ impl CreateInstruction for Or {
         let rhs = Instruction::new(pair, variables, local_variables)?;
         match (lhs.get_return_type(), rhs.get_return_type()) {
             (Type::Int, Type::Int) => Ok(Self::create_from_instructions(lhs, rhs)),
-            _ => Err(Error::BothOperandsMustBeInt("||")),
+            _ => Err(Error::BothOperandsMustBeInt("&")),
         }
     }
 }
-
-impl Or {
+impl BinAnd {
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         match (lhs, rhs) {
             (
                 Instruction::Variable(Variable::Int(lhs)),
                 Instruction::Variable(Variable::Int(rhs)),
-            ) => Instruction::Variable((lhs != 0 || rhs != 0).into()),
-            (Instruction::Variable(Variable::Int(value)), instruction)
-            | (instruction, Instruction::Variable(Variable::Int(value)))
-                if value == 0 =>
-            {
-                instruction
-            }
+            ) => Instruction::Variable((lhs & rhs).into()),
             (lhs, rhs) => Self {
                 lhs: lhs.into(),
                 rhs: rhs.into(),
@@ -53,7 +48,7 @@ impl Or {
     }
 }
 
-impl Exec for Or {
+impl Exec for BinAnd {
     fn exec(
         &self,
         interpreter: &mut crate::interpreter::Interpreter,
@@ -62,15 +57,13 @@ impl Exec for Or {
         let result1 = self.lhs.exec(interpreter, local_variables)?;
         let result2 = self.rhs.exec(interpreter, local_variables)?;
         match (result1, result2) {
-            (Variable::Int(value1), Variable::Int(value2)) => {
-                Ok((value1 != 0 || value2 != 0).into())
-            }
+            (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 & value2).into()),
             _ => panic!(),
         }
     }
 }
 
-impl Recreate for Or {
+impl Recreate for BinAnd {
     fn recreate(self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Instruction {
         let lhs = self.lhs.recreate(local_variables, args);
         let rhs = self.rhs.recreate(local_variables, args);
@@ -78,8 +71,8 @@ impl Recreate for Or {
     }
 }
 
-impl From<Or> for Instruction {
-    fn from(value: Or) -> Self {
-        Self::Or(value)
+impl From<BinAnd> for Instruction {
+    fn from(value: BinAnd) -> Self {
+        Self::BinAnd(value)
     }
 }

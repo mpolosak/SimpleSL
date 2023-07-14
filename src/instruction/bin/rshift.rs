@@ -1,4 +1,6 @@
-use super::{local_variable::LocalVariableMap, CreateInstruction, Exec, Instruction, Recreate};
+use crate::instruction::{
+    local_variable::LocalVariableMap, CreateInstruction, Exec, Instruction, Recreate,
+};
 use crate::{
     error::Error,
     interpreter::VariableMap,
@@ -8,12 +10,12 @@ use crate::{
 use pest::iterators::Pair;
 
 #[derive(Clone)]
-pub struct And {
+pub struct RShift {
     lhs: Box<Instruction>,
     rhs: Box<Instruction>,
 }
 
-impl CreateInstruction for And {
+impl CreateInstruction for RShift {
     fn create_instruction(
         pair: Pair<Rule>,
         variables: &VariableMap,
@@ -26,23 +28,17 @@ impl CreateInstruction for And {
         let rhs = Instruction::new(pair, variables, local_variables)?;
         match (lhs.get_return_type(), rhs.get_return_type()) {
             (Type::Int, Type::Int) => Ok(Self::create_from_instructions(lhs, rhs)),
-            _ => Err(Error::BothOperandsMustBeInt("&&")),
+            _ => Err(Error::BothOperandsMustBeInt(">>")),
         }
     }
 }
-impl And {
+impl RShift {
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         match (lhs, rhs) {
             (
                 Instruction::Variable(Variable::Int(lhs)),
                 Instruction::Variable(Variable::Int(rhs)),
-            ) => Instruction::Variable((lhs * rhs).into()),
-            (Instruction::Variable(Variable::Int(value)), instruction)
-            | (instruction, Instruction::Variable(Variable::Int(value)))
-                if value != 0 =>
-            {
-                instruction
-            }
+            ) => Instruction::Variable((lhs >> rhs).into()),
             (lhs, rhs) => Self {
                 lhs: lhs.into(),
                 rhs: rhs.into(),
@@ -52,7 +48,7 @@ impl And {
     }
 }
 
-impl Exec for And {
+impl Exec for RShift {
     fn exec(
         &self,
         interpreter: &mut crate::interpreter::Interpreter,
@@ -61,13 +57,13 @@ impl Exec for And {
         let result1 = self.lhs.exec(interpreter, local_variables)?;
         let result2 = self.rhs.exec(interpreter, local_variables)?;
         match (result1, result2) {
-            (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 * value2).into()),
+            (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 >> value2).into()),
             _ => panic!(),
         }
     }
 }
 
-impl Recreate for And {
+impl Recreate for RShift {
     fn recreate(self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Instruction {
         let lhs = self.lhs.recreate(local_variables, args);
         let rhs = self.rhs.recreate(local_variables, args);
@@ -75,8 +71,8 @@ impl Recreate for And {
     }
 }
 
-impl From<And> for Instruction {
-    fn from(value: And) -> Self {
-        Self::And(value)
+impl From<RShift> for Instruction {
+    fn from(value: RShift) -> Self {
+        Self::RShift(value)
     }
 }
