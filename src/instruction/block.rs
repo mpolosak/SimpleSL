@@ -1,4 +1,7 @@
-use super::{local_variable::LocalVariableMap, CreateInstruction, Exec, Instruction, Recreate};
+use super::{
+    local_variable::LocalVariableMap, recreate_instructions, CreateInstruction, Exec, Instruction,
+    Recreate,
+};
 use crate::{
     error::Error,
     interpreter::{Interpreter, VariableMap},
@@ -54,14 +57,14 @@ impl Exec for Block {
 }
 
 impl Recreate for Block {
-    fn recreate(self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Instruction {
+    fn recreate(
+        self,
+        local_variables: &mut LocalVariableMap,
+        args: &VariableMap,
+    ) -> Result<Instruction, Error> {
         let mut local_variables = local_variables.clone();
-        let instructions = self
-            .instructions
-            .into_iter()
-            .map(|instruction| instruction.recreate(&mut local_variables, args))
-            .collect();
-        Self { instructions }.into()
+        let instructions = recreate_instructions(self.instructions, &mut local_variables, args)?;
+        Ok(Self { instructions }.into())
     }
 }
 

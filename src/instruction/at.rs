@@ -31,22 +31,30 @@ impl CreateInstruction for At {
                 .matches(&required_instruction_type),
             index.get_return_type() == Type::Int,
         ) {
-            (true, true) => Ok(match (instruction, index) {
-                (Instruction::Variable(variable), Instruction::Variable(index)) => {
-                    at(variable, index)?.into()
-                }
-                (instruction, index) => Self {
-                    instruction: instruction.into(),
-                    index: index.into(),
-                }
-                .into(),
-            }),
+            (true, true) => Self::create_from_instructions(instruction, index),
             (true, false) => Err(Error::WrongType("index".into(), Type::Int)),
             (false, _) => Err(Error::WrongType(
                 "instruction".into(),
                 required_instruction_type,
             )),
         }
+    }
+}
+impl At {
+    fn create_from_instructions(
+        instruction: Instruction,
+        index: Instruction,
+    ) -> Result<Instruction, Error> {
+        Ok(match (instruction, index) {
+            (Instruction::Variable(variable), Instruction::Variable(index)) => {
+                at(variable, index)?.into()
+            }
+            (instruction, index) => Self {
+                instruction: instruction.into(),
+                index: index.into(),
+            }
+            .into(),
+        })
     }
 }
 
@@ -63,10 +71,14 @@ impl Exec for At {
 }
 
 impl Recreate for At {
-    fn recreate(self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Instruction {
-        let instruction = self.instruction.recreate(local_variables, args).into();
-        let index = self.index.recreate(local_variables, args).into();
-        Self { instruction, index }.into()
+    fn recreate(
+        self,
+        local_variables: &mut LocalVariableMap,
+        args: &VariableMap,
+    ) -> Result<Instruction, Error> {
+        let instruction = self.instruction.recreate(local_variables, args)?;
+        let index = self.index.recreate(local_variables, args)?;
+        Self::create_from_instructions(instruction, index)
     }
 }
 

@@ -59,7 +59,7 @@ impl Exec for Function {
     ) -> Result<Variable, Error> {
         let mut fn_local_variables = LocalVariableMap::from(self.params.clone());
         let body =
-            recreate_instructions(self.body.clone(), &mut fn_local_variables, local_variables);
+            recreate_instructions(self.body.clone(), &mut fn_local_variables, local_variables)?;
         Ok(Variable::Function(Rc::new(LangFunction {
             params: self.params.clone(),
             body,
@@ -68,20 +68,26 @@ impl Exec for Function {
 }
 
 impl Recreate for Function {
-    fn recreate(self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Instruction {
+    fn recreate(
+        self,
+        local_variables: &mut LocalVariableMap,
+        args: &VariableMap,
+    ) -> Result<Instruction, Error> {
         let mut local_variables = local_variables.clone();
         local_variables.extend(LocalVariableMap::from(self.params.clone()));
-        let body = recreate_instructions(self.body, &mut local_variables, args);
+        let body = recreate_instructions(self.body, &mut local_variables, args)?;
         if body
             .iter()
             .all(|instruction| matches!(instruction, Instruction::Variable(_)))
         {
-            Instruction::Variable(Variable::Function(Rc::new(LangFunction {
-                params: self.params,
-                body,
-            })))
+            Ok(Instruction::Variable(Variable::Function(Rc::new(
+                LangFunction {
+                    params: self.params,
+                    body,
+                },
+            ))))
         } else {
-            Self { body, ..self }.into()
+            Ok(Self { body, ..self }.into())
         }
     }
 }

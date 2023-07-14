@@ -51,24 +51,28 @@ impl Exec for LocalFunctionCall {
 }
 
 impl Recreate for LocalFunctionCall {
-    fn recreate(self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Instruction {
-        let instructions = recreate_instructions(self.args, local_variables, args);
+    fn recreate(
+        self,
+        local_variables: &mut LocalVariableMap,
+        args: &VariableMap,
+    ) -> Result<Instruction, Error> {
+        let instructions = recreate_instructions(self.args, local_variables, args)?;
         if local_variables.contains_key(&self.ident) {
-            Self {
+            Ok(Self {
                 ident: self.ident,
                 args: instructions,
                 return_type: self.return_type,
             }
-            .into()
+            .into())
         } else {
             let Variable::Function(function) = args.get(&self.ident).unwrap() else {
                         panic!()
                     };
-            FunctionCall {
+            Ok(FunctionCall {
                 function,
                 args: instructions,
             }
-            .into()
+            .into())
         }
     }
 }

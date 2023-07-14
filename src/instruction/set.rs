@@ -48,14 +48,18 @@ impl Exec for Set {
 }
 
 impl Recreate for Set {
-    fn recreate(self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Instruction {
-        let instruction = self.instruction.recreate(local_variables, args);
+    fn recreate(
+        self,
+        local_variables: &mut LocalVariableMap,
+        args: &VariableMap,
+    ) -> Result<Instruction, Error> {
+        let instruction = self.instruction.recreate(local_variables, args)?;
         local_variables.insert(self.ident.clone(), instruction.clone().into());
-        Self {
+        Ok(Self {
             instruction: instruction.into(),
             ..self
         }
-        .into()
+        .into())
     }
 }
 

@@ -55,13 +55,17 @@ impl Exec for Tuple {
 }
 
 impl Recreate for Tuple {
-    fn recreate(self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Instruction {
+    fn recreate(
+        self,
+        local_variables: &mut LocalVariableMap,
+        args: &VariableMap,
+    ) -> Result<Instruction, Error> {
         let elements = self
             .elements
             .into_iter()
             .map(|instruction| instruction.recreate(local_variables, args))
-            .collect();
-        Self::create_from_elements(elements)
+            .collect::<Result<Vec<Instruction>, Error>>()?;
+        Ok(Self::create_from_elements(elements))
     }
 }
 

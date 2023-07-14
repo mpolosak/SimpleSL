@@ -72,11 +72,15 @@ impl Exec for IfElse {
 }
 
 impl Recreate for IfElse {
-    fn recreate(self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Instruction {
-        let condition = self.condition.recreate(local_variables, args);
-        let if_true = self.if_true.recreate(local_variables, args);
-        let if_false = self.if_false.recreate(local_variables, args);
-        Self::create_from_instructions(condition, if_false, if_true)
+    fn recreate(
+        self,
+        local_variables: &mut LocalVariableMap,
+        args: &VariableMap,
+    ) -> Result<Instruction, Error> {
+        let condition = self.condition.recreate(local_variables, args)?;
+        let if_true = self.if_true.recreate(local_variables, args)?;
+        let if_false = self.if_false.recreate(local_variables, args)?;
+        Ok(Self::create_from_instructions(condition, if_false, if_true))
     }
 }
 

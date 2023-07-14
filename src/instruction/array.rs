@@ -72,9 +72,13 @@ impl Exec for Array {
 }
 
 impl Recreate for Array {
-    fn recreate(self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Instruction {
-        let instructions = recreate_instructions(self.instructions, local_variables, args);
-        Self::create_from_instructions(instructions)
+    fn recreate(
+        self,
+        local_variables: &mut LocalVariableMap,
+        args: &VariableMap,
+    ) -> Result<Instruction, Error> {
+        let instructions = recreate_instructions(self.instructions, local_variables, args)?;
+        Ok(Self::create_from_instructions(instructions))
     }
 }
 

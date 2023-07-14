@@ -55,9 +55,13 @@ impl Exec for BinNot {
 }
 
 impl Recreate for BinNot {
-    fn recreate(self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Instruction {
-        let instruction = self.instruction.recreate(local_variables, args);
-        Self::create_from_instruction(instruction)
+    fn recreate(
+        self,
+        local_variables: &mut LocalVariableMap,
+        args: &VariableMap,
+    ) -> Result<Instruction, Error> {
+        let instruction = self.instruction.recreate(local_variables, args)?;
+        Ok(Self::create_from_instruction(instruction))
     }
 }
 

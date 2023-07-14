@@ -6,6 +6,7 @@ use crate::{
     variable::{GetReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
+use std::result::Result;
 
 #[derive(Clone)]
 pub struct Multiply {
@@ -70,10 +71,14 @@ impl Exec for Multiply {
 }
 
 impl Recreate for Multiply {
-    fn recreate(self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Instruction {
-        let lhs = self.lhs.recreate(local_variables, args);
-        let rhs = self.rhs.recreate(local_variables, args);
-        Self::create_from_instructions(lhs, rhs)
+    fn recreate(
+        self,
+        local_variables: &mut LocalVariableMap,
+        args: &VariableMap,
+    ) -> Result<Instruction, Error> {
+        let lhs = self.lhs.recreate(local_variables, args)?;
+        let rhs = self.rhs.recreate(local_variables, args)?;
+        Ok(Self::create_from_instructions(lhs, rhs))
     }
 }
 

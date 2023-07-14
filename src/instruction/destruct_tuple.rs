@@ -89,14 +89,18 @@ impl Exec for DestructTuple {
 }
 
 impl Recreate for DestructTuple {
-    fn recreate(self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Instruction {
-        let instruction = self.instruction.recreate(local_variables, args).into();
+    fn recreate(
+        self,
+        local_variables: &mut LocalVariableMap,
+        args: &VariableMap,
+    ) -> Result<Instruction, Error> {
+        let instruction = self.instruction.recreate(local_variables, args)?.into();
         let result = Self {
             instruction,
             ..self
         };
         result.insert_local_variables(local_variables);
-        result.into()
+        Ok(result.into())
     }
 }
 

@@ -26,11 +26,7 @@ impl CreateInstruction for Divide {
         let rhs = Instruction::new(pair, variables, local_variables)?;
         match (lhs.get_return_type(), rhs.get_return_type()) {
             (Type::Int, Type::Int) | (Type::Float, Type::Float) => {
-                if !matches!(rhs, Instruction::Variable(Variable::Int(0))) {
-                    Ok(Self::create_from_instructions(lhs, rhs))
-                } else {
-                    Err(Error::ZeroDivision)
-                }
+                Self::create_from_instructions(lhs, rhs)
             }
             _ => Err(Error::OperandsMustBeBothIntOrBothFloat("/")),
         }
@@ -38,21 +34,22 @@ impl CreateInstruction for Divide {
 }
 
 impl Divide {
-    fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
+    fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
         match (lhs, rhs) {
+            (_, Instruction::Variable(Variable::Int(0))) => Err(Error::ZeroDivision),
             (
                 Instruction::Variable(Variable::Int(value1)),
                 Instruction::Variable(Variable::Int(value2)),
-            ) => Instruction::Variable((value1 / value2).into()),
+            ) => Ok(Instruction::Variable((value1 / value2).into())),
             (
                 Instruction::Variable(Variable::Float(value1)),
                 Instruction::Variable(Variable::Float(value2)),
-            ) => Instruction::Variable((value1 / value2).into()),
-            (lhs, rhs) => Self {
+            ) => Ok(Instruction::Variable((value1 / value2).into())),
+            (lhs, rhs) => Ok(Self {
                 lhs: lhs.into(),
                 rhs: rhs.into(),
             }
-            .into(),
+            .into()),
         }
     }
 }
@@ -75,9 +72,13 @@ impl Exec for Divide {
 }
 
 impl Recreate for Divide {
-    fn recreate(self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Instruction {
-        let lhs = self.lhs.recreate(local_variables, args);
-        let rhs = self.rhs.recreate(local_variables, args);
+    fn recreate(
+        self,
+        local_variables: &mut LocalVariableMap,
+        args: &VariableMap,
+    ) -> Result<Instruction, Error> {
+        let lhs = self.lhs.recreate(local_variables, args)?;
+        let rhs = self.rhs.recreate(local_variables, args)?;
         Self::create_from_instructions(lhs, rhs)
     }
 }

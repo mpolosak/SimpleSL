@@ -232,18 +232,22 @@ impl Exec for Instruction {
 }
 
 impl Recreate for Instruction {
-    fn recreate(self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Instruction {
+    fn recreate(
+        self,
+        local_variables: &mut LocalVariableMap,
+        args: &VariableMap,
+    ) -> Result<Instruction, Error> {
         match self {
             Self::LocalFunctionCall(function_call) => function_call.recreate(local_variables, args),
             Self::FunctionCall(function_call) => function_call.recreate(local_variables, args),
-            Self::LocalVariable(name, var_type) => match local_variables.get(&name) {
+            Self::LocalVariable(name, var_type) => Ok(match local_variables.get(&name) {
                 Some(LocalVariable::Variable(variable)) => Self::Variable(variable.clone()),
                 Some(_) => Self::LocalVariable(name, var_type),
                 None => {
                     let variable = args.get(&name).unwrap();
                     Self::Variable(variable)
                 }
-            },
+            }),
             Self::Array(array) => array.recreate(local_variables, args),
             Self::Function(function) => function.recreate(local_variables, args),
             Self::Tuple(tuple) => tuple.recreate(local_variables, args),
@@ -271,7 +275,7 @@ impl Recreate for Instruction {
             Self::Block(block) => block.recreate(local_variables, args),
             Self::IfElse(if_else) => if_else.recreate(local_variables, args),
             Self::At(at) => at.recreate(local_variables, args),
-            _ => self,
+            _ => Ok(self),
         }
     }
 }
@@ -328,7 +332,7 @@ pub fn recreate_instructions(
     instructions: Vec<Instruction>,
     local_variables: &mut LocalVariableMap,
     args: &VariableMap,
-) -> Vec<Instruction> {
+) -> Result<Vec<Instruction>, Error> {
     instructions
         .into_iter()
         .map(|instruction| instruction.recreate(local_variables, args))

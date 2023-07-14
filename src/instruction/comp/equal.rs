@@ -21,7 +21,13 @@ impl CreateInstruction for Equal {
         let lhs = Instruction::new(pair, variables, local_variables)?;
         let pair = inner.next().unwrap();
         let rhs = Instruction::new(pair, variables, local_variables)?;
-        Ok(match (lhs, rhs) {
+        Ok(Self::create_from_instructions(lhs, rhs))
+    }
+}
+
+impl Equal {
+    fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
+        match (lhs, rhs) {
             (Instruction::Variable(variable), Instruction::Variable(variable2)) => {
                 Instruction::Variable((variable == variable2).into())
             }
@@ -30,7 +36,7 @@ impl CreateInstruction for Equal {
                 rhs: rhs.into(),
             }
             .into(),
-        })
+        }
     }
 }
 
@@ -47,10 +53,14 @@ impl Exec for Equal {
 }
 
 impl Recreate for Equal {
-    fn recreate(self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Instruction {
-        let lhs = self.lhs.recreate(local_variables, args).into();
-        let rhs = self.rhs.recreate(local_variables, args).into();
-        Instruction::Equal(Self { lhs, rhs })
+    fn recreate(
+        self,
+        local_variables: &mut LocalVariableMap,
+        args: &VariableMap,
+    ) -> Result<Instruction, Error> {
+        let lhs = self.lhs.recreate(local_variables, args)?;
+        let rhs = self.rhs.recreate(local_variables, args)?;
+        Ok(Self::create_from_instructions(lhs, rhs))
     }
 }
 

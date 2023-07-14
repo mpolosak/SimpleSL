@@ -46,13 +46,17 @@ impl Exec for FunctionCall {
 }
 
 impl Recreate for FunctionCall {
-    fn recreate(self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Instruction {
-        let instructions = recreate_instructions(self.args, local_variables, args);
-        Self {
+    fn recreate(
+        self,
+        local_variables: &mut LocalVariableMap,
+        args: &VariableMap,
+    ) -> Result<Instruction, Error> {
+        let instructions = recreate_instructions(self.args, local_variables, args)?;
+        Ok(Self {
             function: self.function,
             args: instructions,
         }
-        .into()
+        .into())
     }
 }
 

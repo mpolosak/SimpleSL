@@ -81,10 +81,14 @@ impl Exec for Greater {
 }
 
 impl Recreate for Greater {
-    fn recreate(self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Instruction {
-        let lhs = self.lhs.recreate(local_variables, args);
-        let rhs = self.rhs.recreate(local_variables, args);
-        Self::create_from_instructions(lhs, rhs)
+    fn recreate(
+        self,
+        local_variables: &mut LocalVariableMap,
+        args: &VariableMap,
+    ) -> Result<Instruction, Error> {
+        let lhs = self.lhs.recreate(local_variables, args)?;
+        let rhs = self.rhs.recreate(local_variables, args)?;
+        Ok(Self::create_from_instructions(lhs, rhs))
     }
 }
 

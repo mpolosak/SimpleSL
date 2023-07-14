@@ -24,5 +24,9 @@ pub trait Exec {
 }
 
 pub trait Recreate {
-    fn recreate(self, local_variables: &mut LocalVariableMap, args: &VariableMap) -> Instruction;
+    fn recreate(
+        self,
+        local_variables: &mut LocalVariableMap,
+        args: &VariableMap,
+    ) -> Result<Instruction, Error>;
 }
