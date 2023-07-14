@@ -63,8 +63,11 @@ impl Type {
             (Self::Array(element_type), Self::Array(element_type2)) => {
                 element_type.matches(element_type2)
             }
-            (Self::Tuple(types), Self::Tuple(types2)) => zip(types.iter(), types2.iter())
-                .all(|(var_type, var_type2)| var_type.matches(var_type2)),
+            (Self::Tuple(types), Self::Tuple(types2)) => {
+                types.len() == types2.len()
+                    && zip(types.iter(), types2.iter())
+                        .all(|(var_type, var_type2)| var_type.matches(var_type2))
+            }
             _ => self == other,
         }
     }
