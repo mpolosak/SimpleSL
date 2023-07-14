@@ -14,6 +14,8 @@ pub enum Error {
     CannotBeNegative(String),
     CannotBeParsed(String),
     TooManyVariables,
+    ZeroDivision,
+    ZeroModulo,
     IO(std::io::Error),
     Parsing(Box<pest::error::Error<Rule>>),
     Other(String),
@@ -56,6 +58,12 @@ impl fmt::Display for Error {
             }
             Self::TooManyVariables => {
                 write!(f, "String contains more than one variable")
+            }
+            Self::ZeroDivision => {
+                write!(f, "Cannot divide by 0")
+            }
+            Self::ZeroModulo => {
+                write!(f, "Cannot calculate the remainder with a divisor of 0")
             }
             Self::IO(error) => write!(f, "{error}"),
             Self::Parsing(error) => write!(f, "{error}"),

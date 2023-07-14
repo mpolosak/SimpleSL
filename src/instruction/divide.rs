@@ -26,7 +26,11 @@ impl CreateInstruction for Divide {
         let rhs = Instruction::new(pair, variables, local_variables)?;
         match (lhs.get_return_type(), rhs.get_return_type()) {
             (Type::Int, Type::Int) | (Type::Float, Type::Float) => {
-                Ok(Self::create_from_instructions(lhs, rhs))
+                if !matches!(rhs, Instruction::Variable(Variable::Int(0))) {
+                    Ok(Self::create_from_instructions(lhs, rhs))
+                } else {
+                    Err(Error::ZeroDivision)
+                }
             }
             _ => Err(Error::OperandsMustBeBothIntOrBothFloat("/")),
         }
@@ -62,6 +66,7 @@ impl Exec for Divide {
         let lhs = self.lhs.exec(interpreter, local_variables)?;
         let rhs = self.rhs.exec(interpreter, local_variables)?;
         match (lhs, rhs) {
+            (Variable::Int(_), Variable::Int(0)) => Err(Error::ZeroDivision),
             (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 / value2).into()),
             (Variable::Float(value1), Variable::Float(value2)) => Ok((value1 / value2).into()),
             _ => panic!(),
