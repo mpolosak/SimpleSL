@@ -47,7 +47,9 @@ string = ${ "\"" ~ inner ~ "\"" }
   }
 null = {"NULL"}
 set = { return_variable ~ "=" ~ expression }
-line = { COMMENT* ~ ( ( ( set | expression ) ~  line_end) | block ) }
+destruct_tuple = { destruct_idents ~ "=" ~ expression }
+  destruct_idents =  {"(" ~ (ident ~ ("," ~ ident)*)? ~ ")"}
+line = { COMMENT* ~ ( ( ( set | destruct_tuple | expression ) ~  line_end) | block ) }
 	line_end = { ";" }
 return_variable = @{ident}
 function = {params~"{"~line*~"}"}

@@ -5,6 +5,7 @@ mod bin;
 mod block;
 mod check_args;
 mod comp;
+mod destruct_tuple;
 mod divide;
 mod function;
 mod function_call;
@@ -28,6 +29,8 @@ use crate::{
 use pest::iterators::Pair;
 use std::fmt;
 pub use traits::{CreateInstruction, Exec, Recreate};
+
+use self::destruct_tuple::DestructTuple;
 use {
     add::Add,
     array::Array,
@@ -60,6 +63,7 @@ pub enum Instruction {
     Function(Function),
     Tuple(Tuple),
     Set(Set),
+    DestructTuple(DestructTuple),
     Not(Not),
     BinNot(BinNot),
     Equal(Equal),
@@ -94,6 +98,9 @@ impl Instruction {
                 Instruction::new(pair, variables, local_variables)
             }
             Rule::set => Ok(Set::new(pair, variables, local_variables)?.into()),
+            Rule::destruct_tuple => {
+                DestructTuple::create_instruction(pair, variables, local_variables)
+            }
             Rule::not => Not::create_instruction(pair, variables, local_variables),
             Rule::bin_not => BinNot::create_instruction(pair, variables, local_variables),
             Rule::equal => Equal::create_instruction(pair, variables, local_variables),
@@ -195,6 +202,9 @@ impl Exec for Instruction {
             Self::Function(function) => function.exec(interpreter, local_variables),
             Self::Tuple(function) => function.exec(interpreter, local_variables),
             Self::Set(set) => set.exec(interpreter, local_variables),
+            Self::DestructTuple(destruct_tuple) => {
+                destruct_tuple.exec(interpreter, local_variables)
+            }
             Self::Not(not) => not.exec(interpreter, local_variables),
             Self::BinNot(bin_not) => bin_not.exec(interpreter, local_variables),
             Self::Equal(equal) => equal.exec(interpreter, local_variables),
@@ -238,6 +248,7 @@ impl Recreate for Instruction {
             Self::Function(function) => function.recreate(local_variables, args),
             Self::Tuple(tuple) => tuple.recreate(local_variables, args),
             Self::Set(set) => set.recreate(local_variables, args),
+            Self::DestructTuple(destruct_tuple) => destruct_tuple.recreate(local_variables, args),
             Self::Not(not) => not.recreate(local_variables, args),
             Self::BinNot(bin_not) => bin_not.recreate(local_variables, args),
             Self::Equal(equal) => equal.recreate(local_variables, args),
@@ -282,6 +293,7 @@ impl GetReturnType for Instruction {
             Self::LocalVariable(_, local_variable) => local_variable.get_type(),
             Self::Tuple(tuple) => tuple.get_return_type(),
             Self::Set(set) => set.get_return_type(),
+            Self::DestructTuple(destruct_tuple) => destruct_tuple.get_return_type(),
             Self::Add(add) => add.get_return_type(),
             Self::Subtract(subtract) => subtract.get_return_type(),
             Self::Multiply(multiply) => multiply.get_return_type(),

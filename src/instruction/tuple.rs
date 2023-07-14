@@ -9,7 +9,7 @@ use pest::iterators::Pair;
 
 #[derive(Clone)]
 pub struct Tuple {
-    elements: Vec<Instruction>,
+    pub elements: Vec<Instruction>,
 }
 
 impl CreateInstruction for Tuple {
