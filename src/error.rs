@@ -16,6 +16,7 @@ pub enum Error {
     TooManyVariables,
     ZeroDivision,
     ZeroModulo,
+    OverflowShift,
     IO(std::io::Error),
     Parsing(Box<pest::error::Error<Rule>>),
     Other(String),
@@ -64,6 +65,9 @@ impl fmt::Display for Error {
             }
             Self::ZeroModulo => {
                 write!(f, "Cannot calculate the remainder with a divisor of 0")
+            }
+            Self::OverflowShift => {
+                write!(f, "Cannot shift with overflow")
             }
             Self::IO(error) => write!(f, "{error}"),
             Self::Parsing(error) => write!(f, "{error}"),

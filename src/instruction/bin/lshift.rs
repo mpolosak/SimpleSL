@@ -27,23 +27,27 @@ impl CreateInstruction for LShift {
         let pair = inner.next().unwrap();
         let rhs = Instruction::new(pair, variables, local_variables)?;
         match (lhs.get_return_type(), rhs.get_return_type()) {
-            (Type::Int, Type::Int) => Ok(Self::create_from_instructions(lhs, rhs)),
+            (Type::Int, Type::Int) => Self::create_from_instructions(lhs, rhs),
             _ => Err(Error::BothOperandsMustBeInt("<<")),
         }
     }
 }
+
 impl LShift {
-    fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
+    fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
         match (lhs, rhs) {
+            (_, Instruction::Variable(Variable::Int(rhs))) if !(0..=63).contains(&rhs) => {
+                Err(Error::OverflowShift)
+            }
             (
                 Instruction::Variable(Variable::Int(lhs)),
                 Instruction::Variable(Variable::Int(rhs)),
-            ) => Instruction::Variable((lhs << rhs).into()),
-            (lhs, rhs) => Self {
+            ) => Ok(Instruction::Variable((lhs << rhs).into())),
+            (lhs, rhs) => Ok(Self {
                 lhs: lhs.into(),
                 rhs: rhs.into(),
             }
-            .into(),
+            .into()),
         }
     }
 }
@@ -57,6 +61,7 @@ impl Exec for LShift {
         let result1 = self.lhs.exec(interpreter, local_variables)?;
         let result2 = self.rhs.exec(interpreter, local_variables)?;
         match (result1, result2) {
+            (_, Variable::Int(rhs)) if !(0..=63).contains(&rhs) => Err(Error::OverflowShift),
             (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 << value2).into()),
             _ => panic!(),
         }
@@ -71,7 +76,7 @@ impl Recreate for LShift {
     ) -> Result<Instruction, Error> {
         let lhs = self.lhs.recreate(local_variables, args)?;
         let rhs = self.rhs.recreate(local_variables, args)?;
-        Ok(Self::create_from_instructions(lhs, rhs))
+        Self::create_from_instructions(lhs, rhs)
     }
 }
 

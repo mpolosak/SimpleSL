@@ -131,8 +131,8 @@ impl Instruction {
             Rule::bin_and => BinAnd::create_instruction(pair, variables, local_variables),
             Rule::bin_or => BinOr::create_instruction(pair, variables, local_variables),
             Rule::xor => Xor::create_instruction(pair, variables, local_variables),
-            Rule::lshift => RShift::create_instruction(pair, variables, local_variables),
-            Rule::rshift => LShift::create_instruction(pair, variables, local_variables),
+            Rule::rshift => RShift::create_instruction(pair, variables, local_variables),
+            Rule::lshift => LShift::create_instruction(pair, variables, local_variables),
             Rule::function_call => Self::create_function_call(pair, variables, local_variables),
             Rule::int | Rule::float | Rule::string | Rule::null => {
                 let variable = Variable::try_from(pair).unwrap();
