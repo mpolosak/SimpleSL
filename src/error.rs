@@ -13,6 +13,7 @@ pub enum Error {
     CannotAdd(Type, Type),
     CannotBeNegative(String),
     CannotBeParsed(String),
+    CannotIndexInto(Type),
     TooManyVariables,
     ZeroDivision,
     ZeroModulo,
@@ -56,6 +57,9 @@ impl fmt::Display for Error {
             Self::CannotBeNegative(ident) => write!(f, "{ident} cannot be negative"),
             Self::CannotBeParsed(text) => {
                 write!(f, "{text} cannot be parsed to variable")
+            }
+            Self::CannotIndexInto(var_type) => {
+                write!(f, "Cannot index into value of type {var_type}")
             }
             Self::TooManyVariables => {
                 write!(f, "String contains more than one variable")

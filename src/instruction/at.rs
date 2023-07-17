@@ -25,18 +25,14 @@ impl CreateInstruction for At {
         let pair = inner.next().unwrap();
         let index = Instruction::new(pair, variables, local_variables)?;
         let required_instruction_type = [Type::String, Type::Array(Type::Any.into())].into();
+        let instruction_return_type = instruction.get_return_type();
         match (
-            instruction
-                .get_return_type()
-                .matches(&required_instruction_type),
+            instruction_return_type.matches(&required_instruction_type),
             index.get_return_type() == Type::Int,
         ) {
             (true, true) => Self::create_from_instructions(instruction, index),
             (true, false) => Err(Error::WrongType("index".into(), Type::Int)),
-            (false, _) => Err(Error::WrongType(
-                "instruction".into(),
-                required_instruction_type,
-            )),
+            (false, _) => Err(Error::CannotIndexInto(instruction_return_type)),
         }
     }
 }
