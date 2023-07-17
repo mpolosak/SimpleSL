@@ -28,31 +28,37 @@ impl CreateInstruction for IfElse {
             return Err(Error::WrongType("condition".to_owned(), Type::Int));
         }
         let true_pair = inner.next().unwrap();
-        let if_true = Instruction::new(true_pair, variables, local_variables)?;
-        let if_false = if rule == Rule::if_else {
-            let false_pair = inner.next().unwrap();
-            Instruction::new(false_pair, variables, local_variables)?
-        } else {
-            Instruction::Variable(Variable::Null)
-        };
-        Ok(Self::create_from_instructions(condition, if_false, if_true))
-    }
-}
-impl IfElse {
-    fn create_from_instructions(
-        condition: Instruction,
-        if_false: Instruction,
-        if_true: Instruction,
-    ) -> Instruction {
-        match condition {
-            Instruction::Variable(Variable::Int(0)) => if_false,
-            Instruction::Variable(Variable::Int(_)) => if_true,
-            condition => Self {
-                condition: condition.into(),
-                if_true: if_true.into(),
-                if_false: if_false.into(),
+        match (condition, rule) {
+            (Instruction::Variable(Variable::Int(0)), Rule::if_else) => {
+                let false_pair = inner.next().unwrap();
+                Instruction::new(false_pair, variables, local_variables)
             }
-            .into(),
+            (Instruction::Variable(Variable::Int(0)), Rule::if_stm) => {
+                Ok(Instruction::Variable(Variable::Null))
+            }
+            (Instruction::Variable(Variable::Int(_)), _) => {
+                Instruction::new(true_pair, variables, local_variables)
+            }
+            (condition, Rule::if_else) => {
+                let if_true = Instruction::new(true_pair, variables, local_variables)?.into();
+                let false_pair = inner.next().unwrap();
+                let if_false = Instruction::new(false_pair, variables, local_variables)?.into();
+                Ok(Self {
+                    condition: condition.into(),
+                    if_true,
+                    if_false,
+                }
+                .into())
+            }
+            (condition, _) => {
+                let if_true = Instruction::new(true_pair, variables, local_variables)?.into();
+                Ok(Self {
+                    condition: condition.into(),
+                    if_true,
+                    if_false: Instruction::Variable(Variable::Null).into(),
+                }
+                .into())
+            }
         }
     }
 }
@@ -78,9 +84,22 @@ impl Recreate for IfElse {
         args: &VariableMap,
     ) -> Result<Instruction, Error> {
         let condition = self.condition.recreate(local_variables, args)?;
-        let if_true = self.if_true.recreate(local_variables, args)?;
-        let if_false = self.if_false.recreate(local_variables, args)?;
-        Ok(Self::create_from_instructions(condition, if_false, if_true))
+        match condition {
+            Instruction::Variable(Variable::Int(0)) => self.if_true.recreate(local_variables, args),
+            Instruction::Variable(Variable::Int(_)) => {
+                self.if_false.recreate(local_variables, args)
+            }
+            condition => {
+                let if_true = self.if_true.recreate(local_variables, args)?.into();
+                let if_false = self.if_false.recreate(local_variables, args)?.into();
+                Ok(Self {
+                    condition: condition.into(),
+                    if_true,
+                    if_false,
+                }
+                .into())
+            }
+        }
     }
 }
 
