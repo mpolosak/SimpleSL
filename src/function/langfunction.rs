@@ -19,7 +19,7 @@ impl Function for LangFunction {
         interpreter: &mut Interpreter,
         mut args: VariableMap,
     ) -> Result<Variable, Error> {
-        let mut result = Variable::Null;
+        let mut result = Variable::Void;
         for instruction in &self.body {
             result = instruction.exec(interpreter, &mut args)?;
         }
@@ -34,7 +34,7 @@ impl GetReturnType for LangFunction {
     fn get_return_type(&self) -> Type {
         match self.body.last() {
             Some(instruction) => instruction.get_return_type(),
-            None => Type::Null,
+            None => Type::Void,
         }
     }
 }

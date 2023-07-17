@@ -134,7 +134,7 @@ impl Instruction {
             Rule::rshift => RShift::create_instruction(pair, variables, local_variables),
             Rule::lshift => LShift::create_instruction(pair, variables, local_variables),
             Rule::function_call => Self::create_function_call(pair, variables, local_variables),
-            Rule::int | Rule::float | Rule::string | Rule::null => {
+            Rule::int | Rule::float | Rule::string | Rule::void => {
                 let variable = Variable::try_from(pair).unwrap();
                 Ok(Self::Variable(variable))
             }

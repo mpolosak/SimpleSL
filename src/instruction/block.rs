@@ -33,7 +33,7 @@ impl CreateInstruction for Block {
             if let Some(Instruction::Variable(variable)) = instructions.last() {
                 Ok(Instruction::Variable(variable.clone()))
             } else {
-                Ok(Instruction::Variable(Variable::Null))
+                Ok(Instruction::Variable(Variable::Void))
             }
         } else {
             Ok(Self { instructions }.into())
@@ -48,7 +48,7 @@ impl Exec for Block {
         local_variables: &mut VariableMap,
     ) -> Result<Variable, Error> {
         let mut local_variables = local_variables.clone();
-        let mut result = Variable::Null;
+        let mut result = Variable::Void;
         for instruction in &self.instructions {
             result = instruction.exec(interpreter, &mut local_variables)?;
         }
@@ -72,7 +72,7 @@ impl GetReturnType for Block {
     fn get_return_type(&self) -> Type {
         match self.instructions.last() {
             Some(last) => last.get_return_type(),
-            None => Type::Null,
+            None => Type::Void,
         }
     }
 }

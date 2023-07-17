@@ -34,7 +34,7 @@ impl CreateInstruction for IfElse {
                 Instruction::new(false_pair, variables, local_variables)
             }
             (Instruction::Variable(Variable::Int(0)), Rule::if_stm) => {
-                Ok(Instruction::Variable(Variable::Null))
+                Ok(Instruction::Variable(Variable::Void))
             }
             (Instruction::Variable(Variable::Int(_)), _) => {
                 Instruction::new(true_pair, variables, local_variables)
@@ -55,7 +55,7 @@ impl CreateInstruction for IfElse {
                 Ok(Self {
                     condition: condition.into(),
                     if_true,
-                    if_false: Instruction::Variable(Variable::Null).into(),
+                    if_false: Instruction::Variable(Variable::Void).into(),
                 }
                 .into())
             }

@@ -1,9 +1,9 @@
 int = { ("+" | "-")? ~ ASCII_DIGIT+ }
 float = @{ int ~ "." ~ ASCII_DIGIT* }
-ident = @{ !null ~ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC|"_")* }
+ident = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC|"_")* }
 function_call = ${ ident ~ args }
 	args = !{"("~expression_list~")"}
-var = _{ float | int | array | string | null | function | tuple }
+var = _{ float | int | array | string | void | function | tuple }
 not = { "!" ~ ( logic_arg )}
 bin_not = { "~" ~ logic_arg }
 logic_arg = _{ exp_in_brackets | function_call | ident | int }
@@ -35,7 +35,7 @@ block = { "{" ~ line* ~ "}" }
 if_else = { "if" ~ expression ~ expression ~ "else" ~ expression }
 if_stm = { "if" ~ expression ~ expression }
 at = { ( add | function_call | ident | array | string ) ~ "[" ~ expression ~ "]"  }
-expression = _{ at | if_else | if_stm | exp_in_brackets | comparasion | math_operations | not | bin_not | and | or | bin_and | bin_or | xor | shift | function_call | ident | var | block}
+expression = _{ at | if_else | if_stm | exp_in_brackets | comparasion | math_operations | not | bin_not | and | or | bin_and | bin_or | xor | shift | function_call | ident | var | block }
 expression_list = _{ (expression ~ ("," ~ expression)*)?}
 array = {"{" ~ expression_list ~ "}"}
 string = ${ "\"" ~ inner ~ "\"" }
@@ -45,7 +45,7 @@ string = ${ "\"" ~ inner ~ "\"" }
       | "\\" ~ ("\"" | "\\" | "b" | "f" | "n" | "r" | "t")
       | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
   }
-null = {"NULL"}
+void = {"()"}
 set = { return_variable ~ "=" ~ expression }
 destruct_tuple = { destruct_idents ~ "=" ~ expression }
   destruct_idents =  {"(" ~ (ident ~ ("," ~ ident)*)? ~ ")"}
@@ -61,12 +61,12 @@ type = _{ multi | standard_types | any }
   int_type = {"int"}
   float_type = {"float"}
   string_type = {"string"}
-  null_type = {"null"}
+  void_type = {"()"}
   function_type = {"function" ~ function_type_params? ~ ("->" ~ type)?}
     function_type_params = {"(" ~ (type ~ ("," ~ type)*)? ~ ")"}
   array_type = { "[" ~ type ~ "]" }
   tuple_type = {"(" ~ (type ~ ("," ~ type)*)? ~ ")"}
-  standard_types = _{ int_type | float_type | string_type | null_type | function_type | array_type | tuple_type }
+  standard_types = _{ int_type | float_type | string_type | void_type | function_type | array_type | tuple_type }
   multi = { ( standard_types ) ~ ( "|" ~ standard_types )+ }
   any = {"any"}
 input = _{ line* ~ EOI}

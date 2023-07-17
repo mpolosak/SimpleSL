@@ -26,7 +26,7 @@ pub enum Type {
     Array(Box<Type>),
     Tuple(Vec<Type>),
     EmptyArray,
-    Null,
+    Void,
     Multi(TypeSet),
     Any,
 }
@@ -114,7 +114,7 @@ impl Display for Type {
             Self::Array(var_type) => write!(f, "[{var_type}]"),
             Self::EmptyArray => write!(f, "[]"),
             Self::Tuple(types) => write!(f, "({})", join(types, ", ")),
-            Self::Null => write!(f, "null"),
+            Self::Void => write!(f, "()"),
             Self::Multi(types) => write!(f, "{types}"),
             Self::Any => write!(f, "any"),
         }
@@ -140,7 +140,7 @@ impl Debug for Type {
             Self::Array(arg0) => f.debug_tuple("Type::Array").field(arg0).finish(),
             Self::EmptyArray => write!(f, "EmptyArray"),
             Self::Tuple(arg0) => f.debug_tuple("Type::Tuple").field(arg0).finish(),
-            Self::Null => write!(f, "Type::Null"),
+            Self::Void => write!(f, "Type::Void"),
             Self::Multi(arg0) => f.debug_tuple("Type::Multi").field(arg0).finish(),
             Self::Any => write!(f, "Type::Any"),
         }
@@ -164,7 +164,7 @@ impl From<Pair<'_, Rule>> for Type {
             Rule::int_type => Self::Int,
             Rule::float_type => Self::Float,
             Rule::string_type => Self::String,
-            Rule::null_type => Self::Null,
+            Rule::void_type => Self::Void,
             Rule::function_type => {
                 let mut return_type = Self::Any;
                 let mut params = Vec::new();

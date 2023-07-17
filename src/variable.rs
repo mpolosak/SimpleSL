@@ -15,7 +15,7 @@ pub enum Variable {
     Function(Rc<dyn Function>),
     Array(Rc<Array>, Type),
     Tuple(Rc<Array>),
-    Null,
+    Void,
 }
 
 impl GetType for Variable {
@@ -30,7 +30,7 @@ impl GetType for Variable {
                 let types = elements.iter().map(Variable::get_type).collect();
                 Type::Tuple(types)
             }
-            Variable::Null => Type::Null,
+            Variable::Void => Type::Void,
         }
     }
 }
@@ -44,7 +44,7 @@ impl fmt::Display for Variable {
             Variable::Function(function) => write!(f, "{function}"),
             Variable::Array(array, _) => write!(f, "{{{}}}", join(array, ", ")),
             Variable::Tuple(elements) => write!(f, "({})", join(elements, ", ")),
-            Variable::Null => write!(f, "NULL"),
+            Variable::Void => write!(f, "()"),
         }
     }
 }
@@ -62,7 +62,7 @@ impl fmt::Debug for Variable {
             Variable::Tuple(elements) => {
                 write!(f, "Variable::Tuple(({}))", join_debug(elements, ", "))
             }
-            Variable::Null => write!(f, "Variable::Null"),
+            Variable::Void => write!(f, "Variable::Void"),
         }
     }
 }
@@ -90,7 +90,7 @@ impl PartialEq for Variable {
             (Variable::String(value1), Variable::String(value2)) => value1 == value2,
             (Variable::Function(value1), Variable::Function(value2)) => Rc::ptr_eq(value1, value2),
             (Variable::Array(value1, _), Variable::Array(value2, _)) => value1 == value2,
-            (Variable::Null, Variable::Null) => true,
+            (Variable::Void, Variable::Void) => true,
             _ => false,
         }
     }
@@ -122,7 +122,7 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
 
                 Ok(Variable::from(Rc::new(array)))
             }
-            Rule::null => Ok(Variable::Null),
+            Rule::void => Ok(Variable::Void),
             _ => Err(Error::CannotBeParsed(pair.as_str().into())),
         }
     }
@@ -200,7 +200,7 @@ impl From<Array> for Variable {
 
 impl From<()> for Variable {
     fn from(_value: ()) -> Self {
-        Self::Null
+        Self::Void
     }
 }
 
@@ -232,7 +232,7 @@ mod tests {
         use std::str::FromStr;
         assert_eq!(Variable::from_str(" 15"), Ok(Variable::Int(15)));
         assert_eq!(Variable::from_str(" 7.5 "), Ok(Variable::Float(7.5)));
-        assert_eq!(Variable::from_str("NULL"), Ok(Variable::Null));
+        assert_eq!(Variable::from_str("()"), Ok(Variable::Void));
         assert_eq!(
             Variable::from_str(r#""print \"""#),
             Ok(Variable::String(String::from("print \"").into()))

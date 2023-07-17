@@ -184,7 +184,7 @@ fn return_type_from_syn_type(return_type: &Type) -> TokenStream {
     {
         quote!(Type::Array(Type::Any.into()))
     } else if return_type.is_empty() {
-        quote!(Type::Null)
+        quote!(Type::Void)
     } else if return_type == "Variable" || return_type == "Result < Variable, Error >" {
         quote!(Type::Any)
     } else {
@@ -207,7 +207,7 @@ pub fn get_body(is_result: bool, ident: Ident, args: TokenStream) -> TokenStream
 
 pub fn get_return_type(function: &ItemFn, return_type: Option<TokenStream>) -> (TokenStream, bool) {
     let ReturnType::Type(_, syn_type) = &function.sig.output else {
-        return (quote!(Type::Null), false)
+        return (quote!(Type::Void), false)
     };
     let return_type = if let Some(return_type) = return_type {
         return_type

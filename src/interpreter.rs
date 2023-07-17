@@ -24,7 +24,7 @@ impl Interpreter {
     pub fn exec(&mut self, input: &str) -> Result<Variable, Error> {
         let instructions = self.parse_input(input)?;
         let mut variables = VariableMap::new();
-        let mut result = Variable::Null;
+        let mut result = Variable::Void;
         for instruction in instructions {
             result = instruction.exec(self, &mut variables)?;
         }
