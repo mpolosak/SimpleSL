@@ -16,6 +16,7 @@ mod logic;
 mod modulo;
 mod multiply;
 mod set;
+mod set_if_else;
 mod subtract;
 mod traits;
 mod tuple;
@@ -29,8 +30,6 @@ use crate::{
 use pest::iterators::Pair;
 use std::fmt;
 pub use traits::{CreateInstruction, Exec, Recreate};
-
-use self::destruct_tuple::DestructTuple;
 use {
     add::Add,
     array::Array,
@@ -39,6 +38,7 @@ use {
     block::Block,
     check_args::check_args,
     comp::{Equal, Greater, GreaterOrEqual},
+    destruct_tuple::DestructTuple,
     divide::Divide,
     function::Function,
     function_call::FunctionCall,
@@ -49,6 +49,7 @@ use {
     modulo::Modulo,
     multiply::Multiply,
     set::Set,
+    set_if_else::SetIfElse,
     subtract::Subtract,
     tuple::Tuple,
 };
@@ -84,6 +85,7 @@ pub enum Instruction {
     Block(Block),
     IfElse(IfElse),
     At(At),
+    SetIfElse(SetIfElse),
 }
 
 impl Instruction {
@@ -159,6 +161,9 @@ impl Instruction {
                 IfElse::create_instruction(pair, variables, local_variables)
             }
             Rule::at => At::create_instruction(pair, variables, local_variables),
+            Rule::set_if_else | Rule::set_if => {
+                SetIfElse::create_instruction(pair, variables, local_variables)
+            }
             _ => panic!(),
         }
     }
@@ -227,6 +232,7 @@ impl Exec for Instruction {
             Self::Block(block) => block.exec(interpreter, local_variables),
             Self::IfElse(if_else) => if_else.exec(interpreter, local_variables),
             Self::At(at) => at.exec(interpreter, local_variables),
+            Self::SetIfElse(set_if) => set_if.exec(interpreter, local_variables),
         }
     }
 }
@@ -305,6 +311,7 @@ impl GetReturnType for Instruction {
             Self::Block(block) => block.get_return_type(),
             Self::IfElse(if_else) => if_else.get_return_type(),
             Self::At(at) => at.get_return_type(),
+            Self::SetIfElse(set_if) => set_if.get_return_type(),
             Self::Not(_)
             | Self::BinNot(_)
             | Self::Equal(..)

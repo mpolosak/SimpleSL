@@ -34,8 +34,10 @@ math_operations = _{ modulo | multiply | divide | add | subtract }
 block = { "{" ~ line* ~ "}" }
 if_else = { "if" ~ expression ~ expression ~ "else" ~ expression }
 if_stm = { "if" ~ expression ~ expression }
+set_if_else = { "if" ~ ident ~ ":" ~ type ~ "=" ~ expression ~ expression ~ "else" ~ expression }
+set_if = { "if" ~ ident ~ ":" ~ type ~ "=" ~ expression ~ expression }
 at = { ( add | function_call | ident | array | string ) ~ "[" ~ expression ~ "]"  }
-expression = _{ at | if_else | if_stm | exp_in_brackets | comparasion | math_operations | not | bin_not | and | or | bin_and | bin_or | xor | shift | function_call | ident | var | block }
+expression = _{ set_if_else | set_if | at | if_else | if_stm | exp_in_brackets | comparasion | math_operations | not | bin_not | and | or | bin_and | bin_or | xor | shift | function_call | ident | var | block }
 expression_list = _{ (expression ~ ("," ~ expression)*)?}
 array = {"{" ~ expression_list ~ "}"}
 string = ${ "\"" ~ inner ~ "\"" }
