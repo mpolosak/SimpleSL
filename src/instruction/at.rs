@@ -45,16 +45,19 @@ impl At {
         instruction: Instruction,
         index: Instruction,
     ) -> Result<Instruction, Error> {
-        Ok(match (instruction, index) {
+        match (instruction, index) {
             (Instruction::Variable(variable), Instruction::Variable(index)) => {
-                at(variable, index)?.into()
+                Ok(at(variable, index)?.into())
             }
-            (instruction, index) => Self {
+            (_, Instruction::Variable(Variable::Int(value))) if value < 0 => {
+                Err(Error::CannotBeNegative("index".into()))
+            }
+            (instruction, index) => Ok(Self {
                 instruction: instruction.into(),
                 index: index.into(),
             }
-            .into(),
-        })
+            .into()),
+        }
     }
 }
 
