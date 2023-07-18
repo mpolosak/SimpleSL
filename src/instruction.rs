@@ -5,18 +5,17 @@ mod bin;
 mod block;
 mod check_args;
 mod comp;
+mod control_flow;
 mod destruct_tuple;
 mod divide;
 mod function;
 mod function_call;
-mod if_else;
 mod local_function_call;
 pub mod local_variable;
 mod logic;
 mod modulo;
 mod multiply;
 mod set;
-mod set_if_else;
 mod subtract;
 mod traits;
 mod tuple;
@@ -38,18 +37,17 @@ use {
     block::Block,
     check_args::check_args,
     comp::{Equal, Greater, GreaterOrEqual},
+    control_flow::{IfElse, Match, SetIfElse},
     destruct_tuple::DestructTuple,
     divide::Divide,
     function::Function,
     function_call::FunctionCall,
-    if_else::IfElse,
     local_function_call::LocalFunctionCall,
     local_variable::{LocalVariable, LocalVariableMap},
     logic::{And, Not, Or},
     modulo::Modulo,
     multiply::Multiply,
     set::Set,
-    set_if_else::SetIfElse,
     subtract::Subtract,
     tuple::Tuple,
 };
@@ -86,6 +84,7 @@ pub enum Instruction {
     IfElse(IfElse),
     At(At),
     SetIfElse(SetIfElse),
+    Match(Match),
 }
 
 impl Instruction {
@@ -164,6 +163,7 @@ impl Instruction {
             Rule::set_if_else | Rule::set_if => {
                 SetIfElse::create_instruction(pair, variables, local_variables)
             }
+            Rule::r#match => Match::create_instruction(pair, variables, local_variables),
             _ => panic!(),
         }
     }
@@ -233,6 +233,7 @@ impl Exec for Instruction {
             Self::IfElse(if_else) => if_else.exec(interpreter, local_variables),
             Self::At(at) => at.exec(interpreter, local_variables),
             Self::SetIfElse(set_if) => set_if.exec(interpreter, local_variables),
+            Self::Match(match_stm) => match_stm.exec(interpreter, local_variables),
         }
     }
 }
@@ -281,6 +282,7 @@ impl Recreate for Instruction {
             Self::Block(block) => block.recreate(local_variables, args),
             Self::IfElse(if_else) => if_else.recreate(local_variables, args),
             Self::At(at) => at.recreate(local_variables, args),
+            Self::Match(match_stm) => match_stm.recreate(local_variables, args),
             _ => Ok(self),
         }
     }
@@ -312,6 +314,7 @@ impl GetReturnType for Instruction {
             Self::IfElse(if_else) => if_else.get_return_type(),
             Self::At(at) => at.get_return_type(),
             Self::SetIfElse(set_if) => set_if.get_return_type(),
+            Self::Match(match_stm) => match_stm.get_return_type(),
             Self::Not(_)
             | Self::BinNot(_)
             | Self::Equal(..)

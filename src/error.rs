@@ -18,6 +18,7 @@ pub enum Error {
     ZeroDivision,
     ZeroModulo,
     OverflowShift,
+    MatchNotCovered,
     IO(std::io::Error),
     Parsing(Box<pest::error::Error<Rule>>),
     Other(String),
@@ -72,6 +73,9 @@ impl fmt::Display for Error {
             }
             Self::OverflowShift => {
                 write!(f, "Cannot shift with overflow")
+            }
+            Self::MatchNotCovered => {
+                write!(f, "All posible values must be covered in match")
             }
             Self::IO(error) => write!(f, "{error}"),
             Self::Parsing(error) => write!(f, "{error}"),

@@ -1,4 +1,4 @@
-use super::{
+use crate::instruction::{
     local_variable::{LocalVariable, LocalVariableMap},
     CreateInstruction, Exec, Instruction, Recreate,
 };
