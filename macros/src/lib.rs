@@ -26,12 +26,14 @@ pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream 
     let args_importing = args_import_from_function_params(&params);
     let catch_rest = if attr.catch_rest {
         match params.pop() {
-            Some((ident, _, type_str)) if type_str == "Rc < Array >" || type_str == "& Array" => {
+            Some((ident, _, type_str))
+                if type_str == "Rc < [Variable] >" || type_str == "& [Variable]" =>
+            {
                 let ident = ident.to_string();
                 quote!(Some(String::from(#ident)))
             }
             Some(_) | None => {
-                panic!("catch_rest=true requiers function to have last param of type Rc<Array> or Array")
+                panic!("catch_rest=true requiers function to have last param of type Rc<[Variable]> or &[Variable]")
             }
         }
     } else {

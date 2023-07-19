@@ -41,7 +41,7 @@ impl Exec for FunctionCall {
         local_variables: &mut VariableMap,
     ) -> Result<Variable, Error> {
         let args = exec_instructions(&self.args, interpreter, local_variables)?;
-        self.function.exec("name", interpreter, args)
+        self.function.exec("name", interpreter, &args)
     }
 }
 

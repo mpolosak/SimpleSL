@@ -1,14 +1,14 @@
 use crate::{
     function::{NativeFunction, Param, Params},
     interpreter::VariableMap,
-    variable::{Array, Type, Variable},
+    variable::{Type, Variable},
 };
 use simplesl_macros::export_function;
 use std::rc::Rc;
 
 pub fn add_functions(variables: &mut VariableMap) {
     #[export_function(return_type = "[string]")]
-    fn split(string: &str, pat: &str) -> Array {
+    fn split(string: &str, pat: &str) -> Rc<[Variable]> {
         string
             .split(pat)
             .map(|slice| Variable::String(Rc::from(slice)))
@@ -26,7 +26,7 @@ pub fn add_functions(variables: &mut VariableMap) {
     }
 
     #[export_function(return_type = "[string]")]
-    fn chars(string: &str) -> Array {
+    fn chars(string: &str) -> Rc<[Variable]> {
         string
             .chars()
             .map(|char| Variable::String(char.to_string().into()))

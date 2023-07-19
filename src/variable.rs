@@ -5,16 +5,14 @@ use pest::iterators::Pair;
 use std::{fmt, rc::Rc, str::FromStr};
 pub use variable_type::{GetReturnType, GetType, Type};
 
-pub type Array = Vec<Variable>;
-
 #[derive(Clone)]
 pub enum Variable {
     Int(i64),
     Float(f64),
     String(Rc<str>),
     Function(Rc<dyn Function>),
-    Array(Rc<Array>, Type),
-    Tuple(Rc<Array>),
+    Array(Rc<[Variable]>, Type),
+    Tuple(Rc<[Variable]>),
     Void,
 }
 
@@ -118,9 +116,9 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
                 let array = pair
                     .into_inner()
                     .map(Self::try_from)
-                    .collect::<Result<Array, Error>>()?;
+                    .collect::<Result<Rc<[Variable]>, Error>>()?;
 
-                Ok(Variable::from(Rc::new(array)))
+                Ok(Variable::from(array))
             }
             Rule::void => Ok(Variable::Void),
             _ => Err(Error::CannotBeParsed(pair.as_str().into())),
@@ -176,8 +174,8 @@ impl From<Rc<dyn Function>> for Variable {
     }
 }
 
-impl From<Rc<Array>> for Variable {
-    fn from(value: Rc<Array>) -> Self {
+impl From<Rc<[Variable]>> for Variable {
+    fn from(value: Rc<[Variable]>) -> Self {
         let mut iter = value.iter();
         let var_type = if let Some(first) = iter.next() {
             let mut element_type = first.get_type();
@@ -189,12 +187,6 @@ impl From<Rc<Array>> for Variable {
             Type::EmptyArray
         };
         Self::Array(value, var_type)
-    }
-}
-
-impl From<Array> for Variable {
-    fn from(value: Array) -> Self {
-        Variable::from(Rc::new(value))
     }
 }
 

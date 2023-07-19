@@ -9,7 +9,7 @@ use std::io;
 
 pub fn add_functions(variables: &mut VariableMap) {
     #[export_function(catch_rest = true)]
-    fn print(vars: &Array) {
+    fn print(vars: &[Variable]) {
         let text = vars
             .iter()
             .fold(String::new(), |acc, arg| acc + &arg.to_string());

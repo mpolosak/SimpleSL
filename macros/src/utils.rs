@@ -66,13 +66,13 @@ fn arg_import_from_function_param(
             };
             let #ident = #ident.as_ref();
         )
-    } else if param_type == "Rc < Array >" {
+    } else if param_type == "Rc < [Variable] >" {
         quote!(
             let Variable::Array(#ident, _) = args.get(#ident_str)? else {
                 panic!()
             };
         )
-    } else if param_type == "& Array" {
+    } else if param_type == "& [Variable]" {
         quote!(
             let Variable::Array(#ident, _) = args.get(#ident_str)? else {
                 panic!()
@@ -127,7 +127,7 @@ fn type_from_str(attrs: &[Attribute], param_type: &str) -> TokenStream {
         quote!(Type::Float)
     } else if param_type == "Rc < str >" || param_type == "& str" {
         quote!(Type::String)
-    } else if param_type == "Rc < Array >" || param_type == "& Array" {
+    } else if param_type == "Rc < [Variable] >" || param_type == "& [Variable]" {
         get_type_from_attrs(attrs).unwrap_or(quote!(Type::Array(Type::Any.into())))
     } else if param_type == "Rc < dyn Function >" {
         let Some(var_type) = get_type_from_attrs(attrs) else{
@@ -177,10 +177,8 @@ fn return_type_from_syn_type(return_type: &Type) -> TokenStream {
         || return_type == "Result < & str, Error >"
     {
         quote!(Type::String)
-    } else if return_type == "Rc < Array >"
-        || return_type == "Array"
-        || return_type == "Result < Rc < Array >, Error >"
-        || return_type == "Result < Array, Error >"
+    } else if return_type == "Rc < [Variable] >"
+        || return_type == "Result < Rc < [Variable] >, Error >"
     {
         quote!(Type::Array(Type::Any.into()))
     } else if return_type.is_empty() {

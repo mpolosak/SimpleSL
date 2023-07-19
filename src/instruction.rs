@@ -27,7 +27,7 @@ use crate::{
     variable::{GetReturnType, GetType, Type},
 };
 use pest::iterators::Pair;
-use std::fmt;
+use std::{fmt, rc::Rc};
 pub use traits::{CreateInstruction, Exec, Recreate};
 use {
     add::Add,
@@ -353,11 +353,11 @@ pub fn exec_instructions(
     instructions: &[Instruction],
     interpreter: &mut Interpreter,
     local_variables: &mut VariableMap,
-) -> Result<Vec<Variable>, Error> {
+) -> Result<Rc<[Variable]>, Error> {
     instructions
         .iter()
         .map(|instruction| instruction.exec(interpreter, local_variables))
-        .collect::<Result<Vec<_>, _>>()
+        .collect::<Result<Rc<_>, _>>()
 }
 
 fn error_wrong_type(args: &[Instruction], var_name: &str) -> Error {

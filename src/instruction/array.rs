@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use super::{
     exec_instructions,
     local_variable::LocalVariableMap,
@@ -55,7 +57,7 @@ impl Array {
             }
             Instruction::Variable(Variable::Array(array.into(), var_type))
         } else {
-            Instruction::Variable(Vec::new().into())
+            Instruction::Variable(Variable::Array(Rc::new([]), Type::EmptyArray))
         }
     }
 }
@@ -67,7 +69,7 @@ impl Exec for Array {
         local_variables: &mut VariableMap,
     ) -> Result<crate::variable::Variable, Error> {
         let array = exec_instructions(&self.instructions, interpreter, local_variables)?;
-        Ok(Variable::Array(array.into(), self.var_type.clone()))
+        Ok(Variable::Array(array, self.var_type.clone()))
     }
 }
 

@@ -46,7 +46,7 @@ impl Exec for LocalFunctionCall {
         let Variable::Function(function) = local_variables.get(&self.ident).unwrap() else {
             return Err(error_wrong_type(&self.args, &self.ident));
         };
-        function.exec(&self.ident, interpreter, args)
+        function.exec(&self.ident, interpreter, &args)
     }
 }
 

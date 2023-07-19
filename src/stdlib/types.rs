@@ -1,7 +1,7 @@
 use crate::{
     function::{NativeFunction, Param, Params},
     interpreter::VariableMap,
-    variable::{Array, Type, Variable},
+    variable::{Type, Variable},
 };
 use simplesl_macros::export_function;
 use std::rc::Rc;
@@ -35,7 +35,7 @@ pub fn add_functions(variables: &mut VariableMap) {
     }
 
     #[export_function]
-    fn array(value: Variable, fallback: Rc<Array>) -> Rc<Array> {
+    fn array(value: Variable, fallback: Rc<[Variable]>) -> Rc<[Variable]> {
         if let Variable::Array(value, _) = value {
             value
         } else {

@@ -9,27 +9,27 @@ pub use self::{
 use crate::{
     error::Error,
     interpreter::{Interpreter, VariableMap},
-    variable::{Array, GetReturnType, GetType, Type, Variable},
+    variable::{GetReturnType, GetType, Type, Variable},
 };
-use std::{fmt, iter::zip};
+use std::{fmt, iter::zip, rc::Rc};
 
 pub trait Function: GetReturnType {
     fn exec(
         &self,
         name: &str,
         interpreter: &mut Interpreter,
-        mut args: Array,
+        args: &[Variable],
     ) -> Result<Variable, Error> {
         let mut args_map = VariableMap::new();
         let params = self.get_params();
         if let Some(param_name) = &params.catch_rest {
             let from = params.standard.len();
-            let rest: Array = args.drain(from..).collect();
+            let rest: Rc<[Variable]> = args.get(from..).unwrap_or(&[]).into();
             args_map.insert(param_name, Variable::from(rest));
         }
 
         for (arg, Param { var_type: _, name }) in zip(args, &params.standard) {
-            args_map.insert(name, arg);
+            args_map.insert(name, arg.clone());
         }
         self.exec_intern(name, interpreter, args_map)
     }
@@ -37,13 +37,13 @@ pub trait Function: GetReturnType {
         &self,
         name: &str,
         interpreter: &mut Interpreter,
-        mut args: Array,
+        args: &[Variable],
     ) -> Result<Variable, Error> {
         let mut args_map = VariableMap::new();
         let params = self.get_params();
         if let Some(param_name) = &params.catch_rest {
             let from = params.standard.len();
-            let rest: Array = args.drain(from..).collect();
+            let rest: Rc<[Variable]> = args.get(from..).unwrap_or(&[]).into();
             args_map.insert(param_name, Variable::from(rest));
         } else if args.len() != params.standard.len() {
             return Err(Error::WrongNumberOfArguments(
@@ -54,7 +54,7 @@ pub trait Function: GetReturnType {
 
         for (arg, Param { var_type, name }) in zip(args, &params.standard) {
             if arg.get_type().matches(var_type) {
-                args_map.insert(name, arg);
+                args_map.insert(name, arg.clone());
             } else {
                 return Err(Error::WrongType(name.clone(), var_type.clone()));
             }
