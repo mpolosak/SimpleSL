@@ -12,7 +12,7 @@ use pest::iterators::Pair;
 
 #[derive(Clone)]
 pub struct Block {
-    instructions: Vec<Instruction>,
+    instructions: Box<[Instruction]>,
 }
 
 impl CreateInstruction for Block {
@@ -25,7 +25,7 @@ impl CreateInstruction for Block {
         let instructions = pair
             .into_inner()
             .map(|pair| Instruction::new(pair, variables, &mut local_variables))
-            .collect::<Result<Vec<Instruction>, Error>>()?;
+            .collect::<Result<Box<[Instruction]>, Error>>()?;
         if instructions
             .iter()
             .all(|instruction| matches!(instruction, Instruction::Variable(_)))
@@ -49,7 +49,7 @@ impl Exec for Block {
     ) -> Result<Variable, Error> {
         let mut local_variables = local_variables.clone();
         let mut result = Variable::Void;
-        for instruction in &self.instructions {
+        for instruction in self.instructions.iter() {
             result = instruction.exec(interpreter, &mut local_variables)?;
         }
         Ok(result)
@@ -63,7 +63,7 @@ impl Recreate for Block {
         args: &VariableMap,
     ) -> Result<Instruction, Error> {
         let mut local_variables = local_variables.clone();
-        let instructions = recreate_instructions(self.instructions, &mut local_variables, args)?;
+        let instructions = recreate_instructions(&self.instructions, &mut local_variables, args)?;
         Ok(Self { instructions }.into())
     }
 }

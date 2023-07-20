@@ -17,7 +17,7 @@ use std::rc::Rc;
 #[derive(Clone)]
 pub struct Function {
     pub params: Params,
-    body: Vec<Instruction>,
+    body: Box<[Instruction]>,
 }
 
 impl CreateInstruction for Function {
@@ -37,7 +37,7 @@ impl CreateInstruction for Function {
         local_variables.extend(LocalVariableMap::from(params.clone()));
         let body = inner
             .map(|arg| Instruction::new(arg, variables, &mut local_variables))
-            .collect::<Result<Vec<_>, _>>()?;
+            .collect::<Result<Box<_>, _>>()?;
         if body
             .iter()
             .all(|instruction| matches!(instruction, Instruction::Variable(_)))
@@ -58,8 +58,7 @@ impl Exec for Function {
         local_variables: &mut VariableMap,
     ) -> Result<Variable, Error> {
         let mut fn_local_variables = LocalVariableMap::from(self.params.clone());
-        let body =
-            recreate_instructions(self.body.clone(), &mut fn_local_variables, local_variables)?;
+        let body = recreate_instructions(&self.body, &mut fn_local_variables, local_variables)?;
         Ok(Variable::Function(Rc::new(LangFunction {
             params: self.params.clone(),
             body,
@@ -75,7 +74,7 @@ impl Recreate for Function {
     ) -> Result<Instruction, Error> {
         let mut local_variables = local_variables.clone();
         local_variables.extend(LocalVariableMap::from(self.params.clone()));
-        let body = recreate_instructions(self.body, &mut local_variables, args)?;
+        let body = recreate_instructions(&self.body, &mut local_variables, args)?;
         if body
             .iter()
             .all(|instruction| matches!(instruction, Instruction::Variable(_)))

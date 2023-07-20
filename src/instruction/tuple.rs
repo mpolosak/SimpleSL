@@ -1,4 +1,7 @@
-use super::{local_variable::LocalVariableMap, CreateInstruction, Exec, Instruction, Recreate};
+use super::{
+    local_variable::LocalVariableMap, recreate_instructions, CreateInstruction, Exec, Instruction,
+    Recreate,
+};
 use crate::{
     error::Error,
     interpreter::{Interpreter, VariableMap},
@@ -9,7 +12,7 @@ use pest::iterators::Pair;
 
 #[derive(Clone)]
 pub struct Tuple {
-    pub elements: Vec<Instruction>,
+    pub elements: Box<[Instruction]>,
 }
 
 impl CreateInstruction for Tuple {
@@ -21,15 +24,15 @@ impl CreateInstruction for Tuple {
         let elements = pair
             .into_inner()
             .map(|pair| Instruction::new(pair, variables, local_variables))
-            .collect::<Result<Vec<Instruction>, Error>>()?;
+            .collect::<Result<Box<[Instruction]>, Error>>()?;
         Ok(Self::create_from_elements(elements))
     }
 }
 
 impl Tuple {
-    fn create_from_elements(elements: Vec<Instruction>) -> Instruction {
+    fn create_from_elements(elements: Box<[Instruction]>) -> Instruction {
         let mut array = Vec::new();
-        for instruction in &elements {
+        for instruction in elements.iter() {
             if let Instruction::Variable(variable) = instruction {
                 array.push(variable.clone());
             } else {
@@ -47,7 +50,7 @@ impl Exec for Tuple {
         local_variables: &mut VariableMap,
     ) -> Result<Variable, Error> {
         let mut elements = Vec::new();
-        for element in &self.elements {
+        for element in self.elements.iter() {
             elements.push(element.exec(interpreter, local_variables)?);
         }
         Ok(Variable::Tuple(elements.into()))
@@ -60,17 +63,13 @@ impl Recreate for Tuple {
         local_variables: &mut LocalVariableMap,
         args: &VariableMap,
     ) -> Result<Instruction, Error> {
-        let elements = self
-            .elements
-            .into_iter()
-            .map(|instruction| instruction.recreate(local_variables, args))
-            .collect::<Result<Vec<Instruction>, Error>>()?;
+        let elements = recreate_instructions(&self.elements, local_variables, args)?;
         Ok(Self::create_from_elements(elements))
     }
 }
 
 impl GetReturnType for Tuple {
-    fn get_return_type(&self) -> crate::variable::Type {
+    fn get_return_type(&self) -> Type {
         let types = self
             .elements
             .iter()

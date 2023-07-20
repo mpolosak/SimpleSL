@@ -179,7 +179,7 @@ impl Instruction {
             .unwrap()
             .into_inner()
             .map(|pair| Self::new(pair, variables, local_variables))
-            .collect::<Result<Vec<_>, _>>()?;
+            .collect::<Result<Box<_>, _>>()?;
         match local_variables.get(var_name) {
             Some(LocalVariable::Function(params, return_type, ..)) => {
                 Ok(LocalFunctionCall::new(var_name, params, args, return_type.clone())?.into())
@@ -339,12 +339,13 @@ impl From<Variable> for Instruction {
 }
 
 pub fn recreate_instructions(
-    instructions: Vec<Instruction>,
+    instructions: &[Instruction],
     local_variables: &mut LocalVariableMap,
     args: &VariableMap,
-) -> Result<Vec<Instruction>, Error> {
+) -> Result<Box<[Instruction]>, Error> {
     instructions
-        .into_iter()
+        .iter()
+        .cloned()
         .map(|instruction| instruction.recreate(local_variables, args))
         .collect()
 }

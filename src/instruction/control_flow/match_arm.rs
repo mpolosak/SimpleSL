@@ -17,7 +17,7 @@ pub enum MatchArm {
         var_type: Type,
         instruction: Instruction,
     },
-    Value(Vec<Instruction>, Instruction),
+    Value(Box<[Instruction]>, Instruction),
     Other(Instruction),
 }
 
@@ -48,7 +48,7 @@ impl MatchArm {
                 let inner_values = pair.into_inner();
                 let values = inner_values
                     .map(|pair| Instruction::new(pair, variables, local_variables))
-                    .collect::<Result<Vec<Instruction>, Error>>()?;
+                    .collect::<Result<Box<[Instruction]>, Error>>()?;
                 let pair = inner.next().unwrap();
                 let instruction = Instruction::new(pair, variables, local_variables)?;
                 Ok(Self::Value(values, instruction))
@@ -79,7 +79,7 @@ impl MatchArm {
             MatchArm::Other(_) => true,
             MatchArm::Type { var_type, .. } => variable.get_type().matches(var_type),
             MatchArm::Value(instructions, _) => {
-                for instruction in instructions {
+                for instruction in instructions.iter() {
                     let match_variable = instruction.exec(interpreter, local_variables)?;
                     if match_variable == *variable {
                         return Ok(true);
@@ -129,7 +129,7 @@ impl MatchArm {
                 }
             }
             Self::Value(values, instruction) => {
-                let values = recreate_instructions(values, local_variables, args)?;
+                let values = recreate_instructions(&values, local_variables, args)?;
                 let instruction = instruction.recreate(local_variables, args)?;
                 Self::Value(values, instruction)
             }

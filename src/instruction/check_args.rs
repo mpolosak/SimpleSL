@@ -6,7 +6,7 @@ use crate::{
 };
 use std::iter::zip;
 
-pub fn check_args(var_name: &str, params: &Params, args: &Vec<Instruction>) -> Result<(), Error> {
+pub fn check_args(var_name: &str, params: &Params, args: &[Instruction]) -> Result<(), Error> {
     match params.catch_rest {
         Some(_) if args.len() < params.standard.len() => {
             return Err(Error::WrongNumberOfArguments(

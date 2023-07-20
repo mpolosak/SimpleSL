@@ -17,14 +17,14 @@ use std::rc::Rc;
 #[derive(Clone)]
 pub struct FunctionCall {
     pub function: Rc<dyn Function>,
-    pub args: Vec<Instruction>,
+    pub args: Box<[Instruction]>,
 }
 
 impl FunctionCall {
     pub fn new(
         var_name: &str,
         variables: &VariableMap,
-        args: Vec<Instruction>,
+        args: Box<[Instruction]>,
     ) -> Result<Self, Error> {
         let Variable::Function(function) = variables.get(var_name)? else {
             return Err(error_wrong_type(&args, var_name));
@@ -51,10 +51,10 @@ impl Recreate for FunctionCall {
         local_variables: &mut LocalVariableMap,
         args: &VariableMap,
     ) -> Result<Instruction, Error> {
-        let instructions = recreate_instructions(self.args, local_variables, args)?;
+        let args = recreate_instructions(&self.args, local_variables, args)?;
         Ok(Self {
             function: self.function,
-            args: instructions,
+            args,
         }
         .into())
     }

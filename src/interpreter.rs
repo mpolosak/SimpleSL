@@ -25,7 +25,7 @@ impl Interpreter {
         let instructions = self.parse_input(input)?;
         let mut variables = VariableMap::new();
         let mut result = Variable::Void;
-        for instruction in instructions {
+        for instruction in instructions.iter() {
             result = instruction.exec(self, &mut variables)?;
         }
         self.variables.extend(variables);
@@ -40,17 +40,13 @@ impl Interpreter {
         self.exec(&contents)
     }
 
-    fn parse_input(&self, input: &str) -> Result<Vec<Instruction>, Error> {
+    fn parse_input(&self, input: &str) -> Result<Box<[Instruction]>, Error> {
         let parse = SimpleSLParser::parse(Rule::input, input)?;
-        let mut instructions = Vec::new();
         let mut local_variables = LocalVariableMap::new();
-        for pair in parse {
-            if pair.as_rule() == Rule::EOI {
-                break;
-            }
-            let instruction = Instruction::new(pair, &self.variables, &mut local_variables)?;
-            instructions.push(instruction);
-        }
+        let instructions = parse
+            .take_while(|pair| pair.as_rule() != Rule::EOI)
+            .map(|pair| Instruction::new(pair, &self.variables, &mut local_variables))
+            .collect::<Result<_, _>>()?;
         Ok(instructions)
     }
 }

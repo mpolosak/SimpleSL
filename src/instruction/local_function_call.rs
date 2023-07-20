@@ -16,7 +16,7 @@ use crate::{
 #[derive(Clone)]
 pub struct LocalFunctionCall {
     ident: String,
-    args: Vec<Instruction>,
+    args: Box<[Instruction]>,
     return_type: Type,
 }
 
@@ -24,7 +24,7 @@ impl LocalFunctionCall {
     pub fn new(
         var_name: &str,
         params: &Params,
-        args: Vec<Instruction>,
+        args: Box<[Instruction]>,
         return_type: Type,
     ) -> Result<Self, Error> {
         check_args(var_name, params, &args)?;
@@ -56,7 +56,7 @@ impl Recreate for LocalFunctionCall {
         local_variables: &mut LocalVariableMap,
         args: &VariableMap,
     ) -> Result<Instruction, Error> {
-        let instructions = recreate_instructions(self.args, local_variables, args)?;
+        let instructions = recreate_instructions(&self.args, local_variables, args)?;
         if local_variables.contains_key(&self.ident) {
             Ok(Self {
                 ident: self.ident,

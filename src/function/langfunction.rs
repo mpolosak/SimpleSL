@@ -9,7 +9,7 @@ use crate::{
 #[derive(Clone)]
 pub struct LangFunction {
     pub params: Params,
-    pub body: Vec<Instruction>,
+    pub body: Box<[Instruction]>,
 }
 
 impl Function for LangFunction {
@@ -20,7 +20,7 @@ impl Function for LangFunction {
         mut args: VariableMap,
     ) -> Result<Variable, Error> {
         let mut result = Variable::Void;
-        for instruction in &self.body {
+        for instruction in self.body.iter() {
             result = instruction.exec(interpreter, &mut args)?;
         }
         Ok(result)

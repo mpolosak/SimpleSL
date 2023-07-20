@@ -56,7 +56,7 @@ impl DestructTuple {
                 }
             }
             Instruction::Tuple(Tuple { elements }) => {
-                for (ident, element) in zip(&self.idents, elements) {
+                for (ident, element) in zip(&self.idents, elements.iter()) {
                     local_variables.insert(ident.clone(), element.clone().into());
                 }
             }

@@ -17,7 +17,7 @@ use pest::iterators::Pair;
 
 #[derive(Clone)]
 pub struct Array {
-    instructions: Vec<Instruction>,
+    instructions: Box<[Instruction]>,
     var_type: Type,
 }
 
@@ -30,12 +30,12 @@ impl CreateInstruction for Array {
         let inner = pair.into_inner();
         let instructions = inner
             .map(|arg| Instruction::new(arg, variables, local_variables))
-            .collect::<Result<Vec<_>, _>>()?;
+            .collect::<Result<Box<_>, _>>()?;
         Ok(Self::create_from_instructions(instructions))
     }
 }
 impl Array {
-    fn create_from_instructions(instructions: Vec<Instruction>) -> Instruction {
+    fn create_from_instructions(instructions: Box<[Instruction]>) -> Instruction {
         let mut iter = instructions.iter();
         if let Some(first) = iter.next() {
             let mut element_type = first.get_return_type();
@@ -44,7 +44,7 @@ impl Array {
             }
             let var_type = Type::Array(element_type.into());
             let mut array = Vec::new();
-            for instruction in &instructions {
+            for instruction in instructions.iter() {
                 if let Instruction::Variable(variable) = instruction {
                     array.push(variable.clone());
                 } else {
@@ -79,7 +79,7 @@ impl Recreate for Array {
         local_variables: &mut LocalVariableMap,
         args: &VariableMap,
     ) -> Result<Instruction, Error> {
-        let instructions = recreate_instructions(self.instructions, local_variables, args)?;
+        let instructions = recreate_instructions(&self.instructions, local_variables, args)?;
         Ok(Self::create_from_instructions(instructions))
     }
 }
