@@ -15,7 +15,7 @@ use pest::iterators::Pair;
 
 #[derive(Clone)]
 pub struct DestructTuple {
-    idents: Vec<String>,
+    idents: Box<[String]>,
     instruction: Box<Instruction>,
 }
 
@@ -27,7 +27,7 @@ impl CreateInstruction for DestructTuple {
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
-        let idents: Vec<String> = pair
+        let idents: Box<[String]> = pair
             .into_inner()
             .map(|pair| pair.as_str().to_owned())
             .collect();
@@ -51,18 +51,18 @@ impl DestructTuple {
     fn insert_local_variables(&self, local_variables: &mut LocalVariableMap) {
         match self.instruction.as_ref() {
             Instruction::Variable(Variable::Tuple(elements)) => {
-                for (ident, element) in zip(&self.idents, elements.iter()) {
+                for (ident, element) in zip(self.idents.iter(), elements.iter()) {
                     local_variables.insert(ident.clone(), LocalVariable::Variable(element.clone()));
                 }
             }
             Instruction::Tuple(Tuple { elements }) => {
-                for (ident, element) in zip(&self.idents, elements.iter()) {
+                for (ident, element) in zip(self.idents.iter(), elements.iter()) {
                     local_variables.insert(ident.clone(), element.clone().into());
                 }
             }
             instruction => {
                 if let Type::Tuple(types) = instruction.get_return_type() {
-                    for (ident, var_type) in zip(&self.idents, types.iter()) {
+                    for (ident, var_type) in zip(self.idents.iter(), types.iter()) {
                         local_variables
                             .insert(ident.clone(), LocalVariable::Other(var_type.clone()));
                     }
@@ -82,7 +82,7 @@ impl Exec for DestructTuple {
     ) -> Result<Variable, Error> {
         let result = self.instruction.exec(interpreter, local_variables)?;
         let Variable::Tuple(elements) = result else {panic!()};
-        for (ident, element) in zip(&self.idents, elements.iter()) {
+        for (ident, element) in zip(self.idents.iter(), elements.iter()) {
             interpreter.variables.insert(ident, element.clone())
         }
         Ok(Variable::Tuple(elements))

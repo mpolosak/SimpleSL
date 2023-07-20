@@ -13,7 +13,7 @@ use pest::iterators::Pair;
 #[derive(Clone)]
 pub struct Match {
     expression: Box<Instruction>,
-    arms: Vec<MatchArm>,
+    arms: Box<[MatchArm]>,
 }
 
 impl CreateInstruction for Match {
@@ -28,7 +28,7 @@ impl CreateInstruction for Match {
         let var_type = expression.get_return_type();
         let arms = inner
             .map(|pair| MatchArm::new(pair, variables, local_variables))
-            .collect::<Result<Vec<MatchArm>, Error>>()?;
+            .collect::<Result<Box<[MatchArm]>, Error>>()?;
         let result = Self {
             expression: expression.into(),
             arms,
@@ -63,7 +63,7 @@ impl Exec for Match {
         local_variables: &mut VariableMap,
     ) -> Result<Variable, Error> {
         let variable = self.expression.exec(interpreter, local_variables)?;
-        for arm in &self.arms {
+        for arm in self.arms.iter() {
             if arm.covers(&variable, interpreter, local_variables)? {
                 return arm.exec(variable, interpreter, local_variables);
             }
@@ -81,9 +81,9 @@ impl Recreate for Match {
         let expression = self.expression.recreate(local_variables, args)?.into();
         let arms = self
             .arms
-            .into_iter()
-            .map(|arm| arm.recreate(local_variables, args))
-            .collect::<Result<Vec<MatchArm>, Error>>()?;
+            .iter()
+            .map(|arm| arm.clone().recreate(local_variables, args))
+            .collect::<Result<Box<[MatchArm]>, Error>>()?;
         Ok(Self { expression, arms }.into())
     }
 }

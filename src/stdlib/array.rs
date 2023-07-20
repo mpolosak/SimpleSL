@@ -13,20 +13,13 @@ pub fn add_functions(variables: &mut VariableMap) {
         if length < 0 {
             return Err(Error::CannotBeNegative(String::from("length")));
         }
-        let mut array = Vec::new();
-        for _ in 0..length {
-            array.push(value.clone());
-        }
-        Ok(array.into())
+        let array = (0..length).map(|_| value.clone()).collect();
+        Ok(array)
     }
 
     #[export_function]
     fn array_concat(array1: &[Variable], array2: &[Variable]) -> Rc<[Variable]> {
-        let mut new_array: Vec<Variable> = array1.into();
-        for element in array2.iter() {
-            new_array.push(element.clone());
-        }
-        new_array.into()
+        array1.iter().chain(array2).cloned().collect()
     }
 
     #[export_function]

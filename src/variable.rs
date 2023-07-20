@@ -72,8 +72,8 @@ impl FromStr for Variable {
         let s = s.trim();
         let parse = SimpleSLParser::parse(Rule::var, s)?;
         if parse.as_str() == s {
-            let pair_vec: Vec<Pair<Rule>> = parse.collect();
-            Self::try_from(pair_vec[0].clone())
+            let pairs: Box<[Pair<Rule>]> = parse.collect();
+            Self::try_from(pairs[0].clone())
         } else {
             Err(Error::TooManyVariables)
         }
