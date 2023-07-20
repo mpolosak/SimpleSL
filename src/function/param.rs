@@ -26,7 +26,7 @@ impl From<Pair<'_, Rule>> for Param {
 
 #[derive(Clone, Debug)]
 pub struct Params {
-    pub standard: Vec<Param>,
+    pub standard: Box<[Param]>,
     pub catch_rest: Option<String>,
 }
 
@@ -53,8 +53,8 @@ impl From<Params> for LocalVariableMap {
     fn from(params: Params) -> Self {
         let mut result: Self = params
             .standard
-            .into_iter()
-            .map(|Param { name, var_type }| (name, var_type.into()))
+            .iter()
+            .map(|Param { name, var_type }| (name.clone(), var_type.clone().into()))
             .collect();
         if let Some(catch_rest) = params.catch_rest {
             result.insert(catch_rest, Type::Array(Type::Any.into()).into());

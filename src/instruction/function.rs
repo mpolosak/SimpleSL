@@ -28,7 +28,7 @@ impl CreateInstruction for Function {
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let params_pair = inner.next().unwrap();
-        let params: Vec<Param> = params_pair.into_inner().map(Param::from).collect();
+        let params = params_pair.into_inner().map(Param::from).collect();
         let params = Params {
             standard: params,
             catch_rest: None,

@@ -28,7 +28,7 @@ pub trait Function: GetReturnType {
             args_map.insert(param_name, Variable::from(rest));
         }
 
-        for (arg, Param { var_type: _, name }) in zip(args, &params.standard) {
+        for (arg, Param { var_type: _, name }) in zip(args, params.standard.iter()) {
             args_map.insert(name, arg.clone());
         }
         self.exec_intern(name, interpreter, args_map)
@@ -52,7 +52,7 @@ pub trait Function: GetReturnType {
             ));
         }
 
-        for (arg, Param { var_type, name }) in zip(args, &params.standard) {
+        for (arg, Param { var_type, name }) in zip(args, params.standard.iter()) {
             if arg.get_type().matches(var_type) {
                 args_map.insert(name, arg.clone());
             } else {

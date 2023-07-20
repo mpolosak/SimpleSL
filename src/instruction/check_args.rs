@@ -23,7 +23,7 @@ pub fn check_args(var_name: &str, params: &Params, args: &[Instruction]) -> Resu
         _ => (),
     }
 
-    for (arg, Param { name, var_type }) in zip(args, &params.standard) {
+    for (arg, Param { name, var_type }) in zip(args, params.standard.iter()) {
         if !arg.get_return_type().matches(var_type) {
             return Err(Error::WrongType(name.clone(), var_type.clone()));
         }
