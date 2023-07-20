@@ -62,8 +62,9 @@ impl DestructTuple {
             }
             instruction => {
                 if let Type::Tuple(types) = instruction.get_return_type() {
-                    for (ident, var_type) in zip(&self.idents, types) {
-                        local_variables.insert(ident.clone(), LocalVariable::Other(var_type));
+                    for (ident, var_type) in zip(&self.idents, types.iter()) {
+                        local_variables
+                            .insert(ident.clone(), LocalVariable::Other(var_type.clone()));
                     }
                 } else {
                     panic!()

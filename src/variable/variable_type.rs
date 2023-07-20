@@ -20,11 +20,11 @@ pub enum Type {
     String,
     Function {
         return_type: Box<Type>,
-        params: Vec<Type>,
+        params: Box<[Type]>,
         catch_rest: bool,
     },
     Array(Box<Type>),
-    Tuple(Vec<Type>),
+    Tuple(Box<[Type]>),
     EmptyArray,
     Void,
     Multi(TypeSet),
@@ -49,7 +49,7 @@ impl Type {
                 if (*catch_rest2 || params.len() != params2.len()) && !catch_rest {
                     false
                 } else {
-                    for (type1, type2) in zip(params, params2) {
+                    for (type1, type2) in zip(params.iter(), params2.iter()) {
                         if !type1.matches(type2) {
                             return false;
                         }
@@ -167,7 +167,7 @@ impl From<Pair<'_, Rule>> for Type {
             Rule::void_type => Self::Void,
             Rule::function_type => {
                 let mut return_type = Self::Any;
-                let mut params = Vec::new();
+                let mut params: Box<[Type]> = [].into();
                 let catch_rest = false;
                 for pair in pair.into_inner() {
                     if pair.as_rule() == Rule::function_type_params {

@@ -92,7 +92,7 @@ impl fmt::Debug for dyn Function {
 impl GetType for dyn Function {
     fn get_type(&self) -> Type {
         let params = self.get_params();
-        let params_types: Vec<Type> = params
+        let params_types: Box<[Type]> = params
             .standard
             .iter()
             .map(|Param { name: _, var_type }| var_type.clone())

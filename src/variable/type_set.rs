@@ -19,7 +19,7 @@ impl PartialEq for TypeSet {
 
 impl Hash for TypeSet {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        let types = Vec::from(self.clone());
+        let types: Box<[Type]> = Box::from(self.clone());
         types.hash(state)
     }
 }
@@ -32,7 +32,7 @@ impl From<[Type; 2]> for TypeSet {
     }
 }
 
-impl From<TypeSet> for Vec<Type> {
+impl From<TypeSet> for Box<[Type]> {
     fn from(value: TypeSet) -> Self {
         value.types.into_iter().collect()
     }
@@ -47,7 +47,7 @@ impl FromIterator<Type> for TypeSet {
 
 impl Display for TypeSet {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let types = Vec::from(self.clone());
+        let types = Box::from(self.clone());
         write!(f, "{}", join(&types, "|"))
     }
 }

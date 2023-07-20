@@ -99,7 +99,7 @@ impl From<Function> for Instruction {
 
 impl GetReturnType for Function {
     fn get_return_type(&self) -> Type {
-        let params_types: Vec<Type> = self
+        let params_types: Box<[Type]> = self
             .params
             .standard
             .iter()
