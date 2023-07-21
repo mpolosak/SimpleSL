@@ -68,7 +68,7 @@ impl Exec for Function {
 
 impl Recreate for Function {
     fn recreate(
-        self,
+        &self,
         local_variables: &mut LocalVariableMap,
         args: &VariableMap,
     ) -> Result<Instruction, Error> {
@@ -81,12 +81,16 @@ impl Recreate for Function {
         {
             Ok(Instruction::Variable(Variable::Function(Rc::new(
                 LangFunction {
-                    params: self.params,
+                    params: self.params.clone(),
                     body,
                 },
             ))))
         } else {
-            Ok(Self { body, ..self }.into())
+            Ok(Self {
+                params: self.params.clone(),
+                body,
+            }
+            .into())
         }
     }
 }

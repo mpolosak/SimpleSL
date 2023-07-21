@@ -66,7 +66,7 @@ impl Exec for RShift {
 
 impl Recreate for RShift {
     fn recreate(
-        self,
+        &self,
         local_variables: &mut LocalVariableMap,
         args: &VariableMap,
     ) -> Result<Instruction, Error> {

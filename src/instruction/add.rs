@@ -74,7 +74,7 @@ impl Exec for Add {
 
 impl Recreate for Add {
     fn recreate(
-        self,
+        &self,
         local_variables: &mut LocalVariableMap,
         args: &VariableMap,
     ) -> Result<Instruction, Error> {

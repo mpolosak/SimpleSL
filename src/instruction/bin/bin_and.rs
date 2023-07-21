@@ -61,7 +61,7 @@ impl Exec for BinAnd {
 
 impl Recreate for BinAnd {
     fn recreate(
-        self,
+        &self,
         local_variables: &mut LocalVariableMap,
         args: &VariableMap,
     ) -> Result<Instruction, Error> {

@@ -71,7 +71,7 @@ impl Exec for Match {
 
 impl Recreate for Match {
     fn recreate(
-        self,
+        &self,
         local_variables: &mut LocalVariableMap,
         args: &VariableMap,
     ) -> Result<Instruction, Error> {

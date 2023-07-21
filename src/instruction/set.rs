@@ -47,15 +47,15 @@ impl Exec for Set {
 
 impl Recreate for Set {
     fn recreate(
-        self,
+        &self,
         local_variables: &mut LocalVariableMap,
         args: &VariableMap,
     ) -> Result<Instruction, Error> {
         let instruction = self.instruction.recreate(local_variables, args)?;
         local_variables.insert(self.ident.clone(), instruction.clone().into());
         Ok(Self {
+            ident: self.ident.clone(),
             instruction,
-            ..self
         }
         .into())
     }

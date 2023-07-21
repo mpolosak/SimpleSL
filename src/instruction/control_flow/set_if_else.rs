@@ -75,7 +75,7 @@ impl Exec for SetIfElse {
 
 impl Recreate for SetIfElse {
     fn recreate(
-        self,
+        &self,
         local_variables: &mut LocalVariableMap,
         args: &VariableMap,
     ) -> Result<Instruction, Error> {
@@ -88,10 +88,11 @@ impl Recreate for SetIfElse {
         let if_match = self.if_match.recreate(&mut match_locals, args)?;
         let else_instruction = self.else_instruction.recreate(local_variables, args)?;
         Ok(Self {
+            ident: self.ident.clone(),
+            var_type: self.var_type.clone(),
             expression,
             if_match,
             else_instruction,
-            ..self
         }
         .into())
     }

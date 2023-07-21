@@ -61,7 +61,7 @@ impl Exec for BinOr {
 
 impl Recreate for BinOr {
     fn recreate(
-        self,
+        &self,
         local_variables: &mut LocalVariableMap,
         args: &VariableMap,
     ) -> Result<Instruction, Error> {

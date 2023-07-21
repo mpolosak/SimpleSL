@@ -58,7 +58,7 @@ impl Exec for Block {
 
 impl Recreate for Block {
     fn recreate(
-        self,
+        &self,
         local_variables: &mut LocalVariableMap,
         args: &VariableMap,
     ) -> Result<Instruction, Error> {

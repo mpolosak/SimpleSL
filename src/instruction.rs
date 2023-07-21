@@ -236,18 +236,18 @@ impl Exec for Instruction {
 
 impl Recreate for Instruction {
     fn recreate(
-        self,
+        &self,
         local_variables: &mut LocalVariableMap,
         args: &VariableMap,
     ) -> Result<Instruction, Error> {
         match self {
             Self::LocalFunctionCall(function_call) => function_call.recreate(local_variables, args),
             Self::FunctionCall(function_call) => function_call.recreate(local_variables, args),
-            Self::LocalVariable(name, var_type) => Ok(match local_variables.get(&name) {
+            Self::LocalVariable(name, var_type) => Ok(match local_variables.get(name) {
                 Some(LocalVariable::Variable(variable)) => Self::Variable(variable.clone()),
-                Some(_) => Self::LocalVariable(name, var_type),
+                Some(_) => Self::LocalVariable(name.clone(), var_type.clone()),
                 None => {
-                    let variable = args.try_get(&name).unwrap();
+                    let variable = args.try_get(name).unwrap();
                     Self::Variable(variable)
                 }
             }),
@@ -279,7 +279,8 @@ impl Recreate for Instruction {
             Self::IfElse(if_else) => if_else.recreate(local_variables, args),
             Self::At(at) => at.recreate(local_variables, args),
             Self::Match(match_stm) => match_stm.recreate(local_variables, args),
-            _ => Ok(self),
+            Self::Variable(variable) => Ok(Self::Variable(variable.clone())),
+            Self::SetIfElse(set_if_else) => set_if_else.recreate(local_variables, args), // _ => Ok(self),
         }
     }
 }
@@ -335,7 +336,6 @@ pub fn recreate_instructions(
 ) -> Result<Box<[Instruction]>, Error> {
     instructions
         .iter()
-        .cloned()
         .map(|instruction| instruction.recreate(local_variables, args))
         .collect()
 }

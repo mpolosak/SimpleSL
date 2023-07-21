@@ -66,7 +66,7 @@ impl Exec for LShift {
 
 impl Recreate for LShift {
     fn recreate(
-        self,
+        &self,
         local_variables: &mut LocalVariableMap,
         args: &VariableMap,
     ) -> Result<Instruction, Error> {

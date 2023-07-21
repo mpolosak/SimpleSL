@@ -50,7 +50,7 @@ impl Exec for Equal {
 
 impl Recreate for Equal {
     fn recreate(
-        self,
+        &self,
         local_variables: &mut LocalVariableMap,
         args: &VariableMap,
     ) -> Result<Instruction, Error> {

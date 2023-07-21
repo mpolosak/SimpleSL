@@ -70,7 +70,7 @@ impl Exec for Or {
 
 impl Recreate for Or {
     fn recreate(
-        self,
+        &self,
         local_variables: &mut LocalVariableMap,
         args: &VariableMap,
     ) -> Result<Instruction, Error> {

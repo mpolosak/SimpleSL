@@ -80,7 +80,7 @@ impl Exec for GreaterOrEqual {
 
 impl Recreate for GreaterOrEqual {
     fn recreate(
-        self,
+        &self,
         local_variables: &mut LocalVariableMap,
         args: &VariableMap,
     ) -> Result<Instruction, Error> {

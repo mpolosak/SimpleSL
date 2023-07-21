@@ -78,7 +78,7 @@ impl Exec for Greater {
 
 impl Recreate for Greater {
     fn recreate(
-        self,
+        &self,
         local_variables: &mut LocalVariableMap,
         args: &VariableMap,
     ) -> Result<Instruction, Error> {

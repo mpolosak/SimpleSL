@@ -55,7 +55,7 @@ impl Exec for Not {
 
 impl Recreate for Not {
     fn recreate(
-        self,
+        &self,
         local_variables: &mut LocalVariableMap,
         args: &VariableMap,
     ) -> Result<Instruction, Error> {

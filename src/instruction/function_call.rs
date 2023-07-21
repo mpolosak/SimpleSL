@@ -47,13 +47,13 @@ impl Exec for FunctionCall {
 
 impl Recreate for FunctionCall {
     fn recreate(
-        self,
+        &self,
         local_variables: &mut LocalVariableMap,
         args: &VariableMap,
     ) -> Result<Instruction, Error> {
         let args = recreate_instructions(&self.args, local_variables, args)?;
         Ok(Self {
-            function: self.function,
+            function: self.function.clone(),
             args,
         }
         .into())

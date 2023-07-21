@@ -67,7 +67,7 @@ impl Exec for And {
 
 impl Recreate for And {
     fn recreate(
-        self,
+        &self,
         local_variables: &mut LocalVariableMap,
         args: &VariableMap,
     ) -> Result<Instruction, Error> {

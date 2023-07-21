@@ -61,7 +61,7 @@ impl Exec for Modulo {
 
 impl Recreate for Modulo {
     fn recreate(
-        self,
+        &self,
         local_variables: &mut LocalVariableMap,
         args: &VariableMap,
     ) -> Result<Instruction, Error> {

@@ -54,16 +54,16 @@ impl Exec for LocalFunctionCall {
 
 impl Recreate for LocalFunctionCall {
     fn recreate(
-        self,
+        &self,
         local_variables: &mut LocalVariableMap,
         args: &VariableMap,
     ) -> Result<Instruction, Error> {
         let instructions = recreate_instructions(&self.args, local_variables, args)?;
         if local_variables.contains_key(&self.ident) {
             Ok(Self {
-                ident: self.ident,
+                ident: self.ident.clone(),
                 args: instructions,
-                return_type: self.return_type,
+                return_type: self.return_type.clone(),
             }
             .into())
         } else {

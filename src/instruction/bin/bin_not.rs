@@ -53,7 +53,7 @@ impl Exec for BinNot {
 
 impl Recreate for BinNot {
     fn recreate(
-        self,
+        &self,
         local_variables: &mut LocalVariableMap,
         args: &VariableMap,
     ) -> Result<Instruction, Error> {

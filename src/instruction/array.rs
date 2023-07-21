@@ -74,7 +74,7 @@ impl Exec for Array {
 
 impl Recreate for Array {
     fn recreate(
-        self,
+        &self,
         local_variables: &mut LocalVariableMap,
         args: &VariableMap,
     ) -> Result<Instruction, Error> {

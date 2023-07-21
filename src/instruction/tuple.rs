@@ -55,7 +55,7 @@ impl Exec for Tuple {
 
 impl Recreate for Tuple {
     fn recreate(
-        self,
+        &self,
         local_variables: &mut LocalVariableMap,
         args: &VariableMap,
     ) -> Result<Instruction, Error> {

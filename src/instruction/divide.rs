@@ -69,7 +69,7 @@ impl Exec for Divide {
 
 impl Recreate for Divide {
     fn recreate(
-        self,
+        &self,
         local_variables: &mut LocalVariableMap,
         args: &VariableMap,
     ) -> Result<Instruction, Error> {
