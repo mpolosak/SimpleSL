@@ -21,7 +21,7 @@ mod traits;
 mod tuple;
 use crate::{
     error::Error,
-    interpreter::{Interpreter, VariableMap},
+    interpreter::{Interpreter, VariableMap, VariableMapTrait},
     parse::Rule,
     variable::Variable,
     variable::{GetReturnType, GetType, Type},
@@ -147,7 +147,7 @@ impl Instruction {
                         Self::LocalVariable(var_name.into(), local_variable.clone())
                     }
                     None => {
-                        let value = variables.get(var_name)?;
+                        let value = variables.try_get(var_name)?;
                         Self::Variable(value)
                     }
                 })
@@ -202,7 +202,7 @@ impl Exec for Instruction {
                 function_call.exec(interpreter, local_variables)
             }
             Self::Variable(var) => Ok(var.clone()),
-            Self::LocalVariable(name, _) => Ok(local_variables.get(name).unwrap()),
+            Self::LocalVariable(name, _) => Ok(local_variables.try_get(name).unwrap()),
             Self::Array(array) => array.exec(interpreter, local_variables),
             Self::Function(function) => function.exec(interpreter, local_variables),
             Self::Tuple(function) => function.exec(interpreter, local_variables),
@@ -251,7 +251,7 @@ impl Recreate for Instruction {
                 Some(LocalVariable::Variable(variable)) => Self::Variable(variable.clone()),
                 Some(_) => Self::LocalVariable(name, var_type),
                 None => {
-                    let variable = args.get(&name).unwrap();
+                    let variable = args.try_get(&name).unwrap();
                     Self::Variable(variable)
                 }
             }),

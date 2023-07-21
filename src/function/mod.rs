@@ -25,11 +25,11 @@ pub trait Function: GetReturnType {
         if let Some(param_name) = &params.catch_rest {
             let from = params.standard.len();
             let rest: Rc<[Variable]> = args.get(from..).unwrap_or(&[]).into();
-            args_map.insert(param_name, Variable::from(rest));
+            args_map.insert(param_name.clone(), Variable::from(rest));
         }
 
         for (arg, Param { var_type: _, name }) in zip(args, params.standard.iter()) {
-            args_map.insert(name, arg.clone());
+            args_map.insert(name.clone(), arg.clone());
         }
         self.exec_intern(name, interpreter, args_map)
     }
@@ -44,7 +44,7 @@ pub trait Function: GetReturnType {
         if let Some(param_name) = &params.catch_rest {
             let from = params.standard.len();
             let rest: Rc<[Variable]> = args.get(from..).unwrap_or(&[]).into();
-            args_map.insert(param_name, Variable::from(rest));
+            args_map.insert(param_name.clone(), Variable::from(rest));
         } else if args.len() != params.standard.len() {
             return Err(Error::WrongNumberOfArguments(
                 String::from(name),
@@ -54,7 +54,7 @@ pub trait Function: GetReturnType {
 
         for (arg, Param { var_type, name }) in zip(args, params.standard.iter()) {
             if arg.get_type().matches(var_type) {
-                args_map.insert(name, arg.clone());
+                args_map.insert(name.clone(), arg.clone());
             } else {
                 return Err(Error::WrongType(name.clone(), var_type.clone()));
             }

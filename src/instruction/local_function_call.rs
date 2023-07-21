@@ -9,7 +9,7 @@ use super::{
 use crate::{
     error::Error,
     function::Params,
-    interpreter::{Interpreter, VariableMap},
+    interpreter::{Interpreter, VariableMap, VariableMapTrait},
     variable::{GetReturnType, Type, Variable},
 };
 
@@ -65,7 +65,7 @@ impl Recreate for LocalFunctionCall {
             }
             .into())
         } else {
-            let Variable::Function(function) = args.get(&self.ident).unwrap() else {
+            let Variable::Function(function) = args.try_get(&self.ident).unwrap() else {
                         panic!()
                     };
             Ok(FunctionCall {

@@ -100,7 +100,7 @@ impl MatchArm {
                 ident, instruction, ..
             } => {
                 let mut local_variables = local_variables.clone();
-                local_variables.insert(ident, variable);
+                local_variables.insert(ident.clone(), variable);
                 instruction.exec(interpreter, &mut local_variables)
             }
             MatchArm::Other(instruction) | MatchArm::Value(_, instruction) => {

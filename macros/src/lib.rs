@@ -45,7 +45,7 @@ pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream 
     quote!(
         #function
         variables.add_native_function(
-            #ident_str,
+            #ident_str.into(),
             NativeFunction {
                 params: Params {
                     standard: [#params].into(),

@@ -43,51 +43,51 @@ fn arg_import_from_function_param(
     let ident_str = ident.to_string();
     if param_type == "i64" {
         quote!(
-            let Variable::Int(#ident) = args.get(#ident_str)? else {
+            let Variable::Int(#ident) = args.try_get(#ident_str)? else {
                 panic!()
             };
         )
     } else if param_type == "f64" {
         quote!(
-            let Variable::Float(#ident) = args.get(#ident_str)? else {
+            let Variable::Float(#ident) = args.try_get(#ident_str)? else {
                 panic!()
             };
         )
     } else if param_type == "Rc < str >" {
         quote!(
-            let Variable::String(#ident) = args.get(#ident_str)? else {
+            let Variable::String(#ident) = args.try_get(#ident_str)? else {
                 panic!()
             };
         )
     } else if param_type == "& str" {
         quote!(
-            let Variable::String(#ident) = args.get(#ident_str)? else {
+            let Variable::String(#ident) = args.try_get(#ident_str)? else {
                 panic!()
             };
             let #ident = #ident.as_ref();
         )
     } else if param_type == "Rc < [Variable] >" {
         quote!(
-            let Variable::Array(#ident, _) = args.get(#ident_str)? else {
+            let Variable::Array(#ident, _) = args.try_get(#ident_str)? else {
                 panic!()
             };
         )
     } else if param_type == "& [Variable]" {
         quote!(
-            let Variable::Array(#ident, _) = args.get(#ident_str)? else {
+            let Variable::Array(#ident, _) = args.try_get(#ident_str)? else {
                 panic!()
             };
             let #ident = #ident.as_ref();
         )
     } else if param_type == "Rc < dyn Function >" {
         quote!(
-            let Variable::Function(#ident) = args.get(#ident_str)? else {
+            let Variable::Function(#ident) = args.try_get(#ident_str)? else {
                 panic!()
             };
         )
     } else if param_type == "Variable" {
         quote!(
-            let #ident = args.get(#ident_str)?;
+            let #ident = args.try_get(#ident_str)?;
         )
     } else if param_type == "& mut Interpreter" {
         quote!()

@@ -64,7 +64,7 @@ impl Exec for SetIfElse {
         let result_type = expression_result.get_type();
         if result_type.matches(&self.var_type) {
             let mut local_variables = local_variables.clone();
-            local_variables.insert(&self.ident, expression_result);
+            local_variables.insert(self.ident.clone(), expression_result);
             self.if_match.exec(interpreter, &mut local_variables)
         } else {
             self.else_instruction.exec(interpreter, local_variables)

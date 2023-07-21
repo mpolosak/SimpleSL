@@ -42,7 +42,7 @@ impl Exec for Set {
         local_variables: &mut VariableMap,
     ) -> Result<crate::variable::Variable, Error> {
         let result = self.instruction.exec(interpreter, local_variables)?;
-        local_variables.insert(&self.ident, result.clone());
+        local_variables.insert(self.ident.clone(), result.clone());
         Ok(result)
     }
 }

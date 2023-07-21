@@ -6,7 +6,7 @@ mod types;
 use crate::{
     error::Error,
     function::{NativeFunction, Param, Params},
-    interpreter::Interpreter,
+    interpreter::{Interpreter, VariableMapTrait},
     variable::{Type, Variable},
 };
 use simplesl_macros::export_function;

@@ -83,9 +83,10 @@ impl Exec for DestructTuple {
     ) -> Result<Variable, Error> {
         let result = self.instruction.exec(interpreter, local_variables)?;
         let Variable::Tuple(elements) = result else {panic!()};
-        for (ident, element) in zip(self.idents.iter(), elements.iter()) {
-            interpreter.variables.insert(ident, element.clone())
-        }
+        interpreter.variables.extend(
+            zip(self.idents.iter(), elements.iter())
+                .map(|(ident, element)| (ident.clone(), element.clone())),
+        );
         Ok(Variable::Tuple(elements))
     }
 }

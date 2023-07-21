@@ -9,7 +9,7 @@ use super::{
 use crate::{
     error::Error,
     function::Function,
-    interpreter::{Interpreter, VariableMap},
+    interpreter::{Interpreter, VariableMap, VariableMapTrait},
     variable::{GetReturnType, Type, Variable},
 };
 use std::rc::Rc;
@@ -26,7 +26,7 @@ impl FunctionCall {
         variables: &VariableMap,
         args: Box<[Instruction]>,
     ) -> Result<Self, Error> {
-        let Variable::Function(function) = variables.get(var_name)? else {
+        let Variable::Function(function) = variables.try_get(var_name)? else {
             return Err(error_wrong_type(&args, var_name));
         };
         let params = function.get_params();

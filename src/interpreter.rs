@@ -57,30 +57,21 @@ impl Default for Interpreter {
     }
 }
 
-#[derive(Clone, Debug, Default)]
-pub struct VariableMap {
-    hash_map: HashMap<String, Variable>,
+pub type VariableMap = HashMap<String, Variable>;
+
+pub trait VariableMapTrait {
+    fn try_get(&self, name: &str) -> Result<Variable, Error>;
+    fn add_native_function(&mut self, name: String, function: NativeFunction);
 }
 
-impl VariableMap {
-    pub fn new() -> Self {
-        VariableMap {
-            hash_map: HashMap::new(),
-        }
-    }
-    pub fn get(&self, name: &str) -> Result<Variable, Error> {
-        match self.hash_map.get(name) {
+impl VariableMapTrait for VariableMap {
+    fn try_get(&self, name: &str) -> Result<Variable, Error> {
+        match self.get(name) {
             Some(variable) => Ok(variable.clone()),
             _ => Err(Error::VariableDoesntExist(String::from(name))),
         }
     }
-    pub fn insert(&mut self, name: &str, variable: Variable) {
-        self.hash_map.insert(String::from(name), variable);
-    }
-    pub fn add_native_function(&mut self, name: &str, function: NativeFunction) {
-        self.insert(name, Variable::Function(Rc::new(function)))
-    }
-    pub fn extend(&mut self, other: VariableMap) {
-        self.hash_map.extend(other.hash_map)
+    fn add_native_function(&mut self, name: String, function: NativeFunction) {
+        self.insert(name, Variable::Function(Rc::new(function)));
     }
 }
