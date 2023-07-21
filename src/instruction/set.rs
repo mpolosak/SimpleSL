@@ -28,7 +28,7 @@ impl Set {
         let ident: Rc<str> = inner.next().unwrap().as_str().into();
         let pair = inner.next().unwrap();
         let instruction = Instruction::new(pair, variables, local_variables)?;
-        local_variables.insert(ident.clone(), instruction.clone().into());
+        local_variables.insert(ident.clone(), (&instruction).into());
         Ok(Self { ident, instruction })
     }
 }
@@ -52,7 +52,7 @@ impl Recreate for Set {
         args: &VariableMap,
     ) -> Result<Instruction, Error> {
         let instruction = self.instruction.recreate(local_variables, args)?;
-        local_variables.insert(self.ident.clone(), instruction.clone().into());
+        local_variables.insert(self.ident.clone(), (&instruction).into());
         Ok(Self {
             ident: self.ident.clone(),
             instruction,

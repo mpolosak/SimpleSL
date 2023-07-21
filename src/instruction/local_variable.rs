@@ -20,15 +20,15 @@ impl From<Type> for LocalVariable {
     }
 }
 
-impl From<Instruction> for LocalVariable {
-    fn from(value: Instruction) -> Self {
+impl From<&Instruction> for LocalVariable {
+    fn from(value: &Instruction) -> Self {
         let var_type = value.get_return_type();
         match (value, var_type) {
             (
                 Instruction::Function(Function { params, .. }),
                 Type::Function { return_type, .. },
-            ) => Self::Function(params, *return_type),
-            (Instruction::Variable(variable), _) => Self::Variable(variable),
+            ) => Self::Function(params.clone(), *return_type),
+            (Instruction::Variable(variable), _) => Self::Variable(variable.clone()),
             (_, var_type) => Self::Other(var_type),
         }
     }
