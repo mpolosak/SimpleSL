@@ -9,7 +9,7 @@ use crate::{
     function::{LangFunction, Param, Params},
     interpreter::{Interpreter, VariableMap},
     parse::Rule,
-    variable::{GetReturnType, Type, Variable},
+    variable::{function_type::FunctionType, GetReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
 use std::rc::Rc;
@@ -114,10 +114,11 @@ impl GetReturnType for Function {
             Some(instruction) => instruction.get_return_type(),
             None => Type::Any,
         };
-        Type::Function {
-            return_type: Box::new(return_type),
+        FunctionType {
+            return_type,
             params: params_types,
             catch_rest,
         }
+        .into()
     }
 }

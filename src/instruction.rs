@@ -23,7 +23,7 @@ use crate::{
     error::Error,
     interpreter::{Interpreter, VariableMap, VariableMapTrait},
     parse::Rule,
-    variable::{GetReturnType, GetType, Type, Variable},
+    variable::{function_type::FunctionType, GetReturnType, GetType, Type, Variable},
 };
 use pest::iterators::Pair;
 use std::rc::Rc;
@@ -355,10 +355,11 @@ fn error_wrong_type(args: &[Instruction], var_name: &str) -> Error {
     let params = args.iter().map(Instruction::get_return_type).collect();
     Error::WrongType(
         var_name.to_owned(),
-        Type::Function {
-            return_type: Type::Any.into(),
+        FunctionType {
+            return_type: Type::Any,
             params,
             catch_rest: false,
-        },
+        }
+        .into(),
     )
 }

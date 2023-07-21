@@ -1,7 +1,7 @@
 use super::{function::Function, Instruction};
 use crate::{
     function::{Param, Params},
-    variable::{GetReturnType, GetType, Type, Variable},
+    variable::{function_type::FunctionType, GetReturnType, GetType, Type, Variable},
 };
 use std::{collections::HashMap, rc::Rc};
 
@@ -24,10 +24,9 @@ impl From<&Instruction> for LocalVariable {
     fn from(value: &Instruction) -> Self {
         let var_type = value.get_return_type();
         match (value, var_type) {
-            (
-                Instruction::Function(Function { params, .. }),
-                Type::Function { return_type, .. },
-            ) => Self::Function(params.clone(), *return_type),
+            (Instruction::Function(Function { params, .. }), Type::Function(function_type)) => {
+                Self::Function(params.clone(), function_type.get_return_type())
+            }
             (Instruction::Variable(variable), _) => Self::Variable(variable.clone()),
             (_, var_type) => Self::Other(var_type),
         }
@@ -37,15 +36,16 @@ impl From<&Instruction> for LocalVariable {
 impl GetType for LocalVariable {
     fn get_type(&self) -> Type {
         match self {
-            LocalVariable::Function(params, return_type) => Type::Function {
-                return_type: return_type.clone().into(),
+            LocalVariable::Function(params, return_type) => FunctionType {
+                return_type: return_type.clone(),
                 params: params
                     .standard
                     .iter()
                     .map(|Param { var_type, name: _ }| var_type.clone())
                     .collect(),
                 catch_rest: params.catch_rest.is_some(),
-            },
+            }
+            .into(),
             LocalVariable::Variable(variable) => variable.get_type(),
             LocalVariable::Other(var_type) => var_type.clone(),
         }

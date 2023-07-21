@@ -9,7 +9,7 @@ pub use self::{
 use crate::{
     error::Error,
     interpreter::{Interpreter, VariableMap},
-    variable::{GetReturnType, GetType, Type, Variable},
+    variable::{function_type::FunctionType, GetReturnType, GetType, Type, Variable},
 };
 use std::{fmt, iter::zip, rc::Rc};
 
@@ -98,11 +98,12 @@ impl GetType for dyn Function {
             .map(|Param { name: _, var_type }| var_type.clone())
             .collect();
         let catch_rest = params.catch_rest.is_some();
-        let return_type = self.get_return_type().into();
-        Type::Function {
+        let return_type = self.get_return_type();
+        FunctionType {
             return_type,
             params: params_types,
             catch_rest,
         }
+        .into()
     }
 }

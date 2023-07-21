@@ -1,3 +1,4 @@
+pub mod function_type;
 pub mod type_set;
 mod variable_type;
 use crate::{error::Error, function::Function, join, parse::*, pest::Parser};

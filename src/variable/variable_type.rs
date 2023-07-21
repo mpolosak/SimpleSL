@@ -1,22 +1,18 @@
-use super::type_set::TypeSet;
+use super::{function_type::FunctionType, type_set::TypeSet};
 use crate::{
     error::Error,
     join,
     parse::{Rule, SimpleSLParser},
 };
 use pest::{iterators::Pair, Parser};
-use std::{collections::HashSet, fmt::Display, hash::Hash, iter::zip, str::FromStr};
+use std::{collections::HashSet, fmt::Display, hash::Hash, iter::zip, rc::Rc, str::FromStr};
 
 #[derive(Clone, Debug, Hash, Eq, PartialEq)]
 pub enum Type {
     Int,
     Float,
     String,
-    Function {
-        return_type: Box<Type>,
-        params: Box<[Type]>,
-        catch_rest: bool,
-    },
+    Function(Rc<FunctionType>),
     Array(Box<Type>),
     Tuple(Box<[Type]>),
     EmptyArray,
@@ -28,24 +24,8 @@ pub enum Type {
 impl Type {
     pub fn matches(&self, other: &Self) -> bool {
         match (self, other) {
-            (
-                Self::Function {
-                    return_type,
-                    params,
-                    catch_rest,
-                },
-                Self::Function {
-                    return_type: return_type2,
-                    params: params2,
-                    catch_rest: catch_rest2,
-                },
-            ) => {
-                if (*catch_rest2 || params.len() != params2.len()) && !catch_rest {
-                    false
-                } else {
-                    zip(params.iter(), params2.iter()).all(|(type1, type2)| type1.matches(type2))
-                        && return_type.matches(return_type2)
-                }
+            (Self::Function(function_type), Self::Function(function_type2)) => {
+                function_type.matches(function_type2)
             }
             (Self::Multi(types), Self::Multi(types2)) => types.types.is_subset(&types2.types),
             (_, Self::Multi(types)) => types.types.iter().any(|var_type| self.matches(var_type)),
@@ -87,20 +67,7 @@ impl Display for Type {
             Self::Int => write!(f, "int"),
             Self::Float => write!(f, "float"),
             Self::String => write!(f, "string"),
-            Self::Function {
-                return_type,
-                params,
-                catch_rest: false,
-            } => {
-                write!(f, "function({})->{return_type}", join(params, ", "))
-            }
-            Self::Function {
-                return_type,
-                params,
-                catch_rest: true,
-            } => {
-                write!(f, "function({},...)->{return_type}", join(params, ", "))
-            }
+            Self::Function(function_type) => write!(f, "{function_type}"),
             Self::Array(var_type) => write!(f, "[{var_type}]"),
             Self::EmptyArray => write!(f, "[]"),
             Self::Tuple(types) => write!(f, "({})", join(types, ", ")),
@@ -129,24 +96,7 @@ impl From<Pair<'_, Rule>> for Type {
             Rule::float_type => Self::Float,
             Rule::string_type => Self::String,
             Rule::void_type => Self::Void,
-            Rule::function_type => {
-                let mut return_type = Self::Any;
-                let mut params: Box<[Type]> = [].into();
-                let catch_rest = false;
-                for pair in pair.into_inner() {
-                    if pair.as_rule() == Rule::function_type_params {
-                        params = pair.into_inner().map(Type::from).collect();
-                    } else {
-                        return_type = Type::from(pair);
-                    }
-                }
-                let return_type = Box::new(return_type);
-                Self::Function {
-                    return_type,
-                    params,
-                    catch_rest,
-                }
-            }
+            Rule::function_type => FunctionType::from(pair).into(),
             Rule::array_type => {
                 let pair = pair.into_inner().next().unwrap();
                 Self::Array(Self::from(pair).into())
