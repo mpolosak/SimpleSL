@@ -56,7 +56,7 @@ pub enum Instruction {
     FunctionCall(FunctionCall),
     LocalFunctionCall(LocalFunctionCall),
     Variable(Variable),
-    LocalVariable(String, LocalVariable),
+    LocalVariable(Rc<str>, LocalVariable),
     Array(Array),
     Function(Function),
     Tuple(Tuple),

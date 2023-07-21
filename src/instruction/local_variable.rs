@@ -3,9 +3,9 @@ use crate::{
     function::{Param, Params},
     variable::{GetReturnType, GetType, Type, Variable},
 };
-use std::collections::HashMap;
+use std::{collections::HashMap, rc::Rc};
 
-pub type LocalVariableMap = HashMap<String, LocalVariable>;
+pub type LocalVariableMap = HashMap<Rc<str>, LocalVariable>;
 
 #[derive(Clone)]
 pub enum LocalVariable {

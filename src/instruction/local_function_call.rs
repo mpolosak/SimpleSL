@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use super::{
     check_args, error_wrong_type, exec_instructions,
     function_call::FunctionCall,
@@ -15,7 +17,7 @@ use crate::{
 
 #[derive(Clone)]
 pub struct LocalFunctionCall {
-    ident: String,
+    ident: Rc<str>,
     args: Box<[Instruction]>,
     return_type: Type,
 }
@@ -29,7 +31,7 @@ impl LocalFunctionCall {
     ) -> Result<Self, Error> {
         check_args(var_name, params, &args)?;
         Ok(Self {
-            ident: String::from(var_name),
+            ident: var_name.into(),
             args,
             return_type,
         })

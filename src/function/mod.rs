@@ -56,7 +56,7 @@ pub trait Function: GetReturnType {
             if arg.get_type().matches(var_type) {
                 args_map.insert(name.clone(), arg.clone());
             } else {
-                return Err(Error::WrongType(name.clone(), var_type.clone()));
+                return Err(Error::WrongType(name.as_ref().to_owned(), var_type.clone()));
             }
         }
         self.exec_intern(name, interpreter, args_map)

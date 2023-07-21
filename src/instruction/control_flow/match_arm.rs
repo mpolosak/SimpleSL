@@ -9,11 +9,12 @@ use crate::{
     variable::{GetType, Type, Variable},
 };
 use pest::iterators::Pair;
+use std::rc::Rc;
 
 #[derive(Clone)]
 pub enum MatchArm {
     Type {
-        ident: String,
+        ident: Rc<str>,
         var_type: Type,
         instruction: Instruction,
     },
@@ -30,7 +31,7 @@ impl MatchArm {
         match pair.as_rule() {
             Rule::match_type => {
                 let mut inner = pair.into_inner();
-                let ident = inner.next().unwrap().as_str().to_owned();
+                let ident: Rc<str> = inner.next().unwrap().as_str().into();
                 let var_type = Type::from(inner.next().unwrap());
                 let pair = inner.next().unwrap();
                 let mut local_variables = local_variables.clone();

@@ -227,7 +227,7 @@ mod tests {
         assert_eq!(Variable::from_str("()"), Ok(Variable::Void));
         assert_eq!(
             Variable::from_str(r#""print \"""#),
-            Ok(Variable::String(String::from("print \"").into()))
+            Ok(Variable::String("print \"".into()))
         );
         assert_eq!(
             Variable::from_str(r#""print" """#),

@@ -6,7 +6,7 @@ fn main() {
     let args: Box<[String]> = env::args().collect();
     match &args[..] {
         [_] => run_shell(),
-        [_, file] => run_from_file(file),
+        [_, file] => run_from_file(&file),
         _ => println!("Too many arguments"),
     }
 }

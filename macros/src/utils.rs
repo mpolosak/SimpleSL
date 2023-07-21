@@ -114,7 +114,7 @@ fn param_from_function_param(
     let param_type = type_from_str(attrs, param_type);
     quote!(
         Param {
-            name: String::from(#ident),
+            name: #ident.into(),
             var_type: #param_type,
         }
     )

@@ -25,7 +25,7 @@ pub fn check_args(var_name: &str, params: &Params, args: &[Instruction]) -> Resu
 
     for (arg, Param { name, var_type }) in zip(args, params.standard.iter()) {
         if !arg.get_return_type().matches(var_type) {
-            return Err(Error::WrongType(name.clone(), var_type.clone()));
+            return Err(Error::WrongType(name.as_ref().to_owned(), var_type.clone()));
         }
     }
     Ok(())

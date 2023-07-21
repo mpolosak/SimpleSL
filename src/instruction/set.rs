@@ -10,10 +10,11 @@ use crate::{
     variable::{GetReturnType, Type},
 };
 use pest::iterators::Pair;
+use std::rc::Rc;
 
 #[derive(Clone)]
 pub struct Set {
-    ident: String,
+    ident: Rc<str>,
     instruction: Instruction,
 }
 
@@ -24,7 +25,7 @@ impl Set {
         local_variables: &mut LocalVariableMap,
     ) -> Result<Self, Error> {
         let mut inner = pair.into_inner();
-        let ident = inner.next().unwrap().as_str().to_owned();
+        let ident: Rc<str> = inner.next().unwrap().as_str().into();
         let pair = inner.next().unwrap();
         let instruction = Instruction::new(pair, variables, local_variables)?;
         local_variables.insert(ident.clone(), instruction.clone().into());

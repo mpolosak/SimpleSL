@@ -57,11 +57,11 @@ impl Default for Interpreter {
     }
 }
 
-pub type VariableMap = HashMap<String, Variable>;
+pub type VariableMap = HashMap<Rc<str>, Variable>;
 
 pub trait VariableMapTrait {
     fn try_get(&self, name: &str) -> Result<Variable, Error>;
-    fn add_native_function(&mut self, name: String, function: NativeFunction);
+    fn add_native_function(&mut self, name: Rc<str>, function: NativeFunction);
 }
 
 impl VariableMapTrait for VariableMap {
@@ -71,7 +71,7 @@ impl VariableMapTrait for VariableMap {
             _ => Err(Error::VariableDoesntExist(String::from(name))),
         }
     }
-    fn add_native_function(&mut self, name: String, function: NativeFunction) {
+    fn add_native_function(&mut self, name: Rc<str>, function: NativeFunction) {
         self.insert(name, Variable::Function(Rc::new(function)));
     }
 }

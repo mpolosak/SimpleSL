@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::instruction::{
     local_variable::{LocalVariable, LocalVariableMap},
     CreateInstruction, Exec, Instruction, Recreate,
@@ -12,7 +14,7 @@ use pest::iterators::Pair;
 
 #[derive(Clone)]
 pub struct SetIfElse {
-    ident: String,
+    ident: Rc<str>,
     var_type: Type,
     expression: Instruction,
     if_match: Instruction,
@@ -27,7 +29,7 @@ impl CreateInstruction for SetIfElse {
     ) -> Result<Instruction, Error> {
         let rule = pair.as_rule();
         let mut inner = pair.into_inner();
-        let ident = inner.next().unwrap().as_str().to_owned();
+        let ident: Rc<str> = inner.next().unwrap().as_str().into();
         let pair = inner.next().unwrap();
         let var_type = Type::from(pair);
         let pair = inner.next().unwrap();

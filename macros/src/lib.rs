@@ -19,7 +19,7 @@ pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream 
     let ident_str = if let Some(value) = attr.name {
         value
     } else {
-        ident.to_string()
+        ident.to_string().into()
     };
     let mut params = function_params_from_itemfn(&mut function);
     let args = args_from_function_params(&params);
@@ -30,7 +30,7 @@ pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream 
                 if type_str == "Rc < [Variable] >" || type_str == "& [Variable]" =>
             {
                 let ident = ident.to_string();
-                quote!(Some(String::from(#ident)))
+                quote!(Some(#ident.into()))
             }
             Some(_) | None => {
                 panic!("catch_rest=true requiers function to have last param of type Rc<[Variable]> or &[Variable]")

@@ -1,10 +1,10 @@
 use crate::{instruction::local_variable::LocalVariableMap, join, parse::Rule, variable::Type};
 use pest::iterators::Pair;
-use std::fmt;
+use std::{fmt, rc::Rc};
 
 #[derive(Clone, Debug)]
 pub struct Param {
-    pub name: String,
+    pub name: Rc<str>,
     pub var_type: Type,
 }
 
@@ -18,7 +18,7 @@ impl From<Pair<'_, Rule>> for Param {
     fn from(value: Pair<'_, Rule>) -> Self {
         let mut inner = value.into_inner();
         Self {
-            name: String::from(inner.next().unwrap().as_str()),
+            name: inner.next().unwrap().as_str().into(),
             var_type: Type::from(inner.next().unwrap()),
         }
     }
@@ -27,7 +27,7 @@ impl From<Pair<'_, Rule>> for Param {
 #[derive(Clone, Debug)]
 pub struct Params {
     pub standard: Box<[Param]>,
-    pub catch_rest: Option<String>,
+    pub catch_rest: Option<Rc<str>>,
 }
 
 impl fmt::Display for Params {

@@ -1,10 +1,11 @@
 use proc_macro::TokenStream;
 use quote::quote;
+use std::rc::Rc;
 use syn::{parse::Parser, punctuated::Punctuated, Expr, ExprLit, Lit, MetaNameValue, Token};
 
 #[derive(Default)]
 pub struct Attributes {
-    pub name: Option<String>,
+    pub name: Option<Rc<str>>,
     pub catch_rest: bool,
     pub return_type: Option<quote::__private::TokenStream>,
 }
@@ -21,7 +22,7 @@ impl Attributes {
                 new.name = match value {
                     Expr::Lit(ExprLit {
                         lit: Lit::Str(lit), ..
-                    }) => Some(lit.value()),
+                    }) => Some(lit.value().into()),
                     _ => panic!("{path} must be str literal"),
                 }
             } else if path == "catch_rest" {
