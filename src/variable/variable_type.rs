@@ -49,12 +49,8 @@ impl Type {
                 if (*catch_rest2 || params.len() != params2.len()) && !catch_rest {
                     false
                 } else {
-                    for (type1, type2) in zip(params.iter(), params2.iter()) {
-                        if !type1.matches(type2) {
-                            return false;
-                        }
-                    }
-                    return_type.matches(return_type2)
+                    zip(params.iter(), params2.iter()).all(|(type1, type2)| type1.matches(type2))
+                        && return_type.matches(return_type2)
                 }
             }
             (Self::Multi(types), Self::Multi(types2)) => types.types.is_subset(&types2.types),

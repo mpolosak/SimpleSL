@@ -45,15 +45,14 @@ impl Array {
             let var_type = Type::Array(element_type.into());
             let mut array = Vec::new();
             for instruction in instructions.iter() {
-                if let Instruction::Variable(variable) = instruction {
-                    array.push(variable.clone());
-                } else {
+                let Instruction::Variable(variable) = instruction else {
                     return Self {
                         instructions,
                         var_type,
                     }
                     .into();
-                }
+                };
+                array.push(variable.clone());
             }
             Instruction::Variable(Variable::Array(array.into(), var_type))
         } else {

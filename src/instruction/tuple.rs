@@ -1,6 +1,6 @@
 use super::{
-    local_variable::LocalVariableMap, recreate_instructions, CreateInstruction, Exec, Instruction,
-    Recreate,
+    exec_instructions, local_variable::LocalVariableMap, recreate_instructions, CreateInstruction,
+    Exec, Instruction, Recreate,
 };
 use crate::{
     error::Error,
@@ -33,11 +33,10 @@ impl Tuple {
     fn create_from_elements(elements: Box<[Instruction]>) -> Instruction {
         let mut array = Vec::new();
         for instruction in elements.iter() {
-            if let Instruction::Variable(variable) = instruction {
-                array.push(variable.clone());
-            } else {
+            let Instruction::Variable(variable) = instruction else {
                 return Self { elements }.into();
-            }
+            };
+            array.push(variable.clone());
         }
         Instruction::Variable(Variable::Tuple(array.into()))
     }
@@ -49,11 +48,8 @@ impl Exec for Tuple {
         interpreter: &mut Interpreter,
         local_variables: &mut VariableMap,
     ) -> Result<Variable, Error> {
-        let mut elements = Vec::new();
-        for element in self.elements.iter() {
-            elements.push(element.exec(interpreter, local_variables)?);
-        }
-        Ok(Variable::Tuple(elements.into()))
+        let elements = exec_instructions(&self.elements, interpreter, local_variables)?;
+        Ok(Variable::Tuple(elements))
     }
 }
 

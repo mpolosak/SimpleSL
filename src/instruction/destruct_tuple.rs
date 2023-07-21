@@ -51,21 +51,22 @@ impl DestructTuple {
     fn insert_local_variables(&self, local_variables: &mut LocalVariableMap) {
         match self.instruction.as_ref() {
             Instruction::Variable(Variable::Tuple(elements)) => {
-                for (ident, element) in zip(self.idents.iter(), elements.iter()) {
-                    local_variables.insert(ident.clone(), LocalVariable::Variable(element.clone()));
-                }
+                local_variables.extend(zip(self.idents.iter(), elements.iter()).map(
+                    |(ident, element)| (ident.clone(), LocalVariable::Variable(element.clone())),
+                ));
             }
             Instruction::Tuple(Tuple { elements }) => {
-                for (ident, element) in zip(self.idents.iter(), elements.iter()) {
-                    local_variables.insert(ident.clone(), element.clone().into());
-                }
+                local_variables.extend(
+                    zip(self.idents.iter(), elements.iter())
+                        .map(|(ident, element)| (ident.clone(), element.clone().into())),
+                );
             }
             instruction => {
                 if let Type::Tuple(types) = instruction.get_return_type() {
-                    for (ident, var_type) in zip(self.idents.iter(), types.iter()) {
-                        local_variables
-                            .insert(ident.clone(), LocalVariable::Other(var_type.clone()));
-                    }
+                    local_variables.extend(
+                        zip(self.idents.iter(), types.iter())
+                            .map(|(ident, var_type)| (ident.clone(), var_type.clone().into())),
+                    );
                 } else {
                     panic!()
                 }

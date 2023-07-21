@@ -3,7 +3,7 @@ use simplesl::interpreter::Interpreter;
 use std::env;
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
+    let args: Box<[String]> = env::args().collect();
     match &args[..] {
         [_] => run_shell(),
         [_, file] => run_from_file(file),
