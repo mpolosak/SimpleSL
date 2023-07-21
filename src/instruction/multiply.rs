@@ -8,7 +8,7 @@ use crate::{
 use pest::iterators::Pair;
 use std::result::Result;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Multiply {
     lhs: Instruction,
     rhs: Instruction,

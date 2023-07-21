@@ -10,7 +10,7 @@ use crate::{
 };
 use pest::iterators::Pair;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Block {
     instructions: Box<[Instruction]>,
 }

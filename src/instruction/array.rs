@@ -15,7 +15,7 @@ use crate::{
 };
 use pest::iterators::Pair;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Array {
     instructions: Box<[Instruction]>,
     var_type: Type,

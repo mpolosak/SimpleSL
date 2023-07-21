@@ -14,7 +14,7 @@ use crate::{
 };
 use std::rc::Rc;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct FunctionCall {
     pub function: Rc<dyn Function>,
     pub args: Box<[Instruction]>,

@@ -15,7 +15,7 @@ use crate::{
     variable::{GetReturnType, Type, Variable},
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct LocalFunctionCall {
     ident: Rc<str>,
     args: Box<[Instruction]>,

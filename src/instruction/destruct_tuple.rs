@@ -13,7 +13,7 @@ use crate::{
 };
 use pest::iterators::Pair;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct DestructTuple {
     idents: Box<[Rc<str>]>,
     instruction: Instruction,

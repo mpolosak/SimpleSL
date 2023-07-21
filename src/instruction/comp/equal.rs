@@ -4,7 +4,7 @@ use crate::instruction::{
 use crate::{error::Error, interpreter::VariableMap, parse::Rule};
 use pest::iterators::Pair;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Equal {
     lhs: Instruction,
     rhs: Instruction,

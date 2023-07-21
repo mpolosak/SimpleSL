@@ -12,7 +12,7 @@ use crate::{
 };
 use pest::iterators::Pair;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct SetIfElse {
     ident: Rc<str>,
     var_type: Type,

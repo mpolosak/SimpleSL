@@ -11,7 +11,7 @@ use crate::{
 use pest::iterators::Pair;
 use std::rc::Rc;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum MatchArm {
     Type {
         ident: Rc<str>,

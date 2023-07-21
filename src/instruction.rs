@@ -26,7 +26,7 @@ use crate::{
     variable::{GetReturnType, GetType, Type, Variable},
 };
 use pest::iterators::Pair;
-use std::{fmt, rc::Rc};
+use std::rc::Rc;
 pub use traits::{CreateInstruction, Exec, Recreate};
 use {
     add::Add,
@@ -51,7 +51,7 @@ use {
     tuple::Tuple,
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Instruction {
     FunctionCall(FunctionCall),
     LocalFunctionCall(LocalFunctionCall),
@@ -281,12 +281,6 @@ impl Recreate for Instruction {
             Self::Match(match_stm) => match_stm.recreate(local_variables, args),
             _ => Ok(self),
         }
-    }
-}
-
-impl fmt::Debug for Instruction {
-    fn fmt(&self, _f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        todo!()
     }
 }
 

@@ -14,7 +14,7 @@ use crate::{
 use pest::iterators::Pair;
 use std::rc::Rc;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Function {
     pub params: Params,
     body: Box<[Instruction]>,

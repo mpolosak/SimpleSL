@@ -12,7 +12,7 @@ use crate::{
 use pest::iterators::Pair;
 use std::rc::Rc;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Set {
     ident: Rc<str>,
     instruction: Instruction,

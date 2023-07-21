@@ -7,7 +7,7 @@ use crate::{
 };
 use pest::iterators::Pair;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct At {
     instruction: Instruction,
     index: Instruction,

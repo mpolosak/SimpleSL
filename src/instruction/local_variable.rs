@@ -7,7 +7,7 @@ use std::{collections::HashMap, rc::Rc};
 
 pub type LocalVariableMap = HashMap<Rc<str>, LocalVariable>;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum LocalVariable {
     Function(Params, Type),
     Variable(Variable),
