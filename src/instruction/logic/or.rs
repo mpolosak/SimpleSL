@@ -11,8 +11,8 @@ use pest::iterators::Pair;
 
 #[derive(Clone)]
 pub struct Or {
-    lhs: Box<Instruction>,
-    rhs: Box<Instruction>,
+    lhs: Instruction,
+    rhs: Instruction,
 }
 
 impl CreateInstruction for Or {
@@ -46,11 +46,7 @@ impl Or {
             {
                 instruction
             }
-            (lhs, rhs) => Self {
-                lhs: lhs.into(),
-                rhs: rhs.into(),
-            }
-            .into(),
+            (lhs, rhs) => Self { lhs, rhs }.into(),
         }
     }
 }
@@ -86,6 +82,6 @@ impl Recreate for Or {
 
 impl From<Or> for Instruction {
     fn from(value: Or) -> Self {
-        Self::Or(value)
+        Self::Or(value.into())
     }
 }

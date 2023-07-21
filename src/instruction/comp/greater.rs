@@ -11,8 +11,8 @@ use pest::iterators::Pair;
 
 #[derive(Clone)]
 pub struct Greater {
-    lhs: Box<Instruction>,
-    rhs: Box<Instruction>,
+    lhs: Instruction,
+    rhs: Instruction,
 }
 
 impl CreateInstruction for Greater {
@@ -55,11 +55,7 @@ impl Greater {
                 Instruction::Variable(Variable::Float(lhs)),
                 Instruction::Variable(Variable::Float(rhs)),
             ) => Instruction::Variable((lhs > rhs).into()),
-            (lhs, rhs) => Self {
-                lhs: lhs.into(),
-                rhs: rhs.into(),
-            }
-            .into(),
+            (lhs, rhs) => Self { lhs, rhs }.into(),
         }
     }
 }
@@ -94,6 +90,6 @@ impl Recreate for Greater {
 
 impl From<Greater> for Instruction {
     fn from(value: Greater) -> Self {
-        Self::Greater(value)
+        Self::Greater(value.into())
     }
 }

@@ -10,8 +10,8 @@ use std::result::Result;
 
 #[derive(Clone)]
 pub struct Multiply {
-    lhs: Box<Instruction>,
-    rhs: Box<Instruction>,
+    lhs: Instruction,
+    rhs: Instruction,
 }
 
 impl CreateInstruction for Multiply {
@@ -45,11 +45,7 @@ impl Multiply {
                 Instruction::Variable(Variable::Float(value1)),
                 Instruction::Variable(Variable::Float(value2)),
             ) => Instruction::Variable((value1 * value2).into()),
-            (lhs, rhs) => Self {
-                lhs: lhs.into(),
-                rhs: rhs.into(),
-            }
-            .into(),
+            (lhs, rhs) => Self { lhs, rhs }.into(),
         }
     }
 }
@@ -90,6 +86,6 @@ impl GetReturnType for Multiply {
 
 impl From<Multiply> for Instruction {
     fn from(value: Multiply) -> Self {
-        Self::Multiply(value)
+        Self::Multiply(value.into())
     }
 }

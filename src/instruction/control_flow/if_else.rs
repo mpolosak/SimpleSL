@@ -11,9 +11,9 @@ use pest::iterators::Pair;
 
 #[derive(Clone)]
 pub struct IfElse {
-    condition: Box<Instruction>,
-    if_true: Box<Instruction>,
-    if_false: Box<Instruction>,
+    condition: Instruction,
+    if_true: Instruction,
+    if_false: Instruction,
 }
 
 impl CreateInstruction for IfElse {
@@ -42,22 +42,22 @@ impl CreateInstruction for IfElse {
                 Instruction::new(true_pair, variables, local_variables)
             }
             (condition, Rule::if_else) => {
-                let if_true = Instruction::new(true_pair, variables, local_variables)?.into();
+                let if_true = Instruction::new(true_pair, variables, local_variables)?;
                 let false_pair = inner.next().unwrap();
-                let if_false = Instruction::new(false_pair, variables, local_variables)?.into();
+                let if_false = Instruction::new(false_pair, variables, local_variables)?;
                 Ok(Self {
-                    condition: condition.into(),
+                    condition,
                     if_true,
                     if_false,
                 }
                 .into())
             }
             (condition, _) => {
-                let if_true = Instruction::new(true_pair, variables, local_variables)?.into();
+                let if_true = Instruction::new(true_pair, variables, local_variables)?;
                 Ok(Self {
-                    condition: condition.into(),
+                    condition,
                     if_true,
-                    if_false: Instruction::Variable(Variable::Void).into(),
+                    if_false: Instruction::Variable(Variable::Void),
                 }
                 .into())
             }
@@ -92,10 +92,10 @@ impl Recreate for IfElse {
                 self.if_false.recreate(local_variables, args)
             }
             condition => {
-                let if_true = self.if_true.recreate(local_variables, args)?.into();
-                let if_false = self.if_false.recreate(local_variables, args)?.into();
+                let if_true = self.if_true.recreate(local_variables, args)?;
+                let if_false = self.if_false.recreate(local_variables, args)?;
                 Ok(Self {
-                    condition: condition.into(),
+                    condition,
                     if_true,
                     if_false,
                 }
@@ -115,6 +115,6 @@ impl GetReturnType for IfElse {
 
 impl From<IfElse> for Instruction {
     fn from(value: IfElse) -> Self {
-        Self::IfElse(value)
+        Self::IfElse(value.into())
     }
 }

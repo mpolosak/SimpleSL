@@ -23,8 +23,7 @@ use crate::{
     error::Error,
     interpreter::{Interpreter, VariableMap, VariableMapTrait},
     parse::Rule,
-    variable::Variable,
-    variable::{GetReturnType, GetType, Type},
+    variable::{GetReturnType, GetType, Type, Variable},
 };
 use pest::iterators::Pair;
 use std::{fmt, rc::Rc};
@@ -61,30 +60,30 @@ pub enum Instruction {
     Array(Array),
     Function(Function),
     Tuple(Tuple),
-    Set(Set),
-    DestructTuple(DestructTuple),
-    Not(Not),
-    BinNot(BinNot),
-    Equal(Equal),
-    Greater(Greater),
-    GreaterOrEqual(GreaterOrEqual),
-    And(And),
-    Or(Or),
-    Multiply(Multiply),
-    Divide(Divide),
-    Add(Add),
-    Subtract(Subtract),
-    Modulo(Modulo),
-    BinAnd(BinAnd),
-    BinOr(BinOr),
-    Xor(Xor),
-    LShift(LShift),
-    RShift(RShift),
+    Set(Box<Set>),
+    DestructTuple(Box<DestructTuple>),
+    Not(Box<Not>),
+    BinNot(Box<BinNot>),
+    Equal(Box<Equal>),
+    Greater(Box<Greater>),
+    GreaterOrEqual(Box<GreaterOrEqual>),
+    And(Box<And>),
+    Or(Box<Or>),
+    Multiply(Box<Multiply>),
+    Divide(Box<Divide>),
+    Add(Box<Add>),
+    Subtract(Box<Subtract>),
+    Modulo(Box<Modulo>),
+    BinAnd(Box<BinAnd>),
+    BinOr(Box<BinOr>),
+    Xor(Box<Xor>),
+    LShift(Box<LShift>),
+    RShift(Box<RShift>),
     Block(Block),
-    IfElse(IfElse),
-    At(At),
-    SetIfElse(SetIfElse),
-    Match(Match),
+    IfElse(Box<IfElse>),
+    At(Box<At>),
+    SetIfElse(Box<SetIfElse>),
+    Match(Box<Match>),
 }
 
 impl Instruction {
@@ -110,10 +109,7 @@ impl Instruction {
                     Instruction::Variable(Variable::Int(value)) => {
                         Instruction::Variable((value == 0).into())
                     }
-                    instruction => Not {
-                        instruction: instruction.into(),
-                    }
-                    .into(),
+                    instruction => Not { instruction }.into(),
                 },
             ),
             Rule::greater | Rule::lower => {

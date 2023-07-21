@@ -14,7 +14,7 @@ use pest::iterators::Pair;
 #[derive(Clone)]
 pub struct Set {
     ident: String,
-    instruction: Box<Instruction>,
+    instruction: Instruction,
 }
 
 impl Set {
@@ -28,10 +28,7 @@ impl Set {
         let pair = inner.next().unwrap();
         let instruction = Instruction::new(pair, variables, local_variables)?;
         local_variables.insert(ident.clone(), instruction.clone().into());
-        Ok(Self {
-            ident,
-            instruction: Box::new(instruction),
-        })
+        Ok(Self { ident, instruction })
     }
 }
 
@@ -56,7 +53,7 @@ impl Recreate for Set {
         let instruction = self.instruction.recreate(local_variables, args)?;
         local_variables.insert(self.ident.clone(), instruction.clone().into());
         Ok(Self {
-            instruction: instruction.into(),
+            instruction,
             ..self
         }
         .into())
@@ -65,7 +62,7 @@ impl Recreate for Set {
 
 impl From<Set> for Instruction {
     fn from(value: Set) -> Self {
-        Self::Set(value)
+        Self::Set(value.into())
     }
 }
 

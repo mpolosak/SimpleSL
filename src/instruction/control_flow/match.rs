@@ -12,7 +12,7 @@ use pest::iterators::Pair;
 
 #[derive(Clone)]
 pub struct Match {
-    expression: Box<Instruction>,
+    expression: Instruction,
     arms: Box<[MatchArm]>,
 }
 
@@ -29,10 +29,7 @@ impl CreateInstruction for Match {
         let arms = inner
             .map(|pair| MatchArm::new(pair, variables, local_variables))
             .collect::<Result<Box<[MatchArm]>, Error>>()?;
-        let result = Self {
-            expression: expression.into(),
-            arms,
-        };
+        let result = Self { expression, arms };
         if result.is_covering_type(&var_type) {
             Ok(result.into())
         } else {
@@ -78,7 +75,7 @@ impl Recreate for Match {
         local_variables: &mut LocalVariableMap,
         args: &VariableMap,
     ) -> Result<Instruction, Error> {
-        let expression = self.expression.recreate(local_variables, args)?.into();
+        let expression = self.expression.recreate(local_variables, args)?;
         let arms = self
             .arms
             .iter()
@@ -96,6 +93,6 @@ impl GetReturnType for Match {
 
 impl From<Match> for Instruction {
     fn from(value: Match) -> Self {
-        Self::Match(value)
+        Self::Match(value.into())
     }
 }

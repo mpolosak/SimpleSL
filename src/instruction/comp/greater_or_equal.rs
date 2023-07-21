@@ -11,8 +11,8 @@ use pest::iterators::Pair;
 
 #[derive(Clone)]
 pub struct GreaterOrEqual {
-    lhs: Box<Instruction>,
-    rhs: Box<Instruction>,
+    lhs: Instruction,
+    rhs: Instruction,
 }
 
 impl CreateInstruction for GreaterOrEqual {
@@ -57,11 +57,7 @@ impl GreaterOrEqual {
                 Instruction::Variable(Variable::Float(lhs)),
                 Instruction::Variable(Variable::Float(rhs)),
             ) => Instruction::Variable((lhs >= rhs).into()),
-            (lhs, rhs) => Self {
-                lhs: lhs.into(),
-                rhs: rhs.into(),
-            }
-            .into(),
+            (lhs, rhs) => Self { lhs, rhs }.into(),
         }
     }
 }
@@ -96,6 +92,6 @@ impl Recreate for GreaterOrEqual {
 
 impl From<GreaterOrEqual> for Instruction {
     fn from(value: GreaterOrEqual) -> Self {
-        Self::GreaterOrEqual(value)
+        Self::GreaterOrEqual(value.into())
     }
 }

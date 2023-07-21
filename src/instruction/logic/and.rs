@@ -11,8 +11,8 @@ use pest::iterators::Pair;
 
 #[derive(Clone)]
 pub struct And {
-    lhs: Box<Instruction>,
-    rhs: Box<Instruction>,
+    lhs: Instruction,
+    rhs: Instruction,
 }
 
 impl CreateInstruction for And {
@@ -45,11 +45,7 @@ impl And {
             {
                 instruction
             }
-            (lhs, rhs) => Self {
-                lhs: lhs.into(),
-                rhs: rhs.into(),
-            }
-            .into(),
+            (lhs, rhs) => Self { lhs, rhs }.into(),
         }
     }
 }
@@ -83,6 +79,6 @@ impl Recreate for And {
 
 impl From<And> for Instruction {
     fn from(value: And) -> Self {
-        Self::And(value)
+        Self::And(value.into())
     }
 }

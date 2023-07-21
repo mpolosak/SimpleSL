@@ -9,8 +9,8 @@ use pest::iterators::Pair;
 
 #[derive(Clone)]
 pub struct Divide {
-    lhs: Box<Instruction>,
-    rhs: Box<Instruction>,
+    lhs: Instruction,
+    rhs: Instruction,
 }
 
 impl CreateInstruction for Divide {
@@ -45,11 +45,7 @@ impl Divide {
                 Instruction::Variable(Variable::Float(value1)),
                 Instruction::Variable(Variable::Float(value2)),
             ) => Ok(Instruction::Variable((value1 / value2).into())),
-            (lhs, rhs) => Ok(Self {
-                lhs: lhs.into(),
-                rhs: rhs.into(),
-            }
-            .into()),
+            (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
         }
     }
 }
@@ -91,6 +87,6 @@ impl GetReturnType for Divide {
 
 impl From<Divide> for Instruction {
     fn from(value: Divide) -> Self {
-        Self::Divide(value)
+        Self::Divide(value.into())
     }
 }

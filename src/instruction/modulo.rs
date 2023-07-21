@@ -9,8 +9,8 @@ use pest::iterators::Pair;
 
 #[derive(Clone)]
 pub struct Modulo {
-    lhs: Box<Instruction>,
-    rhs: Box<Instruction>,
+    lhs: Instruction,
+    rhs: Instruction,
 }
 
 impl CreateInstruction for Modulo {
@@ -38,11 +38,7 @@ impl Modulo {
                 Instruction::Variable(Variable::Int(lhs)),
                 Instruction::Variable(Variable::Int(rhs)),
             ) => Ok(Instruction::Variable((lhs % rhs).into())),
-            (lhs, rhs) => Ok(Self {
-                lhs: lhs.into(),
-                rhs: rhs.into(),
-            }
-            .into()),
+            (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
         }
     }
 }
@@ -77,6 +73,6 @@ impl Recreate for Modulo {
 
 impl From<Modulo> for Instruction {
     fn from(value: Modulo) -> Self {
-        Self::Modulo(value)
+        Self::Modulo(value.into())
     }
 }

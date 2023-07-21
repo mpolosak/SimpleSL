@@ -6,8 +6,8 @@ use pest::iterators::Pair;
 
 #[derive(Clone)]
 pub struct Equal {
-    lhs: Box<Instruction>,
-    rhs: Box<Instruction>,
+    lhs: Instruction,
+    rhs: Instruction,
 }
 
 impl CreateInstruction for Equal {
@@ -31,11 +31,7 @@ impl Equal {
             (Instruction::Variable(variable), Instruction::Variable(variable2)) => {
                 Instruction::Variable((variable == variable2).into())
             }
-            (lhs, rhs) => Self {
-                lhs: lhs.into(),
-                rhs: rhs.into(),
-            }
-            .into(),
+            (lhs, rhs) => Self { lhs, rhs }.into(),
         }
     }
 }
@@ -66,6 +62,6 @@ impl Recreate for Equal {
 
 impl From<Equal> for Instruction {
     fn from(value: Equal) -> Self {
-        Self::Equal(value)
+        Self::Equal(value.into())
     }
 }

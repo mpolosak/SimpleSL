@@ -14,9 +14,9 @@ use pest::iterators::Pair;
 pub struct SetIfElse {
     ident: String,
     var_type: Type,
-    expression: Box<Instruction>,
-    if_match: Box<Instruction>,
-    else_instruction: Box<Instruction>,
+    expression: Instruction,
+    if_match: Instruction,
+    else_instruction: Instruction,
 }
 
 impl CreateInstruction for SetIfElse {
@@ -31,18 +31,17 @@ impl CreateInstruction for SetIfElse {
         let pair = inner.next().unwrap();
         let var_type = Type::from(pair);
         let pair = inner.next().unwrap();
-        let expression = Instruction::new(pair, variables, local_variables)?.into();
+        let expression = Instruction::new(pair, variables, local_variables)?;
         let pair = inner.next().unwrap();
         let mut match_locals = local_variables.clone();
         match_locals.insert(ident.clone(), LocalVariable::Other(var_type.clone()));
-        let if_match = Instruction::new(pair, variables, &mut match_locals)?.into();
+        let if_match = Instruction::new(pair, variables, &mut match_locals)?;
         let else_instruction = if rule == Rule::set_if_else {
             let pair = inner.next().unwrap();
             Instruction::new(pair, variables, local_variables)?
         } else {
             Instruction::Variable(Variable::Void)
-        }
-        .into();
+        };
         Ok(Self {
             ident,
             var_type,
@@ -78,17 +77,14 @@ impl Recreate for SetIfElse {
         local_variables: &mut LocalVariableMap,
         args: &VariableMap,
     ) -> Result<Instruction, Error> {
-        let expression = self.expression.recreate(local_variables, args)?.into();
+        let expression = self.expression.recreate(local_variables, args)?;
         let mut match_locals = local_variables.clone();
         match_locals.insert(
             self.ident.clone(),
             LocalVariable::Other(self.var_type.clone()),
         );
-        let if_match = self.if_match.recreate(&mut match_locals, args)?.into();
-        let else_instruction = self
-            .else_instruction
-            .recreate(local_variables, args)?
-            .into();
+        let if_match = self.if_match.recreate(&mut match_locals, args)?;
+        let else_instruction = self.else_instruction.recreate(local_variables, args)?;
         Ok(Self {
             expression,
             if_match,
@@ -109,6 +105,6 @@ impl GetReturnType for SetIfElse {
 
 impl From<SetIfElse> for Instruction {
     fn from(value: SetIfElse) -> Self {
-        Self::SetIfElse(value)
+        Self::SetIfElse(value.into())
     }
 }

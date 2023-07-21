@@ -9,8 +9,8 @@ use pest::iterators::Pair;
 
 #[derive(Clone)]
 pub struct Add {
-    lhs: Box<Instruction>,
-    rhs: Box<Instruction>,
+    lhs: Instruction,
+    rhs: Instruction,
 }
 
 impl CreateInstruction for Add {
@@ -48,11 +48,7 @@ impl Add {
                 Instruction::Variable(Variable::String(value1)),
                 Instruction::Variable(Variable::String(value2)),
             ) => Instruction::Variable(format!("{value1}{value2}").into()),
-            (rhs, lhs) => Self {
-                rhs: rhs.into(),
-                lhs: lhs.into(),
-            }
-            .into(),
+            (rhs, lhs) => Self { rhs, lhs }.into(),
         }
     }
 }
@@ -96,6 +92,6 @@ impl GetReturnType for Add {
 
 impl From<Add> for Instruction {
     fn from(value: Add) -> Self {
-        Self::Add(value)
+        Self::Add(value.into())
     }
 }

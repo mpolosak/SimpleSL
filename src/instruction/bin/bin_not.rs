@@ -10,7 +10,7 @@ use pest::iterators::Pair;
 
 #[derive(Clone)]
 pub struct BinNot {
-    pub instruction: Box<Instruction>,
+    pub instruction: Instruction,
 }
 
 impl CreateInstruction for BinNot {
@@ -33,10 +33,7 @@ impl BinNot {
     fn create_from_instruction(instruction: Instruction) -> Instruction {
         match instruction {
             Instruction::Variable(Variable::Int(value)) => Instruction::Variable((!value).into()),
-            instruction => Self {
-                instruction: instruction.into(),
-            }
-            .into(),
+            instruction => Self { instruction }.into(),
         }
     }
 }
@@ -67,6 +64,6 @@ impl Recreate for BinNot {
 
 impl From<BinNot> for Instruction {
     fn from(value: BinNot) -> Self {
-        Self::BinNot(value)
+        Self::BinNot(value.into())
     }
 }

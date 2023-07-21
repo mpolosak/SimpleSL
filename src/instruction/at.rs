@@ -9,8 +9,8 @@ use pest::iterators::Pair;
 
 #[derive(Clone)]
 pub struct At {
-    instruction: Box<Instruction>,
-    index: Box<Instruction>,
+    instruction: Instruction,
+    index: Instruction,
 }
 
 impl CreateInstruction for At {
@@ -48,11 +48,7 @@ impl At {
             (_, Instruction::Variable(Variable::Int(value))) if value < 0 => {
                 Err(Error::CannotBeNegative("index".into()))
             }
-            (instruction, index) => Ok(Self {
-                instruction: instruction.into(),
-                index: index.into(),
-            }
-            .into()),
+            (instruction, index) => Ok(Self { instruction, index }.into()),
         }
     }
 }
@@ -94,7 +90,7 @@ impl GetReturnType for At {
 
 impl From<At> for Instruction {
     fn from(value: At) -> Self {
-        Self::At(value)
+        Self::At(value.into())
     }
 }
 

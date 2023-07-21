@@ -10,7 +10,7 @@ use pest::iterators::Pair;
 
 #[derive(Clone)]
 pub struct Not {
-    pub instruction: Box<Instruction>,
+    pub instruction: Instruction,
 }
 
 impl CreateInstruction for Not {
@@ -35,10 +35,7 @@ impl Not {
             Instruction::Variable(Variable::Int(value)) => {
                 Instruction::Variable((value == 0).into())
             }
-            instruction => Self {
-                instruction: instruction.into(),
-            }
-            .into(),
+            instruction => Self { instruction }.into(),
         }
     }
 }
@@ -69,6 +66,6 @@ impl Recreate for Not {
 
 impl From<Not> for Instruction {
     fn from(value: Not) -> Self {
-        Self::Not(value)
+        Self::Not(value.into())
     }
 }

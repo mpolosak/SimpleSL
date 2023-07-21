@@ -11,8 +11,8 @@ use pest::iterators::Pair;
 
 #[derive(Clone)]
 pub struct RShift {
-    lhs: Box<Instruction>,
-    rhs: Box<Instruction>,
+    lhs: Instruction,
+    rhs: Instruction,
 }
 
 impl CreateInstruction for RShift {
@@ -43,11 +43,7 @@ impl RShift {
                 Instruction::Variable(Variable::Int(lhs)),
                 Instruction::Variable(Variable::Int(rhs)),
             ) => Ok(Instruction::Variable((lhs >> rhs).into())),
-            (lhs, rhs) => Ok(Self {
-                lhs: lhs.into(),
-                rhs: rhs.into(),
-            }
-            .into()),
+            (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
         }
     }
 }
@@ -82,6 +78,6 @@ impl Recreate for RShift {
 
 impl From<RShift> for Instruction {
     fn from(value: RShift) -> Self {
-        Self::RShift(value)
+        Self::RShift(value.into())
     }
 }

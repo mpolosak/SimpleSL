@@ -16,7 +16,7 @@ use pest::iterators::Pair;
 #[derive(Clone)]
 pub struct DestructTuple {
     idents: Box<[String]>,
-    instruction: Box<Instruction>,
+    instruction: Instruction,
 }
 
 impl CreateInstruction for DestructTuple {
@@ -37,7 +37,7 @@ impl CreateInstruction for DestructTuple {
             Type::Tuple(types) if types.len() == idents.len() => {
                 let result = Self {
                     idents,
-                    instruction: instruction.into(),
+                    instruction,
                 };
                 result.insert_local_variables(local_variables);
                 Ok(result.into())
@@ -49,7 +49,7 @@ impl CreateInstruction for DestructTuple {
 
 impl DestructTuple {
     fn insert_local_variables(&self, local_variables: &mut LocalVariableMap) {
-        match self.instruction.as_ref() {
+        match &self.instruction {
             Instruction::Variable(Variable::Tuple(elements)) => {
                 local_variables.extend(zip(self.idents.iter(), elements.iter()).map(
                     |(ident, element)| (ident.clone(), LocalVariable::Variable(element.clone())),
@@ -97,7 +97,7 @@ impl Recreate for DestructTuple {
         local_variables: &mut LocalVariableMap,
         args: &VariableMap,
     ) -> Result<Instruction, Error> {
-        let instruction = self.instruction.recreate(local_variables, args)?.into();
+        let instruction = self.instruction.recreate(local_variables, args)?;
         let result = Self {
             instruction,
             ..self
@@ -115,6 +115,6 @@ impl GetReturnType for DestructTuple {
 
 impl From<DestructTuple> for Instruction {
     fn from(value: DestructTuple) -> Self {
-        Self::DestructTuple(value)
+        Self::DestructTuple(value.into())
     }
 }

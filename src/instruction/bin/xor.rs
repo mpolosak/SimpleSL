@@ -11,8 +11,8 @@ use pest::iterators::Pair;
 
 #[derive(Clone)]
 pub struct Xor {
-    lhs: Box<Instruction>,
-    rhs: Box<Instruction>,
+    lhs: Instruction,
+    rhs: Instruction,
 }
 
 impl CreateInstruction for Xor {
@@ -39,11 +39,7 @@ impl Xor {
                 Instruction::Variable(Variable::Int(lhs)),
                 Instruction::Variable(Variable::Int(rhs)),
             ) => Instruction::Variable((lhs ^ rhs).into()),
-            (lhs, rhs) => Self {
-                lhs: lhs.into(),
-                rhs: rhs.into(),
-            }
-            .into(),
+            (lhs, rhs) => Self { lhs, rhs }.into(),
         }
     }
 }
@@ -77,6 +73,6 @@ impl Recreate for Xor {
 
 impl From<Xor> for Instruction {
     fn from(value: Xor) -> Self {
-        Self::Xor(value)
+        Self::Xor(value.into())
     }
 }
