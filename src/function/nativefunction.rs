@@ -4,8 +4,6 @@ use crate::{
     interpreter::{Interpreter, VariableMap},
     variable::{GetReturnType, Type, Variable},
 };
-
-#[derive(Clone)]
 pub struct NativeFunction {
     pub params: Params,
     pub return_type: Type,

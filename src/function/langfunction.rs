@@ -5,8 +5,6 @@ use crate::{
     interpreter::{Interpreter, VariableMap},
     variable::{GetReturnType, Type, Variable},
 };
-
-#[derive(Clone)]
 pub struct LangFunction {
     pub params: Params,
     pub body: Box<[Instruction]>,
