@@ -44,20 +44,23 @@ pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream 
     let body = get_body(is_result, ident, args);
     quote!(
         #function
-        variables.add_native_function(
-            #ident_str.into(),
-            NativeFunction {
-                params: Params {
-                    standard: [#params].into(),
-                    catch_rest: #catch_rest,
+        {
+            use std::rc::Rc;
+            variables.add_native_function(
+                #ident_str.into(),
+                NativeFunction {
+                    params: Params {
+                        standard: Rc::new([#params]),
+                        catch_rest: #catch_rest,
+                    },
+                    return_type: #return_type,
+                    body: |_name, interpreter, args| {
+                        #args_importing
+                        #body
+                    },
                 },
-                return_type: #return_type,
-                body: |_name, interpreter, args| {
-                    #args_importing
-                    #body
-                },
-            },
-        );
+            );
+        }
     )
     .into()
 }

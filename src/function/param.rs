@@ -26,7 +26,7 @@ impl From<Pair<'_, Rule>> for Param {
 
 #[derive(Clone, Debug)]
 pub struct Params {
-    pub standard: Box<[Param]>,
+    pub standard: Rc<[Param]>,
     pub catch_rest: Option<Rc<str>>,
 }
 

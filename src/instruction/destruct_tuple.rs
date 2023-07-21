@@ -15,7 +15,7 @@ use pest::iterators::Pair;
 
 #[derive(Clone, Debug)]
 pub struct DestructTuple {
-    idents: Box<[Rc<str>]>,
+    idents: Rc<[Rc<str>]>,
     instruction: Instruction,
 }
 
@@ -27,7 +27,7 @@ impl CreateInstruction for DestructTuple {
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
-        let idents: Box<[Rc<str>]> = pair.into_inner().map(|pair| pair.as_str().into()).collect();
+        let idents: Rc<[Rc<str>]> = pair.into_inner().map(|pair| pair.as_str().into()).collect();
         let pair = inner.next().unwrap();
         let instruction = Instruction::new(pair, variables, local_variables)?;
         match instruction.get_return_type() {
