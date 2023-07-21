@@ -1,11 +1,11 @@
 pub mod type_set;
 mod variable_type;
-use crate::{error::Error, function::Function, join, join_debug, parse::*, pest::Parser};
+use crate::{error::Error, function::Function, join, parse::*, pest::Parser};
 use pest::iterators::Pair;
 use std::{fmt, rc::Rc, str::FromStr};
 pub use variable_type::{GetReturnType, GetType, Type};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Variable {
     Int(i64),
     Float(f64),
@@ -43,24 +43,6 @@ impl fmt::Display for Variable {
             Variable::Array(array, _) => write!(f, "{{{}}}", join(array, ", ")),
             Variable::Tuple(elements) => write!(f, "({})", join(elements, ", ")),
             Variable::Void => write!(f, "()"),
-        }
-    }
-}
-
-impl fmt::Debug for Variable {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Variable::Int(value) => write!(f, "Variable::Float({value})"),
-            Variable::Float(value) => write!(f, "Variable::Float({value})"),
-            Variable::String(value) => write!(f, "Variable::String(\"{value}\")"),
-            Variable::Function(function) => write!(f, "Variable::Function({function:?})"),
-            Variable::Array(array, _) => {
-                write!(f, "Variable::Array({{{}}})", join_debug(array, ", "))
-            }
-            Variable::Tuple(elements) => {
-                write!(f, "Variable::Tuple(({}))", join_debug(elements, ", "))
-            }
-            Variable::Void => write!(f, "Variable::Void"),
         }
     }
 }

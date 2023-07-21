@@ -1,10 +1,6 @@
 use super::Type;
 use crate::join;
-use std::{
-    collections::HashSet,
-    fmt::{Debug, Display},
-    hash::Hash,
-};
+use std::{collections::HashSet, fmt::Display, hash::Hash};
 
 #[derive(Clone, Debug, Eq)]
 pub struct TypeSet {

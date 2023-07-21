@@ -5,15 +5,9 @@ use crate::{
     parse::{Rule, SimpleSLParser},
 };
 use pest::{iterators::Pair, Parser};
-use std::{
-    collections::HashSet,
-    fmt::{Debug, Display},
-    hash::Hash,
-    iter::zip,
-    str::FromStr,
-};
+use std::{collections::HashSet, fmt::Display, hash::Hash, iter::zip, str::FromStr};
 
-#[derive(Clone, Hash, Eq, PartialEq)]
+#[derive(Clone, Debug, Hash, Eq, PartialEq)]
 pub enum Type {
     Int,
     Float,
@@ -113,32 +107,6 @@ impl Display for Type {
             Self::Void => write!(f, "()"),
             Self::Multi(types) => write!(f, "{types}"),
             Self::Any => write!(f, "any"),
-        }
-    }
-}
-
-impl Debug for Type {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Int => write!(f, "Type::Int"),
-            Self::Float => write!(f, "Type::Float"),
-            Self::String => write!(f, "Type::String"),
-            Self::Function {
-                return_type,
-                params,
-                catch_rest,
-            } => f
-                .debug_struct("Type::Function")
-                .field("return_type", return_type)
-                .field("params", params)
-                .field("catch_rest", catch_rest)
-                .finish(),
-            Self::Array(arg0) => f.debug_tuple("Type::Array").field(arg0).finish(),
-            Self::EmptyArray => write!(f, "EmptyArray"),
-            Self::Tuple(arg0) => f.debug_tuple("Type::Tuple").field(arg0).finish(),
-            Self::Void => write!(f, "Type::Void"),
-            Self::Multi(arg0) => f.debug_tuple("Type::Multi").field(arg0).finish(),
-            Self::Any => write!(f, "Type::Any"),
         }
     }
 }
