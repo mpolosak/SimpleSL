@@ -4,7 +4,7 @@ use super::{
 };
 use crate::{
     error::Error,
-    interpreter::{Interpreter, VariableMap},
+    interpreter::Interpreter,
     parse::Rule,
     variable::{GetReturnType, Type, Variable},
 };
@@ -18,13 +18,13 @@ pub struct Block {
 impl CreateInstruction for Block {
     fn create_instruction(
         pair: Pair<Rule>,
-        variables: &VariableMap,
+        interpreter: &Interpreter,
         local_variables: &mut LocalVariableMap,
     ) -> Result<Instruction, Error> {
         let mut local_variables = local_variables.clone();
         let instructions = pair
             .into_inner()
-            .map(|pair| Instruction::new(pair, variables, &mut local_variables))
+            .map(|pair| Instruction::new(pair, interpreter, &mut local_variables))
             .collect::<Result<Box<[Instruction]>, Error>>()?;
         if instructions
             .iter()
@@ -42,16 +42,13 @@ impl CreateInstruction for Block {
 }
 
 impl Exec for Block {
-    fn exec(
-        &self,
-        interpreter: &mut Interpreter,
-        local_variables: &mut VariableMap,
-    ) -> Result<Variable, Error> {
-        let mut local_variables = local_variables.clone();
+    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, Error> {
+        interpreter.add_layer();
         let mut result = Variable::Void;
         for instruction in self.instructions.iter() {
-            result = instruction.exec(interpreter, &mut local_variables)?;
+            result = instruction.exec(interpreter)?;
         }
+        interpreter.remove_layer();
         Ok(result)
     }
 }
@@ -60,10 +57,11 @@ impl Recreate for Block {
     fn recreate(
         &self,
         local_variables: &mut LocalVariableMap,
-        args: &VariableMap,
+        interpreter: &Interpreter,
     ) -> Result<Instruction, Error> {
         let mut local_variables = local_variables.clone();
-        let instructions = recreate_instructions(&self.instructions, &mut local_variables, args)?;
+        let instructions =
+            recreate_instructions(&self.instructions, &mut local_variables, interpreter)?;
         Ok(Self { instructions }.into())
     }
 }

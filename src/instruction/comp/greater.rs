@@ -3,7 +3,7 @@ use crate::instruction::{
 };
 use crate::{
     error::Error,
-    interpreter::VariableMap,
+    interpreter::Interpreter,
     parse::Rule,
     variable::{GetReturnType, Type, Variable},
 };
@@ -18,15 +18,15 @@ pub struct Greater {
 impl CreateInstruction for Greater {
     fn create_instruction(
         pair: Pair<Rule>,
-        variables: &VariableMap,
+        interpreter: &Interpreter,
         local_variables: &mut LocalVariableMap,
     ) -> Result<Instruction, Error> {
         let rule = pair.as_rule();
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
-        let instruction = Instruction::new(pair, variables, local_variables)?;
+        let instruction = Instruction::new(pair, interpreter, local_variables)?;
         let pair = inner.next().unwrap();
-        let instruction2 = Instruction::new(pair, variables, local_variables)?;
+        let instruction2 = Instruction::new(pair, interpreter, local_variables)?;
         match (
             instruction.get_return_type(),
             instruction2.get_return_type(),
@@ -61,13 +61,9 @@ impl Greater {
 }
 
 impl Exec for Greater {
-    fn exec(
-        &self,
-        interpreter: &mut crate::interpreter::Interpreter,
-        local_variables: &mut VariableMap,
-    ) -> Result<crate::variable::Variable, Error> {
-        let lhs = self.lhs.exec(interpreter, local_variables)?;
-        let rhs = self.rhs.exec(interpreter, local_variables)?;
+    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, Error> {
+        let lhs = self.lhs.exec(interpreter)?;
+        let rhs = self.rhs.exec(interpreter)?;
         match (lhs, rhs) {
             (Variable::Int(lhs), Variable::Int(rhs)) => Ok((lhs > rhs).into()),
             (Variable::Float(lhs), Variable::Float(rhs)) => Ok((lhs > rhs).into()),
@@ -80,10 +76,10 @@ impl Recreate for Greater {
     fn recreate(
         &self,
         local_variables: &mut LocalVariableMap,
-        args: &VariableMap,
+        interpreter: &Interpreter,
     ) -> Result<Instruction, Error> {
-        let lhs = self.lhs.recreate(local_variables, args)?;
-        let rhs = self.rhs.recreate(local_variables, args)?;
+        let lhs = self.lhs.recreate(local_variables, interpreter)?;
+        let rhs = self.rhs.recreate(local_variables, interpreter)?;
         Ok(Self::create_from_instructions(lhs, rhs))
     }
 }

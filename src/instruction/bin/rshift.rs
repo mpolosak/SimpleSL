@@ -3,7 +3,7 @@ use crate::instruction::{
 };
 use crate::{
     error::Error,
-    interpreter::VariableMap,
+    interpreter::Interpreter,
     parse::Rule,
     variable::{GetReturnType, Type, Variable},
 };
@@ -18,7 +18,7 @@ pub struct RShift {
 impl CreateInstruction for RShift {
     fn create_instruction(
         pair: Pair<Rule>,
-        variables: &VariableMap,
+        variables: &Interpreter,
         local_variables: &mut LocalVariableMap,
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
@@ -49,13 +49,9 @@ impl RShift {
 }
 
 impl Exec for RShift {
-    fn exec(
-        &self,
-        interpreter: &mut crate::interpreter::Interpreter,
-        local_variables: &mut VariableMap,
-    ) -> Result<crate::variable::Variable, Error> {
-        let result1 = self.lhs.exec(interpreter, local_variables)?;
-        let result2 = self.rhs.exec(interpreter, local_variables)?;
+    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, Error> {
+        let result1 = self.lhs.exec(interpreter)?;
+        let result2 = self.rhs.exec(interpreter)?;
         match (result1, result2) {
             (_, Variable::Int(rhs)) if !(0..=63).contains(&rhs) => Err(Error::OverflowShift),
             (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 >> value2).into()),
@@ -68,10 +64,10 @@ impl Recreate for RShift {
     fn recreate(
         &self,
         local_variables: &mut LocalVariableMap,
-        args: &VariableMap,
+        interpreter: &Interpreter,
     ) -> Result<Instruction, Error> {
-        let lhs = self.lhs.recreate(local_variables, args)?;
-        let rhs = self.rhs.recreate(local_variables, args)?;
+        let lhs = self.lhs.recreate(local_variables, interpreter)?;
+        let rhs = self.rhs.recreate(local_variables, interpreter)?;
         Self::create_from_instructions(lhs, rhs)
     }
 }

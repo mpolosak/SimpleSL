@@ -1,13 +1,13 @@
 use crate::{
     error::Error,
     function::{Function, NativeFunction, Param, Params},
-    interpreter::{Interpreter, VariableMap, VariableMapTrait},
+    interpreter::Interpreter,
     variable::{Type, Variable},
 };
 use simplesl_macros::export_function;
 use std::{iter::zip, rc::Rc};
 
-pub fn add_functions(variables: &mut VariableMap) {
+pub fn add_functions(interpreter: &mut Interpreter) {
     #[export_function]
     fn new_array(length: i64, value: Variable) -> Result<Rc<[Variable]>, Error> {
         if length < 0 {

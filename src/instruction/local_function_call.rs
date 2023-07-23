@@ -11,7 +11,7 @@ use super::{
 use crate::{
     error::Error,
     function::Params,
-    interpreter::{Interpreter, VariableMap, VariableMapTrait},
+    interpreter::Interpreter,
     variable::{GetReturnType, Type, Variable},
 };
 
@@ -39,13 +39,9 @@ impl LocalFunctionCall {
 }
 
 impl Exec for LocalFunctionCall {
-    fn exec(
-        &self,
-        interpreter: &mut Interpreter,
-        local_variables: &mut VariableMap,
-    ) -> Result<Variable, Error> {
-        let args = exec_instructions(&self.args, interpreter, local_variables)?;
-        let Variable::Function(function) = local_variables.get(&self.ident).unwrap() else {
+    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, Error> {
+        let args = exec_instructions(&self.args, interpreter)?;
+        let Variable::Function(function) = interpreter.get_variable(&self.ident).unwrap() else {
             return Err(error_wrong_type(&self.args, &self.ident));
         };
         function.exec(&self.ident, interpreter, &args)
@@ -56,9 +52,9 @@ impl Recreate for LocalFunctionCall {
     fn recreate(
         &self,
         local_variables: &mut LocalVariableMap,
-        args: &VariableMap,
+        interpreter: &Interpreter,
     ) -> Result<Instruction, Error> {
-        let instructions = recreate_instructions(&self.args, local_variables, args)?;
+        let instructions = recreate_instructions(&self.args, local_variables, interpreter)?;
         if local_variables.contains_key(&self.ident) {
             Ok(Self {
                 ident: self.ident.clone(),
@@ -67,9 +63,9 @@ impl Recreate for LocalFunctionCall {
             }
             .into())
         } else {
-            let Variable::Function(function) = args.try_get(&self.ident).unwrap() else {
-                        panic!()
-                    };
+            let Variable::Function(function) = interpreter.get_variable(&self.ident).unwrap() else {
+                panic!()
+            };
             Ok(FunctionCall {
                 function,
                 args: instructions,

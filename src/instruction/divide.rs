@@ -1,7 +1,7 @@
 use super::{local_variable::LocalVariableMap, CreateInstruction, Exec, Instruction, Recreate};
 use crate::{
     error::Error,
-    interpreter::{Interpreter, VariableMap},
+    interpreter::Interpreter,
     parse::Rule,
     variable::{GetReturnType, Type, Variable},
 };
@@ -16,14 +16,14 @@ pub struct Divide {
 impl CreateInstruction for Divide {
     fn create_instruction(
         pair: Pair<Rule>,
-        variables: &VariableMap,
+        interpreter: &Interpreter,
         local_variables: &mut LocalVariableMap,
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
-        let lhs = Instruction::new(pair, variables, local_variables)?;
+        let lhs = Instruction::new(pair, interpreter, local_variables)?;
         let pair = inner.next().unwrap();
-        let rhs = Instruction::new(pair, variables, local_variables)?;
+        let rhs = Instruction::new(pair, interpreter, local_variables)?;
         match (lhs.get_return_type(), rhs.get_return_type()) {
             (Type::Int, Type::Int) | (Type::Float, Type::Float) => {
                 Self::create_from_instructions(lhs, rhs)
@@ -51,13 +51,9 @@ impl Divide {
 }
 
 impl Exec for Divide {
-    fn exec(
-        &self,
-        interpreter: &mut Interpreter,
-        local_variables: &mut VariableMap,
-    ) -> Result<Variable, Error> {
-        let lhs = self.lhs.exec(interpreter, local_variables)?;
-        let rhs = self.rhs.exec(interpreter, local_variables)?;
+    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, Error> {
+        let lhs = self.lhs.exec(interpreter)?;
+        let rhs = self.rhs.exec(interpreter)?;
         match (lhs, rhs) {
             (Variable::Int(_), Variable::Int(0)) => Err(Error::ZeroDivision),
             (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 / value2).into()),
@@ -71,10 +67,10 @@ impl Recreate for Divide {
     fn recreate(
         &self,
         local_variables: &mut LocalVariableMap,
-        args: &VariableMap,
+        interpreter: &Interpreter,
     ) -> Result<Instruction, Error> {
-        let lhs = self.lhs.recreate(local_variables, args)?;
-        let rhs = self.rhs.recreate(local_variables, args)?;
+        let lhs = self.lhs.recreate(local_variables, interpreter)?;
+        let rhs = self.rhs.recreate(local_variables, interpreter)?;
         Self::create_from_instructions(lhs, rhs)
     }
 }

@@ -1,12 +1,12 @@
 use crate::{
     function::{NativeFunction, Param, Params},
-    interpreter::{VariableMap, VariableMapTrait},
+    interpreter::Interpreter,
     variable::{Type, Variable},
 };
 use simplesl_macros::export_function;
 use std::rc::Rc;
 
-pub fn add_functions(variables: &mut VariableMap) {
+pub fn add_functions(interpreter: &mut Interpreter) {
     #[export_function]
     fn int(value: Variable, fallback: i64) -> i64 {
         if let Variable::Int(value) = value {

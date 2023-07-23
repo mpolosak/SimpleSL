@@ -9,7 +9,7 @@ use super::{
 use crate::{
     error::Error,
     function::Function,
-    interpreter::{Interpreter, VariableMap, VariableMapTrait},
+    interpreter::Interpreter,
     variable::{GetReturnType, Type, Variable},
 };
 use std::rc::Rc;
@@ -23,10 +23,10 @@ pub struct FunctionCall {
 impl FunctionCall {
     pub fn new(
         var_name: &str,
-        variables: &VariableMap,
+        interpreter: &Interpreter,
         args: Box<[Instruction]>,
     ) -> Result<Self, Error> {
-        let Variable::Function(function) = variables.try_get(var_name)? else {
+        let Variable::Function(function) = interpreter.get_variable(var_name)? else {
             return Err(error_wrong_type(&args, var_name));
         };
         let params = function.get_params();
@@ -35,12 +35,8 @@ impl FunctionCall {
     }
 }
 impl Exec for FunctionCall {
-    fn exec(
-        &self,
-        interpreter: &mut Interpreter,
-        local_variables: &mut VariableMap,
-    ) -> Result<Variable, Error> {
-        let args = exec_instructions(&self.args, interpreter, local_variables)?;
+    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, Error> {
+        let args = exec_instructions(&self.args, interpreter)?;
         self.function.exec("name", interpreter, &args)
     }
 }
@@ -49,9 +45,9 @@ impl Recreate for FunctionCall {
     fn recreate(
         &self,
         local_variables: &mut LocalVariableMap,
-        args: &VariableMap,
+        interpreter: &Interpreter,
     ) -> Result<Instruction, Error> {
-        let args = recreate_instructions(&self.args, local_variables, args)?;
+        let args = recreate_instructions(&self.args, local_variables, interpreter)?;
         Ok(Self {
             function: self.function.clone(),
             args,

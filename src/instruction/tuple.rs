@@ -4,7 +4,7 @@ use super::{
 };
 use crate::{
     error::Error,
-    interpreter::{Interpreter, VariableMap},
+    interpreter::Interpreter,
     parse::Rule,
     variable::{GetReturnType, Type, Variable},
 };
@@ -18,12 +18,12 @@ pub struct Tuple {
 impl CreateInstruction for Tuple {
     fn create_instruction(
         pair: Pair<Rule>,
-        variables: &VariableMap,
+        interpreter: &Interpreter,
         local_variables: &mut LocalVariableMap,
     ) -> Result<Instruction, Error> {
         let elements = pair
             .into_inner()
-            .map(|pair| Instruction::new(pair, variables, local_variables))
+            .map(|pair| Instruction::new(pair, interpreter, local_variables))
             .collect::<Result<Box<[Instruction]>, Error>>()?;
         Ok(Self::create_from_elements(elements))
     }
@@ -43,12 +43,8 @@ impl Tuple {
 }
 
 impl Exec for Tuple {
-    fn exec(
-        &self,
-        interpreter: &mut Interpreter,
-        local_variables: &mut VariableMap,
-    ) -> Result<Variable, Error> {
-        let elements = exec_instructions(&self.elements, interpreter, local_variables)?;
+    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, Error> {
+        let elements = exec_instructions(&self.elements, interpreter)?;
         Ok(Variable::Tuple(elements))
     }
 }
@@ -57,9 +53,9 @@ impl Recreate for Tuple {
     fn recreate(
         &self,
         local_variables: &mut LocalVariableMap,
-        args: &VariableMap,
+        interpreter: &Interpreter,
     ) -> Result<Instruction, Error> {
-        let elements = recreate_instructions(&self.elements, local_variables, args)?;
+        let elements = recreate_instructions(&self.elements, local_variables, interpreter)?;
         Ok(Self::create_from_elements(elements))
     }
 }

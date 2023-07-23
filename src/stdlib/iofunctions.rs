@@ -1,13 +1,13 @@
 use crate::{
     error::Error,
     function::{NativeFunction, Params},
-    interpreter::{VariableMap, VariableMapTrait},
+    interpreter::Interpreter,
     variable::*,
 };
 use simplesl_macros::export_function;
 use std::io;
 
-pub fn add_functions(variables: &mut VariableMap) {
+pub fn add_functions(interpreter: &mut Interpreter) {
     #[export_function(catch_rest = true)]
     fn print(vars: &[Variable]) {
         let text = vars

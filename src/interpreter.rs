@@ -11,24 +11,27 @@ use std::{
 };
 
 pub struct Interpreter {
-    pub variables: VariableMap,
+    variables: Vec<VariableMap>,
 }
+
+type VariableMap = HashMap<Rc<str>, Variable>;
 
 impl Interpreter {
     pub fn new() -> Interpreter {
-        let mut variables = VariableMap::new();
-        add_std_lib(&mut variables);
-        Interpreter { variables }
+        let variables = VariableMap::new();
+        let mut result = Interpreter {
+            variables: vec![variables],
+        };
+        add_std_lib(&mut result);
+        result
     }
 
     pub fn exec(&mut self, input: &str) -> Result<Variable, Error> {
         let instructions = self.parse_input(input)?;
-        let mut variables = VariableMap::new();
         let mut result = Variable::Void;
         for instruction in instructions.iter() {
-            result = instruction.exec(self, &mut variables)?;
+            result = instruction.exec(self)?;
         }
-        self.variables.extend(variables);
         Ok(result)
     }
 
@@ -45,33 +48,39 @@ impl Interpreter {
         let mut local_variables = LocalVariableMap::new();
         let instructions = parse
             .take_while(|pair| pair.as_rule() != Rule::EOI)
-            .map(|pair| Instruction::new(pair, &self.variables, &mut local_variables))
+            .map(|pair| Instruction::new(pair, self, &mut local_variables))
             .collect::<Result<_, _>>()?;
         Ok(instructions)
+    }
+    pub fn get_variable(&self, name: &str) -> Result<Variable, Error> {
+        for layer in self.variables.iter().rev() {
+            if let Some(variable) = layer.get(name) {
+                return Ok(variable.clone());
+            }
+        }
+        Err(Error::VariableDoesntExist(name.to_owned()))
+    }
+    pub fn insert(&mut self, name: Rc<str>, variable: Variable) {
+        self.variables.last_mut().unwrap().insert(name, variable);
+    }
+    pub fn insert_native_function(&mut self, name: Rc<str>, function: NativeFunction) {
+        self.variables
+            .last_mut()
+            .unwrap()
+            .insert(name, Variable::Function(Rc::new(function)));
+    }
+    pub fn add_layer(&mut self) {
+        self.variables.push(VariableMap::new())
+    }
+    pub fn remove_layer(&mut self) {
+        if self.variables.len() > 1 {
+            self.variables.pop();
+        }
     }
 }
 
 impl Default for Interpreter {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-pub type VariableMap = HashMap<Rc<str>, Variable>;
-
-pub trait VariableMapTrait {
-    fn try_get(&self, name: &str) -> Result<Variable, Error>;
-    fn add_native_function(&mut self, name: Rc<str>, function: NativeFunction);
-}
-
-impl VariableMapTrait for VariableMap {
-    fn try_get(&self, name: &str) -> Result<Variable, Error> {
-        match self.get(name) {
-            Some(variable) => Ok(variable.clone()),
-            _ => Err(Error::VariableDoesntExist(String::from(name))),
-        }
-    }
-    fn add_native_function(&mut self, name: Rc<str>, function: NativeFunction) {
-        self.insert(name, Variable::Function(Rc::new(function)));
     }
 }

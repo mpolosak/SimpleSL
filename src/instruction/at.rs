@@ -1,7 +1,7 @@
 use super::{local_variable::LocalVariableMap, CreateInstruction, Exec, Instruction, Recreate};
 use crate::{
     error::Error,
-    interpreter::{Interpreter, VariableMap},
+    interpreter::Interpreter,
     parse::Rule,
     variable::{GetReturnType, Type, Variable},
 };
@@ -16,14 +16,14 @@ pub struct At {
 impl CreateInstruction for At {
     fn create_instruction(
         pair: Pair<Rule>,
-        variables: &VariableMap,
+        interpreter: &Interpreter,
         local_variables: &mut LocalVariableMap,
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
-        let instruction = Instruction::new(pair, variables, local_variables)?;
+        let instruction = Instruction::new(pair, interpreter, local_variables)?;
         let pair = inner.next().unwrap();
-        let index = Instruction::new(pair, variables, local_variables)?;
+        let index = Instruction::new(pair, interpreter, local_variables)?;
         let required_instruction_type = [Type::String, Type::Array(Type::Any.into())].into();
         let instruction_return_type = instruction.get_return_type();
         match (
@@ -54,13 +54,9 @@ impl At {
 }
 
 impl Exec for At {
-    fn exec(
-        &self,
-        interpreter: &mut Interpreter,
-        local_variables: &mut VariableMap,
-    ) -> Result<Variable, Error> {
-        let result = self.instruction.exec(interpreter, local_variables)?;
-        let index = self.index.exec(interpreter, local_variables)?;
+    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, Error> {
+        let result = self.instruction.exec(interpreter)?;
+        let index = self.index.exec(interpreter)?;
         at(result, index)
     }
 }
@@ -69,10 +65,10 @@ impl Recreate for At {
     fn recreate(
         &self,
         local_variables: &mut LocalVariableMap,
-        args: &VariableMap,
+        interpreter: &Interpreter,
     ) -> Result<Instruction, Error> {
-        let instruction = self.instruction.recreate(local_variables, args)?;
-        let index = self.index.recreate(local_variables, args)?;
+        let instruction = self.instruction.recreate(local_variables, interpreter)?;
+        let index = self.index.recreate(local_variables, interpreter)?;
         Self::create_from_instructions(instruction, index)
     }
 }

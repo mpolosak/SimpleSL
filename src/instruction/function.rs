@@ -7,7 +7,7 @@ use super::{
 use crate::{
     error::Error,
     function::{LangFunction, Param, Params},
-    interpreter::{Interpreter, VariableMap},
+    interpreter::Interpreter,
     parse::Rule,
     variable::{function_type::FunctionType, GetReturnType, Type, Variable},
 };
@@ -23,7 +23,7 @@ pub struct Function {
 impl CreateInstruction for Function {
     fn create_instruction(
         pair: Pair<Rule>,
-        variables: &VariableMap,
+        interpreter: &Interpreter,
         local_variables: &mut LocalVariableMap,
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
@@ -36,7 +36,7 @@ impl CreateInstruction for Function {
         let mut local_variables = local_variables.clone();
         local_variables.extend(LocalVariableMap::from(params.clone()));
         let body = inner
-            .map(|arg| Instruction::new(arg, variables, &mut local_variables))
+            .map(|arg| Instruction::new(arg, interpreter, &mut local_variables))
             .collect::<Result<Box<_>, _>>()?;
         if body
             .iter()
@@ -52,13 +52,9 @@ impl CreateInstruction for Function {
 }
 
 impl Exec for Function {
-    fn exec(
-        &self,
-        _interpreter: &mut Interpreter,
-        local_variables: &mut VariableMap,
-    ) -> Result<Variable, Error> {
+    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, Error> {
         let mut fn_local_variables = LocalVariableMap::from(self.params.clone());
-        let body = recreate_instructions(&self.body, &mut fn_local_variables, local_variables)?;
+        let body = recreate_instructions(&self.body, &mut fn_local_variables, interpreter)?;
         Ok(Variable::Function(Rc::new(LangFunction {
             params: self.params.clone(),
             body,
@@ -70,11 +66,11 @@ impl Recreate for Function {
     fn recreate(
         &self,
         local_variables: &mut LocalVariableMap,
-        args: &VariableMap,
+        interpreter: &Interpreter,
     ) -> Result<Instruction, Error> {
         let mut local_variables = local_variables.clone();
         local_variables.extend(LocalVariableMap::from(self.params.clone()));
-        let body = recreate_instructions(&self.body, &mut local_variables, args)?;
+        let body = recreate_instructions(&self.body, &mut local_variables, interpreter)?;
         if body
             .iter()
             .all(|instruction| matches!(instruction, Instruction::Variable(_)))

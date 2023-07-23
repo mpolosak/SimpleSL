@@ -1,32 +1,23 @@
 use super::{local_variable::LocalVariableMap, Instruction};
-use crate::{
-    error::Error,
-    interpreter::{Interpreter, VariableMap},
-    parse::Rule,
-    variable::Variable,
-};
+use crate::{error::Error, interpreter::Interpreter, parse::Rule, variable::Variable};
 use pest::iterators::Pair;
 
 pub trait CreateInstruction {
     fn create_instruction(
         pair: Pair<Rule>,
-        variables: &VariableMap,
+        variables: &Interpreter,
         local_variables: &mut LocalVariableMap,
     ) -> Result<Instruction, Error>;
 }
 
 pub trait Exec {
-    fn exec(
-        &self,
-        interpreter: &mut Interpreter,
-        local_variables: &mut VariableMap,
-    ) -> Result<Variable, Error>;
+    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, Error>;
 }
 
 pub trait Recreate {
     fn recreate(
         &self,
         local_variables: &mut LocalVariableMap,
-        args: &VariableMap,
+        interpreter: &Interpreter,
     ) -> Result<Instruction, Error>;
 }

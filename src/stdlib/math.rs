@@ -1,11 +1,11 @@
 use crate::{
     function::{NativeFunction, Param, Params},
-    interpreter::{VariableMap, VariableMapTrait},
+    interpreter::Interpreter,
     variable::{Type, Variable},
 };
 use simplesl_macros::export_function;
 
-pub fn add_functions(variables: &mut VariableMap) {
+pub fn add_functions(interpreter: &mut Interpreter) {
     #[export_function]
     fn int_to_float(value: i64) -> f64 {
         value as f64

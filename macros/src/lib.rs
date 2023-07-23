@@ -46,7 +46,7 @@ pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream 
         #function
         {
             use std::rc::Rc;
-            variables.add_native_function(
+            interpreter.insert_native_function(
                 #ident_str.into(),
                 NativeFunction {
                     params: Params {
@@ -54,7 +54,7 @@ pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream 
                         catch_rest: #catch_rest,
                     },
                     return_type: #return_type,
-                    body: |_name, interpreter, args| {
+                    body: |_name, interpreter| {
                         #args_importing
                         #body
                     },

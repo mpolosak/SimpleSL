@@ -21,7 +21,7 @@ mod traits;
 mod tuple;
 use crate::{
     error::Error,
-    interpreter::{Interpreter, VariableMap, VariableMapTrait},
+    interpreter::Interpreter,
     parse::Rule,
     variable::{function_type::FunctionType, GetReturnType, GetType, Type, Variable},
 };
@@ -89,23 +89,23 @@ pub enum Instruction {
 impl Instruction {
     pub fn new(
         pair: Pair<Rule>,
-        variables: &VariableMap,
+        interpreter: &Interpreter,
         local_variables: &mut LocalVariableMap,
     ) -> Result<Self, Error> {
         match pair.as_rule() {
             Rule::line => {
                 let pair = pair.into_inner().next().unwrap();
-                Instruction::new(pair, variables, local_variables)
+                Instruction::new(pair, interpreter, local_variables)
             }
-            Rule::set => Ok(Set::new(pair, variables, local_variables)?.into()),
+            Rule::set => Ok(Set::new(pair, interpreter, local_variables)?.into()),
             Rule::destruct_tuple => {
-                DestructTuple::create_instruction(pair, variables, local_variables)
+                DestructTuple::create_instruction(pair, interpreter, local_variables)
             }
-            Rule::not => Not::create_instruction(pair, variables, local_variables),
-            Rule::bin_not => BinNot::create_instruction(pair, variables, local_variables),
-            Rule::equal => Equal::create_instruction(pair, variables, local_variables),
+            Rule::not => Not::create_instruction(pair, interpreter, local_variables),
+            Rule::bin_not => BinNot::create_instruction(pair, interpreter, local_variables),
+            Rule::equal => Equal::create_instruction(pair, interpreter, local_variables),
             Rule::not_equal => Ok(
-                match Equal::create_instruction(pair, variables, local_variables)? {
+                match Equal::create_instruction(pair, interpreter, local_variables)? {
                     Instruction::Variable(Variable::Int(value)) => {
                         Instruction::Variable((value == 0).into())
                     }
@@ -113,24 +113,24 @@ impl Instruction {
                 },
             ),
             Rule::greater | Rule::lower => {
-                Greater::create_instruction(pair, variables, local_variables)
+                Greater::create_instruction(pair, interpreter, local_variables)
             }
             Rule::greater_equal | Rule::lower_equal => {
-                GreaterOrEqual::create_instruction(pair, variables, local_variables)
+                GreaterOrEqual::create_instruction(pair, interpreter, local_variables)
             }
-            Rule::and => And::create_instruction(pair, variables, local_variables),
-            Rule::or => Or::create_instruction(pair, variables, local_variables),
-            Rule::multiply => Multiply::create_instruction(pair, variables, local_variables),
-            Rule::divide => Divide::create_instruction(pair, variables, local_variables),
-            Rule::add => Add::create_instruction(pair, variables, local_variables),
-            Rule::subtract => Subtract::create_instruction(pair, variables, local_variables),
-            Rule::modulo => Modulo::create_instruction(pair, variables, local_variables),
-            Rule::bin_and => BinAnd::create_instruction(pair, variables, local_variables),
-            Rule::bin_or => BinOr::create_instruction(pair, variables, local_variables),
-            Rule::xor => Xor::create_instruction(pair, variables, local_variables),
-            Rule::rshift => RShift::create_instruction(pair, variables, local_variables),
-            Rule::lshift => LShift::create_instruction(pair, variables, local_variables),
-            Rule::function_call => Self::create_function_call(pair, variables, local_variables),
+            Rule::and => And::create_instruction(pair, interpreter, local_variables),
+            Rule::or => Or::create_instruction(pair, interpreter, local_variables),
+            Rule::multiply => Multiply::create_instruction(pair, interpreter, local_variables),
+            Rule::divide => Divide::create_instruction(pair, interpreter, local_variables),
+            Rule::add => Add::create_instruction(pair, interpreter, local_variables),
+            Rule::subtract => Subtract::create_instruction(pair, interpreter, local_variables),
+            Rule::modulo => Modulo::create_instruction(pair, interpreter, local_variables),
+            Rule::bin_and => BinAnd::create_instruction(pair, interpreter, local_variables),
+            Rule::bin_or => BinOr::create_instruction(pair, interpreter, local_variables),
+            Rule::xor => Xor::create_instruction(pair, interpreter, local_variables),
+            Rule::rshift => RShift::create_instruction(pair, interpreter, local_variables),
+            Rule::lshift => LShift::create_instruction(pair, interpreter, local_variables),
+            Rule::function_call => Self::create_function_call(pair, interpreter, local_variables),
             Rule::int | Rule::float | Rule::string | Rule::void => {
                 let variable = Variable::try_from(pair).unwrap();
                 Ok(Self::Variable(variable))
@@ -143,29 +143,29 @@ impl Instruction {
                         Self::LocalVariable(var_name.into(), local_variable.clone())
                     }
                     None => {
-                        let value = variables.try_get(var_name)?;
+                        let value = interpreter.get_variable(var_name)?;
                         Self::Variable(value)
                     }
                 })
             }
-            Rule::array => Array::create_instruction(pair, variables, local_variables),
-            Rule::function => Function::create_instruction(pair, variables, local_variables),
-            Rule::tuple => Tuple::create_instruction(pair, variables, local_variables),
-            Rule::block => Block::create_instruction(pair, variables, local_variables),
+            Rule::array => Array::create_instruction(pair, interpreter, local_variables),
+            Rule::function => Function::create_instruction(pair, interpreter, local_variables),
+            Rule::tuple => Tuple::create_instruction(pair, interpreter, local_variables),
+            Rule::block => Block::create_instruction(pair, interpreter, local_variables),
             Rule::if_else | Rule::if_stm => {
-                IfElse::create_instruction(pair, variables, local_variables)
+                IfElse::create_instruction(pair, interpreter, local_variables)
             }
-            Rule::at => At::create_instruction(pair, variables, local_variables),
+            Rule::at => At::create_instruction(pair, interpreter, local_variables),
             Rule::set_if_else | Rule::set_if => {
-                SetIfElse::create_instruction(pair, variables, local_variables)
+                SetIfElse::create_instruction(pair, interpreter, local_variables)
             }
-            Rule::r#match => Match::create_instruction(pair, variables, local_variables),
+            Rule::r#match => Match::create_instruction(pair, interpreter, local_variables),
             _ => panic!(),
         }
     }
     fn create_function_call(
         pair: Pair<'_, Rule>,
-        variables: &VariableMap,
+        interpreter: &Interpreter,
         local_variables: &mut LocalVariableMap,
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
@@ -174,62 +174,52 @@ impl Instruction {
             .next()
             .unwrap()
             .into_inner()
-            .map(|pair| Self::new(pair, variables, local_variables))
+            .map(|pair| Self::new(pair, interpreter, local_variables))
             .collect::<Result<Box<_>, _>>()?;
         match local_variables.get(var_name) {
             Some(LocalVariable::Function(params, return_type, ..)) => {
                 Ok(LocalFunctionCall::new(var_name, params, args, return_type.clone())?.into())
             }
             Some(_) => Err(error_wrong_type(&args, var_name)),
-            None => Ok(FunctionCall::new(var_name, variables, args)?.into()),
+            None => Ok(FunctionCall::new(var_name, interpreter, args)?.into()),
         }
     }
 }
 
 impl Exec for Instruction {
-    fn exec(
-        &self,
-        interpreter: &mut Interpreter,
-        local_variables: &mut VariableMap,
-    ) -> Result<Variable, Error> {
+    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, Error> {
         match self {
-            Self::FunctionCall(function_call) => function_call.exec(interpreter, local_variables),
-            Self::LocalFunctionCall(function_call) => {
-                function_call.exec(interpreter, local_variables)
-            }
+            Self::FunctionCall(function_call) => function_call.exec(interpreter),
+            Self::LocalFunctionCall(function_call) => function_call.exec(interpreter),
             Self::Variable(var) => Ok(var.clone()),
-            Self::LocalVariable(name, _) => Ok(local_variables.try_get(name).unwrap()),
-            Self::Array(array) => array.exec(interpreter, local_variables),
-            Self::Function(function) => function.exec(interpreter, local_variables),
-            Self::Tuple(function) => function.exec(interpreter, local_variables),
-            Self::Set(set) => set.exec(interpreter, local_variables),
-            Self::DestructTuple(destruct_tuple) => {
-                destruct_tuple.exec(interpreter, local_variables)
-            }
-            Self::Not(not) => not.exec(interpreter, local_variables),
-            Self::BinNot(bin_not) => bin_not.exec(interpreter, local_variables),
-            Self::Equal(equal) => equal.exec(interpreter, local_variables),
-            Self::Greater(greater) => greater.exec(interpreter, local_variables),
-            Self::GreaterOrEqual(greater_or_equal) => {
-                greater_or_equal.exec(interpreter, local_variables)
-            }
-            Self::And(and) => and.exec(interpreter, local_variables),
-            Self::Or(or) => or.exec(interpreter, local_variables),
-            Self::Multiply(multiply) => multiply.exec(interpreter, local_variables),
-            Self::Divide(divide) => divide.exec(interpreter, local_variables),
-            Self::Add(add) => add.exec(interpreter, local_variables),
-            Self::Subtract(subtract) => subtract.exec(interpreter, local_variables),
-            Self::Modulo(modulo) => modulo.exec(interpreter, local_variables),
-            Self::BinAnd(bin_and) => bin_and.exec(interpreter, local_variables),
-            Self::BinOr(bin_or) => bin_or.exec(interpreter, local_variables),
-            Self::Xor(xor) => xor.exec(interpreter, local_variables),
-            Self::LShift(lshift) => lshift.exec(interpreter, local_variables),
-            Self::RShift(rshift) => rshift.exec(interpreter, local_variables),
-            Self::Block(block) => block.exec(interpreter, local_variables),
-            Self::IfElse(if_else) => if_else.exec(interpreter, local_variables),
-            Self::At(at) => at.exec(interpreter, local_variables),
-            Self::SetIfElse(set_if) => set_if.exec(interpreter, local_variables),
-            Self::Match(match_stm) => match_stm.exec(interpreter, local_variables),
+            Self::LocalVariable(name, _) => Ok(interpreter.get_variable(name).unwrap()),
+            Self::Array(array) => array.exec(interpreter),
+            Self::Function(function) => function.exec(interpreter),
+            Self::Tuple(function) => function.exec(interpreter),
+            Self::Set(set) => set.exec(interpreter),
+            Self::DestructTuple(destruct_tuple) => destruct_tuple.exec(interpreter),
+            Self::Not(not) => not.exec(interpreter),
+            Self::BinNot(bin_not) => bin_not.exec(interpreter),
+            Self::Equal(equal) => equal.exec(interpreter),
+            Self::Greater(greater) => greater.exec(interpreter),
+            Self::GreaterOrEqual(greater_or_equal) => greater_or_equal.exec(interpreter),
+            Self::And(and) => and.exec(interpreter),
+            Self::Or(or) => or.exec(interpreter),
+            Self::Multiply(multiply) => multiply.exec(interpreter),
+            Self::Divide(divide) => divide.exec(interpreter),
+            Self::Add(add) => add.exec(interpreter),
+            Self::Subtract(subtract) => subtract.exec(interpreter),
+            Self::Modulo(modulo) => modulo.exec(interpreter),
+            Self::BinAnd(bin_and) => bin_and.exec(interpreter),
+            Self::BinOr(bin_or) => bin_or.exec(interpreter),
+            Self::Xor(xor) => xor.exec(interpreter),
+            Self::LShift(lshift) => lshift.exec(interpreter),
+            Self::RShift(rshift) => rshift.exec(interpreter),
+            Self::Block(block) => block.exec(interpreter),
+            Self::IfElse(if_else) => if_else.exec(interpreter),
+            Self::At(at) => at.exec(interpreter),
+            Self::SetIfElse(set_if) => set_if.exec(interpreter),
+            Self::Match(match_stm) => match_stm.exec(interpreter),
         }
     }
 }
@@ -238,49 +228,55 @@ impl Recreate for Instruction {
     fn recreate(
         &self,
         local_variables: &mut LocalVariableMap,
-        args: &VariableMap,
+        interpreter: &Interpreter,
     ) -> Result<Instruction, Error> {
         match self {
-            Self::LocalFunctionCall(function_call) => function_call.recreate(local_variables, args),
-            Self::FunctionCall(function_call) => function_call.recreate(local_variables, args),
+            Self::LocalFunctionCall(function_call) => {
+                function_call.recreate(local_variables, interpreter)
+            }
+            Self::FunctionCall(function_call) => {
+                function_call.recreate(local_variables, interpreter)
+            }
             Self::LocalVariable(name, var_type) => Ok(match local_variables.get(name) {
                 Some(LocalVariable::Variable(variable)) => Self::Variable(variable.clone()),
                 Some(_) => Self::LocalVariable(name.clone(), var_type.clone()),
                 None => {
-                    let variable = args.try_get(name).unwrap();
+                    let variable = interpreter.get_variable(name).unwrap();
                     Self::Variable(variable)
                 }
             }),
-            Self::Array(array) => array.recreate(local_variables, args),
-            Self::Function(function) => function.recreate(local_variables, args),
-            Self::Tuple(tuple) => tuple.recreate(local_variables, args),
-            Self::Set(set) => set.recreate(local_variables, args),
-            Self::DestructTuple(destruct_tuple) => destruct_tuple.recreate(local_variables, args),
-            Self::Not(not) => not.recreate(local_variables, args),
-            Self::BinNot(bin_not) => bin_not.recreate(local_variables, args),
-            Self::Equal(equal) => equal.recreate(local_variables, args),
-            Self::Greater(greater) => greater.recreate(local_variables, args),
-            Self::GreaterOrEqual(greater_or_equal) => {
-                greater_or_equal.recreate(local_variables, args)
+            Self::Array(array) => array.recreate(local_variables, interpreter),
+            Self::Function(function) => function.recreate(local_variables, interpreter),
+            Self::Tuple(tuple) => tuple.recreate(local_variables, interpreter),
+            Self::Set(set) => set.recreate(local_variables, interpreter),
+            Self::DestructTuple(destruct_tuple) => {
+                destruct_tuple.recreate(local_variables, interpreter)
             }
-            Self::And(and) => and.recreate(local_variables, args),
-            Self::Or(or) => or.recreate(local_variables, args),
-            Self::Multiply(multiply) => multiply.recreate(local_variables, args),
-            Self::Divide(divide) => divide.recreate(local_variables, args),
-            Self::Add(add) => add.recreate(local_variables, args),
-            Self::Subtract(subtract) => subtract.recreate(local_variables, args),
-            Self::Modulo(modulo) => modulo.recreate(local_variables, args),
-            Self::BinAnd(bin_and) => bin_and.recreate(local_variables, args),
-            Self::BinOr(bin_or) => bin_or.recreate(local_variables, args),
-            Self::Xor(xor) => xor.recreate(local_variables, args),
-            Self::LShift(lshift) => lshift.recreate(local_variables, args),
-            Self::RShift(rshift) => rshift.recreate(local_variables, args),
-            Self::Block(block) => block.recreate(local_variables, args),
-            Self::IfElse(if_else) => if_else.recreate(local_variables, args),
-            Self::At(at) => at.recreate(local_variables, args),
-            Self::Match(match_stm) => match_stm.recreate(local_variables, args),
+            Self::Not(not) => not.recreate(local_variables, interpreter),
+            Self::BinNot(bin_not) => bin_not.recreate(local_variables, interpreter),
+            Self::Equal(equal) => equal.recreate(local_variables, interpreter),
+            Self::Greater(greater) => greater.recreate(local_variables, interpreter),
+            Self::GreaterOrEqual(greater_or_equal) => {
+                greater_or_equal.recreate(local_variables, interpreter)
+            }
+            Self::And(and) => and.recreate(local_variables, interpreter),
+            Self::Or(or) => or.recreate(local_variables, interpreter),
+            Self::Multiply(multiply) => multiply.recreate(local_variables, interpreter),
+            Self::Divide(divide) => divide.recreate(local_variables, interpreter),
+            Self::Add(add) => add.recreate(local_variables, interpreter),
+            Self::Subtract(subtract) => subtract.recreate(local_variables, interpreter),
+            Self::Modulo(modulo) => modulo.recreate(local_variables, interpreter),
+            Self::BinAnd(bin_and) => bin_and.recreate(local_variables, interpreter),
+            Self::BinOr(bin_or) => bin_or.recreate(local_variables, interpreter),
+            Self::Xor(xor) => xor.recreate(local_variables, interpreter),
+            Self::LShift(lshift) => lshift.recreate(local_variables, interpreter),
+            Self::RShift(rshift) => rshift.recreate(local_variables, interpreter),
+            Self::Block(block) => block.recreate(local_variables, interpreter),
+            Self::IfElse(if_else) => if_else.recreate(local_variables, interpreter),
+            Self::At(at) => at.recreate(local_variables, interpreter),
+            Self::Match(match_stm) => match_stm.recreate(local_variables, interpreter),
             Self::Variable(variable) => Ok(Self::Variable(variable.clone())),
-            Self::SetIfElse(set_if_else) => set_if_else.recreate(local_variables, args), // _ => Ok(self),
+            Self::SetIfElse(set_if_else) => set_if_else.recreate(local_variables, interpreter), // _ => Ok(self),
         }
     }
 }
@@ -332,22 +328,21 @@ impl From<Variable> for Instruction {
 pub fn recreate_instructions(
     instructions: &[Instruction],
     local_variables: &mut LocalVariableMap,
-    args: &VariableMap,
+    interpreter: &Interpreter,
 ) -> Result<Box<[Instruction]>, Error> {
     instructions
         .iter()
-        .map(|instruction| instruction.recreate(local_variables, args))
+        .map(|instruction| instruction.recreate(local_variables, interpreter))
         .collect()
 }
 
 pub fn exec_instructions(
     instructions: &[Instruction],
     interpreter: &mut Interpreter,
-    local_variables: &mut VariableMap,
 ) -> Result<Rc<[Variable]>, Error> {
     instructions
         .iter()
-        .map(|instruction| instruction.exec(interpreter, local_variables))
+        .map(|instruction| instruction.exec(interpreter))
         .collect::<Result<Rc<_>, _>>()
 }
 

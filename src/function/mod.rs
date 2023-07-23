@@ -8,7 +8,7 @@ pub use self::{
 };
 use crate::{
     error::Error,
-    interpreter::{Interpreter, VariableMap},
+    interpreter::Interpreter,
     variable::{function_type::FunctionType, GetReturnType, GetType, Type, Variable},
 };
 use std::{fmt, iter::zip, rc::Rc};
@@ -20,18 +20,20 @@ pub trait Function: GetReturnType {
         interpreter: &mut Interpreter,
         args: &[Variable],
     ) -> Result<Variable, Error> {
-        let mut args_map = VariableMap::new();
+        interpreter.add_layer();
         let params = self.get_params();
         if let Some(param_name) = &params.catch_rest {
             let from = params.standard.len();
             let rest: Rc<[Variable]> = args.get(from..).unwrap_or(&[]).into();
-            args_map.insert(param_name.clone(), Variable::from(rest));
+            interpreter.insert(param_name.clone(), Variable::from(rest));
         }
 
         for (arg, Param { var_type: _, name }) in zip(args, params.standard.iter()) {
-            args_map.insert(name.clone(), arg.clone());
+            interpreter.insert(name.clone(), arg.clone());
         }
-        self.exec_intern(name, interpreter, args_map)
+        let result = self.exec_intern(name, interpreter);
+        interpreter.remove_layer();
+        result
     }
     fn check_args_and_exec(
         &self,
@@ -39,12 +41,12 @@ pub trait Function: GetReturnType {
         interpreter: &mut Interpreter,
         args: &[Variable],
     ) -> Result<Variable, Error> {
-        let mut args_map = VariableMap::new();
+        interpreter.add_layer();
         let params = self.get_params();
         if let Some(param_name) = &params.catch_rest {
             let from = params.standard.len();
             let rest: Rc<[Variable]> = args.get(from..).unwrap_or(&[]).into();
-            args_map.insert(param_name.clone(), Variable::from(rest));
+            interpreter.insert(param_name.clone(), Variable::from(rest));
         } else if args.len() != params.standard.len() {
             return Err(Error::WrongNumberOfArguments(
                 String::from(name),
@@ -54,19 +56,16 @@ pub trait Function: GetReturnType {
 
         for (arg, Param { var_type, name }) in zip(args, params.standard.iter()) {
             if arg.get_type().matches(var_type) {
-                args_map.insert(name.clone(), arg.clone());
+                interpreter.insert(name.clone(), arg.clone());
             } else {
                 return Err(Error::WrongType(name.as_ref().to_owned(), var_type.clone()));
             }
         }
-        self.exec_intern(name, interpreter, args_map)
+        let result = self.exec_intern(name, interpreter);
+        interpreter.remove_layer();
+        result
     }
-    fn exec_intern(
-        &self,
-        name: &str,
-        interpreter: &mut Interpreter,
-        args: VariableMap,
-    ) -> Result<Variable, Error>;
+    fn exec_intern(&self, name: &str, interpreter: &mut Interpreter) -> Result<Variable, Error>;
     fn get_params(&self) -> &Params;
 }
 
