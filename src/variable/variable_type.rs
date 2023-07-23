@@ -17,7 +17,7 @@ pub enum Type {
     Tuple(Box<[Type]>),
     EmptyArray,
     Void,
-    Multi(TypeSet),
+    Multi(Box<TypeSet>),
     Any,
 }
 
@@ -45,18 +45,20 @@ impl Type {
         match (self, other) {
             (Type::Any, _) | (_, Type::Any) => Type::Any,
             (first, second) if first == second => first,
-            (Type::Multi(TypeSet { mut types }), Type::Multi(TypeSet { types: types2 })) => {
-                types.extend(types2);
-                Type::Multi(TypeSet { types })
+            (Type::Multi(mut types), Type::Multi(types2)) => {
+                types.types.extend(types2.types);
+                Type::Multi(types)
             }
-            (Type::Multi(TypeSet { mut types }), var_type)
-            | (var_type, Type::Multi(TypeSet { mut types })) => {
-                types.insert(var_type);
-                Type::Multi(TypeSet { types })
+            (Type::Multi(mut types), var_type) | (var_type, Type::Multi(mut types)) => {
+                types.types.insert(var_type);
+                Type::Multi(types)
             }
-            (first, second) => Type::Multi(TypeSet {
-                types: HashSet::from([first, second]),
-            }),
+            (first, second) => Type::Multi(
+                TypeSet {
+                    types: HashSet::from([first, second]),
+                }
+                .into(),
+            ),
         }
     }
 }
@@ -107,7 +109,7 @@ impl From<Pair<'_, Rule>> for Type {
             }
             Rule::multi => {
                 let types = pair.into_inner().map(Type::from).collect();
-                Type::Multi(types)
+                Type::Multi(Box::new(types))
             }
             Rule::any => Self::Any,
             _ => panic!(),
@@ -117,7 +119,7 @@ impl From<Pair<'_, Rule>> for Type {
 
 impl From<[Type; 2]> for Type {
     fn from(value: [Type; 2]) -> Self {
-        Type::Multi(value.into())
+        Type::Multi(Box::new(value.into()))
     }
 }
 pub trait GetType {
