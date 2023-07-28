@@ -1,5 +1,5 @@
 use crate::instruction::{
-    local_variable::LocalVariableMap, CreateInstruction, Exec, Instruction, Recreate,
+    local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
 use crate::{
     error::Error,
@@ -20,7 +20,7 @@ impl CreateInstruction for IfElse {
     fn create_instruction(
         pair: Pair<Rule>,
         interpreter: &Interpreter,
-        local_variables: &mut LocalVariableMap,
+        local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error> {
         let rule = pair.as_rule();
         let mut inner = pair.into_inner();
@@ -78,7 +78,7 @@ impl Exec for IfElse {
 impl Recreate for IfElse {
     fn recreate(
         &self,
-        local_variables: &mut LocalVariableMap,
+        local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
     ) -> Result<Instruction, Error> {
         let condition = self.condition.recreate(local_variables, interpreter)?;

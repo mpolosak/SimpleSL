@@ -1,4 +1,4 @@
-use super::{local_variable::LocalVariableMap, CreateInstruction, Exec, Instruction, Recreate};
+use super::{local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate};
 use crate::{
     error::Error,
     interpreter::Interpreter,
@@ -17,7 +17,7 @@ impl CreateInstruction for Divide {
     fn create_instruction(
         pair: Pair<Rule>,
         interpreter: &Interpreter,
-        local_variables: &mut LocalVariableMap,
+        local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
@@ -66,7 +66,7 @@ impl Exec for Divide {
 impl Recreate for Divide {
     fn recreate(
         &self,
-        local_variables: &mut LocalVariableMap,
+        local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
     ) -> Result<Instruction, Error> {
         let lhs = self.lhs.recreate(local_variables, interpreter)?;

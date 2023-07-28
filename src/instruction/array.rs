@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use super::{
     exec_instructions,
-    local_variable::LocalVariableMap,
+    local_variable::LocalVariables,
     recreate_instructions,
     traits::{Exec, Recreate},
     CreateInstruction, Instruction,
@@ -25,7 +25,7 @@ impl CreateInstruction for Array {
     fn create_instruction(
         pair: Pair<Rule>,
         interpreter: &Interpreter,
-        local_variables: &mut LocalVariableMap,
+        local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error> {
         let inner = pair.into_inner();
         let instructions = inner
@@ -74,7 +74,7 @@ impl Exec for Array {
 impl Recreate for Array {
     fn recreate(
         &self,
-        local_variables: &mut LocalVariableMap,
+        local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
     ) -> Result<Instruction, Error> {
         let instructions = recreate_instructions(&self.instructions, local_variables, interpreter)?;

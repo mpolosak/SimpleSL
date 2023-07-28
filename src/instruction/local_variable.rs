@@ -6,6 +6,64 @@ use crate::{
 use std::{collections::HashMap, rc::Rc};
 
 pub type LocalVariableMap = HashMap<Rc<str>, LocalVariable>;
+pub struct LocalVariables {
+    variables: Vec<LocalVariableMap>,
+}
+
+impl LocalVariables {
+    pub fn new() -> Self {
+        Self {
+            variables: vec![LocalVariableMap::new()],
+        }
+    }
+    pub fn insert(&mut self, name: Rc<str>, variable: LocalVariable) {
+        self.variables.last_mut().unwrap().insert(name, variable);
+    }
+    pub fn get(&self, name: &str) -> Option<&LocalVariable> {
+        for layer in self.variables.iter().rev() {
+            if let Some(variable) = layer.get(name) {
+                return Some(variable);
+            }
+        }
+        None
+    }
+    pub fn contains_key(&self, name: &Rc<str>) -> bool {
+        self.variables.last().unwrap().contains_key(name)
+    }
+    pub fn add_layer(&mut self) {
+        self.variables.push(LocalVariableMap::new())
+    }
+    pub fn remove_layer(&mut self) {
+        if self.variables.len() > 1 {
+            self.variables.pop();
+        }
+    }
+    pub fn push_layer(&mut self, layer: LocalVariableMap) {
+        self.variables.push(layer)
+    }
+}
+
+impl Default for LocalVariables {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl From<LocalVariableMap> for LocalVariables {
+    fn from(value: LocalVariableMap) -> Self {
+        Self {
+            variables: vec![value],
+        }
+    }
+}
+
+impl From<Params> for LocalVariables {
+    fn from(value: Params) -> Self {
+        Self {
+            variables: vec![value.into()],
+        }
+    }
+}
 
 #[derive(Clone, Debug)]
 pub enum LocalVariable {

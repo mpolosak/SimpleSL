@@ -1,5 +1,5 @@
 use crate::instruction::{
-    local_variable::LocalVariableMap, traits::CreateInstruction, Exec, Instruction, Recreate,
+    local_variable::LocalVariables, traits::CreateInstruction, Exec, Instruction, Recreate,
 };
 use crate::{
     error::Error,
@@ -17,7 +17,7 @@ impl CreateInstruction for BinNot {
     fn create_instruction(
         pair: Pair<crate::parse::Rule>,
         interpreter: &Interpreter,
-        local_variables: &mut LocalVariableMap,
+        local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error> {
         let pair = pair.into_inner().next().unwrap();
         let instruction = Instruction::new(pair, interpreter, local_variables)?;
@@ -50,7 +50,7 @@ impl Exec for BinNot {
 impl Recreate for BinNot {
     fn recreate(
         &self,
-        local_variables: &mut LocalVariableMap,
+        local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
     ) -> Result<Instruction, Error> {
         let instruction = self.instruction.recreate(local_variables, interpreter)?;

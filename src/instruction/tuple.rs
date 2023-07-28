@@ -1,5 +1,5 @@
 use super::{
-    exec_instructions, local_variable::LocalVariableMap, recreate_instructions, CreateInstruction,
+    exec_instructions, local_variable::LocalVariables, recreate_instructions, CreateInstruction,
     Exec, Instruction, Recreate,
 };
 use crate::{
@@ -19,7 +19,7 @@ impl CreateInstruction for Tuple {
     fn create_instruction(
         pair: Pair<Rule>,
         interpreter: &Interpreter,
-        local_variables: &mut LocalVariableMap,
+        local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error> {
         let elements = pair
             .into_inner()
@@ -52,7 +52,7 @@ impl Exec for Tuple {
 impl Recreate for Tuple {
     fn recreate(
         &self,
-        local_variables: &mut LocalVariableMap,
+        local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
     ) -> Result<Instruction, Error> {
         let elements = recreate_instructions(&self.elements, local_variables, interpreter)?;

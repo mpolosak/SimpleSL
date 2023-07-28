@@ -1,5 +1,5 @@
 use super::{
-    local_variable::LocalVariableMap, recreate_instructions, CreateInstruction, Exec, Instruction,
+    local_variable::LocalVariables, recreate_instructions, CreateInstruction, Exec, Instruction,
     Recreate,
 };
 use crate::{
@@ -19,14 +19,14 @@ impl CreateInstruction for Block {
     fn create_instruction(
         pair: Pair<Rule>,
         interpreter: &Interpreter,
-        local_variables: &mut LocalVariableMap,
+        local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error> {
-        let mut local_variables = local_variables.clone();
+        local_variables.add_layer();
         let instructions = pair
             .into_inner()
-            .map(|pair| Instruction::new(pair, interpreter, &mut local_variables))
+            .map(|pair| Instruction::new(pair, interpreter, local_variables))
             .collect::<Result<Box<[Instruction]>, Error>>()?;
-        if instructions
+        let result = if instructions
             .iter()
             .all(|instruction| matches!(instruction, Instruction::Variable(_)))
         {
@@ -37,7 +37,9 @@ impl CreateInstruction for Block {
             }
         } else {
             Ok(Self { instructions }.into())
-        }
+        };
+        local_variables.remove_layer();
+        result
     }
 }
 
@@ -56,13 +58,14 @@ impl Exec for Block {
 impl Recreate for Block {
     fn recreate(
         &self,
-        local_variables: &mut LocalVariableMap,
+        local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
     ) -> Result<Instruction, Error> {
-        let mut local_variables = local_variables.clone();
-        let instructions =
-            recreate_instructions(&self.instructions, &mut local_variables, interpreter)?;
-        Ok(Self { instructions }.into())
+        local_variables.add_layer();
+        let instructions = recreate_instructions(&self.instructions, local_variables, interpreter)?;
+        let result = Ok(Self { instructions }.into());
+        local_variables.remove_layer();
+        result
     }
 }
 

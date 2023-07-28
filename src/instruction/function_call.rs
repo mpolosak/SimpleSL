@@ -1,7 +1,7 @@
 use super::{
     check_args::check_args,
     error_wrong_type, exec_instructions,
-    local_variable::LocalVariableMap,
+    local_variable::LocalVariables,
     recreate_instructions,
     traits::{Exec, Recreate},
     Instruction,
@@ -44,7 +44,7 @@ impl Exec for FunctionCall {
 impl Recreate for FunctionCall {
     fn recreate(
         &self,
-        local_variables: &mut LocalVariableMap,
+        local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
     ) -> Result<Instruction, Error> {
         let args = recreate_instructions(&self.args, local_variables, interpreter)?;

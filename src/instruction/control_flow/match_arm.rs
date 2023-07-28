@@ -1,7 +1,7 @@
 use crate::{
     error::Error,
     instruction::{
-        local_variable::{LocalVariable, LocalVariableMap},
+        local_variable::{LocalVariable, LocalVariables},
         recreate_instructions, Exec, Instruction, Recreate,
     },
     interpreter::Interpreter,
@@ -26,7 +26,7 @@ impl MatchArm {
     pub fn new(
         pair: Pair<Rule>,
         interpreter: &Interpreter,
-        local_variables: &mut LocalVariableMap,
+        local_variables: &mut LocalVariables,
     ) -> Result<Self, Error> {
         match pair.as_rule() {
             Rule::match_type => {
@@ -34,14 +34,16 @@ impl MatchArm {
                 let ident: Rc<str> = inner.next().unwrap().as_str().into();
                 let var_type = Type::from(inner.next().unwrap());
                 let pair = inner.next().unwrap();
-                let mut local_variables = local_variables.clone();
+                local_variables.add_layer();
                 local_variables.insert(ident.clone(), LocalVariable::Other(var_type.clone()));
-                let instruction = Instruction::new(pair, interpreter, &mut local_variables)?;
-                Ok(Self::Type {
+                let instruction = Instruction::new(pair, interpreter, local_variables)?;
+                let result = Ok(Self::Type {
                     ident,
                     var_type,
                     instruction,
-                })
+                });
+                local_variables.remove_layer();
+                result
             }
             Rule::match_value => {
                 let mut inner = pair.into_inner();
@@ -111,7 +113,7 @@ impl MatchArm {
     }
     pub fn recreate(
         self,
-        local_variables: &mut LocalVariableMap,
+        local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
     ) -> Result<Self, Error> {
         Ok(match self {
@@ -120,14 +122,16 @@ impl MatchArm {
                 var_type,
                 instruction,
             } => {
-                let mut local_variable = local_variables.clone();
-                local_variable.insert(ident.clone(), LocalVariable::Other(var_type.clone()));
+                local_variables.add_layer();
+                local_variables.insert(ident.clone(), LocalVariable::Other(var_type.clone()));
                 let instruction = instruction.recreate(local_variables, interpreter)?;
-                Self::Type {
+                let result = Self::Type {
                     ident,
                     var_type,
                     instruction,
-                }
+                };
+                local_variables.remove_layer();
+                result
             }
             Self::Value(values, instruction) => {
                 let values = recreate_instructions(&values, local_variables, interpreter)?;

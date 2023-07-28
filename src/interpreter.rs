@@ -1,4 +1,4 @@
-use crate::instruction::{local_variable::LocalVariableMap, Exec, Instruction};
+use crate::instruction::{local_variable::LocalVariables, Exec, Instruction};
 use crate::{
     error::Error, function::NativeFunction, parse::*, pest::Parser, stdlib::add_std_lib,
     variable::*,
@@ -45,7 +45,7 @@ impl Interpreter {
 
     fn parse_input(&self, input: &str) -> Result<Box<[Instruction]>, Error> {
         let parse = SimpleSLParser::parse(Rule::input, input)?;
-        let mut local_variables = LocalVariableMap::new();
+        let mut local_variables = LocalVariables::new();
         let instructions = parse
             .take_while(|pair| pair.as_rule() != Rule::EOI)
             .map(|pair| Instruction::new(pair, self, &mut local_variables))

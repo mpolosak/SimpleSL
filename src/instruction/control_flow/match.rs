@@ -1,9 +1,7 @@
 use super::match_arm::MatchArm;
 use crate::{
     error::Error,
-    instruction::{
-        local_variable::LocalVariableMap, CreateInstruction, Exec, Instruction, Recreate,
-    },
+    instruction::{local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate},
     interpreter::Interpreter,
     parse::Rule,
     variable::{GetReturnType, Type, Variable},
@@ -20,7 +18,7 @@ impl CreateInstruction for Match {
     fn create_instruction(
         pair: Pair<Rule>,
         interpreter: &Interpreter,
-        local_variables: &mut LocalVariableMap,
+        local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
@@ -68,7 +66,7 @@ impl Exec for Match {
 impl Recreate for Match {
     fn recreate(
         &self,
-        local_variables: &mut LocalVariableMap,
+        local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
     ) -> Result<Instruction, Error> {
         let expression = self.expression.recreate(local_variables, interpreter)?;

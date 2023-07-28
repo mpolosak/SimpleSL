@@ -1,5 +1,5 @@
 use crate::instruction::{
-    local_variable::LocalVariableMap, CreateInstruction, Exec, Instruction, Recreate,
+    local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
 use crate::{
     error::Error,
@@ -19,7 +19,7 @@ impl CreateInstruction for Greater {
     fn create_instruction(
         pair: Pair<Rule>,
         interpreter: &Interpreter,
-        local_variables: &mut LocalVariableMap,
+        local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error> {
         let rule = pair.as_rule();
         let mut inner = pair.into_inner();
@@ -75,7 +75,7 @@ impl Exec for Greater {
 impl Recreate for Greater {
     fn recreate(
         &self,
-        local_variables: &mut LocalVariableMap,
+        local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
     ) -> Result<Instruction, Error> {
         let lhs = self.lhs.recreate(local_variables, interpreter)?;

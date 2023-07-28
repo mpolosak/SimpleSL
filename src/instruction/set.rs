@@ -1,5 +1,5 @@
 use super::{
-    local_variable::LocalVariableMap,
+    local_variable::LocalVariables,
     traits::{Exec, Recreate},
     Instruction,
 };
@@ -22,7 +22,7 @@ impl Set {
     pub fn new(
         pair: Pair<Rule>,
         interpreter: &Interpreter,
-        local_variables: &mut LocalVariableMap,
+        local_variables: &mut LocalVariables,
     ) -> Result<Self, Error> {
         let mut inner = pair.into_inner();
         let ident: Rc<str> = inner.next().unwrap().as_str().into();
@@ -44,7 +44,7 @@ impl Exec for Set {
 impl Recreate for Set {
     fn recreate(
         &self,
-        local_variables: &mut LocalVariableMap,
+        local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
     ) -> Result<Instruction, Error> {
         let instruction = self.instruction.recreate(local_variables, interpreter)?;

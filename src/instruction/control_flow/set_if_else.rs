@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use crate::instruction::{
-    local_variable::{LocalVariable, LocalVariableMap},
+    local_variable::{LocalVariable, LocalVariables},
     CreateInstruction, Exec, Instruction, Recreate,
 };
 use crate::{
@@ -25,7 +25,7 @@ impl CreateInstruction for SetIfElse {
     fn create_instruction(
         pair: Pair<Rule>,
         interpreter: &Interpreter,
-        local_variables: &mut LocalVariableMap,
+        local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error> {
         let rule = pair.as_rule();
         let mut inner = pair.into_inner();
@@ -35,9 +35,10 @@ impl CreateInstruction for SetIfElse {
         let pair = inner.next().unwrap();
         let expression = Instruction::new(pair, interpreter, local_variables)?;
         let pair = inner.next().unwrap();
-        let mut match_locals = local_variables.clone();
-        match_locals.insert(ident.clone(), LocalVariable::Other(var_type.clone()));
-        let if_match = Instruction::new(pair, interpreter, &mut match_locals)?;
+        local_variables.add_layer();
+        local_variables.insert(ident.clone(), LocalVariable::Other(var_type.clone()));
+        let if_match = Instruction::new(pair, interpreter, local_variables)?;
+        local_variables.remove_layer();
         let else_instruction = if rule == Rule::set_if_else {
             let pair = inner.next().unwrap();
             Instruction::new(pair, interpreter, local_variables)?
@@ -74,16 +75,17 @@ impl Exec for SetIfElse {
 impl Recreate for SetIfElse {
     fn recreate(
         &self,
-        local_variables: &mut LocalVariableMap,
+        local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
     ) -> Result<Instruction, Error> {
         let expression = self.expression.recreate(local_variables, interpreter)?;
-        let mut match_locals = local_variables.clone();
-        match_locals.insert(
+        local_variables.add_layer();
+        local_variables.insert(
             self.ident.clone(),
             LocalVariable::Other(self.var_type.clone()),
         );
-        let if_match = self.if_match.recreate(&mut match_locals, interpreter)?;
+        let if_match = self.if_match.recreate(local_variables, interpreter)?;
+        local_variables.remove_layer();
         let else_instruction = self
             .else_instruction
             .recreate(local_variables, interpreter)?;

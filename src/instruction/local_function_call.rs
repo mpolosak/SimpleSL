@@ -3,7 +3,7 @@ use std::rc::Rc;
 use super::{
     check_args, error_wrong_type, exec_instructions,
     function_call::FunctionCall,
-    local_variable::LocalVariableMap,
+    local_variable::LocalVariables,
     recreate_instructions,
     traits::{Exec, Recreate},
     Instruction,
@@ -51,7 +51,7 @@ impl Exec for LocalFunctionCall {
 impl Recreate for LocalFunctionCall {
     fn recreate(
         &self,
-        local_variables: &mut LocalVariableMap,
+        local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
     ) -> Result<Instruction, Error> {
         let instructions = recreate_instructions(&self.args, local_variables, interpreter)?;

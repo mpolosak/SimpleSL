@@ -1,5 +1,5 @@
 use super::{
-    local_variable::LocalVariableMap,
+    local_variable::{LocalVariableMap, LocalVariables},
     recreate_instructions,
     traits::{Exec, Recreate},
     CreateInstruction, Instruction,
@@ -24,7 +24,7 @@ impl CreateInstruction for Function {
     fn create_instruction(
         pair: Pair<Rule>,
         interpreter: &Interpreter,
-        local_variables: &mut LocalVariableMap,
+        local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let params_pair = inner.next().unwrap();
@@ -33,12 +33,11 @@ impl CreateInstruction for Function {
             standard: params,
             catch_rest: None,
         };
-        let mut local_variables = local_variables.clone();
-        local_variables.extend(LocalVariableMap::from(params.clone()));
+        local_variables.push_layer(LocalVariableMap::from(params.clone()));
         let body = inner
-            .map(|arg| Instruction::new(arg, interpreter, &mut local_variables))
+            .map(|arg| Instruction::new(arg, interpreter, local_variables))
             .collect::<Result<Box<_>, _>>()?;
-        if body
+        let result = if body
             .iter()
             .all(|instruction| matches!(instruction, Instruction::Variable(_)))
         {
@@ -47,13 +46,15 @@ impl CreateInstruction for Function {
             ))))
         } else {
             Ok(Self { params, body }.into())
-        }
+        };
+        local_variables.remove_layer();
+        result
     }
 }
 
 impl Exec for Function {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, Error> {
-        let mut fn_local_variables = LocalVariableMap::from(self.params.clone());
+        let mut fn_local_variables = LocalVariables::from(self.params.clone());
         let body = recreate_instructions(&self.body, &mut fn_local_variables, interpreter)?;
         Ok(Variable::Function(Rc::new(LangFunction {
             params: self.params.clone(),
@@ -65,13 +66,12 @@ impl Exec for Function {
 impl Recreate for Function {
     fn recreate(
         &self,
-        local_variables: &mut LocalVariableMap,
+        local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
     ) -> Result<Instruction, Error> {
-        let mut local_variables = local_variables.clone();
-        local_variables.extend(LocalVariableMap::from(self.params.clone()));
-        let body = recreate_instructions(&self.body, &mut local_variables, interpreter)?;
-        if body
+        local_variables.push_layer(self.params.clone().into());
+        let body = recreate_instructions(&self.body, local_variables, interpreter)?;
+        let result = if body
             .iter()
             .all(|instruction| matches!(instruction, Instruction::Variable(_)))
         {
@@ -87,7 +87,9 @@ impl Recreate for Function {
                 body,
             }
             .into())
-        }
+        };
+        local_variables.remove_layer();
+        result
     }
 }
 

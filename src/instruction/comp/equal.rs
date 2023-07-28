@@ -1,5 +1,5 @@
 use crate::instruction::{
-    local_variable::LocalVariableMap, CreateInstruction, Exec, Instruction, Recreate,
+    local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
 use crate::{error::Error, interpreter::Interpreter, parse::Rule, variable::Variable};
 use pest::iterators::Pair;
@@ -14,7 +14,7 @@ impl CreateInstruction for Equal {
     fn create_instruction(
         pair: Pair<Rule>,
         interpreter: &Interpreter,
-        local_variables: &mut LocalVariableMap,
+        local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
@@ -47,7 +47,7 @@ impl Exec for Equal {
 impl Recreate for Equal {
     fn recreate(
         &self,
-        local_variables: &mut LocalVariableMap,
+        local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
     ) -> Result<Instruction, Error> {
         let lhs = self.lhs.recreate(local_variables, interpreter)?;

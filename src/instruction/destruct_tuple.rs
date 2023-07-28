@@ -1,7 +1,7 @@
 use std::{iter::zip, rc::Rc};
 
 use super::{
-    local_variable::{LocalVariable, LocalVariableMap},
+    local_variable::{LocalVariable, LocalVariables},
     tuple::Tuple,
     CreateInstruction, Exec, Instruction, Recreate,
 };
@@ -23,7 +23,7 @@ impl CreateInstruction for DestructTuple {
     fn create_instruction(
         pair: Pair<Rule>,
         interpreter: &Interpreter,
-        local_variables: &mut LocalVariableMap,
+        local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
@@ -45,25 +45,23 @@ impl CreateInstruction for DestructTuple {
 }
 
 impl DestructTuple {
-    fn insert_local_variables(&self, local_variables: &mut LocalVariableMap) {
+    fn insert_local_variables(&self, local_variables: &mut LocalVariables) {
         match &self.instruction {
             Instruction::Variable(Variable::Tuple(elements)) => {
-                local_variables.extend(zip(self.idents.iter(), elements.iter()).map(
-                    |(ident, element)| (ident.clone(), LocalVariable::Variable(element.clone())),
-                ));
+                for (ident, element) in zip(self.idents.iter().cloned(), elements.iter()) {
+                    local_variables.insert(ident, LocalVariable::Variable(element.clone()))
+                }
             }
             Instruction::Tuple(Tuple { elements }) => {
-                local_variables.extend(
-                    zip(self.idents.iter(), elements.iter())
-                        .map(|(ident, element)| (ident.clone(), element.into())),
-                );
+                for (ident, element) in zip(self.idents.iter().cloned(), elements.iter()) {
+                    local_variables.insert(ident, element.into())
+                }
             }
             instruction => {
                 if let Type::Tuple(types) = instruction.get_return_type() {
-                    local_variables.extend(
-                        zip(self.idents.iter(), types.iter())
-                            .map(|(ident, var_type)| (ident.clone(), var_type.clone().into())),
-                    );
+                    for (ident, var_type) in zip(self.idents.iter().cloned(), types.iter()) {
+                        local_variables.insert(ident, var_type.clone().into())
+                    }
                 } else {
                     panic!()
                 }
@@ -86,7 +84,7 @@ impl Exec for DestructTuple {
 impl Recreate for DestructTuple {
     fn recreate(
         &self,
-        local_variables: &mut LocalVariableMap,
+        local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
     ) -> Result<Instruction, Error> {
         let instruction = self.instruction.recreate(local_variables, interpreter)?;

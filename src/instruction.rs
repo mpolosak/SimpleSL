@@ -42,7 +42,7 @@ use {
     function::Function,
     function_call::FunctionCall,
     local_function_call::LocalFunctionCall,
-    local_variable::{LocalVariable, LocalVariableMap},
+    local_variable::{LocalVariable, LocalVariables},
     logic::{And, Not, Or},
     modulo::Modulo,
     multiply::Multiply,
@@ -90,7 +90,7 @@ impl Instruction {
     pub fn new(
         pair: Pair<Rule>,
         interpreter: &Interpreter,
-        local_variables: &mut LocalVariableMap,
+        local_variables: &mut LocalVariables,
     ) -> Result<Self, Error> {
         match pair.as_rule() {
             Rule::line => {
@@ -166,7 +166,7 @@ impl Instruction {
     fn create_function_call(
         pair: Pair<'_, Rule>,
         interpreter: &Interpreter,
-        local_variables: &mut LocalVariableMap,
+        local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let var_name = inner.next().unwrap().as_str();
@@ -227,7 +227,7 @@ impl Exec for Instruction {
 impl Recreate for Instruction {
     fn recreate(
         &self,
-        local_variables: &mut LocalVariableMap,
+        local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
     ) -> Result<Instruction, Error> {
         match self {
@@ -327,7 +327,7 @@ impl From<Variable> for Instruction {
 
 pub fn recreate_instructions(
     instructions: &[Instruction],
-    local_variables: &mut LocalVariableMap,
+    local_variables: &mut LocalVariables,
     interpreter: &Interpreter,
 ) -> Result<Box<[Instruction]>, Error> {
     instructions
