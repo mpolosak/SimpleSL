@@ -43,7 +43,8 @@ match = { "match" ~ expression ~  "{" ~ match_arm* ~ "}" }
   match_other = { "=>" ~ expression ~ "," }
   values = { expression+ }
 at = { ( add | function_call | ident | array | string ) ~ "[" ~ expression ~ "]"  }
-expression = _{ match | set_if_else | set_if | at | if_else | if_stm | exp_in_brackets | comparasion | math_operations | not | bin_not | and | or | bin_and | bin_or | xor | shift | function_call | ident | var | block }
+import = { "import" ~ string }
+expression = _{ import | match | set_if_else | set_if | at | if_else | if_stm | exp_in_brackets | comparasion | math_operations | not | bin_not | and | or | bin_and | bin_or | xor | shift | function_call | ident | var | block }
 expression_list = _{ (expression ~ ("," ~ expression)*)?}
 array = {"{" ~ expression_list ~ "}"}
 string = ${ "\"" ~ inner ~ "\"" }

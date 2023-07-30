@@ -5,7 +5,7 @@ use pest::iterators::Pair;
 pub trait CreateInstruction {
     fn create_instruction(
         pair: Pair<Rule>,
-        variables: &Interpreter,
+        interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error>;
 }

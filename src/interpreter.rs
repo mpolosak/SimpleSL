@@ -26,8 +26,7 @@ impl Interpreter {
         result
     }
 
-    pub fn exec(&mut self, input: &str) -> Result<Variable, Error> {
-        let instructions = self.parse_input(input)?;
+    pub fn exec(&mut self, instructions: &[Instruction]) -> Result<Variable, Error> {
         let mut result = Variable::Void;
         for instruction in instructions.iter() {
             result = instruction.exec(self)?;
@@ -35,20 +34,37 @@ impl Interpreter {
         Ok(result)
     }
 
-    pub fn load_and_exec(&mut self, path: &str) -> Result<Variable, Error> {
+    pub fn parse_and_exec(&mut self, input: &str) -> Result<Variable, Error> {
+        let instructions = self.parse_input(input, &mut LocalVariables::new())?;
+        self.exec(&instructions)
+    }
+
+    pub fn load(
+        &self,
+        path: &str,
+        local_variables: &mut LocalVariables,
+    ) -> Result<Box<[Instruction]>, Error> {
         let file = File::open(path)?;
         let mut buf_reader = BufReader::new(file);
         let mut contents = String::new();
         buf_reader.read_to_string(&mut contents)?;
-        self.exec(&contents)
+        self.parse_input(&contents, local_variables)
     }
 
-    fn parse_input(&self, input: &str) -> Result<Box<[Instruction]>, Error> {
+    pub fn load_and_exec(&mut self, path: &str) -> Result<Variable, Error> {
+        let instructions = self.load(path, &mut LocalVariables::new())?;
+        self.exec(&instructions)
+    }
+
+    fn parse_input(
+        &self,
+        input: &str,
+        local_variables: &mut LocalVariables,
+    ) -> Result<Box<[Instruction]>, Error> {
         let parse = SimpleSLParser::parse(Rule::input, input)?;
-        let mut local_variables = LocalVariables::new();
         let instructions = parse
             .take_while(|pair| pair.as_rule() != Rule::EOI)
-            .map(|pair| Instruction::new(pair, self, &mut local_variables))
+            .map(|pair| Instruction::new(pair, self, local_variables))
             .collect::<Result<_, _>>()?;
         Ok(instructions)
     }

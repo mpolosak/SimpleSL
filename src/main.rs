@@ -21,7 +21,7 @@ fn run_shell() {
                 rl.add_history_entry(&line);
                 line = line.replace('\n', "");
                 if !line.is_empty() {
-                    if let Err(error) = interpreter.exec(&line) {
+                    if let Err(error) = interpreter.parse_and_exec(&line) {
                         eprintln!("{error}");
                     }
                 }
@@ -37,7 +37,7 @@ fn run_shell() {
 
 fn run_from_file(path: &str) {
     let mut interpreter = Interpreter::new();
-    if let Err(error) = interpreter.load_and_exec(path) {
+    if let Err(error) = { interpreter.load_and_exec(path) } {
         println!("{error}")
     }
 }

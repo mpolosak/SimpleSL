@@ -10,6 +10,7 @@ mod destruct_tuple;
 mod divide;
 mod function;
 mod function_call;
+mod import;
 mod local_function_call;
 pub mod local_variable;
 mod logic;
@@ -41,6 +42,7 @@ use {
     divide::Divide,
     function::Function,
     function_call::FunctionCall,
+    import::Import,
     local_function_call::LocalFunctionCall,
     local_variable::{LocalVariable, LocalVariables},
     logic::{And, Not, Or},
@@ -84,6 +86,7 @@ pub enum Instruction {
     At(Box<At>),
     SetIfElse(Box<SetIfElse>),
     Match(Box<Match>),
+    Import(Import),
 }
 
 impl Instruction {
@@ -160,6 +163,7 @@ impl Instruction {
                 SetIfElse::create_instruction(pair, interpreter, local_variables)
             }
             Rule::r#match => Match::create_instruction(pair, interpreter, local_variables),
+            Rule::import => Import::create_instruction(pair, interpreter, local_variables),
             _ => panic!(),
         }
     }
@@ -220,6 +224,7 @@ impl Exec for Instruction {
             Self::At(at) => at.exec(interpreter),
             Self::SetIfElse(set_if) => set_if.exec(interpreter),
             Self::Match(match_stm) => match_stm.exec(interpreter),
+            Self::Import(import) => import.exec(interpreter),
         }
     }
 }
@@ -276,7 +281,8 @@ impl Recreate for Instruction {
             Self::At(at) => at.recreate(local_variables, interpreter),
             Self::Match(match_stm) => match_stm.recreate(local_variables, interpreter),
             Self::Variable(variable) => Ok(Self::Variable(variable.clone())),
-            Self::SetIfElse(set_if_else) => set_if_else.recreate(local_variables, interpreter), // _ => Ok(self),
+            Self::SetIfElse(set_if_else) => set_if_else.recreate(local_variables, interpreter),
+            Self::Import(import) => import.recreate(local_variables, interpreter),
         }
     }
 }
@@ -302,6 +308,7 @@ impl GetReturnType for Instruction {
             Self::At(at) => at.get_return_type(),
             Self::SetIfElse(set_if) => set_if.get_return_type(),
             Self::Match(match_stm) => match_stm.get_return_type(),
+            Self::Import(import) => import.get_return_type(),
             Self::Not(_)
             | Self::BinNot(_)
             | Self::Equal(..)
