@@ -1,7 +1,7 @@
 use super::{Function, Params};
 use crate::{
     error::Error,
-    instruction::{Exec, Instruction},
+    instruction::Instruction,
     interpreter::Interpreter,
     variable::{GetReturnType, Type, Variable},
 };
@@ -12,11 +12,7 @@ pub struct LangFunction {
 
 impl Function for LangFunction {
     fn exec_intern(&self, _name: &str, interpreter: &mut Interpreter) -> Result<Variable, Error> {
-        let mut result = Variable::Void;
-        for instruction in self.body.iter() {
-            result = instruction.exec(interpreter)?;
-        }
-        Ok(result)
+        interpreter.exec(&self.body)
     }
     fn get_params(&self) -> &Params {
         &self.params
