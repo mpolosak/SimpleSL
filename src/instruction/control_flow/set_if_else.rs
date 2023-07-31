@@ -61,11 +61,9 @@ impl Exec for SetIfElse {
         let expression_result = self.expression.exec(interpreter)?;
         let result_type = expression_result.get_type();
         if result_type.matches(&self.var_type) {
-            interpreter.add_layer();
+            let mut interpreter = interpreter.create_layer();
             interpreter.insert(self.ident.clone(), expression_result);
-            let result = self.if_match.exec(interpreter);
-            interpreter.remove_layer();
-            result
+            self.if_match.exec(&mut interpreter)
         } else {
             self.else_instruction.exec(interpreter)
         }

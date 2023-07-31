@@ -20,7 +20,7 @@ pub trait Function: GetReturnType {
         interpreter: &mut Interpreter,
         args: &[Variable],
     ) -> Result<Variable, Error> {
-        interpreter.add_layer();
+        let mut interpreter = interpreter.create_layer();
         let params = self.get_params();
         if let Some(param_name) = &params.catch_rest {
             let from = params.standard.len();
@@ -31,9 +31,7 @@ pub trait Function: GetReturnType {
         for (arg, Param { var_type: _, name }) in zip(args, params.standard.iter()) {
             interpreter.insert(name.clone(), arg.clone());
         }
-        let result = self.exec_intern(name, interpreter);
-        interpreter.remove_layer();
-        result
+        self.exec_intern(name, &mut interpreter)
     }
     fn check_args_and_exec(
         &self,
@@ -41,7 +39,7 @@ pub trait Function: GetReturnType {
         interpreter: &mut Interpreter,
         args: &[Variable],
     ) -> Result<Variable, Error> {
-        interpreter.add_layer();
+        let mut interpreter = interpreter.create_layer();
         let params = self.get_params();
         if let Some(param_name) = &params.catch_rest {
             let from = params.standard.len();
@@ -61,9 +59,7 @@ pub trait Function: GetReturnType {
                 return Err(Error::WrongType(name.as_ref().to_owned(), var_type.clone()));
             }
         }
-        let result = self.exec_intern(name, interpreter);
-        interpreter.remove_layer();
-        result
+        self.exec_intern(name, &mut interpreter)
     }
     fn exec_intern(&self, name: &str, interpreter: &mut Interpreter) -> Result<Variable, Error>;
     fn get_params(&self) -> &Params;

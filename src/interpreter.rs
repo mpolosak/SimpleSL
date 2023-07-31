@@ -10,17 +10,19 @@ use std::{
     rc::Rc,
 };
 
-pub struct Interpreter {
-    variables: Vec<VariableMap>,
+pub struct Interpreter<'a> {
+    variables: VariableMap,
+    lower_layer: Option<&'a Self>,
 }
 
 type VariableMap = HashMap<Rc<str>, Variable>;
 
-impl Interpreter {
-    pub fn new() -> Interpreter {
+impl<'a> Interpreter<'a> {
+    pub fn new() -> Self {
         let variables = VariableMap::new();
-        let mut result = Interpreter {
-            variables: vec![variables],
+        let mut result = Self {
+            variables,
+            lower_layer: None,
         };
         add_std_lib(&mut result);
         result
@@ -69,33 +71,30 @@ impl Interpreter {
         Ok(instructions)
     }
     pub fn get_variable(&self, name: &str) -> Result<Variable, Error> {
-        for layer in self.variables.iter().rev() {
-            if let Some(variable) = layer.get(name) {
-                return Ok(variable.clone());
-            }
+        if let Some(variable) = self.variables.get(name) {
+            Ok(variable.clone())
+        } else if let Some(layer) = self.lower_layer {
+            layer.get_variable(name)
+        } else {
+            Err(Error::VariableDoesntExist(name.to_owned()))
         }
-        Err(Error::VariableDoesntExist(name.to_owned()))
     }
     pub fn insert(&mut self, name: Rc<str>, variable: Variable) {
-        self.variables.last_mut().unwrap().insert(name, variable);
+        self.variables.insert(name, variable);
     }
     pub fn insert_native_function(&mut self, name: Rc<str>, function: NativeFunction) {
         self.variables
-            .last_mut()
-            .unwrap()
             .insert(name, Variable::Function(Rc::new(function)));
     }
-    pub fn add_layer(&mut self) {
-        self.variables.push(VariableMap::new())
-    }
-    pub fn remove_layer(&mut self) {
-        if self.variables.len() > 1 {
-            self.variables.pop();
+    pub fn create_layer(&'a self) -> Self {
+        Self {
+            variables: VariableMap::new(),
+            lower_layer: Some(self),
         }
     }
 }
 
-impl Default for Interpreter {
+impl Default for Interpreter<'_> {
     fn default() -> Self {
         Self::new()
     }

@@ -45,10 +45,8 @@ impl CreateInstruction for Block {
 
 impl Exec for Block {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, Error> {
-        interpreter.add_layer();
-        let result = interpreter.exec(&self.instructions);
-        interpreter.remove_layer();
-        result
+        let mut interpreter = interpreter.create_layer();
+        interpreter.exec(&self.instructions)
     }
 }
 
