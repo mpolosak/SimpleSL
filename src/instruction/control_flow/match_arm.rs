@@ -34,16 +34,14 @@ impl MatchArm {
                 let ident: Rc<str> = inner.next().unwrap().as_str().into();
                 let var_type = Type::from(inner.next().unwrap());
                 let pair = inner.next().unwrap();
-                local_variables.add_layer();
+                let mut local_variables = local_variables.create_layer();
                 local_variables.insert(ident.clone(), LocalVariable::Other(var_type.clone()));
-                let instruction = Instruction::new(pair, interpreter, local_variables)?;
-                let result = Ok(Self::Type {
+                let instruction = Instruction::new(pair, interpreter, &mut local_variables)?;
+                Ok(Self::Type {
                     ident,
                     var_type,
                     instruction,
-                });
-                local_variables.remove_layer();
-                result
+                })
             }
             Rule::match_value => {
                 let mut inner = pair.into_inner();
@@ -120,16 +118,14 @@ impl MatchArm {
                 var_type,
                 instruction,
             } => {
-                local_variables.add_layer();
+                let mut local_variables = local_variables.create_layer();
                 local_variables.insert(ident.clone(), LocalVariable::Other(var_type.clone()));
-                let instruction = instruction.recreate(local_variables, interpreter)?;
-                let result = Self::Type {
+                let instruction = instruction.recreate(&mut local_variables, interpreter)?;
+                Self::Type {
                     ident,
                     var_type,
                     instruction,
-                };
-                local_variables.remove_layer();
-                result
+                }
             }
             Self::Value(values, instruction) => {
                 let values = recreate_instructions(&values, local_variables, interpreter)?;

@@ -35,10 +35,11 @@ impl CreateInstruction for SetIfElse {
         let pair = inner.next().unwrap();
         let expression = Instruction::new(pair, interpreter, local_variables)?;
         let pair = inner.next().unwrap();
-        local_variables.add_layer();
-        local_variables.insert(ident.clone(), LocalVariable::Other(var_type.clone()));
-        let if_match = Instruction::new(pair, interpreter, local_variables)?;
-        local_variables.remove_layer();
+        let if_match = {
+            let mut local_variables = local_variables.create_layer();
+            local_variables.insert(ident.clone(), LocalVariable::Other(var_type.clone()));
+            Instruction::new(pair, interpreter, &mut local_variables)?
+        };
         let else_instruction = if rule == Rule::set_if_else {
             let pair = inner.next().unwrap();
             Instruction::new(pair, interpreter, local_variables)?
@@ -77,13 +78,14 @@ impl Recreate for SetIfElse {
         interpreter: &Interpreter,
     ) -> Result<Instruction, Error> {
         let expression = self.expression.recreate(local_variables, interpreter)?;
-        local_variables.add_layer();
-        local_variables.insert(
-            self.ident.clone(),
-            LocalVariable::Other(self.var_type.clone()),
-        );
-        let if_match = self.if_match.recreate(local_variables, interpreter)?;
-        local_variables.remove_layer();
+        let if_match = {
+            let mut local_variables = local_variables.create_layer();
+            local_variables.insert(
+                self.ident.clone(),
+                LocalVariable::Other(self.var_type.clone()),
+            );
+            self.if_match.recreate(&mut local_variables, interpreter)?
+        };
         let else_instruction = self
             .else_instruction
             .recreate(local_variables, interpreter)?;

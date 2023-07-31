@@ -21,12 +21,12 @@ impl CreateInstruction for Block {
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error> {
-        local_variables.add_layer();
+        let mut local_variables = local_variables.create_layer();
         let instructions = pair
             .into_inner()
-            .map(|pair| Instruction::new(pair, interpreter, local_variables))
+            .map(|pair| Instruction::new(pair, interpreter, &mut local_variables))
             .collect::<Result<Box<[Instruction]>, Error>>()?;
-        let result = if instructions
+        if instructions
             .iter()
             .all(|instruction| matches!(instruction, Instruction::Variable(_)))
         {
@@ -37,9 +37,7 @@ impl CreateInstruction for Block {
             }
         } else {
             Ok(Self { instructions }.into())
-        };
-        local_variables.remove_layer();
-        result
+        }
     }
 }
 
@@ -56,11 +54,10 @@ impl Recreate for Block {
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
     ) -> Result<Instruction, Error> {
-        local_variables.add_layer();
-        let instructions = recreate_instructions(&self.instructions, local_variables, interpreter)?;
-        let result = Ok(Self { instructions }.into());
-        local_variables.remove_layer();
-        result
+        let mut local_variables = local_variables.create_layer();
+        let instructions =
+            recreate_instructions(&self.instructions, &mut local_variables, interpreter)?;
+        Ok(Self { instructions }.into())
     }
 }
 

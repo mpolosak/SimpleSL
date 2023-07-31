@@ -33,11 +33,12 @@ impl CreateInstruction for Function {
             standard: params,
             catch_rest: None,
         };
-        local_variables.push_layer(LocalVariableMap::from(params.clone()));
+        let mut local_variables =
+            local_variables.layer_from_map(LocalVariableMap::from(params.clone()));
         let body = inner
-            .map(|arg| Instruction::new(arg, interpreter, local_variables))
+            .map(|arg| Instruction::new(arg, interpreter, &mut local_variables))
             .collect::<Result<Box<_>, _>>()?;
-        let result = if body
+        if body
             .iter()
             .all(|instruction| matches!(instruction, Instruction::Variable(_)))
         {
@@ -46,9 +47,7 @@ impl CreateInstruction for Function {
             ))))
         } else {
             Ok(Self { params, body }.into())
-        };
-        local_variables.remove_layer();
-        result
+        }
     }
 }
 
@@ -69,9 +68,9 @@ impl Recreate for Function {
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
     ) -> Result<Instruction, Error> {
-        local_variables.push_layer(self.params.clone().into());
-        let body = recreate_instructions(&self.body, local_variables, interpreter)?;
-        let result = if body
+        let mut local_variables = local_variables.layer_from_map(self.params.clone().into());
+        let body = recreate_instructions(&self.body, &mut local_variables, interpreter)?;
+        if body
             .iter()
             .all(|instruction| matches!(instruction, Instruction::Variable(_)))
         {
@@ -87,9 +86,7 @@ impl Recreate for Function {
                 body,
             }
             .into())
-        };
-        local_variables.remove_layer();
-        result
+        }
     }
 }
 

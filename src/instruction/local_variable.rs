@@ -6,61 +6,73 @@ use crate::{
 use std::{collections::HashMap, rc::Rc};
 
 pub type LocalVariableMap = HashMap<Rc<str>, LocalVariable>;
-pub struct LocalVariables {
-    variables: Vec<LocalVariableMap>,
+pub struct LocalVariables<'a> {
+    variables: LocalVariableMap,
+    lower_layer: Option<&'a Self>,
 }
 
-impl LocalVariables {
+impl<'a> LocalVariables<'a> {
     pub fn new() -> Self {
         Self {
-            variables: vec![LocalVariableMap::new()],
+            variables: LocalVariableMap::new(),
+            lower_layer: None,
         }
     }
     pub fn insert(&mut self, name: Rc<str>, variable: LocalVariable) {
-        self.variables.last_mut().unwrap().insert(name, variable);
+        self.variables.insert(name, variable);
     }
     pub fn get(&self, name: &str) -> Option<&LocalVariable> {
-        for layer in self.variables.iter().rev() {
-            if let Some(variable) = layer.get(name) {
-                return Some(variable);
-            }
+        if let Some(variable) = self.variables.get(name) {
+            Some(variable)
+        } else if let Some(layer) = self.lower_layer {
+            layer.get(name)
+        } else {
+            None
         }
-        None
     }
     pub fn contains_key(&self, name: &Rc<str>) -> bool {
-        self.variables.last().unwrap().contains_key(name)
-    }
-    pub fn add_layer(&mut self) {
-        self.variables.push(LocalVariableMap::new())
-    }
-    pub fn remove_layer(&mut self) {
-        if self.variables.len() > 1 {
-            self.variables.pop();
+        if self.variables.contains_key(name) {
+            true
+        } else if let Some(layer) = self.lower_layer {
+            layer.contains_key(name)
+        } else {
+            false
         }
     }
-    pub fn push_layer(&mut self, layer: LocalVariableMap) {
-        self.variables.push(layer)
+    pub fn create_layer(&'a self) -> Self {
+        Self {
+            variables: LocalVariableMap::new(),
+            lower_layer: Some(self),
+        }
+    }
+    pub fn layer_from_map(&'a self, layer: LocalVariableMap) -> Self {
+        Self {
+            variables: layer,
+            lower_layer: Some(self),
+        }
     }
 }
 
-impl Default for LocalVariables {
+impl Default for LocalVariables<'_> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl From<LocalVariableMap> for LocalVariables {
+impl From<LocalVariableMap> for LocalVariables<'_> {
     fn from(value: LocalVariableMap) -> Self {
         Self {
-            variables: vec![value],
+            variables: value,
+            lower_layer: None,
         }
     }
 }
 
-impl From<Params> for LocalVariables {
+impl From<Params> for LocalVariables<'_> {
     fn from(value: Params) -> Self {
         Self {
-            variables: vec![value.into()],
+            variables: value.into(),
+            lower_layer: None,
         }
     }
 }
