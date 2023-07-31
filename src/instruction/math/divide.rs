@@ -1,4 +1,6 @@
-use super::{local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate};
+use crate::instruction::{
+    local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
+};
 use crate::{
     error::Error,
     interpreter::Interpreter,

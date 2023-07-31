@@ -1,4 +1,3 @@
-mod add;
 mod array;
 mod at;
 mod bin;
@@ -7,17 +6,14 @@ mod check_args;
 mod comp;
 mod control_flow;
 mod destruct_tuple;
-mod divide;
 mod function;
 mod function_call;
 mod import;
 mod local_function_call;
 pub mod local_variable;
 mod logic;
-mod modulo;
-mod multiply;
+mod math;
 mod set;
-mod subtract;
 mod traits;
 mod tuple;
 use crate::{
@@ -30,7 +26,6 @@ use pest::iterators::Pair;
 use std::rc::Rc;
 pub use traits::{CreateInstruction, Exec, Recreate};
 use {
-    add::Add,
     array::Array,
     at::At,
     bin::{BinAnd, BinNot, BinOr, LShift, RShift, Xor},
@@ -39,17 +34,14 @@ use {
     comp::{Equal, Greater, GreaterOrEqual},
     control_flow::{IfElse, Match, SetIfElse},
     destruct_tuple::DestructTuple,
-    divide::Divide,
     function::Function,
     function_call::FunctionCall,
     import::Import,
     local_function_call::LocalFunctionCall,
     local_variable::{LocalVariable, LocalVariables},
     logic::{And, Not, Or},
-    modulo::Modulo,
-    multiply::Multiply,
+    math::{Add, Divide, Modulo, Multiply, Pow, Subtract},
     set::Set,
-    subtract::Subtract,
     tuple::Tuple,
 };
 
@@ -71,6 +63,7 @@ pub enum Instruction {
     GreaterOrEqual(Box<GreaterOrEqual>),
     And(Box<And>),
     Or(Box<Or>),
+    Pow(Box<Pow>),
     Multiply(Box<Multiply>),
     Divide(Box<Divide>),
     Add(Box<Add>),
@@ -121,6 +114,7 @@ impl Instruction {
             Rule::greater_equal | Rule::lower_equal => {
                 GreaterOrEqual::create_instruction(pair, interpreter, local_variables)
             }
+            Rule::pow => Pow::create_instruction(pair, interpreter, local_variables),
             Rule::and => And::create_instruction(pair, interpreter, local_variables),
             Rule::or => Or::create_instruction(pair, interpreter, local_variables),
             Rule::multiply => Multiply::create_instruction(pair, interpreter, local_variables),
@@ -209,6 +203,7 @@ impl Exec for Instruction {
             Self::GreaterOrEqual(greater_or_equal) => greater_or_equal.exec(interpreter),
             Self::And(and) => and.exec(interpreter),
             Self::Or(or) => or.exec(interpreter),
+            Self::Pow(pow) => pow.exec(interpreter),
             Self::Multiply(multiply) => multiply.exec(interpreter),
             Self::Divide(divide) => divide.exec(interpreter),
             Self::Add(add) => add.exec(interpreter),
@@ -266,6 +261,7 @@ impl Recreate for Instruction {
             }
             Self::And(and) => and.recreate(local_variables, interpreter),
             Self::Or(or) => or.recreate(local_variables, interpreter),
+            Self::Pow(pow) => pow.recreate(local_variables, interpreter),
             Self::Multiply(multiply) => multiply.recreate(local_variables, interpreter),
             Self::Divide(divide) => divide.recreate(local_variables, interpreter),
             Self::Add(add) => add.recreate(local_variables, interpreter),
@@ -299,6 +295,7 @@ impl GetReturnType for Instruction {
             Self::Tuple(tuple) => tuple.get_return_type(),
             Self::Set(set) => set.get_return_type(),
             Self::DestructTuple(destruct_tuple) => destruct_tuple.get_return_type(),
+            Self::Pow(pow) => pow.get_return_type(),
             Self::Add(add) => add.get_return_type(),
             Self::Subtract(subtract) => subtract.get_return_type(),
             Self::Multiply(multiply) => multiply.get_return_type(),

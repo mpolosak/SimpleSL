@@ -24,13 +24,14 @@ greater_equal = { math_arg ~ ">=" ~ math_arg }
 lower = { math_arg ~ "<" ~ math_arg }
 lower_equal = { math_arg ~ "<=" ~ math_arg }
 math_arg = _{ exp_in_brackets | float | logic_arg }
+pow = { math_arg ~ "**" ~ math_arg }
 multiply = { math_arg ~ "*" ~ math_arg }
 divide = { math_arg ~ "/" ~ math_arg }
 add = { ( math_arg | string ) ~ "+" ~ ( math_arg | string ) }
 subtract = { math_arg ~ "-" ~ math_arg }
 modulo = { logic_arg ~ "%" ~ logic_arg }
 comparasion = _{ equal | not_equal | greater | greater_equal | lower | lower_equal }
-math_operations = _{ modulo | multiply | divide | add | subtract }
+math_operations = _{ pow | modulo | multiply | divide | add | subtract }
 block = { "{" ~ line* ~ "}" }
 if_else = { "if" ~ expression ~ expression ~ "else" ~ expression }
 if_stm = { "if" ~ expression ~ expression }

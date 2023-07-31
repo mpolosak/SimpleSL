@@ -1,4 +1,6 @@
-use super::{local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate};
+use crate::instruction::{
+    local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
+};
 use crate::{
     error::Error,
     interpreter::Interpreter,
@@ -6,15 +8,14 @@ use crate::{
     variable::{GetReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
-use std::result::Result;
 
 #[derive(Clone, Debug)]
-pub struct Multiply {
+pub struct Add {
     lhs: Instruction,
     rhs: Instruction,
 }
 
-impl CreateInstruction for Multiply {
+impl CreateInstruction for Add {
     fn create_instruction(
         pair: Pair<Rule>,
         interpreter: &Interpreter,
@@ -26,43 +27,50 @@ impl CreateInstruction for Multiply {
         let pair = inner.next().unwrap();
         let rhs = Instruction::new(pair, interpreter, local_variables)?;
         match (lhs.get_return_type(), rhs.get_return_type()) {
-            (Type::Int, Type::Int) | (Type::Float, Type::Float) => {
+            (Type::Int, Type::Int) | (Type::Float, Type::Float) | (Type::String, Type::String) => {
                 Ok(Self::create_from_instructions(lhs, rhs))
             }
-            _ => Err(Error::OperandsMustBeBothIntOrBothFloat("*")),
+            (type1, type2) => Err(Error::CannotAdd(type1, type2)),
         }
     }
 }
 
-impl Multiply {
+impl Add {
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         match (lhs, rhs) {
             (
                 Instruction::Variable(Variable::Int(value1)),
                 Instruction::Variable(Variable::Int(value2)),
-            ) => Instruction::Variable((value1 * value2).into()),
+            ) => Instruction::Variable((value1 + value2).into()),
             (
                 Instruction::Variable(Variable::Float(value1)),
                 Instruction::Variable(Variable::Float(value2)),
-            ) => Instruction::Variable((value1 * value2).into()),
-            (lhs, rhs) => Self { lhs, rhs }.into(),
+            ) => Instruction::Variable((value1 + value2).into()),
+            (
+                Instruction::Variable(Variable::String(value1)),
+                Instruction::Variable(Variable::String(value2)),
+            ) => Instruction::Variable(format!("{value1}{value2}").into()),
+            (rhs, lhs) => Self { rhs, lhs }.into(),
         }
     }
 }
 
-impl Exec for Multiply {
+impl Exec for Add {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, Error> {
         let lhs = self.lhs.exec(interpreter)?;
         let rhs = self.rhs.exec(interpreter)?;
         match (lhs, rhs) {
-            (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 * value2).into()),
-            (Variable::Float(value1), Variable::Float(value2)) => Ok((value1 * value2).into()),
+            (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 + value2).into()),
+            (Variable::Float(value1), Variable::Float(value2)) => Ok((value1 + value2).into()),
+            (Variable::String(value1), Variable::String(value2)) => {
+                Ok(format!("{value1}{value2}").into())
+            }
             _ => panic!(),
         }
     }
 }
 
-impl Recreate for Multiply {
+impl Recreate for Add {
     fn recreate(
         &self,
         local_variables: &mut LocalVariables,
@@ -74,14 +82,14 @@ impl Recreate for Multiply {
     }
 }
 
-impl GetReturnType for Multiply {
+impl GetReturnType for Add {
     fn get_return_type(&self) -> Type {
         self.lhs.get_return_type()
     }
 }
 
-impl From<Multiply> for Instruction {
-    fn from(value: Multiply) -> Self {
-        Self::Multiply(value.into())
+impl From<Add> for Instruction {
+    fn from(value: Add) -> Self {
+        Self::Add(value.into())
     }
 }
