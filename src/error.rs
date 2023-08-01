@@ -21,7 +21,7 @@ pub enum Error {
     MatchNotCovered,
     IO(std::io::Error),
     Parsing(Box<pest::error::Error<Rule>>),
-    Other(&'static str),
+    ArgumentDoesntContainType,
 }
 
 impl std::error::Error for Error {}
@@ -79,7 +79,7 @@ impl fmt::Display for Error {
             }
             Self::IO(error) => write!(f, "{error}"),
             Self::Parsing(error) => write!(f, "{error}"),
-            Self::Other(value) => write!(f, "{value}"),
+            Self::ArgumentDoesntContainType => write!(f, "Argument doesn't contain type"),
         }
     }
 }

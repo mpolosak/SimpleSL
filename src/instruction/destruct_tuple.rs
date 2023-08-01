@@ -39,7 +39,10 @@ impl CreateInstruction for DestructTuple {
                 result.insert_local_variables(local_variables);
                 Ok(result.into())
             }
-            _ => Err(Error::Other("er")),
+            _ => Err(Error::WrongType(
+                "instruction".into(),
+                Type::Tuple(std::iter::repeat(Type::Any).take(idents.len()).collect()),
+            )),
         }
     }
 }
