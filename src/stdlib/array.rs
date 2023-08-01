@@ -11,7 +11,7 @@ pub fn add_functions(interpreter: &mut Interpreter) {
     #[export_function]
     fn new_array(length: i64, value: Variable) -> Result<Rc<[Variable]>, Error> {
         if length < 0 {
-            return Err(Error::CannotBeNegative(String::from("length")));
+            return Err(Error::CannotBeNegative("length"));
         }
         let array = (0..length).map(|_| value.clone()).collect();
         Ok(array)
@@ -82,7 +82,7 @@ pub fn add_functions(interpreter: &mut Interpreter) {
         n: i64,
     ) -> Result<Rc<[Variable]>, Error> {
         if n < 0 {
-            return Err(Error::CannotBeNegative(String::from("n")));
+            return Err(Error::CannotBeNegative("n"));
         }
         let n = n as usize;
         if array.len() > n {

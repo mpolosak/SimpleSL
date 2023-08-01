@@ -10,13 +10,13 @@ pub fn check_args(var_name: &str, params: &Params, args: &[Instruction]) -> Resu
     match params.catch_rest {
         Some(_) if args.len() < params.standard.len() => {
             return Err(Error::WrongNumberOfArguments(
-                String::from(var_name),
+                var_name.into(),
                 params.standard.len(),
             ));
         }
         None if args.len() != params.standard.len() => {
             return Err(Error::WrongNumberOfArguments(
-                String::from(var_name),
+                var_name.into(),
                 params.standard.len(),
             ));
         }
@@ -25,7 +25,7 @@ pub fn check_args(var_name: &str, params: &Params, args: &[Instruction]) -> Resu
 
     for (arg, Param { name, var_type }) in zip(args, params.standard.iter()) {
         if !arg.get_return_type().matches(var_type) {
-            return Err(Error::WrongType(name.as_ref().to_owned(), var_type.clone()));
+            return Err(Error::WrongType(name.clone(), var_type.clone()));
         }
     }
     Ok(())

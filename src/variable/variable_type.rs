@@ -85,7 +85,7 @@ impl FromStr for Type {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let Some(pair) = SimpleSLParser::parse(Rule::r#type, s)?.next() else {
-            return Err(Error::Other("Argument doesn't contain type name".to_owned()))
+            return Err(Error::Other("Argument doesn't contain type name"))
         };
         Ok(Self::from(pair))
     }

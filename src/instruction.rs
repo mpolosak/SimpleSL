@@ -178,7 +178,7 @@ impl Instruction {
             Some(LocalVariable::Function(params, return_type, ..)) => {
                 Ok(LocalFunctionCall::new(var_name, params, args, return_type.clone())?.into())
             }
-            Some(_) => Err(error_wrong_type(&args, var_name)),
+            Some(_) => Err(error_wrong_type(&args, var_name.into())),
             None => Ok(FunctionCall::new(var_name, interpreter, args)?.into()),
         }
     }
@@ -350,10 +350,10 @@ pub fn exec_instructions(
         .collect::<Result<Rc<_>, _>>()
 }
 
-fn error_wrong_type(args: &[Instruction], var_name: &str) -> Error {
+fn error_wrong_type(args: &[Instruction], var_name: Rc<str>) -> Error {
     let params = args.iter().map(Instruction::get_return_type).collect();
     Error::WrongType(
-        var_name.to_owned(),
+        var_name,
         FunctionType {
             return_type: Type::Any,
             params,

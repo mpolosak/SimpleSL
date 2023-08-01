@@ -76,7 +76,7 @@ impl<'a> Interpreter<'a> {
         } else if let Some(layer) = self.lower_layer {
             layer.get_variable(name)
         } else {
-            Err(Error::VariableDoesntExist(name.to_owned()))
+            Err(Error::VariableDoesntExist(name.into()))
         }
     }
     pub fn insert(&mut self, name: Rc<str>, variable: Variable) {

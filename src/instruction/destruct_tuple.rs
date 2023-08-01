@@ -39,7 +39,7 @@ impl CreateInstruction for DestructTuple {
                 result.insert_local_variables(local_variables);
                 Ok(result.into())
             }
-            _ => Err(Error::Other("er".into())),
+            _ => Err(Error::Other("er")),
         }
     }
 }

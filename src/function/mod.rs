@@ -47,7 +47,7 @@ pub trait Function: GetReturnType {
             interpreter.insert(param_name.clone(), Variable::from(rest));
         } else if args.len() != params.standard.len() {
             return Err(Error::WrongNumberOfArguments(
-                String::from(name),
+                name.into(),
                 params.standard.len(),
             ));
         }
@@ -56,7 +56,7 @@ pub trait Function: GetReturnType {
             if arg.get_type().matches(var_type) {
                 interpreter.insert(name.clone(), arg.clone());
             } else {
-                return Err(Error::WrongType(name.as_ref().to_owned(), var_type.clone()));
+                return Err(Error::WrongType(name.clone(), var_type.clone()));
             }
         }
         self.exec_intern(name, &mut interpreter)

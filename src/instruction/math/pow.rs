@@ -39,7 +39,7 @@ impl Pow {
     fn create_from_instructions(base: Instruction, exp: Instruction) -> Result<Instruction, Error> {
         match (base, exp) {
             (_, Instruction::Variable(Variable::Int(exp))) if exp < 0 => {
-                Err(Error::CannotBeNegative("exponent".into()))
+                Err(Error::CannotBeNegative("exponent"))
             }
             (
                 Instruction::Variable(Variable::Int(base)),
@@ -59,7 +59,7 @@ impl Exec for Pow {
         let base = self.base.exec(interpreter)?;
         let exp = self.exp.exec(interpreter)?;
         match (base, exp) {
-            (_, Variable::Int(exp)) if exp < 0 => Err(Error::CannotBeNegative("exponent".into())),
+            (_, Variable::Int(exp)) if exp < 0 => Err(Error::CannotBeNegative("exponent")),
             (Variable::Int(base), Variable::Int(exp)) => Ok((base.pow(exp as u32)).into()),
             (Variable::Float(base), Variable::Float(exp)) => Ok((base.powf(exp)).into()),
             _ => panic!(),

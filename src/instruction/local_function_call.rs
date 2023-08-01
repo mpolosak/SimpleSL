@@ -42,7 +42,7 @@ impl Exec for LocalFunctionCall {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, Error> {
         let args = exec_instructions(&self.args, interpreter)?;
         let Variable::Function(function) = interpreter.get_variable(&self.ident).unwrap() else {
-            return Err(error_wrong_type(&self.args, &self.ident));
+            return Err(error_wrong_type(&self.args, self.ident.clone()));
         };
         function.exec(&self.ident, interpreter, &args)
     }

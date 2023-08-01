@@ -27,7 +27,7 @@ impl FunctionCall {
         args: Box<[Instruction]>,
     ) -> Result<Self, Error> {
         let Variable::Function(function) = interpreter.get_variable(var_name)? else {
-            return Err(error_wrong_type(&args, var_name));
+            return Err(error_wrong_type(&args, var_name.into()));
         };
         let params = function.get_params();
         check_args(var_name, params, &args)?;

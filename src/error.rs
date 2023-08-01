@@ -1,18 +1,18 @@
 use crate::{parse::Rule, variable::Type};
-use std::fmt;
+use std::{fmt, rc::Rc};
 
 #[derive(Debug)]
 pub enum Error {
-    VariableDoesntExist(String),
-    WrongType(String, Type),
+    VariableDoesntExist(Box<str>),
+    WrongType(Rc<str>, Type),
     OperandsMustBeBothIntOrBothFloat(&'static str),
     BothOperandsMustBeInt(&'static str),
     OperandMustBeInt(&'static str),
-    WrongNumberOfArguments(String, usize),
+    WrongNumberOfArguments(Box<str>, usize),
     IndexToBig,
     CannotAdd(Type, Type),
-    CannotBeNegative(String),
-    CannotBeParsed(String),
+    CannotBeNegative(&'static str),
+    CannotBeParsed(Box<str>),
     CannotIndexInto(Type),
     TooManyVariables,
     ZeroDivision,
@@ -21,7 +21,7 @@ pub enum Error {
     MatchNotCovered,
     IO(std::io::Error),
     Parsing(Box<pest::error::Error<Rule>>),
-    Other(String),
+    Other(&'static str),
 }
 
 impl std::error::Error for Error {}

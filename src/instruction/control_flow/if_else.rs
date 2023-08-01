@@ -27,7 +27,7 @@ impl CreateInstruction for IfElse {
         let condition_pair = inner.next().unwrap();
         let condition = Instruction::new(condition_pair, interpreter, local_variables)?;
         if condition.get_return_type() != Type::Int {
-            return Err(Error::WrongType("condition".to_owned(), Type::Int));
+            return Err(Error::WrongType("condition".into(), Type::Int));
         }
         let true_pair = inner.next().unwrap();
         match (condition, rule) {

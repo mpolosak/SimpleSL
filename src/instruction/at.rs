@@ -46,7 +46,7 @@ impl At {
                 Ok(at(variable, index)?.into())
             }
             (_, Instruction::Variable(Variable::Int(value))) if value < 0 => {
-                Err(Error::CannotBeNegative("index".into()))
+                Err(Error::CannotBeNegative("index"))
             }
             (instruction, index) => Ok(Self { instruction, index }.into()),
         }
@@ -94,7 +94,7 @@ fn at(variable: Variable, index: Variable) -> Result<Variable, Error> {
     match (variable, index) {
         (Variable::String(string), Variable::Int(index)) => {
             if index < 0 {
-                Err(Error::CannotBeNegative(String::from("index")))
+                Err(Error::CannotBeNegative("index"))
             } else if index as usize > string.len() {
                 Err(Error::IndexToBig)
             } else {
@@ -104,7 +104,7 @@ fn at(variable: Variable, index: Variable) -> Result<Variable, Error> {
         }
         (Variable::Array(array, _), Variable::Int(index)) => {
             if index < 0 {
-                return Err(Error::CannotBeNegative(String::from("index")));
+                return Err(Error::CannotBeNegative("index"));
             }
             let index = index as usize;
             if index < array.len() {
