@@ -24,6 +24,11 @@ pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream 
     let mut params = function_params_from_itemfn(&mut function);
     let args = args_from_function_params(&params);
     let args_importing = args_import_from_function_params(&params);
+    let generics = if let Some(generics) = attr.generics {
+        quote!(let generics = Some(#generics);)
+    } else {
+        quote!(let generics = None;)
+    };
     let catch_rest = if attr.catch_rest {
         match params.pop() {
             Some((ident, _, type_str))
@@ -44,6 +49,7 @@ pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream 
     let body = get_body(is_result, ident, args);
     quote!(
         #function
+        #generics
         {
             use std::rc::Rc;
             interpreter.insert_native_function(
@@ -58,6 +64,7 @@ pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream 
                         #args_importing
                         #body
                     },
+                    generics
                 },
             );
         }

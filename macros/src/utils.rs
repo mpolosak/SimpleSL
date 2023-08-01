@@ -148,7 +148,7 @@ fn get_type_from_attrs(attrs: &[Attribute]) -> Option<TokenStream> {
                 if quote!(#path).to_string() == "var_type" =>
             {
                 return Some(quote!(
-                    {use std::str::FromStr; Type::from_str(#tokens).unwrap()}
+                    {Type::new_from_str(generics.as_ref(), #tokens).unwrap()}
                 ))
             }
             _ => (),

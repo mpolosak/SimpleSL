@@ -1,11 +1,11 @@
-use super::{function_type::FunctionType, type_set::TypeSet};
+use super::{function_type::FunctionType, type_set::TypeSet, Generics};
 use crate::{
     error::Error,
     join,
     parse::{Rule, SimpleSLParser},
 };
 use pest::{iterators::Pair, Parser};
-use std::{collections::HashSet, fmt::Display, hash::Hash, iter::zip, rc::Rc, str::FromStr};
+use std::{collections::HashSet, fmt::Display, hash::Hash, iter::zip, rc::Rc};
 
 #[derive(Clone, Debug, Hash, Eq, PartialEq)]
 pub enum Type {
@@ -18,10 +18,56 @@ pub enum Type {
     EmptyArray,
     Void,
     Multi(Box<TypeSet>),
+    Generic(Rc<str>, Rc<TypeSet>),
     Any,
 }
 
 impl Type {
+    pub fn new(generics: Option<&Generics>, pair: Pair<Rule>) -> Result<Self, Error> {
+        match pair.as_rule() {
+            Rule::int_type => Ok(Self::Int),
+            Rule::float_type => Ok(Self::Float),
+            Rule::string_type => Ok(Self::String),
+            Rule::void_type => Ok(Self::Void),
+            Rule::function_type => Ok(FunctionType::new(generics, pair)?.into()),
+            Rule::array_type => {
+                let pair = pair.into_inner().next().unwrap();
+                Ok(Self::Array(Self::new(generics, pair)?.into()))
+            }
+            Rule::tuple_type => {
+                let types = pair
+                    .into_inner()
+                    .map(|pair| Type::new(generics, pair))
+                    .collect::<Result<_, _>>()?;
+                Ok(Self::Tuple(types))
+            }
+            Rule::multi => {
+                let types = pair
+                    .into_inner()
+                    .map(|pair| Type::new(generics, pair))
+                    .collect::<Result<_, _>>()?;
+                Ok(Type::Multi(Box::new(types)))
+            }
+            Rule::any => Ok(Self::Any),
+            Rule::generic_type => {
+                let ident = pair.as_str();
+                let Some(generics) = generics else {
+                    return Err(Error::TypeDoesntExist(ident.into()))
+                };
+                let Some(typeset) = generics.0.get(ident) else {
+                    return Err(Error::TypeDoesntExist(ident.into()))
+                };
+                Ok(Self::Generic(ident.into(), typeset.clone()))
+            }
+            _ => panic!(),
+        }
+    }
+    pub fn new_from_str(generics: Option<&Generics>, str: &str) -> Result<Self, Error> {
+        let Some(pair) = SimpleSLParser::parse(Rule::r#type, str)?.next() else {
+            return Err(Error::ArgumentDoesntContainType)
+        };
+        Self::new(generics, pair)
+    }
     pub fn matches(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::Function(function_type), Self::Function(function_type2)) => {
@@ -37,6 +83,12 @@ impl Type {
                 types.len() == types2.len()
                     && zip(types.iter(), types2.iter())
                         .all(|(var_type, var_type2)| var_type.matches(var_type2))
+            }
+            (_, Self::Generic(_, typeset)) => {
+                typeset.types.iter().any(|var_type| self.matches(var_type))
+            }
+            (Self::Generic(_, typeset), _) => {
+                typeset.types.iter().all(|var_type| var_type.matches(self))
             }
             _ => self == other,
         }
@@ -75,44 +127,8 @@ impl Display for Type {
             Self::Tuple(types) => write!(f, "({})", join(types, ", ")),
             Self::Void => write!(f, "()"),
             Self::Multi(types) => write!(f, "{types}"),
+            Self::Generic(ident, _) => write!(f, "{ident}"),
             Self::Any => write!(f, "any"),
-        }
-    }
-}
-
-impl FromStr for Type {
-    type Err = Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let Some(pair) = SimpleSLParser::parse(Rule::r#type, s)?.next() else {
-            return Err(Error::ArgumentDoesntContainType)
-        };
-        Ok(Self::from(pair))
-    }
-}
-
-impl From<Pair<'_, Rule>> for Type {
-    fn from(pair: Pair<'_, Rule>) -> Self {
-        match pair.as_rule() {
-            Rule::int_type => Self::Int,
-            Rule::float_type => Self::Float,
-            Rule::string_type => Self::String,
-            Rule::void_type => Self::Void,
-            Rule::function_type => FunctionType::from(pair).into(),
-            Rule::array_type => {
-                let pair = pair.into_inner().next().unwrap();
-                Self::Array(Self::from(pair).into())
-            }
-            Rule::tuple_type => {
-                let types = pair.into_inner().map(Type::from).collect();
-                Self::Tuple(types)
-            }
-            Rule::multi => {
-                let types = pair.into_inner().map(Type::from).collect();
-                Type::Multi(Box::new(types))
-            }
-            Rule::any => Self::Any,
-            _ => panic!(),
         }
     }
 }

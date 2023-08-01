@@ -28,7 +28,10 @@ impl CreateInstruction for Function {
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let params_pair = inner.next().unwrap();
-        let params = params_pair.into_inner().map(Param::from).collect();
+        let params = params_pair
+            .into_inner()
+            .map(|pair| Param::new(None, pair))
+            .collect::<Result<_, _>>()?;
         let params = Params {
             standard: params,
             catch_rest: None,
@@ -43,7 +46,11 @@ impl CreateInstruction for Function {
             .all(|instruction| matches!(instruction, Instruction::Variable(_)))
         {
             Ok(Instruction::Variable(Variable::Function(Rc::new(
-                LangFunction { params, body },
+                LangFunction {
+                    params,
+                    body,
+                    generics: None,
+                },
             ))))
         } else {
             Ok(Self { params, body }.into())
@@ -58,6 +65,7 @@ impl Exec for Function {
         Ok(Variable::Function(Rc::new(LangFunction {
             params: self.params.clone(),
             body,
+            generics: None,
         })))
     }
 }
@@ -78,6 +86,7 @@ impl Recreate for Function {
                 LangFunction {
                     params: self.params.clone(),
                     body,
+                    generics: None,
                 },
             ))))
         } else {

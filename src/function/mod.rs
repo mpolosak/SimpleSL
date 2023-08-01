@@ -9,7 +9,7 @@ pub use self::{
 use crate::{
     error::Error,
     interpreter::Interpreter,
-    variable::{function_type::FunctionType, GetReturnType, GetType, Type, Variable},
+    variable::{function_type::FunctionType, Generics, GetReturnType, GetType, Type, Variable},
 };
 use std::{fmt, iter::zip, rc::Rc};
 
@@ -63,13 +63,18 @@ pub trait Function: GetReturnType {
     }
     fn exec_intern(&self, name: &str, interpreter: &mut Interpreter) -> Result<Variable, Error>;
     fn get_params(&self) -> &Params;
+    fn get_generics(&self) -> Option<&Generics>;
 }
 
 impl fmt::Display for dyn Function {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let params = self.get_params();
         let return_type = self.get_return_type();
-        write!(f, "function({params})->{return_type}")
+        if let Some(generics) = self.get_generics() {
+            write!(f, "function{generics}({params})->{return_type}")
+        } else {
+            write!(f, "function({params})->{return_type}")
+        }
     }
 }
 
@@ -77,9 +82,10 @@ impl fmt::Debug for dyn Function {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let params = self.get_params();
         let return_type = self.get_return_type();
+        let generics = self.get_generics();
         write!(
             f,
-            "dyn Function(params: [{params}], return_type: {return_type:?})"
+            "dyn Function(params: [{params}], return_type: {return_type:?}, generics: {generics:?})"
         )
     }
 }

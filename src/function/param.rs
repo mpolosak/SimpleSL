@@ -1,4 +1,10 @@
-use crate::{instruction::local_variable::LocalVariableMap, join, parse::Rule, variable::Type};
+use crate::{
+    error::Error,
+    instruction::local_variable::LocalVariableMap,
+    join,
+    parse::Rule,
+    variable::{Generics, Type},
+};
 use pest::iterators::Pair;
 use std::{fmt, rc::Rc};
 
@@ -14,13 +20,13 @@ impl fmt::Display for Param {
     }
 }
 
-impl From<Pair<'_, Rule>> for Param {
-    fn from(value: Pair<'_, Rule>) -> Self {
-        let mut inner = value.into_inner();
-        Self {
+impl Param {
+    pub fn new(generics: Option<&Generics>, pair: Pair<'_, Rule>) -> Result<Self, Error> {
+        let mut inner = pair.into_inner();
+        Ok(Self {
             name: inner.next().unwrap().as_str().into(),
-            var_type: Type::from(inner.next().unwrap()),
-        }
+            var_type: Type::new(generics, inner.next().unwrap())?,
+        })
     }
 }
 

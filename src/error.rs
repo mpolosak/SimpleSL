@@ -1,9 +1,10 @@
 use crate::{parse::Rule, variable::Type};
 use std::{fmt, rc::Rc};
 
-#[derive(Debug)]
+#[derive()]
 pub enum Error {
     VariableDoesntExist(Box<str>),
+    TypeDoesntExist(Rc<str>),
     WrongType(Rc<str>, Type),
     OperandsMustBeBothIntOrBothFloat(&'static str),
     BothOperandsMustBeInt(&'static str),
@@ -30,6 +31,9 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::VariableDoesntExist(var_name) => {
+                write!(f, "{var_name} doesn't exist")
+            }
+            Self::TypeDoesntExist(var_name) => {
                 write!(f, "{var_name} doesn't exist")
             }
             Self::WrongType(var_name, var_type) => {
@@ -99,5 +103,47 @@ impl From<std::io::Error> for Error {
 impl PartialEq for Error {
     fn eq(&self, other: &Self) -> bool {
         self.to_string() == other.to_string()
+    }
+}
+
+impl fmt::Debug for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::VariableDoesntExist(arg0) => {
+                f.debug_tuple("VariableDoesntExist").field(arg0).finish()
+            }
+            Self::TypeDoesntExist(arg0) => f.debug_tuple("TypeDoesntExist").field(arg0).finish(),
+            Self::WrongType(arg0, arg1) => {
+                f.debug_tuple("WrongType").field(arg0).field(arg1).finish()
+            }
+            Self::OperandsMustBeBothIntOrBothFloat(arg0) => f
+                .debug_tuple("OperandsMustBeBothIntOrBothFloat")
+                .field(arg0)
+                .finish(),
+            Self::BothOperandsMustBeInt(arg0) => {
+                f.debug_tuple("BothOperandsMustBeInt").field(arg0).finish()
+            }
+            Self::OperandMustBeInt(arg0) => f.debug_tuple("OperandMustBeInt").field(arg0).finish(),
+            Self::WrongNumberOfArguments(arg0, arg1) => f
+                .debug_tuple("WrongNumberOfArguments")
+                .field(arg0)
+                .field(arg1)
+                .finish(),
+            Self::IndexToBig => write!(f, "IndexToBig"),
+            Self::CannotAdd(arg0, arg1) => {
+                f.debug_tuple("CannotAdd").field(arg0).field(arg1).finish()
+            }
+            Self::CannotBeNegative(arg0) => f.debug_tuple("CannotBeNegative").field(arg0).finish(),
+            Self::CannotBeParsed(arg0) => f.debug_tuple("CannotBeParsed").field(arg0).finish(),
+            Self::CannotIndexInto(arg0) => f.debug_tuple("CannotIndexInto").field(arg0).finish(),
+            Self::TooManyVariables => write!(f, "TooManyVariables"),
+            Self::ZeroDivision => write!(f, "ZeroDivision"),
+            Self::ZeroModulo => write!(f, "ZeroModulo"),
+            Self::OverflowShift => write!(f, "OverflowShift"),
+            Self::MatchNotCovered => write!(f, "MatchNotCovered"),
+            Self::IO(arg0) => f.debug_tuple("IO").field(arg0).finish(),
+            Self::Parsing(arg0) => write!(f, "Parsing({arg0})"),
+            Self::ArgumentDoesntContainType => write!(f, "ArgumentDoesntContainType"),
+        }
     }
 }

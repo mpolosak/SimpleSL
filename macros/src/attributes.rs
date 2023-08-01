@@ -8,6 +8,7 @@ pub struct Attributes {
     pub name: Option<Rc<str>>,
     pub catch_rest: bool,
     pub return_type: Option<quote::__private::TokenStream>,
+    pub generics: Option<quote::__private::TokenStream>,
 }
 
 impl Attributes {
@@ -37,7 +38,14 @@ impl Attributes {
                 new.return_type = match value {
                     Expr::Lit(ExprLit {
                         lit: Lit::Str(lit), ..
-                    }) => Some(quote!({use std::str::FromStr; Type::from_str(#lit).unwrap()})),
+                    }) => Some(quote!({Type::new_from_str(generics.as_ref(), #lit).unwrap()})),
+                    _ => panic!("{path} must be str"),
+                }
+            } else if path == "generics" {
+                new.generics = match value {
+                    Expr::Lit(ExprLit {
+                        lit: Lit::Str(lit), ..
+                    }) => Some(quote!({Generics::new_from_str(None,#lit).unwrap()})),
                     _ => panic!("{path} must be bool"),
                 }
             }

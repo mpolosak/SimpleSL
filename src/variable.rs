@@ -1,7 +1,9 @@
 pub mod function_type;
+mod generics;
 pub mod type_set;
 mod variable_type;
 use crate::{error::Error, function::Function, join, parse::*, pest::Parser};
+pub use generics::Generics;
 use pest::iterators::Pair;
 use std::{fmt, rc::Rc, str::FromStr};
 pub use variable_type::{GetReturnType, GetType, Type};

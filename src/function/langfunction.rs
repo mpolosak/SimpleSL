@@ -3,11 +3,12 @@ use crate::{
     error::Error,
     instruction::Instruction,
     interpreter::Interpreter,
-    variable::{GetReturnType, Type, Variable},
+    variable::{Generics, GetReturnType, Type, Variable},
 };
 pub struct LangFunction {
     pub params: Params,
     pub body: Box<[Instruction]>,
+    pub generics: Option<Generics>,
 }
 
 impl Function for LangFunction {
@@ -16,6 +17,9 @@ impl Function for LangFunction {
     }
     fn get_params(&self) -> &Params {
         &self.params
+    }
+    fn get_generics(&self) -> Option<&Generics> {
+        self.generics.as_ref()
     }
 }
 

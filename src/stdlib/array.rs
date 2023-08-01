@@ -2,14 +2,14 @@ use crate::{
     error::Error,
     function::{Function, NativeFunction, Param, Params},
     interpreter::Interpreter,
-    variable::{Type, Variable},
+    variable::{Generics, Type, Variable},
 };
 use simplesl_macros::export_function;
 use std::{iter::zip, rc::Rc};
 
 pub fn add_functions(interpreter: &mut Interpreter) {
-    #[export_function]
-    fn new_array(length: i64, value: Variable) -> Result<Rc<[Variable]>, Error> {
+    #[export_function(generics = "<T: any>", return_type = "[T]")]
+    fn new_array(length: i64, #[var_type("T")] value: Variable) -> Result<Rc<[Variable]>, Error> {
         if length < 0 {
             return Err(Error::CannotBeNegative("length"));
         }
@@ -17,16 +17,19 @@ pub fn add_functions(interpreter: &mut Interpreter) {
         Ok(array)
     }
 
-    #[export_function]
-    fn array_concat(array1: &[Variable], array2: &[Variable]) -> Rc<[Variable]> {
+    #[export_function(generics = "<T: any; S: any>", return_type = "[T|S]")]
+    fn array_concat(
+        #[var_type("[T]")] array1: &[Variable],
+        #[var_type("[S]")] array2: &[Variable],
+    ) -> Rc<[Variable]> {
         array1.iter().chain(array2).cloned().collect()
     }
 
-    #[export_function]
+    #[export_function(generics = "<T: any; S: any>", return_type = "[S]")]
     fn for_each(
         interpreter: &mut Interpreter,
-        array: &[Variable],
-        #[var_type("function(any)->any")] function: Rc<dyn Function>,
+        #[var_type("[T]")] array: &[Variable],
+        #[var_type("function(T)->S")] function: Rc<dyn Function>,
     ) -> Result<Rc<[Variable]>, Error> {
         let new_array = array
             .iter()
@@ -35,11 +38,11 @@ pub fn add_functions(interpreter: &mut Interpreter) {
         Ok(new_array)
     }
 
-    #[export_function]
+    #[export_function(generics = "<T: any>", return_type = "[T]")]
     fn filter(
         interpreter: &mut Interpreter,
-        array: &[Variable],
-        #[var_type("function(any)->int")] function: Rc<dyn Function>,
+        #[var_type("[T]")] array: &[Variable],
+        #[var_type("function(T)->int")] function: Rc<dyn Function>,
     ) -> Result<Rc<[Variable]>, Error> {
         let mut new_array = Vec::new();
         for element in array.iter() {
@@ -50,35 +53,35 @@ pub fn add_functions(interpreter: &mut Interpreter) {
         Ok(new_array.into())
     }
 
-    #[export_function]
+    #[export_function(generics = "<T: any; S: any>", return_type = "[S]")]
     fn reduce(
         interpreter: &mut Interpreter,
-        array: &[Variable],
-        initial_value: Variable,
-        #[var_type("function(any, any)->any")] function: Rc<dyn Function>,
+        #[var_type("[T]")] array: &[Variable],
+        #[var_type("S")] initial_value: Variable,
+        #[var_type("function(S, T)->S")] function: Rc<dyn Function>,
     ) -> Result<Variable, Error> {
         array.iter().try_fold(initial_value, |acc, current| {
             function.exec("function", interpreter, &[acc, current.clone()])
         })
     }
 
-    #[export_function(name = "zip", return_type = "[[any]]")]
-    fn array_zip(array1: &[Variable], array2: &[Variable]) -> Rc<[Variable]> {
+    #[export_function(name = "zip", generics = "<T: any; S: any>", return_type = "[(T,S)]")]
+    fn array_zip(
+        #[var_type("[T]")] array1: &[Variable],
+        #[var_type("[S]")] array2: &[Variable],
+    ) -> Rc<[Variable]> {
         zip(array1.iter(), array2.iter())
             .map(|(element1, element2)| {
-                Variable::Array(
-                    Rc::new([element1.clone(), element2.clone()]),
-                    Type::Array(Type::Any.into()),
-                )
+                Variable::Tuple(Rc::new([element1.clone(), element2.clone()]))
             })
             .collect()
     }
 
-    #[export_function]
+    #[export_function(generics = "<T: any>")]
     fn recsub(
         interpreter: &mut Interpreter,
-        array: &[Variable],
-        #[var_type("function([any])->any")] function: Rc<dyn Function>,
+        #[var_type("[T]")] array: &[Variable],
+        #[var_type("function([T])->T")] function: Rc<dyn Function>,
         n: i64,
     ) -> Result<Rc<[Variable]>, Error> {
         if n < 0 {
