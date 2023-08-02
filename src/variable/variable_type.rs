@@ -113,6 +113,39 @@ impl Type {
             ),
         }
     }
+    pub fn simplify_generics(&self, generics: &Generics) -> Self {
+        match self {
+            Type::Function(function) => function.simplify_generics(generics).into(),
+            Type::Array(var_type) => Type::Array(var_type.simplify_generics(generics).into()),
+            Type::Tuple(types) => Type::Tuple(
+                types
+                    .iter()
+                    .map(|var_type| var_type.simplify_generics(generics))
+                    .collect(),
+            ),
+            Type::Multi(typeset) => Type::Multi(
+                TypeSet {
+                    types: typeset
+                        .types
+                        .iter()
+                        .map(|var_type| var_type.simplify_generics(generics))
+                        .collect(),
+                }
+                .into(),
+            ),
+            Type::Generic(name, typeset) => {
+                let typeset = generics.0.get(name).unwrap_or(typeset);
+                if typeset.types.len() == 1 {
+                    let var_type = typeset.types.iter().next().unwrap();
+                    if !matches!(var_type, &Type::Any) {
+                        return var_type.clone();
+                    }
+                }
+                Type::Generic(name.clone(), typeset.clone())
+            }
+            other => other.clone(),
+        }
+    }
 }
 
 impl Display for Type {

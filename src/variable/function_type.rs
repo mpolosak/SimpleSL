@@ -39,6 +39,20 @@ impl FunctionType {
                 && self.return_type.matches(&other.return_type)
         }
     }
+    pub fn simplify_generics(&self, generics: &Generics) -> Self {
+        let return_type = self.return_type.simplify_generics(generics);
+        let params = self
+            .params
+            .iter()
+            .map(|var_type| var_type.simplify_generics(generics))
+            .collect();
+        let catch_rest = self.catch_rest;
+        Self {
+            return_type,
+            params,
+            catch_rest,
+        }
+    }
 }
 
 impl Display for FunctionType {

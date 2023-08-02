@@ -21,6 +21,9 @@ impl Function for LangFunction {
     fn get_generics(&self) -> Option<&Generics> {
         self.generics.as_ref()
     }
+    fn simplify_generics(&self, _generics: &Generics) -> Result<std::rc::Rc<dyn Function>, Error> {
+        todo!()
+    }
 }
 
 impl GetReturnType for LangFunction {

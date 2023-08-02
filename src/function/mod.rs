@@ -64,6 +64,7 @@ pub trait Function: GetReturnType {
     fn exec_intern(&self, name: &str, interpreter: &mut Interpreter) -> Result<Variable, Error>;
     fn get_params(&self) -> &Params;
     fn get_generics(&self) -> Option<&Generics>;
+    fn simplify_generics(&self, generics: &Generics) -> Result<Rc<dyn Function>, Error>;
 }
 
 impl fmt::Display for dyn Function {

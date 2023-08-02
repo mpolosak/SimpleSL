@@ -7,7 +7,7 @@ use crate::{
 use pest::{iterators::Pair, Parser};
 use std::{collections::HashMap, fmt::Display, rc::Rc};
 
-#[derive(Default, Debug)]
+#[derive(Clone, Default, Debug)]
 pub struct Generics(pub HashMap<Rc<str>, Rc<TypeSet>>);
 impl Generics {
     pub fn new(generics: Option<&Generics>, pair: Pair<'_, Rule>) -> Result<Self, Error> {

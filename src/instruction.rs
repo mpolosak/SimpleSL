@@ -14,6 +14,7 @@ pub mod local_variable;
 mod logic;
 mod math;
 mod set;
+mod subtitute_types;
 mod traits;
 mod tuple;
 use crate::{
@@ -25,6 +26,8 @@ use crate::{
 use pest::iterators::Pair;
 use std::rc::Rc;
 pub use traits::{CreateInstruction, Exec, Recreate};
+
+use self::subtitute_types::SubstituteTypes;
 use {
     array::Array,
     at::At,
@@ -80,6 +83,7 @@ pub enum Instruction {
     SetIfElse(Box<SetIfElse>),
     Match(Box<Match>),
     Import(Import),
+    SubstituteTypes(Box<SubstituteTypes>),
 }
 
 impl Instruction {
@@ -158,6 +162,9 @@ impl Instruction {
             }
             Rule::r#match => Match::create_instruction(pair, interpreter, local_variables),
             Rule::import => Import::create_instruction(pair, interpreter, local_variables),
+            Rule::substitute_types => {
+                SubstituteTypes::create_instruction(pair, interpreter, local_variables)
+            }
             _ => panic!(),
         }
     }
@@ -220,6 +227,7 @@ impl Exec for Instruction {
             Self::SetIfElse(set_if) => set_if.exec(interpreter),
             Self::Match(match_stm) => match_stm.exec(interpreter),
             Self::Import(import) => import.exec(interpreter),
+            Self::SubstituteTypes(sub) => sub.exec(interpreter),
         }
     }
 }
@@ -279,6 +287,7 @@ impl Recreate for Instruction {
             Self::Variable(variable) => Ok(Self::Variable(variable.clone())),
             Self::SetIfElse(set_if_else) => set_if_else.recreate(local_variables, interpreter),
             Self::Import(import) => import.recreate(local_variables, interpreter),
+            Self::SubstituteTypes(sub) => sub.recreate(local_variables, interpreter),
         }
     }
 }
@@ -306,6 +315,7 @@ impl GetReturnType for Instruction {
             Self::SetIfElse(set_if) => set_if.get_return_type(),
             Self::Match(match_stm) => match_stm.get_return_type(),
             Self::Import(import) => import.get_return_type(),
+            Self::SubstituteTypes(sub) => sub.get_return_type(),
             Self::Not(_)
             | Self::BinNot(_)
             | Self::Equal(..)
