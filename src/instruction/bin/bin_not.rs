@@ -21,7 +21,8 @@ impl CreateInstruction for BinNot {
     ) -> Result<Instruction> {
         let pair = pair.into_inner().next().unwrap();
         let instruction = Instruction::new(pair, interpreter, local_variables)?;
-        if instruction.get_return_type() == Type::Int {
+        let return_type = instruction.get_return_type();
+        if return_type == Type::Int || return_type == Type::Array(Type::Int.into()) {
             Ok(Self::create_from_instruction(instruction))
         } else {
             Err(Error::OperandMustBeInt("~"))
@@ -30,9 +31,18 @@ impl CreateInstruction for BinNot {
 }
 
 impl BinNot {
+    fn bin_not(operand: Variable) -> Variable {
+        match operand {
+            Variable::Int(operand) => (!operand).into(),
+            Variable::Array(array, _) => array.iter().cloned().map(Self::bin_not).collect(),
+            operand => panic!("Tried to do ~ {operand}"),
+        }
+    }
     fn create_from_instruction(instruction: Instruction) -> Instruction {
         match instruction {
-            Instruction::Variable(Variable::Int(value)) => Instruction::Variable((!value).into()),
+            Instruction::Variable(Variable::Int(value)) => {
+                Instruction::Variable((value == 0).into())
+            }
             instruction => Self { instruction }.into(),
         }
     }
@@ -40,10 +50,8 @@ impl BinNot {
 
 impl Exec for BinNot {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
-        let Variable::Int(result) = self.instruction.exec(interpreter)? else {
-            panic!()
-        };
-        Ok((!result).into())
+        let result = self.instruction.exec(interpreter)?;
+        Ok(Self::bin_not(result))
     }
 }
 

@@ -1,10 +1,11 @@
+use super::can_be_used;
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
-    variable::{GetReturnType, Type, Variable},
+    variable::{Type, Variable},
     Error, Result,
 };
 use pest::iterators::Pair;
@@ -26,19 +27,30 @@ impl CreateInstruction for Xor {
         let lhs = Instruction::new(pair, interpreter, local_variables)?;
         let pair = inner.next().unwrap();
         let rhs = Instruction::new(pair, interpreter, local_variables)?;
-        match (lhs.get_return_type(), rhs.get_return_type()) {
-            (Type::Int, Type::Int) => Ok(Self::create_from_instructions(lhs, rhs)),
-            _ => Err(Error::BothOperandsMustBeInt("^")),
+        if can_be_used(&lhs, &rhs) {
+            Ok(Self::create_from_instructions(lhs, rhs))
+        } else {
+            Err(Error::BothOperandsMustBeInt("^"))
         }
     }
 }
 impl Xor {
+    fn xor(lhs: Variable, rhs: Variable) -> Variable {
+        match (lhs, rhs) {
+            (Variable::Int(lhs), Variable::Int(rhs)) => (lhs ^ rhs).into(),
+            (array @ Variable::Array(_, Type::EmptyArray), _)
+            | (_, array @ Variable::Array(_, Type::EmptyArray)) => array,
+            (value, Variable::Array(array, _)) | (Variable::Array(array, _), value) => array
+                .iter()
+                .cloned()
+                .map(|element| Self::xor(element, value.clone()))
+                .collect(),
+            (lhs, rhs) => panic!("Tried to do {lhs} ^ {rhs} which is imposible"),
+        }
+    }
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         match (lhs, rhs) {
-            (
-                Instruction::Variable(Variable::Int(lhs)),
-                Instruction::Variable(Variable::Int(rhs)),
-            ) => Instruction::Variable((lhs ^ rhs).into()),
+            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => Self::xor(lhs, rhs).into(),
             (lhs, rhs) => Self { lhs, rhs }.into(),
         }
     }
@@ -46,12 +58,9 @@ impl Xor {
 
 impl Exec for Xor {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
-        let result1 = self.lhs.exec(interpreter)?;
-        let result2 = self.rhs.exec(interpreter)?;
-        match (result1, result2) {
-            (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 ^ value2).into()),
-            _ => panic!(),
-        }
+        let lhs = self.lhs.exec(interpreter)?;
+        let rhs = self.rhs.exec(interpreter)?;
+        Ok(Self::xor(lhs, rhs))
     }
 }
 

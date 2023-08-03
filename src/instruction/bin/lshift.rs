@@ -1,10 +1,11 @@
+use super::can_be_used;
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
-    variable::{GetReturnType, Type, Variable},
+    variable::{Type, Variable},
     Error, Result,
 };
 use pest::iterators::Pair;
@@ -26,23 +27,42 @@ impl CreateInstruction for LShift {
         let lhs = Instruction::new(pair, interpreter, local_variables)?;
         let pair = inner.next().unwrap();
         let rhs = Instruction::new(pair, interpreter, local_variables)?;
-        match (lhs.get_return_type(), rhs.get_return_type()) {
-            (Type::Int, Type::Int) => Self::create_from_instructions(lhs, rhs),
-            _ => Err(Error::BothOperandsMustBeInt("<<")),
+        if can_be_used(&lhs, &rhs) {
+            Self::create_from_instructions(lhs, rhs)
+        } else {
+            Err(Error::BothOperandsMustBeInt("<<"))
         }
     }
 }
 
 impl LShift {
+    fn lshift(lhs: Variable, rhs: Variable) -> Result<Variable> {
+        match (lhs, rhs) {
+            (_, Variable::Int(rhs)) if !(0..=63).contains(&rhs) => Err(Error::OverflowShift),
+            (Variable::Int(lhs), Variable::Int(rhs)) => Ok((lhs << rhs).into()),
+            (array @ Variable::Array(_, Type::EmptyArray), _)
+            | (_, array @ Variable::Array(_, Type::EmptyArray)) => Ok(array),
+            (value, Variable::Array(array, _)) => array
+                .iter()
+                .cloned()
+                .map(|element| Self::lshift(value.clone(), element))
+                .collect(),
+            (Variable::Array(array, _), value) => array
+                .iter()
+                .cloned()
+                .map(|element| Self::lshift(element, value.clone()))
+                .collect(),
+            (lhs, rhs) => panic!("Tried to do {lhs} << {rhs} which is imposible"),
+        }
+    }
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
         match (lhs, rhs) {
+            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
+                Ok(Self::lshift(lhs, rhs)?.into())
+            }
             (_, Instruction::Variable(Variable::Int(rhs))) if !(0..=63).contains(&rhs) => {
                 Err(Error::OverflowShift)
             }
-            (
-                Instruction::Variable(Variable::Int(lhs)),
-                Instruction::Variable(Variable::Int(rhs)),
-            ) => Ok(Instruction::Variable((lhs << rhs).into())),
             (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
         }
     }
@@ -50,13 +70,9 @@ impl LShift {
 
 impl Exec for LShift {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
-        let result1 = self.lhs.exec(interpreter)?;
-        let result2 = self.rhs.exec(interpreter)?;
-        match (result1, result2) {
-            (_, Variable::Int(rhs)) if !(0..=63).contains(&rhs) => Err(Error::OverflowShift),
-            (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 << value2).into()),
-            _ => panic!(),
-        }
+        let lhs = self.lhs.exec(interpreter)?;
+        let rhs = self.rhs.exec(interpreter)?;
+        Self::lshift(lhs, rhs)
     }
 }
 
