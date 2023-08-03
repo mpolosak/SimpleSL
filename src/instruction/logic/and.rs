@@ -28,17 +28,39 @@ impl CreateInstruction for And {
         let rhs = Instruction::new(pair, interpreter, local_variables)?;
         match (lhs.get_return_type(), rhs.get_return_type()) {
             (Type::Int, Type::Int) => Ok(Self::create_from_instructions(lhs, rhs)),
+            (Type::Array(var_type), Type::Int) | (Type::Int, Type::Array(var_type))
+                if var_type == Type::Int.into() =>
+            {
+                Ok(Self::create_from_instructions(lhs, rhs))
+            }
+            (Type::EmptyArray, Type::Int | Type::Float | Type::String)
+            | (Type::Int | Type::Float | Type::String, Type::EmptyArray) => {
+                Ok(Self::create_from_instructions(lhs, rhs))
+            }
             _ => Err(Error::BothOperandsMustBeInt("&&")),
         }
     }
 }
+
 impl And {
+    fn and(lhs: Variable, rhs: Variable) -> Variable {
+        match (lhs, rhs) {
+            (array @ Variable::Array(_, Type::EmptyArray), _)
+            | (_, array @ Variable::Array(_, Type::EmptyArray)) => array,
+            (Variable::Int(_), Variable::Int(0)) | (Variable::Int(0), Variable::Int(_)) => {
+                Variable::Int(0)
+            }
+            (Variable::Array(array, _), Variable::Int(0))
+            | (Variable::Int(0), Variable::Array(array, _)) => std::iter::repeat(Variable::Int(0))
+                .take(array.len())
+                .collect(),
+            (value, Variable::Int(_)) | (Variable::Int(_), value) => value,
+            (lhs, rhs) => panic!("Tried {lhs} && {rhs} which is imposible"),
+        }
+    }
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         match (lhs, rhs) {
-            (
-                Instruction::Variable(Variable::Int(lhs)),
-                Instruction::Variable(Variable::Int(rhs)),
-            ) => Instruction::Variable((lhs * rhs).into()),
+            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => Self::and(lhs, rhs).into(),
             (Instruction::Variable(Variable::Int(value)), instruction)
             | (instruction, Instruction::Variable(Variable::Int(value)))
                 if value != 0 =>
@@ -52,12 +74,9 @@ impl And {
 
 impl Exec for And {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
-        let result1 = self.lhs.exec(interpreter)?;
-        let result2 = self.rhs.exec(interpreter)?;
-        match (result1, result2) {
-            (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 * value2).into()),
-            _ => panic!(),
-        }
+        let lhs = self.lhs.exec(interpreter)?;
+        let rhs = self.rhs.exec(interpreter)?;
+        Ok(Self::and(lhs, rhs))
     }
 }
 

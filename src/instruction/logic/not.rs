@@ -21,7 +21,8 @@ impl CreateInstruction for Not {
     ) -> Result<Instruction> {
         let pair = pair.into_inner().next().unwrap();
         let instruction = Instruction::new(pair, interpreter, local_variables)?;
-        if instruction.get_return_type() == Type::Int {
+        let return_type = instruction.get_return_type();
+        if return_type == Type::Int || return_type == Type::Array(Type::Int.into()) {
             Ok(Self::create_from_instruction(instruction))
         } else {
             Err(Error::OperandMustBeInt("!"))
@@ -30,6 +31,13 @@ impl CreateInstruction for Not {
 }
 
 impl Not {
+    fn not(operand: Variable) -> Variable {
+        match operand {
+            Variable::Int(operand) => (operand == 0).into(),
+            Variable::Array(array, _) => array.iter().cloned().map(Self::not).collect(),
+            operand => panic!("Tried to negate {operand}"),
+        }
+    }
     fn create_from_instruction(instruction: Instruction) -> Instruction {
         match instruction {
             Instruction::Variable(Variable::Int(value)) => {
@@ -42,10 +50,8 @@ impl Not {
 
 impl Exec for Not {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
-        let Variable::Int(result) = self.instruction.exec(interpreter)? else {
-            panic!()
-        };
-        Ok((result == 0).into())
+        let result = self.instruction.exec(interpreter)?;
+        Ok(Self::not(result))
     }
 }
 
