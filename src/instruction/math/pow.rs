@@ -30,25 +30,54 @@ impl CreateInstruction for Pow {
             (Type::Int, Type::Int) | (Type::Float, Type::Float) => {
                 Self::create_from_instructions(base, exp)
             }
+            (Type::Array(var_type), Type::Int) | (Type::Int, Type::Array(var_type))
+                if var_type == Type::Int.into() =>
+            {
+                Self::create_from_instructions(base, exp)
+            }
+            (Type::Array(var_type), Type::Float) | (Type::Float, Type::Array(var_type))
+                if var_type == Type::Float.into() =>
+            {
+                Self::create_from_instructions(base, exp)
+            }
+            (Type::EmptyArray, Type::Int | Type::Float)
+            | (Type::Int | Type::Float, Type::EmptyArray) => {
+                Self::create_from_instructions(base, exp)
+            }
             _ => Err(Error::OperandsMustBeBothIntOrBothFloat("**")),
         }
     }
 }
 
 impl Pow {
+    fn pow(base: Variable, exp: Variable) -> Result<Variable> {
+        match (base, exp) {
+            (_, Variable::Int(exp)) if exp < 0 => Err(Error::CannotBeNegative("exponent")),
+            (Variable::Int(base), Variable::Int(exp)) => Ok((base.pow(exp as u32)).into()),
+            (Variable::Float(base), Variable::Float(exp)) => Ok((base.powf(exp)).into()),
+            (array @ Variable::Array(_, Type::EmptyArray), _)
+            | (_, array @ Variable::Array(_, Type::EmptyArray)) => Ok(array),
+            (value, Variable::Array(array, _)) => array
+                .iter()
+                .cloned()
+                .map(|element| Self::pow(value.clone(), element))
+                .collect(),
+            (Variable::Array(array, _), value) => array
+                .iter()
+                .cloned()
+                .map(|element| Self::pow(element, value.clone()))
+                .collect(),
+            (base, exp) => panic!("Tried to raise {base} to {exp} power"),
+        }
+    }
     fn create_from_instructions(base: Instruction, exp: Instruction) -> Result<Instruction> {
         match (base, exp) {
+            (Instruction::Variable(base), Instruction::Variable(exp)) => {
+                Ok(Self::pow(base, exp)?.into())
+            }
             (_, Instruction::Variable(Variable::Int(exp))) if exp < 0 => {
                 Err(Error::CannotBeNegative("exponent"))
             }
-            (
-                Instruction::Variable(Variable::Int(base)),
-                Instruction::Variable(Variable::Int(exp)),
-            ) => Ok(Instruction::Variable(base.pow(exp as u32).into())),
-            (
-                Instruction::Variable(Variable::Float(base)),
-                Instruction::Variable(Variable::Float(exp)),
-            ) => Ok(Instruction::Variable((base.powf(exp)).into())),
             (base, exp) => Ok(Self { base, exp }.into()),
         }
     }
@@ -58,12 +87,7 @@ impl Exec for Pow {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let base = self.base.exec(interpreter)?;
         let exp = self.exp.exec(interpreter)?;
-        match (base, exp) {
-            (_, Variable::Int(exp)) if exp < 0 => Err(Error::CannotBeNegative("exponent")),
-            (Variable::Int(base), Variable::Int(exp)) => Ok((base.pow(exp as u32)).into()),
-            (Variable::Float(base), Variable::Float(exp)) => Ok((base.powf(exp)).into()),
-            _ => panic!(),
-        }
+        Pow::pow(base, exp)
     }
 }
 
