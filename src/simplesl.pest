@@ -6,7 +6,7 @@ function_call = ${ ident ~ args }
 var = _{ float | int | array | string | function | void | tuple }
 not = { "!" ~ ( logic_arg )}
 bin_not = { "~" ~ logic_arg }
-logic_arg = _{ exp_in_brackets | function_call | ident | int }
+logic_arg = _{ exp_in_brackets | function_call | ident | int | array }
 equal = { equal_arg ~ "==" ~ equal_arg }
 not_equal = { equal_arg ~ "!=" ~ equal_arg }
   equal_arg = _{ math_operations | not | bin_not | exp_in_brackets | function_call | var | ident }
@@ -23,7 +23,7 @@ greater = { math_arg ~ ">" ~ math_arg }
 greater_equal = { math_arg ~ ">=" ~ math_arg }
 lower = { math_arg ~ "<" ~ math_arg }
 lower_equal = { math_arg ~ "<=" ~ math_arg }
-math_arg = _{ exp_in_brackets | float | logic_arg }
+math_arg = _{ float | logic_arg }
 pow = { math_arg ~ "**" ~ math_arg }
 multiply = { math_arg ~ "*" ~ math_arg }
 divide = { math_arg ~ "/" ~ math_arg }
@@ -45,7 +45,7 @@ match = { "match" ~ expression ~  "{" ~ match_arm* ~ "}" }
   values = { expression+ }
 at = { ( add | function_call | ident | array | string ) ~ "[" ~ expression ~ "]"  }
 import = { "import" ~ string }
-expression = _{ import | match | set_if_else | set_if | at | if_else | if_stm | exp_in_brackets | comparasion | math_operations | not | bin_not | and | or | bin_and | bin_or | xor | shift | function_call | ident | var | block }
+expression = _{ import | match | set_if_else | set_if | at | if_else | if_stm | comparasion | math_operations | not | bin_not | and | or | bin_and | bin_or | xor | shift | function_call | ident | exp_in_brackets | var | block  }
 expression_list = _{ (expression ~ ("," ~ expression)*)?}
 array = {"{" ~ expression_list ~ "}"}
 string = ${ "\"" ~ inner ~ "\"" }

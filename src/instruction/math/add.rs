@@ -30,26 +30,56 @@ impl CreateInstruction for Add {
             (Type::Int, Type::Int) | (Type::Float, Type::Float) | (Type::String, Type::String) => {
                 Ok(Self::create_from_instructions(lhs, rhs))
             }
+            (Type::Array(var_type), Type::Int) | (Type::Int, Type::Array(var_type))
+                if var_type == Type::Int.into() =>
+            {
+                Ok(Self::create_from_instructions(lhs, rhs))
+            }
+            (Type::Array(var_type), Type::Float) | (Type::Float, Type::Array(var_type))
+                if var_type == Type::Float.into() =>
+            {
+                Ok(Self::create_from_instructions(lhs, rhs))
+            }
+            (Type::Array(var_type), Type::String) | (Type::String, Type::Array(var_type))
+                if var_type == Type::String.into() =>
+            {
+                Ok(Self::create_from_instructions(lhs, rhs))
+            }
             (type1, type2) => Err(Error::CannotAdd(type1, type2)),
         }
     }
 }
 
 impl Add {
+    fn add(lhs: Variable, rhs: Variable) -> Variable {
+        match (lhs, rhs) {
+            (Variable::Int(value1), Variable::Int(value2)) => (value1 + value2).into(),
+            (Variable::Float(value1), Variable::Float(value2)) => (value1 + value2).into(),
+            (Variable::String(value1), Variable::String(value2)) => {
+                format!("{value1}{value2}").into()
+            }
+            (array @ Variable::Array(_, Type::EmptyArray), _)
+            | (_, array @ Variable::Array(_, Type::EmptyArray)) => array,
+            (Variable::Array(array, element_type), value)
+                if element_type == Type::Array(Type::String.into()) =>
+            {
+                array
+                    .iter()
+                    .cloned()
+                    .map(|element| Self::add(element, value.clone()))
+                    .collect()
+            }
+            (value, Variable::Array(array, _)) | (Variable::Array(array, _), value) => array
+                .iter()
+                .cloned()
+                .map(|element| Self::add(value.clone(), element))
+                .collect(),
+            (lhs, rhs) => panic!("Tried to add {lhs} and {rhs} which is imposible"),
+        }
+    }
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         match (lhs, rhs) {
-            (
-                Instruction::Variable(Variable::Int(value1)),
-                Instruction::Variable(Variable::Int(value2)),
-            ) => Instruction::Variable((value1 + value2).into()),
-            (
-                Instruction::Variable(Variable::Float(value1)),
-                Instruction::Variable(Variable::Float(value2)),
-            ) => Instruction::Variable((value1 + value2).into()),
-            (
-                Instruction::Variable(Variable::String(value1)),
-                Instruction::Variable(Variable::String(value2)),
-            ) => Instruction::Variable(format!("{value1}{value2}").into()),
+            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => Self::add(lhs, rhs).into(),
             (rhs, lhs) => Self { rhs, lhs }.into(),
         }
     }
@@ -59,14 +89,7 @@ impl Exec for Add {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, Error> {
         let lhs = self.lhs.exec(interpreter)?;
         let rhs = self.rhs.exec(interpreter)?;
-        match (lhs, rhs) {
-            (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 + value2).into()),
-            (Variable::Float(value1), Variable::Float(value2)) => Ok((value1 + value2).into()),
-            (Variable::String(value1), Variable::String(value2)) => {
-                Ok(format!("{value1}{value2}").into())
-            }
-            _ => panic!(),
-        }
+        Ok(Self::add(lhs, rhs))
     }
 }
 
@@ -84,7 +107,11 @@ impl Recreate for Add {
 
 impl GetReturnType for Add {
     fn get_return_type(&self) -> Type {
-        self.lhs.get_return_type()
+        match (self.lhs.get_return_type(), self.rhs.get_return_type()) {
+            (var_type @ Type::Array(_), _) | (_, var_type @ Type::Array(_)) | (var_type, _) => {
+                var_type
+            }
+        }
     }
 }
 

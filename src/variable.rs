@@ -179,6 +179,13 @@ impl From<()> for Variable {
     }
 }
 
+impl FromIterator<Variable> for Variable {
+    fn from_iter<T: IntoIterator<Item = Variable>>(iter: T) -> Self {
+        let elements: Rc<[Variable]> = iter.into_iter().collect();
+        elements.into()
+    }
+}
+
 pub fn is_correct_variable_name(name: &str) -> bool {
     let Ok(parse) = SimpleSLParser::parse(Rule::ident, name) else {
         return false
