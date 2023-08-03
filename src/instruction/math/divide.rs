@@ -40,6 +40,10 @@ impl CreateInstruction for Divide {
             {
                 Self::create_from_instructions(dividend, divisor)
             }
+            (Type::EmptyArray, Type::Int | Type::Float)
+            | (Type::Int | Type::Float, Type::EmptyArray) => {
+                Self::create_from_instructions(dividend, divisor)
+            }
             _ => Err(Error::OperandsMustBeBothIntOrBothFloat("/")),
         }
     }

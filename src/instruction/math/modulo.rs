@@ -33,6 +33,10 @@ impl CreateInstruction for Modulo {
             {
                 Self::create_from_instructions(dividend, divisor)
             }
+            (Type::EmptyArray, Type::Int | Type::Float | Type::String)
+            | (Type::Int | Type::Float | Type::String, Type::EmptyArray) => {
+                Self::create_from_instructions(dividend, divisor)
+            }
             _ => Err(Error::BothOperandsMustBeInt("%")),
         }
     }

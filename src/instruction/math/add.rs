@@ -45,6 +45,10 @@ impl CreateInstruction for Add {
             {
                 Ok(Self::create_from_instructions(lhs, rhs))
             }
+            (Type::EmptyArray, Type::Int | Type::Float | Type::String)
+            | (Type::Int | Type::Float | Type::String, Type::EmptyArray) => {
+                Ok(Self::create_from_instructions(lhs, rhs))
+            }
             (type1, type2) => Err(Error::CannotAdd(type1, type2)),
         }
     }
