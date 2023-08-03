@@ -77,7 +77,7 @@ pub fn add_functions(interpreter: &mut Interpreter) {
             .collect()
     }
 
-    #[export_function(generics = "<T: any>")]
+    #[export_function(generics = "<T: any>", return_type = "[T]")]
     fn recsub(
         interpreter: &mut Interpreter,
         #[var_type("[T]")] array: &[Variable],
