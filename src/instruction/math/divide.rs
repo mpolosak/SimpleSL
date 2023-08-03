@@ -11,8 +11,8 @@ use pest::iterators::Pair;
 
 #[derive(Clone, Debug)]
 pub struct Divide {
-    lhs: Instruction,
-    rhs: Instruction,
+    dividend: Instruction,
+    divisor: Instruction,
 }
 
 impl CreateInstruction for Divide {
@@ -23,12 +23,22 @@ impl CreateInstruction for Divide {
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
-        let lhs = Instruction::new(pair, interpreter, local_variables)?;
+        let dividend = Instruction::new(pair, interpreter, local_variables)?;
         let pair = inner.next().unwrap();
-        let rhs = Instruction::new(pair, interpreter, local_variables)?;
-        match (lhs.get_return_type(), rhs.get_return_type()) {
+        let divisor = Instruction::new(pair, interpreter, local_variables)?;
+        match (dividend.get_return_type(), divisor.get_return_type()) {
             (Type::Int, Type::Int) | (Type::Float, Type::Float) => {
-                Self::create_from_instructions(lhs, rhs)
+                Self::create_from_instructions(dividend, divisor)
+            }
+            (Type::Array(var_type), Type::Int) | (Type::Int, Type::Array(var_type))
+                if var_type == Type::Int.into() =>
+            {
+                Self::create_from_instructions(dividend, divisor)
+            }
+            (Type::Array(var_type), Type::Float) | (Type::Float, Type::Array(var_type))
+                if var_type == Type::Float.into() =>
+            {
+                Self::create_from_instructions(dividend, divisor)
             }
             _ => Err(Error::OperandsMustBeBothIntOrBothFloat("/")),
         }
@@ -36,32 +46,47 @@ impl CreateInstruction for Divide {
 }
 
 impl Divide {
-    fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
-        match (lhs, rhs) {
+    fn divide(dividend: Variable, divisor: Variable) -> Result<Variable, Error> {
+        match (dividend, divisor) {
+            (_, Variable::Int(0)) => Err(Error::ZeroDivision),
+            (Variable::Int(dividend), Variable::Int(divisor)) => Ok((dividend / divisor).into()),
+            (Variable::Float(dividend), Variable::Float(divisor)) => {
+                Ok((dividend / divisor).into())
+            }
+            (Variable::Array(array, _), divisor @ (Variable::Int(_) | Variable::Float(_))) => array
+                .iter()
+                .cloned()
+                .map(|dividend| Self::divide(dividend, divisor.clone()))
+                .collect::<Result<Variable, Error>>(),
+            (dividend @ (Variable::Int(_) | Variable::Float(_)), Variable::Array(array, _)) => {
+                array
+                    .iter()
+                    .cloned()
+                    .map(|divisor| Self::divide(dividend.clone(), divisor))
+                    .collect::<Result<Variable, Error>>()
+            }
+            (dividend, divisor) => panic!("Tried to divide {dividend} by {divisor}"),
+        }
+    }
+    fn create_from_instructions(
+        dividend: Instruction,
+        divisor: Instruction,
+    ) -> Result<Instruction, Error> {
+        match (dividend, divisor) {
+            (Instruction::Variable(dividend), Instruction::Variable(divisor)) => {
+                Ok(Self::divide(dividend, divisor)?.into())
+            }
             (_, Instruction::Variable(Variable::Int(0))) => Err(Error::ZeroDivision),
-            (
-                Instruction::Variable(Variable::Int(value1)),
-                Instruction::Variable(Variable::Int(value2)),
-            ) => Ok(Instruction::Variable((value1 / value2).into())),
-            (
-                Instruction::Variable(Variable::Float(value1)),
-                Instruction::Variable(Variable::Float(value2)),
-            ) => Ok(Instruction::Variable((value1 / value2).into())),
-            (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
+            (dividend, divisor) => Ok(Self { dividend, divisor }.into()),
         }
     }
 }
 
 impl Exec for Divide {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, Error> {
-        let lhs = self.lhs.exec(interpreter)?;
-        let rhs = self.rhs.exec(interpreter)?;
-        match (lhs, rhs) {
-            (Variable::Int(_), Variable::Int(0)) => Err(Error::ZeroDivision),
-            (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 / value2).into()),
-            (Variable::Float(value1), Variable::Float(value2)) => Ok((value1 / value2).into()),
-            _ => panic!(),
-        }
+        let dividend = self.dividend.exec(interpreter)?;
+        let divisor = self.divisor.exec(interpreter)?;
+        Self::divide(dividend, divisor)
     }
 }
 
@@ -71,15 +96,22 @@ impl Recreate for Divide {
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
     ) -> Result<Instruction, Error> {
-        let lhs = self.lhs.recreate(local_variables, interpreter)?;
-        let rhs = self.rhs.recreate(local_variables, interpreter)?;
-        Self::create_from_instructions(lhs, rhs)
+        let dividend = self.dividend.recreate(local_variables, interpreter)?;
+        let divisor = self.divisor.recreate(local_variables, interpreter)?;
+        Self::create_from_instructions(dividend, divisor)
     }
 }
 
 impl GetReturnType for Divide {
     fn get_return_type(&self) -> Type {
-        self.lhs.get_return_type()
+        match (
+            self.dividend.get_return_type(),
+            self.divisor.get_return_type(),
+        ) {
+            (var_type @ Type::Array(_), _) | (_, var_type @ Type::Array(_)) | (var_type, _) => {
+                var_type
+            }
+        }
     }
 }
 
