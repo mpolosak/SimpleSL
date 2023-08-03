@@ -66,6 +66,12 @@ impl Recreate for Not {
     }
 }
 
+impl GetReturnType for Not {
+    fn get_return_type(&self) -> Type {
+        self.instruction.get_return_type()
+    }
+}
+
 impl From<Not> for Instruction {
     fn from(value: Not) -> Self {
         Self::Not(value.into())

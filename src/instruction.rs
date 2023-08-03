@@ -304,19 +304,19 @@ impl GetReturnType for Instruction {
             Self::SetIfElse(set_if) => set_if.get_return_type(),
             Self::Match(match_stm) => match_stm.get_return_type(),
             Self::Import(import) => import.get_return_type(),
-            Self::Not(_)
-            | Self::BinNot(_)
-            | Self::Equal(..)
-            | Self::Greater(..)
-            | Self::GreaterOrEqual(..)
-            | Self::And(..)
-            | Self::Or(..)
-            | Self::Modulo(..)
-            | Self::BinAnd(..)
-            | Self::BinOr(..)
-            | Self::Xor(..)
-            | Self::LShift(..)
-            | Self::RShift(..) => Type::Int,
+            Self::Not(not) => not.get_return_type(),
+            Self::BinNot(bin_not) => bin_not.get_return_type(),
+            Self::Greater(greater) => greater.get_return_type(),
+            Self::GreaterOrEqual(greater_or_equal) => greater_or_equal.get_return_type(),
+            Self::BinAnd(bin_and) => bin_and.get_return_type(),
+            Self::BinOr(bin_or) => bin_or.get_return_type(),
+            Self::Xor(xor) => xor.get_return_type(),
+            Self::LShift(lshift) => lshift.get_return_type(),
+            Self::RShift(rshift) => rshift.get_return_type(),
+            Self::Or(or) => or.get_return_type(),
+            Self::And(and) => and.get_return_type(),
+            Self::Modulo(modulo) => modulo.get_return_type(),
+            Self::Equal(..) => Type::Int,
         }
     }
 }

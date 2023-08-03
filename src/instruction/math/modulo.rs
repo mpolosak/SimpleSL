@@ -93,6 +93,22 @@ impl Recreate for Modulo {
     }
 }
 
+impl GetReturnType for Modulo {
+    fn get_return_type(&self) -> Type {
+        if matches!(
+            (
+                self.dividend.get_return_type(),
+                self.divisor.get_return_type()
+            ),
+            (Type::Array(_), _) | (_, Type::Array(_))
+        ) {
+            Type::Array(Type::Int.into())
+        } else {
+            Type::Int
+        }
+    }
+}
+
 impl From<Modulo> for Instruction {
     fn from(value: Modulo) -> Self {
         Self::Modulo(value.into())

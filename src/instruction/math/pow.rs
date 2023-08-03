@@ -105,7 +105,11 @@ impl Recreate for Pow {
 
 impl GetReturnType for Pow {
     fn get_return_type(&self) -> Type {
-        self.base.get_return_type()
+        match (self.base.get_return_type(), self.exp.get_return_type()) {
+            (var_type @ Type::Array(_), _) | (_, var_type @ Type::Array(_)) | (var_type, _) => {
+                var_type
+            }
+        }
     }
 }
 

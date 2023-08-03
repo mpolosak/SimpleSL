@@ -66,6 +66,12 @@ impl Recreate for BinNot {
     }
 }
 
+impl GetReturnType for BinNot {
+    fn get_return_type(&self) -> Type {
+        self.instruction.get_return_type()
+    }
+}
+
 impl From<BinNot> for Instruction {
     fn from(value: BinNot) -> Self {
         Self::BinNot(value.into())

@@ -92,6 +92,19 @@ impl Recreate for And {
     }
 }
 
+impl GetReturnType for And {
+    fn get_return_type(&self) -> Type {
+        if matches!(
+            (self.lhs.get_return_type(), self.rhs.get_return_type()),
+            (Type::Array(_), _) | (_, Type::Array(_))
+        ) {
+            Type::Array(Type::Int.into())
+        } else {
+            Type::Int
+        }
+    }
+}
+
 impl From<And> for Instruction {
     fn from(value: And) -> Self {
         Self::And(value.into())

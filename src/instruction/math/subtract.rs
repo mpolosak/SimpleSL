@@ -105,7 +105,14 @@ impl Recreate for Subtract {
 
 impl GetReturnType for Subtract {
     fn get_return_type(&self) -> Type {
-        self.minuend.get_return_type()
+        match (
+            self.minuend.get_return_type(),
+            self.subtrahend.get_return_type(),
+        ) {
+            (var_type @ Type::Array(_), _) | (_, var_type @ Type::Array(_)) | (var_type, _) => {
+                var_type
+            }
+        }
     }
 }
 

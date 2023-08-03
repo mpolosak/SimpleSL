@@ -91,6 +91,19 @@ impl Recreate for Or {
     }
 }
 
+impl GetReturnType for Or {
+    fn get_return_type(&self) -> Type {
+        if matches!(
+            (self.lhs.get_return_type(), self.rhs.get_return_type()),
+            (Type::Array(_), _) | (_, Type::Array(_))
+        ) {
+            Type::Array(Type::Int.into())
+        } else {
+            Type::Int
+        }
+    }
+}
+
 impl From<Or> for Instruction {
     fn from(value: Or) -> Self {
         Self::Or(value.into())

@@ -2,6 +2,7 @@ use super::can_be_used;
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
+use crate::variable::GetReturnType;
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
@@ -75,6 +76,19 @@ impl Recreate for BinOr {
         let lhs = self.lhs.recreate(local_variables, interpreter)?;
         let rhs = self.rhs.recreate(local_variables, interpreter)?;
         Ok(Self::create_from_instructions(lhs, rhs))
+    }
+}
+
+impl GetReturnType for BinOr {
+    fn get_return_type(&self) -> Type {
+        if matches!(
+            (self.lhs.get_return_type(), self.rhs.get_return_type()),
+            (Type::Array(_), _) | (_, Type::Array(_))
+        ) {
+            Type::Array(Type::Int.into())
+        } else {
+            Type::Int
+        }
     }
 }
 

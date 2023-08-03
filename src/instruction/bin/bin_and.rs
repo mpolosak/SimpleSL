@@ -3,7 +3,7 @@ use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
 use crate::interpreter::Interpreter;
-use crate::variable::Variable;
+use crate::variable::{GetReturnType, Variable};
 use crate::{parse::Rule, variable::Type, Error, Result};
 use pest::iterators::Pair;
 
@@ -72,6 +72,19 @@ impl Recreate for BinAnd {
         let lhs = self.lhs.recreate(local_variables, interpreter)?;
         let rhs = self.rhs.recreate(local_variables, interpreter)?;
         Ok(Self::create_from_instructions(lhs, rhs))
+    }
+}
+
+impl GetReturnType for BinAnd {
+    fn get_return_type(&self) -> Type {
+        if matches!(
+            (self.lhs.get_return_type(), self.rhs.get_return_type()),
+            (Type::Array(_), _) | (_, Type::Array(_))
+        ) {
+            Type::Array(Type::Int.into())
+        } else {
+            Type::Int
+        }
     }
 }
 
