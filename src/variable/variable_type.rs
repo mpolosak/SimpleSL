@@ -5,7 +5,7 @@ use crate::{
     Error, Result,
 };
 use pest::{iterators::Pair, Parser};
-use std::{collections::HashSet, fmt::Display, hash::Hash, iter::zip, rc::Rc, str::FromStr};
+use std::{fmt::Display, hash::Hash, iter::zip, rc::Rc, str::FromStr};
 
 #[derive(Clone, Debug, Hash, Eq, PartialEq)]
 pub enum Type {
@@ -27,8 +27,8 @@ impl Type {
             (Self::Function(function_type), Self::Function(function_type2)) => {
                 function_type.matches(function_type2)
             }
-            (Self::Multi(types), Self::Multi(types2)) => types.types.is_subset(&types2.types),
-            (_, Self::Multi(types)) => types.types.iter().any(|var_type| self.matches(var_type)),
+            (Self::Multi(types), Self::Multi(types2)) => types.is_subset(types2),
+            (_, Self::Multi(types)) => types.iter().any(|var_type| self.matches(var_type)),
             (_, Self::Any) | (Self::EmptyArray, Self::Array(_)) => true,
             (Self::Array(element_type), Self::Array(element_type2)) => {
                 element_type.matches(element_type2)
@@ -46,19 +46,14 @@ impl Type {
             (Type::Any, _) | (_, Type::Any) => Type::Any,
             (first, second) if first == second => first,
             (Type::Multi(mut types), Type::Multi(types2)) => {
-                types.types.extend(types2.types);
+                types.extend(types2.iter().cloned());
                 Type::Multi(types)
             }
             (Type::Multi(mut types), var_type) | (var_type, Type::Multi(mut types)) => {
-                types.types.insert(var_type);
+                types.insert(var_type);
                 Type::Multi(types)
             }
-            (first, second) => Type::Multi(
-                TypeSet {
-                    types: HashSet::from([first, second]),
-                }
-                .into(),
-            ),
+            (first, second) => Type::Multi(TypeSet::from([first, second]).into()),
         }
     }
 }

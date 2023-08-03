@@ -39,10 +39,7 @@ impl CreateInstruction for Match {
 impl Match {
     fn is_covering_type(&self, checked_type: &Type) -> bool {
         match checked_type {
-            Type::Multi(types) => types
-                .types
-                .iter()
-                .all(|var_type| self.is_covering_type(var_type)),
+            Type::Multi(types) => types.iter().all(|var_type| self.is_covering_type(var_type)),
             checked_type => self
                 .arms
                 .iter()
