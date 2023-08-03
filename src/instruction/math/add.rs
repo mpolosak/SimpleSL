@@ -27,9 +27,10 @@ impl CreateInstruction for Add {
         let pair = inner.next().unwrap();
         let rhs = Instruction::new(pair, interpreter, local_variables)?;
         match (lhs.get_return_type(), rhs.get_return_type()) {
-            (Type::Int, Type::Int) | (Type::Float, Type::Float) | (Type::String, Type::String) => {
-                Ok(Self::create_from_instructions(lhs, rhs))
-            }
+            (Type::Int, Type::Int)
+            | (Type::Float, Type::Float)
+            | (Type::String, Type::String)
+            | (Type::Array(_), Type::Array(_)) => Ok(Self::create_from_instructions(lhs, rhs)),
             (Type::Array(var_type), Type::Int) | (Type::Int, Type::Array(var_type))
                 if var_type == Type::Int.into() =>
             {
@@ -61,6 +62,9 @@ impl Add {
             (Variable::Float(value1), Variable::Float(value2)) => (value1 + value2).into(),
             (Variable::String(value1), Variable::String(value2)) => {
                 format!("{value1}{value2}").into()
+            }
+            (Variable::Array(array1, _), Variable::Array(array2, _)) => {
+                array1.iter().chain(array2.iter()).cloned().collect()
             }
             (array @ Variable::Array(_, Type::EmptyArray), _)
             | (_, array @ Variable::Array(_, Type::EmptyArray)) => array,
@@ -112,6 +116,9 @@ impl Recreate for Add {
 impl GetReturnType for Add {
     fn get_return_type(&self) -> Type {
         match (self.lhs.get_return_type(), self.rhs.get_return_type()) {
+            (Type::Array(element_type1), Type::Array(element_type2)) => {
+                Type::Array(element_type1.concat(element_type2.as_ref().clone()).into())
+            }
             (var_type @ Type::Array(_), _) | (_, var_type @ Type::Array(_)) | (var_type, _) => {
                 var_type
             }

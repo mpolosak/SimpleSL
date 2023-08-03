@@ -18,11 +18,6 @@ pub fn add_functions(interpreter: &mut Interpreter) {
     }
 
     #[export_function]
-    fn array_concat(array1: &[Variable], array2: &[Variable]) -> Rc<[Variable]> {
-        array1.iter().chain(array2).cloned().collect()
-    }
-
-    #[export_function]
     fn for_each(
         interpreter: &mut Interpreter,
         array: &[Variable],
