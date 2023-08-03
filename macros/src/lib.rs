@@ -21,24 +21,9 @@ pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream 
     } else {
         ident.to_string().into()
     };
-    let mut params = function_params_from_itemfn(&mut function);
+    let params = function_params_from_itemfn(&mut function);
     let args = args_from_function_params(&params);
     let args_importing = args_import_from_function_params(&params);
-    let catch_rest = if attr.catch_rest {
-        match params.pop() {
-            Some((ident, _, type_str))
-                if type_str == "Rc < [Variable] >" || type_str == "& [Variable]" =>
-            {
-                let ident = ident.to_string();
-                quote!(Some(#ident.into()))
-            }
-            Some(_) | None => {
-                panic!("catch_rest=true requiers function to have last param of type Rc<[Variable]> or &[Variable]")
-            }
-        }
-    } else {
-        quote!(None)
-    };
     let params = params_from_function_params(&params);
     let (return_type, is_result) = get_return_type(&function, attr.return_type);
     let body = get_body(is_result, ident, args);
@@ -49,10 +34,7 @@ pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream 
             interpreter.insert_native_function(
                 #ident_str.into(),
                 NativeFunction {
-                    params: Params {
-                        standard: Rc::new([#params]),
-                        catch_rest: #catch_rest,
-                    },
+                    params: Params(Rc::new([#params])),
                     return_type: #return_type,
                     body: |_name, interpreter| {
                         #args_importing

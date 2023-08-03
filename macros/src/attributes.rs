@@ -25,14 +25,6 @@ impl Attributes {
                     }) => Some(lit.value().into()),
                     _ => panic!("{path} must be str literal"),
                 }
-            } else if path == "catch_rest" {
-                new.catch_rest = match value {
-                    Expr::Lit(ExprLit {
-                        lit: Lit::Bool(lit),
-                        ..
-                    }) => lit.value(),
-                    _ => panic!("{path} must be bool"),
-                }
             } else if path == "return_type" {
                 new.return_type = match value {
                     Expr::Lit(ExprLit {

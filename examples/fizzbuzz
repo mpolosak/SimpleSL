@@ -24,5 +24,6 @@ iota = (value: int, size: int){
 };
 
 array = iota(1, 15);
-array = for_each(array, fizzbuzz);
-for_each(array, print);
+fizzbuzz_any = (item: any){fizzbuzz(int(item, 0));};
+array = for_each(array, fizzbuzz_any);
+for_each(array, (item: any) {print({item});});

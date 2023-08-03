@@ -2,7 +2,6 @@ mod array;
 mod at;
 mod bin;
 mod block;
-mod check_args;
 mod comp;
 mod control_flow;
 mod destruct_tuple;
@@ -30,7 +29,6 @@ use {
     at::At,
     bin::{BinAnd, BinNot, BinOr, LShift, RShift, Xor},
     block::Block,
-    check_args::check_args,
     comp::{Equal, Greater, GreaterOrEqual},
     control_flow::{IfElse, Match, SetIfElse},
     destruct_tuple::DestructTuple,
@@ -357,7 +355,6 @@ fn error_wrong_type(args: &[Instruction], var_name: Rc<str>) -> Error {
         FunctionType {
             return_type: Type::Any,
             params,
-            catch_rest: false,
         }
         .into(),
     )

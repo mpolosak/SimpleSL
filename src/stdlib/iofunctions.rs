@@ -1,6 +1,6 @@
 use crate::{
     error::Error,
-    function::{NativeFunction, Params},
+    function::{NativeFunction, Param, Params},
     interpreter::Interpreter,
     variable::*,
 };
@@ -8,7 +8,7 @@ use simplesl_macros::export_function;
 use std::io;
 
 pub fn add_functions(interpreter: &mut Interpreter) {
-    #[export_function(catch_rest = true)]
+    #[export_function]
     fn print(vars: &[Variable]) {
         let text = vars
             .iter()

@@ -1,5 +1,4 @@
 use super::{
-    check_args::check_args,
     error_wrong_type, exec_instructions,
     local_variable::LocalVariables,
     recreate_instructions,
@@ -8,7 +7,7 @@ use super::{
 };
 use crate::{
     error::Error,
-    function::Function,
+    function::{check_args, Function},
     interpreter::Interpreter,
     variable::{GetReturnType, Type, Variable},
 };
@@ -30,7 +29,14 @@ impl FunctionCall {
             return Err(error_wrong_type(&args, var_name.into()));
         };
         let params = function.get_params();
-        check_args(var_name, params, &args)?;
+        check_args(
+            var_name,
+            params,
+            &args
+                .iter()
+                .map(Instruction::get_return_type)
+                .collect::<Box<[Type]>>(),
+        )?;
         Ok(Self { function, args })
     }
 }

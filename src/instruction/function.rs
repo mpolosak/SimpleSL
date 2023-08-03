@@ -28,11 +28,7 @@ impl CreateInstruction for Function {
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let params_pair = inner.next().unwrap();
-        let params = params_pair.into_inner().map(Param::from).collect();
-        let params = Params {
-            standard: params,
-            catch_rest: None,
-        };
+        let params = Params(params_pair.into_inner().map(Param::from).collect());
         let mut local_variables =
             local_variables.layer_from_map(LocalVariableMap::from(params.clone()));
         let body = inner
@@ -100,11 +96,9 @@ impl GetReturnType for Function {
     fn get_return_type(&self) -> Type {
         let params_types: Box<[Type]> = self
             .params
-            .standard
             .iter()
             .map(|Param { name: _, var_type }| var_type.clone())
             .collect();
-        let catch_rest = self.params.catch_rest.is_some();
         let return_type = match self.body.last() {
             Some(instruction) => instruction.get_return_type(),
             None => Type::Any,
@@ -112,7 +106,6 @@ impl GetReturnType for Function {
         FunctionType {
             return_type,
             params: params_types,
-            catch_rest,
         }
         .into()
     }

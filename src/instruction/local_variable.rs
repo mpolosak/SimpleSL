@@ -109,11 +109,9 @@ impl GetType for LocalVariable {
             LocalVariable::Function(params, return_type) => FunctionType {
                 return_type: return_type.clone(),
                 params: params
-                    .standard
                     .iter()
                     .map(|Param { var_type, name: _ }| var_type.clone())
                     .collect(),
-                catch_rest: params.catch_rest.is_some(),
             }
             .into(),
             LocalVariable::Variable(variable) => variable.get_type(),

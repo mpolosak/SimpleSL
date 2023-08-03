@@ -1,7 +1,5 @@
-use std::rc::Rc;
-
 use super::{
-    check_args, error_wrong_type, exec_instructions,
+    error_wrong_type, exec_instructions,
     function_call::FunctionCall,
     local_variable::LocalVariables,
     recreate_instructions,
@@ -10,10 +8,11 @@ use super::{
 };
 use crate::{
     error::Error,
-    function::Params,
+    function::{check_args, Params},
     interpreter::Interpreter,
     variable::{GetReturnType, Type, Variable},
 };
+use std::rc::Rc;
 
 #[derive(Clone, Debug)]
 pub struct LocalFunctionCall {
@@ -29,7 +28,14 @@ impl LocalFunctionCall {
         args: Box<[Instruction]>,
         return_type: Type,
     ) -> Result<Self, Error> {
-        check_args(var_name, params, &args)?;
+        check_args(
+            var_name,
+            params,
+            &args
+                .iter()
+                .map(Instruction::get_return_type)
+                .collect::<Box<[Type]>>(),
+        )?;
         Ok(Self {
             ident: var_name.into(),
             args,
