@@ -5,7 +5,7 @@ use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{GetReturnType, Type, Variable},
-    Error,
+    Error, Result,
 };
 use pest::iterators::Pair;
 
@@ -20,7 +20,7 @@ impl CreateInstruction for Modulo {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Instruction> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
         let dividend = Instruction::new(pair, interpreter, local_variables)?;
@@ -38,7 +38,7 @@ impl CreateInstruction for Modulo {
     }
 }
 impl Modulo {
-    fn modulo(dividend: Variable, divisor: Variable) -> Result<Variable, Error> {
+    fn modulo(dividend: Variable, divisor: Variable) -> Result<Variable> {
         match (dividend, divisor) {
             (_, Variable::Int(0)) => Err(Error::ZeroModulo),
             (Variable::Int(dividend), Variable::Int(divisor)) => Ok((dividend % divisor).into()),
@@ -46,19 +46,19 @@ impl Modulo {
                 .iter()
                 .cloned()
                 .map(|dividend| Self::modulo(dividend, divisor.clone()))
-                .collect::<Result<Variable, Error>>(),
+                .collect::<Result<Variable>>(),
             (dividend @ Variable::Int(_), Variable::Array(array, _)) => array
                 .iter()
                 .cloned()
                 .map(|divisor| Self::modulo(dividend.clone(), divisor))
-                .collect::<Result<Variable, Error>>(),
+                .collect::<Result<Variable>>(),
             (dividend, divisor) => panic!("Tried to divide {dividend} by {divisor}"),
         }
     }
     fn create_from_instructions(
         dividend: Instruction,
         divisor: Instruction,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Instruction> {
         match (dividend, divisor) {
             (Instruction::Variable(dividend), Instruction::Variable(divisor)) => {
                 Ok(Self::modulo(dividend, divisor)?.into())
@@ -70,7 +70,7 @@ impl Modulo {
 }
 
 impl Exec for Modulo {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, Error> {
+    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let dividend = self.dividend.exec(interpreter)?;
         let divisor = self.divisor.exec(interpreter)?;
         Self::modulo(dividend, divisor)
@@ -82,7 +82,7 @@ impl Recreate for Modulo {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Instruction> {
         let dividend = self.dividend.recreate(local_variables, interpreter)?;
         let divisor = self.divisor.recreate(local_variables, interpreter)?;
         Self::create_from_instructions(dividend, divisor)

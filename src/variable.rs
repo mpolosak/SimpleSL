@@ -1,7 +1,7 @@
 pub mod function_type;
 pub mod type_set;
 mod variable_type;
-use crate::{function::Function, join, parse::*, pest::Parser, Error};
+use crate::{function::Function, join, parse::*, pest::Parser, Error, Result};
 use pest::iterators::Pair;
 use std::{fmt, rc::Rc, str::FromStr};
 pub use variable_type::{GetReturnType, GetType, Type};
@@ -51,7 +51,7 @@ impl fmt::Display for Variable {
 impl FromStr for Variable {
     type Err = Error;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    fn from_str(s: &str) -> Result<Self> {
         let s = s.trim();
         let parse = SimpleSLParser::parse(Rule::var, s)?;
         if parse.as_str() == s {
@@ -80,7 +80,7 @@ impl PartialEq for Variable {
 impl TryFrom<Pair<'_, Rule>> for Variable {
     type Error = Error;
 
-    fn try_from(pair: Pair<Rule>) -> Result<Self, Self::Error> {
+    fn try_from(pair: Pair<Rule>) -> Result<Self> {
         match pair.as_rule() {
             Rule::int => {
                 let value = pair.as_str().trim().parse::<i64>().unwrap();
@@ -99,7 +99,7 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
                 let array = pair
                     .into_inner()
                     .map(Self::try_from)
-                    .collect::<Result<Rc<[Variable]>, Error>>()?;
+                    .collect::<Result<Rc<[Variable]>>>()?;
 
                 Ok(Variable::from(array))
             }

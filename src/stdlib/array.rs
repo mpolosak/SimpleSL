@@ -2,14 +2,14 @@ use crate::{
     function::{Function, NativeFunction, Param, Params},
     interpreter::Interpreter,
     variable::{Type, Variable},
-    Error,
+    Error, Result,
 };
 use simplesl_macros::export_function;
 use std::{iter::zip, rc::Rc};
 
 pub fn add_functions(interpreter: &mut Interpreter) {
     #[export_function]
-    fn new_array(length: i64, value: Variable) -> Result<Rc<[Variable]>, Error> {
+    fn new_array(length: i64, value: Variable) -> Result<Rc<[Variable]>> {
         if length < 0 {
             return Err(Error::CannotBeNegative("length"));
         }
@@ -27,11 +27,11 @@ pub fn add_functions(interpreter: &mut Interpreter) {
         interpreter: &mut Interpreter,
         array: &[Variable],
         #[var_type("function(any)->any")] function: Rc<dyn Function>,
-    ) -> Result<Rc<[Variable]>, Error> {
+    ) -> Result<Rc<[Variable]>> {
         let new_array = array
             .iter()
             .map(|var| function.exec("function", interpreter, &[var.clone()]))
-            .collect::<Result<Rc<[Variable]>, Error>>()?;
+            .collect::<Result<Rc<[Variable]>>>()?;
         Ok(new_array)
     }
 
@@ -40,7 +40,7 @@ pub fn add_functions(interpreter: &mut Interpreter) {
         interpreter: &mut Interpreter,
         array: &[Variable],
         #[var_type("function(any)->int")] function: Rc<dyn Function>,
-    ) -> Result<Rc<[Variable]>, Error> {
+    ) -> Result<Rc<[Variable]>> {
         let mut new_array = Vec::new();
         for element in array.iter() {
             if function.exec("function", interpreter, &[element.clone()])? != Variable::Int(0) {
@@ -56,7 +56,7 @@ pub fn add_functions(interpreter: &mut Interpreter) {
         array: &[Variable],
         initial_value: Variable,
         #[var_type("function(any, any)->any")] function: Rc<dyn Function>,
-    ) -> Result<Variable, Error> {
+    ) -> Result<Variable> {
         array.iter().try_fold(initial_value, |acc, current| {
             function.exec("function", interpreter, &[acc, current.clone()])
         })
@@ -80,7 +80,7 @@ pub fn add_functions(interpreter: &mut Interpreter) {
         array: &[Variable],
         #[var_type("function([any])->any")] function: Rc<dyn Function>,
         n: i64,
-    ) -> Result<Rc<[Variable]>, Error> {
+    ) -> Result<Rc<[Variable]>> {
         if n < 0 {
             return Err(Error::CannotBeNegative("n"));
         }

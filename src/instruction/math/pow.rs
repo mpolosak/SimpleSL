@@ -5,7 +5,7 @@ use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{GetReturnType, Type, Variable},
-    Error,
+    Error, Result,
 };
 use pest::iterators::Pair;
 
@@ -20,7 +20,7 @@ impl CreateInstruction for Pow {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Instruction> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
         let base = Instruction::new(pair, interpreter, local_variables)?;
@@ -36,7 +36,7 @@ impl CreateInstruction for Pow {
 }
 
 impl Pow {
-    fn create_from_instructions(base: Instruction, exp: Instruction) -> Result<Instruction, Error> {
+    fn create_from_instructions(base: Instruction, exp: Instruction) -> Result<Instruction> {
         match (base, exp) {
             (_, Instruction::Variable(Variable::Int(exp))) if exp < 0 => {
                 Err(Error::CannotBeNegative("exponent"))
@@ -55,7 +55,7 @@ impl Pow {
 }
 
 impl Exec for Pow {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, Error> {
+    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let base = self.base.exec(interpreter)?;
         let exp = self.exp.exec(interpreter)?;
         match (base, exp) {
@@ -72,7 +72,7 @@ impl Recreate for Pow {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Instruction> {
         let base = self.base.recreate(local_variables, interpreter)?;
         let exp = self.exp.recreate(local_variables, interpreter)?;
         Self::create_from_instructions(base, exp)

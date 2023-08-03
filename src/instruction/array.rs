@@ -11,7 +11,7 @@ use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{GetReturnType, Type, Variable},
-    Error,
+    Result,
 };
 use pest::iterators::Pair;
 
@@ -26,11 +26,11 @@ impl CreateInstruction for Array {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Instruction> {
         let inner = pair.into_inner();
         let instructions = inner
             .map(|arg| Instruction::new(arg, interpreter, local_variables))
-            .collect::<Result<Box<_>, _>>()?;
+            .collect::<Result<Box<_>>>()?;
         Ok(Self::create_from_instructions(instructions))
     }
 }
@@ -62,10 +62,7 @@ impl Array {
 }
 
 impl Exec for Array {
-    fn exec(
-        &self,
-        interpreter: &mut crate::interpreter::Interpreter,
-    ) -> Result<crate::variable::Variable, Error> {
+    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let array = exec_instructions(&self.instructions, interpreter)?;
         Ok(Variable::Array(array, self.var_type.clone()))
     }
@@ -76,7 +73,7 @@ impl Recreate for Array {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Instruction> {
         let instructions = recreate_instructions(&self.instructions, local_variables, interpreter)?;
         Ok(Self::create_from_instructions(instructions))
     }

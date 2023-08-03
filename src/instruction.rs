@@ -19,7 +19,7 @@ use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{function_type::FunctionType, GetReturnType, GetType, Type, Variable},
-    Error,
+    Error, Result,
 };
 use pest::iterators::Pair;
 use std::rc::Rc;
@@ -85,7 +85,7 @@ impl Instruction {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Self, Error> {
+    ) -> Result<Self> {
         match pair.as_rule() {
             Rule::line => {
                 let pair = pair.into_inner().next().unwrap();
@@ -163,7 +163,7 @@ impl Instruction {
         pair: Pair<'_, Rule>,
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Instruction> {
         let mut inner = pair.into_inner();
         let var_name = inner.next().unwrap().as_str();
         let args = inner
@@ -171,7 +171,7 @@ impl Instruction {
             .unwrap()
             .into_inner()
             .map(|pair| Self::new(pair, interpreter, local_variables))
-            .collect::<Result<Box<_>, _>>()?;
+            .collect::<Result<Box<_>>>()?;
         match local_variables.get(var_name) {
             Some(LocalVariable::Function(params, return_type, ..)) => {
                 Ok(LocalFunctionCall::new(var_name, params, args, return_type.clone())?.into())
@@ -183,7 +183,7 @@ impl Instruction {
 }
 
 impl Exec for Instruction {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, Error> {
+    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         match self {
             Self::FunctionCall(function_call) => function_call.exec(interpreter),
             Self::LocalFunctionCall(function_call) => function_call.exec(interpreter),
@@ -227,7 +227,7 @@ impl Recreate for Instruction {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Instruction> {
         match self {
             Self::LocalFunctionCall(function_call) => {
                 function_call.recreate(local_variables, interpreter)
@@ -331,7 +331,7 @@ pub fn recreate_instructions(
     instructions: &[Instruction],
     local_variables: &mut LocalVariables,
     interpreter: &Interpreter,
-) -> Result<Box<[Instruction]>, Error> {
+) -> Result<Box<[Instruction]>> {
     instructions
         .iter()
         .map(|instruction| instruction.recreate(local_variables, interpreter))
@@ -341,11 +341,11 @@ pub fn recreate_instructions(
 pub fn exec_instructions(
     instructions: &[Instruction],
     interpreter: &mut Interpreter,
-) -> Result<Rc<[Variable]>, Error> {
+) -> Result<Rc<[Variable]>> {
     instructions
         .iter()
         .map(|instruction| instruction.exec(interpreter))
-        .collect::<Result<Rc<_>, _>>()
+        .collect::<Result<Rc<_>>>()
 }
 
 fn error_wrong_type(args: &[Instruction], var_name: Rc<str>) -> Error {

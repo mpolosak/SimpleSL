@@ -4,7 +4,7 @@ use crate::instruction::{
 use crate::{
     interpreter::Interpreter,
     variable::{GetReturnType, Type, Variable},
-    Error,
+    Error, Result,
 };
 use pest::iterators::Pair;
 
@@ -18,7 +18,7 @@ impl CreateInstruction for BinNot {
         pair: Pair<crate::parse::Rule>,
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Instruction> {
         let pair = pair.into_inner().next().unwrap();
         let instruction = Instruction::new(pair, interpreter, local_variables)?;
         if instruction.get_return_type() == Type::Int {
@@ -39,7 +39,7 @@ impl BinNot {
 }
 
 impl Exec for BinNot {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, Error> {
+    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let Variable::Int(result) = self.instruction.exec(interpreter)? else {
             panic!()
         };
@@ -52,7 +52,7 @@ impl Recreate for BinNot {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Instruction> {
         let instruction = self.instruction.recreate(local_variables, interpreter)?;
         Ok(Self::create_from_instruction(instruction))
     }

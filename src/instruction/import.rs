@@ -6,7 +6,7 @@ use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{GetReturnType, Type, Variable},
-    Error,
+    Result,
 };
 use pest::iterators::Pair;
 
@@ -20,7 +20,7 @@ impl CreateInstruction for Import {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Instruction> {
         let Instruction::Variable(Variable::String(path)) = Instruction::new(
             pair.into_inner().next().unwrap(),
             interpreter,
@@ -45,7 +45,7 @@ impl CreateInstruction for Import {
 }
 
 impl Exec for Import {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, Error> {
+    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         interpreter.exec(&self.instructions)
     }
 }
@@ -55,7 +55,7 @@ impl Recreate for Import {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Instruction> {
         let instructions = recreate_instructions(&self.instructions, local_variables, interpreter)?;
         Ok(Self { instructions }.into())
     }

@@ -10,7 +10,7 @@ use crate::{
     function::{check_args, Params},
     interpreter::Interpreter,
     variable::{GetReturnType, Type, Variable},
-    Error,
+    Result,
 };
 use std::rc::Rc;
 
@@ -27,7 +27,7 @@ impl LocalFunctionCall {
         params: &Params,
         args: Box<[Instruction]>,
         return_type: Type,
-    ) -> Result<Self, Error> {
+    ) -> Result<Self> {
         check_args(
             var_name,
             params,
@@ -45,7 +45,7 @@ impl LocalFunctionCall {
 }
 
 impl Exec for LocalFunctionCall {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, Error> {
+    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let args = exec_instructions(&self.args, interpreter)?;
         let Variable::Function(function) = interpreter.get_variable(&self.ident).unwrap() else {
             return Err(error_wrong_type(&self.args, self.ident.clone()));
@@ -59,7 +59,7 @@ impl Recreate for LocalFunctionCall {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Instruction> {
         let instructions = recreate_instructions(&self.args, local_variables, interpreter)?;
         if local_variables.contains_key(&self.ident) {
             Ok(Self {

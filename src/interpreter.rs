@@ -1,6 +1,7 @@
 use crate::instruction::{local_variable::LocalVariables, Exec, Instruction};
 use crate::{
     function::NativeFunction, parse::*, pest::Parser, stdlib::add_std_lib, variable::*, Error,
+    Result,
 };
 use std::{
     collections::HashMap,
@@ -27,7 +28,7 @@ impl<'a> Interpreter<'a> {
         result
     }
 
-    pub fn exec(&mut self, instructions: &[Instruction]) -> Result<Variable, Error> {
+    pub fn exec(&mut self, instructions: &[Instruction]) -> Result<Variable> {
         let mut result = Variable::Void;
         for instruction in instructions.iter() {
             result = instruction.exec(self)?;
@@ -35,7 +36,7 @@ impl<'a> Interpreter<'a> {
         Ok(result)
     }
 
-    pub fn parse_and_exec(&mut self, input: &str) -> Result<Variable, Error> {
+    pub fn parse_and_exec(&mut self, input: &str) -> Result<Variable> {
         let instructions = self.parse_input(input, &mut LocalVariables::new())?;
         self.exec(&instructions)
     }
@@ -44,7 +45,7 @@ impl<'a> Interpreter<'a> {
         &self,
         path: &str,
         local_variables: &mut LocalVariables,
-    ) -> Result<Box<[Instruction]>, Error> {
+    ) -> Result<Box<[Instruction]>> {
         let file = File::open(path)?;
         let mut buf_reader = BufReader::new(file);
         let mut contents = String::new();
@@ -52,7 +53,7 @@ impl<'a> Interpreter<'a> {
         self.parse_input(&contents, local_variables)
     }
 
-    pub fn load_and_exec(&mut self, path: &str) -> Result<Variable, Error> {
+    pub fn load_and_exec(&mut self, path: &str) -> Result<Variable> {
         let instructions = self.load(path, &mut LocalVariables::new())?;
         self.exec(&instructions)
     }
@@ -61,15 +62,15 @@ impl<'a> Interpreter<'a> {
         &self,
         input: &str,
         local_variables: &mut LocalVariables,
-    ) -> Result<Box<[Instruction]>, Error> {
+    ) -> Result<Box<[Instruction]>> {
         let parse = SimpleSLParser::parse(Rule::input, input)?;
         let instructions = parse
             .take_while(|pair| pair.as_rule() != Rule::EOI)
             .map(|pair| Instruction::new(pair, self, local_variables))
-            .collect::<Result<_, _>>()?;
+            .collect::<Result<_>>()?;
         Ok(instructions)
     }
-    pub fn get_variable(&self, name: &str) -> Result<Variable, Error> {
+    pub fn get_variable(&self, name: &str) -> Result<Variable> {
         if let Some(variable) = self.variables.get(name) {
             Ok(variable.clone())
         } else if let Some(layer) = self.lower_layer {

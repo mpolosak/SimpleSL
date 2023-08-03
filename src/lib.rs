@@ -11,6 +11,8 @@ extern crate pest_derive;
 pub use error::Error;
 use std::fmt::{Debug, Display};
 
+pub type Result<T> = std::result::Result<T, Error>;
+
 pub fn join(array: &[impl Display], separator: &str) -> String {
     let mut result = String::new();
     if let [elements @ .., last] = array {

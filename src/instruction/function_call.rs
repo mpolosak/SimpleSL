@@ -9,7 +9,7 @@ use crate::{
     function::{check_args, Function},
     interpreter::Interpreter,
     variable::{GetReturnType, Type, Variable},
-    Error,
+    Result,
 };
 use std::rc::Rc;
 
@@ -24,7 +24,7 @@ impl FunctionCall {
         var_name: &str,
         interpreter: &Interpreter,
         args: Box<[Instruction]>,
-    ) -> Result<Self, Error> {
+    ) -> Result<Self> {
         let Variable::Function(function) = interpreter.get_variable(var_name)? else {
             return Err(error_wrong_type(&args, var_name.into()));
         };
@@ -41,7 +41,7 @@ impl FunctionCall {
     }
 }
 impl Exec for FunctionCall {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, Error> {
+    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let args = exec_instructions(&self.args, interpreter)?;
         self.function.exec("name", interpreter, &args)
     }
@@ -52,7 +52,7 @@ impl Recreate for FunctionCall {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Instruction> {
         let args = recreate_instructions(&self.args, local_variables, interpreter)?;
         Ok(Self {
             function: self.function.clone(),

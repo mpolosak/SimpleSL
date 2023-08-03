@@ -11,7 +11,7 @@ pub use self::{
 use crate::{
     interpreter::Interpreter,
     variable::{function_type::FunctionType, GetReturnType, GetType, Type, Variable},
-    Error,
+    Result,
 };
 use std::{fmt, iter::zip};
 
@@ -21,7 +21,7 @@ pub trait Function: GetReturnType {
         name: &str,
         interpreter: &mut Interpreter,
         args: &[Variable],
-    ) -> Result<Variable, Error> {
+    ) -> Result<Variable> {
         let mut interpreter = interpreter.create_layer();
         let params = self.get_params();
         for (arg, Param { var_type: _, name }) in zip(args, params.iter()) {
@@ -34,7 +34,7 @@ pub trait Function: GetReturnType {
         name: &str,
         interpreter: &mut Interpreter,
         args: &[Variable],
-    ) -> Result<Variable, Error> {
+    ) -> Result<Variable> {
         let params = self.get_params();
         check_args(
             name,
@@ -43,7 +43,7 @@ pub trait Function: GetReturnType {
         )?;
         self.exec(name, interpreter, args)
     }
-    fn exec_intern(&self, name: &str, interpreter: &mut Interpreter) -> Result<Variable, Error>;
+    fn exec_intern(&self, name: &str, interpreter: &mut Interpreter) -> Result<Variable>;
     fn get_params(&self) -> &Params;
 }
 

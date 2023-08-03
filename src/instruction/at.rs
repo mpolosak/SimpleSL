@@ -3,7 +3,7 @@ use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{GetReturnType, Type, Variable},
-    Error,
+    Error, Result,
 };
 use pest::iterators::Pair;
 
@@ -18,7 +18,7 @@ impl CreateInstruction for At {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Instruction> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
         let instruction = Instruction::new(pair, interpreter, local_variables)?;
@@ -40,7 +40,7 @@ impl At {
     fn create_from_instructions(
         instruction: Instruction,
         index: Instruction,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Instruction> {
         match (instruction, index) {
             (Instruction::Variable(variable), Instruction::Variable(index)) => {
                 Ok(at(variable, index)?.into())
@@ -54,7 +54,7 @@ impl At {
 }
 
 impl Exec for At {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, Error> {
+    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let result = self.instruction.exec(interpreter)?;
         let index = self.index.exec(interpreter)?;
         at(result, index)
@@ -66,7 +66,7 @@ impl Recreate for At {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Instruction> {
         let instruction = self.instruction.recreate(local_variables, interpreter)?;
         let index = self.index.recreate(local_variables, interpreter)?;
         Self::create_from_instructions(instruction, index)
@@ -90,7 +90,7 @@ impl From<At> for Instruction {
     }
 }
 
-fn at(variable: Variable, index: Variable) -> Result<Variable, Error> {
+fn at(variable: Variable, index: Variable) -> Result<Variable> {
     match (variable, index) {
         (Variable::String(string), Variable::Int(index)) => {
             if index < 0 {

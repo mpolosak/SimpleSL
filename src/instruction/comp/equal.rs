@@ -1,7 +1,7 @@
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
-use crate::{interpreter::Interpreter, parse::Rule, variable::Variable, Error};
+use crate::{interpreter::Interpreter, parse::Rule, variable::Variable, Result};
 use pest::iterators::Pair;
 
 #[derive(Clone, Debug)]
@@ -15,7 +15,7 @@ impl CreateInstruction for Equal {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Instruction> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
         let lhs = Instruction::new(pair, interpreter, local_variables)?;
@@ -37,7 +37,7 @@ impl Equal {
 }
 
 impl Exec for Equal {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, Error> {
+    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let lhs = self.lhs.exec(interpreter)?;
         let rhs = self.rhs.exec(interpreter)?;
         Ok((lhs == rhs).into())
@@ -49,7 +49,7 @@ impl Recreate for Equal {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Instruction> {
         let lhs = self.lhs.recreate(local_variables, interpreter)?;
         let rhs = self.rhs.recreate(local_variables, interpreter)?;
         Ok(Self::create_from_instructions(lhs, rhs))

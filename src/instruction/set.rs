@@ -6,8 +6,8 @@ use super::{
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
-    variable::{GetReturnType, Type},
-    Error,
+    variable::{GetReturnType, Type, Variable},
+    Result,
 };
 use pest::iterators::Pair;
 use std::rc::Rc;
@@ -23,7 +23,7 @@ impl Set {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Self, Error> {
+    ) -> Result<Self> {
         let mut inner = pair.into_inner();
         let ident: Rc<str> = inner.next().unwrap().as_str().into();
         let pair = inner.next().unwrap();
@@ -34,7 +34,7 @@ impl Set {
 }
 
 impl Exec for Set {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<crate::variable::Variable, Error> {
+    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let result = self.instruction.exec(interpreter)?;
         interpreter.insert(self.ident.clone(), result.clone());
         Ok(result)
@@ -46,7 +46,7 @@ impl Recreate for Set {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Instruction> {
         let instruction = self.instruction.recreate(local_variables, interpreter)?;
         local_variables.insert(self.ident.clone(), (&instruction).into());
         Ok(Self {

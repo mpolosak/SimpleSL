@@ -4,7 +4,7 @@ use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{GetReturnType, Type, Variable},
-    Error,
+    Error, Result,
 };
 use pest::iterators::Pair;
 
@@ -19,14 +19,14 @@ impl CreateInstruction for Match {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Instruction> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
         let expression = Instruction::new(pair, interpreter, local_variables)?;
         let var_type = expression.get_return_type();
         let arms = inner
             .map(|pair| MatchArm::new(pair, interpreter, local_variables))
-            .collect::<Result<Box<[MatchArm]>, Error>>()?;
+            .collect::<Result<Box<[MatchArm]>>>()?;
         let result = Self { expression, arms };
         if result.is_covering_type(&var_type) {
             Ok(result.into())
@@ -52,7 +52,7 @@ impl Match {
 }
 
 impl Exec for Match {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, Error> {
+    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let variable = self.expression.exec(interpreter)?;
         for arm in self.arms.iter() {
             if arm.covers(&variable, interpreter)? {
@@ -68,13 +68,13 @@ impl Recreate for Match {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Instruction> {
         let expression = self.expression.recreate(local_variables, interpreter)?;
         let arms = self
             .arms
             .iter()
             .map(|arm| arm.clone().recreate(local_variables, interpreter))
-            .collect::<Result<Box<[MatchArm]>, Error>>()?;
+            .collect::<Result<Box<[MatchArm]>>>()?;
         Ok(Self { expression, arms }.into())
     }
 }

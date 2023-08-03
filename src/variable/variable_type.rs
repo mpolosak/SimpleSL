@@ -2,7 +2,7 @@ use super::{function_type::FunctionType, type_set::TypeSet};
 use crate::{
     join,
     parse::{Rule, SimpleSLParser},
-    Error,
+    Error, Result,
 };
 use pest::{iterators::Pair, Parser};
 use std::{collections::HashSet, fmt::Display, hash::Hash, iter::zip, rc::Rc, str::FromStr};
@@ -83,7 +83,7 @@ impl Display for Type {
 impl FromStr for Type {
     type Err = Error;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    fn from_str(s: &str) -> Result<Self> {
         let Some(pair) = SimpleSLParser::parse(Rule::r#type, s)?.next() else {
             return Err(Error::ArgumentDoesntContainType)
         };

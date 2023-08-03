@@ -5,10 +5,9 @@ use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{GetReturnType, Type, Variable},
-    Error,
+    Error, Result,
 };
 use pest::iterators::Pair;
-use std::result::Result;
 
 #[derive(Clone, Debug)]
 pub struct Multiply {
@@ -21,7 +20,7 @@ impl CreateInstruction for Multiply {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Instruction> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
         let lhs = Instruction::new(pair, interpreter, local_variables)?;
@@ -53,7 +52,7 @@ impl Multiply {
 }
 
 impl Exec for Multiply {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, Error> {
+    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let lhs = self.lhs.exec(interpreter)?;
         let rhs = self.rhs.exec(interpreter)?;
         match (lhs, rhs) {
@@ -69,7 +68,7 @@ impl Recreate for Multiply {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Instruction> {
         let lhs = self.lhs.recreate(local_variables, interpreter)?;
         let rhs = self.rhs.recreate(local_variables, interpreter)?;
         Ok(Self::create_from_instructions(lhs, rhs))

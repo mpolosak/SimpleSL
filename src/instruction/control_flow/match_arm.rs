@@ -6,7 +6,7 @@ use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{GetType, Type, Variable},
-    Error,
+    Result,
 };
 use pest::iterators::Pair;
 use std::rc::Rc;
@@ -27,7 +27,7 @@ impl MatchArm {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Self, Error> {
+    ) -> Result<Self> {
         match pair.as_rule() {
             Rule::match_type => {
                 let mut inner = pair.into_inner();
@@ -49,7 +49,7 @@ impl MatchArm {
                 let inner_values = pair.into_inner();
                 let values = inner_values
                     .map(|pair| Instruction::new(pair, interpreter, local_variables))
-                    .collect::<Result<Box<[Instruction]>, Error>>()?;
+                    .collect::<Result<Box<[Instruction]>>>()?;
                 let pair = inner.next().unwrap();
                 let instruction = Instruction::new(pair, interpreter, local_variables)?;
                 Ok(Self::Value(values, instruction))
@@ -70,11 +70,7 @@ impl MatchArm {
             Self::Type { var_type, .. } => checked_type.matches(var_type),
         }
     }
-    pub fn covers(
-        &self,
-        variable: &Variable,
-        interpreter: &mut Interpreter,
-    ) -> Result<bool, Error> {
+    pub fn covers(&self, variable: &Variable, interpreter: &mut Interpreter) -> Result<bool> {
         Ok(match self {
             MatchArm::Other(_) => true,
             MatchArm::Type { var_type, .. } => variable.get_type().matches(var_type),
@@ -89,11 +85,7 @@ impl MatchArm {
             }
         })
     }
-    pub fn exec(
-        &self,
-        variable: Variable,
-        interpreter: &mut Interpreter,
-    ) -> Result<Variable, Error> {
+    pub fn exec(&self, variable: Variable, interpreter: &mut Interpreter) -> Result<Variable> {
         match self {
             MatchArm::Type {
                 ident, instruction, ..
@@ -111,7 +103,7 @@ impl MatchArm {
         self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Self, Error> {
+    ) -> Result<Self> {
         Ok(match self {
             Self::Type {
                 ident,

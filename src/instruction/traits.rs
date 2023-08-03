@@ -1,5 +1,5 @@
 use super::{local_variable::LocalVariables, Instruction};
-use crate::{interpreter::Interpreter, parse::Rule, variable::Variable, Error};
+use crate::{interpreter::Interpreter, parse::Rule, variable::Variable, Result};
 use pest::iterators::Pair;
 
 pub trait CreateInstruction {
@@ -7,11 +7,11 @@ pub trait CreateInstruction {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, Error>;
+    ) -> Result<Instruction>;
 }
 
 pub trait Exec {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, Error>;
+    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable>;
 }
 
 pub trait Recreate {
@@ -19,5 +19,5 @@ pub trait Recreate {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction, Error>;
+    ) -> Result<Instruction>;
 }

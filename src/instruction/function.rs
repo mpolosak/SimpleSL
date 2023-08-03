@@ -9,7 +9,7 @@ use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{function_type::FunctionType, GetReturnType, Type, Variable},
-    Error,
+    Result,
 };
 use pest::iterators::Pair;
 use std::rc::Rc;
@@ -25,7 +25,7 @@ impl CreateInstruction for Function {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Instruction> {
         let mut inner = pair.into_inner();
         let params_pair = inner.next().unwrap();
         let params = Params(params_pair.into_inner().map(Param::from).collect());
@@ -33,7 +33,7 @@ impl CreateInstruction for Function {
             local_variables.layer_from_map(LocalVariableMap::from(params.clone()));
         let body = inner
             .map(|arg| Instruction::new(arg, interpreter, &mut local_variables))
-            .collect::<Result<Box<_>, _>>()?;
+            .collect::<Result<Box<_>>>()?;
         if body
             .iter()
             .all(|instruction| matches!(instruction, Instruction::Variable(_)))
@@ -48,7 +48,7 @@ impl CreateInstruction for Function {
 }
 
 impl Exec for Function {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, Error> {
+    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let mut fn_local_variables = LocalVariables::from(self.params.clone());
         let body = recreate_instructions(&self.body, &mut fn_local_variables, interpreter)?;
         Ok(Variable::Function(Rc::new(LangFunction {
@@ -63,7 +63,7 @@ impl Recreate for Function {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Instruction> {
         let mut local_variables = local_variables.layer_from_map(self.params.clone().into());
         let body = recreate_instructions(&self.body, &mut local_variables, interpreter)?;
         if body

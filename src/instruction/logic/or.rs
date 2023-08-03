@@ -5,7 +5,7 @@ use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{GetReturnType, Type, Variable},
-    Error,
+    Error, Result,
 };
 use pest::iterators::Pair;
 
@@ -20,7 +20,7 @@ impl CreateInstruction for Or {
         pair: Pair<Rule>,
         variables: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Instruction> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
         let lhs = Instruction::new(pair, variables, local_variables)?;
@@ -52,7 +52,7 @@ impl Or {
 }
 
 impl Exec for Or {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, Error> {
+    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let result1 = self.lhs.exec(interpreter)?;
         let result2 = self.rhs.exec(interpreter)?;
         match (result1, result2) {
@@ -69,7 +69,7 @@ impl Recreate for Or {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Instruction> {
         let lhs = self.lhs.recreate(local_variables, interpreter)?;
         let rhs = self.rhs.recreate(local_variables, interpreter)?;
         Ok(Self::create_from_instructions(lhs, rhs))

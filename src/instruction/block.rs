@@ -6,7 +6,7 @@ use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{GetReturnType, Type, Variable},
-    Error,
+    Result,
 };
 use pest::iterators::Pair;
 
@@ -20,12 +20,12 @@ impl CreateInstruction for Block {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Instruction> {
         let mut local_variables = local_variables.create_layer();
         let instructions = pair
             .into_inner()
             .map(|pair| Instruction::new(pair, interpreter, &mut local_variables))
-            .collect::<Result<Box<[Instruction]>, Error>>()?;
+            .collect::<Result<Box<[Instruction]>>>()?;
         if instructions
             .iter()
             .all(|instruction| matches!(instruction, Instruction::Variable(_)))
@@ -42,7 +42,7 @@ impl CreateInstruction for Block {
 }
 
 impl Exec for Block {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, Error> {
+    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let mut interpreter = interpreter.create_layer();
         interpreter.exec(&self.instructions)
     }
@@ -53,7 +53,7 @@ impl Recreate for Block {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Instruction> {
         let mut local_variables = local_variables.create_layer();
         let instructions =
             recreate_instructions(&self.instructions, &mut local_variables, interpreter)?;

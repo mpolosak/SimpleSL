@@ -2,16 +2,16 @@ use super::{Function, Params};
 use crate::{
     interpreter::Interpreter,
     variable::{GetReturnType, Type, Variable},
-    Error,
+    Result,
 };
 pub struct NativeFunction {
     pub params: Params,
     pub return_type: Type,
-    pub body: fn(&str, &mut Interpreter) -> Result<Variable, Error>,
+    pub body: fn(&str, &mut Interpreter) -> Result<Variable>,
 }
 
 impl Function for NativeFunction {
-    fn exec_intern(&self, name: &str, interpreter: &mut Interpreter) -> Result<Variable, Error> {
+    fn exec_intern(&self, name: &str, interpreter: &mut Interpreter) -> Result<Variable> {
         (self.body)(name, interpreter)
     }
     fn get_params(&self) -> &Params {

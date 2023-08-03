@@ -3,7 +3,7 @@ use crate::{
     instruction::Instruction,
     interpreter::Interpreter,
     variable::{GetReturnType, Type, Variable},
-    Error,
+    Result,
 };
 pub struct LangFunction {
     pub params: Params,
@@ -11,7 +11,7 @@ pub struct LangFunction {
 }
 
 impl Function for LangFunction {
-    fn exec_intern(&self, _name: &str, interpreter: &mut Interpreter) -> Result<Variable, Error> {
+    fn exec_intern(&self, _name: &str, interpreter: &mut Interpreter) -> Result<Variable> {
         interpreter.exec(&self.body)
     }
     fn get_params(&self) -> &Params {

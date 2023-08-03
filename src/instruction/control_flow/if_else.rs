@@ -5,7 +5,7 @@ use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{GetReturnType, Type, Variable},
-    Error,
+    Error, Result,
 };
 use pest::iterators::Pair;
 
@@ -21,7 +21,7 @@ impl CreateInstruction for IfElse {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Instruction> {
         let rule = pair.as_rule();
         let mut inner = pair.into_inner();
         let condition_pair = inner.next().unwrap();
@@ -66,7 +66,7 @@ impl CreateInstruction for IfElse {
 }
 
 impl Exec for IfElse {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<crate::variable::Variable, Error> {
+    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         if self.condition.exec(interpreter)? == Variable::Int(0) {
             self.if_false.exec(interpreter)
         } else {
@@ -80,7 +80,7 @@ impl Recreate for IfElse {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Instruction> {
         let condition = self.condition.recreate(local_variables, interpreter)?;
         match condition {
             Instruction::Variable(Variable::Int(0)) => {

@@ -160,30 +160,28 @@ fn get_type_from_attrs(attrs: &[Attribute]) -> Option<TokenStream> {
 fn return_type_from_syn_type(return_type: &Type) -> TokenStream {
     let return_type = quote!(#return_type).to_string();
     if return_type == "i64"
-        || return_type == "Result < i64, Error >"
+        || return_type == "Result < i64 >"
         || return_type == "bool"
-        || return_type == "Result < bool, Error >"
+        || return_type == "Result < bool >"
         || return_type == "usize"
-        || return_type == "Result < usize, Error >"
+        || return_type == "Result < usize >"
     {
         quote!(Type::Int)
-    } else if return_type == "f64" || return_type == "Result < f64, Error >" {
+    } else if return_type == "f64" || return_type == "Result < f64 >" {
         quote!(Type::Float)
     } else if return_type == "Rc < str >"
-        || return_type == "Result < Rc < str >, Error >"
+        || return_type == "Result < Rc < str > >"
         || return_type == "String"
-        || return_type == "Result < String, Error >"
+        || return_type == "Result < String >"
         || return_type == "& str"
-        || return_type == "Result < & str, Error >"
+        || return_type == "Result < & str >"
     {
         quote!(Type::String)
-    } else if return_type == "Rc < [Variable] >"
-        || return_type == "Result < Rc < [Variable] >, Error >"
-    {
+    } else if return_type == "Rc < [Variable] >" || return_type == "Result < Rc < [Variable] > >" {
         quote!(Type::Array(Type::Any.into()))
     } else if return_type.is_empty() {
         quote!(Type::Void)
-    } else if return_type == "Variable" || return_type == "Result < Variable, Error >" {
+    } else if return_type == "Variable" || return_type == "Result < Variable >" {
         quote!(Type::Any)
     } else {
         panic!("{return_type} type isn't allowed")
