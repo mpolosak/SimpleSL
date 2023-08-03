@@ -16,10 +16,10 @@ mod set;
 mod traits;
 mod tuple;
 use crate::{
-    error::Error,
     interpreter::Interpreter,
     parse::Rule,
     variable::{function_type::FunctionType, GetReturnType, GetType, Type, Variable},
+    Error,
 };
 use pest::iterators::Pair;
 use std::rc::Rc;

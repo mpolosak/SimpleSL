@@ -1,7 +1,7 @@
 pub mod function_type;
 pub mod type_set;
 mod variable_type;
-use crate::{error::Error, function::Function, join, parse::*, pest::Parser};
+use crate::{function::Function, join, parse::*, pest::Parser, Error};
 use pest::iterators::Pair;
 use std::{fmt, rc::Rc, str::FromStr};
 pub use variable_type::{GetReturnType, GetType, Type};
@@ -209,8 +209,8 @@ mod tests {
     }
     #[test]
     fn check_variable_from_str() {
-        use crate::error::Error;
         use crate::variable::Variable;
+        use crate::Error;
         use std::str::FromStr;
         assert_eq!(Variable::from_str(" 15"), Ok(Variable::Int(15)));
         assert_eq!(Variable::from_str(" 7.5 "), Ok(Variable::Float(7.5)));

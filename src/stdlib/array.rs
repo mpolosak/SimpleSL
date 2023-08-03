@@ -1,8 +1,8 @@
 use crate::{
-    error::Error,
     function::{Function, NativeFunction, Param, Params},
     interpreter::Interpreter,
     variable::{Type, Variable},
+    Error,
 };
 use simplesl_macros::export_function;
 use std::{iter::zip, rc::Rc};

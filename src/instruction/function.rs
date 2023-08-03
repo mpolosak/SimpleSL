@@ -5,11 +5,11 @@ use super::{
     CreateInstruction, Instruction,
 };
 use crate::{
-    error::Error,
     function::{LangFunction, Param, Params},
     interpreter::Interpreter,
     parse::Rule,
     variable::{function_type::FunctionType, GetReturnType, Type, Variable},
+    Error,
 };
 use pest::iterators::Pair;
 use std::rc::Rc;

@@ -1,8 +1,8 @@
 use super::{function_type::FunctionType, type_set::TypeSet};
 use crate::{
-    error::Error,
     join,
     parse::{Rule, SimpleSLParser},
+    Error,
 };
 use pest::{iterators::Pair, Parser};
 use std::{collections::HashSet, fmt::Display, hash::Hash, iter::zip, rc::Rc, str::FromStr};

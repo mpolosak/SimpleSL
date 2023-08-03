@@ -9,9 +9,9 @@ pub use self::{
     param::{Param, Params},
 };
 use crate::{
-    error::Error,
     interpreter::Interpreter,
     variable::{function_type::FunctionType, GetReturnType, GetType, Type, Variable},
+    Error,
 };
 use std::{fmt, iter::zip};
 

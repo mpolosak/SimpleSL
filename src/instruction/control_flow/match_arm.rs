@@ -1,5 +1,4 @@
 use crate::{
-    error::Error,
     instruction::{
         local_variable::{LocalVariable, LocalVariables},
         recreate_instructions, Exec, Instruction, Recreate,
@@ -7,6 +6,7 @@ use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{GetType, Type, Variable},
+    Error,
 };
 use pest::iterators::Pair;
 use std::rc::Rc;

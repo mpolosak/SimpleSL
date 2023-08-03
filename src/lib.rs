@@ -1,4 +1,4 @@
-pub mod error;
+mod error;
 pub mod function;
 pub mod instruction;
 pub mod interpreter;
@@ -8,6 +8,7 @@ pub mod variable;
 extern crate pest;
 #[macro_use]
 extern crate pest_derive;
+pub use error::Error;
 use std::fmt::{Debug, Display};
 
 pub fn join(array: &[impl Display], separator: &str) -> String {

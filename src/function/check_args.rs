@@ -1,7 +1,7 @@
 use crate::{
-    error::Error,
     function::{Param, Params},
     variable::Type,
+    Error,
 };
 use std::iter::zip;
 

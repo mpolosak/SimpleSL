@@ -2,9 +2,9 @@ use crate::instruction::{
     local_variable::LocalVariables, traits::CreateInstruction, Exec, Instruction, Recreate,
 };
 use crate::{
-    error::Error,
     interpreter::Interpreter,
     variable::{GetReturnType, Type, Variable},
+    Error,
 };
 use pest::iterators::Pair;
 

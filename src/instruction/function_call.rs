@@ -6,10 +6,10 @@ use super::{
     Instruction,
 };
 use crate::{
-    error::Error,
     function::{check_args, Function},
     interpreter::Interpreter,
     variable::{GetReturnType, Type, Variable},
+    Error,
 };
 use std::rc::Rc;
 

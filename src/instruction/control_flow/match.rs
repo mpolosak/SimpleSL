@@ -1,10 +1,10 @@
 use super::match_arm::MatchArm;
 use crate::{
-    error::Error,
     instruction::{local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate},
     interpreter::Interpreter,
     parse::Rule,
     variable::{GetReturnType, Type, Variable},
+    Error,
 };
 use pest::iterators::Pair;
 

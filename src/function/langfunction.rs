@@ -1,9 +1,9 @@
 use super::{Function, Params};
 use crate::{
-    error::Error,
     instruction::Instruction,
     interpreter::Interpreter,
     variable::{GetReturnType, Type, Variable},
+    Error,
 };
 pub struct LangFunction {
     pub params: Params,

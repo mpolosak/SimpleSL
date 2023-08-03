@@ -1,7 +1,6 @@
 use crate::instruction::{local_variable::LocalVariables, Exec, Instruction};
 use crate::{
-    error::Error, function::NativeFunction, parse::*, pest::Parser, stdlib::add_std_lib,
-    variable::*,
+    function::NativeFunction, parse::*, pest::Parser, stdlib::add_std_lib, variable::*, Error,
 };
 use std::{
     collections::HashMap,

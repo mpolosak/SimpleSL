@@ -1,5 +1,5 @@
 use super::{local_variable::LocalVariables, Instruction};
-use crate::{error::Error, interpreter::Interpreter, parse::Rule, variable::Variable};
+use crate::{interpreter::Interpreter, parse::Rule, variable::Variable, Error};
 use pest::iterators::Pair;
 
 pub trait CreateInstruction {

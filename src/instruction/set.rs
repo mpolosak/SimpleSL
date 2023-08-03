@@ -4,10 +4,10 @@ use super::{
     Instruction,
 };
 use crate::{
-    error::Error,
     interpreter::Interpreter,
     parse::Rule,
     variable::{GetReturnType, Type},
+    Error,
 };
 use pest::iterators::Pair;
 use std::rc::Rc;

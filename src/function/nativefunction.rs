@@ -1,8 +1,8 @@
 use super::{Function, Params};
 use crate::{
-    error::Error,
     interpreter::Interpreter,
     variable::{GetReturnType, Type, Variable},
+    Error,
 };
 pub struct NativeFunction {
     pub params: Params,

@@ -4,9 +4,9 @@ use crate::instruction::{
 use crate::interpreter::Interpreter;
 use crate::variable::Variable;
 use crate::{
-    error::Error,
     parse::Rule,
     variable::{GetReturnType, Type},
+    Error,
 };
 use pest::iterators::Pair;
 

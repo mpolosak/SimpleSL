@@ -1,7 +1,7 @@
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
-use crate::{error::Error, interpreter::Interpreter, parse::Rule, variable::Variable};
+use crate::{interpreter::Interpreter, parse::Rule, variable::Variable, Error};
 use pest::iterators::Pair;
 
 #[derive(Clone, Debug)]

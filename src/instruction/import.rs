@@ -3,10 +3,10 @@ use super::{
     Recreate,
 };
 use crate::{
-    error::Error,
     interpreter::Interpreter,
     parse::Rule,
     variable::{GetReturnType, Type, Variable},
+    Error,
 };
 use pest::iterators::Pair;
 

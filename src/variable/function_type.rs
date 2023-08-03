@@ -1,10 +1,7 @@
-use std::{fmt::Display, iter::zip};
-
-use pest::iterators::Pair;
-
-use crate::{join, parse::Rule};
-
 use super::{GetReturnType, Type};
+use crate::{join, parse::Rule};
+use pest::iterators::Pair;
+use std::{fmt::Display, iter::zip};
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct FunctionType {

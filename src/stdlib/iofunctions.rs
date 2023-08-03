@@ -1,8 +1,8 @@
 use crate::{
-    error::Error,
     function::{NativeFunction, Param, Params},
     interpreter::Interpreter,
     variable::*,
+    Error,
 };
 use simplesl_macros::export_function;
 use std::io;
