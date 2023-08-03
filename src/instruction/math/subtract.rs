@@ -11,8 +11,8 @@ use pest::iterators::Pair;
 
 #[derive(Clone, Debug)]
 pub struct Subtract {
-    lhs: Instruction,
-    rhs: Instruction,
+    minuend: Instruction,
+    subtrahend: Instruction,
 }
 
 impl CreateInstruction for Subtract {
@@ -23,12 +23,26 @@ impl CreateInstruction for Subtract {
     ) -> Result<Instruction> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
-        let lhs = Instruction::new(pair, interpreter, local_variables)?;
+        let minuend = Instruction::new(pair, interpreter, local_variables)?;
         let pair = inner.next().unwrap();
-        let rhs = Instruction::new(pair, interpreter, local_variables)?;
-        match (lhs.get_return_type(), rhs.get_return_type()) {
+        let subtrahend = Instruction::new(pair, interpreter, local_variables)?;
+        match (minuend.get_return_type(), subtrahend.get_return_type()) {
             (Type::Int, Type::Int) | (Type::Float, Type::Float) => {
-                Ok(Self::create_from_instructions(lhs, rhs))
+                Ok(Self::create_from_instructions(minuend, subtrahend))
+            }
+            (Type::Array(var_type), Type::Int) | (Type::Int, Type::Array(var_type))
+                if var_type == Type::Int.into() =>
+            {
+                Ok(Self::create_from_instructions(minuend, subtrahend))
+            }
+            (Type::Array(var_type), Type::Float) | (Type::Float, Type::Array(var_type))
+                if var_type == Type::Float.into() =>
+            {
+                Ok(Self::create_from_instructions(minuend, subtrahend))
+            }
+            (Type::EmptyArray, Type::Int | Type::Float)
+            | (Type::Int | Type::Float, Type::EmptyArray) => {
+                Ok(Self::create_from_instructions(minuend, subtrahend))
             }
             _ => Err(Error::OperandsMustBeBothIntOrBothFloat("-")),
         }
@@ -36,30 +50,44 @@ impl CreateInstruction for Subtract {
 }
 
 impl Subtract {
-    fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
-        match (lhs, rhs) {
-            (
-                Instruction::Variable(Variable::Int(value1)),
-                Instruction::Variable(Variable::Int(value2)),
-            ) => Instruction::Variable((value1 - value2).into()),
-            (
-                Instruction::Variable(Variable::Float(value1)),
-                Instruction::Variable(Variable::Float(value2)),
-            ) => Instruction::Variable((value1 - value2).into()),
-            (lhs, rhs) => Self { lhs, rhs }.into(),
+    fn subtract(minuend: Variable, subtrahend: Variable) -> Variable {
+        match (minuend, subtrahend) {
+            (Variable::Int(lhs), Variable::Int(rhs)) => (lhs - rhs).into(),
+            (Variable::Float(lhs), Variable::Float(rhs)) => (lhs - rhs).into(),
+            (array @ Variable::Array(_, Type::EmptyArray), _)
+            | (_, array @ Variable::Array(_, Type::EmptyArray)) => array,
+            (minuend, Variable::Array(array, _)) => array
+                .iter()
+                .cloned()
+                .map(|subtrahend| Self::subtract(minuend.clone(), subtrahend))
+                .collect(),
+            (Variable::Array(array, _), subtrahend) => array
+                .iter()
+                .cloned()
+                .map(|minuend| Self::subtract(minuend, subtrahend.clone()))
+                .collect(),
+            (minuend, subtrahend) => panic!("Tried to subtract {minuend} from {subtrahend}"),
+        }
+    }
+    fn create_from_instructions(minuend: Instruction, subtrahend: Instruction) -> Instruction {
+        match (minuend, subtrahend) {
+            (Instruction::Variable(minuend), Instruction::Variable(rhs)) => {
+                Self::subtract(minuend, rhs).into()
+            }
+            (minuend, subtrahend) => Self {
+                minuend,
+                subtrahend,
+            }
+            .into(),
         }
     }
 }
 
 impl Exec for Subtract {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
-        let lhs = self.lhs.exec(interpreter)?;
-        let rhs = self.rhs.exec(interpreter)?;
-        match (lhs, rhs) {
-            (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 - value2).into()),
-            (Variable::Float(value1), Variable::Float(value2)) => Ok((value1 - value2).into()),
-            _ => panic!(),
-        }
+        let minuend = self.minuend.exec(interpreter)?;
+        let subtrahend = self.subtrahend.exec(interpreter)?;
+        Ok(Self::subtract(minuend, subtrahend))
     }
 }
 
@@ -69,15 +97,15 @@ impl Recreate for Subtract {
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
     ) -> Result<Instruction> {
-        let lhs = self.lhs.recreate(local_variables, interpreter)?;
-        let rhs = self.rhs.recreate(local_variables, interpreter)?;
-        Ok(Self::create_from_instructions(lhs, rhs))
+        let minuend = self.minuend.recreate(local_variables, interpreter)?;
+        let subtrahend = self.subtrahend.recreate(local_variables, interpreter)?;
+        Ok(Self::create_from_instructions(minuend, subtrahend))
     }
 }
 
 impl GetReturnType for Subtract {
     fn get_return_type(&self) -> Type {
-        self.lhs.get_return_type()
+        self.minuend.get_return_type()
     }
 }
 
