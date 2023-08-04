@@ -1,4 +1,5 @@
 mod array;
+mod array_ops;
 mod at;
 mod bin;
 mod block;
@@ -26,6 +27,7 @@ use std::rc::Rc;
 pub use traits::{CreateInstruction, Exec, Recreate};
 use {
     array::Array,
+    array_ops::Map,
     at::At,
     bin::{BinAnd, BinNot, BinOr, LShift, RShift, Xor},
     block::Block,
@@ -78,6 +80,7 @@ pub enum Instruction {
     SetIfElse(Box<SetIfElse>),
     Match(Box<Match>),
     Import(Import),
+    Map(Box<Map>),
 }
 
 impl Instruction {
@@ -156,6 +159,7 @@ impl Instruction {
             }
             Rule::r#match => Match::create_instruction(pair, interpreter, local_variables),
             Rule::import => Import::create_instruction(pair, interpreter, local_variables),
+            Rule::map => Map::create_instruction(pair, interpreter, local_variables),
             _ => panic!(),
         }
     }
@@ -218,6 +222,7 @@ impl Exec for Instruction {
             Self::SetIfElse(set_if) => set_if.exec(interpreter),
             Self::Match(match_stm) => match_stm.exec(interpreter),
             Self::Import(import) => import.exec(interpreter),
+            Self::Map(map) => map.exec(interpreter),
         }
     }
 }
@@ -277,6 +282,7 @@ impl Recreate for Instruction {
             Self::Variable(variable) => Ok(Self::Variable(variable.clone())),
             Self::SetIfElse(set_if_else) => set_if_else.recreate(local_variables, interpreter),
             Self::Import(import) => import.recreate(local_variables, interpreter),
+            Self::Map(map) => map.recreate(local_variables, interpreter),
         }
     }
 }
@@ -316,6 +322,7 @@ impl GetReturnType for Instruction {
             Self::Or(or) => or.get_return_type(),
             Self::And(and) => and.get_return_type(),
             Self::Modulo(modulo) => modulo.get_return_type(),
+            Self::Map(map) => map.get_return_type(),
             Self::Equal(..) => Type::Int,
         }
     }

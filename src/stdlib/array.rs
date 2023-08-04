@@ -18,19 +18,6 @@ pub fn add_functions(interpreter: &mut Interpreter) {
     }
 
     #[export_function]
-    fn for_each(
-        interpreter: &mut Interpreter,
-        array: &[Variable],
-        #[var_type("function(any)->any")] function: Rc<dyn Function>,
-    ) -> Result<Rc<[Variable]>> {
-        let new_array = array
-            .iter()
-            .map(|var| function.exec("function", interpreter, &[var.clone()]))
-            .collect::<Result<Rc<[Variable]>>>()?;
-        Ok(new_array)
-    }
-
-    #[export_function]
     fn filter(
         interpreter: &mut Interpreter,
         array: &[Variable],

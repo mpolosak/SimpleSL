@@ -22,6 +22,7 @@ pub enum Error {
     IO(std::io::Error),
     Parsing(Box<pest::error::Error<Rule>>),
     ArgumentDoesntContainType,
+    CannotDo(Type, &'static str, Type),
 }
 
 impl std::error::Error for Error {}
@@ -80,6 +81,9 @@ impl fmt::Display for Error {
             Self::IO(error) => write!(f, "{error}"),
             Self::Parsing(error) => write!(f, "{error}"),
             Self::ArgumentDoesntContainType => write!(f, "Argument doesn't contain type"),
+            Self::CannotDo(var_type1, op, var_type2) => {
+                write!(f, "Cannot do {var_type1} {op} {var_type2}")
+            }
         }
     }
 }
