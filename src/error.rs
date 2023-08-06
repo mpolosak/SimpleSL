@@ -5,9 +5,6 @@ use std::{fmt, rc::Rc};
 pub enum Error {
     VariableDoesntExist(Box<str>),
     WrongType(Rc<str>, Type),
-    OperandsMustBeBothIntOrBothFloat(&'static str),
-    BothOperandsMustBeInt(&'static str),
-    OperandMustBeInt(&'static str),
     WrongNumberOfArguments(Box<str>, usize),
     IndexToBig,
     CannotAdd(Type, Type),
@@ -22,7 +19,8 @@ pub enum Error {
     IO(std::io::Error),
     Parsing(Box<pest::error::Error<Rule>>),
     ArgumentDoesntContainType,
-    CannotDo(Type, &'static str, Type),
+    CannotDo(&'static str, Type),
+    CannotDo2(Type, &'static str, Type),
 }
 
 impl std::error::Error for Error {}
@@ -35,18 +33,6 @@ impl fmt::Display for Error {
             }
             Self::WrongType(var_name, var_type) => {
                 write!(f, "{var_name} should be {var_type}")
-            }
-            Self::OperandsMustBeBothIntOrBothFloat(operator) => {
-                write!(
-                    f,
-                    "Arguments of {operator} operator must be both int or both float",
-                )
-            }
-            Self::BothOperandsMustBeInt(operator) => {
-                write!(f, "Both arguments of {operator} operator must be int",)
-            }
-            Self::OperandMustBeInt(operator) => {
-                write!(f, "Argument of {operator} operator must be int",)
             }
             Self::WrongNumberOfArguments(name, 0) => {
                 write!(f, "{name} requires no arguments but some passed")
@@ -81,7 +67,10 @@ impl fmt::Display for Error {
             Self::IO(error) => write!(f, "{error}"),
             Self::Parsing(error) => write!(f, "{error}"),
             Self::ArgumentDoesntContainType => write!(f, "Argument doesn't contain type"),
-            Self::CannotDo(var_type1, op, var_type2) => {
+            Self::CannotDo(op, var_type) => {
+                write!(f, "Cannot do {op} {var_type}")
+            }
+            Self::CannotDo2(var_type1, op, var_type2) => {
                 write!(f, "Cannot do {var_type1} {op} {var_type2}")
             }
         }

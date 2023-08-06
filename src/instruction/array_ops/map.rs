@@ -25,7 +25,7 @@ impl CreateInstruction for Map {
         if Self::can_be_used(&array, &function) {
             Ok(Self { array, function }.into())
         } else {
-            Err(Error::CannotDo(
+            Err(Error::CannotDo2(
                 array.get_return_type(),
                 "@",
                 function.get_return_type(),

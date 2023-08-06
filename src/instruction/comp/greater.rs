@@ -26,9 +26,17 @@ impl CreateInstruction for Greater {
         let rhs = Instruction::new(pair, interpreter, local_variables)?;
         match (can_be_used(&lhs, &rhs), rule) {
             (true, Rule::greater) => Ok(Self::create_from_instructions(lhs, rhs)),
-            (true, Rule::lower_equal) => Ok(Self::create_from_instructions(rhs, lhs)),
-            (_, Rule::greater_equal) => Err(Error::OperandsMustBeBothIntOrBothFloat(">")),
-            _ => Err(Error::OperandsMustBeBothIntOrBothFloat("<")),
+            (true, Rule::lower) => Ok(Self::create_from_instructions(rhs, lhs)),
+            (_, Rule::greater) => Err(Error::CannotDo2(
+                lhs.get_return_type(),
+                ">",
+                rhs.get_return_type(),
+            )),
+            _ => Err(Error::CannotDo2(
+                lhs.get_return_type(),
+                "<",
+                rhs.get_return_type(),
+            )),
         }
     }
 }

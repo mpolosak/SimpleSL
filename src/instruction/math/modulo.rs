@@ -37,7 +37,11 @@ impl CreateInstruction for Modulo {
             | (Type::Int | Type::Float | Type::String, Type::EmptyArray) => {
                 Self::create_from_instructions(dividend, divisor)
             }
-            _ => Err(Error::BothOperandsMustBeInt("%")),
+            _ => Err(Error::CannotDo2(
+                dividend.get_return_type(),
+                "%",
+                divisor.get_return_type(),
+            )),
         }
     }
 }

@@ -44,7 +44,11 @@ impl CreateInstruction for Subtract {
             | (Type::Int | Type::Float, Type::EmptyArray) => {
                 Ok(Self::create_from_instructions(minuend, subtrahend))
             }
-            _ => Err(Error::OperandsMustBeBothIntOrBothFloat("-")),
+            _ => Err(Error::CannotDo2(
+                minuend.get_return_type(),
+                "-",
+                subtrahend.get_return_type(),
+            )),
         }
     }
 }

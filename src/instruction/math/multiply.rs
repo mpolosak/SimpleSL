@@ -44,7 +44,11 @@ impl CreateInstruction for Multiply {
             | (Type::Int | Type::Float, Type::EmptyArray) => {
                 Ok(Self::create_from_instructions(lhs, rhs))
             }
-            _ => Err(Error::OperandsMustBeBothIntOrBothFloat("*")),
+            _ => Err(Error::CannotDo2(
+                lhs.get_return_type(),
+                "*",
+                rhs.get_return_type(),
+            )),
         }
     }
 }

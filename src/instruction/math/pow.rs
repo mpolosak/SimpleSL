@@ -44,7 +44,11 @@ impl CreateInstruction for Pow {
             | (Type::Int | Type::Float, Type::EmptyArray) => {
                 Self::create_from_instructions(base, exp)
             }
-            _ => Err(Error::OperandsMustBeBothIntOrBothFloat("**")),
+            _ => Err(Error::CannotDo2(
+                base.get_return_type(),
+                "**",
+                exp.get_return_type(),
+            )),
         }
     }
 }

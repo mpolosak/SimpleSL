@@ -25,7 +25,7 @@ impl CreateInstruction for Not {
         if return_type == Type::Int || return_type == Type::Array(Type::Int.into()) {
             Ok(Self::create_from_instruction(instruction))
         } else {
-            Err(Error::OperandMustBeInt("!"))
+            Err(Error::CannotDo("!", instruction.get_return_type()))
         }
     }
 }

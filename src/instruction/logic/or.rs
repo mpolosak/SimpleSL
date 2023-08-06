@@ -37,7 +37,11 @@ impl CreateInstruction for Or {
             | (Type::Int | Type::Float | Type::String, Type::EmptyArray) => {
                 Ok(Self::create_from_instructions(lhs, rhs))
             }
-            _ => Err(Error::BothOperandsMustBeInt("||")),
+            _ => Err(Error::CannotDo2(
+                lhs.get_return_type(),
+                "||",
+                rhs.get_return_type(),
+            )),
         }
     }
 }

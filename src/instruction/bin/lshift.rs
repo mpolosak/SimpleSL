@@ -31,7 +31,11 @@ impl CreateInstruction for LShift {
         if can_be_used(&lhs, &rhs) {
             Self::create_from_instructions(lhs, rhs)
         } else {
-            Err(Error::BothOperandsMustBeInt("<<"))
+            Err(Error::CannotDo2(
+                lhs.get_return_type(),
+                "<<",
+                rhs.get_return_type(),
+            ))
         }
     }
 }
