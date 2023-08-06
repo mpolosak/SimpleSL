@@ -18,21 +18,6 @@ pub fn add_functions(interpreter: &mut Interpreter) {
     }
 
     #[export_function]
-    fn filter(
-        interpreter: &mut Interpreter,
-        array: &[Variable],
-        #[var_type("function(any)->int")] function: Rc<dyn Function>,
-    ) -> Result<Rc<[Variable]>> {
-        let mut new_array = Vec::new();
-        for element in array.iter() {
-            if function.exec("function", interpreter, &[element.clone()])? != Variable::Int(0) {
-                new_array.push(element.clone());
-            }
-        }
-        Ok(new_array.into())
-    }
-
-    #[export_function]
     fn reduce(
         interpreter: &mut Interpreter,
         array: &[Variable],

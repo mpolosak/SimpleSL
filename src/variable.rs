@@ -173,6 +173,12 @@ impl From<Rc<[Variable]>> for Variable {
     }
 }
 
+impl From<Vec<Variable>> for Variable {
+    fn from(value: Vec<Variable>) -> Self {
+        Rc::<[Self]>::from(value).into()
+    }
+}
+
 impl From<()> for Variable {
     fn from(_value: ()) -> Self {
         Self::Void

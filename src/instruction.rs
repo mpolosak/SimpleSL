@@ -27,7 +27,7 @@ use std::rc::Rc;
 pub use traits::{CreateInstruction, Exec, Recreate};
 use {
     array::Array,
-    array_ops::Map,
+    array_ops::{Filter, Map},
     at::At,
     bin::{BinAnd, BinNot, BinOr, LShift, RShift, Xor},
     block::Block,
@@ -81,6 +81,7 @@ pub enum Instruction {
     Match(Box<Match>),
     Import(Import),
     Map(Box<Map>),
+    Filter(Box<Filter>),
 }
 
 impl Instruction {
@@ -160,6 +161,7 @@ impl Instruction {
             Rule::r#match => Match::create_instruction(pair, interpreter, local_variables),
             Rule::import => Import::create_instruction(pair, interpreter, local_variables),
             Rule::map => Map::create_instruction(pair, interpreter, local_variables),
+            Rule::filter => Filter::create_instruction(pair, interpreter, local_variables),
             _ => panic!(),
         }
     }
@@ -223,6 +225,7 @@ impl Exec for Instruction {
             Self::Match(match_stm) => match_stm.exec(interpreter),
             Self::Import(import) => import.exec(interpreter),
             Self::Map(map) => map.exec(interpreter),
+            Self::Filter(filter) => filter.exec(interpreter),
         }
     }
 }
@@ -283,6 +286,7 @@ impl Recreate for Instruction {
             Self::SetIfElse(set_if_else) => set_if_else.recreate(local_variables, interpreter),
             Self::Import(import) => import.recreate(local_variables, interpreter),
             Self::Map(map) => map.recreate(local_variables, interpreter),
+            Self::Filter(filter) => filter.recreate(local_variables, interpreter),
         }
     }
 }
@@ -323,6 +327,7 @@ impl GetReturnType for Instruction {
             Self::And(and) => and.get_return_type(),
             Self::Modulo(modulo) => modulo.get_return_type(),
             Self::Map(map) => map.get_return_type(),
+            Self::Filter(filter) => filter.get_return_type(),
             Self::Equal(..) => Type::Int,
         }
     }
