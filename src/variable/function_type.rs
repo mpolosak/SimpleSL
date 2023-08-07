@@ -58,3 +58,59 @@ impl From<FunctionType> for Type {
         Self::Function(value.into())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::variable::{type_set::TypeSet, Type};
+
+    use super::FunctionType;
+    #[test]
+    fn check_function_type_matches() {
+        let function_type = FunctionType {
+            params: [Type::Any].into(),
+            return_type: Type::Int,
+        };
+        let function_type2 = FunctionType {
+            params: [Type::Int].into(),
+            return_type: Type::Any,
+        };
+        assert!(function_type.matches(&function_type));
+        assert!(function_type2.matches(&function_type2));
+        assert!(function_type.matches(&function_type2));
+        assert!(!function_type2.matches(&function_type));
+        let function_type = FunctionType {
+            params: [
+                Type::Any,
+                Type::Int,
+                Type::Multi(
+                    TypeSet::from([Type::Float, Type::String, Type::Array(Type::Any.into())])
+                        .into(),
+                ),
+            ]
+            .into(),
+            return_type: Type::Int,
+        };
+        let function_type2 = FunctionType {
+            params: [Type::Int].into(),
+            return_type: Type::Any,
+        };
+        let function_type3 = FunctionType {
+            params: [
+                Type::String,
+                Type::Int,
+                Type::Multi(TypeSet::from([Type::Float, Type::String]).into()),
+            ]
+            .into(),
+            return_type: Type::Multi(TypeSet::from([Type::Float, Type::String, Type::Int]).into()),
+        };
+        assert!(function_type.matches(&function_type));
+        assert!(function_type2.matches(&function_type2));
+        assert!(function_type3.matches(&function_type3));
+        assert!(!function_type.matches(&function_type2));
+        assert!(!function_type2.matches(&function_type));
+        assert!(function_type.matches(&function_type3));
+        assert!(!function_type3.matches(&function_type));
+        assert!(!function_type3.matches(&function_type2));
+        assert!(!function_type2.matches(&function_type3));
+    }
+}
