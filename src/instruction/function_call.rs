@@ -1,49 +1,97 @@
 use super::{
-    error_wrong_type, exec_instructions,
-    local_variable::LocalVariables,
+    exec_instructions,
+    function::Function,
+    local_variable::{LocalVariable, LocalVariables},
     recreate_instructions,
     traits::{Exec, Recreate},
-    Instruction,
+    CreateInstruction, Instruction,
 };
 use crate::{
-    function::{check_args, Function},
+    function::{check_args, Params},
     interpreter::Interpreter,
-    variable::{GetReturnType, Type, Variable},
-    Result,
+    variable::{function_type::FunctionType, GetReturnType, Type, Variable},
+    Error, Result,
 };
-use std::rc::Rc;
 
 #[derive(Clone, Debug)]
 pub struct FunctionCall {
-    pub function: Rc<dyn Function>,
+    pub function: Instruction,
     pub args: Box<[Instruction]>,
 }
 
-impl FunctionCall {
-    pub fn new(
-        var_name: &str,
+impl CreateInstruction for FunctionCall {
+    fn create_instruction(
+        pair: pest::iterators::Pair<crate::parse::Rule>,
         interpreter: &Interpreter,
-        args: Box<[Instruction]>,
-    ) -> Result<Self> {
-        let Variable::Function(function) = interpreter.get_variable(var_name)? else {
-            return Err(error_wrong_type(&args, var_name.into()));
-        };
-        let params = function.get_params();
+        local_variables: &mut LocalVariables,
+    ) -> Result<Instruction> {
+        let mut inner = pair.into_inner();
+        let pair = inner.next().unwrap();
+        let pair_str = pair.as_str();
+        let function = Instruction::new(pair, interpreter, local_variables)?;
+        let args = inner
+            .next()
+            .unwrap()
+            .into_inner()
+            .map(|pair| Instruction::new(pair, interpreter, local_variables))
+            .collect::<Result<Box<_>>>()?;
+        match &function {
+            Instruction::Variable(Variable::Function(function2)) => {
+                let params = function2.get_params();
+                Self::check_args_with_params(pair_str, params, &args)?;
+                Ok(Self { function, args }.into())
+            }
+            Instruction::LocalVariable(_, LocalVariable::Function(params, _))
+            | Instruction::Function(Function { params, .. }) => {
+                Self::check_args_with_params(pair_str, params, &args)?;
+                Ok(Self { function, args }.into())
+            }
+            instruction => {
+                Self::check_args_with_type(pair_str, instruction.get_return_type(), &args)?;
+                Ok(Self { function, args }.into())
+            }
+        }
+    }
+}
+
+impl FunctionCall {
+    fn check_args_with_params(pair_str: &str, params: &Params, args: &[Instruction]) -> Result<()> {
         check_args(
-            var_name,
+            pair_str,
             params,
             &args
                 .iter()
                 .map(Instruction::get_return_type)
                 .collect::<Box<[Type]>>(),
-        )?;
-        Ok(Self { function, args })
+        )
+    }
+    fn check_args_with_type(pair_str: &str, var_type: Type, args: &[Instruction]) -> Result<()> {
+        let params = args
+            .iter()
+            .map(Instruction::get_return_type)
+            .collect::<Box<[Type]>>();
+        let expected = Type::Function(
+            FunctionType {
+                params,
+                return_type: Type::Any,
+            }
+            .into(),
+        );
+        if var_type.matches(&expected) {
+            Ok(())
+        } else {
+            Err(Error::WrongType(pair_str.into(), expected))
+        }
     }
 }
+
 impl Exec for FunctionCall {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let args = exec_instructions(&self.args, interpreter)?;
-        self.function.exec("name", interpreter, &args)
+        let Variable::Function(function) = self.function.exec(interpreter)? else {
+            panic!("Tried to call not function")
+        };
+        function.exec("name", interpreter, &args)
     }
 }
 
@@ -64,12 +112,15 @@ impl Recreate for FunctionCall {
 
 impl From<FunctionCall> for Instruction {
     fn from(value: FunctionCall) -> Self {
-        Self::FunctionCall(value)
+        Self::FunctionCall(value.into())
     }
 }
 
 impl GetReturnType for FunctionCall {
     fn get_return_type(&self) -> Type {
-        self.function.get_return_type()
+        let Type::Function(function_type) = self.function.get_return_type() else {
+            panic!();
+        };
+        function_type.return_type.clone()
     }
 }

@@ -9,7 +9,6 @@ mod destruct_tuple;
 mod function;
 mod function_call;
 mod import;
-mod local_function_call;
 pub mod local_variable;
 mod logic;
 mod math;
@@ -19,8 +18,8 @@ mod tuple;
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
-    variable::{function_type::FunctionType, GetReturnType, GetType, Type, Variable},
-    Error, Result,
+    variable::{GetReturnType, GetType, Type, Variable},
+    Result,
 };
 use pest::iterators::Pair;
 use std::rc::Rc;
@@ -37,7 +36,6 @@ use {
     function::Function,
     function_call::FunctionCall,
     import::Import,
-    local_function_call::LocalFunctionCall,
     local_variable::{LocalVariable, LocalVariables},
     logic::{And, Not, Or},
     math::{Add, Divide, Modulo, Multiply, Pow, Subtract},
@@ -47,8 +45,7 @@ use {
 
 #[derive(Clone, Debug)]
 pub enum Instruction {
-    FunctionCall(FunctionCall),
-    LocalFunctionCall(LocalFunctionCall),
+    FunctionCall(Box<FunctionCall>),
     Variable(Variable),
     LocalVariable(Rc<str>, LocalVariable),
     Array(Array),
@@ -130,7 +127,9 @@ impl Instruction {
             Rule::xor => Xor::create_instruction(pair, interpreter, local_variables),
             Rule::rshift => RShift::create_instruction(pair, interpreter, local_variables),
             Rule::lshift => LShift::create_instruction(pair, interpreter, local_variables),
-            Rule::function_call => Self::create_function_call(pair, interpreter, local_variables),
+            Rule::function_call => {
+                FunctionCall::create_instruction(pair, interpreter, local_variables)
+            }
             Rule::int | Rule::float | Rule::string | Rule::void => {
                 let variable = Variable::try_from(pair).unwrap();
                 Ok(Self::Variable(variable))
@@ -167,34 +166,12 @@ impl Instruction {
             _ => panic!(),
         }
     }
-    fn create_function_call(
-        pair: Pair<'_, Rule>,
-        interpreter: &Interpreter,
-        local_variables: &mut LocalVariables,
-    ) -> Result<Instruction> {
-        let mut inner = pair.into_inner();
-        let var_name = inner.next().unwrap().as_str();
-        let args = inner
-            .next()
-            .unwrap()
-            .into_inner()
-            .map(|pair| Self::new(pair, interpreter, local_variables))
-            .collect::<Result<Box<_>>>()?;
-        match local_variables.get(var_name) {
-            Some(LocalVariable::Function(params, return_type, ..)) => {
-                Ok(LocalFunctionCall::new(var_name, params, args, return_type.clone())?.into())
-            }
-            Some(_) => Err(error_wrong_type(&args, var_name.into())),
-            None => Ok(FunctionCall::new(var_name, interpreter, args)?.into()),
-        }
-    }
 }
 
 impl Exec for Instruction {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         match self {
             Self::FunctionCall(function_call) => function_call.exec(interpreter),
-            Self::LocalFunctionCall(function_call) => function_call.exec(interpreter),
             Self::Variable(var) => Ok(var.clone()),
             Self::LocalVariable(name, _) => Ok(interpreter.get_variable(name).unwrap()),
             Self::Array(array) => array.exec(interpreter),
@@ -240,9 +217,6 @@ impl Recreate for Instruction {
         interpreter: &Interpreter,
     ) -> Result<Instruction> {
         match self {
-            Self::LocalFunctionCall(function_call) => {
-                function_call.recreate(local_variables, interpreter)
-            }
             Self::FunctionCall(function_call) => {
                 function_call.recreate(local_variables, interpreter)
             }
@@ -302,7 +276,6 @@ impl GetReturnType for Instruction {
             Self::Array(array) => array.get_return_type(),
             Self::Function(function) => function.get_return_type(),
             Self::FunctionCall(function_call) => function_call.get_return_type(),
-            Self::LocalFunctionCall(function_call) => function_call.get_return_type(),
             Self::LocalVariable(_, local_variable) => local_variable.get_type(),
             Self::Tuple(tuple) => tuple.get_return_type(),
             Self::Set(set) => set.get_return_type(),
@@ -363,16 +336,4 @@ pub fn exec_instructions(
         .iter()
         .map(|instruction| instruction.exec(interpreter))
         .collect::<Result<Rc<_>>>()
-}
-
-fn error_wrong_type(args: &[Instruction], var_name: Rc<str>) -> Error {
-    let params = args.iter().map(Instruction::get_return_type).collect();
-    Error::WrongType(
-        var_name,
-        FunctionType {
-            return_type: Type::Any,
-            params,
-        }
-        .into(),
-    )
 }
