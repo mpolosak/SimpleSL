@@ -42,7 +42,10 @@ impl Map {
         ) {
             (Type::Array(element_type), Type::Function(function_type)) => {
                 let params = &function_type.params;
-                params.len() == 1 && element_type.matches(&params[0])
+                (params.len() == 1 && element_type.matches(&params[0]))
+                    || (params.len() == 2
+                        && Type::Int.matches(&params[0])
+                        && element_type.matches(&params[1]))
             }
             (Type::EmptyArray, Type::Function(function_type)) => function_type.params.len() == 1,
             _ => false,
@@ -55,9 +58,20 @@ impl Exec for Map {
         let array = self.array.exec(interpreter)?;
         let function = self.function.exec(interpreter)?;
         match (array, function) {
+            (Variable::Array(array, _), Variable::Function(function))
+                if function.get_params().len() == 1 =>
+            {
+                array
+                    .iter()
+                    .cloned()
+                    .map(|var| function.exec("function", interpreter, &[var]))
+                    .collect()
+            }
             (Variable::Array(array, _), Variable::Function(function)) => array
                 .iter()
-                .map(|var| function.exec("function", interpreter, &[var.clone()]))
+                .cloned()
+                .enumerate()
+                .map(|(index, var)| function.exec("function", interpreter, &[index.into(), var]))
                 .collect(),
             (array, function) => panic!("Tried to do {array} @ {function}"),
         }

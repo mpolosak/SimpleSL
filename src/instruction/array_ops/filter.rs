@@ -42,9 +42,11 @@ impl Filter {
         ) {
             (Type::Array(element_type), Type::Function(function_type)) => {
                 let params = &function_type.params;
-                params.len() == 1
-                    && element_type.matches(&params[0])
-                    && function_type.return_type == Type::Int
+                function_type.return_type == Type::Int
+                    && ((params.len() == 1 && element_type.matches(&params[0]))
+                        || (params.len() == 2
+                            && Type::Int.matches(&params[0])
+                            && element_type.matches(&params[1])))
             }
             (Type::EmptyArray, Type::Function(function_type)) => {
                 function_type.params.len() == 1 && function_type.return_type == Type::Int
@@ -59,13 +61,26 @@ impl Exec for Filter {
         let array = self.array.exec(interpreter)?;
         let function = self.function.exec(interpreter)?;
         match (array, function) {
-            (Variable::Array(array, _), Variable::Function(function)) => {
+            (Variable::Array(array, _), Variable::Function(function))
+                if function.get_params().len() == 1 =>
+            {
                 let mut new_array = Vec::new();
-                for element in array.iter() {
+                for element in array.iter().cloned() {
                     if function.exec("function", interpreter, &[element.clone()])?
                         != Variable::Int(0)
                     {
-                        new_array.push(element.clone());
+                        new_array.push(element);
+                    }
+                }
+                Ok(new_array.into())
+            }
+            (Variable::Array(array, _), Variable::Function(function)) => {
+                let mut new_array = Vec::new();
+                for (index, element) in array.iter().cloned().enumerate() {
+                    if function.exec("function", interpreter, &[index.into(), element.clone()])?
+                        != Variable::Int(0)
+                    {
+                        new_array.push(element);
                     }
                 }
                 Ok(new_array.into())
