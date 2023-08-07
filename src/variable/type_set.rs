@@ -23,8 +23,8 @@ impl Hash for TypeSet {
     }
 }
 
-impl From<[Type; 2]> for TypeSet {
-    fn from(value: [Type; 2]) -> Self {
+impl<const N: usize> From<[Type; N]> for TypeSet {
+    fn from(value: [Type; N]) -> Self {
         Self(value.into())
     }
 }
