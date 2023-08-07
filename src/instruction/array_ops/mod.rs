@@ -1,3 +1,4 @@
 mod filter;
 mod map;
-pub use {filter::Filter, map::Map};
+mod type_filter;
+pub use {filter::Filter, map::Map, type_filter::TypeFilter};

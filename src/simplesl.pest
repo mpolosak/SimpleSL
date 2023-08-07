@@ -47,7 +47,10 @@ at = { ( add | function_call | ident | array | string ) ~ "[" ~ expression ~ "]"
 import = { "import" ~ string }
 map = { ( ident | array | function_call ) ~ "@" ~ expression }
 filter = { ( ident | array | function_call ) ~ "?" ~ expression }
-expression = _{ filter | map | import | match | set_if_else | set_if | at | if_else | if_stm | comparasion | math_operations | not | bin_not | and | or | bin_and | bin_or | xor | shift | function_call | ident | exp_in_brackets | var | block  }
+type_filter = { ( ident | array | function_call ) ~ "?" ~ type }
+expression = _{ type_filter | filter | map | import | match | set_if_else | set_if | at | if_else
+  | if_stm | comparasion | math_operations | not | bin_not | and | or | bin_and | bin_or | xor
+  | shift | function_call | ident | exp_in_brackets | var | block  }
 expression_list = _{ (expression ~ ("," ~ expression)*)?}
 array = {"{" ~ expression_list ~ "}"}
 string = ${ "\"" ~ inner ~ "\"" }
