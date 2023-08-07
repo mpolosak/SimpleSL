@@ -1,8 +1,9 @@
 fib = (n:int){
-    recsub({0,1}, (array:[any]){
+    array = recsub({0,1}, (array:[any]){
         len = len(array);
         a = array[len-1];
         b = array[len-2];
         int(a, 0)+int(b, 0);
     }, n);
+    array ? int;
 };
