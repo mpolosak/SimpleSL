@@ -41,7 +41,7 @@ impl fmt::Display for Variable {
             Variable::Float(value) => write!(f, "{value}"),
             Variable::String(value) => write!(f, "{value}"),
             Variable::Function(function) => write!(f, "{function}"),
-            Variable::Array(array, _) => write!(f, "{{{}}}", join(array, ", ")),
+            Variable::Array(array, _) => write!(f, "[{}]", join(array, ", ")),
             Variable::Tuple(elements) => write!(f, "({})", join(elements, ", ")),
             Variable::Void => write!(f, "()"),
         }

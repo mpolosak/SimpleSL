@@ -15,7 +15,7 @@ Returns array filled whith increasing values, starting with value
 Length of returned array equals size
 */
 iota = (value: int, size: int){
-    array = recsub({value}, (array: [any]){
+    array = recsub([value], (array: [any]){
         len = len(array);
         last = array[len-1];
         last = int(last, 0);
@@ -26,4 +26,4 @@ iota = (value: int, size: int){
 
 array = iota(1, 15);
 array = array @ fizzbuzz;
-array @ (item: any) {print({item});};
+array @ (item: any) {print([item]);};
