@@ -1,5 +1,6 @@
 mod array;
 mod array_ops;
+mod array_repeat;
 mod at;
 mod bin;
 mod block;
@@ -24,6 +25,8 @@ use crate::{
 use pest::iterators::Pair;
 use std::rc::Rc;
 pub use traits::{CreateInstruction, Exec, Recreate};
+
+use self::array_repeat::ArrayRepeat;
 use {
     array::Array,
     array_ops::{Filter, Map, TypeFilter},
@@ -49,6 +52,7 @@ pub enum Instruction {
     Variable(Variable),
     LocalVariable(Rc<str>, LocalVariable),
     Array(Array),
+    ArrayRepeat(Box<ArrayRepeat>),
     Function(Function),
     Tuple(Tuple),
     Set(Box<Set>),
@@ -148,6 +152,9 @@ impl Instruction {
                 })
             }
             Rule::array => Array::create_instruction(pair, interpreter, local_variables),
+            Rule::array_repeat => {
+                ArrayRepeat::create_instruction(pair, interpreter, local_variables)
+            }
             Rule::function => Function::create_instruction(pair, interpreter, local_variables),
             Rule::tuple => Tuple::create_instruction(pair, interpreter, local_variables),
             Rule::block => Block::create_instruction(pair, interpreter, local_variables),
@@ -175,6 +182,7 @@ impl Exec for Instruction {
             Self::Variable(var) => Ok(var.clone()),
             Self::LocalVariable(name, _) => Ok(interpreter.get_variable(name).unwrap()),
             Self::Array(array) => array.exec(interpreter),
+            Self::ArrayRepeat(array) => array.exec(interpreter),
             Self::Function(function) => function.exec(interpreter),
             Self::Tuple(function) => function.exec(interpreter),
             Self::Set(set) => set.exec(interpreter),
@@ -229,6 +237,7 @@ impl Recreate for Instruction {
                 }
             }),
             Self::Array(array) => array.recreate(local_variables, interpreter),
+            Self::ArrayRepeat(array) => array.recreate(local_variables, interpreter),
             Self::Function(function) => function.recreate(local_variables, interpreter),
             Self::Tuple(tuple) => tuple.recreate(local_variables, interpreter),
             Self::Set(set) => set.recreate(local_variables, interpreter),
@@ -274,6 +283,7 @@ impl GetReturnType for Instruction {
         match self {
             Self::Variable(variable) => variable.get_type(),
             Self::Array(array) => array.get_return_type(),
+            Self::ArrayRepeat(array) => array.get_return_type(),
             Self::Function(function) => function.get_return_type(),
             Self::FunctionCall(function_call) => function_call.get_return_type(),
             Self::LocalVariable(_, local_variable) => local_variable.get_type(),

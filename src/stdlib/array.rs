@@ -9,15 +9,6 @@ use std::rc::Rc;
 
 pub fn add_functions(interpreter: &mut Interpreter) {
     #[export_function]
-    fn new_array(length: i64, value: Variable) -> Result<Rc<[Variable]>> {
-        if length < 0 {
-            return Err(Error::CannotBeNegative("length"));
-        }
-        let array = (0..length).map(|_| value.clone()).collect();
-        Ok(array)
-    }
-
-    #[export_function]
     fn reduce(
         interpreter: &mut Interpreter,
         array: &[Variable],
