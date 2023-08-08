@@ -1,3 +1,5 @@
+use std::{iter::zip, rc::Rc};
+
 use crate::{
     instruction::{local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate},
     interpreter::Interpreter,
@@ -47,7 +49,36 @@ impl Map {
                         && Type::Int.matches(&params[0])
                         && element_type.matches(&params[1]))
             }
-            (Type::EmptyArray, Type::Function(function_type)) => function_type.params.len() == 1,
+            (Type::EmptyArray, Type::Function(function_type)) => {
+                function_type.params.len() == 1
+                    || (function_type.params.len() == 1
+                        && Type::Int.matches(&function_type.params[0]))
+            }
+            (Type::Tuple(types), Type::Function(function_type))
+                if function_type.params.len() == types.len() =>
+            {
+                zip(types.iter(), function_type.params.iter()).all(|(var_type, param_type)| {
+                    if let Type::Array(var_type) = var_type {
+                        var_type.matches(param_type)
+                    } else {
+                        false
+                    }
+                })
+            }
+            (Type::Tuple(types), Type::Function(function_type))
+                if function_type.params.len() == types.len() + 1 =>
+            {
+                let mut params_iter = function_type.params.iter();
+                let index_type = params_iter.next().unwrap();
+                Type::Int.matches(index_type)
+                    && zip(types.iter(), params_iter).all(|(var_type, param_type)| {
+                        if let Type::Array(var_type) = var_type {
+                            var_type.matches(param_type)
+                        } else {
+                            false
+                        }
+                    })
+            }
             _ => false,
         }
     }
@@ -73,6 +104,50 @@ impl Exec for Map {
                 .enumerate()
                 .map(|(index, var)| function.exec("function", interpreter, &[index.into(), var]))
                 .collect(),
+            (Variable::Tuple(arrays), Variable::Function(function))
+                if function.get_params().len() == arrays.len() =>
+            {
+                let arrays: Box<[&Rc<[Variable]>]> = arrays
+                    .iter()
+                    .map(|array| {
+                        if let Variable::Array(array, _) = array {
+                            array
+                        } else {
+                            panic!()
+                        }
+                    })
+                    .collect();
+                let len = arrays.iter().map(|array| array.len()).min().unwrap();
+                let mut result = Vec::new();
+                for i in 0..len {
+                    let args: Box<[Variable]> =
+                        arrays.iter().map(|array| array[i].clone()).collect();
+                    result.push(function.exec("function", interpreter, &args)?);
+                }
+                Ok(result.into())
+            }
+            (Variable::Tuple(arrays), Variable::Function(function))
+                if function.get_params().len() == arrays.len() + 1 =>
+            {
+                let arrays: Box<[&Rc<[Variable]>]> = arrays
+                    .iter()
+                    .map(|array| {
+                        if let Variable::Array(array, _) = array {
+                            array
+                        } else {
+                            panic!()
+                        }
+                    })
+                    .collect();
+                let len = arrays.iter().map(|array| array.len()).min().unwrap();
+                let mut result = Vec::new();
+                for i in 0..len {
+                    let mut args = vec![i.into()];
+                    args.extend(arrays.iter().map(|array| array[i].clone()));
+                    result.push(function.exec("function", interpreter, &args)?);
+                }
+                Ok(result.into())
+            }
             (array, function) => panic!("Tried to do {array} @ {function}"),
         }
     }

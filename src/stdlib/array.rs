@@ -5,7 +5,7 @@ use crate::{
     Error, Result,
 };
 use simplesl_macros::export_function;
-use std::{iter::zip, rc::Rc};
+use std::rc::Rc;
 
 pub fn add_functions(interpreter: &mut Interpreter) {
     #[export_function]
@@ -27,18 +27,6 @@ pub fn add_functions(interpreter: &mut Interpreter) {
         array.iter().try_fold(initial_value, |acc, current| {
             function.exec("function", interpreter, &[acc, current.clone()])
         })
-    }
-
-    #[export_function(name = "zip", return_type = "[[any]]")]
-    fn array_zip(array1: &[Variable], array2: &[Variable]) -> Rc<[Variable]> {
-        zip(array1.iter(), array2.iter())
-            .map(|(element1, element2)| {
-                Variable::Array(
-                    Rc::new([element1.clone(), element2.clone()]),
-                    Type::Array(Type::Any.into()),
-                )
-            })
-            .collect()
     }
 
     #[export_function]
