@@ -1,6 +1,7 @@
 use crate::{
     function::{NativeFunction, Param, Params},
     interpreter::Interpreter,
+    join,
     variable::*,
     Result,
 };
@@ -9,11 +10,13 @@ use std::io;
 
 pub fn add_functions(interpreter: &mut Interpreter) {
     #[export_function]
-    fn print(vars: &[Variable]) {
-        let text = vars
-            .iter()
-            .fold(String::new(), |acc, arg| acc + &arg.to_string());
-        println!("{text}");
+    fn print(var: Variable) {
+        println!("{var}");
+    }
+
+    #[export_function]
+    fn print_array(array: &[Variable], sep: &str) {
+        println!("{}", join(array, sep));
     }
 
     #[export_function]

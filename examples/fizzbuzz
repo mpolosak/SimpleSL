@@ -20,4 +20,4 @@ iota = (value: int, size: int){
 
 array = iota(1, 15);
 array = array @ fizzbuzz;
-array @ (item: any) {print([item]);};
+array @ print;

@@ -1,10 +1,10 @@
-print(["Hello world!"]);
+print("Hello world!");
 x = 5;
 y = 6;
-print([x, "+", y, "=", x+y]);
+print_array([x, "+", y, "=", x+y], " ");
 array = [y, x*7, [54.5], "text", x, len];
-print([array]);
+print(array);
 example_function = (name:string){
-    print(["Hello ", name, "!"]);
+    print_array(["Hello ", name, "!"], "");
 };
 example_function("world");
