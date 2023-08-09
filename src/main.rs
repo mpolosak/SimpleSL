@@ -1,4 +1,4 @@
-use rustyline::{error::ReadlineError, Editor};
+use rustyline::{error::ReadlineError, DefaultEditor};
 use simplesl::interpreter::Interpreter;
 use std::env;
 
@@ -13,12 +13,12 @@ fn main() {
 
 fn run_shell() {
     let mut interpreter = Interpreter::default();
-    let mut rl = Editor::<()>::new().expect("Unable to read user input");
+    let mut rl = DefaultEditor::new().expect("Unable to read user input");
     loop {
         let readline = rl.readline("> ");
         match readline {
             Ok(mut line) => {
-                rl.add_history_entry(&line);
+                rl.add_history_entry(&line).unwrap();
                 line = line.replace('\n', "");
                 if !line.is_empty() {
                     if let Err(error) = interpreter.parse_and_exec(&line) {
