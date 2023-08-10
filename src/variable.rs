@@ -1,12 +1,12 @@
 pub mod function_type;
 pub mod type_set;
 mod variable_type;
-use crate::{function::Function, join, parse::*, pest::Parser, Error, Result};
+use crate::{function::Function, join_debug, parse::*, pest::Parser, Error, Result};
 use pest::iterators::Pair;
 use std::{fmt, io, rc::Rc, str::FromStr};
 pub use variable_type::{GetReturnType, GetType, Type};
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub enum Variable {
     Int(i64),
     Float(f64),
@@ -41,9 +41,22 @@ impl fmt::Display for Variable {
             Variable::Float(value) => write!(f, "{value}"),
             Variable::String(value) => write!(f, "{value}"),
             Variable::Function(function) => write!(f, "{function}"),
-            Variable::Array(array, _) => write!(f, "[{}]", join(array, ", ")),
-            Variable::Tuple(elements) => write!(f, "({})", join(elements, ", ")),
+            Variable::Array(array, _) => {
+                write!(f, "[{}]", join_debug(array, ", "))
+            }
+            Variable::Tuple(elements) => write!(f, "({})", join_debug(elements, ", ")),
             Variable::Void => write!(f, "()"),
+        }
+    }
+}
+
+impl fmt::Debug for Variable {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Int(value) => write!(f, "{value:?}"),
+            Self::Float(value) => write!(f, "{value:?}"),
+            Self::String(value) => write!(f, "{value:?}"),
+            other => write!(f, "{other}"),
         }
     }
 }
