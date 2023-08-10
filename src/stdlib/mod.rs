@@ -1,4 +1,5 @@
 mod array;
+mod fs;
 mod iofunctions;
 mod math;
 mod string;
@@ -16,6 +17,7 @@ pub fn add_std_lib(interpreter: &mut Interpreter) {
     types::add_functions(interpreter);
     math::add_functions(interpreter);
     string::add_functions(interpreter);
+    fs::add_functions(interpreter);
 
     #[export_function]
     fn len(#[var_type("[any]|string")] variable: Variable) -> usize {

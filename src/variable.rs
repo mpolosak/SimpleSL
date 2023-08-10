@@ -3,7 +3,7 @@ pub mod type_set;
 mod variable_type;
 use crate::{function::Function, join, parse::*, pest::Parser, Error, Result};
 use pest::iterators::Pair;
-use std::{fmt, rc::Rc, str::FromStr};
+use std::{fmt, io, rc::Rc, str::FromStr};
 pub use variable_type::{GetReturnType, GetType, Type};
 
 #[derive(Clone, Debug)]
@@ -182,6 +182,27 @@ impl From<Vec<Variable>> for Variable {
 impl From<()> for Variable {
     fn from(_value: ()) -> Self {
         Self::Void
+    }
+}
+
+impl From<io::Result<String>> for Variable {
+    fn from(value: io::Result<String>) -> Self {
+        match value {
+            Ok(value) => value.into(),
+            Err(error) => error.into(),
+        }
+    }
+}
+
+impl From<io::Error> for Variable {
+    fn from(value: io::Error) -> Self {
+        Variable::Tuple(Rc::from([value.kind().into(), value.to_string().into()]))
+    }
+}
+
+impl From<io::ErrorKind> for Variable {
+    fn from(value: io::ErrorKind) -> Self {
+        (value as i64).into()
     }
 }
 

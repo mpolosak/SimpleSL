@@ -183,6 +183,13 @@ fn return_type_from_syn_type(return_type: &Type) -> TokenStream {
         quote!(Type::Void)
     } else if return_type == "Variable" || return_type == "Result < Variable >" {
         quote!(Type::Any)
+    } else if return_type == "io :: Result < String >"
+        || return_type == "std :: io :: Result < String >"
+    {
+        quote!({
+            use std::str::FromStr;
+            Type::from_str("string|(int,string)").unwrap()
+        })
     } else {
         panic!("{return_type} type isn't allowed")
     }
