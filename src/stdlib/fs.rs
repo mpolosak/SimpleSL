@@ -11,4 +11,8 @@ pub fn add_functions(interpreter: &mut Interpreter) {
     fn file_read_to_string(path: &str) -> io::Result<String> {
         fs::read_to_string(path)
     }
+    #[export_function]
+    fn write_to_file(path: &str, contents: &str) -> io::Result<()> {
+        fs::write(path, contents)
+    }
 }

@@ -185,8 +185,8 @@ impl From<()> for Variable {
     }
 }
 
-impl From<io::Result<String>> for Variable {
-    fn from(value: io::Result<String>) -> Self {
+impl<T: Into<Variable>> From<io::Result<T>> for Variable {
+    fn from(value: io::Result<T>) -> Self {
         match value {
             Ok(value) => value.into(),
             Err(error) => error.into(),

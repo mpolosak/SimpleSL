@@ -190,6 +190,11 @@ fn return_type_from_syn_type(return_type: &Type) -> TokenStream {
             use std::str::FromStr;
             Type::from_str("string|(int,string)").unwrap()
         })
+    } else if return_type == "io :: Result < () >" || return_type == "std :: io :: Result < () >" {
+        quote!({
+            use std::str::FromStr;
+            Type::from_str("()|(int,string)").unwrap()
+        })
     } else {
         panic!("{return_type} type isn't allowed")
     }
