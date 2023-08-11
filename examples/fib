@@ -1,3 +1,10 @@
+int = (variable: any, fallback: int) {
+    match variable {
+        value: int => value,
+        => fallback,
+    };
+};
+
 fib = (n:int){
     array = recsub([0,1], (array:[any]){
         len = len(array);
