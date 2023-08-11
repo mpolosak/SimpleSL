@@ -5,7 +5,7 @@ use crate::{
     },
     interpreter::Interpreter,
     parse::Rule,
-    variable::{GetType, Type, Variable},
+    variable::{GetReturnType, GetType, Type, Variable},
     Result,
 };
 use pest::iterators::Pair;
@@ -128,5 +128,15 @@ impl MatchArm {
                 Self::Other(instruction.recreate(local_variables, interpreter)?)
             }
         })
+    }
+}
+
+impl GetReturnType for MatchArm {
+    fn get_return_type(&self) -> Type {
+        match self {
+            MatchArm::Type { instruction, .. }
+            | MatchArm::Value(_, instruction)
+            | MatchArm::Other(instruction) => instruction.get_return_type(),
+        }
     }
 }

@@ -78,7 +78,11 @@ impl Recreate for Match {
 
 impl GetReturnType for Match {
     fn get_return_type(&self) -> Type {
-        todo!()
+        self.arms
+            .iter()
+            .map(GetReturnType::get_return_type)
+            .reduce(Type::concat)
+            .unwrap()
     }
 }
 
