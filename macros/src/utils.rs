@@ -195,6 +195,16 @@ fn return_type_from_syn_type(return_type: &Type) -> TokenStream {
             use std::str::FromStr;
             Type::from_str("()|(int,string)").unwrap()
         })
+    } else if return_type == "Option < i64 >" {
+        quote!({
+            use std::str::FromStr;
+            Type::from_str("int|()").unwrap()
+        })
+    } else if return_type == "Option < f64 >" {
+        quote!({
+            use std::str::FromStr;
+            Type::from_str("float|()").unwrap()
+        })
     } else {
         panic!("{return_type} type isn't allowed")
     }

@@ -198,6 +198,15 @@ impl From<()> for Variable {
     }
 }
 
+impl<T: Into<Variable>> From<Option<T>> for Variable {
+    fn from(value: Option<T>) -> Self {
+        match value {
+            Some(value) => value.into(),
+            None => Variable::Void,
+        }
+    }
+}
+
 impl<T: Into<Variable>> From<io::Result<T>> for Variable {
     fn from(value: io::Result<T>) -> Self {
         match value {
