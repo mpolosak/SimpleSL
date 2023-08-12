@@ -7,7 +7,7 @@ pub use self::{
     param::{Param, Params},
 };
 use crate::{
-    instruction::{Exec, Instruction},
+    instruction::Exec,
     interpreter::Interpreter,
     variable::{function_type::FunctionType, GetReturnType, GetType, Type, Variable},
     Result,
@@ -22,23 +22,17 @@ pub struct Function {
 }
 
 impl Function {
-    pub fn new_lang(params: Params, body: Box<[Instruction]>) -> Self {
-        let return_type = match body.last() {
-            Some(instruction) => instruction.get_return_type(),
-            None => Type::Void,
-        };
-        Self {
-            params,
-            body: Body::Lang(body),
-            return_type,
-        }
-    }
     pub fn exec(&self, interpreter: &mut Interpreter, args: &[Variable]) -> Result<Variable> {
         let mut interpreter = interpreter.create_layer();
         for (arg, Param { var_type: _, name }) in zip(args, self.params.iter()) {
             interpreter.insert(name.clone(), arg.clone());
         }
-        self.body.exec(&mut interpreter)
+        if self.return_type != Type::Void {
+            self.body.exec(&mut interpreter)
+        } else {
+            self.body.exec(&mut interpreter)?;
+            Ok(Variable::Void)
+        }
     }
 }
 

@@ -21,6 +21,7 @@ pub enum Error {
     ArgumentDoesntContainType,
     CannotDo(&'static str, Type),
     CannotDo2(Type, &'static str, Type),
+    WrongReturn(Type, Type),
 }
 
 impl std::error::Error for Error {}
@@ -72,6 +73,13 @@ impl fmt::Display for Error {
             }
             Self::CannotDo2(var_type1, op, var_type2) => {
                 write!(f, "Cannot do {var_type1} {op} {var_type2}")
+            }
+            Self::WrongReturn(expected, returned) => {
+                write!(
+                    f,
+                    "Type {returned} of variable that you want to return
+                    doesn't match declared return type {expected}"
+                )
             }
         }
     }

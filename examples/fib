@@ -1,4 +1,4 @@
-int = (variable: any, fallback: int) {
+int = (variable: any, fallback: int) -> int {
     match variable {
         value: int => value,
         => fallback,

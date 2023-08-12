@@ -5,11 +5,11 @@ use super::{
     CreateInstruction, Instruction,
 };
 use crate::{
-    function::{Function, Param, Params},
+    function::{Body, Function, Param, Params},
     interpreter::Interpreter,
     parse::Rule,
     variable::{function_type::FunctionType, GetReturnType, Type, Variable},
-    Result,
+    Error, Result,
 };
 use pest::iterators::Pair;
 
@@ -17,6 +17,7 @@ use pest::iterators::Pair;
 pub struct FunctionDeclaration {
     pub params: Params,
     body: Box<[Instruction]>,
+    return_type: Type,
 }
 
 impl CreateInstruction for FunctionDeclaration {
@@ -25,23 +26,48 @@ impl CreateInstruction for FunctionDeclaration {
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
     ) -> Result<Instruction> {
-        let mut inner = pair.into_inner();
+        let mut inner = pair.into_inner().peekable();
         let params_pair = inner.next().unwrap();
         let params = Params(params_pair.into_inner().map(Param::from).collect());
+        let return_type = match inner.peek() {
+            Some(pair) if pair.as_rule() == Rule::return_type_decl => {
+                Type::from(inner.next().unwrap().into_inner().next().unwrap())
+            }
+            _ => Type::Void,
+        };
         let mut local_variables =
             local_variables.layer_from_map(LocalVariableMap::from(params.clone()));
         let body = inner
-            .map(|arg| Instruction::new(arg, interpreter, &mut local_variables))
+            .map(|instruction| Instruction::new(instruction, interpreter, &mut local_variables))
             .collect::<Result<Box<_>>>()?;
+        if return_type != Type::Void {
+            let returned = match body.last() {
+                Some(instruction) => instruction.get_return_type(),
+                None => Type::Void,
+            };
+            if !returned.matches(&return_type) {
+                return Err(Error::WrongReturn(return_type, returned));
+            }
+        }
         if body
             .iter()
             .all(|instruction| matches!(instruction, Instruction::Variable(_)))
         {
             Ok(Instruction::Variable(
-                Function::new_lang(params, body).into(),
+                Function {
+                    params,
+                    body: Body::Lang(body),
+                    return_type,
+                }
+                .into(),
             ))
         } else {
-            Ok(Self { params, body }.into())
+            Ok(Self {
+                params,
+                body,
+                return_type,
+            }
+            .into())
         }
     }
 }
@@ -50,7 +76,12 @@ impl Exec for FunctionDeclaration {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let mut fn_local_variables = LocalVariables::from(self.params.clone());
         let body = recreate_instructions(&self.body, &mut fn_local_variables, interpreter)?;
-        Ok(Function::new_lang(self.params.clone(), body).into())
+        Ok(Function {
+            params: self.params.clone(),
+            body: Body::Lang(body),
+            return_type: self.return_type.clone(),
+        }
+        .into())
     }
 }
 
@@ -67,12 +98,18 @@ impl Recreate for FunctionDeclaration {
             .all(|instruction| matches!(instruction, Instruction::Variable(_)))
         {
             Ok(Instruction::Variable(
-                Function::new_lang(self.params.clone(), body).into(),
+                Function {
+                    params: self.params.clone(),
+                    body: Body::Lang(body),
+                    return_type: self.return_type.clone(),
+                }
+                .into(),
             ))
         } else {
             Ok(Self {
                 params: self.params.clone(),
                 body,
+                return_type: self.return_type.clone(),
             }
             .into())
         }
@@ -87,18 +124,15 @@ impl From<FunctionDeclaration> for Instruction {
 
 impl GetReturnType for FunctionDeclaration {
     fn get_return_type(&self) -> Type {
-        let params_types: Box<[Type]> = self
+        let params: Box<[Type]> = self
             .params
             .iter()
             .map(|Param { name: _, var_type }| var_type.clone())
             .collect();
-        let return_type = match self.body.last() {
-            Some(instruction) => instruction.get_return_type(),
-            None => Type::Any,
-        };
+        let return_type = self.return_type.clone();
         FunctionType {
             return_type,
-            params: params_types,
+            params,
         }
         .into()
     }

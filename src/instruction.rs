@@ -172,7 +172,7 @@ impl Instruction {
             Rule::map => Map::create_instruction(pair, interpreter, local_variables),
             Rule::filter => Filter::create_instruction(pair, interpreter, local_variables),
             Rule::type_filter => TypeFilter::create_instruction(pair, interpreter, local_variables),
-            _ => panic!(),
+            rule => panic!("Unexpected rule: {rule:?}"),
         }
     }
 }

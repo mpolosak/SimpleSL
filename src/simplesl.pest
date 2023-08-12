@@ -68,10 +68,11 @@ destruct_tuple = { destruct_idents ~ "=" ~ expression }
 line = { COMMENT* ~ ( ( ( set | destruct_tuple | expression ) ~  line_end) | block ) }
 	line_end = { ";" }
 return_variable = @{ident}
-function = {params~"{"~line*~"}"}
+function = {params ~ return_type_decl? ~"{"~line*~"}"}
 	param = {ident ~ ":" ~ type}
 	params_list = _{ (param ~ ("," ~ param)*)?}
     params = {"(" ~ params_list? ~ ")"}
+  return_type_decl = {("->" ~ type | return_type)}
 tuple =  {"(" ~ (expression ~ ("," ~ expression)+)? ~ ")"}
 type = _{ multi | standard_types | any }
   int_type = {"int"}
