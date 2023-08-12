@@ -95,14 +95,14 @@ impl Exec for Map {
                 array
                     .iter()
                     .cloned()
-                    .map(|var| function.exec("function", interpreter, &[var]))
+                    .map(|var| function.exec(interpreter, &[var]))
                     .collect()
             }
             (Variable::Array(array, _), Variable::Function(function)) => array
                 .iter()
                 .cloned()
                 .enumerate()
-                .map(|(index, var)| function.exec("function", interpreter, &[index.into(), var]))
+                .map(|(index, var)| function.exec(interpreter, &[index.into(), var]))
                 .collect(),
             (Variable::Tuple(arrays), Variable::Function(function))
                 if function.get_params().len() == arrays.len() =>
@@ -122,7 +122,7 @@ impl Exec for Map {
                 for i in 0..len {
                     let args: Box<[Variable]> =
                         arrays.iter().map(|array| array[i].clone()).collect();
-                    result.push(function.exec("function", interpreter, &args)?);
+                    result.push(function.exec(interpreter, &args)?);
                 }
                 Ok(result.into())
             }
@@ -144,7 +144,7 @@ impl Exec for Map {
                 for i in 0..len {
                     let mut args = vec![i.into()];
                     args.extend(arrays.iter().map(|array| array[i].clone()));
-                    result.push(function.exec("function", interpreter, &args)?);
+                    result.push(function.exec(interpreter, &args)?);
                 }
                 Ok(result.into())
             }

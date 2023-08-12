@@ -16,18 +16,13 @@ use crate::{
 use std::{fmt, iter::zip};
 
 pub trait Function: GetReturnType {
-    fn exec(
-        &self,
-        name: &str,
-        interpreter: &mut Interpreter,
-        args: &[Variable],
-    ) -> Result<Variable> {
+    fn exec(&self, interpreter: &mut Interpreter, args: &[Variable]) -> Result<Variable> {
         let mut interpreter = interpreter.create_layer();
         let params = self.get_params();
         for (arg, Param { var_type: _, name }) in zip(args, params.iter()) {
             interpreter.insert(name.clone(), arg.clone());
         }
-        self.exec_intern(name, &mut interpreter)
+        self.exec_intern(&mut interpreter)
     }
     fn check_args_and_exec(
         &self,
@@ -41,9 +36,9 @@ pub trait Function: GetReturnType {
             params,
             &args.iter().map(Variable::get_type).collect::<Box<[Type]>>(),
         )?;
-        self.exec(name, interpreter, args)
+        self.exec(interpreter, args)
     }
-    fn exec_intern(&self, name: &str, interpreter: &mut Interpreter) -> Result<Variable>;
+    fn exec_intern(&self, interpreter: &mut Interpreter) -> Result<Variable>;
     fn get_params(&self) -> &Params;
 }
 

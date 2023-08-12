@@ -36,7 +36,7 @@ pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream 
                 NativeFunction {
                     params: Params(Rc::new([#params])),
                     return_type: #return_type,
-                    body: |_name, interpreter| {
+                    body: |interpreter| {
                         #args_importing
                         #body
                     },

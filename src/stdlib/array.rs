@@ -16,7 +16,7 @@ pub fn add_functions(interpreter: &mut Interpreter) {
         #[var_type("function(any, any)->any")] function: Rc<dyn Function>,
     ) -> Result<Variable> {
         array.iter().try_fold(initial_value, |acc, current| {
-            function.exec("function", interpreter, &[acc, current.clone()])
+            function.exec(interpreter, &[acc, current.clone()])
         })
     }
 
@@ -38,7 +38,6 @@ pub fn add_functions(interpreter: &mut Interpreter) {
             let mut new_array: Vec<Variable> = array.into();
             for _ in 0..n - array.len() {
                 new_array.push(function.exec(
-                    "function",
                     interpreter,
                     &[Variable::Array(
                         new_array.clone().into(),

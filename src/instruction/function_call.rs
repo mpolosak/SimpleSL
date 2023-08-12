@@ -91,7 +91,7 @@ impl Exec for FunctionCall {
         let Variable::Function(function) = self.function.exec(interpreter)? else {
             panic!("Tried to call not function")
         };
-        function.exec("name", interpreter, &args)
+        function.exec(interpreter, &args)
     }
 }
 

@@ -7,12 +7,12 @@ use crate::{
 pub struct NativeFunction {
     pub params: Params,
     pub return_type: Type,
-    pub body: fn(&str, &mut Interpreter) -> Result<Variable>,
+    pub body: fn(&mut Interpreter) -> Result<Variable>,
 }
 
 impl Function for NativeFunction {
-    fn exec_intern(&self, name: &str, interpreter: &mut Interpreter) -> Result<Variable> {
-        (self.body)(name, interpreter)
+    fn exec_intern(&self, interpreter: &mut Interpreter) -> Result<Variable> {
+        (self.body)(interpreter)
     }
     fn get_params(&self) -> &Params {
         &self.params

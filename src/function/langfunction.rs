@@ -11,7 +11,7 @@ pub struct LangFunction {
 }
 
 impl Function for LangFunction {
-    fn exec_intern(&self, _name: &str, interpreter: &mut Interpreter) -> Result<Variable> {
+    fn exec_intern(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         interpreter.exec(&self.body)
     }
     fn get_params(&self) -> &Params {

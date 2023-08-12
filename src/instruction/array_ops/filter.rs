@@ -66,9 +66,7 @@ impl Exec for Filter {
             {
                 let mut new_array = Vec::new();
                 for element in array.iter().cloned() {
-                    if function.exec("function", interpreter, &[element.clone()])?
-                        != Variable::Int(0)
-                    {
+                    if function.exec(interpreter, &[element.clone()])? != Variable::Int(0) {
                         new_array.push(element);
                     }
                 }
@@ -77,7 +75,7 @@ impl Exec for Filter {
             (Variable::Array(array, _), Variable::Function(function)) => {
                 let mut new_array = Vec::new();
                 for (index, element) in array.iter().cloned().enumerate() {
-                    if function.exec("function", interpreter, &[index.into(), element.clone()])?
+                    if function.exec(interpreter, &[index.into(), element.clone()])?
                         != Variable::Int(0)
                     {
                         new_array.push(element);
