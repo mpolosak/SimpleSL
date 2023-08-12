@@ -11,7 +11,7 @@ pub enum Variable {
     Int(i64),
     Float(f64),
     String(Rc<str>),
-    Function(Rc<dyn Function>),
+    Function(Rc<Function>),
     Array(Rc<[Variable]>, Type),
     Tuple(Rc<[Variable]>),
     Void,
@@ -164,8 +164,14 @@ impl From<String> for Variable {
     }
 }
 
-impl From<Rc<dyn Function>> for Variable {
-    fn from(value: Rc<dyn Function>) -> Self {
+impl From<Function> for Variable {
+    fn from(value: Function) -> Self {
+        Self::Function(value.into())
+    }
+}
+
+impl From<Rc<Function>> for Variable {
+    fn from(value: Rc<Function>) -> Self {
         Self::Function(value)
     }
 }

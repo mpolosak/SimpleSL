@@ -62,7 +62,7 @@ impl Exec for Filter {
         let function = self.function.exec(interpreter)?;
         match (array, function) {
             (Variable::Array(array, _), Variable::Function(function))
-                if function.get_params().len() == 1 =>
+                if function.params.len() == 1 =>
             {
                 let mut new_array = Vec::new();
                 for element in array.iter().cloned() {

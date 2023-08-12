@@ -5,7 +5,7 @@ use super::{
     CreateInstruction, Instruction,
 };
 use crate::{
-    function::{LangFunction, Param, Params},
+    function::{Body, Function, Param, Params},
     interpreter::Interpreter,
     parse::Rule,
     variable::{function_type::FunctionType, GetReturnType, Type, Variable},
@@ -15,12 +15,12 @@ use pest::iterators::Pair;
 use std::rc::Rc;
 
 #[derive(Clone, Debug)]
-pub struct Function {
+pub struct FunctionDeclaration {
     pub params: Params,
     body: Box<[Instruction]>,
 }
 
-impl CreateInstruction for Function {
+impl CreateInstruction for FunctionDeclaration {
     fn create_instruction(
         pair: Pair<Rule>,
         interpreter: &Interpreter,
@@ -39,7 +39,10 @@ impl CreateInstruction for Function {
             .all(|instruction| matches!(instruction, Instruction::Variable(_)))
         {
             Ok(Instruction::Variable(Variable::Function(Rc::new(
-                LangFunction { params, body },
+                Function {
+                    params,
+                    body: Body::Lang(body),
+                },
             ))))
         } else {
             Ok(Self { params, body }.into())
@@ -47,18 +50,18 @@ impl CreateInstruction for Function {
     }
 }
 
-impl Exec for Function {
+impl Exec for FunctionDeclaration {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let mut fn_local_variables = LocalVariables::from(self.params.clone());
         let body = recreate_instructions(&self.body, &mut fn_local_variables, interpreter)?;
-        Ok(Variable::Function(Rc::new(LangFunction {
+        Ok(Variable::Function(Rc::new(Function {
             params: self.params.clone(),
-            body,
+            body: Body::Lang(body),
         })))
     }
 }
 
-impl Recreate for Function {
+impl Recreate for FunctionDeclaration {
     fn recreate(
         &self,
         local_variables: &mut LocalVariables,
@@ -71,9 +74,9 @@ impl Recreate for Function {
             .all(|instruction| matches!(instruction, Instruction::Variable(_)))
         {
             Ok(Instruction::Variable(Variable::Function(Rc::new(
-                LangFunction {
+                Function {
                     params: self.params.clone(),
-                    body,
+                    body: Body::Lang(body),
                 },
             ))))
         } else {
@@ -86,13 +89,13 @@ impl Recreate for Function {
     }
 }
 
-impl From<Function> for Instruction {
-    fn from(value: Function) -> Self {
+impl From<FunctionDeclaration> for Instruction {
+    fn from(value: FunctionDeclaration) -> Self {
         Self::Function(value)
     }
 }
 
-impl GetReturnType for Function {
+impl GetReturnType for FunctionDeclaration {
     fn get_return_type(&self) -> Type {
         let params_types: Box<[Type]> = self
             .params

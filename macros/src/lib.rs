@@ -31,16 +31,18 @@ pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream 
         #function
         {
             use std::rc::Rc;
-            interpreter.insert_native_function(
+            interpreter.insert(
                 #ident_str.into(),
-                NativeFunction {
-                    params: Params(Rc::new([#params])),
-                    return_type: #return_type,
-                    body: |interpreter| {
-                        #args_importing
-                        #body
+                function::Function {
+                    params: function::Params(Rc::new([#params])),
+                    body: function::Body::Native{
+                        body: |interpreter| {
+                            #args_importing
+                            #body
+                        },
+                        return_type: #return_type,
                     },
-                },
+                }.into(),
             );
         }
     )

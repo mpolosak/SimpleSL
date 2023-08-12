@@ -1,6 +1,6 @@
 use super::{
     exec_instructions,
-    function::Function,
+    function::FunctionDeclaration,
     local_variable::{LocalVariable, LocalVariables},
     recreate_instructions,
     traits::{Exec, Recreate},
@@ -37,12 +37,11 @@ impl CreateInstruction for FunctionCall {
             .collect::<Result<Box<_>>>()?;
         match &function {
             Instruction::Variable(Variable::Function(function2)) => {
-                let params = function2.get_params();
-                Self::check_args_with_params(pair_str, params, &args)?;
+                Self::check_args_with_params(pair_str, &function2.params, &args)?;
                 Ok(Self { function, args }.into())
             }
             Instruction::LocalVariable(_, LocalVariable::Function(params, _))
-            | Instruction::Function(Function { params, .. }) => {
+            | Instruction::Function(FunctionDeclaration { params, .. }) => {
                 Self::check_args_with_params(pair_str, params, &args)?;
                 Ok(Self { function, args }.into())
             }

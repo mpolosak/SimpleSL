@@ -4,7 +4,7 @@ mod fs;
 mod iofunctions;
 mod string;
 use crate::{
-    function::{NativeFunction, Param, Params},
+    function,
     interpreter::Interpreter,
     variable::{Type, Variable},
 };

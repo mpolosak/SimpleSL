@@ -90,7 +90,7 @@ impl Exec for Map {
         let function = self.function.exec(interpreter)?;
         match (array, function) {
             (Variable::Array(array, _), Variable::Function(function))
-                if function.get_params().len() == 1 =>
+                if function.params.len() == 1 =>
             {
                 array
                     .iter()
@@ -105,7 +105,7 @@ impl Exec for Map {
                 .map(|(index, var)| function.exec(interpreter, &[index.into(), var]))
                 .collect(),
             (Variable::Tuple(arrays), Variable::Function(function))
-                if function.get_params().len() == arrays.len() =>
+                if function.params.len() == arrays.len() =>
             {
                 let arrays: Box<[&Rc<[Variable]>]> = arrays
                     .iter()
@@ -127,7 +127,7 @@ impl Exec for Map {
                 Ok(result.into())
             }
             (Variable::Tuple(arrays), Variable::Function(function))
-                if function.get_params().len() == arrays.len() + 1 =>
+                if function.params.len() == arrays.len() + 1 =>
             {
                 let arrays: Box<[&Rc<[Variable]>]> = arrays
                     .iter()

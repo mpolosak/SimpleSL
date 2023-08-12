@@ -1,5 +1,5 @@
 use crate::{
-    function::{Function, NativeFunction, Param, Params},
+    function::{self, Function},
     interpreter::Interpreter,
     variable::{Type, Variable},
     Error, Result,
@@ -13,7 +13,7 @@ pub fn add_functions(interpreter: &mut Interpreter) {
         interpreter: &mut Interpreter,
         array: &[Variable],
         initial_value: Variable,
-        #[var_type("function(any, any)->any")] function: Rc<dyn Function>,
+        #[var_type("function(any, any)->any")] function: Rc<Function>,
     ) -> Result<Variable> {
         array.iter().try_fold(initial_value, |acc, current| {
             function.exec(interpreter, &[acc, current.clone()])
@@ -24,7 +24,7 @@ pub fn add_functions(interpreter: &mut Interpreter) {
     fn recsub(
         interpreter: &mut Interpreter,
         array: &[Variable],
-        #[var_type("function([any])->any")] function: Rc<dyn Function>,
+        #[var_type("function([any])->any")] function: Rc<Function>,
         n: i64,
     ) -> Result<Rc<[Variable]>> {
         if n < 0 {

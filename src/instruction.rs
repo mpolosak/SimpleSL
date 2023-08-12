@@ -36,7 +36,7 @@ use {
     comp::{Equal, Greater, GreaterOrEqual},
     control_flow::{IfElse, Match, SetIfElse},
     destruct_tuple::DestructTuple,
-    function::Function,
+    function::FunctionDeclaration,
     function_call::FunctionCall,
     import::Import,
     local_variable::{LocalVariable, LocalVariables},
@@ -53,7 +53,7 @@ pub enum Instruction {
     LocalVariable(Rc<str>, LocalVariable),
     Array(Array),
     ArrayRepeat(Box<ArrayRepeat>),
-    Function(Function),
+    Function(FunctionDeclaration),
     Tuple(Tuple),
     Set(Box<Set>),
     DestructTuple(Box<DestructTuple>),
@@ -155,7 +155,9 @@ impl Instruction {
             Rule::array_repeat => {
                 ArrayRepeat::create_instruction(pair, interpreter, local_variables)
             }
-            Rule::function => Function::create_instruction(pair, interpreter, local_variables),
+            Rule::function => {
+                FunctionDeclaration::create_instruction(pair, interpreter, local_variables)
+            }
             Rule::tuple => Tuple::create_instruction(pair, interpreter, local_variables),
             Rule::block => Block::create_instruction(pair, interpreter, local_variables),
             Rule::if_else | Rule::if_stm => {

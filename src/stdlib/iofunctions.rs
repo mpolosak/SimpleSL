@@ -1,10 +1,4 @@
-use crate::{
-    function::{NativeFunction, Param, Params},
-    interpreter::Interpreter,
-    join,
-    variable::*,
-    Result,
-};
+use crate::{function, interpreter::Interpreter, join, variable::*, Result};
 use simplesl_macros::export_function;
 use std::io;
 

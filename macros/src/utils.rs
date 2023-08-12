@@ -79,7 +79,7 @@ fn arg_import_from_function_param(
             };
             let #ident = #ident.as_ref();
         )
-    } else if param_type == "Rc < dyn Function >" {
+    } else if param_type == "Rc < Function >" {
         quote!(
             let Variable::Function(#ident) = interpreter.get_variable(#ident_str)? else {
                 panic!()
@@ -113,7 +113,7 @@ fn param_from_function_param(
     let ident = ident.to_string();
     let param_type = type_from_str(attrs, param_type);
     quote!(
-        Param {
+        function::Param {
             name: #ident.into(),
             var_type: #param_type,
         }
@@ -129,7 +129,7 @@ fn type_from_str(attrs: &[Attribute], param_type: &str) -> TokenStream {
         quote!(Type::String)
     } else if param_type == "Rc < [Variable] >" || param_type == "& [Variable]" {
         get_type_from_attrs(attrs).unwrap_or(quote!(Type::Array(Type::Any.into())))
-    } else if param_type == "Rc < dyn Function >" {
+    } else if param_type == "Rc < Function >" {
         let Some(var_type) = get_type_from_attrs(attrs) else{
             panic!("Argument of type function must be precede by var_type attribute")
         };

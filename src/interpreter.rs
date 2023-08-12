@@ -1,8 +1,5 @@
 use crate::instruction::{local_variable::LocalVariables, Exec, Instruction};
-use crate::{
-    function::NativeFunction, parse::*, pest::Parser, stdlib::add_std_lib, variable::*, Error,
-    Result,
-};
+use crate::{parse::*, pest::Parser, stdlib::add_std_lib, variable::*, Error, Result};
 use std::{
     collections::HashMap,
     fs::File,
@@ -82,10 +79,7 @@ impl<'a> Interpreter<'a> {
     pub fn insert(&mut self, name: Rc<str>, variable: Variable) {
         self.variables.insert(name, variable);
     }
-    pub fn insert_native_function(&mut self, name: Rc<str>, function: NativeFunction) {
-        self.variables
-            .insert(name, Variable::Function(Rc::new(function)));
-    }
+
     pub fn create_layer(&'a self) -> Self {
         Self {
             variables: VariableMap::new(),
