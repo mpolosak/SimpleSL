@@ -7,7 +7,7 @@ pub use self::{
     param::{Param, Params},
 };
 use crate::{
-    instruction::Exec,
+    instruction::{Exec, Instruction},
     interpreter::Interpreter,
     variable::{function_type::FunctionType, GetReturnType, GetType, Type, Variable},
     Result,
@@ -18,9 +18,21 @@ use std::{fmt, iter::zip};
 pub struct Function {
     pub params: Params,
     pub body: Body,
+    pub return_type: Type,
 }
 
 impl Function {
+    pub fn new_lang(params: Params, body: Box<[Instruction]>) -> Self {
+        let return_type = match body.last() {
+            Some(instruction) => instruction.get_return_type(),
+            None => Type::Void,
+        };
+        Self {
+            params,
+            body: Body::Lang(body),
+            return_type,
+        }
+    }
     pub fn exec(&self, interpreter: &mut Interpreter, args: &[Variable]) -> Result<Variable> {
         let mut interpreter = interpreter.create_layer();
         for (arg, Param { var_type: _, name }) in zip(args, self.params.iter()) {
@@ -32,15 +44,15 @@ impl Function {
 
 impl GetType for Function {
     fn get_type(&self) -> Type {
-        let params_types: Box<[Type]> = self
+        let params: Box<[Type]> = self
             .params
             .iter()
             .map(|Param { name: _, var_type }| var_type.clone())
             .collect();
-        let return_type = self.get_return_type();
+        let return_type = self.return_type.clone();
         FunctionType {
             return_type,
-            params: params_types,
+            params,
         }
         .into()
     }
@@ -48,7 +60,7 @@ impl GetType for Function {
 
 impl GetReturnType for Function {
     fn get_return_type(&self) -> Type {
-        self.body.get_return_type()
+        self.return_type.clone()
     }
 }
 

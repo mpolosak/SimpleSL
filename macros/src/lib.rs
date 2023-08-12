@@ -35,13 +35,13 @@ pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream 
                 #ident_str.into(),
                 function::Function {
                     params: function::Params(Rc::new([#params])),
-                    body: function::Body::Native{
-                        body: |interpreter| {
+                    body: function::Body::Native(
+                        |interpreter| {
                             #args_importing
                             #body
-                        },
-                        return_type: #return_type,
-                    },
+                        }
+                    ),
+                    return_type: #return_type,
                 }.into(),
             );
         }

@@ -5,14 +5,13 @@ use super::{
     CreateInstruction, Instruction,
 };
 use crate::{
-    function::{Body, Function, Param, Params},
+    function::{Function, Param, Params},
     interpreter::Interpreter,
     parse::Rule,
     variable::{function_type::FunctionType, GetReturnType, Type, Variable},
     Result,
 };
 use pest::iterators::Pair;
-use std::rc::Rc;
 
 #[derive(Clone, Debug)]
 pub struct FunctionDeclaration {
@@ -38,12 +37,9 @@ impl CreateInstruction for FunctionDeclaration {
             .iter()
             .all(|instruction| matches!(instruction, Instruction::Variable(_)))
         {
-            Ok(Instruction::Variable(Variable::Function(Rc::new(
-                Function {
-                    params,
-                    body: Body::Lang(body),
-                },
-            ))))
+            Ok(Instruction::Variable(
+                Function::new_lang(params, body).into(),
+            ))
         } else {
             Ok(Self { params, body }.into())
         }
@@ -54,10 +50,7 @@ impl Exec for FunctionDeclaration {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let mut fn_local_variables = LocalVariables::from(self.params.clone());
         let body = recreate_instructions(&self.body, &mut fn_local_variables, interpreter)?;
-        Ok(Variable::Function(Rc::new(Function {
-            params: self.params.clone(),
-            body: Body::Lang(body),
-        })))
+        Ok(Function::new_lang(self.params.clone(), body).into())
     }
 }
 
@@ -73,12 +66,9 @@ impl Recreate for FunctionDeclaration {
             .iter()
             .all(|instruction| matches!(instruction, Instruction::Variable(_)))
         {
-            Ok(Instruction::Variable(Variable::Function(Rc::new(
-                Function {
-                    params: self.params.clone(),
-                    body: Body::Lang(body),
-                },
-            ))))
+            Ok(Instruction::Variable(
+                Function::new_lang(self.params.clone(), body).into(),
+            ))
         } else {
             Ok(Self {
                 params: self.params.clone(),
