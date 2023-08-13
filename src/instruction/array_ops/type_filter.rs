@@ -7,7 +7,7 @@ use crate::{
 };
 use pest::iterators::Pair;
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct TypeFilter {
     array: Instruction,
     var_type: Type,

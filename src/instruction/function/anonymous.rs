@@ -13,7 +13,7 @@ use crate::{
 };
 use pest::iterators::Pair;
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct AnonymousFunction {
     pub params: Params,
     body: Box<[Instruction]>,

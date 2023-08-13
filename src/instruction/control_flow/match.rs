@@ -8,7 +8,7 @@ use crate::{
 };
 use pest::iterators::Pair;
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Match {
     expression: Instruction,
     arms: Box<[MatchArm]>,
@@ -70,7 +70,7 @@ impl Recreate for Match {
         let arms = self
             .arms
             .iter()
-            .map(|arm| arm.clone().recreate(local_variables, interpreter))
+            .map(|arm| arm.recreate(local_variables, interpreter))
             .collect::<Result<Box<[MatchArm]>>>()?;
         Ok(Self { expression, arms }.into())
     }

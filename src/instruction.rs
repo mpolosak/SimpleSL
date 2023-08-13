@@ -43,7 +43,7 @@ use pest::iterators::Pair;
 use std::rc::Rc;
 pub use traits::{CreateInstruction, Exec, Recreate};
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub enum Instruction {
     Add(Box<Add>),
     And(Box<And>),

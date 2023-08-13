@@ -7,7 +7,7 @@ use crate::variable::{GetReturnType, Variable};
 use crate::{parse::Rule, variable::Type, Error, Result};
 use pest::iterators::Pair;
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct BinAnd {
     lhs: Instruction,
     rhs: Instruction,

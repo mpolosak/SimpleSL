@@ -11,7 +11,7 @@ use crate::{
 };
 use pest::iterators::Pair;
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Xor {
     lhs: Instruction,
     rhs: Instruction,

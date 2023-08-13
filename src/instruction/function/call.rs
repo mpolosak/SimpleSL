@@ -13,7 +13,7 @@ use crate::{
     Error, Result,
 };
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct FunctionCall {
     pub function: Instruction,
     pub args: Box<[Instruction]>,
@@ -100,12 +100,9 @@ impl Recreate for FunctionCall {
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
     ) -> Result<Instruction> {
+        let function = self.function.recreate(local_variables, interpreter)?;
         let args = recreate_instructions(&self.args, local_variables, interpreter)?;
-        Ok(Self {
-            function: self.function.clone(),
-            args,
-        }
-        .into())
+        Ok(Self { function, args }.into())
     }
 }
 

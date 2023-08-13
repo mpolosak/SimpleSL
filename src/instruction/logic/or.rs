@@ -9,7 +9,7 @@ use crate::{
 };
 use pest::iterators::Pair;
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Or {
     lhs: Instruction,
     rhs: Instruction,

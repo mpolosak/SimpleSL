@@ -7,7 +7,7 @@ use pest::iterators::Pair;
 
 use super::can_be_used;
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct GreaterOrEqual {
     lhs: Instruction,
     rhs: Instruction,

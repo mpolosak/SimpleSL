@@ -14,7 +14,7 @@ use crate::{
 use pest::iterators::Pair;
 use std::rc::Rc;
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct FunctionDeclaration {
     ident: Rc<str>,
     pub params: Params,

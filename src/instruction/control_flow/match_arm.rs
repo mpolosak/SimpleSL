@@ -11,7 +11,7 @@ use crate::{
 use pest::iterators::Pair;
 use std::rc::Rc;
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub enum MatchArm {
     Type {
         ident: Rc<str>,
@@ -100,7 +100,7 @@ impl MatchArm {
         }
     }
     pub fn recreate(
-        self,
+        &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
     ) -> Result<Self> {
@@ -114,13 +114,13 @@ impl MatchArm {
                 local_variables.insert(ident.clone(), LocalVariable::Other(var_type.clone()));
                 let instruction = instruction.recreate(&mut local_variables, interpreter)?;
                 Self::Type {
-                    ident,
-                    var_type,
+                    ident: ident.clone(),
+                    var_type: var_type.clone(),
                     instruction,
                 }
             }
             Self::Value(values, instruction) => {
-                let values = recreate_instructions(&values, local_variables, interpreter)?;
+                let values = recreate_instructions(values, local_variables, interpreter)?;
                 let instruction = instruction.recreate(local_variables, interpreter)?;
                 Self::Value(values, instruction)
             }

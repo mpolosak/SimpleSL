@@ -6,7 +6,7 @@ use crate::variable::{GetReturnType, Type};
 use crate::{interpreter::Interpreter, parse::Rule, variable::Variable, Error, Result};
 use pest::iterators::Pair;
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Greater {
     lhs: Instruction,
     rhs: Instruction,
