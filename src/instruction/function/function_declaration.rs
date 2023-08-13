@@ -1,20 +1,22 @@
-use super::{
-    local_variable::{LocalVariableMap, LocalVariables},
-    recreate_instructions,
-    traits::{Exec, Recreate},
-    CreateInstruction, Instruction,
-};
 use crate::{
     function::{Body, Function, Param, Params},
+    instruction::{
+        local_variable::{LocalVariable, LocalVariableMap, LocalVariables},
+        recreate_instructions,
+        set::Set,
+        CreateInstruction, Exec, Instruction, Recreate,
+    },
     interpreter::Interpreter,
     parse::Rule,
     variable::{function_type::FunctionType, GetReturnType, Type, Variable},
     Error, Result,
 };
 use pest::iterators::Pair;
+use std::rc::Rc;
 
 #[derive(Clone, Debug)]
 pub struct FunctionDeclaration {
+    ident: Rc<str>,
     pub params: Params,
     body: Box<[Instruction]>,
     return_type: Type,
@@ -26,7 +28,9 @@ impl CreateInstruction for FunctionDeclaration {
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
     ) -> Result<Instruction> {
-        let mut inner = pair.into_inner().peekable();
+        let mut inner = pair.into_inner();
+        let ident: Rc<str> = inner.next().unwrap().as_str().into();
+        let mut inner = inner.next().unwrap().into_inner();
         let params_pair = inner.next().unwrap();
         let params = Params(params_pair.into_inner().map(Param::from).collect());
         let return_type = match inner.peek() {
@@ -35,11 +39,13 @@ impl CreateInstruction for FunctionDeclaration {
             }
             _ => Type::Void,
         };
-        let mut local_variables =
-            local_variables.layer_from_map(LocalVariableMap::from(params.clone()));
-        let body = inner
-            .map(|instruction| Instruction::new(instruction, interpreter, &mut local_variables))
-            .collect::<Result<Box<_>>>()?;
+        let body = {
+            let mut local_variables =
+                local_variables.layer_from_map(LocalVariableMap::from(params.clone()));
+            inner
+                .map(|instruction| Instruction::new(instruction, interpreter, &mut local_variables))
+                .collect::<Result<Box<_>>>()
+        }?;
         if return_type != Type::Void {
             let returned = match body.last() {
                 Some(instruction) => instruction.get_return_type(),
@@ -53,19 +59,28 @@ impl CreateInstruction for FunctionDeclaration {
             .iter()
             .all(|instruction| matches!(instruction, Instruction::Variable(_)))
         {
-            Ok(Instruction::Variable(
-                Function {
-                    params,
-                    body: Body::Lang(body),
-                    return_type,
-                }
-                .into(),
-            ))
+            let variable: Variable = Function {
+                params,
+                body: Body::Lang(body),
+                return_type,
+            }
+            .into();
+            local_variables.insert(ident.clone(), LocalVariable::Variable(variable.clone()));
+            Ok(Set {
+                ident,
+                instruction: Instruction::Variable(variable),
+            }
+            .into())
         } else {
+            local_variables.insert(
+                ident.clone(),
+                LocalVariable::Function(params.clone(), return_type.clone()),
+            );
             Ok(Self {
                 params,
                 body,
                 return_type,
+                ident,
             }
             .into())
         }
@@ -76,12 +91,14 @@ impl Exec for FunctionDeclaration {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let mut fn_local_variables = LocalVariables::from(self.params.clone());
         let body = recreate_instructions(&self.body, &mut fn_local_variables, interpreter)?;
-        Ok(Function {
+        let function: Rc<Function> = Function {
             params: self.params.clone(),
             body: Body::Lang(body),
             return_type: self.return_type.clone(),
         }
-        .into())
+        .into();
+        interpreter.insert(self.ident.clone(), function.clone().into());
+        Ok(function.into())
     }
 }
 
@@ -91,25 +108,39 @@ impl Recreate for FunctionDeclaration {
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
     ) -> Result<Instruction> {
-        let mut local_variables = local_variables.layer_from_map(self.params.clone().into());
-        let body = recreate_instructions(&self.body, &mut local_variables, interpreter)?;
+        let body = {
+            let mut local_variables = local_variables.layer_from_map(self.params.clone().into());
+            recreate_instructions(&self.body, &mut local_variables, interpreter)
+        }?;
+        let ident = self.ident.clone();
+        let params = self.params.clone();
+        let return_type = self.return_type.clone();
         if body
             .iter()
             .all(|instruction| matches!(instruction, Instruction::Variable(_)))
         {
-            Ok(Instruction::Variable(
-                Function {
-                    params: self.params.clone(),
-                    body: Body::Lang(body),
-                    return_type: self.return_type.clone(),
-                }
-                .into(),
-            ))
+            let variable: Variable = Function {
+                params,
+                body: Body::Lang(body),
+                return_type,
+            }
+            .into();
+            local_variables.insert(ident.clone(), LocalVariable::Variable(variable.clone()));
+            Ok(Set {
+                ident,
+                instruction: Instruction::Variable(variable),
+            }
+            .into())
         } else {
+            local_variables.insert(
+                ident.clone(),
+                LocalVariable::Function(params.clone(), return_type.clone()),
+            );
             Ok(Self {
-                params: self.params.clone(),
+                ident,
+                params,
                 body,
-                return_type: self.return_type.clone(),
+                return_type,
             }
             .into())
         }
@@ -118,7 +149,7 @@ impl Recreate for FunctionDeclaration {
 
 impl From<FunctionDeclaration> for Instruction {
     fn from(value: FunctionDeclaration) -> Self {
-        Self::Function(value)
+        Self::FunctionDeclaration(value)
     }
 }
 

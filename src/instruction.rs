@@ -8,7 +8,6 @@ mod comp;
 mod control_flow;
 mod destruct_tuple;
 mod function;
-mod function_call;
 mod import;
 pub mod local_variable;
 mod logic;
@@ -16,6 +15,24 @@ mod math;
 mod set;
 mod traits;
 mod tuple;
+use self::{
+    array::Array,
+    array_ops::{Filter, Map, TypeFilter},
+    array_repeat::ArrayRepeat,
+    at::At,
+    bin::{BinAnd, BinNot, BinOr, LShift, RShift, Xor},
+    block::Block,
+    comp::{Equal, Greater, GreaterOrEqual},
+    control_flow::{IfElse, Match, SetIfElse},
+    destruct_tuple::DestructTuple,
+    function::{AnonymousFunction, FunctionCall, FunctionDeclaration},
+    import::Import,
+    local_variable::{LocalVariable, LocalVariables},
+    logic::{And, Not, Or},
+    math::{Add, Divide, Modulo, Multiply, Pow, Subtract},
+    set::Set,
+    tuple::Tuple,
+};
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
@@ -26,64 +43,45 @@ use pest::iterators::Pair;
 use std::rc::Rc;
 pub use traits::{CreateInstruction, Exec, Recreate};
 
-use self::array_repeat::ArrayRepeat;
-use {
-    array::Array,
-    array_ops::{Filter, Map, TypeFilter},
-    at::At,
-    bin::{BinAnd, BinNot, BinOr, LShift, RShift, Xor},
-    block::Block,
-    comp::{Equal, Greater, GreaterOrEqual},
-    control_flow::{IfElse, Match, SetIfElse},
-    destruct_tuple::DestructTuple,
-    function::FunctionDeclaration,
-    function_call::FunctionCall,
-    import::Import,
-    local_variable::{LocalVariable, LocalVariables},
-    logic::{And, Not, Or},
-    math::{Add, Divide, Modulo, Multiply, Pow, Subtract},
-    set::Set,
-    tuple::Tuple,
-};
-
 #[derive(Clone, Debug)]
 pub enum Instruction {
-    FunctionCall(Box<FunctionCall>),
-    Variable(Variable),
-    LocalVariable(Rc<str>, LocalVariable),
+    Add(Box<Add>),
+    And(Box<And>),
+    AnonymousFunction(AnonymousFunction),
     Array(Array),
     ArrayRepeat(Box<ArrayRepeat>),
-    Function(FunctionDeclaration),
-    Tuple(Tuple),
-    Set(Box<Set>),
-    DestructTuple(Box<DestructTuple>),
-    Not(Box<Not>),
+    At(Box<At>),
+    BinAnd(Box<BinAnd>),
     BinNot(Box<BinNot>),
+    BinOr(Box<BinOr>),
+    Block(Block),
+    DestructTuple(Box<DestructTuple>),
+    Divide(Box<Divide>),
     Equal(Box<Equal>),
+    Filter(Box<Filter>),
+    FunctionCall(Box<FunctionCall>),
     Greater(Box<Greater>),
     GreaterOrEqual(Box<GreaterOrEqual>),
-    And(Box<And>),
+    IfElse(Box<IfElse>),
+    Import(Import),
+    LShift(Box<LShift>),
+    LocalVariable(Rc<str>, LocalVariable),
+    Map(Box<Map>),
+    Match(Box<Match>),
+    Modulo(Box<Modulo>),
+    Multiply(Box<Multiply>),
+    Not(Box<Not>),
     Or(Box<Or>),
     Pow(Box<Pow>),
-    Multiply(Box<Multiply>),
-    Divide(Box<Divide>),
-    Add(Box<Add>),
-    Subtract(Box<Subtract>),
-    Modulo(Box<Modulo>),
-    BinAnd(Box<BinAnd>),
-    BinOr(Box<BinOr>),
-    Xor(Box<Xor>),
-    LShift(Box<LShift>),
     RShift(Box<RShift>),
-    Block(Block),
-    IfElse(Box<IfElse>),
-    At(Box<At>),
+    Set(Box<Set>),
     SetIfElse(Box<SetIfElse>),
-    Match(Box<Match>),
-    Import(Import),
-    Map(Box<Map>),
-    Filter(Box<Filter>),
+    Subtract(Box<Subtract>),
+    Tuple(Tuple),
     TypeFilter(Box<TypeFilter>),
+    Variable(Variable),
+    Xor(Box<Xor>),
+    FunctionDeclaration(FunctionDeclaration),
 }
 
 impl Instruction {
@@ -156,7 +154,7 @@ impl Instruction {
                 ArrayRepeat::create_instruction(pair, interpreter, local_variables)
             }
             Rule::function => {
-                FunctionDeclaration::create_instruction(pair, interpreter, local_variables)
+                AnonymousFunction::create_instruction(pair, interpreter, local_variables)
             }
             Rule::tuple => Tuple::create_instruction(pair, interpreter, local_variables),
             Rule::block => Block::create_instruction(pair, interpreter, local_variables),
@@ -172,6 +170,9 @@ impl Instruction {
             Rule::map => Map::create_instruction(pair, interpreter, local_variables),
             Rule::filter => Filter::create_instruction(pair, interpreter, local_variables),
             Rule::type_filter => TypeFilter::create_instruction(pair, interpreter, local_variables),
+            Rule::function_declaration => {
+                FunctionDeclaration::create_instruction(pair, interpreter, local_variables)
+            }
             rule => panic!("Unexpected rule: {rule:?}"),
         }
     }
@@ -185,7 +186,7 @@ impl Exec for Instruction {
             Self::LocalVariable(name, _) => Ok(interpreter.get_variable(name).unwrap()),
             Self::Array(array) => array.exec(interpreter),
             Self::ArrayRepeat(array) => array.exec(interpreter),
-            Self::Function(function) => function.exec(interpreter),
+            Self::AnonymousFunction(function) => function.exec(interpreter),
             Self::Tuple(function) => function.exec(interpreter),
             Self::Set(set) => set.exec(interpreter),
             Self::DestructTuple(destruct_tuple) => destruct_tuple.exec(interpreter),
@@ -216,6 +217,7 @@ impl Exec for Instruction {
             Self::Map(map) => map.exec(interpreter),
             Self::Filter(filter) => filter.exec(interpreter),
             Self::TypeFilter(filter) => filter.exec(interpreter),
+            Self::FunctionDeclaration(declaration) => declaration.exec(interpreter),
         }
     }
 }
@@ -240,7 +242,7 @@ impl Recreate for Instruction {
             }),
             Self::Array(array) => array.recreate(local_variables, interpreter),
             Self::ArrayRepeat(array) => array.recreate(local_variables, interpreter),
-            Self::Function(function) => function.recreate(local_variables, interpreter),
+            Self::AnonymousFunction(function) => function.recreate(local_variables, interpreter),
             Self::Tuple(tuple) => tuple.recreate(local_variables, interpreter),
             Self::Set(set) => set.recreate(local_variables, interpreter),
             Self::DestructTuple(destruct_tuple) => {
@@ -276,6 +278,9 @@ impl Recreate for Instruction {
             Self::Map(map) => map.recreate(local_variables, interpreter),
             Self::Filter(filter) => filter.recreate(local_variables, interpreter),
             Self::TypeFilter(filter) => filter.recreate(local_variables, interpreter),
+            Self::FunctionDeclaration(declaration) => {
+                declaration.recreate(local_variables, interpreter)
+            }
         }
     }
 }
@@ -286,7 +291,7 @@ impl GetReturnType for Instruction {
             Self::Variable(variable) => variable.get_type(),
             Self::Array(array) => array.get_return_type(),
             Self::ArrayRepeat(array) => array.get_return_type(),
-            Self::Function(function) => function.get_return_type(),
+            Self::AnonymousFunction(function) => function.get_return_type(),
             Self::FunctionCall(function_call) => function_call.get_return_type(),
             Self::LocalVariable(_, local_variable) => local_variable.get_type(),
             Self::Tuple(tuple) => tuple.get_return_type(),
@@ -318,6 +323,7 @@ impl GetReturnType for Instruction {
             Self::Map(map) => map.get_return_type(),
             Self::Filter(filter) => filter.get_return_type(),
             Self::TypeFilter(filter) => filter.get_return_type(),
+            Self::FunctionDeclaration(declaration) => declaration.get_return_type(),
             Self::Equal(..) => Type::Int,
         }
     }

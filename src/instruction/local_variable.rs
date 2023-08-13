@@ -1,4 +1,4 @@
-use super::{function::FunctionDeclaration, Instruction};
+use super::Instruction;
 use crate::{
     function::{Param, Params},
     variable::{function_type::FunctionType, GetReturnType, GetType, Type, Variable},
@@ -94,10 +94,6 @@ impl From<&Instruction> for LocalVariable {
     fn from(value: &Instruction) -> Self {
         let var_type = value.get_return_type();
         match (value, var_type) {
-            (
-                Instruction::Function(FunctionDeclaration { params, .. }),
-                Type::Function(function_type),
-            ) => Self::Function(params.clone(), function_type.get_return_type()),
             (Instruction::Variable(variable), _) => Self::Variable(variable.clone()),
             (_, var_type) => Self::Other(var_type),
         }

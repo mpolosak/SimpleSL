@@ -1,6 +1,6 @@
-use super::{
+use crate::instruction::{
     exec_instructions,
-    function::FunctionDeclaration,
+    function::AnonymousFunction,
     local_variable::{LocalVariable, LocalVariables},
     recreate_instructions,
     traits::{Exec, Recreate},
@@ -41,7 +41,7 @@ impl CreateInstruction for FunctionCall {
                 Ok(Self { function, args }.into())
             }
             Instruction::LocalVariable(_, LocalVariable::Function(params, _))
-            | Instruction::Function(FunctionDeclaration { params, .. }) => {
+            | Instruction::AnonymousFunction(AnonymousFunction { params, .. }) => {
                 Self::check_args_with_params(pair_str, params, &args)?;
                 Ok(Self { function, args }.into())
             }

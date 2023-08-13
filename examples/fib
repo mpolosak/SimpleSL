@@ -5,12 +5,12 @@ int = (variable: any, fallback: int) -> int {
     };
 };
 
-fib = (n:int){
-    array = recsub([0,1], (array:[any]){
+fib = (n:int) -> [int] {
+    array = recsub([0,1], (array:[any]) -> int {
         len = len(array);
         a = array[len-1];
         b = array[len-2];
         int(a, 0)+int(b, 0);
-    }, n);
+    }, 70);
     array ? int;
 };

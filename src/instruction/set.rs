@@ -14,8 +14,8 @@ use std::rc::Rc;
 
 #[derive(Clone, Debug)]
 pub struct Set {
-    ident: Rc<str>,
-    instruction: Instruction,
+    pub ident: Rc<str>,
+    pub instruction: Instruction,
 }
 
 impl Set {

@@ -62,12 +62,12 @@ string = ${ "\"" ~ inner ~ "\"" }
       | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
   }
 void = {"()"}
-set = { return_variable ~ "=" ~ expression }
+function_declaration = { ident ~ "=" ~ function }
+set = { ident ~ "=" ~ expression }
 destruct_tuple = { destruct_idents ~ "=" ~ expression }
   destruct_idents =  {"(" ~ (ident ~ ("," ~ ident)*)? ~ ")"}
-line = { COMMENT* ~ ( ( ( set | destruct_tuple | expression ) ~  line_end) | block ) }
+line = { COMMENT* ~ ( ( ( function_declaration | set | destruct_tuple | expression ) ~  line_end) | block ) }
 	line_end = { ";" }
-return_variable = @{ident}
 function = {params ~ return_type_decl? ~"{"~line*~"}"}
 	param = {ident ~ ":" ~ type}
 	params_list = _{ (param ~ ("," ~ param)*)?}
