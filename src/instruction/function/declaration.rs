@@ -40,6 +40,11 @@ impl CreateInstruction for FunctionDeclaration {
             _ => Type::Void,
         };
         let body = {
+            let mut local_variables = local_variables.create_layer();
+            local_variables.insert(
+                ident.clone(),
+                LocalVariable::Function(params.clone(), return_type.clone()),
+            );
             let mut local_variables =
                 local_variables.layer_from_map(LocalVariableMap::from(params.clone()));
             inner
@@ -90,8 +95,12 @@ impl CreateInstruction for FunctionDeclaration {
 
 impl Exec for FunctionDeclaration {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
-        let mut fn_local_variables = LocalVariables::from(self.params.clone());
-        let body = recreate_instructions(&self.body, &mut fn_local_variables, interpreter)?;
+        let mut local_variables = LocalVariables::from(self.params.clone());
+        local_variables.insert(
+            self.ident.clone(),
+            LocalVariable::Function(self.params.clone(), self.return_type.clone()),
+        );
+        let body = recreate_instructions(&self.body, &mut local_variables, interpreter)?;
         let function: Rc<Function> = Function {
             ident: Some(self.ident.clone()),
             params: self.params.clone(),
@@ -111,6 +120,11 @@ impl Recreate for FunctionDeclaration {
         interpreter: &Interpreter,
     ) -> Result<Instruction> {
         let body = {
+            let mut local_variables = local_variables.create_layer();
+            local_variables.insert(
+                self.ident.clone(),
+                LocalVariable::Function(self.params.clone(), self.return_type.clone()),
+            );
             let mut local_variables = local_variables.layer_from_map(self.params.clone().into());
             recreate_instructions(&self.body, &mut local_variables, interpreter)
         }?;
