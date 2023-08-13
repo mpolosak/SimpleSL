@@ -5,12 +5,32 @@ int = (variable: any, fallback: int) -> int {
     };
 };
 
-fib = (n:int) -> [int] {
-    array = recsub([0,1], (array:[any]) -> int {
-        len = len(array);
-        a = array[len-1];
-        b = array[len-2];
-        int(a, 0)+int(b, 0);
-    }, 70);
-    array ? int;
+custom_fib = (fib0: int, fib1: int, n:int) -> int {
+    if n < 1 {
+        fib0;
+    } else if n == 1 {
+        fib1;
+    } else {
+        custom_fib(fib1, fib0+fib1, n-1);
+    };
+};
+
+fib = (n:int) -> int {
+    custom_fib(0, 1, n);
+};
+ 
+custom_array_fib = (elements: [int], n: int) -> [int] {
+    len = len(elements);
+    if len < n {
+        element_last = elements[len-1];
+        element_second_last = elements[len-2];
+        next_fib = element_last + element_second_last;
+        custom_array_fib(elements+[next_fib], n);
+    } else {
+        elements;
+    };
+};
+
+array_fib = (n: int) -> [int] {
+    custom_array_fib([0,1], n);
 };
