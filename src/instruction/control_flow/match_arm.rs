@@ -15,7 +15,7 @@ use std::rc::Rc;
 pub enum MatchArm {
     Type {
         ident: Rc<str>,
-        var_type: Type,
+        var_type: Rc<Type>,
         instruction: Instruction,
     },
     Value(Box<[Instruction]>, Instruction),
@@ -32,7 +32,7 @@ impl MatchArm {
             Rule::match_type => {
                 let mut inner = pair.into_inner();
                 let ident: Rc<str> = inner.next().unwrap().as_str().into();
-                let var_type = Type::from(inner.next().unwrap());
+                let var_type = Rc::new(Type::from(inner.next().unwrap()));
                 let pair = inner.next().unwrap();
                 let mut local_variables = local_variables.create_layer();
                 local_variables.insert(ident.clone(), LocalVariable::Other(var_type.clone()));
@@ -132,7 +132,7 @@ impl MatchArm {
 }
 
 impl GetReturnType for MatchArm {
-    fn get_return_type(&self) -> Type {
+    fn get_return_type(&self) -> Rc<Type> {
         match self {
             MatchArm::Type { instruction, .. }
             | MatchArm::Value(_, instruction)

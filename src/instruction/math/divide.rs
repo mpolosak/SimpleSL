@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
@@ -26,17 +28,19 @@ impl CreateInstruction for Divide {
         let dividend = Instruction::new(pair, interpreter, local_variables)?;
         let pair = inner.next().unwrap();
         let divisor = Instruction::new(pair, interpreter, local_variables)?;
-        match (dividend.get_return_type(), divisor.get_return_type()) {
+        let dividend_return_type = dividend.get_return_type();
+        let divisor_return_type = divisor.get_return_type();
+        match (dividend_return_type.as_ref(), divisor_return_type.as_ref()) {
             (Type::Int, Type::Int) | (Type::Float, Type::Float) => {
                 Self::create_from_instructions(dividend, divisor)
             }
             (Type::Array(var_type), Type::Int) | (Type::Int, Type::Array(var_type))
-                if var_type == Type::Int.into() =>
+                if var_type.as_ref() == &Type::Int =>
             {
                 Self::create_from_instructions(dividend, divisor)
             }
             (Type::Array(var_type), Type::Float) | (Type::Float, Type::Array(var_type))
-                if var_type == Type::Float.into() =>
+                if var_type.as_ref() == &Type::Float =>
             {
                 Self::create_from_instructions(dividend, divisor)
             }
@@ -45,9 +49,9 @@ impl CreateInstruction for Divide {
                 Self::create_from_instructions(dividend, divisor)
             }
             _ => Err(Error::CannotDo2(
-                dividend.get_return_type(),
+                dividend_return_type,
                 "/",
-                divisor.get_return_type(),
+                divisor_return_type,
             )),
         }
     }
@@ -111,14 +115,17 @@ impl Recreate for Divide {
 }
 
 impl GetReturnType for Divide {
-    fn get_return_type(&self) -> Type {
+    fn get_return_type(&self) -> Rc<Type> {
         match (
             self.dividend.get_return_type(),
             self.divisor.get_return_type(),
         ) {
-            (var_type @ Type::Array(_), _) | (_, var_type @ Type::Array(_)) | (var_type, _) => {
+            (var_type, _) | (_, var_type)
+                if matches!(var_type.as_ref(), Type::Array(_) | Type::EmptyArray) =>
+            {
                 var_type
             }
+            (var_type, _) => var_type,
         }
     }
 }

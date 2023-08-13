@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use super::{
     local_variable::LocalVariables, recreate_instructions, CreateInstruction, Exec, Instruction,
     Recreate,
@@ -62,10 +64,10 @@ impl Recreate for Block {
 }
 
 impl GetReturnType for Block {
-    fn get_return_type(&self) -> Type {
+    fn get_return_type(&self) -> Rc<Type> {
         match self.instructions.last() {
             Some(last) => last.get_return_type(),
-            None => Type::Void,
+            None => Type::Void.into(),
         }
     }
 }

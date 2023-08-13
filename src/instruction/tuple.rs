@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use super::{
     exec_instructions, local_variable::LocalVariables, recreate_instructions, CreateInstruction,
     Exec, Instruction, Recreate,
@@ -61,13 +63,13 @@ impl Recreate for Tuple {
 }
 
 impl GetReturnType for Tuple {
-    fn get_return_type(&self) -> Type {
+    fn get_return_type(&self) -> Rc<Type> {
         let types = self
             .elements
             .iter()
             .map(Instruction::get_return_type)
             .collect();
-        Type::Tuple(types)
+        Type::Tuple(types).into()
     }
 }
 

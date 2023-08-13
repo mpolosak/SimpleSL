@@ -3,9 +3,9 @@ use crate::{
     variable::Type,
     Error, Result,
 };
-use std::iter::zip;
+use std::{iter::zip, rc::Rc};
 
-pub fn check_args(var_name: &str, params: &Params, args: &[Type]) -> Result<()> {
+pub fn check_args(var_name: &str, params: &Params, args: &[Rc<Type>]) -> Result<()> {
     if params.len() != args.len() {
         return Err(Error::WrongNumberOfArguments(var_name.into(), params.len()));
     }

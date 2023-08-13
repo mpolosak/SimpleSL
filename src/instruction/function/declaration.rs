@@ -19,7 +19,7 @@ pub struct FunctionDeclaration {
     ident: Rc<str>,
     pub params: Params,
     body: Box<[Instruction]>,
-    return_type: Type,
+    return_type: Rc<Type>,
 }
 
 impl CreateInstruction for FunctionDeclaration {
@@ -33,12 +33,13 @@ impl CreateInstruction for FunctionDeclaration {
         let mut inner = inner.next().unwrap().into_inner();
         let params_pair = inner.next().unwrap();
         let params = Params(params_pair.into_inner().map(Param::from).collect());
-        let return_type = match inner.peek() {
+        let return_type: Rc<Type> = match inner.peek() {
             Some(pair) if pair.as_rule() == Rule::return_type_decl => {
                 Type::from(inner.next().unwrap().into_inner().next().unwrap())
             }
             _ => Type::Void,
-        };
+        }
+        .into();
         let body = {
             let mut local_variables = local_variables.create_layer();
             local_variables.insert(
@@ -51,10 +52,10 @@ impl CreateInstruction for FunctionDeclaration {
                 .map(|instruction| Instruction::new(instruction, interpreter, &mut local_variables))
                 .collect::<Result<Box<_>>>()
         }?;
-        if return_type != Type::Void {
+        if return_type.as_ref() != &Type::Void {
             let returned = match body.last() {
                 Some(instruction) => instruction.get_return_type(),
-                None => Type::Void,
+                None => Type::Void.into(),
             };
             if !returned.matches(&return_type) {
                 return Err(Error::WrongReturn(return_type, returned));
@@ -171,17 +172,19 @@ impl From<FunctionDeclaration> for Instruction {
 }
 
 impl GetReturnType for FunctionDeclaration {
-    fn get_return_type(&self) -> Type {
-        let params: Box<[Type]> = self
+    fn get_return_type(&self) -> Rc<Type> {
+        let params: Box<[Rc<Type>]> = self
             .params
             .iter()
             .map(|Param { name: _, var_type }| var_type.clone())
             .collect();
         let return_type = self.return_type.clone();
-        FunctionType {
-            return_type,
-            params,
-        }
-        .into()
+        Rc::new(
+            FunctionType {
+                return_type,
+                params,
+            }
+            .into(),
+        )
     }
 }

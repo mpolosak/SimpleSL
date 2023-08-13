@@ -13,8 +13,8 @@ pub enum Type {
     Float,
     String,
     Function(Rc<FunctionType>),
-    Array(Box<Type>),
-    Tuple(Box<[Type]>),
+    Array(Rc<Type>),
+    Tuple(Rc<[Rc<Type>]>),
     EmptyArray,
     Void,
     Multi(Box<TypeSet>),
@@ -41,19 +41,21 @@ impl Type {
             _ => self == other,
         }
     }
-    pub fn concat(self, other: Self) -> Self {
+    pub fn concat(&self, other: &Self) -> Self {
         match (self, other) {
             (Type::Any, _) | (_, Type::Any) => Type::Any,
-            (first, second) if first == second => first,
-            (Type::Multi(mut types), Type::Multi(types2)) => {
+            (first, second) if first == second => first.clone(),
+            (Type::Multi(types), Type::Multi(types2)) => {
+                let mut types = types.clone();
                 types.extend(types2.iter().cloned());
                 Type::Multi(types)
             }
-            (Type::Multi(mut types), var_type) | (var_type, Type::Multi(mut types)) => {
-                types.insert(var_type);
+            (Type::Multi(types), var_type) | (var_type, Type::Multi(types)) => {
+                let mut types = types.clone();
+                types.insert(var_type.clone());
                 Type::Multi(types)
             }
-            (first, second) => Type::Multi(TypeSet::from([first, second]).into()),
+            (first, second) => Type::Multi(TypeSet::from([first.clone(), second.clone()]).into()),
         }
     }
 }
@@ -99,7 +101,10 @@ impl From<Pair<'_, Rule>> for Type {
                 Self::Array(Self::from(pair).into())
             }
             Rule::tuple_type => {
-                let types = pair.into_inner().map(Type::from).collect();
+                let types = pair
+                    .into_inner()
+                    .map(|pair| Type::from(pair).into())
+                    .collect();
                 Self::Tuple(types)
             }
             Rule::multi => {
@@ -118,9 +123,9 @@ impl From<[Type; 2]> for Type {
     }
 }
 pub trait GetType {
-    fn get_type(&self) -> Type;
+    fn get_type(&self) -> Rc<Type>;
 }
 
 pub trait GetReturnType {
-    fn get_return_type(&self) -> Type;
+    fn get_return_type(&self) -> Rc<Type>;
 }

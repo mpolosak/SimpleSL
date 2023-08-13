@@ -1,9 +1,11 @@
+use std::rc::Rc;
+
 use super::can_be_used;
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
 use crate::interpreter::Interpreter;
-use crate::variable::{GetReturnType, Variable};
+use crate::variable::{GetReturnType, GetType, Variable};
 use crate::{parse::Rule, variable::Type, Error, Result};
 use pest::iterators::Pair;
 
@@ -39,8 +41,7 @@ impl BinAnd {
     fn bin_and(lhs: Variable, rhs: Variable) -> Variable {
         match (lhs, rhs) {
             (Variable::Int(lhs), Variable::Int(rhs)) => (lhs & rhs).into(),
-            (array @ Variable::Array(_, Type::EmptyArray), _)
-            | (_, array @ Variable::Array(_, Type::EmptyArray)) => array,
+            (array, _) | (_, array) if array.get_type().as_ref() == &Type::EmptyArray => array,
             (value, Variable::Array(array, _)) | (Variable::Array(array, _), value) => array
                 .iter()
                 .cloned()
@@ -80,14 +81,14 @@ impl Recreate for BinAnd {
 }
 
 impl GetReturnType for BinAnd {
-    fn get_return_type(&self) -> Type {
-        if matches!(
-            (self.lhs.get_return_type(), self.rhs.get_return_type()),
-            (Type::Array(_), _) | (_, Type::Array(_))
-        ) {
-            Type::Array(Type::Int.into())
-        } else {
-            Type::Int
+    fn get_return_type(&self) -> Rc<Type> {
+        match (self.lhs.get_return_type(), self.rhs.get_return_type()) {
+            (var_type, _) | (_, var_type)
+                if matches!(var_type.as_ref(), Type::Array(_) | Type::EmptyArray) =>
+            {
+                var_type
+            }
+            (var_type, _) => var_type,
         }
     }
 }

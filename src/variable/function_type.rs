@@ -1,12 +1,12 @@
 use super::{GetReturnType, Type};
 use crate::{join, parse::Rule};
 use pest::iterators::Pair;
-use std::{fmt::Display, iter::zip};
+use std::{fmt::Display, iter::zip, rc::Rc};
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct FunctionType {
-    pub params: Box<[Type]>,
-    pub return_type: Type,
+    pub params: Box<[Rc<Type>]>,
+    pub return_type: Rc<Type>,
 }
 
 impl FunctionType {
@@ -20,7 +20,7 @@ impl FunctionType {
 
 impl Display for FunctionType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if matches!(self.return_type, Type::Multi(_)) {
+        if matches!(self.return_type.as_ref(), Type::Multi(_)) {
             write!(
                 f,
                 "function({})->({})",
@@ -39,20 +39,23 @@ impl Display for FunctionType {
 }
 
 impl GetReturnType for FunctionType {
-    fn get_return_type(&self) -> Type {
+    fn get_return_type(&self) -> Rc<Type> {
         self.return_type.clone()
     }
 }
 
 impl From<Pair<'_, Rule>> for FunctionType {
     fn from(pair: Pair<'_, Rule>) -> Self {
-        let mut return_type = Type::Any;
-        let mut params: Box<[Type]> = [].into();
+        let mut return_type = Type::Any.into();
+        let mut params: Box<[Rc<Type>]> = [].into();
         for pair in pair.into_inner() {
             if pair.as_rule() == Rule::function_type_params {
-                params = pair.into_inner().map(Type::from).collect();
+                params = pair
+                    .into_inner()
+                    .map(|pair| Type::from(pair).into())
+                    .collect();
             } else {
-                return_type = Type::from(pair);
+                return_type = Type::from(pair).into();
             }
         }
         Self {
@@ -76,12 +79,12 @@ mod tests {
     #[test]
     fn check_function_type_matches() {
         let function_type = FunctionType {
-            params: [Type::Any].into(),
-            return_type: Type::Int,
+            params: [Type::Any.into()].into(),
+            return_type: Type::Int.into(),
         };
         let function_type2 = FunctionType {
-            params: [Type::Int].into(),
-            return_type: Type::Any,
+            params: [Type::Int.into()].into(),
+            return_type: Type::Any.into(),
         };
         assert!(function_type.matches(&function_type));
         assert!(function_type2.matches(&function_type2));
@@ -89,28 +92,30 @@ mod tests {
         assert!(!function_type2.matches(&function_type));
         let function_type = FunctionType {
             params: [
-                Type::Any,
-                Type::Int,
+                Type::Any.into(),
+                Type::Int.into(),
                 Type::Multi(
                     TypeSet::from([Type::Float, Type::String, Type::Array(Type::Any.into())])
                         .into(),
-                ),
+                )
+                .into(),
             ]
             .into(),
-            return_type: Type::Int,
+            return_type: Type::Int.into(),
         };
         let function_type2 = FunctionType {
-            params: [Type::Int].into(),
-            return_type: Type::Any,
+            params: [Type::Int.into()].into(),
+            return_type: Type::Any.into(),
         };
         let function_type3 = FunctionType {
             params: [
-                Type::String,
-                Type::Int,
-                Type::Multi(TypeSet::from([Type::Float, Type::String]).into()),
+                Type::String.into(),
+                Type::Int.into(),
+                Type::Multi(TypeSet::from([Type::Float, Type::String]).into()).into(),
             ]
             .into(),
-            return_type: Type::Multi(TypeSet::from([Type::Float, Type::String, Type::Int]).into()),
+            return_type: Type::Multi(TypeSet::from([Type::Float, Type::String, Type::Int]).into())
+                .into(),
         };
         assert!(function_type.matches(&function_type));
         assert!(function_type2.matches(&function_type2));

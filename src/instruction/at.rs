@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use super::{local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate};
 use crate::{
     interpreter::Interpreter,
@@ -28,10 +30,10 @@ impl CreateInstruction for At {
         let instruction_return_type = instruction.get_return_type();
         match (
             instruction_return_type.matches(&required_instruction_type),
-            index.get_return_type() == Type::Int,
+            index.get_return_type().as_ref() == &Type::Int,
         ) {
             (true, true) => Self::create_from_instructions(instruction, index),
-            (true, false) => Err(Error::WrongType("index".into(), Type::Int)),
+            (true, false) => Err(Error::WrongType("index".into(), Type::Int.into())),
             (false, _) => Err(Error::CannotIndexInto(instruction_return_type)),
         }
     }
@@ -74,11 +76,12 @@ impl Recreate for At {
 }
 
 impl GetReturnType for At {
-    fn get_return_type(&self) -> Type {
-        match self.instruction.get_return_type() {
-            Type::String => Type::String,
-            Type::Array(elements_type) => *elements_type,
-            Type::EmptyArray => Type::Any,
+    fn get_return_type(&self) -> Rc<Type> {
+        let instruction_return = self.instruction.get_return_type();
+        match instruction_return.as_ref() {
+            Type::String => instruction_return,
+            Type::Array(elements_type) => elements_type.clone(),
+            Type::EmptyArray => Type::Any.into(),
             _ => panic!(),
         }
     }

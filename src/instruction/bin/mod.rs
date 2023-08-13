@@ -11,10 +11,13 @@ pub use {
 };
 
 fn can_be_used(lhs: &Instruction, rhs: &Instruction) -> bool {
-    match (lhs.get_return_type(), rhs.get_return_type()) {
+    match (
+        lhs.get_return_type().as_ref(),
+        rhs.get_return_type().as_ref(),
+    ) {
         (Type::Int, Type::Int) => true,
         (Type::Array(var_type), Type::Int) | (Type::Int, Type::Array(var_type))
-            if var_type == Type::Int.into() =>
+            if var_type.as_ref() == &Type::Int =>
         {
             true
         }

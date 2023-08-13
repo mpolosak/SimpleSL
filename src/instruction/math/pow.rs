@@ -1,6 +1,7 @@
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
+use crate::variable::GetType;
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
@@ -8,6 +9,7 @@ use crate::{
     Error, Result,
 };
 use pest::iterators::Pair;
+use std::rc::Rc;
 
 #[derive(Debug)]
 pub struct Pow {
@@ -26,17 +28,19 @@ impl CreateInstruction for Pow {
         let base = Instruction::new(pair, interpreter, local_variables)?;
         let pair = inner.next().unwrap();
         let exp = Instruction::new(pair, interpreter, local_variables)?;
-        match (base.get_return_type(), exp.get_return_type()) {
+        let base_return_type = base.get_return_type();
+        let exp_return_type = exp.get_return_type();
+        match (base_return_type.as_ref(), exp_return_type.as_ref()) {
             (Type::Int, Type::Int) | (Type::Float, Type::Float) => {
                 Self::create_from_instructions(base, exp)
             }
             (Type::Array(var_type), Type::Int) | (Type::Int, Type::Array(var_type))
-                if var_type == Type::Int.into() =>
+                if var_type.as_ref() == &Type::Int =>
             {
                 Self::create_from_instructions(base, exp)
             }
             (Type::Array(var_type), Type::Float) | (Type::Float, Type::Array(var_type))
-                if var_type == Type::Float.into() =>
+                if var_type.as_ref() == &Type::Float =>
             {
                 Self::create_from_instructions(base, exp)
             }
@@ -44,11 +48,7 @@ impl CreateInstruction for Pow {
             | (Type::Int | Type::Float, Type::EmptyArray) => {
                 Self::create_from_instructions(base, exp)
             }
-            _ => Err(Error::CannotDo2(
-                base.get_return_type(),
-                "**",
-                exp.get_return_type(),
-            )),
+            _ => Err(Error::CannotDo2(base_return_type, "**", exp_return_type)),
         }
     }
 }
@@ -59,8 +59,7 @@ impl Pow {
             (_, Variable::Int(exp)) if exp < 0 => Err(Error::CannotBeNegative("exponent")),
             (Variable::Int(base), Variable::Int(exp)) => Ok((base.pow(exp as u32)).into()),
             (Variable::Float(base), Variable::Float(exp)) => Ok((base.powf(exp)).into()),
-            (array @ Variable::Array(_, Type::EmptyArray), _)
-            | (_, array @ Variable::Array(_, Type::EmptyArray)) => Ok(array),
+            (array, _) | (_, array) if array.get_type().as_ref() == &Type::EmptyArray => Ok(array),
             (value, Variable::Array(array, _)) => array
                 .iter()
                 .cloned()
@@ -108,11 +107,14 @@ impl Recreate for Pow {
 }
 
 impl GetReturnType for Pow {
-    fn get_return_type(&self) -> Type {
+    fn get_return_type(&self) -> Rc<Type> {
         match (self.base.get_return_type(), self.exp.get_return_type()) {
-            (var_type @ Type::Array(_), _) | (_, var_type @ Type::Array(_)) | (var_type, _) => {
+            (var_type, _) | (_, var_type)
+                if matches!(var_type.as_ref(), Type::Array(_) | Type::EmptyArray) =>
+            {
                 var_type
             }
+            (var_type, _) => var_type,
         }
     }
 }

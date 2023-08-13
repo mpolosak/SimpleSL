@@ -1,6 +1,7 @@
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
+use crate::variable::GetType;
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
@@ -8,6 +9,7 @@ use crate::{
     Error, Result,
 };
 use pest::iterators::Pair;
+use std::rc::Rc;
 
 #[derive(Debug)]
 pub struct Multiply {
@@ -26,17 +28,19 @@ impl CreateInstruction for Multiply {
         let lhs = Instruction::new(pair, interpreter, local_variables)?;
         let pair = inner.next().unwrap();
         let rhs = Instruction::new(pair, interpreter, local_variables)?;
-        match (lhs.get_return_type(), rhs.get_return_type()) {
+        let lhs_return_type = lhs.get_return_type();
+        let rhs_return_type = rhs.get_return_type();
+        match (lhs_return_type.as_ref(), rhs_return_type.as_ref()) {
             (Type::Int, Type::Int) | (Type::Float, Type::Float) => {
                 Ok(Self::create_from_instructions(lhs, rhs))
             }
             (Type::Array(var_type), Type::Int) | (Type::Int, Type::Array(var_type))
-                if var_type == Type::Int.into() =>
+                if var_type.as_ref() == &Type::Int =>
             {
                 Ok(Self::create_from_instructions(lhs, rhs))
             }
             (Type::Array(var_type), Type::Float) | (Type::Float, Type::Array(var_type))
-                if var_type == Type::Float.into() =>
+                if var_type.as_ref() == &Type::Float =>
             {
                 Ok(Self::create_from_instructions(lhs, rhs))
             }
@@ -44,11 +48,7 @@ impl CreateInstruction for Multiply {
             | (Type::Int | Type::Float, Type::EmptyArray) => {
                 Ok(Self::create_from_instructions(lhs, rhs))
             }
-            _ => Err(Error::CannotDo2(
-                lhs.get_return_type(),
-                "*",
-                rhs.get_return_type(),
-            )),
+            _ => Err(Error::CannotDo2(lhs_return_type, "*", rhs_return_type)),
         }
     }
 }
@@ -58,8 +58,7 @@ impl Multiply {
         match (lhs, rhs) {
             (Variable::Int(lhs), Variable::Int(rhs)) => (lhs * rhs).into(),
             (Variable::Float(lhs), Variable::Float(rhs)) => (lhs * rhs).into(),
-            (array @ Variable::Array(_, Type::EmptyArray), _)
-            | (_, array @ Variable::Array(_, Type::EmptyArray)) => array,
+            (array, _) | (_, array) if array.get_type().as_ref() == &Type::EmptyArray => array,
             (value, Variable::Array(array, _)) | (Variable::Array(array, _), value) => array
                 .iter()
                 .cloned()
@@ -99,11 +98,14 @@ impl Recreate for Multiply {
 }
 
 impl GetReturnType for Multiply {
-    fn get_return_type(&self) -> Type {
+    fn get_return_type(&self) -> Rc<Type> {
         match (self.lhs.get_return_type(), self.rhs.get_return_type()) {
-            (var_type @ Type::Array(_), _) | (_, var_type @ Type::Array(_)) | (var_type, _) => {
+            (var_type, _) | (_, var_type)
+                if matches!(var_type.as_ref(), Type::Array(_) | Type::EmptyArray) =>
+            {
                 var_type
             }
+            (var_type, _) => var_type,
         }
     }
 }

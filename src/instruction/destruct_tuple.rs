@@ -30,7 +30,7 @@ impl CreateInstruction for DestructTuple {
         let idents: Rc<[Rc<str>]> = pair.into_inner().map(|pair| pair.as_str().into()).collect();
         let pair = inner.next().unwrap();
         let instruction = Instruction::new(pair, interpreter, local_variables)?;
-        match instruction.get_return_type() {
+        match instruction.get_return_type().as_ref() {
             Type::Tuple(types) if types.len() == idents.len() => {
                 let result = Self {
                     idents,
@@ -41,7 +41,12 @@ impl CreateInstruction for DestructTuple {
             }
             _ => Err(Error::WrongType(
                 "instruction".into(),
-                Type::Tuple(std::iter::repeat(Type::Any).take(idents.len()).collect()),
+                Type::Tuple(
+                    std::iter::repeat(Type::Any.into())
+                        .take(idents.len())
+                        .collect(),
+                )
+                .into(),
             )),
         }
     }
@@ -61,7 +66,7 @@ impl DestructTuple {
                 }
             }
             instruction => {
-                if let Type::Tuple(types) = instruction.get_return_type() {
+                if let Type::Tuple(types) = instruction.get_return_type().as_ref() {
                     for (ident, var_type) in zip(self.idents.iter().cloned(), types.iter()) {
                         local_variables.insert(ident, var_type.clone().into())
                     }
@@ -101,7 +106,7 @@ impl Recreate for DestructTuple {
 }
 
 impl GetReturnType for DestructTuple {
-    fn get_return_type(&self) -> Type {
+    fn get_return_type(&self) -> Rc<Type> {
         self.instruction.get_return_type()
     }
 }

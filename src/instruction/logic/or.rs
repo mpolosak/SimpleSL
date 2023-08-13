@@ -1,6 +1,7 @@
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
+use crate::variable::GetType;
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
@@ -8,6 +9,7 @@ use crate::{
     Error, Result,
 };
 use pest::iterators::Pair;
+use std::rc::Rc;
 
 #[derive(Debug)]
 pub struct Or {
@@ -26,10 +28,13 @@ impl CreateInstruction for Or {
         let lhs = Instruction::new(pair, variables, local_variables)?;
         let pair = inner.next().unwrap();
         let rhs = Instruction::new(pair, variables, local_variables)?;
-        match (lhs.get_return_type(), rhs.get_return_type()) {
+        match (
+            lhs.get_return_type().as_ref(),
+            rhs.get_return_type().as_ref(),
+        ) {
             (Type::Int, Type::Int) => Ok(Self::create_from_instructions(lhs, rhs)),
             (Type::Array(var_type), Type::Int) | (Type::Int, Type::Array(var_type))
-                if var_type == Type::Int.into() =>
+                if var_type.as_ref() == &Type::Int =>
             {
                 Ok(Self::create_from_instructions(lhs, rhs))
             }
@@ -49,10 +54,8 @@ impl CreateInstruction for Or {
 impl Or {
     fn or(lhs: Variable, rhs: Variable) -> Variable {
         match (lhs, rhs) {
-            (value @ Variable::Array(_, Type::EmptyArray), _)
-            | (_, value @ Variable::Array(_, Type::EmptyArray))
-            | (value, Variable::Int(0))
-            | (Variable::Int(0), value) => value,
+            (value, _) | (_, value) if value.get_type().as_ref() == &Type::EmptyArray => value,
+            (value, Variable::Int(0)) | (Variable::Int(0), value) => value,
             (Variable::Int(_), Variable::Int(_)) => Variable::Int(1),
             (Variable::Array(array, _), Variable::Int(_))
             | (Variable::Int(_), Variable::Array(array, _)) => std::iter::repeat(Variable::Int(1))
@@ -96,14 +99,14 @@ impl Recreate for Or {
 }
 
 impl GetReturnType for Or {
-    fn get_return_type(&self) -> Type {
-        if matches!(
-            (self.lhs.get_return_type(), self.rhs.get_return_type()),
-            (Type::Array(_), _) | (_, Type::Array(_))
-        ) {
-            Type::Array(Type::Int.into())
-        } else {
-            Type::Int
+    fn get_return_type(&self) -> Rc<Type> {
+        match (self.lhs.get_return_type(), self.rhs.get_return_type()) {
+            (var_type, _) | (_, var_type)
+                if matches!(var_type.as_ref(), Type::Array(_) | Type::EmptyArray) =>
+            {
+                var_type
+            }
+            (var_type, _) => var_type,
         }
     }
 }

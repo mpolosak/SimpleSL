@@ -18,7 +18,7 @@ use pest::iterators::Pair;
 #[derive(Debug)]
 pub struct Array {
     instructions: Box<[Instruction]>,
-    var_type: Type,
+    var_type: Rc<Type>,
 }
 
 impl CreateInstruction for Array {
@@ -40,9 +40,11 @@ impl Array {
         if let Some(first) = iter.next() {
             let mut element_type = first.get_return_type();
             for instruction in iter {
-                element_type = element_type.concat(instruction.get_return_type());
+                element_type = element_type
+                    .concat(instruction.get_return_type().as_ref())
+                    .into();
             }
-            let var_type = Type::Array(element_type.into());
+            let var_type = Type::Array(element_type).into();
             let mut array = Vec::new();
             for instruction in instructions.iter() {
                 let Instruction::Variable(variable) = instruction else {
@@ -56,7 +58,7 @@ impl Array {
             }
             Instruction::Variable(Variable::Array(array.into(), var_type))
         } else {
-            Instruction::Variable(Variable::Array(Rc::new([]), Type::EmptyArray))
+            Instruction::Variable(Variable::Array(Rc::new([]), Type::EmptyArray.into()))
         }
     }
 }
@@ -80,7 +82,7 @@ impl Recreate for Array {
 }
 
 impl GetReturnType for Array {
-    fn get_return_type(&self) -> Type {
+    fn get_return_type(&self) -> Rc<Type> {
         self.var_type.clone()
     }
 }

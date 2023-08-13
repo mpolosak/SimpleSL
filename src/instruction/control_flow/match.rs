@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use super::match_arm::MatchArm;
 use crate::{
     instruction::{local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate},
@@ -77,11 +79,11 @@ impl Recreate for Match {
 }
 
 impl GetReturnType for Match {
-    fn get_return_type(&self) -> Type {
+    fn get_return_type(&self) -> Rc<Type> {
         self.arms
             .iter()
             .map(GetReturnType::get_return_type)
-            .reduce(Type::concat)
+            .reduce(|acc, curr| acc.concat(&curr).into())
             .unwrap()
     }
 }

@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
@@ -26,8 +28,9 @@ impl CreateInstruction for IfElse {
         let mut inner = pair.into_inner();
         let condition_pair = inner.next().unwrap();
         let condition = Instruction::new(condition_pair, interpreter, local_variables)?;
-        if condition.get_return_type() != Type::Int {
-            return Err(Error::WrongType("condition".into(), Type::Int));
+        let condition_return_type = condition.get_return_type();
+        if condition.get_return_type().as_ref() != &Type::Int {
+            return Err(Error::WrongType("condition".into(), condition_return_type));
         }
         let true_pair = inner.next().unwrap();
         match (condition, rule) {
@@ -104,10 +107,10 @@ impl Recreate for IfElse {
 }
 
 impl GetReturnType for IfElse {
-    fn get_return_type(&self) -> Type {
+    fn get_return_type(&self) -> Rc<Type> {
         let true_return_type = self.if_true.get_return_type();
         let false_return_type = self.if_false.get_return_type();
-        true_return_type.concat(false_return_type)
+        true_return_type.concat(&false_return_type).into()
     }
 }
 

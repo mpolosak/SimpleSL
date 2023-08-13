@@ -19,7 +19,7 @@ pub struct Function {
     pub ident: Option<Rc<str>>,
     pub params: Params,
     pub body: Body,
-    pub return_type: Type,
+    pub return_type: Rc<Type>,
 }
 
 impl Function {
@@ -35,7 +35,7 @@ impl Function {
         for (arg, Param { var_type: _, name }) in zip(args, self.params.iter()) {
             interpreter.insert(name.clone(), arg.clone());
         }
-        if self.return_type != Type::Void {
+        if self.return_type.as_ref() != &Type::Void {
             self.body.exec(&mut interpreter)
         } else {
             self.body.exec(&mut interpreter)?;
@@ -45,23 +45,25 @@ impl Function {
 }
 
 impl GetType for Function {
-    fn get_type(&self) -> Type {
-        let params: Box<[Type]> = self
+    fn get_type(&self) -> Rc<Type> {
+        let params: Box<[Rc<Type>]> = self
             .params
             .iter()
             .map(|Param { name: _, var_type }| var_type.clone())
             .collect();
         let return_type = self.return_type.clone();
-        FunctionType {
-            return_type,
-            params,
-        }
-        .into()
+        Rc::new(
+            FunctionType {
+                return_type,
+                params,
+            }
+            .into(),
+        )
     }
 }
 
 impl GetReturnType for Function {
-    fn get_return_type(&self) -> Type {
+    fn get_return_type(&self) -> Rc<Type> {
         self.return_type.clone()
     }
 }
