@@ -34,6 +34,7 @@ pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream 
             interpreter.insert(
                 #ident_str.into(),
                 function::Function {
+                    ident: None,
                     params: function::Params(Rc::new([#params])),
                     body: function::Body::Native(
                         |interpreter| {

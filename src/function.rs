@@ -12,10 +12,11 @@ use crate::{
     variable::{function_type::FunctionType, GetReturnType, GetType, Type, Variable},
     Result,
 };
-use std::{fmt, iter::zip};
+use std::{fmt, iter::zip, rc::Rc};
 
 #[derive(Debug)]
 pub struct Function {
+    pub ident: Option<Rc<str>>,
     pub params: Params,
     pub body: Body,
     pub return_type: Type,

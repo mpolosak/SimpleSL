@@ -60,6 +60,7 @@ impl CreateInstruction for FunctionDeclaration {
             .all(|instruction| matches!(instruction, Instruction::Variable(_)))
         {
             let variable: Variable = Function {
+                ident: Some(ident.clone()),
                 params,
                 body: Body::Lang(body),
                 return_type,
@@ -92,6 +93,7 @@ impl Exec for FunctionDeclaration {
         let mut fn_local_variables = LocalVariables::from(self.params.clone());
         let body = recreate_instructions(&self.body, &mut fn_local_variables, interpreter)?;
         let function: Rc<Function> = Function {
+            ident: Some(self.ident.clone()),
             params: self.params.clone(),
             body: Body::Lang(body),
             return_type: self.return_type.clone(),
@@ -120,6 +122,7 @@ impl Recreate for FunctionDeclaration {
             .all(|instruction| matches!(instruction, Instruction::Variable(_)))
         {
             let variable: Variable = Function {
+                ident: Some(ident.clone()),
                 params,
                 body: Body::Lang(body),
                 return_type,

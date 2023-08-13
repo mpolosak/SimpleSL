@@ -55,6 +55,7 @@ impl CreateInstruction for AnonymousFunction {
         {
             Ok(Instruction::Variable(
                 Function {
+                    ident: None,
                     params,
                     body: Body::Lang(body),
                     return_type,
@@ -77,6 +78,7 @@ impl Exec for AnonymousFunction {
         let mut fn_local_variables = LocalVariables::from(self.params.clone());
         let body = recreate_instructions(&self.body, &mut fn_local_variables, interpreter)?;
         Ok(Function {
+            ident: None,
             params: self.params.clone(),
             body: Body::Lang(body),
             return_type: self.return_type.clone(),
@@ -99,6 +101,7 @@ impl Recreate for AnonymousFunction {
         {
             Ok(Instruction::Variable(
                 Function {
+                    ident: None,
                     params: self.params.clone(),
                     body: Body::Lang(body),
                     return_type: self.return_type.clone(),

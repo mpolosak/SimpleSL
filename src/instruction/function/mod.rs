@@ -1,7 +1,7 @@
 mod anonymous;
 mod call;
-mod function_declaration;
+mod declaration;
 
 pub use self::{
-    anonymous::AnonymousFunction, call::FunctionCall, function_declaration::FunctionDeclaration,
+    anonymous::AnonymousFunction, call::FunctionCall, declaration::FunctionDeclaration,
 };
