@@ -1,0 +1,10 @@
+sort = (array: [int]) -> [int] {
+    if len(array) < 2 {
+        array;
+    } else {
+        first = array[0];
+        array1 = array?(item:int)->int{item<first;};
+        array2 = array?(item:int)->int{first<=item;};
+        sort(array1)+sort(array2);
+    };
+};

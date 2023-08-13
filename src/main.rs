@@ -12,7 +12,7 @@ fn main() {
 }
 
 fn run_shell() {
-    let mut interpreter = Interpreter::default();
+    let mut interpreter = Interpreter::new();
     let mut rl = DefaultEditor::new().expect("Unable to read user input");
     loop {
         let readline = rl.readline("> ");
