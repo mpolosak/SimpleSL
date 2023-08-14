@@ -43,15 +43,15 @@ impl CreateInstruction for AnonymousFunction {
         let body = inner
             .map(|instruction| Instruction::new(instruction, interpreter, &mut local_variables))
             .collect::<Result<Box<_>>>()?;
-        if return_type.as_ref() != &Type::Void {
-            let returned = match body.last() {
-                Some(instruction) => instruction.get_return_type(),
-                None => Type::Void.into(),
-            };
-            if !returned.matches(&return_type) {
-                return Err(Error::WrongReturn(return_type, returned));
-            }
+
+        let returned = match body.last() {
+            Some(instruction) => instruction.get_return_type(),
+            None => Type::Void.into(),
+        };
+        if !returned.matches(&return_type) {
+            return Err(Error::WrongReturn(return_type, returned));
         }
+
         if body
             .iter()
             .all(|instruction| matches!(instruction, Instruction::Variable(_)))

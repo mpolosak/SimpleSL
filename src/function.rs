@@ -31,12 +31,7 @@ impl Function {
         for (arg, Param { var_type: _, name }) in zip(args, self.params.iter()) {
             interpreter.insert(name.clone(), arg.clone());
         }
-        if self.return_type.as_ref() != &Type::Void {
-            self.body.exec(&mut interpreter)
-        } else {
-            self.body.exec(&mut interpreter)?;
-            Ok(Variable::Void)
-        }
+        self.body.exec(&mut interpreter)
     }
 }
 
