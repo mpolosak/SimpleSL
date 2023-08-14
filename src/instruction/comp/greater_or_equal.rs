@@ -28,7 +28,7 @@ impl CreateInstruction for GreaterOrEqual {
         let pair = inner.next().unwrap();
         let rhs = Instruction::new(pair, interpreter, local_variables)?;
         match (can_be_used(&lhs, &rhs), rule) {
-            (true, Rule::greater) => Ok(Self::create_from_instructions(lhs, rhs)),
+            (true, Rule::greater_equal) => Ok(Self::create_from_instructions(lhs, rhs)),
             (true, Rule::lower_equal) => Ok(Self::create_from_instructions(rhs, lhs)),
             (_, Rule::greater_equal) => Err(Error::CannotDo2(
                 lhs.get_return_type(),
