@@ -31,21 +31,16 @@ impl CreateInstruction for Pow {
         let base_return_type = base.get_return_type();
         let exp_return_type = exp.get_return_type();
         match (base_return_type.as_ref(), exp_return_type.as_ref()) {
-            (Type::Int, Type::Int) | (Type::Float, Type::Float) => {
-                Self::create_from_instructions(base, exp)
-            }
-            (Type::Array(var_type), Type::Int) | (Type::Int, Type::Array(var_type))
-                if var_type.as_ref() == &Type::Int =>
-            {
-                Self::create_from_instructions(base, exp)
-            }
-            (Type::Array(var_type), Type::Float) | (Type::Float, Type::Array(var_type))
-                if var_type.as_ref() == &Type::Float =>
-            {
-                Self::create_from_instructions(base, exp)
-            }
-            (Type::EmptyArray, Type::Int | Type::Float)
+            (Type::Int, Type::Int)
+            | (Type::Float, Type::Float)
+            | (Type::EmptyArray, Type::Int | Type::Float)
             | (Type::Int | Type::Float, Type::EmptyArray) => {
+                Self::create_from_instructions(base, exp)
+            }
+            (Type::Array(element_type), var_type @ (Type::Int | Type::Float))
+            | (var_type @ (Type::Int | Type::Float), Type::Array(element_type))
+                if element_type.as_ref() == var_type =>
+            {
                 Self::create_from_instructions(base, exp)
             }
             _ => Err(Error::CannotDo2(base_return_type, "**", exp_return_type)),

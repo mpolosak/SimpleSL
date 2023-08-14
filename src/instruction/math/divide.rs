@@ -31,21 +31,16 @@ impl CreateInstruction for Divide {
         let dividend_return_type = dividend.get_return_type();
         let divisor_return_type = divisor.get_return_type();
         match (dividend_return_type.as_ref(), divisor_return_type.as_ref()) {
-            (Type::Int, Type::Int) | (Type::Float, Type::Float) => {
-                Self::create_from_instructions(dividend, divisor)
-            }
-            (Type::Array(var_type), Type::Int) | (Type::Int, Type::Array(var_type))
-                if var_type.as_ref() == &Type::Int =>
-            {
-                Self::create_from_instructions(dividend, divisor)
-            }
-            (Type::Array(var_type), Type::Float) | (Type::Float, Type::Array(var_type))
-                if var_type.as_ref() == &Type::Float =>
-            {
-                Self::create_from_instructions(dividend, divisor)
-            }
-            (Type::EmptyArray, Type::Int | Type::Float)
+            (Type::Int, Type::Int)
+            | (Type::Float, Type::Float)
+            | (Type::EmptyArray, Type::Int | Type::Float)
             | (Type::Int | Type::Float, Type::EmptyArray) => {
+                Self::create_from_instructions(dividend, divisor)
+            }
+            (Type::Array(element_type), var_type @ (Type::Int | Type::Float))
+            | (var_type @ (Type::Int | Type::Float), Type::Array(element_type))
+                if element_type.as_ref() == var_type =>
+            {
                 Self::create_from_instructions(dividend, divisor)
             }
             _ => Err(Error::CannotDo2(

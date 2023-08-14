@@ -32,14 +32,14 @@ impl CreateInstruction for Or {
             lhs.get_return_type().as_ref(),
             rhs.get_return_type().as_ref(),
         ) {
-            (Type::Int, Type::Int) => Ok(Self::create_from_instructions(lhs, rhs)),
+            (Type::Int, Type::Int)
+            | (Type::EmptyArray, Type::Int | Type::Float | Type::String)
+            | (Type::Int | Type::Float | Type::String, Type::EmptyArray) => {
+                Ok(Self::create_from_instructions(lhs, rhs))
+            }
             (Type::Array(var_type), Type::Int) | (Type::Int, Type::Array(var_type))
                 if var_type.as_ref() == &Type::Int =>
             {
-                Ok(Self::create_from_instructions(lhs, rhs))
-            }
-            (Type::EmptyArray, Type::Int | Type::Float | Type::String)
-            | (Type::Int | Type::Float | Type::String, Type::EmptyArray) => {
                 Ok(Self::create_from_instructions(lhs, rhs))
             }
             _ => Err(Error::CannotDo2(

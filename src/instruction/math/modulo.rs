@@ -31,14 +31,14 @@ impl CreateInstruction for Modulo {
         let dividend_return_type = dividend.get_return_type();
         let divisor_return_type = divisor.get_return_type();
         match (dividend_return_type.as_ref(), divisor_return_type.as_ref()) {
-            (Type::Int, Type::Int) => Self::create_from_instructions(dividend, divisor),
+            (Type::Int, Type::Int)
+            | (Type::EmptyArray, Type::Int | Type::Float | Type::String)
+            | (Type::Int | Type::Float | Type::String, Type::EmptyArray) => {
+                Self::create_from_instructions(dividend, divisor)
+            }
             (Type::Array(var_type), Type::Int) | (Type::Int, Type::Array(var_type))
                 if var_type.as_ref() == &Type::Int =>
             {
-                Self::create_from_instructions(dividend, divisor)
-            }
-            (Type::EmptyArray, Type::Int | Type::Float | Type::String)
-            | (Type::Int | Type::Float | Type::String, Type::EmptyArray) => {
                 Self::create_from_instructions(dividend, divisor)
             }
             _ => Err(Error::CannotDo2(

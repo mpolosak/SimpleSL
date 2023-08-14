@@ -35,21 +35,16 @@ impl CreateInstruction for Subtract {
             minuend_return_type.as_ref(),
             subtrahend_return_type.as_ref(),
         ) {
-            (Type::Int, Type::Int) | (Type::Float, Type::Float) => {
-                Ok(Self::create_from_instructions(minuend, subtrahend))
-            }
-            (Type::Array(var_type), Type::Int) | (Type::Int, Type::Array(var_type))
-                if var_type.as_ref() == &Type::Int =>
-            {
-                Ok(Self::create_from_instructions(minuend, subtrahend))
-            }
-            (Type::Array(var_type), Type::Float) | (Type::Float, Type::Array(var_type))
-                if var_type.as_ref() == &Type::Float =>
-            {
-                Ok(Self::create_from_instructions(minuend, subtrahend))
-            }
-            (Type::EmptyArray, Type::Int | Type::Float)
+            (Type::Int, Type::Int)
+            | (Type::Float, Type::Float)
+            | (Type::EmptyArray, Type::Int | Type::Float)
             | (Type::Int | Type::Float, Type::EmptyArray) => {
+                Ok(Self::create_from_instructions(minuend, subtrahend))
+            }
+            (Type::Array(element_type), var_type @ (Type::Int | Type::Float))
+            | (var_type @ (Type::Int | Type::Float), Type::Array(element_type))
+                if element_type.as_ref() == var_type =>
+            {
                 Ok(Self::create_from_instructions(minuend, subtrahend))
             }
             _ => Err(Error::CannotDo2(
