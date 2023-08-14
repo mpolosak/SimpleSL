@@ -68,7 +68,7 @@ impl Exec for Filter {
             {
                 let mut new_array: Box<Vec<Variable>> = Box::default();
                 for element in array.iter().cloned() {
-                    if function.exec(&[element.clone()])? != Variable::Int(0) {
+                    if function.exec(interpreter, &[element.clone()])? != Variable::Int(0) {
                         new_array.push(element);
                     }
                 }
@@ -77,7 +77,9 @@ impl Exec for Filter {
             (Variable::Array(array, _), Variable::Function(function)) => {
                 let mut new_array: Box<Vec<Variable>> = Box::default();
                 for (index, element) in array.iter().cloned().enumerate() {
-                    if function.exec(&[index.into(), element.clone()])? != Variable::Int(0) {
+                    if function.exec(interpreter, &[index.into(), element.clone()])?
+                        != Variable::Int(0)
+                    {
                         new_array.push(element);
                     }
                 }

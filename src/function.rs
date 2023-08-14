@@ -23,8 +23,12 @@ pub struct Function {
 }
 
 impl Function {
-    pub fn exec(self: &Rc<Self>, args: &[Variable]) -> Result<Variable> {
-        let mut interpreter = Box::new(Interpreter::new());
+    pub fn exec(
+        self: &Rc<Self>,
+        interpreter: &mut Interpreter,
+        args: &[Variable],
+    ) -> Result<Variable> {
+        let mut interpreter = interpreter.create_layer();
         if let Some(ident) = &self.ident {
             interpreter.insert(ident.clone(), self.clone().into())
         }
