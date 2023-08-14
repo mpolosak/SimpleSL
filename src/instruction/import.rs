@@ -23,11 +23,7 @@ impl CreateInstruction for Import {
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
     ) -> Result<Instruction> {
-        let Instruction::Variable(Variable::String(path)) = Instruction::new(
-            pair.into_inner().next().unwrap(),
-            interpreter,
-            local_variables,
-        )? else {
+        let Variable::String(path) = Variable::try_from(pair.into_inner().next().unwrap()).unwrap() else {
             panic!()
         };
         let instructions = interpreter.load(&path, local_variables)?;
