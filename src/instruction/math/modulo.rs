@@ -37,11 +37,9 @@ impl CreateInstruction for Modulo {
             {
                 Self::create_from_instructions(dividend, divisor)
             }
-            _ => Err(Error::CannotDo2(
-                dividend.get_return_type(),
-                "%",
-                divisor.get_return_type(),
-            )),
+            (dividend_type, divisor_type) => {
+                Err(Error::CannotDo2(dividend_type, "%", divisor_type))
+            }
         }
     }
 }

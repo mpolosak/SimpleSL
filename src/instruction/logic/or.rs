@@ -37,11 +37,7 @@ impl CreateInstruction for Or {
             {
                 Ok(Self::create_from_instructions(lhs, rhs))
             }
-            _ => Err(Error::CannotDo2(
-                lhs.get_return_type(),
-                "||",
-                rhs.get_return_type(),
-            )),
+            (lhs_type, rhs_type) => Err(Error::CannotDo2(lhs_type, "||", rhs_type)),
         }
     }
 }

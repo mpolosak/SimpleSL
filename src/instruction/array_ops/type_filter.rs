@@ -22,10 +22,9 @@ impl CreateInstruction for TypeFilter {
         let mut inner = pair.into_inner();
         let array = Instruction::new(inner.next().unwrap(), interpreter, local_variables)?;
         let var_type = Type::from(inner.next().unwrap());
-        if matches!(array.get_return_type(), Type::Array(_) | Type::EmptyArray) {
-            Ok(Self { array, var_type }.into())
-        } else {
-            Err(Error::CannotDo2(array.get_return_type(), "?", var_type))
+        match array.get_return_type() {
+            Type::Array(_) | Type::EmptyArray => Ok(Self { array, var_type }.into()),
+            array_type => Err(Error::CannotDo2(array_type, "?", var_type)),
         }
     }
 }
