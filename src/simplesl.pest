@@ -44,9 +44,9 @@ match = { "match" ~ expression ~  "{" ~ match_arm* ~ "}" }
   values = { expression+ }
 at = { ( function_call | ident | array | array_repeat | string ) ~ "[" ~ expression ~ "]"  }
 import = { "import" ~ string }
-map = { ( ident | array | array_repeat | function_call | tuple ) ~ "@" ~ expression }
-filter = { ( ident | array | array_repeat | function_call ) ~ "?" ~ expression }
-type_filter = { ( ident | array | array_repeat | function_call ) ~ "?" ~ type }
+map = { op_arg ~ "@" ~ expression }
+filter = { op_arg ~ "?" ~ expression }
+type_filter = { op_arg ~ "?" ~ type }
 expression = _{ type_filter | filter | map | import | match | set_if_else | set_if | at | if_else
   | if_stm | comparasion | math_operations | not | bin_not | and | or | bin_and | bin_or | xor
   | shift | function_call | ident | exp_in_brackets | var | block  }
