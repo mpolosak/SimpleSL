@@ -9,7 +9,6 @@ pub enum Error {
     WrongType(Rc<str>, Type),
     WrongNumberOfArguments(Box<str>, usize),
     IndexToBig,
-    CannotAdd(Type, Type),
     CannotBeNegative(&'static str),
     CannotBeParsed(Box<str>),
     CannotIndexInto(Type),
@@ -46,7 +45,6 @@ impl fmt::Display for Error {
                 write!(f, "{name} requires {num} args")
             }
             Self::IndexToBig => write!(f, "index must be lower than array size"),
-            Self::CannotAdd(type1, type2) => write!(f, "Cannot add {type1} and {type2}"),
             Self::CannotBeNegative(ident) => write!(f, "{ident} cannot be negative"),
             Self::CannotBeParsed(text) => {
                 write!(f, "{text} cannot be parsed to variable")
