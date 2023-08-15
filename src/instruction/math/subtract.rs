@@ -1,4 +1,4 @@
-use crate::instruction::traits::BinOp;
+use crate::instruction::traits::{BinOp, CanBeUsed};
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
@@ -28,6 +28,22 @@ impl BinOp for Subtract {
     }
 }
 
+impl CanBeUsed for Subtract {
+    fn can_be_used(minuend: &Type, subtrahend: &Type) -> bool {
+        match (minuend, subtrahend) {
+            (Type::Int, Type::Int)
+            | (Type::Float, Type::Float)
+            | (Type::EmptyArray, Type::Int | Type::Float)
+            | (Type::Int | Type::Float, Type::EmptyArray) => true,
+            (Type::Array(element_type), var_type @ (Type::Int | Type::Float))
+            | (var_type @ (Type::Int | Type::Float), Type::Array(element_type)) => {
+                element_type.as_ref() == var_type
+            }
+            _ => false,
+        }
+    }
+}
+
 impl CreateInstruction for Subtract {
     fn create_instruction(
         pair: Pair<Rule>,
@@ -39,24 +55,16 @@ impl CreateInstruction for Subtract {
         let minuend = Instruction::new(pair, interpreter, local_variables)?;
         let pair = inner.next().unwrap();
         let subtrahend = Instruction::new(pair, interpreter, local_variables)?;
-        match (minuend.get_return_type(), subtrahend.get_return_type()) {
-            (Type::Int, Type::Int)
-            | (Type::Float, Type::Float)
-            | (Type::EmptyArray, Type::Int | Type::Float)
-            | (Type::Int | Type::Float, Type::EmptyArray) => {
-                Ok(Self::create_from_instructions(minuend, subtrahend))
-            }
-            (Type::Array(element_type), var_type @ (Type::Int | Type::Float))
-            | (var_type @ (Type::Int | Type::Float), Type::Array(element_type))
-                if element_type.as_ref() == &var_type =>
-            {
-                Ok(Self::create_from_instructions(minuend, subtrahend))
-            }
-            (minuend_type, subtrahend_type) => Err(Error::CannotDo2(
+        let minuend_type = minuend.get_return_type();
+        let subtrahend_type = subtrahend.get_return_type();
+        if Self::can_be_used(&minuend_type, &subtrahend_type) {
+            Ok(Self::create_from_instructions(minuend, subtrahend))
+        } else {
+            Err(Error::CannotDo2(
                 minuend_type,
                 Self::SYMBOL,
                 subtrahend_type,
-            )),
+            ))
         }
     }
 }

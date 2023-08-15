@@ -1,7 +1,8 @@
 use crate::{
     instruction::{
-        local_variable::LocalVariables, traits::BinOp, CreateInstruction, Exec, Instruction,
-        Recreate,
+        local_variable::LocalVariables,
+        traits::{BinOp, CanBeUsed},
+        CreateInstruction, Exec, Instruction, Recreate,
     },
     interpreter::Interpreter,
     parse::Rule,
@@ -28,33 +29,9 @@ impl BinOp for Filter {
     }
 }
 
-impl CreateInstruction for Filter {
-    fn create_instruction(
-        pair: Pair<Rule>,
-        interpreter: &Interpreter,
-        local_variables: &mut LocalVariables,
-    ) -> Result<Instruction> {
-        let mut inner = pair.into_inner();
-        let array = Instruction::new(inner.next().unwrap(), interpreter, local_variables)?;
-        let function = Instruction::new(inner.next().unwrap(), interpreter, local_variables)?;
-        if Self::can_be_used(&array, &function) {
-            Ok(Self { array, function }.into())
-        } else {
-            Err(Error::CannotDo2(
-                array.get_return_type(),
-                Self::SYMBOL,
-                function.get_return_type(),
-            ))
-        }
-    }
-}
-
-impl Filter {
-    fn can_be_used(instruction1: &Instruction, instruction2: &Instruction) -> bool {
-        match (
-            instruction1.get_return_type(),
-            instruction2.get_return_type(),
-        ) {
+impl CanBeUsed for Filter {
+    fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
+        match (lhs, rhs) {
             (Type::Array(element_type), Type::Function(function_type)) => {
                 let params = &function_type.params;
                 function_type.return_type == Type::Int
@@ -67,6 +44,25 @@ impl Filter {
                 function_type.params.len() == 1 && function_type.return_type == Type::Int
             }
             _ => false,
+        }
+    }
+}
+
+impl CreateInstruction for Filter {
+    fn create_instruction(
+        pair: Pair<Rule>,
+        interpreter: &Interpreter,
+        local_variables: &mut LocalVariables,
+    ) -> Result<Instruction> {
+        let mut inner = pair.into_inner();
+        let array = Instruction::new(inner.next().unwrap(), interpreter, local_variables)?;
+        let function = Instruction::new(inner.next().unwrap(), interpreter, local_variables)?;
+        let array_type = array.get_return_type();
+        let function_type = function.get_return_type();
+        if Self::can_be_used(&array_type, &function_type) {
+            Ok(Self { array, function }.into())
+        } else {
+            Err(Error::CannotDo2(array_type, Self::SYMBOL, function_type))
         }
     }
 }

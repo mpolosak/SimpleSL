@@ -1,5 +1,4 @@
-use super::Instruction;
-use crate::variable::{GetReturnType, Type};
+use crate::variable::Type;
 mod equal;
 mod greater;
 mod greater_or_equal;
@@ -10,16 +9,16 @@ pub use {
     lower_or_equal::LowerOrEqual,
 };
 
-fn can_be_used(lhs: &Instruction, rhs: &Instruction) -> bool {
-    match (lhs.get_return_type(), rhs.get_return_type()) {
+fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
+    match (lhs, rhs) {
         (Type::Int, Type::Int) | (Type::Float, Type::Float) => true,
         (Type::Array(var_type), Type::Int) | (Type::Int, Type::Array(var_type))
-            if var_type == Type::Int.into() =>
+            if var_type.as_ref() == &Type::Int =>
         {
             true
         }
         (Type::Array(var_type), Type::Float) | (Type::Float, Type::Array(var_type))
-            if var_type == Type::Float.into() =>
+            if var_type.as_ref() == &Type::Float =>
         {
             true
         }

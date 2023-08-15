@@ -1,4 +1,4 @@
-use crate::instruction::traits::BinOp;
+use crate::instruction::traits::{BinOp, CanBeUsed};
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
@@ -28,6 +28,22 @@ impl BinOp for Multiply {
     }
 }
 
+impl CanBeUsed for Multiply {
+    fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
+        match (lhs, rhs) {
+            (Type::Int, Type::Int)
+            | (Type::Float, Type::Float)
+            | (Type::EmptyArray, Type::Int | Type::Float)
+            | (Type::Int | Type::Float, Type::EmptyArray) => true,
+            (Type::Array(element_type), var_type @ (Type::Int | Type::Float))
+            | (var_type @ (Type::Int | Type::Float), Type::Array(element_type)) => {
+                element_type.as_ref() == var_type
+            }
+            _ => false,
+        }
+    }
+}
+
 impl CreateInstruction for Multiply {
     fn create_instruction(
         pair: Pair<Rule>,
@@ -39,24 +55,12 @@ impl CreateInstruction for Multiply {
         let lhs = Instruction::new(pair, interpreter, local_variables)?;
         let pair = inner.next().unwrap();
         let rhs = Instruction::new(pair, interpreter, local_variables)?;
-        match (lhs.get_return_type(), rhs.get_return_type()) {
-            (Type::Int, Type::Int)
-            | (Type::Float, Type::Float)
-            | (Type::EmptyArray, Type::Int | Type::Float)
-            | (Type::Int | Type::Float, Type::EmptyArray) => {
-                Ok(Self::create_from_instructions(lhs, rhs))
-            }
-            (Type::Array(element_type), var_type @ (Type::Int | Type::Float))
-            | (var_type @ (Type::Int | Type::Float), Type::Array(element_type))
-                if element_type.as_ref() == &var_type =>
-            {
-                Ok(Self::create_from_instructions(lhs, rhs))
-            }
-            (lhs_return_type, rhs_return_type) => Err(Error::CannotDo2(
-                lhs_return_type,
-                Self::SYMBOL,
-                rhs_return_type,
-            )),
+        let lhs_type = lhs.get_return_type();
+        let rhs_type = rhs.get_return_type();
+        if Self::can_be_used(&lhs_type, &rhs_type) {
+            Ok(Self::create_from_instructions(lhs, rhs))
+        } else {
+            Err(Error::CannotDo2(lhs_type, Self::SYMBOL, rhs_type))
         }
     }
 }

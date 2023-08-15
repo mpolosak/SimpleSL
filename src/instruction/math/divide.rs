@@ -1,4 +1,4 @@
-use crate::instruction::traits::BinOp;
+use crate::instruction::traits::{BinOp, CanBeUsed};
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
@@ -28,6 +28,22 @@ impl BinOp for Divide {
     }
 }
 
+impl CanBeUsed for Divide {
+    fn can_be_used(dividend: &Type, divisor: &Type) -> bool {
+        match (dividend, divisor) {
+            (Type::Int, Type::Int)
+            | (Type::Float, Type::Float)
+            | (Type::EmptyArray, Type::Int | Type::Float)
+            | (Type::Int | Type::Float, Type::EmptyArray) => true,
+            (Type::Array(element_type), var_type @ (Type::Int | Type::Float))
+            | (var_type @ (Type::Int | Type::Float), Type::Array(element_type)) => {
+                element_type.as_ref() == var_type
+            }
+            _ => false,
+        }
+    }
+}
+
 impl CreateInstruction for Divide {
     fn create_instruction(
         pair: Pair<Rule>,
@@ -39,22 +55,12 @@ impl CreateInstruction for Divide {
         let dividend = Instruction::new(pair, interpreter, local_variables)?;
         let pair = inner.next().unwrap();
         let divisor = Instruction::new(pair, interpreter, local_variables)?;
-        match (dividend.get_return_type(), divisor.get_return_type()) {
-            (Type::Int, Type::Int)
-            | (Type::Float, Type::Float)
-            | (Type::EmptyArray, Type::Int | Type::Float)
-            | (Type::Int | Type::Float, Type::EmptyArray) => {
-                Self::create_from_instructions(dividend, divisor)
-            }
-            (Type::Array(element_type), var_type @ (Type::Int | Type::Float))
-            | (var_type @ (Type::Int | Type::Float), Type::Array(element_type))
-                if element_type.as_ref() == &var_type =>
-            {
-                Self::create_from_instructions(dividend, divisor)
-            }
-            (dividend_type, divisor_type) => {
-                Err(Error::CannotDo2(dividend_type, Self::SYMBOL, divisor_type))
-            }
+        let dividend_type = dividend.get_return_type();
+        let divisor_type = divisor.get_return_type();
+        if Self::can_be_used(&dividend_type, &divisor_type) {
+            Self::create_from_instructions(dividend, divisor)
+        } else {
+            Err(Error::CannotDo2(dividend_type, Self::SYMBOL, divisor_type))
         }
     }
 }

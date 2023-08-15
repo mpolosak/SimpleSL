@@ -1,5 +1,6 @@
 mod bin_op;
-pub use self::bin_op::BinOp;
+mod can_be_used;
+pub use self::{bin_op::BinOp, can_be_used::CanBeUsed};
 use super::{local_variable::LocalVariables, Instruction};
 use crate::{interpreter::Interpreter, parse::Rule, variable::Variable, Result};
 use pest::iterators::Pair;

@@ -1,4 +1,4 @@
-use crate::instruction::traits::BinOp;
+use crate::instruction::traits::{BinOp, CanBeUsed};
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
@@ -20,6 +20,12 @@ impl BinOp for Equal {
 
     fn get_rhs(&self) -> &Instruction {
         &self.rhs
+    }
+}
+
+impl CanBeUsed for Equal {
+    fn can_be_used(_lhs: &crate::variable::Type, _rhs: &crate::variable::Type) -> bool {
+        true
     }
 }
 

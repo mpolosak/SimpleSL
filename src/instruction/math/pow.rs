@@ -1,4 +1,4 @@
-use crate::instruction::traits::BinOp;
+use crate::instruction::traits::{BinOp, CanBeUsed};
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
@@ -28,6 +28,22 @@ impl BinOp for Pow {
     }
 }
 
+impl CanBeUsed for Pow {
+    fn can_be_used(base: &Type, exp: &Type) -> bool {
+        match (base, exp) {
+            (Type::Int, Type::Int)
+            | (Type::Float, Type::Float)
+            | (Type::EmptyArray, Type::Int | Type::Float)
+            | (Type::Int | Type::Float, Type::EmptyArray) => true,
+            (Type::Array(element_type), var_type @ (Type::Int | Type::Float))
+            | (var_type @ (Type::Int | Type::Float), Type::Array(element_type)) => {
+                element_type.as_ref() == var_type
+            }
+            _ => false,
+        }
+    }
+}
+
 impl CreateInstruction for Pow {
     fn create_instruction(
         pair: Pair<Rule>,
@@ -39,24 +55,12 @@ impl CreateInstruction for Pow {
         let base = Instruction::new(pair, interpreter, local_variables)?;
         let pair = inner.next().unwrap();
         let exp = Instruction::new(pair, interpreter, local_variables)?;
-        match (base.get_return_type(), exp.get_return_type()) {
-            (Type::Int, Type::Int)
-            | (Type::Float, Type::Float)
-            | (Type::EmptyArray, Type::Int | Type::Float)
-            | (Type::Int | Type::Float, Type::EmptyArray) => {
-                Self::create_from_instructions(base, exp)
-            }
-            (Type::Array(element_type), var_type @ (Type::Int | Type::Float))
-            | (var_type @ (Type::Int | Type::Float), Type::Array(element_type))
-                if element_type.as_ref() == &var_type =>
-            {
-                Self::create_from_instructions(base, exp)
-            }
-            (base_return_type, exp_return_type) => Err(Error::CannotDo2(
-                base_return_type,
-                Self::SYMBOL,
-                exp_return_type,
-            )),
+        let base_type = base.get_return_type();
+        let exp_type = exp.get_return_type();
+        if Self::can_be_used(&base_type, &exp_type) {
+            Self::create_from_instructions(base, exp)
+        } else {
+            Err(Error::CannotDo2(base_type, Self::SYMBOL, exp_type))
         }
     }
 }
