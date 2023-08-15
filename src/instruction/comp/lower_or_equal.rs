@@ -8,12 +8,12 @@ use pest::iterators::Pair;
 use super::can_be_used;
 
 #[derive(Debug)]
-pub struct GreaterOrEqual {
+pub struct LowerOrEqual {
     lhs: Instruction,
     rhs: Instruction,
 }
 
-impl CreateInstruction for GreaterOrEqual {
+impl CreateInstruction for LowerOrEqual {
     fn create_instruction(
         pair: Pair<Rule>,
         interpreter: &Interpreter,
@@ -29,18 +29,18 @@ impl CreateInstruction for GreaterOrEqual {
         } else {
             Err(Error::CannotDo2(
                 lhs.get_return_type(),
-                ">=",
+                "<=",
                 rhs.get_return_type(),
             ))
         }
     }
 }
 
-impl GreaterOrEqual {
+impl LowerOrEqual {
     fn greater_or_equal(lhs: Variable, rhs: Variable) -> Variable {
         match (lhs, rhs) {
-            (Variable::Int(lhs), Variable::Int(rhs)) => (lhs >= rhs).into(),
-            (Variable::Float(lhs), Variable::Float(rhs)) => (lhs >= rhs).into(),
+            (Variable::Int(lhs), Variable::Int(rhs)) => (lhs <= rhs).into(),
+            (Variable::Float(lhs), Variable::Float(rhs)) => (lhs <= rhs).into(),
             (lhs, Variable::Array(array, _)) => array
                 .iter()
                 .cloned()
@@ -51,7 +51,7 @@ impl GreaterOrEqual {
                 .cloned()
                 .map(|lhs| Self::greater_or_equal(lhs, rhs.clone()))
                 .collect(),
-            (lhs, rhs) => panic!("Tried to do {lhs} >= {rhs}"),
+            (lhs, rhs) => panic!("Tried to do {lhs} <= {rhs}"),
         }
     }
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
@@ -64,7 +64,7 @@ impl GreaterOrEqual {
     }
 }
 
-impl Exec for GreaterOrEqual {
+impl Exec for LowerOrEqual {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let lhs = self.lhs.exec(interpreter)?;
         let rhs = self.rhs.exec(interpreter)?;
@@ -72,7 +72,7 @@ impl Exec for GreaterOrEqual {
     }
 }
 
-impl Recreate for GreaterOrEqual {
+impl Recreate for LowerOrEqual {
     fn recreate(
         &self,
         local_variables: &mut LocalVariables,
@@ -84,7 +84,7 @@ impl Recreate for GreaterOrEqual {
     }
 }
 
-impl GetReturnType for GreaterOrEqual {
+impl GetReturnType for LowerOrEqual {
     fn get_return_type(&self) -> Type {
         if matches!(
             (self.lhs.get_return_type(), self.rhs.get_return_type()),
@@ -97,8 +97,8 @@ impl GetReturnType for GreaterOrEqual {
     }
 }
 
-impl From<GreaterOrEqual> for Instruction {
-    fn from(value: GreaterOrEqual) -> Self {
-        Self::GreaterOrEqual(value.into())
+impl From<LowerOrEqual> for Instruction {
+    fn from(value: LowerOrEqual) -> Self {
+        Self::LowerOrEqual(value.into())
     }
 }

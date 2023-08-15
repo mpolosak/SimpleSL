@@ -22,7 +22,7 @@ use self::{
     at::At,
     bin::{BinAnd, BinNot, BinOr, LShift, RShift, Xor},
     block::Block,
-    comp::{Equal, Greater, GreaterOrEqual},
+    comp::{Equal, Greater, GreaterOrEqual, LowerOrEqual},
     control_flow::{IfElse, Match, SetIfElse},
     destruct_tuple::DestructTuple,
     function::{AnonymousFunction, FunctionCall, FunctionDeclaration},
@@ -62,6 +62,7 @@ pub enum Instruction {
     FunctionCall(Box<FunctionCall>),
     Greater(Box<Greater>),
     GreaterOrEqual(Box<GreaterOrEqual>),
+    LowerOrEqual(Box<LowerOrEqual>),
     IfElse(Box<IfElse>),
     Import(Import),
     LShift(Box<LShift>),
@@ -113,8 +114,11 @@ impl Instruction {
             Rule::greater | Rule::lower => {
                 Greater::create_instruction(pair, interpreter, local_variables)
             }
-            Rule::greater_equal | Rule::lower_equal => {
+            Rule::greater_equal => {
                 GreaterOrEqual::create_instruction(pair, interpreter, local_variables)
+            }
+            Rule::lower_equal => {
+                LowerOrEqual::create_instruction(pair, interpreter, local_variables)
             }
             Rule::pow => Pow::create_instruction(pair, interpreter, local_variables),
             Rule::and => And::create_instruction(pair, interpreter, local_variables),
@@ -195,6 +199,7 @@ impl Exec for Instruction {
             Self::Equal(equal) => equal.exec(interpreter),
             Self::Greater(greater) => greater.exec(interpreter),
             Self::GreaterOrEqual(greater_or_equal) => greater_or_equal.exec(interpreter),
+            Self::LowerOrEqual(greater_or_equal) => greater_or_equal.exec(interpreter),
             Self::And(and) => and.exec(interpreter),
             Self::Or(or) => or.exec(interpreter),
             Self::Pow(pow) => pow.exec(interpreter),
@@ -255,6 +260,9 @@ impl Recreate for Instruction {
             Self::GreaterOrEqual(greater_or_equal) => {
                 greater_or_equal.recreate(local_variables, interpreter)
             }
+            Self::LowerOrEqual(lower_or_equal) => {
+                lower_or_equal.recreate(local_variables, interpreter)
+            }
             Self::And(and) => and.recreate(local_variables, interpreter),
             Self::Or(or) => or.recreate(local_variables, interpreter),
             Self::Pow(pow) => pow.recreate(local_variables, interpreter),
@@ -312,6 +320,7 @@ impl GetReturnType for Instruction {
             Self::BinNot(bin_not) => bin_not.get_return_type(),
             Self::Greater(greater) => greater.get_return_type(),
             Self::GreaterOrEqual(greater_or_equal) => greater_or_equal.get_return_type(),
+            Self::LowerOrEqual(greater_or_equal) => greater_or_equal.get_return_type(),
             Self::BinAnd(bin_and) => bin_and.get_return_type(),
             Self::BinOr(bin_or) => bin_or.get_return_type(),
             Self::Xor(xor) => xor.get_return_type(),
