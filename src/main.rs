@@ -11,7 +11,7 @@ fn main() -> ExitCode {
     }
     .map_or_else(
         |error| {
-            eprintln!("{error:?}");
+            eprintln!("{error}");
             ExitCode::FAILURE
         },
         |_| ExitCode::SUCCESS,
