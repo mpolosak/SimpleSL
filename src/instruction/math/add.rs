@@ -1,3 +1,4 @@
+use crate::instruction::traits::BinOp;
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
@@ -13,6 +14,18 @@ use pest::iterators::Pair;
 pub struct Add {
     lhs: Instruction,
     rhs: Instruction,
+}
+
+impl BinOp for Add {
+    const SYMBOL: &'static str = "+";
+
+    fn get_lhs(&self) -> &Instruction {
+        &self.lhs
+    }
+
+    fn get_rhs(&self) -> &Instruction {
+        &self.rhs
+    }
 }
 
 impl CreateInstruction for Add {
@@ -37,7 +50,7 @@ impl CreateInstruction for Add {
             {
                 Ok(Self::create_from_instructions(lhs, rhs))
             }
-            (type1, type2) => Err(Error::CannotDo2(type1, "+", type2)),
+            (type1, type2) => Err(Error::CannotDo2(type1, Self::SYMBOL, type2)),
         }
     }
 }
@@ -69,7 +82,10 @@ impl Add {
                 .cloned()
                 .map(|element| Self::add(value.clone(), element))
                 .collect(),
-            (lhs, rhs) => panic!("Tried to add {lhs} and {rhs} which is imposible"),
+            (lhs, rhs) => panic!(
+                "Tried to do {lhs} {} {rhs} which is imposible",
+                Self::SYMBOL
+            ),
         }
     }
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {

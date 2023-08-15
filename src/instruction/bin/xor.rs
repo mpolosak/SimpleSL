@@ -1,4 +1,5 @@
 use super::can_be_used;
+use crate::instruction::traits::BinOp;
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
@@ -17,6 +18,18 @@ pub struct Xor {
     rhs: Instruction,
 }
 
+impl BinOp for Xor {
+    const SYMBOL: &'static str = "^";
+
+    fn get_lhs(&self) -> &Instruction {
+        &self.lhs
+    }
+
+    fn get_rhs(&self) -> &Instruction {
+        &self.rhs
+    }
+}
+
 impl CreateInstruction for Xor {
     fn create_instruction(
         pair: Pair<Rule>,
@@ -33,7 +46,7 @@ impl CreateInstruction for Xor {
         } else {
             Err(Error::CannotDo2(
                 lhs.get_return_type(),
-                "^",
+                Self::SYMBOL,
                 rhs.get_return_type(),
             ))
         }
@@ -50,7 +63,10 @@ impl Xor {
                 .cloned()
                 .map(|element| Self::xor(element, value.clone()))
                 .collect(),
-            (lhs, rhs) => panic!("Tried to do {lhs} ^ {rhs} which is imposible"),
+            (lhs, rhs) => panic!(
+                "Tried to do {lhs} {} {rhs} which is imposible",
+                Self::SYMBOL
+            ),
         }
     }
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {

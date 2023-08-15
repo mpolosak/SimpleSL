@@ -1,3 +1,4 @@
+use crate::instruction::traits::BinOp;
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
@@ -13,6 +14,18 @@ use pest::iterators::Pair;
 pub struct Subtract {
     minuend: Instruction,
     subtrahend: Instruction,
+}
+
+impl BinOp for Subtract {
+    const SYMBOL: &'static str = "-";
+
+    fn get_lhs(&self) -> &Instruction {
+        &self.minuend
+    }
+
+    fn get_rhs(&self) -> &Instruction {
+        &self.subtrahend
+    }
 }
 
 impl CreateInstruction for Subtract {
@@ -39,9 +52,11 @@ impl CreateInstruction for Subtract {
             {
                 Ok(Self::create_from_instructions(minuend, subtrahend))
             }
-            (minuend_type, subtrahend_type) => {
-                Err(Error::CannotDo2(minuend_type, "-", subtrahend_type))
-            }
+            (minuend_type, subtrahend_type) => Err(Error::CannotDo2(
+                minuend_type,
+                Self::SYMBOL,
+                subtrahend_type,
+            )),
         }
     }
 }
@@ -63,7 +78,9 @@ impl Subtract {
                 .cloned()
                 .map(|minuend| Self::subtract(minuend, subtrahend.clone()))
                 .collect(),
-            (minuend, subtrahend) => panic!("Tried to subtract {minuend} from {subtrahend}"),
+            (minuend, subtrahend) => {
+                panic!("Tried to calc {minuend} {} {subtrahend}", Self::SYMBOL)
+            }
         }
     }
     fn create_from_instructions(minuend: Instruction, subtrahend: Instruction) -> Instruction {

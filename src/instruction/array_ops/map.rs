@@ -1,7 +1,10 @@
 use std::{iter::zip, rc::Rc};
 
 use crate::{
-    instruction::{local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate},
+    instruction::{
+        local_variable::LocalVariables, traits::BinOp, CreateInstruction, Exec, Instruction,
+        Recreate,
+    },
     interpreter::Interpreter,
     parse::Rule,
     variable::{GetReturnType, Type, Variable},
@@ -13,6 +16,18 @@ use pest::iterators::Pair;
 pub struct Map {
     array: Instruction,
     function: Instruction,
+}
+
+impl BinOp for Map {
+    const SYMBOL: &'static str = "@";
+
+    fn get_lhs(&self) -> &Instruction {
+        &self.array
+    }
+
+    fn get_rhs(&self) -> &Instruction {
+        &self.function
+    }
 }
 
 impl CreateInstruction for Map {

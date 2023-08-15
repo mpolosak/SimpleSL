@@ -1,5 +1,8 @@
 use crate::{
-    instruction::{local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate},
+    instruction::{
+        local_variable::LocalVariables, traits::BinOp, CreateInstruction, Exec, Instruction,
+        Recreate,
+    },
     interpreter::Interpreter,
     parse::Rule,
     variable::{GetReturnType, Type, Variable},
@@ -11,6 +14,18 @@ use pest::iterators::Pair;
 pub struct Filter {
     array: Instruction,
     function: Instruction,
+}
+
+impl BinOp for Filter {
+    const SYMBOL: &'static str = "?";
+
+    fn get_lhs(&self) -> &Instruction {
+        &self.array
+    }
+
+    fn get_rhs(&self) -> &Instruction {
+        &self.function
+    }
 }
 
 impl CreateInstruction for Filter {
@@ -27,7 +42,7 @@ impl CreateInstruction for Filter {
         } else {
             Err(Error::CannotDo2(
                 array.get_return_type(),
-                "?",
+                Self::SYMBOL,
                 function.get_return_type(),
             ))
         }
@@ -83,7 +98,7 @@ impl Exec for Filter {
                 }
                 Ok((*new_array).into())
             }
-            (array, function) => panic!("Tried to do {array} ? {function}"),
+            (array, function) => panic!("Tried to do {array} {} {function}", Self::SYMBOL),
         }
     }
 }

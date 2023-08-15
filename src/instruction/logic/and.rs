@@ -1,3 +1,4 @@
+use crate::instruction::traits::BinOp;
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
@@ -13,6 +14,18 @@ use pest::iterators::Pair;
 pub struct And {
     lhs: Instruction,
     rhs: Instruction,
+}
+
+impl BinOp for And {
+    const SYMBOL: &'static str = "&&";
+
+    fn get_lhs(&self) -> &Instruction {
+        &self.lhs
+    }
+
+    fn get_rhs(&self) -> &Instruction {
+        &self.rhs
+    }
 }
 
 impl CreateInstruction for And {
@@ -37,7 +50,7 @@ impl CreateInstruction for And {
             {
                 Ok(Self::create_from_instructions(lhs, rhs))
             }
-            (lhs_type, rhs_type) => Err(Error::CannotDo2(lhs_type, "&&", rhs_type)),
+            (lhs_type, rhs_type) => Err(Error::CannotDo2(lhs_type, Self::SYMBOL, rhs_type)),
         }
     }
 }
@@ -55,7 +68,7 @@ impl And {
                 .take(array.len())
                 .collect(),
             (value, Variable::Int(_)) | (Variable::Int(_), value) => value,
-            (lhs, rhs) => panic!("Tried {lhs} && {rhs} which is imposible"),
+            (lhs, rhs) => panic!("Tried {lhs} {} {rhs} which is imposible", Self::SYMBOL),
         }
     }
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {

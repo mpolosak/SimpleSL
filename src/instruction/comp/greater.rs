@@ -1,4 +1,5 @@
 use super::can_be_used;
+use crate::instruction::traits::BinOp;
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
@@ -10,6 +11,18 @@ use pest::iterators::Pair;
 pub struct Greater {
     lhs: Instruction,
     rhs: Instruction,
+}
+
+impl BinOp for Greater {
+    const SYMBOL: &'static str = ">";
+
+    fn get_lhs(&self) -> &Instruction {
+        &self.lhs
+    }
+
+    fn get_rhs(&self) -> &Instruction {
+        &self.rhs
+    }
 }
 
 impl CreateInstruction for Greater {
@@ -28,7 +41,7 @@ impl CreateInstruction for Greater {
         } else {
             Err(Error::CannotDo2(
                 lhs.get_return_type(),
-                ">",
+                Self::SYMBOL,
                 rhs.get_return_type(),
             ))
         }
@@ -50,7 +63,7 @@ impl Greater {
                 .cloned()
                 .map(|lhs| Self::greater(lhs, rhs.clone()))
                 .collect(),
-            (lhs, rhs) => panic!("Tried to do {lhs} > {rhs}"),
+            (lhs, rhs) => panic!("Tried to do {lhs} {} {rhs}", Self::SYMBOL),
         }
     }
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {

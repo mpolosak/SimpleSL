@@ -1,4 +1,5 @@
 use super::can_be_used;
+use crate::instruction::traits::BinOp;
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
@@ -15,6 +16,18 @@ use pest::iterators::Pair;
 pub struct BinOr {
     lhs: Instruction,
     rhs: Instruction,
+}
+
+impl BinOp for BinOr {
+    const SYMBOL: &'static str = "|";
+
+    fn get_lhs(&self) -> &Instruction {
+        &self.lhs
+    }
+
+    fn get_rhs(&self) -> &Instruction {
+        &self.rhs
+    }
 }
 
 impl CreateInstruction for BinOr {

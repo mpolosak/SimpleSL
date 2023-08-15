@@ -1,3 +1,4 @@
+use crate::instruction::traits::BinOp;
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
@@ -8,6 +9,18 @@ use pest::iterators::Pair;
 pub struct Equal {
     lhs: Instruction,
     rhs: Instruction,
+}
+
+impl BinOp for Equal {
+    const SYMBOL: &'static str = "==";
+
+    fn get_lhs(&self) -> &Instruction {
+        &self.lhs
+    }
+
+    fn get_rhs(&self) -> &Instruction {
+        &self.rhs
+    }
 }
 
 impl CreateInstruction for Equal {

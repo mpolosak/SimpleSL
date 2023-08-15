@@ -1,4 +1,5 @@
 use super::can_be_used;
+use crate::instruction::traits::BinOp;
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
@@ -17,6 +18,18 @@ pub struct LShift {
     rhs: Instruction,
 }
 
+impl BinOp for LShift {
+    const SYMBOL: &'static str = "<<";
+
+    fn get_lhs(&self) -> &Instruction {
+        &self.lhs
+    }
+
+    fn get_rhs(&self) -> &Instruction {
+        &self.rhs
+    }
+}
+
 impl CreateInstruction for LShift {
     fn create_instruction(
         pair: Pair<Rule>,
@@ -33,7 +46,7 @@ impl CreateInstruction for LShift {
         } else {
             Err(Error::CannotDo2(
                 lhs.get_return_type(),
-                "<<",
+                Self::SYMBOL,
                 rhs.get_return_type(),
             ))
         }
@@ -57,7 +70,10 @@ impl LShift {
                 .cloned()
                 .map(|element| Self::lshift(element, value.clone()))
                 .collect(),
-            (lhs, rhs) => panic!("Tried to do {lhs} << {rhs} which is imposible"),
+            (lhs, rhs) => panic!(
+                "Tried to do {lhs} {} {rhs} which is imposible",
+                Self::SYMBOL
+            ),
         }
     }
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {

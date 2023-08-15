@@ -1,3 +1,4 @@
+use crate::instruction::traits::BinOp;
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
@@ -13,6 +14,18 @@ use pest::iterators::Pair;
 pub struct Divide {
     dividend: Instruction,
     divisor: Instruction,
+}
+
+impl BinOp for Divide {
+    const SYMBOL: &'static str = "/";
+
+    fn get_lhs(&self) -> &Instruction {
+        &self.dividend
+    }
+
+    fn get_rhs(&self) -> &Instruction {
+        &self.divisor
+    }
 }
 
 impl CreateInstruction for Divide {
@@ -40,7 +53,7 @@ impl CreateInstruction for Divide {
                 Self::create_from_instructions(dividend, divisor)
             }
             (dividend_type, divisor_type) => {
-                Err(Error::CannotDo2(dividend_type, "/", divisor_type))
+                Err(Error::CannotDo2(dividend_type, Self::SYMBOL, divisor_type))
             }
         }
     }
@@ -66,7 +79,7 @@ impl Divide {
                     .map(|divisor| Self::divide(dividend.clone(), divisor))
                     .collect::<Result<Variable>>()
             }
-            (dividend, divisor) => panic!("Tried to divide {dividend} by {divisor}"),
+            (dividend, divisor) => panic!("Tried to calc {dividend} {} {divisor}", Self::SYMBOL),
         }
     }
     fn create_from_instructions(

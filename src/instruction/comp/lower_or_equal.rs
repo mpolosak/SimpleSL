@@ -1,3 +1,4 @@
+use crate::instruction::traits::BinOp;
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
@@ -11,6 +12,18 @@ use super::can_be_used;
 pub struct LowerOrEqual {
     lhs: Instruction,
     rhs: Instruction,
+}
+
+impl BinOp for LowerOrEqual {
+    const SYMBOL: &'static str = "<=";
+
+    fn get_lhs(&self) -> &Instruction {
+        &self.lhs
+    }
+
+    fn get_rhs(&self) -> &Instruction {
+        &self.rhs
+    }
 }
 
 impl CreateInstruction for LowerOrEqual {
@@ -29,7 +42,7 @@ impl CreateInstruction for LowerOrEqual {
         } else {
             Err(Error::CannotDo2(
                 lhs.get_return_type(),
-                "<=",
+                Self::SYMBOL,
                 rhs.get_return_type(),
             ))
         }
@@ -51,7 +64,7 @@ impl LowerOrEqual {
                 .cloned()
                 .map(|lhs| Self::greater_or_equal(lhs, rhs.clone()))
                 .collect(),
-            (lhs, rhs) => panic!("Tried to do {lhs} <= {rhs}"),
+            (lhs, rhs) => panic!("Tried to do {lhs} {} {rhs}", Self::SYMBOL),
         }
     }
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {

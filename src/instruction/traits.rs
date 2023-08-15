@@ -1,7 +1,8 @@
+mod bin_op;
+pub use self::bin_op::BinOp;
 use super::{local_variable::LocalVariables, Instruction};
 use crate::{interpreter::Interpreter, parse::Rule, variable::Variable, Result};
 use pest::iterators::Pair;
-
 pub trait CreateInstruction {
     fn create_instruction(
         pair: Pair<Rule>,

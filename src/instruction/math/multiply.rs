@@ -1,3 +1,4 @@
+use crate::instruction::traits::BinOp;
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
@@ -13,6 +14,18 @@ use pest::iterators::Pair;
 pub struct Multiply {
     lhs: Instruction,
     rhs: Instruction,
+}
+
+impl BinOp for Multiply {
+    const SYMBOL: &'static str = "*";
+
+    fn get_lhs(&self) -> &Instruction {
+        &self.lhs
+    }
+
+    fn get_rhs(&self) -> &Instruction {
+        &self.rhs
+    }
 }
 
 impl CreateInstruction for Multiply {
@@ -39,9 +52,11 @@ impl CreateInstruction for Multiply {
             {
                 Ok(Self::create_from_instructions(lhs, rhs))
             }
-            (lhs_return_type, rhs_return_type) => {
-                Err(Error::CannotDo2(lhs_return_type, "*", rhs_return_type))
-            }
+            (lhs_return_type, rhs_return_type) => Err(Error::CannotDo2(
+                lhs_return_type,
+                Self::SYMBOL,
+                rhs_return_type,
+            )),
         }
     }
 }
@@ -58,7 +73,7 @@ impl Multiply {
                 .cloned()
                 .map(|element| Self::multiply(element, value.clone()))
                 .collect(),
-            (lhs, rhs) => panic!("Tried to multiply {lhs} and {rhs}"),
+            (lhs, rhs) => panic!("Tried to calc {lhs} {} {rhs}", Self::SYMBOL),
         }
     }
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {

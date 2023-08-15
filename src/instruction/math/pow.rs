@@ -1,3 +1,4 @@
+use crate::instruction::traits::BinOp;
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
@@ -13,6 +14,18 @@ use pest::iterators::Pair;
 pub struct Pow {
     base: Instruction,
     exp: Instruction,
+}
+
+impl BinOp for Pow {
+    const SYMBOL: &'static str = "**";
+
+    fn get_lhs(&self) -> &Instruction {
+        &self.base
+    }
+
+    fn get_rhs(&self) -> &Instruction {
+        &self.exp
+    }
 }
 
 impl CreateInstruction for Pow {
@@ -39,9 +52,11 @@ impl CreateInstruction for Pow {
             {
                 Self::create_from_instructions(base, exp)
             }
-            (base_return_type, exp_return_type) => {
-                Err(Error::CannotDo2(base_return_type, "**", exp_return_type))
-            }
+            (base_return_type, exp_return_type) => Err(Error::CannotDo2(
+                base_return_type,
+                Self::SYMBOL,
+                exp_return_type,
+            )),
         }
     }
 }
@@ -64,7 +79,7 @@ impl Pow {
                 .cloned()
                 .map(|element| Self::pow(element, value.clone()))
                 .collect(),
-            (base, exp) => panic!("Tried to raise {base} to {exp} power"),
+            (base, exp) => panic!("Tried to calc {base} {} {exp}", Self::SYMBOL),
         }
     }
     fn create_from_instructions(base: Instruction, exp: Instruction) -> Result<Instruction> {
