@@ -39,8 +39,8 @@ impl CreateInstruction for Map {
 impl Map {
     fn can_be_used(instruction1: &Instruction, instruction2: &Instruction) -> bool {
         match (
-            instruction1.get_return_type().as_ref(),
-            instruction2.get_return_type().as_ref(),
+            instruction1.get_return_type(),
+            instruction2.get_return_type(),
         ) {
             (Type::Array(element_type), Type::Function(function_type)) => {
                 let params = &function_type.params;
@@ -58,7 +58,7 @@ impl Map {
                 if function_type.params.len() == types.len() =>
             {
                 zip(types.iter(), function_type.params.iter()).all(|(var_type, param_type)| {
-                    if let Type::Array(var_type) = var_type.as_ref() {
+                    if let Type::Array(var_type) = var_type {
                         var_type.matches(param_type)
                     } else {
                         false
@@ -72,7 +72,7 @@ impl Map {
                 let index_type = params_iter.next().unwrap();
                 Type::Int.matches(index_type)
                     && zip(types.iter(), params_iter).all(|(var_type, param_type)| {
-                        if let Type::Array(var_type) = var_type.as_ref() {
+                        if let Type::Array(var_type) = var_type {
                             var_type.matches(param_type)
                         } else {
                             false
@@ -166,10 +166,9 @@ impl Recreate for Map {
 }
 
 impl GetReturnType for Map {
-    fn get_return_type(&self) -> Rc<Type> {
-        let instruction_return_type = self.function.get_return_type();
-        let Type::Function(function_type) = instruction_return_type.as_ref() else {panic!()};
-        Type::Array(function_type.return_type.clone()).into()
+    fn get_return_type(&self) -> Type {
+        let Type::Function(function_type) = self.function.get_return_type() else {panic!()};
+        Type::Array(function_type.return_type.clone().into())
     }
 }
 

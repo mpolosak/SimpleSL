@@ -115,8 +115,8 @@ fn param_from_function_param(
     quote!(
         function::Param {
             name: #ident.into(),
-            var_type: #param_type.into(),
-        }.into()
+            var_type: #param_type,
+        }
     )
 }
 

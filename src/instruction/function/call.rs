@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use crate::instruction::{
     exec_instructions,
     function::AnonymousFunction,
@@ -63,29 +61,25 @@ impl FunctionCall {
             &args
                 .iter()
                 .map(Instruction::get_return_type)
-                .collect::<Box<[Rc<Type>]>>(),
+                .collect::<Box<[Type]>>(),
         )
     }
-    fn check_args_with_type(
-        pair_str: &str,
-        var_type: Rc<Type>,
-        args: &[Instruction],
-    ) -> Result<()> {
+    fn check_args_with_type(pair_str: &str, var_type: Type, args: &[Instruction]) -> Result<()> {
         let params = args
             .iter()
             .map(Instruction::get_return_type)
-            .collect::<Box<[Rc<Type>]>>();
+            .collect::<Box<[Type]>>();
         let expected = Type::Function(
             FunctionType {
                 params,
-                return_type: Type::Any.into(),
+                return_type: Type::Any,
             }
             .into(),
         );
         if var_type.matches(&expected) {
             Ok(())
         } else {
-            Err(Error::WrongType(pair_str.into(), expected.into()))
+            Err(Error::WrongType(pair_str.into(), expected))
         }
     }
 }
@@ -119,9 +113,8 @@ impl From<FunctionCall> for Instruction {
 }
 
 impl GetReturnType for FunctionCall {
-    fn get_return_type(&self) -> Rc<Type> {
-        let instruction_return_type = &self.function.get_return_type();
-        let Type::Function(function_type) = instruction_return_type.as_ref() else {
+    fn get_return_type(&self) -> Type {
+        let Type::Function(function_type) = self.function.get_return_type() else {
             panic!();
         };
         function_type.return_type.clone()

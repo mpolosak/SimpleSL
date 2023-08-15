@@ -5,7 +5,7 @@ use std::{fmt, ops::Deref, rc::Rc};
 #[derive(Clone, Debug)]
 pub struct Param {
     pub name: Rc<str>,
-    pub var_type: Rc<Type>,
+    pub var_type: Type,
 }
 
 impl fmt::Display for Param {
@@ -19,7 +19,7 @@ impl From<Pair<'_, Rule>> for Param {
         let mut inner = value.into_inner();
         Self {
             name: inner.next().unwrap().as_str().into(),
-            var_type: Type::from(inner.next().unwrap()).into(),
+            var_type: Type::from(inner.next().unwrap()),
         }
     }
 }

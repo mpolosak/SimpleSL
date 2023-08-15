@@ -12,24 +12,24 @@ pub enum Variable {
     Float(f64),
     String(Rc<str>),
     Function(Rc<Function>),
-    Array(Rc<[Variable]>, Rc<Type>),
+    Array(Rc<[Variable]>, Type),
     Tuple(Rc<[Variable]>),
     Void,
 }
 
 impl GetType for Variable {
-    fn get_type(&self) -> Rc<Type> {
+    fn get_type(&self) -> Type {
         match self {
-            Variable::Int(_) => Type::Int.into(),
-            Variable::Float(_) => Type::Float.into(),
-            Variable::String(_) => Type::String.into(),
+            Variable::Int(_) => Type::Int,
+            Variable::Float(_) => Type::Float,
+            Variable::String(_) => Type::String,
             Variable::Function(function) => function.get_type(),
             Variable::Array(_, var_type) => var_type.clone(),
             Variable::Tuple(elements) => {
                 let types = elements.iter().map(Variable::get_type).collect();
-                Type::Tuple(types).into()
+                Type::Tuple(types)
             }
-            Variable::Void => Type::Void.into(),
+            Variable::Void => Type::Void,
         }
     }
 }
@@ -182,13 +182,13 @@ impl From<Rc<[Variable]>> for Variable {
         let var_type = if let Some(first) = iter.next() {
             let mut element_type = first.get_type();
             for instruction in iter {
-                element_type = element_type.concat(instruction.get_type().as_ref()).into();
+                element_type = element_type.concat(instruction.get_type());
             }
-            Type::Array(element_type)
+            Type::Array(element_type.into())
         } else {
             Type::EmptyArray
         };
-        Self::Array(value, var_type.into())
+        Self::Array(value, var_type)
     }
 }
 

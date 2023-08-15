@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use super::can_be_used;
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
@@ -91,17 +89,14 @@ impl Recreate for Greater {
 }
 
 impl GetReturnType for Greater {
-    fn get_return_type(&self) -> Rc<Type> {
+    fn get_return_type(&self) -> Type {
         if matches!(
-            (
-                self.lhs.get_return_type().as_ref(),
-                self.rhs.get_return_type().as_ref()
-            ),
+            (self.lhs.get_return_type(), self.rhs.get_return_type()),
             (Type::Array(_), _) | (_, Type::Array(_))
         ) {
-            Type::Array(Type::Int.into()).into()
+            Type::Array(Type::Int.into())
         } else {
-            Type::Int.into()
+            Type::Int
         }
     }
 }

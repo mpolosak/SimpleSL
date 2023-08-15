@@ -6,12 +6,11 @@ use crate::{
     Error, Result,
 };
 use pest::iterators::Pair;
-use std::rc::Rc;
 
 #[derive(Debug)]
 pub struct TypeFilter {
     array: Instruction,
-    var_type: Rc<Type>,
+    var_type: Type,
 }
 
 impl CreateInstruction for TypeFilter {
@@ -22,11 +21,8 @@ impl CreateInstruction for TypeFilter {
     ) -> Result<Instruction> {
         let mut inner = pair.into_inner();
         let array = Instruction::new(inner.next().unwrap(), interpreter, local_variables)?;
-        let var_type = Rc::new(Type::from(inner.next().unwrap()));
-        if matches!(
-            array.get_return_type().as_ref(),
-            Type::Array(_) | Type::EmptyArray
-        ) {
+        let var_type = Type::from(inner.next().unwrap());
+        if matches!(array.get_return_type(), Type::Array(_) | Type::EmptyArray) {
             Ok(Self { array, var_type }.into())
         } else {
             Err(Error::CannotDo2(array.get_return_type(), "?", var_type))
@@ -64,8 +60,8 @@ impl Recreate for TypeFilter {
 }
 
 impl GetReturnType for TypeFilter {
-    fn get_return_type(&self) -> Rc<Type> {
-        Type::Array(self.var_type.clone()).into()
+    fn get_return_type(&self) -> Type {
+        Type::Array(self.var_type.clone().into())
     }
 }
 

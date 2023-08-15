@@ -79,19 +79,13 @@ impl From<Params> for LocalVariables<'_> {
 
 #[derive(Clone, Debug)]
 pub enum LocalVariable {
-    Function(Params, Rc<Type>),
+    Function(Params, Type),
     Variable(Variable),
-    Other(Rc<Type>),
+    Other(Type),
 }
 
 impl From<Type> for LocalVariable {
     fn from(value: Type) -> Self {
-        Self::Other(value.into())
-    }
-}
-
-impl From<Rc<Type>> for LocalVariable {
-    fn from(value: Rc<Type>) -> Self {
         Self::Other(value)
     }
 }
@@ -107,18 +101,16 @@ impl From<&Instruction> for LocalVariable {
 }
 
 impl GetType for LocalVariable {
-    fn get_type(&self) -> Rc<Type> {
+    fn get_type(&self) -> Type {
         match self {
-            LocalVariable::Function(params, return_type) => Rc::new(
-                FunctionType {
-                    return_type: return_type.clone(),
-                    params: params
-                        .iter()
-                        .map(|Param { var_type, name: _ }| var_type.clone())
-                        .collect(),
-                }
-                .into(),
-            ),
+            LocalVariable::Function(params, return_type) => FunctionType {
+                return_type: return_type.clone(),
+                params: params
+                    .iter()
+                    .map(|Param { var_type, name: _ }| var_type.clone())
+                    .collect(),
+            }
+            .into(),
             LocalVariable::Variable(variable) => variable.get_type(),
             LocalVariable::Other(var_type) => var_type.clone(),
         }

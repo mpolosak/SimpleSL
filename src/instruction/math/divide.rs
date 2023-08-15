@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
@@ -28,9 +26,7 @@ impl CreateInstruction for Divide {
         let dividend = Instruction::new(pair, interpreter, local_variables)?;
         let pair = inner.next().unwrap();
         let divisor = Instruction::new(pair, interpreter, local_variables)?;
-        let dividend_return_type = dividend.get_return_type();
-        let divisor_return_type = divisor.get_return_type();
-        match (dividend_return_type.as_ref(), divisor_return_type.as_ref()) {
+        match (dividend.get_return_type(), divisor.get_return_type()) {
             (Type::Int, Type::Int)
             | (Type::Float, Type::Float)
             | (Type::EmptyArray, Type::Int | Type::Float)
@@ -39,14 +35,14 @@ impl CreateInstruction for Divide {
             }
             (Type::Array(element_type), var_type @ (Type::Int | Type::Float))
             | (var_type @ (Type::Int | Type::Float), Type::Array(element_type))
-                if element_type.as_ref() == var_type =>
+                if element_type.as_ref() == &var_type =>
             {
                 Self::create_from_instructions(dividend, divisor)
             }
             _ => Err(Error::CannotDo2(
-                dividend_return_type,
+                dividend.get_return_type(),
                 "/",
-                divisor_return_type,
+                divisor.get_return_type(),
             )),
         }
     }
@@ -110,17 +106,14 @@ impl Recreate for Divide {
 }
 
 impl GetReturnType for Divide {
-    fn get_return_type(&self) -> Rc<Type> {
+    fn get_return_type(&self) -> Type {
         match (
             self.dividend.get_return_type(),
             self.divisor.get_return_type(),
         ) {
-            (var_type, _) | (_, var_type)
-                if matches!(var_type.as_ref(), Type::Array(_) | Type::EmptyArray) =>
-            {
+            (var_type @ Type::Array(_), _) | (_, var_type @ Type::Array(_)) | (var_type, _) => {
                 var_type
             }
-            (var_type, _) => var_type,
         }
     }
 }

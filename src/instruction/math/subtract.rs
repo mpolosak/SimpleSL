@@ -1,9 +1,6 @@
-use std::rc::Rc;
-
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
-use crate::variable::GetType;
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
@@ -29,12 +26,7 @@ impl CreateInstruction for Subtract {
         let minuend = Instruction::new(pair, interpreter, local_variables)?;
         let pair = inner.next().unwrap();
         let subtrahend = Instruction::new(pair, interpreter, local_variables)?;
-        let minuend_return_type = minuend.get_return_type();
-        let subtrahend_return_type = subtrahend.get_return_type();
-        match (
-            minuend_return_type.as_ref(),
-            subtrahend_return_type.as_ref(),
-        ) {
+        match (minuend.get_return_type(), subtrahend.get_return_type()) {
             (Type::Int, Type::Int)
             | (Type::Float, Type::Float)
             | (Type::EmptyArray, Type::Int | Type::Float)
@@ -43,15 +35,13 @@ impl CreateInstruction for Subtract {
             }
             (Type::Array(element_type), var_type @ (Type::Int | Type::Float))
             | (var_type @ (Type::Int | Type::Float), Type::Array(element_type))
-                if element_type.as_ref() == var_type =>
+                if element_type.as_ref() == &var_type =>
             {
                 Ok(Self::create_from_instructions(minuend, subtrahend))
             }
-            _ => Err(Error::CannotDo2(
-                minuend_return_type,
-                "-",
-                subtrahend_return_type,
-            )),
+            (minuend_type, subtrahend_type) => {
+                Err(Error::CannotDo2(minuend_type, "-", subtrahend_type))
+            }
         }
     }
 }
@@ -61,7 +51,8 @@ impl Subtract {
         match (minuend, subtrahend) {
             (Variable::Int(lhs), Variable::Int(rhs)) => (lhs - rhs).into(),
             (Variable::Float(lhs), Variable::Float(rhs)) => (lhs - rhs).into(),
-            (array, _) | (_, array) if array.get_type().as_ref() == &Type::EmptyArray => array,
+            (array @ Variable::Array(_, Type::EmptyArray), _)
+            | (_, array @ Variable::Array(_, Type::EmptyArray)) => array,
             (minuend, Variable::Array(array, _)) => array
                 .iter()
                 .cloned()
@@ -110,17 +101,14 @@ impl Recreate for Subtract {
 }
 
 impl GetReturnType for Subtract {
-    fn get_return_type(&self) -> Rc<Type> {
+    fn get_return_type(&self) -> Type {
         match (
             self.minuend.get_return_type(),
             self.subtrahend.get_return_type(),
         ) {
-            (var_type, _) | (_, var_type)
-                if matches!(var_type.as_ref(), Type::Array(_) | Type::EmptyArray) =>
-            {
+            (var_type @ Type::Array(_), _) | (_, var_type @ Type::Array(_)) | (var_type, _) => {
                 var_type
             }
-            (var_type, _) => var_type,
         }
     }
 }

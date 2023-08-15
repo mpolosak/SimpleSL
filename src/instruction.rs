@@ -286,7 +286,7 @@ impl Recreate for Instruction {
 }
 
 impl GetReturnType for Instruction {
-    fn get_return_type(&self) -> Rc<Type> {
+    fn get_return_type(&self) -> Type {
         match self {
             Self::Variable(variable) => variable.get_type(),
             Self::Array(array) => array.get_return_type(),
@@ -324,7 +324,7 @@ impl GetReturnType for Instruction {
             Self::Filter(filter) => filter.get_return_type(),
             Self::TypeFilter(filter) => filter.get_return_type(),
             Self::FunctionDeclaration(declaration) => declaration.get_return_type(),
-            Self::Equal(..) => Type::Int.into(),
+            Self::Equal(..) => Type::Int,
         }
     }
 }

@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use crate::{
     instruction::{local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate},
     interpreter::Interpreter,
@@ -39,19 +37,19 @@ impl CreateInstruction for Filter {
 impl Filter {
     fn can_be_used(instruction1: &Instruction, instruction2: &Instruction) -> bool {
         match (
-            instruction1.get_return_type().as_ref(),
-            instruction2.get_return_type().as_ref(),
+            instruction1.get_return_type(),
+            instruction2.get_return_type(),
         ) {
             (Type::Array(element_type), Type::Function(function_type)) => {
                 let params = &function_type.params;
-                function_type.return_type.as_ref() == &Type::Int
+                function_type.return_type == Type::Int
                     && ((params.len() == 1 && element_type.matches(&params[0]))
                         || (params.len() == 2
                             && Type::Int.matches(&params[0])
                             && element_type.matches(&params[1])))
             }
             (Type::EmptyArray, Type::Function(function_type)) => {
-                function_type.params.len() == 1 && function_type.return_type.as_ref() == &Type::Int
+                function_type.params.len() == 1 && function_type.return_type == Type::Int
             }
             _ => false,
         }
@@ -103,7 +101,7 @@ impl Recreate for Filter {
 }
 
 impl GetReturnType for Filter {
-    fn get_return_type(&self) -> Rc<Type> {
+    fn get_return_type(&self) -> Type {
         self.array.get_return_type()
     }
 }

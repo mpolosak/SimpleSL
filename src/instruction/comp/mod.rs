@@ -6,18 +6,15 @@ mod greater_or_equal;
 pub use {equal::Equal, greater::Greater, greater_or_equal::GreaterOrEqual};
 
 fn can_be_used(lhs: &Instruction, rhs: &Instruction) -> bool {
-    match (
-        lhs.get_return_type().as_ref(),
-        rhs.get_return_type().as_ref(),
-    ) {
+    match (lhs.get_return_type(), rhs.get_return_type()) {
         (Type::Int, Type::Int) | (Type::Float, Type::Float) => true,
         (Type::Array(var_type), Type::Int) | (Type::Int, Type::Array(var_type))
-            if var_type.as_ref() == &Type::Int =>
+            if var_type == Type::Int.into() =>
         {
             true
         }
         (Type::Array(var_type), Type::Float) | (Type::Float, Type::Array(var_type))
-            if var_type.as_ref() == &Type::Float =>
+            if var_type == Type::Float.into() =>
         {
             true
         }

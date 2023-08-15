@@ -1,10 +1,8 @@
-use std::rc::Rc;
-
 use super::can_be_used;
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
-use crate::variable::{GetReturnType, GetType};
+use crate::variable::GetReturnType;
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
@@ -47,7 +45,8 @@ impl RShift {
         match (lhs, rhs) {
             (_, Variable::Int(rhs)) if !(0..=63).contains(&rhs) => Err(Error::OverflowShift),
             (Variable::Int(lhs), Variable::Int(rhs)) => Ok((lhs >> rhs).into()),
-            (array, _) | (_, array) if array.get_type().as_ref() == &Type::EmptyArray => Ok(array),
+            (array @ Variable::Array(_, Type::EmptyArray), _)
+            | (_, array @ Variable::Array(_, Type::EmptyArray)) => Ok(array),
             (value, Variable::Array(array, _)) => array
                 .iter()
                 .cloned()
@@ -95,14 +94,14 @@ impl Recreate for RShift {
 }
 
 impl GetReturnType for RShift {
-    fn get_return_type(&self) -> Rc<Type> {
-        match (self.lhs.get_return_type(), self.rhs.get_return_type()) {
-            (var_type, _) | (_, var_type)
-                if matches!(var_type.as_ref(), Type::Array(_) | Type::EmptyArray) =>
-            {
-                var_type
-            }
-            (var_type, _) => var_type,
+    fn get_return_type(&self) -> Type {
+        if matches!(
+            (self.lhs.get_return_type(), self.rhs.get_return_type()),
+            (Type::Array(_), _) | (_, Type::Array(_))
+        ) {
+            Type::Array(Type::Int.into())
+        } else {
+            Type::Int
         }
     }
 }

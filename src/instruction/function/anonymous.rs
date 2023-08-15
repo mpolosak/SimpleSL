@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use crate::instruction::{
     local_variable::{LocalVariableMap, LocalVariables},
     recreate_instructions,
@@ -19,7 +17,7 @@ use pest::iterators::Pair;
 pub struct AnonymousFunction {
     pub params: Params,
     body: Box<[Instruction]>,
-    return_type: Rc<Type>,
+    return_type: Type,
 }
 
 impl CreateInstruction for AnonymousFunction {
@@ -31,13 +29,12 @@ impl CreateInstruction for AnonymousFunction {
         let mut inner = pair.into_inner().peekable();
         let params_pair = inner.next().unwrap();
         let params = Params(params_pair.into_inner().map(Param::from).collect());
-        let return_type: Rc<Type> = match inner.peek() {
+        let return_type = match inner.peek() {
             Some(pair) if pair.as_rule() == Rule::return_type_decl => {
                 Type::from(inner.next().unwrap().into_inner().next().unwrap())
             }
             _ => Type::Void,
-        }
-        .into();
+        };
         let mut local_variables =
             local_variables.layer_from_map(LocalVariableMap::from(params.clone()));
         let body = inner
@@ -46,7 +43,7 @@ impl CreateInstruction for AnonymousFunction {
 
         let returned = match body.last() {
             Some(instruction) => instruction.get_return_type(),
-            None => Type::Void.into(),
+            None => Type::Void,
         };
         if !returned.matches(&return_type) {
             return Err(Error::WrongReturn(return_type, returned));
@@ -129,19 +126,17 @@ impl From<AnonymousFunction> for Instruction {
 }
 
 impl GetReturnType for AnonymousFunction {
-    fn get_return_type(&self) -> Rc<Type> {
-        let params: Box<[Rc<Type>]> = self
+    fn get_return_type(&self) -> Type {
+        let params: Box<[Type]> = self
             .params
             .iter()
             .map(|Param { name: _, var_type }| var_type.clone())
             .collect();
         let return_type = self.return_type.clone();
-        Rc::new(
-            FunctionType {
-                return_type,
-                params,
-            }
-            .into(),
-        )
+        FunctionType {
+            return_type,
+            params,
+        }
+        .into()
     }
 }

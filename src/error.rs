@@ -4,13 +4,13 @@ use std::{fmt, rc::Rc};
 #[derive(Debug)]
 pub enum Error {
     VariableDoesntExist(Box<str>),
-    WrongType(Rc<str>, Rc<Type>),
+    WrongType(Rc<str>, Type),
     WrongNumberOfArguments(Box<str>, usize),
     IndexToBig,
-    CannotAdd(Rc<Type>, Rc<Type>),
+    CannotAdd(Type, Type),
     CannotBeNegative(&'static str),
     CannotBeParsed(Box<str>),
-    CannotIndexInto(Rc<Type>),
+    CannotIndexInto(Type),
     TooManyVariables,
     ZeroDivision,
     ZeroModulo,
@@ -19,9 +19,9 @@ pub enum Error {
     IO(std::io::Error),
     Parsing(Box<pest::error::Error<Rule>>),
     ArgumentDoesntContainType,
-    CannotDo(&'static str, Rc<Type>),
-    CannotDo2(Rc<Type>, &'static str, Rc<Type>),
-    WrongReturn(Rc<Type>, Rc<Type>),
+    CannotDo(&'static str, Type),
+    CannotDo2(Type, &'static str, Type),
+    WrongReturn(Type, Type),
 }
 
 impl std::error::Error for Error {}

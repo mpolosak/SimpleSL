@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use super::{local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate};
 use crate::{
     interpreter::Interpreter,
@@ -24,10 +22,10 @@ impl CreateInstruction for ArrayRepeat {
         let mut inner = pair.into_inner();
         let value = Instruction::new(inner.next().unwrap(), interpreter, local_variables)?;
         let len = Instruction::new(inner.next().unwrap(), interpreter, local_variables)?;
-        if len.get_return_type().as_ref() == &Type::Int {
+        if len.get_return_type() == Type::Int {
             Self::create_from_instructions(value, len)
         } else {
-            Err(Error::WrongType("len".into(), Type::Int.into()))
+            Err(Error::WrongType("len".into(), Type::Int))
         }
     }
 }
@@ -72,9 +70,9 @@ impl Recreate for ArrayRepeat {
 }
 
 impl GetReturnType for ArrayRepeat {
-    fn get_return_type(&self) -> Rc<Type> {
+    fn get_return_type(&self) -> Type {
         let element_type = self.value.get_return_type();
-        Type::Array(element_type).into()
+        Type::Array(element_type.into())
     }
 }
 

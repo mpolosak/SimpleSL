@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use super::{
     local_variable::LocalVariables, recreate_instructions, CreateInstruction, Exec, Instruction,
     Recreate,
@@ -60,10 +58,10 @@ impl Recreate for Import {
 }
 
 impl GetReturnType for Import {
-    fn get_return_type(&self) -> Rc<Type> {
+    fn get_return_type(&self) -> Type {
         match self.instructions.last() {
             Some(last) => last.get_return_type(),
-            None => Type::Void.into(),
+            None => Type::Void,
         }
     }
 }

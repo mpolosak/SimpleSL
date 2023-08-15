@@ -15,7 +15,7 @@ use pest::iterators::Pair;
 #[derive(Debug)]
 pub struct SetIfElse {
     ident: Rc<str>,
-    var_type: Rc<Type>,
+    var_type: Type,
     expression: Instruction,
     if_match: Instruction,
     else_instruction: Instruction,
@@ -31,7 +31,7 @@ impl CreateInstruction for SetIfElse {
         let mut inner = pair.into_inner();
         let ident: Rc<str> = inner.next().unwrap().as_str().into();
         let pair = inner.next().unwrap();
-        let var_type = Rc::new(Type::from(pair));
+        let var_type = Type::from(pair);
         let pair = inner.next().unwrap();
         let expression = Instruction::new(pair, interpreter, local_variables)?;
         let pair = inner.next().unwrap();
@@ -101,10 +101,10 @@ impl Recreate for SetIfElse {
 }
 
 impl GetReturnType for SetIfElse {
-    fn get_return_type(&self) -> Rc<Type> {
+    fn get_return_type(&self) -> Type {
         let true_return_type = self.if_match.get_return_type();
         let false_return_type = self.else_instruction.get_return_type();
-        true_return_type.concat(&false_return_type).into()
+        true_return_type.concat(false_return_type)
     }
 }
 

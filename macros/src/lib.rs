@@ -42,7 +42,7 @@ pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream 
                             #body
                         }
                     ),
-                    return_type: #return_type.into(),
+                    return_type: #return_type,
                 }.into(),
             );
         }

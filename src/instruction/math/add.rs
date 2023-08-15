@@ -1,7 +1,6 @@
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
 };
-use crate::variable::GetType;
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
@@ -9,7 +8,6 @@ use crate::{
     Error, Result,
 };
 use pest::iterators::Pair;
-use std::rc::Rc;
 
 #[derive(Debug)]
 pub struct Add {
@@ -28,24 +26,18 @@ impl CreateInstruction for Add {
         let lhs = Instruction::new(pair, interpreter, local_variables)?;
         let pair = inner.next().unwrap();
         let rhs = Instruction::new(pair, interpreter, local_variables)?;
-        let lhs_return_type = lhs.get_return_type();
-        let rhs_return_type = rhs.get_return_type();
-        match (lhs_return_type.as_ref(), rhs_return_type.as_ref()) {
+        match (lhs.get_return_type(), rhs.get_return_type()) {
             (Type::Int, Type::Int)
             | (Type::Float, Type::Float)
             | (Type::String, Type::String)
-            | (Type::Array(_), Type::Array(_))
-            | (Type::EmptyArray, Type::Int | Type::Float | Type::String)
-            | (Type::Int | Type::Float | Type::String, Type::EmptyArray) => {
-                Ok(Self::create_from_instructions(lhs, rhs))
-            }
+            | (Type::Array(_), Type::Array(_)) => Ok(Self::create_from_instructions(lhs, rhs)),
             (Type::Array(element_type), var_type @ (Type::Int | Type::Float | Type::String))
             | (var_type @ (Type::Int | Type::Float | Type::String), Type::Array(element_type))
-                if element_type.as_ref() == var_type =>
+                if element_type.as_ref() == &var_type =>
             {
                 Ok(Self::create_from_instructions(lhs, rhs))
             }
-            _ => Err(Error::CannotAdd(lhs_return_type, rhs_return_type)),
+            (type1, type2) => Err(Error::CannotAdd(type1, type2)),
         }
     }
 }
@@ -61,9 +53,10 @@ impl Add {
             (Variable::Array(array1, _), Variable::Array(array2, _)) => {
                 array1.iter().chain(array2.iter()).cloned().collect()
             }
-            (array, _) | (_, array) if array.get_type().as_ref() == &Type::EmptyArray => array,
+            (array @ Variable::Array(_, Type::EmptyArray), _)
+            | (_, array @ Variable::Array(_, Type::EmptyArray)) => array,
             (Variable::Array(array, element_type), value)
-                if element_type.as_ref() == &Type::Array(Type::String.into()) =>
+                if element_type == Type::Array(Type::String.into()) =>
             {
                 array
                     .iter()
@@ -108,16 +101,13 @@ impl Recreate for Add {
 }
 
 impl GetReturnType for Add {
-    fn get_return_type(&self) -> Rc<Type> {
-        match (
-            self.lhs.get_return_type().as_ref(),
-            self.rhs.get_return_type().as_ref(),
-        ) {
+    fn get_return_type(&self) -> Type {
+        match (self.lhs.get_return_type(), self.rhs.get_return_type()) {
             (Type::Array(element_type1), Type::Array(element_type2)) => {
-                Type::Array(element_type1.concat(element_type2.as_ref()).into()).into()
+                Type::Array(element_type1.concat(element_type2.as_ref().clone()).into())
             }
             (var_type @ Type::Array(_), _) | (_, var_type @ Type::Array(_)) | (var_type, _) => {
-                var_type.clone().into()
+                var_type
             }
         }
     }

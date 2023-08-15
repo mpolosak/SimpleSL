@@ -64,7 +64,7 @@ impl From<Set> for Instruction {
 }
 
 impl GetReturnType for Set {
-    fn get_return_type(&self) -> Rc<Type> {
+    fn get_return_type(&self) -> Type {
         self.instruction.get_return_type()
     }
 }
