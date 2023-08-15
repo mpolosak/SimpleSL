@@ -4,32 +4,31 @@ ident = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC|"_")* }
 function_call = ${ ident ~ args }
 	args = !{"("~expression_list~")"}
 var = _{ float | int | array | array_repeat | string | function | void | tuple }
-not = { "!" ~ ( logic_arg )}
-bin_not = { "~" ~ logic_arg }
-logic_arg = _{ exp_in_brackets | function_call | ident | int | array | array_repeat }
+not = { "!" ~ ( op_arg )}
+bin_not = { "~" ~ op_arg }
+op_arg = _{ exp_in_brackets | function_call | ident | var }
 equal = { equal_arg ~ "==" ~ equal_arg }
 not_equal = { equal_arg ~ "!=" ~ equal_arg }
-  equal_arg = _{ math_operations | not | bin_not | exp_in_brackets | function_call | var | ident }
-exp_in_brackets = _{ "(" ~ ( math_operations | math_arg | equal | not_equal | and | or | bin_and | bin_or | xor | shift ) ~ ")" }
-and = { logic_arg ~ "&&" ~ logic_arg }
-or = { logic_arg ~ "||" ~ logic_arg }
-bin_and = { logic_arg ~ "&" ~ logic_arg }
-bin_or = { logic_arg ~ "|" ~ logic_arg }
-xor = { logic_arg ~ "^" ~ logic_arg }
-lshift = { logic_arg ~ "<<" ~ logic_arg }
-rshift = { logic_arg ~ ">>" ~ logic_arg }
+  equal_arg = _{ math_operations | not | bin_not | op_arg }
+exp_in_brackets = _{ "(" ~ ( math_operations | op_arg | equal | not_equal | and | or | bin_and | bin_or | xor | shift ) ~ ")" }
+and = { op_arg ~ "&&" ~ op_arg }
+or = { op_arg ~ "||" ~ op_arg }
+bin_and = { op_arg ~ "&" ~ op_arg }
+bin_or = { op_arg ~ "|" ~ op_arg }
+xor = { op_arg ~ "^" ~ op_arg }
+lshift = { op_arg ~ "<<" ~ op_arg }
+rshift = { op_arg ~ ">>" ~ op_arg }
 shift = _{ lshift | rshift }
-greater = { math_arg ~ ">" ~ math_arg }
-greater_equal = { math_arg ~ ">=" ~ math_arg }
-lower = { math_arg ~ "<" ~ math_arg }
-lower_equal = { math_arg ~ "<=" ~ math_arg }
-math_arg = _{ float | logic_arg }
-pow = { math_arg ~ "**" ~ math_arg }
-multiply = { math_arg ~ "*" ~ math_arg }
-divide = { math_arg ~ "/" ~ math_arg }
-add = { ( math_arg | string ) ~ "+" ~ ( math_arg | string ) }
-subtract = { math_arg ~ "-" ~ math_arg }
-modulo = { logic_arg ~ "%" ~ logic_arg }
+greater = { op_arg ~ ">" ~ op_arg }
+greater_equal = { op_arg ~ ">=" ~ op_arg }
+lower = { op_arg ~ "<" ~ op_arg }
+lower_equal = { op_arg ~ "<=" ~ op_arg }
+pow = { op_arg ~ "**" ~ op_arg }
+multiply = { op_arg ~ "*" ~ op_arg }
+divide = { op_arg ~ "/" ~ op_arg }
+add = { ( op_arg | string ) ~ "+" ~ ( op_arg | string ) }
+subtract = { op_arg ~ "-" ~ op_arg }
+modulo = { op_arg ~ "%" ~ op_arg }
 comparasion = _{ equal | not_equal | greater | greater_equal | lower | lower_equal }
 math_operations = _{ pow | modulo | multiply | divide | add | subtract }
 block = { "{" ~ line* ~ "}" }
@@ -43,7 +42,7 @@ match = { "match" ~ expression ~  "{" ~ match_arm* ~ "}" }
   match_value = { values ~ "=>" ~ expression ~ "," }
   match_other = { "=>" ~ expression ~ "," }
   values = { expression+ }
-at = { ( add | function_call | ident | array | array_repeat | string ) ~ "[" ~ expression ~ "]"  }
+at = { ( function_call | ident | array | array_repeat | string ) ~ "[" ~ expression ~ "]"  }
 import = { "import" ~ string }
 map = { ( ident | array | array_repeat | function_call | tuple ) ~ "@" ~ expression }
 filter = { ( ident | array | array_repeat | function_call ) ~ "?" ~ expression }
