@@ -1,9 +1,16 @@
-int = @{ ("+" | "-")? ~ ASCII_DIGIT+ }
-float = @{ int ~ "." ~ ASCII_DIGIT* }
 ident = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC|"_")* }
 function_call = ${ ident ~ args }
 	args = !{"("~expression_list~")"}
 var = _{ float | int | array | array_repeat | string | function | void | tuple }
+  function = {params ~ return_type_decl? ~"{"~line*~"}"}
+  param = {ident ~ ":" ~ type}
+  params_list = _{ (param ~ ("," ~ param)*)?}
+    params = {"(" ~ params_list? ~ ")"}
+  return_type_decl = {("->" ~ type | return_type)}
+  tuple =  {"(" ~ (expression ~ ("," ~ expression)+) ~ ")"}
+  int = @{ ("+" | "-")? ~ ASCII_DIGIT+ }
+  float = @{ int ~ "." ~ ASCII_DIGIT* }
+  void = {"()"}
 not = { "!" ~ ( op_arg )}
 bin_not = { "~" ~ op_arg }
 op_arg = _{ exp_in_brackets | function_call | ident | var }
@@ -60,19 +67,12 @@ string = ${ "\"" ~ inner ~ "\"" }
       | "\\" ~ ("\"" | "\\" | "b" | "f" | "n" | "r" | "t")
       | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
   }
-void = {"()"}
-function_declaration = { ident ~ "=" ~ function }
-set = { ident ~ "=" ~ expression }
-destruct_tuple = { destruct_idents ~ "=" ~ expression }
-  destruct_idents =  {"(" ~ (ident ~ ("," ~ ident)*)? ~ ")"}
 line = { COMMENT* ~ (( function_declaration | set | destruct_tuple | expression ) ~  line_end?) }
 	line_end = { ";" }
-function = {params ~ return_type_decl? ~"{"~line*~"}"}
-	param = {ident ~ ":" ~ type}
-	params_list = _{ (param ~ ("," ~ param)*)?}
-    params = {"(" ~ params_list? ~ ")"}
-  return_type_decl = {("->" ~ type | return_type)}
-tuple =  {"(" ~ (expression ~ ("," ~ expression)+) ~ ")"}
+  function_declaration = { ident ~ "=" ~ function }
+  set = { ident ~ "=" ~ expression }
+  destruct_tuple = { destruct_idents ~ "=" ~ expression }
+    destruct_idents =  {"(" ~ (ident ~ ("," ~ ident)*)? ~ ")"}
 type = _{ multi | standard_types | any }
   int_type = {"int"}
   float_type = {"float"}
