@@ -1,4 +1,3 @@
-use super::can_be_used;
 use crate::instruction::traits::{BinOp, CanBeUsed};
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
@@ -11,6 +10,8 @@ use crate::{
     Error, Result,
 };
 use pest::iterators::Pair;
+
+use super::BitwiseBinOp;
 
 #[derive(Debug)]
 pub struct Xor {
@@ -30,11 +31,7 @@ impl BinOp for Xor {
     }
 }
 
-impl CanBeUsed for Xor {
-    fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
-        can_be_used(lhs, rhs)
-    }
-}
+impl BitwiseBinOp for Xor {}
 
 impl CreateInstruction for Xor {
     fn create_instruction(
@@ -49,7 +46,7 @@ impl CreateInstruction for Xor {
         let rhs = Instruction::new(pair, interpreter, local_variables)?;
         let lhs_type = lhs.get_return_type();
         let rhs_type = rhs.get_return_type();
-        if can_be_used(&lhs_type, &rhs_type) {
+        if Self::can_be_used(&lhs_type, &rhs_type) {
             Ok(Self::create_from_instructions(lhs, rhs))
         } else {
             Err(Error::CannotDo2(lhs_type, Self::SYMBOL, rhs_type))
@@ -98,19 +95,6 @@ impl Recreate for Xor {
         let lhs = self.lhs.recreate(local_variables, interpreter)?;
         let rhs = self.rhs.recreate(local_variables, interpreter)?;
         Ok(Self::create_from_instructions(lhs, rhs))
-    }
-}
-
-impl GetReturnType for Xor {
-    fn get_return_type(&self) -> Type {
-        if matches!(
-            (self.lhs.get_return_type(), self.rhs.get_return_type()),
-            (Type::Array(_), _) | (_, Type::Array(_))
-        ) {
-            Type::Array(Type::Int.into())
-        } else {
-            Type::Int
-        }
     }
 }
 

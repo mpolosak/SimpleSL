@@ -1,4 +1,3 @@
-use super::can_be_used;
 use crate::instruction::traits::{BinOp, CanBeUsed};
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
@@ -11,6 +10,8 @@ use crate::{
     Error, Result,
 };
 use pest::iterators::Pair;
+
+use super::BitwiseBinOp;
 
 #[derive(Debug)]
 pub struct RShift {
@@ -30,11 +31,7 @@ impl BinOp for RShift {
     }
 }
 
-impl CanBeUsed for RShift {
-    fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
-        can_be_used(lhs, rhs)
-    }
-}
+impl BitwiseBinOp for RShift {}
 
 impl CreateInstruction for RShift {
     fn create_instruction(
@@ -107,19 +104,6 @@ impl Recreate for RShift {
         let lhs = self.lhs.recreate(local_variables, interpreter)?;
         let rhs = self.rhs.recreate(local_variables, interpreter)?;
         Self::create_from_instructions(lhs, rhs)
-    }
-}
-
-impl GetReturnType for RShift {
-    fn get_return_type(&self) -> Type {
-        if matches!(
-            (self.lhs.get_return_type(), self.rhs.get_return_type()),
-            (Type::Array(_), _) | (_, Type::Array(_))
-        ) {
-            Type::Array(Type::Int.into())
-        } else {
-            Type::Int
-        }
     }
 }
 

@@ -1,4 +1,4 @@
-use super::can_be_used;
+use super::BitwiseBinOp;
 use crate::instruction::traits::{BinOp, CanBeUsed};
 use crate::instruction::{
     local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
@@ -30,11 +30,7 @@ impl BinOp for BitwiseOr {
     }
 }
 
-impl CanBeUsed for BitwiseOr {
-    fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
-        can_be_used(lhs, rhs)
-    }
-}
+impl BitwiseBinOp for BitwiseOr {}
 
 impl CreateInstruction for BitwiseOr {
     fn create_instruction(
@@ -100,19 +96,6 @@ impl Recreate for BitwiseOr {
         let lhs = self.lhs.recreate(local_variables, interpreter)?;
         let rhs = self.rhs.recreate(local_variables, interpreter)?;
         Ok(Self::create_from_instructions(lhs, rhs))
-    }
-}
-
-impl GetReturnType for BitwiseOr {
-    fn get_return_type(&self) -> Type {
-        if matches!(
-            (self.lhs.get_return_type(), self.rhs.get_return_type()),
-            (Type::Array(_), _) | (_, Type::Array(_))
-        ) {
-            Type::Array(Type::Int.into())
-        } else {
-            Type::Int
-        }
     }
 }
 
