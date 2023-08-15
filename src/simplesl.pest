@@ -48,7 +48,7 @@ match = { "match" ~ expression ~  "{" ~ match_arm* ~ "}" }
   match_type = { ident ~ ":" ~ type ~ "=>" ~ expression ~ "," }
   match_value = { values ~ "=>" ~ expression ~ "," }
   match_other = { "=>" ~ expression ~ "," }
-  values = { expression+ }
+  values = { expression_list }
 at = { ( function_call | ident | array | array_repeat | string ) ~ "[" ~ expression ~ "]"  }
 import = { "import" ~ string }
 map = { op_arg ~ "@" ~ expression }
