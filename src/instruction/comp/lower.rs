@@ -7,12 +7,12 @@ use crate::{interpreter::Interpreter, parse::Rule, variable::Variable, Error, Re
 use pest::iterators::Pair;
 
 #[derive(Debug)]
-pub struct Greater {
+pub struct Lower {
     lhs: Instruction,
     rhs: Instruction,
 }
 
-impl CreateInstruction for Greater {
+impl CreateInstruction for Lower {
     fn create_instruction(
         pair: Pair<Rule>,
         interpreter: &Interpreter,
@@ -28,18 +28,18 @@ impl CreateInstruction for Greater {
         } else {
             Err(Error::CannotDo2(
                 lhs.get_return_type(),
-                ">",
+                "<",
                 rhs.get_return_type(),
             ))
         }
     }
 }
 
-impl Greater {
+impl Lower {
     fn greater(lhs: Variable, rhs: Variable) -> Variable {
         match (lhs, rhs) {
-            (Variable::Int(lhs), Variable::Int(rhs)) => (lhs > rhs).into(),
-            (Variable::Float(lhs), Variable::Float(rhs)) => (lhs > rhs).into(),
+            (Variable::Int(lhs), Variable::Int(rhs)) => (lhs < rhs).into(),
+            (Variable::Float(lhs), Variable::Float(rhs)) => (lhs < rhs).into(),
             (lhs, Variable::Array(array, _)) => array
                 .iter()
                 .cloned()
@@ -50,7 +50,7 @@ impl Greater {
                 .cloned()
                 .map(|lhs| Self::greater(lhs, rhs.clone()))
                 .collect(),
-            (lhs, rhs) => panic!("Tried to do {lhs} > {rhs}"),
+            (lhs, rhs) => panic!("Tried to do {lhs} < {rhs}"),
         }
     }
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
@@ -63,14 +63,14 @@ impl Greater {
     }
 }
 
-impl Exec for Greater {
+impl Exec for Lower {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let lhs = self.lhs.exec(interpreter)?;
         let rhs = self.rhs.exec(interpreter)?;
         Ok(Self::greater(lhs, rhs))
     }
 }
-impl Recreate for Greater {
+impl Recreate for Lower {
     fn recreate(
         &self,
         local_variables: &mut LocalVariables,
@@ -82,7 +82,7 @@ impl Recreate for Greater {
     }
 }
 
-impl GetReturnType for Greater {
+impl GetReturnType for Lower {
     fn get_return_type(&self) -> Type {
         if matches!(
             (self.lhs.get_return_type(), self.rhs.get_return_type()),
@@ -95,8 +95,8 @@ impl GetReturnType for Greater {
     }
 }
 
-impl From<Greater> for Instruction {
-    fn from(value: Greater) -> Self {
-        Self::Greater(value.into())
+impl From<Lower> for Instruction {
+    fn from(value: Lower) -> Self {
+        Self::Lower(value.into())
     }
 }
