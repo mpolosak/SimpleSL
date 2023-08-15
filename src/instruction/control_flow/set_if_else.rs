@@ -104,7 +104,7 @@ impl GetReturnType for SetIfElse {
     fn get_return_type(&self) -> Type {
         let true_return_type = self.if_match.get_return_type();
         let false_return_type = self.else_instruction.get_return_type();
-        true_return_type.concat(false_return_type)
+        true_return_type | false_return_type
     }
 }
 

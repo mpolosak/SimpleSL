@@ -5,7 +5,14 @@ use crate::{
     Error, Result,
 };
 use pest::{iterators::Pair, Parser};
-use std::{fmt::Display, hash::Hash, iter::zip, rc::Rc, str::FromStr};
+use std::{
+    fmt::Display,
+    hash::Hash,
+    iter::zip,
+    ops::{BitOr, BitOrAssign},
+    rc::Rc,
+    str::FromStr,
+};
 
 #[derive(Clone, Debug, Hash, Eq, PartialEq)]
 pub enum Type {
@@ -115,6 +122,20 @@ impl From<Pair<'_, Rule>> for Type {
 impl From<[Type; 2]> for Type {
     fn from(value: [Type; 2]) -> Self {
         Type::Multi(Box::new(value.into()))
+    }
+}
+
+impl BitOr for Type {
+    type Output = Self;
+
+    fn bitor(self, rhs: Self) -> Self::Output {
+        self.concat(rhs)
+    }
+}
+
+impl BitOrAssign for Type {
+    fn bitor_assign(&mut self, rhs: Self) {
+        *self = self.clone() | rhs
     }
 }
 pub trait GetType {

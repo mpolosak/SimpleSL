@@ -182,7 +182,7 @@ impl From<Rc<[Variable]>> for Variable {
         let var_type = if let Some(first) = iter.next() {
             let mut element_type = first.get_type();
             for instruction in iter {
-                element_type = element_type.concat(instruction.get_type());
+                element_type |= instruction.get_type();
             }
             Type::Array(element_type.into())
         } else {

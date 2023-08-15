@@ -40,7 +40,7 @@ impl Array {
         if let Some(first) = iter.next() {
             let mut element_type = first.get_return_type();
             for instruction in iter {
-                element_type = element_type.concat(instruction.get_return_type());
+                element_type |= instruction.get_return_type();
             }
             let var_type = Type::Array(element_type.into());
             let mut array = Vec::new();

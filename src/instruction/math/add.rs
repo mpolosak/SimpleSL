@@ -103,9 +103,9 @@ impl Recreate for Add {
 impl GetReturnType for Add {
     fn get_return_type(&self) -> Type {
         match (self.lhs.get_return_type(), self.rhs.get_return_type()) {
-            (Type::Array(element_type1), Type::Array(element_type2)) => {
-                Type::Array(element_type1.concat(element_type2.as_ref().clone()).into())
-            }
+            (Type::Array(element_type1), Type::Array(element_type2)) => Type::Array(
+                (element_type1.as_ref().clone() | element_type2.as_ref().clone()).into(),
+            ),
             (var_type @ Type::Array(_), _) | (_, var_type @ Type::Array(_)) | (var_type, _) => {
                 var_type
             }
