@@ -1,3 +1,5 @@
+use rustyline::error::ReadlineError;
+
 use crate::{parse::Rule, variable::Type};
 use std::{fmt, rc::Rc};
 
@@ -18,10 +20,12 @@ pub enum Error {
     MatchNotCovered,
     IO(std::io::Error),
     Parsing(Box<pest::error::Error<Rule>>),
+    ReadlineError(ReadlineError),
     ArgumentDoesntContainType,
     CannotDo(&'static str, Type),
     CannotDo2(Type, &'static str, Type),
     WrongReturn(Type, Type),
+    TooManyArguments,
 }
 
 impl std::error::Error for Error {}
@@ -77,10 +81,12 @@ impl fmt::Display for Error {
             Self::WrongReturn(expected, returned) => {
                 write!(
                     f,
-                    "Type {returned} of variable that you want to return
-                    doesn't match declared return type {expected}"
+                    "Type {returned} of variable that you want\
+                    to return doesn't match declared return type {expected}"
                 )
             }
+            Self::ReadlineError(error) => write!(f, "{error}"),
+            Self::TooManyArguments => write!(f, "Too many arguments"),
         }
     }
 }
@@ -94,6 +100,12 @@ impl From<pest::error::Error<Rule>> for Error {
 impl From<std::io::Error> for Error {
     fn from(value: std::io::Error) -> Self {
         Self::IO(value)
+    }
+}
+
+impl From<ReadlineError> for Error {
+    fn from(value: ReadlineError) -> Self {
+        Error::ReadlineError(value)
     }
 }
 
