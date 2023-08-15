@@ -10,7 +10,7 @@ op_arg = _{ exp_in_brackets | function_call | ident | var }
 equal = { equal_arg ~ "==" ~ equal_arg }
 not_equal = { equal_arg ~ "!=" ~ equal_arg }
   equal_arg = _{ math_operations | not | bin_not | op_arg }
-exp_in_brackets = _{ "(" ~ ( math_operations | op_arg | equal | not_equal | and | or | bin_and | bin_or | xor | shift ) ~ ")" }
+exp_in_brackets = _{ "(" ~ expression ~ ")" }
 and = { op_arg ~ "&&" ~ op_arg }
 or = { op_arg ~ "||" ~ op_arg }
 bin_and = { op_arg ~ "&" ~ op_arg }
