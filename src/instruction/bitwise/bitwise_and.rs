@@ -9,12 +9,12 @@ use crate::{parse::Rule, variable::Type, Error, Result};
 use pest::iterators::Pair;
 
 #[derive(Debug)]
-pub struct BinAnd {
+pub struct BitwiseAnd {
     lhs: Instruction,
     rhs: Instruction,
 }
 
-impl BinOp for BinAnd {
+impl BinOp for BitwiseAnd {
     const SYMBOL: &'static str = "&";
 
     fn get_lhs(&self) -> &Instruction {
@@ -26,13 +26,13 @@ impl BinOp for BinAnd {
     }
 }
 
-impl CanBeUsed for BinAnd {
+impl CanBeUsed for BitwiseAnd {
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
         can_be_used(lhs, rhs)
     }
 }
 
-impl CreateInstruction for BinAnd {
+impl CreateInstruction for BitwiseAnd {
     fn create_instruction(
         pair: Pair<Rule>,
         interpreter: &Interpreter,
@@ -52,7 +52,7 @@ impl CreateInstruction for BinAnd {
         }
     }
 }
-impl BinAnd {
+impl BitwiseAnd {
     fn bin_and(lhs: Variable, rhs: Variable) -> Variable {
         match (lhs, rhs) {
             (Variable::Int(lhs), Variable::Int(rhs)) => (lhs & rhs).into(),
@@ -79,7 +79,7 @@ impl BinAnd {
     }
 }
 
-impl Exec for BinAnd {
+impl Exec for BitwiseAnd {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let lhs = self.lhs.exec(interpreter)?;
         let rhs = self.rhs.exec(interpreter)?;
@@ -87,7 +87,7 @@ impl Exec for BinAnd {
     }
 }
 
-impl Recreate for BinAnd {
+impl Recreate for BitwiseAnd {
     fn recreate(
         &self,
         local_variables: &mut LocalVariables,
@@ -99,7 +99,7 @@ impl Recreate for BinAnd {
     }
 }
 
-impl GetReturnType for BinAnd {
+impl GetReturnType for BitwiseAnd {
     fn get_return_type(&self) -> Type {
         if matches!(
             (self.lhs.get_return_type(), self.rhs.get_return_type()),
@@ -112,8 +112,8 @@ impl GetReturnType for BinAnd {
     }
 }
 
-impl From<BinAnd> for Instruction {
-    fn from(value: BinAnd) -> Self {
+impl From<BitwiseAnd> for Instruction {
+    fn from(value: BitwiseAnd) -> Self {
         Self::BinAnd(value.into())
     }
 }

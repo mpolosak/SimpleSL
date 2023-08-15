@@ -13,12 +13,12 @@ use crate::{
 use pest::iterators::Pair;
 
 #[derive(Debug)]
-pub struct BinOr {
+pub struct BitwiseOr {
     lhs: Instruction,
     rhs: Instruction,
 }
 
-impl BinOp for BinOr {
+impl BinOp for BitwiseOr {
     const SYMBOL: &'static str = "|";
 
     fn get_lhs(&self) -> &Instruction {
@@ -30,13 +30,13 @@ impl BinOp for BinOr {
     }
 }
 
-impl CanBeUsed for BinOr {
+impl CanBeUsed for BitwiseOr {
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
         can_be_used(lhs, rhs)
     }
 }
 
-impl CreateInstruction for BinOr {
+impl CreateInstruction for BitwiseOr {
     fn create_instruction(
         pair: Pair<Rule>,
         interpreter: &Interpreter,
@@ -56,7 +56,7 @@ impl CreateInstruction for BinOr {
         }
     }
 }
-impl BinOr {
+impl BitwiseOr {
     fn bin_or(lhs: Variable, rhs: Variable) -> Variable {
         match (lhs, rhs) {
             (Variable::Int(lhs), Variable::Int(rhs)) => (lhs | rhs).into(),
@@ -83,7 +83,7 @@ impl BinOr {
     }
 }
 
-impl Exec for BinOr {
+impl Exec for BitwiseOr {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let lhs = self.lhs.exec(interpreter)?;
         let rhs = self.rhs.exec(interpreter)?;
@@ -91,7 +91,7 @@ impl Exec for BinOr {
     }
 }
 
-impl Recreate for BinOr {
+impl Recreate for BitwiseOr {
     fn recreate(
         &self,
         local_variables: &mut LocalVariables,
@@ -103,7 +103,7 @@ impl Recreate for BinOr {
     }
 }
 
-impl GetReturnType for BinOr {
+impl GetReturnType for BitwiseOr {
     fn get_return_type(&self) -> Type {
         if matches!(
             (self.lhs.get_return_type(), self.rhs.get_return_type()),
@@ -116,8 +116,8 @@ impl GetReturnType for BinOr {
     }
 }
 
-impl From<BinOr> for Instruction {
-    fn from(value: BinOr) -> Self {
+impl From<BitwiseOr> for Instruction {
+    fn from(value: BitwiseOr) -> Self {
         Self::BinOr(value.into())
     }
 }

@@ -2,7 +2,7 @@ mod array;
 mod array_ops;
 mod array_repeat;
 mod at;
-mod bin;
+mod bitwise;
 mod block;
 mod comp;
 mod control_flow;
@@ -20,7 +20,7 @@ use self::{
     array_ops::{Filter, Map, TypeFilter},
     array_repeat::ArrayRepeat,
     at::At,
-    bin::{BinAnd, BinNot, BinOr, LShift, RShift, Xor},
+    bitwise::{BitwiseAnd, BitwiseNot, BitwiseOr, LShift, RShift, Xor},
     block::Block,
     comp::{Equal, Greater, GreaterOrEqual, Lower, LowerOrEqual},
     control_flow::{IfElse, Match, SetIfElse},
@@ -51,9 +51,9 @@ pub enum Instruction {
     Array(Array),
     ArrayRepeat(Box<ArrayRepeat>),
     At(Box<At>),
-    BinAnd(Box<BinAnd>),
-    BinNot(Box<BinNot>),
-    BinOr(Box<BinOr>),
+    BinAnd(Box<BitwiseAnd>),
+    BinNot(Box<BitwiseNot>),
+    BinOr(Box<BitwiseOr>),
     Block(Block),
     DestructTuple(Box<DestructTuple>),
     Divide(Box<Divide>),
@@ -102,7 +102,7 @@ impl Instruction {
                 DestructTuple::create_instruction(pair, interpreter, local_variables)
             }
             Rule::not => Not::create_instruction(pair, interpreter, local_variables),
-            Rule::bin_not => BinNot::create_instruction(pair, interpreter, local_variables),
+            Rule::bin_not => BitwiseNot::create_instruction(pair, interpreter, local_variables),
             Rule::equal => Equal::create_instruction(pair, interpreter, local_variables),
             Rule::not_equal => Ok(
                 match Equal::create_instruction(pair, interpreter, local_variables)? {
@@ -128,8 +128,8 @@ impl Instruction {
             Rule::add => Add::create_instruction(pair, interpreter, local_variables),
             Rule::subtract => Subtract::create_instruction(pair, interpreter, local_variables),
             Rule::modulo => Modulo::create_instruction(pair, interpreter, local_variables),
-            Rule::bin_and => BinAnd::create_instruction(pair, interpreter, local_variables),
-            Rule::bin_or => BinOr::create_instruction(pair, interpreter, local_variables),
+            Rule::bin_and => BitwiseAnd::create_instruction(pair, interpreter, local_variables),
+            Rule::bin_or => BitwiseOr::create_instruction(pair, interpreter, local_variables),
             Rule::xor => Xor::create_instruction(pair, interpreter, local_variables),
             Rule::rshift => RShift::create_instruction(pair, interpreter, local_variables),
             Rule::lshift => LShift::create_instruction(pair, interpreter, local_variables),

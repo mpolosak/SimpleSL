@@ -9,11 +9,11 @@ use crate::{
 use pest::iterators::Pair;
 
 #[derive(Debug)]
-pub struct BinNot {
+pub struct BitwiseNot {
     pub instruction: Instruction,
 }
 
-impl CreateInstruction for BinNot {
+impl CreateInstruction for BitwiseNot {
     fn create_instruction(
         pair: Pair<crate::parse::Rule>,
         interpreter: &Interpreter,
@@ -30,7 +30,7 @@ impl CreateInstruction for BinNot {
     }
 }
 
-impl BinNot {
+impl BitwiseNot {
     fn bin_not(operand: Variable) -> Variable {
         match operand {
             Variable::Int(operand) => (!operand).into(),
@@ -48,14 +48,14 @@ impl BinNot {
     }
 }
 
-impl Exec for BinNot {
+impl Exec for BitwiseNot {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let result = self.instruction.exec(interpreter)?;
         Ok(Self::bin_not(result))
     }
 }
 
-impl Recreate for BinNot {
+impl Recreate for BitwiseNot {
     fn recreate(
         &self,
         local_variables: &mut LocalVariables,
@@ -66,14 +66,14 @@ impl Recreate for BinNot {
     }
 }
 
-impl GetReturnType for BinNot {
+impl GetReturnType for BitwiseNot {
     fn get_return_type(&self) -> Type {
         self.instruction.get_return_type()
     }
 }
 
-impl From<BinNot> for Instruction {
-    fn from(value: BinNot) -> Self {
+impl From<BitwiseNot> for Instruction {
+    fn from(value: BitwiseNot) -> Self {
         Self::BinNot(value.into())
     }
 }
