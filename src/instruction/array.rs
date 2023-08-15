@@ -36,12 +36,12 @@ impl CreateInstruction for Array {
 }
 impl Array {
     fn create_from_instructions(instructions: Box<[Instruction]>) -> Instruction {
-        let mut iter = instructions.iter();
-        if let Some(first) = iter.next() {
-            let mut element_type = first.get_return_type();
-            for instruction in iter {
-                element_type |= instruction.get_return_type();
-            }
+        let mut iter = instructions.iter().peekable();
+        if iter.peek().is_some() {
+            let element_type = iter
+                .map(Instruction::get_return_type)
+                .reduce(Type::concat)
+                .unwrap();
             let var_type = Type::Array(element_type.into());
             let mut array = Vec::new();
             for instruction in instructions.iter() {

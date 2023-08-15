@@ -178,12 +178,9 @@ impl From<Rc<Function>> for Variable {
 
 impl From<Rc<[Variable]>> for Variable {
     fn from(value: Rc<[Variable]>) -> Self {
-        let mut iter = value.iter();
-        let var_type = if let Some(first) = iter.next() {
-            let mut element_type = first.get_type();
-            for instruction in iter {
-                element_type |= instruction.get_type();
-            }
+        let mut iter = value.iter().peekable();
+        let var_type = if iter.peek().is_some() {
+            let element_type = iter.map(Variable::get_type).reduce(Type::concat).unwrap();
             Type::Array(element_type.into())
         } else {
             Type::EmptyArray
