@@ -19,8 +19,6 @@ sort = (array: [int]) -> [int] {
         }),0);
         array1 = array?(item:int)->int{item<first;};
         array2 = array?(item:int)->int{first<item;};
-        array = sort(array1)+[first; count];
-        array = array+sort(array2);
-        array;
+        sort(array1)+[first; count]+sort(array2)
     };
 };

@@ -19,11 +19,11 @@ impl CreateInstruction for Tuple {
     fn create_instruction(
         pair: Pair<Rule>,
         interpreter: &Interpreter,
-        local_variables: &mut LocalVariables,
+        local_variables: &LocalVariables,
     ) -> Result<Instruction> {
         let elements = pair
             .into_inner()
-            .map(|pair| Instruction::new(pair, interpreter, local_variables))
+            .map(|pair| Instruction::new_expression(pair, interpreter, local_variables))
             .collect::<Result<Box<[Instruction]>>>()?;
         Ok(Self::create_from_elements(elements))
     }

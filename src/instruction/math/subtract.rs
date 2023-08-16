@@ -1,12 +1,10 @@
 use crate::instruction::traits::{BinOp, CanBeUsed, CreateFromInstructions};
-use crate::instruction::{local_variable::LocalVariables, CreateInstruction, Exec, Instruction};
+use crate::instruction::{Exec, Instruction};
 use crate::{
     interpreter::Interpreter,
-    parse::Rule,
     variable::{GetReturnType, Type, Variable},
-    Error, Result,
+    Result,
 };
-use pest::iterators::Pair;
 
 #[derive(Debug)]
 pub struct Subtract {
@@ -45,31 +43,6 @@ impl CanBeUsed for Subtract {
                 element_type.as_ref() == var_type
             }
             _ => false,
-        }
-    }
-}
-
-impl CreateInstruction for Subtract {
-    fn create_instruction(
-        pair: Pair<Rule>,
-        interpreter: &Interpreter,
-        local_variables: &mut LocalVariables,
-    ) -> Result<Instruction> {
-        let mut inner = pair.into_inner();
-        let pair = inner.next().unwrap();
-        let minuend = Instruction::new(pair, interpreter, local_variables)?;
-        let pair = inner.next().unwrap();
-        let subtrahend = Instruction::new(pair, interpreter, local_variables)?;
-        let minuend_type = minuend.get_return_type();
-        let subtrahend_type = subtrahend.get_return_type();
-        if Self::can_be_used(&minuend_type, &subtrahend_type) {
-            Self::create_from_instructions(minuend, subtrahend)
-        } else {
-            Err(Error::CannotDo2(
-                minuend_type,
-                Self::SYMBOL,
-                subtrahend_type,
-            ))
         }
     }
 }

@@ -1,12 +1,10 @@
 use crate::instruction::traits::{BinOp, CanBeUsed, CreateFromInstructions};
-use crate::instruction::{local_variable::LocalVariables, CreateInstruction, Exec, Instruction};
+use crate::instruction::{Exec, Instruction};
 use crate::{
     interpreter::Interpreter,
-    parse::Rule,
     variable::{GetReturnType, Type, Variable},
     Error, Result,
 };
-use pest::iterators::Pair;
 
 #[derive(Debug)]
 pub struct Divide {
@@ -42,27 +40,6 @@ impl CanBeUsed for Divide {
                 element_type.as_ref() == var_type
             }
             _ => false,
-        }
-    }
-}
-
-impl CreateInstruction for Divide {
-    fn create_instruction(
-        pair: Pair<Rule>,
-        interpreter: &Interpreter,
-        local_variables: &mut LocalVariables,
-    ) -> Result<Instruction> {
-        let mut inner = pair.into_inner();
-        let pair = inner.next().unwrap();
-        let dividend = Instruction::new(pair, interpreter, local_variables)?;
-        let pair = inner.next().unwrap();
-        let divisor = Instruction::new(pair, interpreter, local_variables)?;
-        let dividend_type = dividend.get_return_type();
-        let divisor_type = divisor.get_return_type();
-        if Self::can_be_used(&dividend_type, &divisor_type) {
-            Self::create_from_instructions(dividend, divisor)
-        } else {
-            Err(Error::CannotDo2(dividend_type, Self::SYMBOL, divisor_type))
         }
     }
 }

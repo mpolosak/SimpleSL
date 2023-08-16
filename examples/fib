@@ -22,9 +22,7 @@ fib = (n:int) -> int {
 custom_array_fib = (elements: [int], n: int) -> [int] {
     len = len(elements);
     if len < n {
-        element_last = elements[len-1];
-        element_second_last = elements[len-2];
-        next_fib = element_last + element_second_last;
+        next_fib = elements[len-1] + elements[len-2];
         custom_array_fib(elements+[next_fib], n);
     } else {
         elements;

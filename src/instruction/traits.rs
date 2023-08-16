@@ -13,6 +13,14 @@ pub trait CreateInstruction {
     fn create_instruction(
         pair: Pair<Rule>,
         interpreter: &Interpreter,
+        local_variables: &LocalVariables,
+    ) -> Result<Instruction>;
+}
+
+pub trait MutCreateInstruction {
+    fn create_instruction(
+        pair: Pair<Rule>,
+        interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
     ) -> Result<Instruction>;
 }

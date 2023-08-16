@@ -19,7 +19,7 @@ impl CreateInstruction for Block {
     fn create_instruction(
         pair: Pair<Rule>,
         interpreter: &Interpreter,
-        local_variables: &mut LocalVariables,
+        local_variables: &LocalVariables,
     ) -> Result<Instruction> {
         let mut local_variables = local_variables.create_layer();
         let instructions = pair

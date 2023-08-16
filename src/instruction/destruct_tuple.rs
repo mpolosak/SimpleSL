@@ -2,8 +2,9 @@ use std::{iter::zip, rc::Rc};
 
 use super::{
     local_variable::{LocalVariable, LocalVariables},
+    traits::MutCreateInstruction,
     tuple::Tuple,
-    CreateInstruction, Exec, Instruction, Recreate,
+    Exec, Instruction, Recreate,
 };
 use crate::{
     interpreter::Interpreter,
@@ -19,7 +20,7 @@ pub struct DestructTuple {
     instruction: Instruction,
 }
 
-impl CreateInstruction for DestructTuple {
+impl MutCreateInstruction for DestructTuple {
     fn create_instruction(
         pair: Pair<Rule>,
         interpreter: &Interpreter,

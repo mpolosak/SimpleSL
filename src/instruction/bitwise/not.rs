@@ -1,26 +1,18 @@
-use crate::instruction::{
-    local_variable::LocalVariables, traits::CreateInstruction, Exec, Instruction, Recreate,
-};
+use crate::instruction::{local_variable::LocalVariables, Exec, Instruction, Recreate};
+use crate::Error;
 use crate::{
     interpreter::Interpreter,
     variable::{GetReturnType, Type, Variable},
-    Error, Result,
+    Result,
 };
-use pest::iterators::Pair;
 
 #[derive(Debug)]
 pub struct BitwiseNot {
     pub instruction: Instruction,
 }
 
-impl CreateInstruction for BitwiseNot {
-    fn create_instruction(
-        pair: Pair<crate::parse::Rule>,
-        interpreter: &Interpreter,
-        local_variables: &mut LocalVariables,
-    ) -> Result<Instruction> {
-        let pair = pair.into_inner().next().unwrap();
-        let instruction = Instruction::new(pair, interpreter, local_variables)?;
+impl BitwiseNot {
+    pub fn create_instruction(instruction: Instruction) -> Result<Instruction> {
         let return_type = instruction.get_return_type();
         if return_type == Type::Int || return_type == Type::Array(Type::Int.into()) {
             Ok(Self::create_from_instruction(instruction))
@@ -28,9 +20,6 @@ impl CreateInstruction for BitwiseNot {
             Err(Error::CannotDo("~", instruction.get_return_type()))
         }
     }
-}
-
-impl BitwiseNot {
     fn bin_not(operand: Variable) -> Variable {
         match operand {
             Variable::Int(operand) => (!operand).into(),

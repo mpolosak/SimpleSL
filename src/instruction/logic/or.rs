@@ -1,12 +1,10 @@
 use crate::instruction::traits::{BinOp, CanBeUsed, CreateFromInstructions};
-use crate::instruction::{local_variable::LocalVariables, CreateInstruction, Exec, Instruction};
+use crate::instruction::{Exec, Instruction};
 use crate::{
     interpreter::Interpreter,
-    parse::Rule,
     variable::{GetReturnType, Type, Variable},
-    Error, Result,
+    Result,
 };
-use pest::iterators::Pair;
 
 #[derive(Debug)]
 pub struct Or {
@@ -40,27 +38,6 @@ impl CanBeUsed for Or {
                 var_type.as_ref() == &Type::Int
             }
             _ => false,
-        }
-    }
-}
-
-impl CreateInstruction for Or {
-    fn create_instruction(
-        pair: Pair<Rule>,
-        variables: &Interpreter,
-        local_variables: &mut LocalVariables,
-    ) -> Result<Instruction> {
-        let mut inner = pair.into_inner();
-        let pair = inner.next().unwrap();
-        let lhs = Instruction::new(pair, variables, local_variables)?;
-        let pair = inner.next().unwrap();
-        let rhs = Instruction::new(pair, variables, local_variables)?;
-        let lhs_type = lhs.get_return_type();
-        let rhs_type = rhs.get_return_type();
-        if Self::can_be_used(&lhs_type, &rhs_type) {
-            Self::create_from_instructions(lhs, rhs)
-        } else {
-            Err(Error::CannotDo2(lhs_type, Self::SYMBOL, rhs_type))
         }
     }
 }

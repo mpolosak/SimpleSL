@@ -1,14 +1,13 @@
 use super::traits::{BinOp, CanBeUsed};
 use crate::variable::{GetReturnType, Type};
-mod bitwise_and;
-mod bitwise_not;
-mod bitwise_or;
+mod and;
 mod lshift;
+mod not;
+mod or;
 mod rshift;
 mod xor;
 pub use {
-    bitwise_and::BitwiseAnd, bitwise_not::BitwiseNot, bitwise_or::BitwiseOr, lshift::LShift,
-    rshift::RShift, xor::Xor,
+    and::BitwiseAnd, lshift::LShift, not::BitwiseNot, or::BitwiseOr, rshift::RShift, xor::Xor,
 };
 
 trait BitwiseBinOp: BinOp {}

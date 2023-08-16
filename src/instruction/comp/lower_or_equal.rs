@@ -1,8 +1,7 @@
 use crate::instruction::traits::{BinOp, CanBeUsed, CreateFromInstructions};
-use crate::instruction::{local_variable::LocalVariables, CreateInstruction, Exec, Instruction};
+use crate::instruction::{Exec, Instruction};
 use crate::variable::{GetReturnType, Type};
-use crate::{interpreter::Interpreter, parse::Rule, variable::Variable, Error, Result};
-use pest::iterators::Pair;
+use crate::{interpreter::Interpreter, variable::Variable, Result};
 
 use super::can_be_used;
 
@@ -31,27 +30,6 @@ impl BinOp for LowerOrEqual {
 impl CanBeUsed for LowerOrEqual {
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
         can_be_used(lhs, rhs)
-    }
-}
-
-impl CreateInstruction for LowerOrEqual {
-    fn create_instruction(
-        pair: Pair<Rule>,
-        interpreter: &Interpreter,
-        local_variables: &mut LocalVariables,
-    ) -> Result<Instruction> {
-        let mut inner = pair.into_inner();
-        let pair = inner.next().unwrap();
-        let lhs = Instruction::new(pair, interpreter, local_variables)?;
-        let pair = inner.next().unwrap();
-        let rhs = Instruction::new(pair, interpreter, local_variables)?;
-        let lhs_type = lhs.get_return_type();
-        let rhs_type = rhs.get_return_type();
-        if Self::can_be_used(&lhs_type, &rhs_type) {
-            Self::create_from_instructions(lhs, rhs)
-        } else {
-            Err(Error::CannotDo2(lhs_type, Self::SYMBOL, rhs_type))
-        }
     }
 }
 

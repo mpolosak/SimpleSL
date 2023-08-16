@@ -1,12 +1,10 @@
 use crate::instruction::traits::{BinOp, CanBeUsed, CreateFromInstructions};
-use crate::instruction::{local_variable::LocalVariables, CreateInstruction, Exec, Instruction};
+use crate::instruction::{Exec, Instruction};
 use crate::{
     interpreter::Interpreter,
-    parse::Rule,
     variable::{GetReturnType, Type, Variable},
     Error, Result,
 };
-use pest::iterators::Pair;
 
 #[derive(Debug)]
 pub struct Pow {
@@ -42,27 +40,6 @@ impl CanBeUsed for Pow {
                 element_type.as_ref() == var_type
             }
             _ => false,
-        }
-    }
-}
-
-impl CreateInstruction for Pow {
-    fn create_instruction(
-        pair: Pair<Rule>,
-        interpreter: &Interpreter,
-        local_variables: &mut LocalVariables,
-    ) -> Result<Instruction> {
-        let mut inner = pair.into_inner();
-        let pair = inner.next().unwrap();
-        let base = Instruction::new(pair, interpreter, local_variables)?;
-        let pair = inner.next().unwrap();
-        let exp = Instruction::new(pair, interpreter, local_variables)?;
-        let base_type = base.get_return_type();
-        let exp_type = exp.get_return_type();
-        if Self::can_be_used(&base_type, &exp_type) {
-            Self::create_from_instructions(base, exp)
-        } else {
-            Err(Error::CannotDo2(base_type, Self::SYMBOL, exp_type))
         }
     }
 }

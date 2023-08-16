@@ -2,7 +2,8 @@ use std::rc::Rc;
 
 use crate::instruction::{
     local_variable::{LocalVariable, LocalVariables},
-    CreateInstruction, Exec, Instruction, Recreate,
+    traits::MutCreateInstruction,
+    Exec, Instruction, Recreate,
 };
 use crate::{
     interpreter::Interpreter,
@@ -21,7 +22,7 @@ pub struct SetIfElse {
     else_instruction: Instruction,
 }
 
-impl CreateInstruction for SetIfElse {
+impl MutCreateInstruction for SetIfElse {
     fn create_instruction(
         pair: Pair<Rule>,
         interpreter: &Interpreter,

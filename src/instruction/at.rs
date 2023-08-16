@@ -1,6 +1,5 @@
 use super::{
-    local_variable::LocalVariables, traits::CreateFromInstructions, CreateInstruction, Exec,
-    Instruction, Recreate,
+    local_variable::LocalVariables, traits::CreateFromInstructions, Exec, Instruction, Recreate,
 };
 use crate::{
     interpreter::Interpreter,
@@ -16,17 +15,15 @@ pub struct At {
     index: Instruction,
 }
 
-impl CreateInstruction for At {
-    fn create_instruction(
-        pair: Pair<Rule>,
+impl At {
+    pub fn create_instruction(
+        instruction: Instruction,
+        index: Pair<Rule>,
         interpreter: &Interpreter,
-        local_variables: &mut LocalVariables,
+        local_variables: &LocalVariables,
     ) -> Result<Instruction> {
-        let mut inner = pair.into_inner();
-        let pair = inner.next().unwrap();
-        let instruction = Instruction::new(pair, interpreter, local_variables)?;
-        let pair = inner.next().unwrap();
-        let index = Instruction::new(pair, interpreter, local_variables)?;
+        let pair = index.into_inner().next().unwrap();
+        let index = Instruction::new_expression(pair, interpreter, local_variables)?;
         let required_instruction_type = [Type::String, Type::Array(Type::Any.into())].into();
         let instruction_return_type = instruction.get_return_type();
         match (

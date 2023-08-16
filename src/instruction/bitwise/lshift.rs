@@ -1,13 +1,10 @@
-use crate::instruction::traits::{BinOp, CanBeUsed, CreateFromInstructions};
-use crate::instruction::{local_variable::LocalVariables, CreateInstruction, Exec, Instruction};
-use crate::variable::GetReturnType;
+use crate::instruction::traits::{BinOp, CreateFromInstructions};
+use crate::instruction::{Exec, Instruction};
 use crate::{
     interpreter::Interpreter,
-    parse::Rule,
     variable::{Type, Variable},
     Error, Result,
 };
-use pest::iterators::Pair;
 
 use super::BitwiseBinOp;
 
@@ -34,27 +31,6 @@ impl BinOp for LShift {
 }
 
 impl BitwiseBinOp for LShift {}
-
-impl CreateInstruction for LShift {
-    fn create_instruction(
-        pair: Pair<Rule>,
-        interpreter: &Interpreter,
-        local_variables: &mut LocalVariables,
-    ) -> Result<Instruction> {
-        let mut inner = pair.into_inner();
-        let pair = inner.next().unwrap();
-        let lhs = Instruction::new(pair, interpreter, local_variables)?;
-        let pair = inner.next().unwrap();
-        let rhs = Instruction::new(pair, interpreter, local_variables)?;
-        let lhs_type = lhs.get_return_type();
-        let rhs_type = rhs.get_return_type();
-        if Self::can_be_used(&lhs_type, &rhs_type) {
-            Self::create_from_instructions(lhs, rhs)
-        } else {
-            Err(Error::CannotDo2(lhs_type, Self::SYMBOL, rhs_type))
-        }
-    }
-}
 
 impl CreateFromInstructions for LShift {
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {

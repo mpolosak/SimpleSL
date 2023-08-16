@@ -4,7 +4,8 @@ use crate::{
         local_variable::{LocalVariable, LocalVariableMap, LocalVariables},
         recreate_instructions,
         set::Set,
-        CreateInstruction, Exec, Instruction, Recreate,
+        traits::MutCreateInstruction,
+        Exec, Instruction, Recreate,
     },
     interpreter::Interpreter,
     parse::Rule,
@@ -22,7 +23,7 @@ pub struct FunctionDeclaration {
     return_type: Type,
 }
 
-impl CreateInstruction for FunctionDeclaration {
+impl MutCreateInstruction for FunctionDeclaration {
     fn create_instruction(
         pair: Pair<Rule>,
         interpreter: &Interpreter,

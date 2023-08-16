@@ -1,7 +1,6 @@
 use crate::instruction::traits::{BinOp, CanBeUsed, CreateFromInstructions};
-use crate::instruction::{local_variable::LocalVariables, CreateInstruction, Exec, Instruction};
-use crate::{interpreter::Interpreter, parse::Rule, variable::Variable, Result};
-use pest::iterators::Pair;
+use crate::instruction::{Exec, Instruction};
+use crate::{interpreter::Interpreter, variable::Variable, Result};
 
 #[derive(Debug)]
 pub struct Equal {
@@ -39,21 +38,6 @@ impl CreateFromInstructions for Equal {
             }
             (lhs, rhs) => Ok(Self::construct(lhs, rhs).into()),
         }
-    }
-}
-
-impl CreateInstruction for Equal {
-    fn create_instruction(
-        pair: Pair<Rule>,
-        interpreter: &Interpreter,
-        local_variables: &mut LocalVariables,
-    ) -> Result<Instruction> {
-        let mut inner = pair.into_inner();
-        let pair = inner.next().unwrap();
-        let lhs = Instruction::new(pair, interpreter, local_variables)?;
-        let pair = inner.next().unwrap();
-        let rhs = Instruction::new(pair, interpreter, local_variables)?;
-        Self::create_from_instructions(lhs, rhs)
     }
 }
 

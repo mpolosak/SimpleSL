@@ -1,15 +1,12 @@
 use crate::{
     instruction::{
-        local_variable::LocalVariables,
         traits::{BinOp, CanBeUsed, CreateFromInstructions},
-        CreateInstruction, Exec, Instruction,
+        Exec, Instruction,
     },
     interpreter::Interpreter,
-    parse::Rule,
     variable::{GetReturnType, Type, Variable},
-    Error, Result,
+    Result,
 };
-use pest::iterators::Pair;
 
 #[derive(Debug)]
 pub struct Filter {
@@ -48,25 +45,6 @@ impl CanBeUsed for Filter {
                 function_type.params.len() == 1 && function_type.return_type == Type::Int
             }
             _ => false,
-        }
-    }
-}
-
-impl CreateInstruction for Filter {
-    fn create_instruction(
-        pair: Pair<Rule>,
-        interpreter: &Interpreter,
-        local_variables: &mut LocalVariables,
-    ) -> Result<Instruction> {
-        let mut inner = pair.into_inner();
-        let array = Instruction::new(inner.next().unwrap(), interpreter, local_variables)?;
-        let function = Instruction::new(inner.next().unwrap(), interpreter, local_variables)?;
-        let array_type = array.get_return_type();
-        let function_type = function.get_return_type();
-        if Self::can_be_used(&array_type, &function_type) {
-            Self::create_from_instructions(array, function)
-        } else {
-            Err(Error::CannotDo2(array_type, Self::SYMBOL, function_type))
         }
     }
 }

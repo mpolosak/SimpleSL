@@ -1,77 +1,79 @@
 ident = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC|"_")* }
-function_call = ${ ident ~ args }
-	args = !{"("~expression_list~")"}
 var = _{ float | int | array | array_repeat | string | function | void | tuple }
   function = {params ~ return_type_decl? ~"{"~line*~"}"}
   param = {ident ~ ":" ~ type}
   params_list = _{ (param ~ ("," ~ param)*)?}
     params = {"(" ~ params_list? ~ ")"}
   return_type_decl = {("->" ~ type | return_type)}
-  tuple =  {"(" ~ (expression ~ ("," ~ expression)+) ~ ")"}
+  tuple =  {"(" ~ (expr ~ ("," ~ expr)+) ~ ")"}
   int = @{ ("+" | "-")? ~ ASCII_DIGIT+ }
   float = @{ int ~ "." ~ ASCII_DIGIT* }
   void = {"()"}
-not = { "!" ~ ( op_arg )}
-bin_not = { "~" ~ op_arg }
-op_arg = _{ exp_in_brackets | function_call | ident | var }
-equal = { equal_arg ~ "==" ~ equal_arg }
-not_equal = { equal_arg ~ "!=" ~ equal_arg }
-  equal_arg = _{ math_operations | not | bin_not | op_arg }
-exp_in_brackets = _{ "(" ~ expression ~ ")" }
-and = { op_arg ~ "&&" ~ op_arg }
-or = { op_arg ~ "||" ~ op_arg }
-bin_and = { op_arg ~ "&" ~ op_arg }
-bin_or = { op_arg ~ "|" ~ op_arg }
-xor = { op_arg ~ "^" ~ op_arg }
-lshift = { op_arg ~ "<<" ~ op_arg }
-rshift = { op_arg ~ ">>" ~ op_arg }
-shift = _{ lshift | rshift }
-greater = { op_arg ~ ">" ~ op_arg }
-greater_equal = { op_arg ~ ">=" ~ op_arg }
-lower = { op_arg ~ "<" ~ op_arg }
-lower_equal = { op_arg ~ "<=" ~ op_arg }
-pow = { op_arg ~ "**" ~ op_arg }
-multiply = { op_arg ~ "*" ~ op_arg }
-divide = { op_arg ~ "/" ~ op_arg }
-add = { ( op_arg | string ) ~ "+" ~ ( op_arg | string ) }
-subtract = { op_arg ~ "-" ~ op_arg }
-modulo = { op_arg ~ "%" ~ op_arg }
-comparasion = _{ equal | not_equal | greater | greater_equal | lower | lower_equal }
-math_operations = _{ pow | modulo | multiply | divide | add | subtract }
-block = { "{" ~ line* ~ "}" }
-if_else = { "if" ~ expression ~ expression ~ "else" ~ expression }
-if_stm = { "if" ~ expression ~ expression }
-set_if_else = { "if" ~ ident ~ ":" ~ type ~ "=" ~ expression ~ expression ~ "else" ~ expression }
-set_if = { "if" ~ ident ~ ":" ~ type ~ "=" ~ expression ~ expression }
-match = { "match" ~ expression ~  "{" ~ match_arm* ~ "}" }
-  match_arm = _{ match_type | match_value | match_other }
-  match_type = { ident ~ ":" ~ type ~ "=>" ~ expression ~ "," }
-  match_value = { values ~ "=>" ~ expression ~ "," }
-  match_other = { "=>" ~ expression ~ "," }
-  values = { expression_list }
-at = { ( function_call | ident | array | array_repeat | string ) ~ "[" ~ expression ~ "]"  }
-import = { "import" ~ string }
-map = { op_arg ~ "@" ~ expression }
-filter = { op_arg ~ "?" ~ expression }
-type_filter = { op_arg ~ "?" ~ type }
-expression = _{ type_filter | filter | map | import | match | set_if_else | set_if | at | if_else
-  | if_stm | comparasion | math_operations | not | bin_not | and | or | bin_and | bin_or | xor
-  | shift | function_call | ident | exp_in_brackets | var | block  }
-expression_list = _{ (expression ~ ("," ~ expression)*)?}
-array = {"[" ~ expression_list ~ "]"}
-array_repeat = {"[" ~ expression ~ ";" ~ expression ~ "]"}
-string = ${ "\"" ~ inner ~ "\"" }
-  inner = @{ char* }
-  char = {
-      !("\"" | "\\") ~ ANY
-      | "\\" ~ ("\"" | "\\" | "b" | "f" | "n" | "r" | "t")
-      | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
-  }
-line = { COMMENT* ~ (( function_declaration | set | destruct_tuple | expression ) ~  line_end?) }
-	line_end = { ";" }
+  array = {"[" ~ expression_list ~ "]"}
+  array_repeat = {"[" ~ expr ~ ";" ~ expr ~ "]"}
+  string = ${ "\"" ~ inner ~ "\"" }
+    inner = @{ char* }
+    char = {
+        !("\"" | "\\") ~ ANY
+        | "\\" ~ ("\"" | "\\" | "b" | "f" | "n" | "r" | "t")
+        | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
+    }
+primary = _{ ident | var | expr_in_brackets }
+  expr_in_brackets = _{ "(" ~ expr ~ ")" }
+atom = _{ prefix_op? ~ primary ~ postfix_op? }
+expr = { (atom ~ (bin_op ~ atom)*) }
+bin_op = _{ comp | and | or | bitwise_and | bitwise_or | xor | lshift | rshift | pow | multiply | divide | add | subtract | modulo
+            | map | filter }
+  comp = _{ equal | not_equal | greater | greater_equal | lower | lower_equal }
+    equal = { "==" }
+    not_equal = { "!=" }
+  and = { "&&" }
+  or = { "||" }
+  bitwise_and = { "&" }
+  bitwise_or = { "|" }
+  xor = { "^" }
+  lshift = { "<<" }
+  rshift = { ">>" }
+  greater = { ">" }
+  greater_equal = { ">=" }
+  lower = { "<" }
+  lower_equal = { "<=" }
+  pow = { "**" }
+  multiply = { "*" }
+  divide = { "/" }
+  add = { "+" }
+  subtract = { "-" }
+  modulo = { "%" }
+  map = { "@" }
+  filter = { "?" }
+prefix_op = _{not | bitwise_not}
+  not = { "!" }
+  bitwise_not = { "~" }
+postfix_op = _{ type_filter | at | function_call }
+  type_filter = { "?" ~ type }
+  at = { "[" ~ expr ~ "]"  }
+  function_call = {"("~expression_list~")"}
+stm = _{ block | if_else | if_stm | set_if_else | if_stm
+        | set_if_else | set_if | match | import | expr }
+  block = { "{" ~ line* ~ "}" }
+  body = _{ block | expr }
+  if_else = { "if" ~ expr ~ body ~ "else" ~ stm }
+  if_stm = { "if" ~ expr ~ body }
+  set_if_else = { "if" ~ ident ~ ":" ~ type ~ "=" ~ expr ~ body ~ "else" ~ stm }
+  set_if = { "if" ~ ident ~ ":" ~ type ~ "=" ~ expr ~ body }
+  match = { "match" ~ expr ~  "{" ~ match_arm* ~ "}" }
+    match_arm = _{ match_type | match_value | match_other }
+    match_type = { ident ~ ":" ~ type ~ "=>" ~ body ~ "," }
+    match_value = { values ~ "=>" ~ body ~ "," }
+    match_other = { "=>" ~ body ~ "," }
+    values = _{ (expr ~ ("," ~ expr)*)}
+  import = { "import" ~ string }
+expression_list = _{ (expr ~ ("," ~ expr)*)?}
+line = _{ COMMENT* ~ (( function_declaration | set | destruct_tuple | stm ) ~  line_end?) }
+	line_end = _{ ";" }
   function_declaration = { ident ~ "=" ~ function }
-  set = { ident ~ "=" ~ expression }
-  destruct_tuple = { destruct_idents ~ "=" ~ expression }
+  set = { ident ~ "=" ~ stm}
+  destruct_tuple = { destruct_idents ~ "=" ~ stm }
     destruct_idents =  {"(" ~ (ident ~ ("," ~ ident)*)? ~ ")"}
 type = _{ multi | standard_types | any }
   int_type = {"int"}

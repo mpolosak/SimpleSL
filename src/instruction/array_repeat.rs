@@ -17,11 +17,12 @@ impl CreateInstruction for ArrayRepeat {
     fn create_instruction(
         pair: Pair<Rule>,
         interpreter: &Interpreter,
-        local_variables: &mut LocalVariables,
+        local_variables: &LocalVariables,
     ) -> Result<Instruction> {
         let mut inner = pair.into_inner();
-        let value = Instruction::new(inner.next().unwrap(), interpreter, local_variables)?;
-        let len = Instruction::new(inner.next().unwrap(), interpreter, local_variables)?;
+        let value =
+            Instruction::new_expression(inner.next().unwrap(), interpreter, local_variables)?;
+        let len = Instruction::new_expression(inner.next().unwrap(), interpreter, local_variables)?;
         if len.get_return_type() == Type::Int {
             Self::create_from_instructions(value, len)
         } else {

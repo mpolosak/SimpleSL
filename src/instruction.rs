@@ -31,17 +31,18 @@ use self::{
     logic::{And, Not, Or},
     math::{Add, Divide, Modulo, Multiply, Pow, Subtract},
     set::Set,
+    traits::CreateBinOp,
     tuple::Tuple,
 };
 use crate::{
     interpreter::Interpreter,
-    parse::Rule,
+    parse::{Rule, PRATT_PARSER},
     variable::{GetReturnType, GetType, Type, Variable},
     Result,
 };
 use pest::iterators::Pair;
 use std::rc::Rc;
-pub use traits::{CreateInstruction, Exec, Recreate};
+pub use traits::{CreateInstruction, Exec, MutCreateInstruction, Recreate};
 
 #[derive(Debug)]
 pub enum Instruction {
@@ -93,92 +94,98 @@ impl Instruction {
         local_variables: &mut LocalVariables,
     ) -> Result<Self> {
         match pair.as_rule() {
-            Rule::line => {
-                let pair = pair.into_inner().next().unwrap();
-                Instruction::new(pair, interpreter, local_variables)
-            }
             Rule::set => Ok(Set::new(pair, interpreter, local_variables)?.into()),
             Rule::destruct_tuple => {
                 DestructTuple::create_instruction(pair, interpreter, local_variables)
             }
-            Rule::not => Not::create_instruction(pair, interpreter, local_variables),
-            Rule::bin_not => BitwiseNot::create_instruction(pair, interpreter, local_variables),
-            Rule::equal => Equal::create_instruction(pair, interpreter, local_variables),
-            Rule::not_equal => Ok(
-                match Equal::create_instruction(pair, interpreter, local_variables)? {
-                    Instruction::Variable(Variable::Int(value)) => {
-                        Instruction::Variable((value == 0).into())
-                    }
-                    instruction => Not { instruction }.into(),
-                },
-            ),
-            Rule::greater => Greater::create_instruction(pair, interpreter, local_variables),
-            Rule::lower => Lower::create_instruction(pair, interpreter, local_variables),
-            Rule::greater_equal => {
-                GreaterOrEqual::create_instruction(pair, interpreter, local_variables)
-            }
-            Rule::lower_equal => {
-                LowerOrEqual::create_instruction(pair, interpreter, local_variables)
-            }
-            Rule::pow => Pow::create_instruction(pair, interpreter, local_variables),
-            Rule::and => And::create_instruction(pair, interpreter, local_variables),
-            Rule::or => Or::create_instruction(pair, interpreter, local_variables),
-            Rule::multiply => Multiply::create_instruction(pair, interpreter, local_variables),
-            Rule::divide => Divide::create_instruction(pair, interpreter, local_variables),
-            Rule::add => Add::create_instruction(pair, interpreter, local_variables),
-            Rule::subtract => Subtract::create_instruction(pair, interpreter, local_variables),
-            Rule::modulo => Modulo::create_instruction(pair, interpreter, local_variables),
-            Rule::bin_and => BitwiseAnd::create_instruction(pair, interpreter, local_variables),
-            Rule::bin_or => BitwiseOr::create_instruction(pair, interpreter, local_variables),
-            Rule::xor => Xor::create_instruction(pair, interpreter, local_variables),
-            Rule::rshift => RShift::create_instruction(pair, interpreter, local_variables),
-            Rule::lshift => LShift::create_instruction(pair, interpreter, local_variables),
-            Rule::function_call => {
-                FunctionCall::create_instruction(pair, interpreter, local_variables)
-            }
-            Rule::int | Rule::float | Rule::string | Rule::void => {
-                let variable = Variable::try_from(pair).unwrap();
-                Ok(Self::Variable(variable))
-            }
-            Rule::ident => {
-                let var_name = pair.as_str();
-                Ok(match local_variables.get(var_name) {
-                    Some(LocalVariable::Variable(variable)) => Self::Variable(variable.clone()),
-                    Some(local_variable) => {
-                        Self::LocalVariable(var_name.into(), local_variable.clone())
-                    }
-                    None => {
-                        let value = interpreter.get_variable(var_name)?;
-                        Self::Variable(value)
-                    }
-                })
-            }
-            Rule::array => Array::create_instruction(pair, interpreter, local_variables),
-            Rule::array_repeat => {
-                ArrayRepeat::create_instruction(pair, interpreter, local_variables)
-            }
-            Rule::function => {
-                AnonymousFunction::create_instruction(pair, interpreter, local_variables)
-            }
-            Rule::tuple => Tuple::create_instruction(pair, interpreter, local_variables),
             Rule::block => Block::create_instruction(pair, interpreter, local_variables),
+            Rule::import => Import::create_instruction(pair, interpreter, local_variables),
             Rule::if_else | Rule::if_stm => {
                 IfElse::create_instruction(pair, interpreter, local_variables)
             }
-            Rule::at => At::create_instruction(pair, interpreter, local_variables),
             Rule::set_if_else | Rule::set_if => {
                 SetIfElse::create_instruction(pair, interpreter, local_variables)
             }
             Rule::r#match => Match::create_instruction(pair, interpreter, local_variables),
-            Rule::import => Import::create_instruction(pair, interpreter, local_variables),
-            Rule::map => Map::create_instruction(pair, interpreter, local_variables),
-            Rule::filter => Filter::create_instruction(pair, interpreter, local_variables),
-            Rule::type_filter => TypeFilter::create_instruction(pair, interpreter, local_variables),
             Rule::function_declaration => {
                 FunctionDeclaration::create_instruction(pair, interpreter, local_variables)
             }
-            rule => panic!("Unexpected rule: {rule:?}"),
+            Rule::expr => Self::new_expression(pair, interpreter, local_variables),
+            rule => unreachable!("Unexpected rule: {rule:?}"),
         }
+    }
+    pub fn new_expression(
+        pair: Pair<Rule>,
+        interpreter: &Interpreter,
+        local_variables: &LocalVariables,
+    ) -> Result<Self> {
+        PRATT_PARSER
+            .map_primary(|pair| match pair.as_rule() {
+                Rule::expr => Self::new_expression(pair, interpreter, local_variables),
+                Rule::ident => {
+                    let ident = pair.as_str();
+                    Ok(match local_variables.get(ident) {
+                        Some(LocalVariable::Variable(variable)) => Self::Variable(variable.clone()),
+                        Some(local_variable) => {
+                            Self::LocalVariable(ident.into(), local_variable.clone())
+                        }
+                        None => {
+                            let value = interpreter.get_variable(ident)?;
+                            Self::Variable(value)
+                        }
+                    })
+                }
+                Rule::int | Rule::float | Rule::string | Rule::void => {
+                    let variable = Variable::try_from(pair).unwrap();
+                    Ok(Self::Variable(variable))
+                }
+                Rule::tuple => Tuple::create_instruction(pair, interpreter, local_variables),
+                Rule::array => Array::create_instruction(pair, interpreter, local_variables),
+                Rule::array_repeat => {
+                    ArrayRepeat::create_instruction(pair, interpreter, local_variables)
+                }
+                Rule::function => {
+                    AnonymousFunction::create_instruction(pair, interpreter, local_variables)
+                }
+                rule => unreachable!("Unexpected rule: {rule:?}"),
+            })
+            .map_prefix(|op, rhs| match op.as_rule() {
+                Rule::not => Not::create_instruction(rhs?),
+                Rule::bitwise_not => BitwiseNot::create_instruction(rhs?),
+                rule => unreachable!("Unexpected rule: {rule:?}"),
+            })
+            .map_infix(|lhs, op, rhs| match op.as_rule() {
+                Rule::pow => Pow::create_bin_op(lhs?, rhs?),
+                Rule::multiply => Multiply::create_bin_op(lhs?, rhs?),
+                Rule::add => Add::create_bin_op(lhs?, rhs?),
+                Rule::subtract => Subtract::create_bin_op(lhs?, rhs?),
+                Rule::divide => Divide::create_bin_op(lhs?, rhs?),
+                Rule::modulo => Modulo::create_bin_op(lhs?, rhs?),
+                Rule::equal => Equal::create_bin_op(lhs?, rhs?),
+                Rule::lower => Lower::create_bin_op(lhs?, rhs?),
+                Rule::lower_equal => LowerOrEqual::create_bin_op(lhs?, rhs?),
+                Rule::greater => Greater::create_bin_op(lhs?, rhs?),
+                Rule::greater_equal => GreaterOrEqual::create_bin_op(lhs?, rhs?),
+                Rule::map => Map::create_bin_op(lhs?, rhs?),
+                Rule::filter => Filter::create_bin_op(lhs?, rhs?),
+                Rule::bitwise_and => BitwiseAnd::create_bin_op(lhs?, rhs?),
+                Rule::bitwise_or => BitwiseOr::create_bin_op(lhs?, rhs?),
+                Rule::xor => Xor::create_bin_op(lhs?, rhs?),
+                Rule::rshift => RShift::create_bin_op(lhs?, rhs?),
+                Rule::lshift => LShift::create_bin_op(lhs?, rhs?),
+                Rule::and => And::create_bin_op(lhs?, rhs?),
+                Rule::or => Or::create_bin_op(lhs?, rhs?),
+                rule => unreachable!("Unexpected rule: {rule:?}"),
+            })
+            .map_postfix(|lhs, op| match op.as_rule() {
+                Rule::at => At::create_instruction(lhs?, op, interpreter, local_variables),
+                Rule::type_filter => TypeFilter::create_instruction(lhs?, op),
+                Rule::function_call => {
+                    FunctionCall::create_instruction(lhs?, op, interpreter, local_variables)
+                }
+                rule => unreachable!("Unexpected rule: {rule:?}"),
+            })
+            .parse(pair.into_inner())
     }
 }
 
