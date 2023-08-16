@@ -1,8 +1,8 @@
 use crate::{
     instruction::{
         local_variable::LocalVariables,
-        traits::{BinOp, CanBeUsed},
-        CreateInstruction, Exec, Instruction, Recreate,
+        traits::{BinOp, CanBeUsed, CreateFromInstructions},
+        CreateInstruction, Exec, Instruction,
     },
     interpreter::Interpreter,
     parse::Rule,
@@ -91,10 +91,16 @@ impl CreateInstruction for Map {
         let array_type = array.get_return_type();
         let function_type = function.get_return_type();
         if Self::can_be_used(&array_type, &function_type) {
-            Ok(Self::construct(array, function).into())
+            Self::create_from_instructions(array, function)
         } else {
             Err(Error::CannotDo2(array_type, Self::SYMBOL, function_type))
         }
+    }
+}
+
+impl CreateFromInstructions for Map {
+    fn create_from_instructions(array: Instruction, function: Instruction) -> Result<Instruction> {
+        Ok(Self::construct(array, function).into())
     }
 }
 
@@ -164,18 +170,6 @@ impl Exec for Map {
             }
             (array, function) => panic!("Tried to do {array} {} {function}", Self::SYMBOL),
         }
-    }
-}
-
-impl Recreate for Map {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction> {
-        let array = self.array.recreate(local_variables, interpreter)?;
-        let function = self.function.recreate(local_variables, interpreter)?;
-        Ok(Self::construct(array, function).into())
     }
 }
 

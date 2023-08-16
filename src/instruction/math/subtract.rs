@@ -1,7 +1,5 @@
-use crate::instruction::traits::{BinOp, CanBeUsed};
-use crate::instruction::{
-    local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
-};
+use crate::instruction::traits::{BinOp, CanBeUsed, CreateFromInstructions};
+use crate::instruction::{local_variable::LocalVariables, CreateInstruction, Exec, Instruction};
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
@@ -65,13 +63,27 @@ impl CreateInstruction for Subtract {
         let minuend_type = minuend.get_return_type();
         let subtrahend_type = subtrahend.get_return_type();
         if Self::can_be_used(&minuend_type, &subtrahend_type) {
-            Ok(Self::create_from_instructions(minuend, subtrahend))
+            Self::create_from_instructions(minuend, subtrahend)
         } else {
             Err(Error::CannotDo2(
                 minuend_type,
                 Self::SYMBOL,
                 subtrahend_type,
             ))
+        }
+    }
+}
+
+impl CreateFromInstructions for Subtract {
+    fn create_from_instructions(
+        minuend: Instruction,
+        subtrahend: Instruction,
+    ) -> Result<Instruction> {
+        match (minuend, subtrahend) {
+            (Instruction::Variable(minuend), Instruction::Variable(rhs)) => {
+                Ok(Self::subtract(minuend, rhs).into())
+            }
+            (minuend, subtrahend) => Ok(Self::construct(minuend, subtrahend).into()),
         }
     }
 }
@@ -98,14 +110,6 @@ impl Subtract {
             }
         }
     }
-    fn create_from_instructions(minuend: Instruction, subtrahend: Instruction) -> Instruction {
-        match (minuend, subtrahend) {
-            (Instruction::Variable(minuend), Instruction::Variable(rhs)) => {
-                Self::subtract(minuend, rhs).into()
-            }
-            (minuend, subtrahend) => Self::construct(minuend, subtrahend).into(),
-        }
-    }
 }
 
 impl Exec for Subtract {
@@ -113,18 +117,6 @@ impl Exec for Subtract {
         let minuend = self.minuend.exec(interpreter)?;
         let subtrahend = self.subtrahend.exec(interpreter)?;
         Ok(Self::subtract(minuend, subtrahend))
-    }
-}
-
-impl Recreate for Subtract {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction> {
-        let minuend = self.minuend.recreate(local_variables, interpreter)?;
-        let subtrahend = self.subtrahend.recreate(local_variables, interpreter)?;
-        Ok(Self::create_from_instructions(minuend, subtrahend))
     }
 }
 

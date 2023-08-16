@@ -1,7 +1,5 @@
-use crate::instruction::traits::{BinOp, CanBeUsed};
-use crate::instruction::{
-    local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
-};
+use crate::instruction::traits::{BinOp, CanBeUsed, CreateFromInstructions};
+use crate::instruction::{local_variable::LocalVariables, CreateInstruction, Exec, Instruction};
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
@@ -69,6 +67,20 @@ impl CreateInstruction for Pow {
     }
 }
 
+impl CreateFromInstructions for Pow {
+    fn create_from_instructions(base: Instruction, exp: Instruction) -> Result<Instruction> {
+        match (base, exp) {
+            (Instruction::Variable(base), Instruction::Variable(exp)) => {
+                Ok(Self::pow(base, exp)?.into())
+            }
+            (_, Instruction::Variable(Variable::Int(exp))) if exp < 0 => {
+                Err(Error::CannotBeNegative("exponent"))
+            }
+            (base, exp) => Ok(Self::construct(base, exp).into()),
+        }
+    }
+}
+
 impl Pow {
     fn pow(base: Variable, exp: Variable) -> Result<Variable> {
         match (base, exp) {
@@ -90,17 +102,6 @@ impl Pow {
             (base, exp) => panic!("Tried to calc {base} {} {exp}", Self::SYMBOL),
         }
     }
-    fn create_from_instructions(base: Instruction, exp: Instruction) -> Result<Instruction> {
-        match (base, exp) {
-            (Instruction::Variable(base), Instruction::Variable(exp)) => {
-                Ok(Self::pow(base, exp)?.into())
-            }
-            (_, Instruction::Variable(Variable::Int(exp))) if exp < 0 => {
-                Err(Error::CannotBeNegative("exponent"))
-            }
-            (base, exp) => Ok(Self::construct(base, exp).into()),
-        }
-    }
 }
 
 impl Exec for Pow {
@@ -108,18 +109,6 @@ impl Exec for Pow {
         let base = self.base.exec(interpreter)?;
         let exp = self.exp.exec(interpreter)?;
         Pow::pow(base, exp)
-    }
-}
-
-impl Recreate for Pow {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction> {
-        let base = self.base.recreate(local_variables, interpreter)?;
-        let exp = self.exp.recreate(local_variables, interpreter)?;
-        Self::create_from_instructions(base, exp)
     }
 }
 

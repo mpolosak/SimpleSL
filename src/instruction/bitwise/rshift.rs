@@ -1,7 +1,5 @@
-use crate::instruction::traits::{BinOp, CanBeUsed};
-use crate::instruction::{
-    local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
-};
+use crate::instruction::traits::{BinOp, CanBeUsed, CreateFromInstructions};
+use crate::instruction::{local_variable::LocalVariables, CreateInstruction, Exec, Instruction};
 use crate::variable::GetReturnType;
 use crate::{
     interpreter::Interpreter,
@@ -58,6 +56,20 @@ impl CreateInstruction for RShift {
     }
 }
 
+impl CreateFromInstructions for RShift {
+    fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
+        match (lhs, rhs) {
+            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
+                Ok(Self::rshift(lhs, rhs)?.into())
+            }
+            (_, Instruction::Variable(Variable::Int(rhs))) if !(0..=63).contains(&rhs) => {
+                Err(Error::OverflowShift)
+            }
+            (lhs, rhs) => Ok(Self::construct(lhs, rhs).into()),
+        }
+    }
+}
+
 impl RShift {
     fn rshift(lhs: Variable, rhs: Variable) -> Result<Variable> {
         match (lhs, rhs) {
@@ -81,17 +93,6 @@ impl RShift {
             ),
         }
     }
-    fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
-        match (lhs, rhs) {
-            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
-                Ok(Self::rshift(lhs, rhs)?.into())
-            }
-            (_, Instruction::Variable(Variable::Int(rhs))) if !(0..=63).contains(&rhs) => {
-                Err(Error::OverflowShift)
-            }
-            (lhs, rhs) => Ok(Self::construct(lhs, rhs).into()),
-        }
-    }
 }
 
 impl Exec for RShift {
@@ -99,18 +100,6 @@ impl Exec for RShift {
         let lhs = self.lhs.exec(interpreter)?;
         let rhs = self.rhs.exec(interpreter)?;
         Self::rshift(lhs, rhs)
-    }
-}
-
-impl Recreate for RShift {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction> {
-        let lhs = self.lhs.recreate(local_variables, interpreter)?;
-        let rhs = self.rhs.recreate(local_variables, interpreter)?;
-        Self::create_from_instructions(lhs, rhs)
     }
 }
 

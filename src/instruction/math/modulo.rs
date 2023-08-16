@@ -1,7 +1,5 @@
-use crate::instruction::traits::{BinOp, CanBeUsed};
-use crate::instruction::{
-    local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
-};
+use crate::instruction::traits::{BinOp, CanBeUsed, CreateFromInstructions};
+use crate::instruction::{local_variable::LocalVariables, CreateInstruction, Exec, Instruction};
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
@@ -66,6 +64,22 @@ impl CreateInstruction for Modulo {
         }
     }
 }
+
+impl CreateFromInstructions for Modulo {
+    fn create_from_instructions(
+        dividend: Instruction,
+        divisor: Instruction,
+    ) -> Result<Instruction> {
+        match (dividend, divisor) {
+            (Instruction::Variable(dividend), Instruction::Variable(divisor)) => {
+                Ok(Self::modulo(dividend, divisor)?.into())
+            }
+            (_, Instruction::Variable(Variable::Int(0))) => Err(Error::ZeroModulo),
+            (dividend, divisor) => Ok(Self::construct(dividend, divisor).into()),
+        }
+    }
+}
+
 impl Modulo {
     fn modulo(dividend: Variable, divisor: Variable) -> Result<Variable> {
         match (dividend, divisor) {
@@ -84,18 +98,6 @@ impl Modulo {
             (dividend, divisor) => panic!("Tried to calc {dividend} {} {divisor}", Self::SYMBOL),
         }
     }
-    fn create_from_instructions(
-        dividend: Instruction,
-        divisor: Instruction,
-    ) -> Result<Instruction> {
-        match (dividend, divisor) {
-            (Instruction::Variable(dividend), Instruction::Variable(divisor)) => {
-                Ok(Self::modulo(dividend, divisor)?.into())
-            }
-            (_, Instruction::Variable(Variable::Int(0))) => Err(Error::ZeroModulo),
-            (dividend, divisor) => Ok(Self::construct(dividend, divisor).into()),
-        }
-    }
 }
 
 impl Exec for Modulo {
@@ -103,18 +105,6 @@ impl Exec for Modulo {
         let dividend = self.dividend.exec(interpreter)?;
         let divisor = self.divisor.exec(interpreter)?;
         Self::modulo(dividend, divisor)
-    }
-}
-
-impl Recreate for Modulo {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction> {
-        let dividend = self.dividend.recreate(local_variables, interpreter)?;
-        let divisor = self.divisor.recreate(local_variables, interpreter)?;
-        Self::create_from_instructions(dividend, divisor)
     }
 }
 

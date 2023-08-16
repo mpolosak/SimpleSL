@@ -1,6 +1,9 @@
 mod bin_op;
 mod can_be_used;
-pub use self::{bin_op::BinOp, can_be_used::CanBeUsed};
+mod create_from_instructions;
+pub use self::{
+    bin_op::BinOp, can_be_used::CanBeUsed, create_from_instructions::CreateFromInstructions,
+};
 use super::{local_variable::LocalVariables, Instruction};
 use crate::{interpreter::Interpreter, parse::Rule, variable::Variable, Result};
 use pest::iterators::Pair;

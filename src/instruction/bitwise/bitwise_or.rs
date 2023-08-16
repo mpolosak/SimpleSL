@@ -1,8 +1,6 @@
 use super::BitwiseBinOp;
-use crate::instruction::traits::{BinOp, CanBeUsed};
-use crate::instruction::{
-    local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
-};
+use crate::instruction::traits::{BinOp, CanBeUsed, CreateFromInstructions};
+use crate::instruction::{local_variable::LocalVariables, CreateInstruction, Exec, Instruction};
 use crate::variable::GetReturnType;
 use crate::{
     interpreter::Interpreter,
@@ -50,12 +48,24 @@ impl CreateInstruction for BitwiseOr {
         let lhs_type = lhs.get_return_type();
         let rhs_type = rhs.get_return_type();
         if Self::can_be_used(&lhs_type, &rhs_type) {
-            Ok(Self::create_from_instructions(lhs, rhs))
+            Self::create_from_instructions(lhs, rhs)
         } else {
             Err(Error::CannotDo2(lhs_type, Self::SYMBOL, rhs_type))
         }
     }
 }
+
+impl CreateFromInstructions for BitwiseOr {
+    fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
+        Ok(match (lhs, rhs) {
+            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
+                Self::bin_or(lhs, rhs).into()
+            }
+            (lhs, rhs) => Self::construct(lhs, rhs).into(),
+        })
+    }
+}
+
 impl BitwiseOr {
     fn bin_or(lhs: Variable, rhs: Variable) -> Variable {
         match (lhs, rhs) {
@@ -73,14 +83,6 @@ impl BitwiseOr {
             ),
         }
     }
-    fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
-        match (lhs, rhs) {
-            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
-                Self::bin_or(lhs, rhs).into()
-            }
-            (lhs, rhs) => Self::construct(lhs, rhs).into(),
-        }
-    }
 }
 
 impl Exec for BitwiseOr {
@@ -88,18 +90,6 @@ impl Exec for BitwiseOr {
         let lhs = self.lhs.exec(interpreter)?;
         let rhs = self.rhs.exec(interpreter)?;
         Ok(Self::bin_or(lhs, rhs))
-    }
-}
-
-impl Recreate for BitwiseOr {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction> {
-        let lhs = self.lhs.recreate(local_variables, interpreter)?;
-        let rhs = self.rhs.recreate(local_variables, interpreter)?;
-        Ok(Self::create_from_instructions(lhs, rhs))
     }
 }
 
