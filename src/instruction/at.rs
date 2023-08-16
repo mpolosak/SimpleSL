@@ -1,4 +1,7 @@
-use super::{local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate};
+use super::{
+    local_variable::LocalVariables, traits::CreateFromInstructions, CreateInstruction, Exec,
+    Instruction, Recreate,
+};
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
@@ -36,7 +39,8 @@ impl CreateInstruction for At {
         }
     }
 }
-impl At {
+
+impl CreateFromInstructions for At {
     fn create_from_instructions(
         instruction: Instruction,
         index: Instruction,
