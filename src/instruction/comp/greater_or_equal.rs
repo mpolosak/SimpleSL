@@ -24,6 +24,10 @@ impl BinOp for GreaterOrEqual {
     fn get_rhs(&self) -> &Instruction {
         &self.rhs
     }
+
+    fn construct(lhs: Instruction, rhs: Instruction) -> Self {
+        Self { lhs, rhs }
+    }
 }
 
 impl CanBeUsed for GreaterOrEqual {
@@ -76,7 +80,7 @@ impl GreaterOrEqual {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
                 Self::greater_or_equal(lhs, rhs).into()
             }
-            (lhs, rhs) => Self { lhs, rhs }.into(),
+            (lhs, rhs) => Self::construct(lhs, rhs).into(),
         }
     }
 }

@@ -28,6 +28,10 @@ impl BinOp for BitwiseOr {
     fn get_rhs(&self) -> &Instruction {
         &self.rhs
     }
+
+    fn construct(lhs: Instruction, rhs: Instruction) -> Self {
+        Self { lhs, rhs }
+    }
 }
 
 impl BitwiseBinOp for BitwiseOr {}
@@ -74,7 +78,7 @@ impl BitwiseOr {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
                 Self::bin_or(lhs, rhs).into()
             }
-            (lhs, rhs) => Self { lhs, rhs }.into(),
+            (lhs, rhs) => Self::construct(lhs, rhs).into(),
         }
     }
 }

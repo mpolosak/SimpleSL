@@ -26,6 +26,13 @@ impl BinOp for Subtract {
     fn get_rhs(&self) -> &Instruction {
         &self.subtrahend
     }
+
+    fn construct(minuend: Instruction, subtrahend: Instruction) -> Self {
+        Self {
+            minuend,
+            subtrahend,
+        }
+    }
 }
 
 impl CanBeUsed for Subtract {
@@ -96,11 +103,7 @@ impl Subtract {
             (Instruction::Variable(minuend), Instruction::Variable(rhs)) => {
                 Self::subtract(minuend, rhs).into()
             }
-            (minuend, subtrahend) => Self {
-                minuend,
-                subtrahend,
-            }
-            .into(),
+            (minuend, subtrahend) => Self::construct(minuend, subtrahend).into(),
         }
     }
 }

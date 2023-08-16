@@ -24,6 +24,10 @@ impl BinOp for BitwiseAnd {
     fn get_rhs(&self) -> &Instruction {
         &self.rhs
     }
+
+    fn construct(lhs: Instruction, rhs: Instruction) -> Self {
+        Self { lhs, rhs }
+    }
 }
 
 impl BitwiseBinOp for BitwiseAnd {}

@@ -26,6 +26,10 @@ impl BinOp for Divide {
     fn get_rhs(&self) -> &Instruction {
         &self.divisor
     }
+
+    fn construct(dividend: Instruction, divisor: Instruction) -> Self {
+        Self { dividend, divisor }
+    }
 }
 
 impl CanBeUsed for Divide {
@@ -97,7 +101,7 @@ impl Divide {
                 Ok(Self::divide(dividend, divisor)?.into())
             }
             (_, Instruction::Variable(Variable::Int(0))) => Err(Error::ZeroDivision),
-            (dividend, divisor) => Ok(Self { dividend, divisor }.into()),
+            (dividend, divisor) => Ok(Self::construct(dividend, divisor).into()),
         }
     }
 }

@@ -29,6 +29,10 @@ impl BinOp for LShift {
     fn get_rhs(&self) -> &Instruction {
         &self.rhs
     }
+
+    fn construct(lhs: Instruction, rhs: Instruction) -> Self {
+        Self { lhs, rhs }
+    }
 }
 
 impl BitwiseBinOp for LShift {}
@@ -85,7 +89,7 @@ impl LShift {
             (_, Instruction::Variable(Variable::Int(rhs))) if !(0..=63).contains(&rhs) => {
                 Err(Error::OverflowShift)
             }
-            (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
+            (lhs, rhs) => Ok(Self::construct(lhs, rhs).into()),
         }
     }
 }

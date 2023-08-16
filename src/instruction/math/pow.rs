@@ -26,6 +26,10 @@ impl BinOp for Pow {
     fn get_rhs(&self) -> &Instruction {
         &self.exp
     }
+
+    fn construct(base: Instruction, exp: Instruction) -> Self {
+        Self { base, exp }
+    }
 }
 
 impl CanBeUsed for Pow {
@@ -94,7 +98,7 @@ impl Pow {
             (_, Instruction::Variable(Variable::Int(exp))) if exp < 0 => {
                 Err(Error::CannotBeNegative("exponent"))
             }
-            (base, exp) => Ok(Self { base, exp }.into()),
+            (base, exp) => Ok(Self::construct(base, exp).into()),
         }
     }
 }

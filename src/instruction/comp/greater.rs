@@ -23,6 +23,10 @@ impl BinOp for Greater {
     fn get_rhs(&self) -> &Instruction {
         &self.rhs
     }
+
+    fn construct(lhs: Instruction, rhs: Instruction) -> Self {
+        Self { lhs, rhs }
+    }
 }
 
 impl CanBeUsed for Greater {
@@ -75,7 +79,7 @@ impl Greater {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
                 Self::greater(lhs, rhs).into()
             }
-            (lhs, rhs) => Self { lhs, rhs }.into(),
+            (lhs, rhs) => Self::construct(lhs, rhs).into(),
         }
     }
 }

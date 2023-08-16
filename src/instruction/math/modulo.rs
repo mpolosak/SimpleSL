@@ -26,6 +26,10 @@ impl BinOp for Modulo {
     fn get_rhs(&self) -> &Instruction {
         &self.divisor
     }
+
+    fn construct(dividend: Instruction, divisor: Instruction) -> Self {
+        Self { dividend, divisor }
+    }
 }
 
 impl CanBeUsed for Modulo {
@@ -89,7 +93,7 @@ impl Modulo {
                 Ok(Self::modulo(dividend, divisor)?.into())
             }
             (_, Instruction::Variable(Variable::Int(0))) => Err(Error::ZeroModulo),
-            (dividend, divisor) => Ok(Self { dividend, divisor }.into()),
+            (dividend, divisor) => Ok(Self::construct(dividend, divisor).into()),
         }
     }
 }

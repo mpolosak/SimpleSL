@@ -29,6 +29,10 @@ impl BinOp for RShift {
     fn get_rhs(&self) -> &Instruction {
         &self.rhs
     }
+
+    fn construct(lhs: Instruction, rhs: Instruction) -> Self {
+        Self { lhs, rhs }
+    }
 }
 
 impl BitwiseBinOp for RShift {}
@@ -71,7 +75,10 @@ impl RShift {
                 .cloned()
                 .map(|element| Self::rshift(element, value.clone()))
                 .collect(),
-            (lhs, rhs) => panic!("Tried to do {lhs} >> {rhs} which is imposible"),
+            (lhs, rhs) => panic!(
+                "Tried to do {lhs} {} {rhs} which is imposible",
+                Self::SYMBOL
+            ),
         }
     }
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
@@ -82,7 +89,7 @@ impl RShift {
             (_, Instruction::Variable(Variable::Int(rhs))) if !(0..=63).contains(&rhs) => {
                 Err(Error::OverflowShift)
             }
-            (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
+            (lhs, rhs) => Ok(Self::construct(lhs, rhs).into()),
         }
     }
 }

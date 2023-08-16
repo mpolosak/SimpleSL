@@ -26,6 +26,10 @@ impl BinOp for Multiply {
     fn get_rhs(&self) -> &Instruction {
         &self.rhs
     }
+
+    fn construct(lhs: Instruction, rhs: Instruction) -> Self {
+        Self { lhs, rhs }
+    }
 }
 
 impl CanBeUsed for Multiply {
@@ -85,7 +89,7 @@ impl Multiply {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
                 Self::multiply(lhs, rhs).into()
             }
-            (lhs, rhs) => Self { lhs, rhs }.into(),
+            (lhs, rhs) => Self::construct(lhs, rhs).into(),
         }
     }
 }

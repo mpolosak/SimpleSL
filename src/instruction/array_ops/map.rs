@@ -1,5 +1,3 @@
-use std::{iter::zip, rc::Rc};
-
 use crate::{
     instruction::{
         local_variable::LocalVariables,
@@ -12,6 +10,7 @@ use crate::{
     Error, Result,
 };
 use pest::iterators::Pair;
+use std::{iter::zip, rc::Rc};
 
 #[derive(Debug)]
 pub struct Map {
@@ -28,6 +27,10 @@ impl BinOp for Map {
 
     fn get_rhs(&self) -> &Instruction {
         &self.function
+    }
+
+    fn construct(array: Instruction, function: Instruction) -> Self {
+        Self { array, function }
     }
 }
 
@@ -88,7 +91,7 @@ impl CreateInstruction for Map {
         let array_type = array.get_return_type();
         let function_type = function.get_return_type();
         if Self::can_be_used(&array_type, &function_type) {
-            Ok(Self { array, function }.into())
+            Ok(Self::construct(array, function).into())
         } else {
             Err(Error::CannotDo2(array_type, Self::SYMBOL, function_type))
         }
@@ -172,7 +175,7 @@ impl Recreate for Map {
     ) -> Result<Instruction> {
         let array = self.array.recreate(local_variables, interpreter)?;
         let function = self.function.recreate(local_variables, interpreter)?;
-        Ok(Self { array, function }.into())
+        Ok(Self::construct(array, function).into())
     }
 }
 

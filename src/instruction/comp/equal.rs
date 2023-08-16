@@ -21,6 +21,10 @@ impl BinOp for Equal {
     fn get_rhs(&self) -> &Instruction {
         &self.rhs
     }
+
+    fn construct(lhs: Instruction, rhs: Instruction) -> Self {
+        Self::construct(lhs, rhs)
+    }
 }
 
 impl CanBeUsed for Equal {
@@ -50,7 +54,7 @@ impl Equal {
             (Instruction::Variable(variable), Instruction::Variable(variable2)) => {
                 Instruction::Variable((variable == variable2).into())
             }
-            (lhs, rhs) => Self { lhs, rhs }.into(),
+            (lhs, rhs) => Self::construct(lhs, rhs).into(),
         }
     }
 }

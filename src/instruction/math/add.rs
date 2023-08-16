@@ -26,6 +26,10 @@ impl BinOp for Add {
     fn get_rhs(&self) -> &Instruction {
         &self.rhs
     }
+
+    fn construct(lhs: Instruction, rhs: Instruction) -> Self {
+        Self { lhs, rhs }
+    }
 }
 
 impl CanBeUsed for Add {
@@ -101,7 +105,7 @@ impl Add {
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         match (lhs, rhs) {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => Self::add(lhs, rhs).into(),
-            (rhs, lhs) => Self { rhs, lhs }.into(),
+            (rhs, lhs) => Self::construct(lhs, rhs).into(),
         }
     }
 }
