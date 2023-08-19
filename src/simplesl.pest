@@ -23,7 +23,7 @@ primary = _{ ident | var | expr_in_brackets }
 atom = _{ prefix_op? ~ primary ~ postfix_op? }
 expr = { (atom ~ (bin_op ~ atom)*) }
 bin_op = _{ comp | and | or | bitwise_and | bitwise_or | xor | lshift | rshift | pow | multiply | divide | add | subtract | modulo
-            | map | filter }
+            | map | filter | reduce }
   comp = _{ equal | not_equal | greater | greater_equal | lower | lower_equal }
     equal = { "==" }
     not_equal = { "!=" }
@@ -46,6 +46,7 @@ bin_op = _{ comp | and | or | bitwise_and | bitwise_or | xor | lshift | rshift |
   modulo = { "%" }
   map = { "@" }
   filter = { "?" }
+  reduce = { "$" ~ expr }
 prefix_op = _{not | bitwise_not | unary_minus }
   not = { "!" }
   bitwise_not = { "~" }

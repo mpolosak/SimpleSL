@@ -17,7 +17,7 @@ mod traits;
 mod tuple;
 use self::{
     array::Array,
-    array_ops::{Filter, Map, TypeFilter},
+    array_ops::{Filter, Map, Reduce, TypeFilter},
     array_repeat::ArrayRepeat,
     at::At,
     bitwise::{BitwiseAnd, BitwiseNot, BitwiseOr, LShift, RShift, Xor},
@@ -78,6 +78,7 @@ pub enum Instruction {
     Or(Box<Or>),
     Pow(Box<Pow>),
     RShift(Box<RShift>),
+    Reduce(Box<Reduce>),
     Set(Box<Set>),
     SetIfElse(Box<SetIfElse>),
     Subtract(Box<Subtract>),
@@ -177,6 +178,9 @@ impl Instruction {
                 Rule::lshift => LShift::create_bin_op(lhs?, rhs?),
                 Rule::and => And::create_bin_op(lhs?, rhs?),
                 Rule::or => Or::create_bin_op(lhs?, rhs?),
+                Rule::reduce => {
+                    Reduce::create_instruction(lhs?, op, rhs?, local_variables, interpreter)
+                }
                 rule => unreachable!("Unexpected rule: {rule:?}"),
             })
             .map_postfix(|lhs, op| match op.as_rule() {
@@ -234,6 +238,7 @@ impl Exec for Instruction {
             Self::Filter(filter) => filter.exec(interpreter),
             Self::TypeFilter(filter) => filter.exec(interpreter),
             Self::FunctionDeclaration(declaration) => declaration.exec(interpreter),
+            Self::Reduce(reduce) => reduce.exec(interpreter),
         }
     }
 }
@@ -302,6 +307,7 @@ impl Recreate for Instruction {
             Self::FunctionDeclaration(declaration) => {
                 declaration.recreate(local_variables, interpreter)
             }
+            Self::Reduce(reduce) => reduce.recreate(local_variables, interpreter),
         }
     }
 }
@@ -348,6 +354,7 @@ impl GetReturnType for Instruction {
             Self::Filter(filter) => filter.get_return_type(),
             Self::TypeFilter(filter) => filter.get_return_type(),
             Self::FunctionDeclaration(declaration) => declaration.get_return_type(),
+            Self::Reduce(reduce) => reduce.get_return_type(),
             Self::Equal(..) => Type::Int,
         }
     }
