@@ -29,9 +29,9 @@ use self::{
     import::Import,
     local_variable::{LocalVariable, LocalVariables},
     logic::{And, Not, Or},
-    math::{Add, Divide, Modulo, Multiply, Pow, Subtract},
+    math::{Add, Divide, Modulo, Multiply, Pow, Subtract, UnaryMinus},
     set::Set,
-    traits::CreateBinOp,
+    traits::{CreateBinOp, PrefixOp},
     tuple::Tuple,
 };
 use crate::{
@@ -61,14 +61,15 @@ pub enum Instruction {
     Equal(Box<Equal>),
     Filter(Box<Filter>),
     FunctionCall(Box<FunctionCall>),
+    FunctionDeclaration(FunctionDeclaration),
     Greater(Box<Greater>),
-    Lower(Box<Lower>),
     GreaterOrEqual(Box<GreaterOrEqual>),
-    LowerOrEqual(Box<LowerOrEqual>),
     IfElse(Box<IfElse>),
     Import(Import),
     LShift(Box<LShift>),
     LocalVariable(Rc<str>, LocalVariable),
+    Lower(Box<Lower>),
+    LowerOrEqual(Box<LowerOrEqual>),
     Map(Box<Map>),
     Match(Box<Match>),
     Modulo(Box<Modulo>),
@@ -82,9 +83,9 @@ pub enum Instruction {
     Subtract(Box<Subtract>),
     Tuple(Tuple),
     TypeFilter(Box<TypeFilter>),
+    UnaryMinus(Box<UnaryMinus>),
     Variable(Variable),
     Xor(Box<Xor>),
-    FunctionDeclaration(FunctionDeclaration),
 }
 
 impl Instruction {
@@ -152,6 +153,7 @@ impl Instruction {
             .map_prefix(|op, rhs| match op.as_rule() {
                 Rule::not => Not::create_instruction(rhs?),
                 Rule::bitwise_not => BitwiseNot::create_instruction(rhs?),
+                Rule::unary_minus => UnaryMinus::create_instruction(rhs?),
                 rule => unreachable!("Unexpected rule: {rule:?}"),
             })
             .map_infix(|lhs, op, rhs| match op.as_rule() {
@@ -208,6 +210,7 @@ impl Exec for Instruction {
             Self::Lower(lower) => lower.exec(interpreter),
             Self::GreaterOrEqual(greater_or_equal) => greater_or_equal.exec(interpreter),
             Self::LowerOrEqual(greater_or_equal) => greater_or_equal.exec(interpreter),
+            Self::UnaryMinus(unary) => unary.exec(interpreter),
             Self::And(and) => and.exec(interpreter),
             Self::Or(or) => or.exec(interpreter),
             Self::Pow(pow) => pow.exec(interpreter),
@@ -272,6 +275,7 @@ impl Recreate for Instruction {
             Self::LowerOrEqual(lower_or_equal) => {
                 lower_or_equal.recreate(local_variables, interpreter)
             }
+            Self::UnaryMinus(unary) => unary.recreate(local_variables, interpreter),
             Self::And(and) => and.recreate(local_variables, interpreter),
             Self::Or(or) => or.recreate(local_variables, interpreter),
             Self::Pow(pow) => pow.recreate(local_variables, interpreter),
@@ -314,6 +318,7 @@ impl GetReturnType for Instruction {
             Self::Tuple(tuple) => tuple.get_return_type(),
             Self::Set(set) => set.get_return_type(),
             Self::DestructTuple(destruct_tuple) => destruct_tuple.get_return_type(),
+            Self::UnaryMinus(unary) => unary.get_return_type(),
             Self::Pow(pow) => pow.get_return_type(),
             Self::Add(add) => add.get_return_type(),
             Self::Subtract(subtract) => subtract.get_return_type(),

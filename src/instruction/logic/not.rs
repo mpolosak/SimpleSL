@@ -1,63 +1,29 @@
-use crate::instruction::{local_variable::LocalVariables, Exec, Instruction, Recreate};
-use crate::Error;
-use crate::{
-    interpreter::Interpreter,
-    variable::{GetReturnType, Type, Variable},
-    Result,
-};
+use crate::instruction::traits::PrefixOp;
+use crate::instruction::Instruction;
+use crate::variable::Type;
 
 #[derive(Debug)]
 pub struct Not {
     pub instruction: Instruction,
 }
 
-impl Not {
-    pub fn create_instruction(instruction: Instruction) -> Result<Instruction> {
-        let return_type = instruction.get_return_type();
-        if return_type == Type::Int || return_type == Type::Array(Type::Int.into()) {
-            Ok(Self::create_from_instruction(instruction))
-        } else {
-            Err(Error::CannotDo("!", instruction.get_return_type()))
-        }
-    }
-    fn not(operand: Variable) -> Variable {
-        match operand {
-            Variable::Int(operand) => (operand == 0).into(),
-            Variable::Array(array, _) => array.iter().cloned().map(Self::not).collect(),
-            operand => panic!("Tried to negate {operand}"),
-        }
-    }
-    fn create_from_instruction(instruction: Instruction) -> Instruction {
-        match instruction {
-            Instruction::Variable(Variable::Int(value)) => {
-                Instruction::Variable((value == 0).into())
-            }
-            instruction => Self { instruction }.into(),
-        }
-    }
-}
+impl PrefixOp for Not {
+    const SYMBOL: &'static str = "!";
 
-impl Exec for Not {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
-        let result = self.instruction.exec(interpreter)?;
-        Ok(Self::not(result))
+    fn get_instruction(&self) -> &Instruction {
+        &self.instruction
     }
-}
 
-impl Recreate for Not {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction> {
-        let instruction = self.instruction.recreate(local_variables, interpreter)?;
-        Ok(Self::create_from_instruction(instruction))
+    fn construct(instruction: Instruction) -> Self {
+        Self { instruction }
     }
-}
 
-impl GetReturnType for Not {
-    fn get_return_type(&self) -> Type {
-        self.instruction.get_return_type()
+    fn can_be_used(var_type: &Type) -> bool {
+        var_type.matches(&(Type::Int | Type::Array((Type::Int).into())))
+    }
+
+    fn calc_int(num: i64) -> i64 {
+        (num == 0) as i64
     }
 }
 
