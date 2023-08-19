@@ -27,17 +27,17 @@ bin_op = _{ comp | and | or | bitwise_and | bitwise_or | xor | lshift | rshift |
   comp = _{ equal | not_equal | greater | greater_equal | lower | lower_equal }
     equal = { "==" }
     not_equal = { "!=" }
+    lshift = { "<<" }
+    rshift = { ">>" }
+    greater = { ">" }
+    greater_equal = { ">=" }
+    lower = { "<" }
+    lower_equal = { "<=" }
   and = { "&&" }
   or = { "||" }
   bitwise_and = { "&" }
   bitwise_or = { "|" }
   xor = { "^" }
-  lshift = { "<<" }
-  rshift = { ">>" }
-  greater = { ">" }
-  greater_equal = { ">=" }
-  lower = { "<" }
-  lower_equal = { "<=" }
   pow = { "**" }
   multiply = { "*" }
   divide = { "/" }

@@ -10,13 +10,9 @@ sort = (array: [int]) -> [int] {
         array;
     } else {
         first = array[0];
-        count = int(reduce(array, 0, (sum: any, item: any)->any{
-            if item == first {
-                int(sum, 0)+1;
-            } else {
-                sum;
-            };
-        }),0);
+        count = len(array?(item:int)->int{
+            item == first
+        });
         array1 = array?(item:int)->int{item<first;};
         array2 = array?(item:int)->int{first<item;};
         sort(array1)+[first; count]+sort(array2)
