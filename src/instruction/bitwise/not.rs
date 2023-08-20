@@ -3,12 +3,12 @@ use crate::instruction::Instruction;
 use crate::variable::Type;
 
 #[derive(Debug)]
-pub struct Not {
+pub struct BitwiseNot {
     pub instruction: Instruction,
 }
 
-impl PrefixOp for Not {
-    const SYMBOL: &'static str = "!";
+impl PrefixOp for BitwiseNot {
+    const SYMBOL: &'static str = "~";
 
     fn get_instruction(&self) -> &Instruction {
         &self.instruction
@@ -23,12 +23,12 @@ impl PrefixOp for Not {
     }
 
     fn calc_int(num: i64) -> i64 {
-        (num == 0) as i64
+        !num
     }
 }
 
-impl From<Not> for Instruction {
-    fn from(value: Not) -> Self {
-        Self::Not(value.into())
+impl From<BitwiseNot> for Instruction {
+    fn from(value: BitwiseNot) -> Self {
+        Self::BinNot(value.into())
     }
 }

@@ -15,9 +15,7 @@ Returns array filled whith increasing values, starting with value
 Length of returned array equals size
 */
 iota = (value: int, size: int) -> [int] {
-    [value; size] @ (index: int, value:int) -> int {index+value;};
+    [value; size] @ (index: int, value:int) -> int {index+value};
 };
 
-array = iota(1, 15);
-array = array @ fizzbuzz;
-array @ print;
+iota(1, 15) @ fizzbuzz @ print;

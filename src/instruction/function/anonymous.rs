@@ -24,7 +24,7 @@ impl CreateInstruction for AnonymousFunction {
     fn create_instruction(
         pair: Pair<Rule>,
         interpreter: &Interpreter,
-        local_variables: &mut LocalVariables,
+        local_variables: &LocalVariables,
     ) -> Result<Instruction> {
         let mut inner = pair.into_inner().peekable();
         let params_pair = inner.next().unwrap();

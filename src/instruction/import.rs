@@ -1,6 +1,6 @@
 use super::{
-    local_variable::LocalVariables, recreate_instructions, CreateInstruction, Exec, Instruction,
-    Recreate,
+    local_variable::LocalVariables, recreate_instructions, traits::MutCreateInstruction, Exec,
+    Instruction, Recreate,
 };
 use crate::{
     interpreter::Interpreter,
@@ -15,7 +15,7 @@ pub struct Import {
     instructions: Box<[Instruction]>,
 }
 
-impl CreateInstruction for Import {
+impl MutCreateInstruction for Import {
     fn create_instruction(
         pair: Pair<Rule>,
         interpreter: &Interpreter,

@@ -1,4 +1,3 @@
-mod array;
 mod convert;
 mod fs;
 mod iofunctions;
@@ -11,7 +10,6 @@ use crate::{
 use simplesl_macros::export_function;
 
 pub fn add_std_lib(interpreter: &mut Interpreter) {
-    array::add_functions(interpreter);
     iofunctions::add_functions(interpreter);
     convert::add_functions(interpreter);
     string::add_functions(interpreter);

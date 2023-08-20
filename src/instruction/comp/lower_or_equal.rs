@@ -6,13 +6,13 @@ use crate::{interpreter::Interpreter, variable::Variable, Result};
 use super::can_be_used;
 
 #[derive(Debug)]
-pub struct GreaterOrEqual {
+pub struct LowerOrEqual {
     lhs: Instruction,
     rhs: Instruction,
 }
 
-impl BinOp for GreaterOrEqual {
-    const SYMBOL: &'static str = ">=";
+impl BinOp for LowerOrEqual {
+    const SYMBOL: &'static str = "<=";
 
     fn get_lhs(&self) -> &Instruction {
         &self.lhs
@@ -27,13 +27,13 @@ impl BinOp for GreaterOrEqual {
     }
 }
 
-impl CanBeUsed for GreaterOrEqual {
+impl CanBeUsed for LowerOrEqual {
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
         can_be_used(lhs, rhs)
     }
 }
 
-impl CreateFromInstructions for GreaterOrEqual {
+impl CreateFromInstructions for LowerOrEqual {
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
         match (lhs, rhs) {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
@@ -44,11 +44,11 @@ impl CreateFromInstructions for GreaterOrEqual {
     }
 }
 
-impl GreaterOrEqual {
+impl LowerOrEqual {
     fn greater_or_equal(lhs: Variable, rhs: Variable) -> Variable {
         match (lhs, rhs) {
-            (Variable::Int(lhs), Variable::Int(rhs)) => (lhs >= rhs).into(),
-            (Variable::Float(lhs), Variable::Float(rhs)) => (lhs >= rhs).into(),
+            (Variable::Int(lhs), Variable::Int(rhs)) => (lhs <= rhs).into(),
+            (Variable::Float(lhs), Variable::Float(rhs)) => (lhs <= rhs).into(),
             (lhs, Variable::Array(array, _)) => array
                 .iter()
                 .cloned()
@@ -64,7 +64,7 @@ impl GreaterOrEqual {
     }
 }
 
-impl Exec for GreaterOrEqual {
+impl Exec for LowerOrEqual {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let lhs = self.lhs.exec(interpreter)?;
         let rhs = self.rhs.exec(interpreter)?;
@@ -72,7 +72,7 @@ impl Exec for GreaterOrEqual {
     }
 }
 
-impl GetReturnType for GreaterOrEqual {
+impl GetReturnType for LowerOrEqual {
     fn get_return_type(&self) -> Type {
         if matches!(
             (self.lhs.get_return_type(), self.rhs.get_return_type()),
@@ -85,8 +85,8 @@ impl GetReturnType for GreaterOrEqual {
     }
 }
 
-impl From<GreaterOrEqual> for Instruction {
-    fn from(value: GreaterOrEqual) -> Self {
-        Self::GreaterOrEqual(value.into())
+impl From<LowerOrEqual> for Instruction {
+    fn from(value: LowerOrEqual) -> Self {
+        Self::LowerOrEqual(value.into())
     }
 }

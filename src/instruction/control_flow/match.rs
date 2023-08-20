@@ -1,6 +1,8 @@
 use super::match_arm::MatchArm;
 use crate::{
-    instruction::{local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate},
+    instruction::{
+        local_variable::LocalVariables, traits::MutCreateInstruction, Exec, Instruction, Recreate,
+    },
     interpreter::Interpreter,
     parse::Rule,
     variable::{GetReturnType, Type, Variable},
@@ -14,7 +16,7 @@ pub struct Match {
     arms: Box<[MatchArm]>,
 }
 
-impl CreateInstruction for Match {
+impl MutCreateInstruction for Match {
     fn create_instruction(
         pair: Pair<Rule>,
         interpreter: &Interpreter,

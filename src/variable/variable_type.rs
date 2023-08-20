@@ -99,7 +99,7 @@ impl From<Pair<'_, Rule>> for Type {
             Rule::int_type => Self::Int,
             Rule::float_type => Self::Float,
             Rule::string_type => Self::String,
-            Rule::void_type => Self::Void,
+            Rule::void => Self::Void,
             Rule::function_type => FunctionType::from(pair).into(),
             Rule::array_type => {
                 let pair = pair.into_inner().next().unwrap();

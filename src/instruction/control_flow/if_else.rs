@@ -1,5 +1,5 @@
 use crate::instruction::{
-    local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
+    local_variable::LocalVariables, traits::MutCreateInstruction, Exec, Instruction, Recreate,
 };
 use crate::{
     interpreter::Interpreter,
@@ -16,7 +16,7 @@ pub struct IfElse {
     if_false: Instruction,
 }
 
-impl CreateInstruction for IfElse {
+impl MutCreateInstruction for IfElse {
     fn create_instruction(
         pair: Pair<Rule>,
         interpreter: &Interpreter,

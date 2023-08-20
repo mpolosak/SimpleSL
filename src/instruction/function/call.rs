@@ -1,16 +1,21 @@
-use crate::instruction::{
-    exec_instructions,
-    function::AnonymousFunction,
-    local_variable::{LocalVariable, LocalVariables},
-    recreate_instructions,
-    traits::{Exec, Recreate},
-    CreateInstruction, Instruction,
-};
+use pest::iterators::Pair;
+
 use crate::{
     function::{check_args, Params},
     interpreter::Interpreter,
     variable::{function_type::FunctionType, GetReturnType, Type, Variable},
     Error, Result,
+};
+use crate::{
+    instruction::{
+        exec_instructions,
+        function::AnonymousFunction,
+        local_variable::{LocalVariable, LocalVariables},
+        recreate_instructions,
+        traits::{Exec, Recreate},
+        Instruction,
+    },
+    parse::Rule,
 };
 
 #[derive(Debug)]
@@ -19,41 +24,33 @@ pub struct FunctionCall {
     pub args: Box<[Instruction]>,
 }
 
-impl CreateInstruction for FunctionCall {
-    fn create_instruction(
-        pair: pest::iterators::Pair<crate::parse::Rule>,
+impl FunctionCall {
+    pub fn create_instruction(
+        function: Instruction,
+        args: Pair<Rule>,
         interpreter: &Interpreter,
-        local_variables: &mut LocalVariables,
+        local_variables: &LocalVariables,
     ) -> Result<Instruction> {
-        let mut inner = pair.into_inner();
-        let pair = inner.next().unwrap();
-        let pair_str = pair.as_str();
-        let function = Instruction::new(pair, interpreter, local_variables)?;
-        let args = inner
-            .next()
-            .unwrap()
+        let args = args
             .into_inner()
-            .map(|pair| Instruction::new(pair, interpreter, local_variables))
+            .map(|pair| Instruction::new_expression(pair, interpreter, local_variables))
             .collect::<Result<Box<_>>>()?;
         match &function {
             Instruction::Variable(Variable::Function(function2)) => {
-                Self::check_args_with_params(pair_str, &function2.params, &args)?;
+                Self::check_args_with_params("function", &function2.params, &args)?;
                 Ok(Self { function, args }.into())
             }
             Instruction::LocalVariable(_, LocalVariable::Function(params, _))
             | Instruction::AnonymousFunction(AnonymousFunction { params, .. }) => {
-                Self::check_args_with_params(pair_str, params, &args)?;
+                Self::check_args_with_params("function", params, &args)?;
                 Ok(Self { function, args }.into())
             }
             instruction => {
-                Self::check_args_with_type(pair_str, instruction.get_return_type(), &args)?;
+                Self::check_args_with_type("function", instruction.get_return_type(), &args)?;
                 Ok(Self { function, args }.into())
             }
         }
     }
-}
-
-impl FunctionCall {
     fn check_args_with_params(pair_str: &str, params: &Params, args: &[Instruction]) -> Result<()> {
         check_args(
             pair_str,

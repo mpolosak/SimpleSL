@@ -25,11 +25,11 @@ impl CreateInstruction for Array {
     fn create_instruction(
         pair: Pair<Rule>,
         interpreter: &Interpreter,
-        local_variables: &mut LocalVariables,
+        local_variables: &LocalVariables,
     ) -> Result<Instruction> {
         let inner = pair.into_inner();
         let instructions = inner
-            .map(|arg| Instruction::new(arg, interpreter, local_variables))
+            .map(|arg| Instruction::new_expression(arg, interpreter, local_variables))
             .collect::<Result<Box<_>>>()?;
         Ok(Self::create_from_instructions(instructions))
     }

@@ -1,5 +1,5 @@
 use crate::{
-    instruction::{local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate},
+    instruction::{local_variable::LocalVariables, Exec, Instruction, Recreate},
     interpreter::Interpreter,
     parse::Rule,
     variable::{GetReturnType, GetType, Type, Variable},
@@ -13,16 +13,11 @@ pub struct TypeFilter {
     var_type: Type,
 }
 
-impl CreateInstruction for TypeFilter {
-    fn create_instruction(
-        pair: Pair<Rule>,
-        interpreter: &Interpreter,
-        local_variables: &mut LocalVariables,
-    ) -> Result<Instruction> {
-        let mut inner = pair.into_inner();
-        let array = Instruction::new(inner.next().unwrap(), interpreter, local_variables)?;
-        let var_type = Type::from(inner.next().unwrap());
-        match array.get_return_type() {
+impl TypeFilter {
+    pub fn create_instruction(array: Instruction, var_type: Pair<Rule>) -> Result<Instruction> {
+        let array_type = array.get_return_type();
+        let var_type = Type::from(var_type);
+        match array_type {
             Type::Array(_) | Type::EmptyArray => Ok(Self { array, var_type }.into()),
             array_type => Err(Error::CannotDo2(array_type, "?", var_type)),
         }

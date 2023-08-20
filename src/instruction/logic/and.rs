@@ -1,13 +1,10 @@
-use crate::instruction::{
-    local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
-};
+use crate::instruction::traits::{BinOp, CanBeUsed, CreateFromInstructions};
+use crate::instruction::{Exec, Instruction};
 use crate::{
     interpreter::Interpreter,
-    parse::Rule,
     variable::{GetReturnType, Type, Variable},
-    Error, Result,
+    Result,
 };
-use pest::iterators::Pair;
 
 #[derive(Debug)]
 pub struct And {
@@ -15,30 +12,48 @@ pub struct And {
     rhs: Instruction,
 }
 
-impl CreateInstruction for And {
-    fn create_instruction(
-        pair: Pair<Rule>,
-        interpreter: &Interpreter,
-        local_variables: &mut LocalVariables,
-    ) -> Result<Instruction> {
-        let mut inner = pair.into_inner();
-        let pair = inner.next().unwrap();
-        let lhs = Instruction::new(pair, interpreter, local_variables)?;
-        let pair = inner.next().unwrap();
-        let rhs = Instruction::new(pair, interpreter, local_variables)?;
-        match (lhs.get_return_type(), rhs.get_return_type()) {
+impl BinOp for And {
+    const SYMBOL: &'static str = "&&";
+
+    fn get_lhs(&self) -> &Instruction {
+        &self.lhs
+    }
+
+    fn get_rhs(&self) -> &Instruction {
+        &self.rhs
+    }
+
+    fn construct(lhs: Instruction, rhs: Instruction) -> Self {
+        Self { lhs, rhs }
+    }
+}
+
+impl CanBeUsed for And {
+    fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
+        match (lhs, rhs) {
             (Type::Int, Type::Int)
-            | (Type::EmptyArray, Type::Int | Type::Float | Type::String)
-            | (Type::Int | Type::Float | Type::String, Type::EmptyArray) => {
-                Ok(Self::create_from_instructions(lhs, rhs))
+            | (Type::EmptyArray, Type::Int)
+            | (Type::Int, Type::EmptyArray) => true,
+            (Type::Array(var_type), Type::Int) | (Type::Int, Type::Array(var_type)) => {
+                var_type.as_ref() == &Type::Int
             }
-            (Type::Array(var_type), Type::Int) | (Type::Int, Type::Array(var_type))
-                if var_type == Type::Int.into() =>
-            {
-                Ok(Self::create_from_instructions(lhs, rhs))
-            }
-            (lhs_type, rhs_type) => Err(Error::CannotDo2(lhs_type, "&&", rhs_type)),
+            _ => false,
         }
+    }
+}
+
+impl CreateFromInstructions for And {
+    fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
+        Ok(match (lhs, rhs) {
+            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => Self::and(lhs, rhs).into(),
+            (Instruction::Variable(Variable::Int(value)), instruction)
+            | (instruction, Instruction::Variable(Variable::Int(value)))
+                if value != 0 =>
+            {
+                instruction
+            }
+            (lhs, rhs) => Self::construct(lhs, rhs).into(),
+        })
     }
 }
 
@@ -55,19 +70,7 @@ impl And {
                 .take(array.len())
                 .collect(),
             (value, Variable::Int(_)) | (Variable::Int(_), value) => value,
-            (lhs, rhs) => panic!("Tried {lhs} && {rhs} which is imposible"),
-        }
-    }
-    fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
-        match (lhs, rhs) {
-            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => Self::and(lhs, rhs).into(),
-            (Instruction::Variable(Variable::Int(value)), instruction)
-            | (instruction, Instruction::Variable(Variable::Int(value)))
-                if value != 0 =>
-            {
-                instruction
-            }
-            (lhs, rhs) => Self { lhs, rhs }.into(),
+            (lhs, rhs) => panic!("Tried {lhs} {} {rhs} which is imposible", Self::SYMBOL),
         }
     }
 }
@@ -77,18 +80,6 @@ impl Exec for And {
         let lhs = self.lhs.exec(interpreter)?;
         let rhs = self.rhs.exec(interpreter)?;
         Ok(Self::and(lhs, rhs))
-    }
-}
-
-impl Recreate for And {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction> {
-        let lhs = self.lhs.recreate(local_variables, interpreter)?;
-        let rhs = self.rhs.recreate(local_variables, interpreter)?;
-        Ok(Self::create_from_instructions(lhs, rhs))
     }
 }
 

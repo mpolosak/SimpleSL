@@ -1,13 +1,10 @@
-use crate::instruction::{
-    local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
-};
+use crate::instruction::traits::{BinOp, CanBeUsed, CreateFromInstructions};
+use crate::instruction::{Exec, Instruction};
 use crate::{
     interpreter::Interpreter,
-    parse::Rule,
     variable::{GetReturnType, Type, Variable},
     Error, Result,
 };
-use pest::iterators::Pair;
 
 #[derive(Debug)]
 pub struct Modulo {
@@ -15,34 +12,51 @@ pub struct Modulo {
     divisor: Instruction,
 }
 
-impl CreateInstruction for Modulo {
-    fn create_instruction(
-        pair: Pair<Rule>,
-        interpreter: &Interpreter,
-        local_variables: &mut LocalVariables,
-    ) -> Result<Instruction> {
-        let mut inner = pair.into_inner();
-        let pair = inner.next().unwrap();
-        let dividend = Instruction::new(pair, interpreter, local_variables)?;
-        let pair = inner.next().unwrap();
-        let divisor = Instruction::new(pair, interpreter, local_variables)?;
-        match (dividend.get_return_type(), divisor.get_return_type()) {
+impl BinOp for Modulo {
+    const SYMBOL: &'static str = "%";
+
+    fn get_lhs(&self) -> &Instruction {
+        &self.dividend
+    }
+
+    fn get_rhs(&self) -> &Instruction {
+        &self.divisor
+    }
+
+    fn construct(dividend: Instruction, divisor: Instruction) -> Self {
+        Self { dividend, divisor }
+    }
+}
+
+impl CanBeUsed for Modulo {
+    fn can_be_used(dividend: &Type, divisor: &Type) -> bool {
+        match (dividend, divisor) {
             (Type::Int, Type::Int)
-            | (Type::EmptyArray, Type::Int | Type::Float | Type::String)
-            | (Type::Int | Type::Float | Type::String, Type::EmptyArray) => {
-                Self::create_from_instructions(dividend, divisor)
+            | (Type::EmptyArray, Type::Int)
+            | (Type::Int, Type::EmptyArray) => true,
+            (Type::Array(var_type), Type::Int) | (Type::Int, Type::Array(var_type)) => {
+                var_type.as_ref() == &Type::Int
             }
-            (Type::Array(var_type), Type::Int) | (Type::Int, Type::Array(var_type))
-                if var_type == Type::Int.into() =>
-            {
-                Self::create_from_instructions(dividend, divisor)
-            }
-            (dividend_type, divisor_type) => {
-                Err(Error::CannotDo2(dividend_type, "%", divisor_type))
-            }
+            _ => false,
         }
     }
 }
+
+impl CreateFromInstructions for Modulo {
+    fn create_from_instructions(
+        dividend: Instruction,
+        divisor: Instruction,
+    ) -> Result<Instruction> {
+        match (dividend, divisor) {
+            (Instruction::Variable(dividend), Instruction::Variable(divisor)) => {
+                Ok(Self::modulo(dividend, divisor)?.into())
+            }
+            (_, Instruction::Variable(Variable::Int(0))) => Err(Error::ZeroModulo),
+            (dividend, divisor) => Ok(Self::construct(dividend, divisor).into()),
+        }
+    }
+}
+
 impl Modulo {
     fn modulo(dividend: Variable, divisor: Variable) -> Result<Variable> {
         match (dividend, divisor) {
@@ -58,19 +72,7 @@ impl Modulo {
                 .cloned()
                 .map(|divisor| Self::modulo(dividend.clone(), divisor))
                 .collect::<Result<Variable>>(),
-            (dividend, divisor) => panic!("Tried to divide {dividend} by {divisor}"),
-        }
-    }
-    fn create_from_instructions(
-        dividend: Instruction,
-        divisor: Instruction,
-    ) -> Result<Instruction> {
-        match (dividend, divisor) {
-            (Instruction::Variable(dividend), Instruction::Variable(divisor)) => {
-                Ok(Self::modulo(dividend, divisor)?.into())
-            }
-            (_, Instruction::Variable(Variable::Int(0))) => Err(Error::ZeroModulo),
-            (dividend, divisor) => Ok(Self { dividend, divisor }.into()),
+            (dividend, divisor) => panic!("Tried to calc {dividend} {} {divisor}", Self::SYMBOL),
         }
     }
 }
@@ -80,18 +82,6 @@ impl Exec for Modulo {
         let dividend = self.dividend.exec(interpreter)?;
         let divisor = self.divisor.exec(interpreter)?;
         Self::modulo(dividend, divisor)
-    }
-}
-
-impl Recreate for Modulo {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction> {
-        let dividend = self.dividend.recreate(local_variables, interpreter)?;
-        let divisor = self.divisor.recreate(local_variables, interpreter)?;
-        Self::create_from_instructions(dividend, divisor)
     }
 }
 

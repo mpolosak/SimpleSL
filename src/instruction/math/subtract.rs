@@ -1,13 +1,10 @@
-use crate::instruction::{
-    local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate,
-};
+use crate::instruction::traits::{BinOp, CanBeUsed, CreateFromInstructions};
+use crate::instruction::{Exec, Instruction};
 use crate::{
     interpreter::Interpreter,
-    parse::Rule,
     variable::{GetReturnType, Type, Variable},
-    Error, Result,
+    Result,
 };
-use pest::iterators::Pair;
 
 #[derive(Debug)]
 pub struct Subtract {
@@ -15,33 +12,51 @@ pub struct Subtract {
     subtrahend: Instruction,
 }
 
-impl CreateInstruction for Subtract {
-    fn create_instruction(
-        pair: Pair<Rule>,
-        interpreter: &Interpreter,
-        local_variables: &mut LocalVariables,
-    ) -> Result<Instruction> {
-        let mut inner = pair.into_inner();
-        let pair = inner.next().unwrap();
-        let minuend = Instruction::new(pair, interpreter, local_variables)?;
-        let pair = inner.next().unwrap();
-        let subtrahend = Instruction::new(pair, interpreter, local_variables)?;
-        match (minuend.get_return_type(), subtrahend.get_return_type()) {
+impl BinOp for Subtract {
+    const SYMBOL: &'static str = "-";
+
+    fn get_lhs(&self) -> &Instruction {
+        &self.minuend
+    }
+
+    fn get_rhs(&self) -> &Instruction {
+        &self.subtrahend
+    }
+
+    fn construct(minuend: Instruction, subtrahend: Instruction) -> Self {
+        Self {
+            minuend,
+            subtrahend,
+        }
+    }
+}
+
+impl CanBeUsed for Subtract {
+    fn can_be_used(minuend: &Type, subtrahend: &Type) -> bool {
+        match (minuend, subtrahend) {
             (Type::Int, Type::Int)
             | (Type::Float, Type::Float)
             | (Type::EmptyArray, Type::Int | Type::Float)
-            | (Type::Int | Type::Float, Type::EmptyArray) => {
-                Ok(Self::create_from_instructions(minuend, subtrahend))
-            }
+            | (Type::Int | Type::Float, Type::EmptyArray) => true,
             (Type::Array(element_type), var_type @ (Type::Int | Type::Float))
-            | (var_type @ (Type::Int | Type::Float), Type::Array(element_type))
-                if element_type.as_ref() == &var_type =>
-            {
-                Ok(Self::create_from_instructions(minuend, subtrahend))
+            | (var_type @ (Type::Int | Type::Float), Type::Array(element_type)) => {
+                element_type.as_ref() == var_type
             }
-            (minuend_type, subtrahend_type) => {
-                Err(Error::CannotDo2(minuend_type, "-", subtrahend_type))
+            _ => false,
+        }
+    }
+}
+
+impl CreateFromInstructions for Subtract {
+    fn create_from_instructions(
+        minuend: Instruction,
+        subtrahend: Instruction,
+    ) -> Result<Instruction> {
+        match (minuend, subtrahend) {
+            (Instruction::Variable(minuend), Instruction::Variable(rhs)) => {
+                Ok(Self::subtract(minuend, rhs).into())
             }
+            (minuend, subtrahend) => Ok(Self::construct(minuend, subtrahend).into()),
         }
     }
 }
@@ -63,19 +78,9 @@ impl Subtract {
                 .cloned()
                 .map(|minuend| Self::subtract(minuend, subtrahend.clone()))
                 .collect(),
-            (minuend, subtrahend) => panic!("Tried to subtract {minuend} from {subtrahend}"),
-        }
-    }
-    fn create_from_instructions(minuend: Instruction, subtrahend: Instruction) -> Instruction {
-        match (minuend, subtrahend) {
-            (Instruction::Variable(minuend), Instruction::Variable(rhs)) => {
-                Self::subtract(minuend, rhs).into()
+            (minuend, subtrahend) => {
+                panic!("Tried to calc {minuend} {} {subtrahend}", Self::SYMBOL)
             }
-            (minuend, subtrahend) => Self {
-                minuend,
-                subtrahend,
-            }
-            .into(),
         }
     }
 }
@@ -85,18 +90,6 @@ impl Exec for Subtract {
         let minuend = self.minuend.exec(interpreter)?;
         let subtrahend = self.subtrahend.exec(interpreter)?;
         Ok(Self::subtract(minuend, subtrahend))
-    }
-}
-
-impl Recreate for Subtract {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction> {
-        let minuend = self.minuend.recreate(local_variables, interpreter)?;
-        let subtrahend = self.subtrahend.recreate(local_variables, interpreter)?;
-        Ok(Self::create_from_instructions(minuend, subtrahend))
     }
 }
 
