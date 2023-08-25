@@ -15,3 +15,45 @@ Multiline comment
 */
 print("Hello world"/* Comment */)
 ```
+### Variables
+```
+x = 5 // int
+y = 5.0 // float
+text = "Hello\n world" // string
+x = ["int", 7.0, 4] // array
+x = [0; 5] // array containg five zeros
+tuple = (5, 7.8, "value") // tuple
+{
+    tuple = (4, "rgg", 56)
+    print(tuple) // prints (4, "rgg", 56)
+}
+print(tuple) //prints (5, 7.8, "value")
+```
+### Functions
+```
+delta = (a: float, b: float, c: float) -> float {
+    b**2.0+4.0*a*c
+} // function taking free arguments of type float and returning value of type float
+name = "Tom"
+x = (){
+    print("Hello "+name);
+}
+x() // prints "Hello Tom"
+name = "Jerry"
+x() // still prints "Hello Tom"
+print = (vars: any) {
+} // function are availible after they are created and can be overwritten
+x() // but this still works as before
+y = (f: function()->()){
+    f()
+} // function y takes function as argument and exec it
+y(
+    ()->(){print("Function")} // anonymous function
+)
+rec = (n: int){
+    if n {
+        rec()
+    }
+} //recursion
+
+```
