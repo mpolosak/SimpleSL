@@ -1,5 +1,7 @@
 use super::{
-    local_variable::LocalVariables, traits::CreateFromInstructions, Exec, Instruction, Recreate,
+    local_variable::LocalVariables,
+    traits::{BaseInstruction, CreateFromInstructions},
+    Exec, Instruction, Recreate,
 };
 use crate::{
     interpreter::Interpreter,
@@ -85,11 +87,7 @@ impl GetReturnType for At {
     }
 }
 
-impl From<At> for Instruction {
-    fn from(value: At) -> Self {
-        Self::At(value.into())
-    }
-}
+impl BaseInstruction for At {}
 
 fn at(variable: Variable, index: Variable) -> Result<Variable> {
     match (variable, index) {

@@ -1,5 +1,7 @@
 use crate::{
-    instruction::{local_variable::LocalVariables, Exec, Instruction, Recreate},
+    instruction::{
+        local_variable::LocalVariables, traits::BaseInstruction, Exec, Instruction, Recreate,
+    },
     interpreter::Interpreter,
     parse::Rule,
     variable::{function_type::FunctionType, GetReturnType, Type, Variable},
@@ -120,8 +122,4 @@ impl GetReturnType for Reduce {
     }
 }
 
-impl From<Reduce> for Instruction {
-    fn from(value: Reduce) -> Self {
-        Self::Reduce(value.into())
-    }
-}
+impl BaseInstruction for Reduce {}

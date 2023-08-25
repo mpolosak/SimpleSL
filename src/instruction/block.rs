@@ -1,6 +1,6 @@
 use super::{
-    local_variable::LocalVariables, recreate_instructions, CreateInstruction, Exec, Instruction,
-    Recreate,
+    local_variable::LocalVariables, recreate_instructions, traits::BaseInstruction,
+    CreateInstruction, Exec, Instruction, Recreate,
 };
 use crate::{
     interpreter::Interpreter,
@@ -70,8 +70,4 @@ impl GetReturnType for Block {
     }
 }
 
-impl From<Block> for Instruction {
-    fn from(value: Block) -> Self {
-        Self::Block(value)
-    }
-}
+impl BaseInstruction for Block {}

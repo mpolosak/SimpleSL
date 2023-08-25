@@ -1,4 +1,4 @@
-use crate::instruction::traits::{BinOp, CreateFromInstructions};
+use crate::instruction::traits::{BaseInstruction, BinOp, CreateFromInstructions};
 use crate::instruction::{Exec, Instruction};
 use crate::{
     interpreter::Interpreter,
@@ -70,8 +70,4 @@ impl Exec for Xor {
     }
 }
 
-impl From<Xor> for Instruction {
-    fn from(value: Xor) -> Self {
-        Self::Xor(value.into())
-    }
-}
+impl BaseInstruction for Xor {}

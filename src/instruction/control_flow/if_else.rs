@@ -1,3 +1,4 @@
+use crate::instruction::traits::BaseInstruction;
 use crate::instruction::{
     local_variable::LocalVariables, traits::MutCreateInstruction, Exec, Instruction, Recreate,
 };
@@ -111,8 +112,4 @@ impl GetReturnType for IfElse {
     }
 }
 
-impl From<IfElse> for Instruction {
-    fn from(value: IfElse) -> Self {
-        Self::IfElse(value.into())
-    }
-}
+impl BaseInstruction for IfElse {}

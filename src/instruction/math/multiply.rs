@@ -1,4 +1,4 @@
-use crate::instruction::traits::{BinOp, CanBeUsed, CreateFromInstructions};
+use crate::instruction::traits::{BaseInstruction, BinOp, CanBeUsed, CreateFromInstructions};
 use crate::instruction::{Exec, Instruction};
 use crate::{
     interpreter::Interpreter,
@@ -90,8 +90,4 @@ impl GetReturnType for Multiply {
     }
 }
 
-impl From<Multiply> for Instruction {
-    fn from(value: Multiply) -> Self {
-        Self::Multiply(value.into())
-    }
-}
+impl BaseInstruction for Multiply {}

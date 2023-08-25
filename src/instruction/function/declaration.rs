@@ -4,7 +4,7 @@ use crate::{
         local_variable::{LocalVariable, LocalVariableMap, LocalVariables},
         recreate_instructions,
         set::Set,
-        traits::MutCreateInstruction,
+        traits::{BaseInstruction, MutCreateInstruction},
         Exec, Instruction, Recreate,
     },
     interpreter::Interpreter,
@@ -163,12 +163,6 @@ impl Recreate for FunctionDeclaration {
     }
 }
 
-impl From<FunctionDeclaration> for Instruction {
-    fn from(value: FunctionDeclaration) -> Self {
-        Self::FunctionDeclaration(value)
-    }
-}
-
 impl GetReturnType for FunctionDeclaration {
     fn get_return_type(&self) -> Type {
         let params: Box<[Type]> = self
@@ -184,3 +178,5 @@ impl GetReturnType for FunctionDeclaration {
         .into()
     }
 }
+
+impl BaseInstruction for FunctionDeclaration {}

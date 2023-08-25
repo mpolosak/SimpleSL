@@ -2,6 +2,7 @@ use pest::iterators::Pair;
 
 use crate::{
     function::{check_args, Params},
+    instruction::traits::BaseInstruction,
     interpreter::Interpreter,
     variable::{function_type::FunctionType, GetReturnType, Type, Variable},
     Error, Result,
@@ -103,12 +104,6 @@ impl Recreate for FunctionCall {
     }
 }
 
-impl From<FunctionCall> for Instruction {
-    fn from(value: FunctionCall) -> Self {
-        Self::FunctionCall(value.into())
-    }
-}
-
 impl GetReturnType for FunctionCall {
     fn get_return_type(&self) -> Type {
         let Type::Function(function_type) = self.function.get_return_type() else {
@@ -117,3 +112,5 @@ impl GetReturnType for FunctionCall {
         function_type.return_type.clone()
     }
 }
+
+impl BaseInstruction for FunctionCall {}

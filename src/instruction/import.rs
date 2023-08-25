@@ -1,6 +1,8 @@
 use super::{
-    local_variable::LocalVariables, recreate_instructions, traits::MutCreateInstruction, Exec,
-    Instruction, Recreate,
+    local_variable::LocalVariables,
+    recreate_instructions,
+    traits::{BaseInstruction, MutCreateInstruction},
+    Exec, Instruction, Recreate,
 };
 use crate::{
     interpreter::Interpreter,
@@ -66,8 +68,4 @@ impl GetReturnType for Import {
     }
 }
 
-impl From<Import> for Instruction {
-    fn from(value: Import) -> Self {
-        Self::Import(value)
-    }
-}
+impl BaseInstruction for Import {}

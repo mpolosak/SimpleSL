@@ -1,4 +1,4 @@
-use crate::instruction::traits::{BinOp, CanBeUsed, CreateFromInstructions};
+use crate::instruction::traits::{BaseInstruction, BinOp, CanBeUsed, CreateFromInstructions};
 use crate::instruction::{Exec, Instruction};
 use crate::{
     interpreter::Interpreter,
@@ -97,8 +97,4 @@ impl GetReturnType for Or {
     }
 }
 
-impl From<Or> for Instruction {
-    fn from(value: Or) -> Self {
-        Self::Or(value.into())
-    }
-}
+impl BaseInstruction for Or {}

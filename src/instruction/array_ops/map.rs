@@ -1,6 +1,6 @@
 use crate::{
     instruction::{
-        traits::{BinOp, CanBeUsed, CreateFromInstructions},
+        traits::{BaseInstruction, BinOp, CanBeUsed, CreateFromInstructions},
         Exec, Instruction,
     },
     interpreter::Interpreter,
@@ -158,8 +158,4 @@ impl GetReturnType for Map {
     }
 }
 
-impl From<Map> for Instruction {
-    fn from(value: Map) -> Self {
-        Self::Map(value.into())
-    }
-}
+impl BaseInstruction for Map {}

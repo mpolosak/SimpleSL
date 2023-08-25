@@ -1,4 +1,4 @@
-use crate::instruction::traits::{BinOp, CanBeUsed, CreateFromInstructions};
+use crate::instruction::traits::{BaseInstruction, BinOp, CanBeUsed, CreateFromInstructions};
 use crate::instruction::{Exec, Instruction};
 use crate::{
     interpreter::Interpreter,
@@ -106,8 +106,4 @@ impl GetReturnType for Subtract {
     }
 }
 
-impl From<Subtract> for Instruction {
-    fn from(value: Subtract) -> Self {
-        Self::Subtract(value.into())
-    }
-}
+impl BaseInstruction for Subtract {}

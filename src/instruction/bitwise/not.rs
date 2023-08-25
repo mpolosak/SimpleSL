@@ -1,6 +1,9 @@
-use crate::instruction::traits::PrefixOp;
-use crate::instruction::Instruction;
-use crate::variable::Type;
+use crate::instruction::local_variable::LocalVariables;
+use crate::instruction::traits::{BaseInstruction, PrefixOp};
+use crate::instruction::{Exec, Instruction, Recreate};
+use crate::interpreter::Interpreter;
+use crate::variable::{GetReturnType, Type, Variable};
+use crate::Result;
 
 #[derive(Debug)]
 pub struct BitwiseNot {
@@ -27,8 +30,26 @@ impl PrefixOp for BitwiseNot {
     }
 }
 
-impl From<BitwiseNot> for Instruction {
-    fn from(value: BitwiseNot) -> Self {
-        Self::BinNot(value.into())
+impl Exec for BitwiseNot {
+    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
+        PrefixOp::exec(self, interpreter)
     }
 }
+
+impl Recreate for BitwiseNot {
+    fn recreate(
+        &self,
+        local_variables: &mut LocalVariables,
+        interpreter: &Interpreter,
+    ) -> Result<Instruction> {
+        PrefixOp::recreate(self, local_variables, interpreter)
+    }
+}
+
+impl GetReturnType for BitwiseNot {
+    fn get_return_type(&self) -> Type {
+        PrefixOp::get_return_type(self)
+    }
+}
+
+impl BaseInstruction for BitwiseNot {}

@@ -4,7 +4,7 @@ use super::{
     exec_instructions,
     local_variable::LocalVariables,
     recreate_instructions,
-    traits::{Exec, Recreate},
+    traits::{BaseInstruction, Exec, Recreate},
     CreateInstruction, Instruction,
 };
 use crate::{
@@ -85,8 +85,4 @@ impl GetReturnType for Array {
     }
 }
 
-impl From<Array> for Instruction {
-    fn from(value: Array) -> Self {
-        Self::Array(value)
-    }
-}
+impl BaseInstruction for Array {}

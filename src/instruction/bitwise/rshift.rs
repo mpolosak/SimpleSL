@@ -1,4 +1,4 @@
-use crate::instruction::traits::{BinOp, CreateFromInstructions};
+use crate::instruction::traits::{BaseInstruction, BinOp, CreateFromInstructions};
 use crate::instruction::{Exec, Instruction};
 use crate::{
     interpreter::Interpreter,
@@ -79,8 +79,4 @@ impl Exec for RShift {
     }
 }
 
-impl From<RShift> for Instruction {
-    fn from(value: RShift) -> Self {
-        Self::RShift(value.into())
-    }
-}
+impl BaseInstruction for RShift {}

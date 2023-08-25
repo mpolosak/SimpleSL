@@ -1,4 +1,4 @@
-use crate::instruction::traits::{BinOp, CanBeUsed, CreateFromInstructions};
+use crate::instruction::traits::{BaseInstruction, BinOp, CanBeUsed, CreateFromInstructions};
 use crate::instruction::{Exec, Instruction};
 use crate::{
     interpreter::Interpreter,
@@ -101,8 +101,4 @@ impl GetReturnType for Modulo {
     }
 }
 
-impl From<Modulo> for Instruction {
-    fn from(value: Modulo) -> Self {
-        Self::Modulo(value.into())
-    }
-}
+impl BaseInstruction for Modulo {}

@@ -1,4 +1,4 @@
-use crate::instruction::traits::{BinOp, CanBeUsed, CreateFromInstructions};
+use crate::instruction::traits::{BaseInstruction, BinOp, CanBeUsed, CreateFromInstructions};
 use crate::instruction::{Exec, Instruction};
 use crate::{
     interpreter::Interpreter,
@@ -105,8 +105,4 @@ impl GetReturnType for Divide {
     }
 }
 
-impl From<Divide> for Instruction {
-    fn from(value: Divide) -> Self {
-        Self::Divide(value.into())
-    }
-}
+impl BaseInstruction for Divide {}

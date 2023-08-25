@@ -1,4 +1,4 @@
-use crate::instruction::traits::{BinOp, CanBeUsed, CreateFromInstructions};
+use crate::instruction::traits::{BaseInstruction, BinOp, CanBeUsed, CreateFromInstructions};
 use crate::instruction::{Exec, Instruction};
 use crate::variable::{GetReturnType, Type};
 use crate::{interpreter::Interpreter, variable::Variable, Result};
@@ -85,8 +85,4 @@ impl GetReturnType for GreaterOrEqual {
     }
 }
 
-impl From<GreaterOrEqual> for Instruction {
-    fn from(value: GreaterOrEqual) -> Self {
-        Self::GreaterOrEqual(value.into())
-    }
-}
+impl BaseInstruction for GreaterOrEqual {}

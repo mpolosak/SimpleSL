@@ -1,4 +1,4 @@
-use crate::instruction::traits::{BinOp, CanBeUsed, CreateFromInstructions};
+use crate::instruction::traits::{BaseInstruction, BinOp, CanBeUsed, CreateFromInstructions};
 use crate::instruction::{Exec, Instruction};
 use crate::{
     interpreter::Interpreter,
@@ -96,8 +96,4 @@ impl GetReturnType for And {
     }
 }
 
-impl From<And> for Instruction {
-    fn from(value: And) -> Self {
-        Self::And(value.into())
-    }
-}
+impl BaseInstruction for And {}

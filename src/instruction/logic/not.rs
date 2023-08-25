@@ -1,6 +1,9 @@
-use crate::instruction::traits::PrefixOp;
-use crate::instruction::Instruction;
-use crate::variable::Type;
+use crate::instruction::local_variable::LocalVariables;
+use crate::instruction::traits::{BaseInstruction, PrefixOp};
+use crate::instruction::{Exec, Instruction, Recreate};
+use crate::interpreter::Interpreter;
+use crate::variable::{GetReturnType, Type, Variable};
+use crate::Result;
 
 #[derive(Debug)]
 pub struct Not {
@@ -27,8 +30,26 @@ impl PrefixOp for Not {
     }
 }
 
-impl From<Not> for Instruction {
-    fn from(value: Not) -> Self {
-        Self::Not(value.into())
+impl Exec for Not {
+    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
+        PrefixOp::exec(self, interpreter)
     }
 }
+
+impl Recreate for Not {
+    fn recreate(
+        &self,
+        local_variables: &mut LocalVariables,
+        interpreter: &Interpreter,
+    ) -> Result<Instruction> {
+        PrefixOp::recreate(self, local_variables, interpreter)
+    }
+}
+
+impl GetReturnType for Not {
+    fn get_return_type(&self) -> Type {
+        PrefixOp::get_return_type(self)
+    }
+}
+
+impl BaseInstruction for Not {}

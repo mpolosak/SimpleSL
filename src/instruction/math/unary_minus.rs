@@ -1,6 +1,9 @@
-use crate::instruction::traits::PrefixOp;
-use crate::instruction::Instruction;
-use crate::variable::Type;
+use crate::instruction::local_variable::LocalVariables;
+use crate::instruction::traits::{BaseInstruction, PrefixOp};
+use crate::instruction::{Exec, Instruction, Recreate};
+use crate::interpreter::Interpreter;
+use crate::variable::{GetReturnType, Type, Variable};
+use crate::Result;
 
 #[derive(Debug)]
 pub struct UnaryMinus {
@@ -31,8 +34,26 @@ impl PrefixOp for UnaryMinus {
     }
 }
 
-impl From<UnaryMinus> for Instruction {
-    fn from(value: UnaryMinus) -> Self {
-        Self::UnaryMinus(value.into())
+impl Exec for UnaryMinus {
+    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
+        PrefixOp::exec(self, interpreter)
     }
 }
+
+impl Recreate for UnaryMinus {
+    fn recreate(
+        &self,
+        local_variables: &mut LocalVariables,
+        interpreter: &Interpreter,
+    ) -> Result<Instruction> {
+        PrefixOp::recreate(self, local_variables, interpreter)
+    }
+}
+
+impl GetReturnType for UnaryMinus {
+    fn get_return_type(&self) -> Type {
+        PrefixOp::get_return_type(self)
+    }
+}
+
+impl BaseInstruction for UnaryMinus {}

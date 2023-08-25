@@ -1,6 +1,6 @@
 use crate::{
     instruction::{
-        traits::{BinOp, CanBeUsed, CreateFromInstructions},
+        traits::{BaseInstruction, BinOp, CanBeUsed, CreateFromInstructions},
         Exec, Instruction,
     },
     interpreter::Interpreter,
@@ -93,8 +93,4 @@ impl GetReturnType for Filter {
     }
 }
 
-impl From<Filter> for Instruction {
-    fn from(value: Filter) -> Self {
-        Self::Filter(value.into())
-    }
-}
+impl BaseInstruction for Filter {}

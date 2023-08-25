@@ -1,4 +1,7 @@
-use super::{local_variable::LocalVariables, CreateInstruction, Exec, Instruction, Recreate};
+use super::{
+    local_variable::LocalVariables, traits::BaseInstruction, CreateInstruction, Exec, Instruction,
+    Recreate,
+};
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
@@ -77,8 +80,4 @@ impl GetReturnType for ArrayRepeat {
     }
 }
 
-impl From<ArrayRepeat> for Instruction {
-    fn from(value: ArrayRepeat) -> Self {
-        Self::ArrayRepeat(value.into())
-    }
-}
+impl BaseInstruction for ArrayRepeat {}

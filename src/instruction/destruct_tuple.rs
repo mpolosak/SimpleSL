@@ -2,7 +2,7 @@ use std::{iter::zip, rc::Rc};
 
 use super::{
     local_variable::{LocalVariable, LocalVariables},
-    traits::MutCreateInstruction,
+    traits::{BaseInstruction, MutCreateInstruction},
     tuple::Tuple,
     Exec, Instruction, Recreate,
 };
@@ -107,8 +107,4 @@ impl GetReturnType for DestructTuple {
     }
 }
 
-impl From<DestructTuple> for Instruction {
-    fn from(value: DestructTuple) -> Self {
-        Self::DestructTuple(value.into())
-    }
-}
+impl BaseInstruction for DestructTuple {}

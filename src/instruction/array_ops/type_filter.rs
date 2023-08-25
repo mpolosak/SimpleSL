@@ -1,5 +1,7 @@
 use crate::{
-    instruction::{local_variable::LocalVariables, Exec, Instruction, Recreate},
+    instruction::{
+        local_variable::LocalVariables, traits::BaseInstruction, Exec, Instruction, Recreate,
+    },
     interpreter::Interpreter,
     parse::Rule,
     variable::{GetReturnType, GetType, Type, Variable},
@@ -59,8 +61,4 @@ impl GetReturnType for TypeFilter {
     }
 }
 
-impl From<TypeFilter> for Instruction {
-    fn from(value: TypeFilter) -> Self {
-        Self::TypeFilter(value.into())
-    }
-}
+impl BaseInstruction for TypeFilter {}

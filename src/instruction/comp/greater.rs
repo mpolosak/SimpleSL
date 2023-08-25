@@ -1,5 +1,5 @@
 use super::can_be_used;
-use crate::instruction::traits::{BinOp, CanBeUsed, CreateFromInstructions};
+use crate::instruction::traits::{BaseInstruction, BinOp, CanBeUsed, CreateFromInstructions};
 use crate::instruction::{Exec, Instruction};
 use crate::variable::{GetReturnType, Type};
 use crate::{interpreter::Interpreter, variable::Variable, Result};
@@ -84,8 +84,4 @@ impl GetReturnType for Greater {
     }
 }
 
-impl From<Greater> for Instruction {
-    fn from(value: Greater) -> Self {
-        Self::Greater(value.into())
-    }
-}
+impl BaseInstruction for Greater {}

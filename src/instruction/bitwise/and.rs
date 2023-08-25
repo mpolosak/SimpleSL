@@ -1,5 +1,5 @@
 use super::BitwiseBinOp;
-use crate::instruction::traits::{BinOp, CreateFromInstructions};
+use crate::instruction::traits::{BaseInstruction, BinOp, CreateFromInstructions};
 use crate::instruction::{Exec, Instruction};
 use crate::interpreter::Interpreter;
 use crate::variable::Variable;
@@ -67,8 +67,4 @@ impl Exec for BitwiseAnd {
     }
 }
 
-impl From<BitwiseAnd> for Instruction {
-    fn from(value: BitwiseAnd) -> Self {
-        Self::BinAnd(value.into())
-    }
-}
+impl BaseInstruction for BitwiseAnd {}

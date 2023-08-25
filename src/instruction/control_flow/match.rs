@@ -1,7 +1,9 @@
 use super::match_arm::MatchArm;
 use crate::{
     instruction::{
-        local_variable::LocalVariables, traits::MutCreateInstruction, Exec, Instruction, Recreate,
+        local_variable::LocalVariables,
+        traits::{BaseInstruction, MutCreateInstruction},
+        Exec, Instruction, Recreate,
     },
     interpreter::Interpreter,
     parse::Rule,
@@ -88,8 +90,4 @@ impl GetReturnType for Match {
     }
 }
 
-impl From<Match> for Instruction {
-    fn from(value: Match) -> Self {
-        Self::Match(value.into())
-    }
-}
+impl BaseInstruction for Match {}

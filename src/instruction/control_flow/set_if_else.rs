@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use crate::instruction::{
     local_variable::{LocalVariable, LocalVariables},
-    traits::MutCreateInstruction,
+    traits::{BaseInstruction, MutCreateInstruction},
     Exec, Instruction, Recreate,
 };
 use crate::{
@@ -109,8 +109,4 @@ impl GetReturnType for SetIfElse {
     }
 }
 
-impl From<SetIfElse> for Instruction {
-    fn from(value: SetIfElse) -> Self {
-        Self::SetIfElse(value.into())
-    }
-}
+impl BaseInstruction for SetIfElse {}
