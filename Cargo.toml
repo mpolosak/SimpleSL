@@ -1,9 +1,13 @@
 [workspace]
-
 [package]
 name = "simplesl"
 version = "0.1.0"
+authors = ["Michał Połosak <mpolosak@op.pl>"]
 edition = "2021"
+license = "MIT"
+repository = "https://github.com/mpolosak/SimpleSL"
+readme = "README.md"
+description = "Simple Scripting Language"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -13,4 +17,4 @@ pest = "2.0"
 pest_derive = "2.0"
 unescaper = "0.1.0"
 lazy_static = "1.4.0"
-simplesl_macros = { path="macros" }
+simplesl_macros = { path="macros", version="0.1.0" }

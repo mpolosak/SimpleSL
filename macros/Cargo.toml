@@ -1,7 +1,11 @@
 [package]
 name = "simplesl_macros"
 version = "0.1.0"
+authors = ["Michał Połosak <mpolosak@op.pl>"]
 edition = "2021"
+license = "MIT"
+description = "Macros simplyfing adding functions to SimpleSl"
+repository = "https://github.com/mpolosak/SimpleSL"
 
 [lib]
 proc_macro = true
