@@ -15,11 +15,11 @@ pub struct Divide {
 impl BinOp for Divide {
     const SYMBOL: &'static str = "/";
 
-    fn get_lhs(&self) -> &Instruction {
+    fn lhs(&self) -> &Instruction {
         &self.dividend
     }
 
-    fn get_rhs(&self) -> &Instruction {
+    fn rhs(&self) -> &Instruction {
         &self.divisor
     }
 

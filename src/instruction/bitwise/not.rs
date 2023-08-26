@@ -13,7 +13,7 @@ pub struct BitwiseNot {
 impl PrefixOp for BitwiseNot {
     const SYMBOL: &'static str = "~";
 
-    fn get_instruction(&self) -> &Instruction {
+    fn instruction(&self) -> &Instruction {
         &self.instruction
     }
 

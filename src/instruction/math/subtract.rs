@@ -15,11 +15,11 @@ pub struct Subtract {
 impl BinOp for Subtract {
     const SYMBOL: &'static str = "-";
 
-    fn get_lhs(&self) -> &Instruction {
+    fn lhs(&self) -> &Instruction {
         &self.minuend
     }
 
-    fn get_rhs(&self) -> &Instruction {
+    fn rhs(&self) -> &Instruction {
         &self.subtrahend
     }
 

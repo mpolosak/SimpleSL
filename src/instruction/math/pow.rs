@@ -15,11 +15,11 @@ pub struct Pow {
 impl BinOp for Pow {
     const SYMBOL: &'static str = "**";
 
-    fn get_lhs(&self) -> &Instruction {
+    fn lhs(&self) -> &Instruction {
         &self.base
     }
 
-    fn get_rhs(&self) -> &Instruction {
+    fn rhs(&self) -> &Instruction {
         &self.exp
     }
 

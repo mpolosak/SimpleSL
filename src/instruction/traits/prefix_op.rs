@@ -9,7 +9,7 @@ use super::{Exec, Recreate};
 
 pub trait PrefixOp: Sized + Into<Instruction> {
     const SYMBOL: &'static str;
-    fn get_instruction(&self) -> &Instruction;
+    fn instruction(&self) -> &Instruction;
     fn construct(instruction: Instruction) -> Self;
     fn can_be_used(var_type: &Type) -> bool;
     fn calc(variable: Variable) -> Variable {
@@ -41,7 +41,7 @@ pub trait PrefixOp: Sized + Into<Instruction> {
         }
     }
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
-        let result = self.get_instruction().exec(interpreter)?;
+        let result = self.instruction().exec(interpreter)?;
         Ok(Self::calc(result))
     }
     fn recreate(
@@ -49,12 +49,10 @@ pub trait PrefixOp: Sized + Into<Instruction> {
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
     ) -> Result<Instruction> {
-        let instruction = self
-            .get_instruction()
-            .recreate(local_variables, interpreter)?;
+        let instruction = self.instruction().recreate(local_variables, interpreter)?;
         Ok(Self::create_from_instruction(instruction))
     }
     fn get_return_type(&self) -> Type {
-        self.get_instruction().get_return_type()
+        self.instruction().get_return_type()
     }
 }

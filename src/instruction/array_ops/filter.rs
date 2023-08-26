@@ -17,11 +17,11 @@ pub struct Filter {
 impl BinOp for Filter {
     const SYMBOL: &'static str = "?";
 
-    fn get_lhs(&self) -> &Instruction {
+    fn lhs(&self) -> &Instruction {
         &self.array
     }
 
-    fn get_rhs(&self) -> &Instruction {
+    fn rhs(&self) -> &Instruction {
         &self.function
     }
 

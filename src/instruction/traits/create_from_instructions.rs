@@ -14,8 +14,8 @@ impl<T: CreateFromInstructions + BinOp> Recreate for T {
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
     ) -> Result<Instruction> {
-        let lhs = self.get_lhs().recreate(local_variables, interpreter)?;
-        let rhs = self.get_rhs().recreate(local_variables, interpreter)?;
+        let lhs = self.lhs().recreate(local_variables, interpreter)?;
+        let rhs = self.rhs().recreate(local_variables, interpreter)?;
         Self::create_from_instructions(lhs, rhs)
     }
 }

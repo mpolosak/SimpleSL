@@ -18,11 +18,11 @@ pub struct Map {
 impl BinOp for Map {
     const SYMBOL: &'static str = "@";
 
-    fn get_lhs(&self) -> &Instruction {
+    fn lhs(&self) -> &Instruction {
         &self.array
     }
 
-    fn get_rhs(&self) -> &Instruction {
+    fn rhs(&self) -> &Instruction {
         &self.function
     }
 
@@ -153,7 +153,9 @@ impl Exec for Map {
 
 impl GetReturnType for Map {
     fn get_return_type(&self) -> Type {
-        let Type::Function(function_type) = self.function.get_return_type() else {panic!()};
+        let Type::Function(function_type) = self.function.get_return_type() else {
+            panic!()
+        };
         Type::Array(function_type.return_type.clone().into())
     }
 }

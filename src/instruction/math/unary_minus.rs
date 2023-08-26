@@ -13,7 +13,7 @@ pub struct UnaryMinus {
 impl PrefixOp for UnaryMinus {
     const SYMBOL: &'static str = "-";
 
-    fn get_instruction(&self) -> &Instruction {
+    fn instruction(&self) -> &Instruction {
         &self.instruction
     }
 

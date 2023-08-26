@@ -13,7 +13,7 @@ pub struct Not {
 impl PrefixOp for Not {
     const SYMBOL: &'static str = "!";
 
-    fn get_instruction(&self) -> &Instruction {
+    fn instruction(&self) -> &Instruction {
         &self.instruction
     }
 

@@ -29,10 +29,7 @@ impl<T: BitwiseBinOp> CanBeUsed for T {
 impl<T: BitwiseBinOp> GetReturnType for T {
     fn get_return_type(&self) -> Type {
         if matches!(
-            (
-                self.get_lhs().get_return_type(),
-                self.get_rhs().get_return_type()
-            ),
+            (self.lhs().get_return_type(), self.rhs().get_return_type()),
             (Type::Array(_), _) | (_, Type::Array(_))
         ) {
             Type::Array(Type::Int.into())

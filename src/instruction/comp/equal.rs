@@ -12,11 +12,11 @@ pub struct Equal {
 impl BinOp for Equal {
     const SYMBOL: &'static str = "==";
 
-    fn get_lhs(&self) -> &Instruction {
+    fn lhs(&self) -> &Instruction {
         &self.lhs
     }
 
-    fn get_rhs(&self) -> &Instruction {
+    fn rhs(&self) -> &Instruction {
         &self.rhs
     }
 
