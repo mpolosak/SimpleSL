@@ -98,9 +98,7 @@ impl GetReturnType for Divide {
             self.dividend.get_return_type(),
             self.divisor.get_return_type(),
         ) {
-            (var_type @ Type::Array(_), _) | (_, var_type @ Type::Array(_)) | (var_type, _) => {
-                var_type
-            }
+            (_, var_type @ Type::Array(_)) | (var_type, _) => var_type,
         }
     }
 }

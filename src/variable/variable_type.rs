@@ -29,6 +29,7 @@ pub enum Type {
 }
 
 impl Type {
+    #[must_use]
     pub fn matches(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::Function(function_type), Self::Function(function_type2)) => {
@@ -48,6 +49,7 @@ impl Type {
             _ => self == other,
         }
     }
+    #[must_use]
     pub fn concat(self, other: Self) -> Self {
         match (self, other) {
             (Type::Any, _) | (_, Type::Any) => Type::Any,
@@ -87,7 +89,7 @@ impl FromStr for Type {
 
     fn from_str(s: &str) -> Result<Self> {
         let Some(pair) = SimpleSLParser::parse(Rule::r#type, s)?.next() else {
-            return Err(Error::ArgumentDoesntContainType)
+            return Err(Error::ArgumentDoesntContainType);
         };
         Ok(Self::from(pair))
     }
@@ -135,7 +137,7 @@ impl BitOr for Type {
 
 impl BitOrAssign for Type {
     fn bitor_assign(&mut self, rhs: Self) {
-        *self = self.clone() | rhs
+        *self = self.clone() | rhs;
     }
 }
 pub trait GetType {

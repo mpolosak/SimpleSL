@@ -12,6 +12,7 @@ pub struct LocalVariables<'a> {
 }
 
 impl<'a> LocalVariables<'a> {
+    #[must_use]
     pub fn new() -> Self {
         Self {
             variables: LocalVariableMap::new(),
@@ -21,6 +22,7 @@ impl<'a> LocalVariables<'a> {
     pub fn insert(&mut self, name: Rc<str>, variable: LocalVariable) {
         self.variables.insert(name, variable);
     }
+    #[must_use]
     pub fn get(&self, name: &str) -> Option<&LocalVariable> {
         if let Some(variable) = self.variables.get(name) {
             Some(variable)
@@ -30,6 +32,7 @@ impl<'a> LocalVariables<'a> {
             None
         }
     }
+    #[must_use]
     pub fn contains_key(&self, name: &Rc<str>) -> bool {
         if self.variables.contains_key(name) {
             true
@@ -39,12 +42,14 @@ impl<'a> LocalVariables<'a> {
             false
         }
     }
+    #[must_use]
     pub fn create_layer(&'a self) -> Self {
         Self {
             variables: LocalVariableMap::new(),
             lower_layer: Some(self),
         }
     }
+    #[must_use]
     pub fn layer_from_map(&'a self, layer: LocalVariableMap) -> Self {
         Self {
             variables: layer,

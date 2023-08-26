@@ -33,7 +33,7 @@ fn run_shell() -> Result<()> {
                     }
                 }
             }
-            Err(ReadlineError::Interrupted) | Err(ReadlineError::Eof) => return Ok(()),
+            Err(ReadlineError::Interrupted | ReadlineError::Eof) => return Ok(()),
             Err(err) => return Err(err.into()),
         }
     }

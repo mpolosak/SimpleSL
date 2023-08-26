@@ -26,7 +26,7 @@ impl PrefixOp for Not {
     }
 
     fn calc_int(num: i64) -> i64 {
-        (num == 0) as i64
+        i64::from(num == 0)
     }
 }
 

@@ -104,9 +104,7 @@ impl GetReturnType for Add {
             (Type::Array(element_type1), Type::Array(element_type2)) => Type::Array(
                 (element_type1.as_ref().clone() | element_type2.as_ref().clone()).into(),
             ),
-            (var_type @ Type::Array(_), _) | (_, var_type @ Type::Array(_)) | (var_type, _) => {
-                var_type
-            }
+            (_, var_type @ Type::Array(_)) | (var_type, _) => var_type,
         }
     }
 }

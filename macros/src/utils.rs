@@ -98,11 +98,11 @@ fn arg_import_from_function_param(
 
 pub fn params_from_function_params(params: &[(Ident, Vec<Attribute>, String)]) -> TokenStream {
     params.iter().fold(quote!(), |acc, param| {
-        if param.2 != "& mut Interpreter" {
+        if param.2 == "& mut Interpreter" {
+            quote!()
+        } else {
             let param = param_from_function_param(param);
             quote!(#acc #param,)
-        } else {
-            quote!()
         }
     })
 }
@@ -130,7 +130,7 @@ fn type_from_str(attrs: &[Attribute], param_type: &str) -> TokenStream {
     } else if param_type == "Rc < [Variable] >" || param_type == "& [Variable]" {
         get_type_from_attrs(attrs).unwrap_or(quote!(Type::Array(Type::Any.into())))
     } else if param_type == "Rc < Function >" {
-        let Some(var_type) = get_type_from_attrs(attrs) else{
+        let Some(var_type) = get_type_from_attrs(attrs) else {
             panic!("Argument of type function must be precede by var_type attribute")
         };
         var_type
@@ -215,7 +215,7 @@ fn is_result(return_type: &Type) -> bool {
     return_type.starts_with("Result")
 }
 
-pub fn get_body(is_result: bool, ident: Ident, args: TokenStream) -> TokenStream {
+pub fn get_body(is_result: bool, ident: &Ident, args: &TokenStream) -> TokenStream {
     if is_result {
         quote!(Ok(#ident(#args)?.into()))
     } else {
@@ -225,7 +225,7 @@ pub fn get_body(is_result: bool, ident: Ident, args: TokenStream) -> TokenStream
 
 pub fn get_return_type(function: &ItemFn, return_type: Option<TokenStream>) -> (TokenStream, bool) {
     let ReturnType::Type(_, syn_type) = &function.sig.output else {
-        return (quote!(Type::Void), false)
+        return (quote!(Type::Void), false);
     };
     let return_type = if let Some(return_type) = return_type {
         return_type

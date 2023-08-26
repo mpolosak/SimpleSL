@@ -134,8 +134,8 @@ impl GetReturnType for AnonymousFunction {
             .collect();
         let return_type = self.return_type.clone();
         FunctionType {
-            return_type,
             params,
+            return_type,
         }
         .into()
     }

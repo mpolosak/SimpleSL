@@ -82,10 +82,10 @@ impl MutCreateInstruction for FunctionDeclaration {
                 LocalVariable::Function(params.clone(), return_type.clone()),
             );
             Ok(Self {
+                ident,
                 params,
                 body,
                 return_type,
-                ident,
             }
             .into())
         }
@@ -172,8 +172,8 @@ impl GetReturnType for FunctionDeclaration {
             .collect();
         let return_type = self.return_type.clone();
         FunctionType {
-            return_type,
             params,
+            return_type,
         }
         .into()
     }

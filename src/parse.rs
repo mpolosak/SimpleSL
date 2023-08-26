@@ -6,7 +6,7 @@ pub struct SimpleSLParser;
 
 lazy_static::lazy_static! {
     pub static ref PRATT_PARSER: PrattParser<Rule> = {
-        use pest::pratt_parser::{Assoc::*, Op};
+        use pest::pratt_parser::{Assoc::Left, Op};
         use Rule::*;
 
         // Precedence is defined lowest to highest

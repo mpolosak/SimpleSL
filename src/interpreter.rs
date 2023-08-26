@@ -15,6 +15,7 @@ pub struct Interpreter<'a> {
 type VariableMap = HashMap<Rc<str>, Variable>;
 
 impl<'a> Interpreter<'a> {
+    #[must_use]
     pub fn new() -> Self {
         let variables = VariableMap::new();
         let mut result = Self {
@@ -80,6 +81,7 @@ impl<'a> Interpreter<'a> {
         self.variables.insert(name, variable);
     }
 
+    #[must_use]
     pub fn create_layer(&'a self) -> Box<Self> {
         Self {
             variables: VariableMap::new(),

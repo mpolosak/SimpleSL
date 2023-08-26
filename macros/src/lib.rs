@@ -1,3 +1,4 @@
+#![warn(clippy::pedantic)]
 extern crate proc_macro;
 use proc_macro::TokenStream;
 extern crate quote;
@@ -26,7 +27,7 @@ pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream 
     let args_importing = args_import_from_function_params(&params);
     let params = params_from_function_params(&params);
     let (return_type, is_result) = get_return_type(&function, attr.return_type);
-    let body = get_body(is_result, ident, args);
+    let body = get_body(is_result, &ident, &args);
     quote!(
         #function
         {

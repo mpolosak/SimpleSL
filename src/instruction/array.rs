@@ -44,7 +44,7 @@ impl Array {
                 .unwrap();
             let var_type = Type::Array(element_type.into());
             let mut array = Vec::new();
-            for instruction in instructions.iter() {
+            for instruction in &*instructions {
                 let Instruction::Variable(variable) = instruction else {
                     return Self {
                         instructions,

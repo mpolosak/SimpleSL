@@ -31,9 +31,7 @@ impl BinOp for Modulo {
 impl CanBeUsed for Modulo {
     fn can_be_used(dividend: &Type, divisor: &Type) -> bool {
         match (dividend, divisor) {
-            (Type::Int, Type::Int)
-            | (Type::EmptyArray, Type::Int)
-            | (Type::Int, Type::EmptyArray) => true,
+            (Type::Int | Type::EmptyArray, Type::Int) | (Type::Int, Type::EmptyArray) => true,
             (Type::Array(var_type), Type::Int) | (Type::Int, Type::Array(var_type)) => {
                 var_type.as_ref() == &Type::Int
             }

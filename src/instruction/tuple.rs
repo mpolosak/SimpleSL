@@ -32,7 +32,7 @@ impl CreateInstruction for Tuple {
 impl Tuple {
     fn create_from_elements(elements: Box<[Instruction]>) -> Instruction {
         let mut array = Vec::new();
-        for instruction in elements.iter() {
+        for instruction in &*elements {
             let Instruction::Variable(variable) = instruction else {
                 return Self { elements }.into();
             };

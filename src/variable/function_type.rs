@@ -10,6 +10,7 @@ pub struct FunctionType {
 }
 
 impl FunctionType {
+    #[must_use]
     pub fn matches(&self, other: &Self) -> bool {
         self.params.len() == other.params.len()
             && zip(self.params.iter(), other.params.iter())
@@ -56,8 +57,8 @@ impl From<Pair<'_, Rule>> for FunctionType {
             }
         }
         Self {
-            return_type,
             params,
+            return_type,
         }
     }
 }

@@ -31,9 +31,7 @@ impl BinOp for And {
 impl CanBeUsed for And {
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
         match (lhs, rhs) {
-            (Type::Int, Type::Int)
-            | (Type::EmptyArray, Type::Int)
-            | (Type::Int, Type::EmptyArray) => true,
+            (Type::Int | Type::EmptyArray, Type::Int) | (Type::Int, Type::EmptyArray) => true,
             (Type::Array(var_type), Type::Int) | (Type::Int, Type::Array(var_type)) => {
                 var_type.as_ref() == &Type::Int
             }

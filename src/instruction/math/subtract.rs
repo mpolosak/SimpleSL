@@ -99,9 +99,7 @@ impl GetReturnType for Subtract {
             self.minuend.get_return_type(),
             self.subtrahend.get_return_type(),
         ) {
-            (var_type @ Type::Array(_), _) | (_, var_type @ Type::Array(_)) | (var_type, _) => {
-                var_type
-            }
+            (_, var_type @ Type::Array(_)) | (var_type, _) => var_type,
         }
     }
 }
