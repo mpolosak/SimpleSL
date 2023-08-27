@@ -24,13 +24,9 @@ impl<'a> LocalVariables<'a> {
     }
     #[must_use]
     pub fn get(&self, name: &str) -> Option<&LocalVariable> {
-        if let Some(variable) = self.variables.get(name) {
-            Some(variable)
-        } else if let Some(layer) = self.lower_layer {
-            layer.get(name)
-        } else {
-            None
-        }
+        self.variables
+            .get(name)
+            .or_else(|| self.lower_layer?.get(name))
     }
     #[must_use]
     pub fn contains_key(&self, name: &Rc<str>) -> bool {
