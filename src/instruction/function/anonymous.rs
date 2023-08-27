@@ -29,11 +29,12 @@ impl CreateInstruction for AnonymousFunction {
         let mut inner = pair.into_inner().peekable();
         let params_pair = inner.next().unwrap();
         let params = Params(params_pair.into_inner().map(Param::from).collect());
-        let return_type = match inner.peek() {
-            Some(pair) if pair.as_rule() == Rule::return_type_decl => {
-                Type::from(inner.next().unwrap().into_inner().next().unwrap())
-            }
-            _ => Type::Void,
+        let return_type = if matches!(inner.peek(), Some(pair)
+            if pair.as_rule() == Rule::return_type_decl)
+        {
+            Type::from(inner.next().unwrap().into_inner().next().unwrap())
+        } else {
+            Type::Void
         };
         let mut local_variables =
             local_variables.layer_from_map(LocalVariableMap::from(params.clone()));
@@ -48,11 +49,17 @@ impl CreateInstruction for AnonymousFunction {
             return Err(Error::WrongReturn(return_type, returned));
         }
 
+        Ok(Self::create(params, body, return_type))
+    }
+}
+
+impl AnonymousFunction {
+    fn create(params: Params, body: Box<[Instruction]>, return_type: Type) -> Instruction {
         if body
             .iter()
             .all(|instruction| matches!(instruction, Instruction::Variable(_)))
         {
-            Ok(Instruction::Variable(
+            Instruction::Variable(
                 Function {
                     ident: None,
                     params,
@@ -60,14 +67,14 @@ impl CreateInstruction for AnonymousFunction {
                     return_type,
                 }
                 .into(),
-            ))
+            )
         } else {
-            Ok(Self {
+            Self {
                 params,
                 body,
                 return_type,
             }
-            .into())
+            .into()
         }
     }
 }
@@ -94,27 +101,11 @@ impl Recreate for AnonymousFunction {
     ) -> Result<Instruction> {
         let mut local_variables = local_variables.layer_from_map(self.params.clone().into());
         let body = recreate_instructions(&self.body, &mut local_variables, interpreter)?;
-        if body
-            .iter()
-            .all(|instruction| matches!(instruction, Instruction::Variable(_)))
-        {
-            Ok(Instruction::Variable(
-                Function {
-                    ident: None,
-                    params: self.params.clone(),
-                    body: Body::Lang(body),
-                    return_type: self.return_type.clone(),
-                }
-                .into(),
-            ))
-        } else {
-            Ok(Self {
-                params: self.params.clone(),
-                body,
-                return_type: self.return_type.clone(),
-            }
-            .into())
-        }
+        Ok(Self::create(
+            self.params.clone(),
+            body,
+            self.return_type.clone(),
+        ))
     }
 }
 
@@ -129,7 +120,7 @@ impl GetReturnType for AnonymousFunction {
         let params: Box<[Type]> = self
             .params
             .iter()
-            .map(|Param { name: _, var_type }| var_type.clone())
+            .map(|param| param.var_type.clone())
             .collect();
         let return_type = self.return_type.clone();
         FunctionType {
