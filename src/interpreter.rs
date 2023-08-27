@@ -1,11 +1,7 @@
 use crate::instruction::{local_variable::LocalVariables, Exec, Instruction};
 use crate::{parse::*, pest::Parser, stdlib::add_std_lib, variable::*, Error, Result};
-use std::{
-    collections::HashMap,
-    fs::File,
-    io::{BufReader, Read},
-    rc::Rc,
-};
+use std::fs::read_to_string;
+use std::{collections::HashMap, rc::Rc};
 
 pub struct Interpreter<'a> {
     variables: VariableMap,
@@ -17,21 +13,20 @@ type VariableMap = HashMap<Rc<str>, Variable>;
 impl<'a> Interpreter<'a> {
     #[must_use]
     pub fn new() -> Self {
-        let variables = VariableMap::new();
-        let mut result = Self {
-            variables,
+        let mut interpreter = Self {
+            variables: VariableMap::new(),
             lower_layer: None,
         };
-        add_std_lib(&mut result);
-        result
+        add_std_lib(&mut interpreter);
+        interpreter
     }
 
     pub fn exec(&mut self, instructions: &[Instruction]) -> Result<Variable> {
-        let mut result = Variable::Void;
-        for instruction in instructions.iter() {
-            result = instruction.exec(self)?;
-        }
-        Ok(result)
+        instructions
+            .iter()
+            .map(|instruction| instruction.exec(self))
+            .last()
+            .unwrap_or(Ok(Variable::Void))
     }
 
     pub fn parse_and_exec(&mut self, input: &str) -> Result<Variable> {
@@ -44,10 +39,7 @@ impl<'a> Interpreter<'a> {
         path: &str,
         local_variables: &mut LocalVariables,
     ) -> Result<Box<[Instruction]>> {
-        let file = File::open(path)?;
-        let mut buf_reader = BufReader::new(file);
-        let mut contents = String::new();
-        buf_reader.read_to_string(&mut contents)?;
+        let contents = read_to_string(path)?;
         self.parse_input(&contents, local_variables)
     }
 
@@ -63,7 +55,6 @@ impl<'a> Interpreter<'a> {
     ) -> Result<Box<[Instruction]>> {
         let parse = SimpleSLParser::parse(Rule::input, input)?;
         let instructions = parse
-            .take_while(|pair| pair.as_rule() != Rule::EOI)
             .map(|pair| Instruction::new(pair, self, local_variables))
             .collect::<Result<_>>()?;
         Ok(instructions)
