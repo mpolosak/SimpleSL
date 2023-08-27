@@ -72,12 +72,11 @@ impl<'a> Interpreter<'a> {
     }
 
     #[must_use]
-    pub fn create_layer(&'a self) -> Box<Self> {
+    pub fn create_layer(&'a self) -> Self {
         Self {
             variables: VariableMap::new(),
             lower_layer: Some(self),
         }
-        .into()
     }
 }
 
