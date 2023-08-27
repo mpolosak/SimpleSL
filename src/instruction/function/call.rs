@@ -47,7 +47,7 @@ impl FunctionCall {
                 Ok(Self { function, args }.into())
             }
             instruction => {
-                Self::check_args_with_type("function", instruction.get_return_type(), &args)?;
+                Self::check_args_with_type("function", &instruction.get_return_type(), &args)?;
                 Ok(Self { function, args }.into())
             }
         }
@@ -62,7 +62,7 @@ impl FunctionCall {
                 .collect::<Box<[Type]>>(),
         )
     }
-    fn check_args_with_type(pair_str: &str, var_type: Type, args: &[Instruction]) -> Result<()> {
+    fn check_args_with_type(pair_str: &str, var_type: &Type, args: &[Instruction]) -> Result<()> {
         let params = args
             .iter()
             .map(Instruction::get_return_type)
@@ -107,7 +107,7 @@ impl Recreate for FunctionCall {
 impl GetReturnType for FunctionCall {
     fn get_return_type(&self) -> Type {
         let Type::Function(function_type) = self.function.get_return_type() else {
-            panic!();
+            unreachable!();
         };
         function_type.return_type.clone()
     }
