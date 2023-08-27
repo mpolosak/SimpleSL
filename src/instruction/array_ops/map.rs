@@ -116,13 +116,13 @@ impl Exec for Map {
                     })
                     .collect();
                 let len = arrays.iter().map(|array| array.len()).min().unwrap();
-                let mut result = Vec::new();
-                for i in 0..len {
-                    let args: Box<[Variable]> =
-                        arrays.iter().map(|array| array[i].clone()).collect();
-                    result.push(function.exec(interpreter, &args)?);
-                }
-                Ok(result.into())
+                (0..len)
+                    .map(|i| {
+                        let args: Box<[Variable]> =
+                            arrays.iter().map(|array| array[i].clone()).collect();
+                        function.exec(interpreter, &args)
+                    })
+                    .collect()
             }
             (Variable::Tuple(arrays), Variable::Function(function))
                 if function.params.len() == arrays.len() + 1 =>
@@ -138,13 +138,13 @@ impl Exec for Map {
                     })
                     .collect();
                 let len = arrays.iter().map(|array| array.len()).min().unwrap();
-                let mut result = Vec::new();
-                for i in 0..len {
-                    let mut args = vec![i.into()];
-                    args.extend(arrays.iter().map(|array| array[i].clone()));
-                    result.push(function.exec(interpreter, &args)?);
-                }
-                Ok(result.into())
+                (0..len)
+                    .map(|i| {
+                        let mut args = vec![i.into()];
+                        args.extend(arrays.iter().map(|array| array[i].clone()));
+                        function.exec(interpreter, &args)
+                    })
+                    .collect()
             }
             (array, function) => panic!("Tried to do {array} {} {function}", Self::SYMBOL),
         }
@@ -154,7 +154,7 @@ impl Exec for Map {
 impl GetReturnType for Map {
     fn get_return_type(&self) -> Type {
         let Type::Function(function_type) = self.function.get_return_type() else {
-            panic!()
+            unreachable!()
         };
         Type::Array(function_type.return_type.clone().into())
     }
