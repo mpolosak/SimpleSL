@@ -34,13 +34,10 @@ impl<'a> LocalVariables<'a> {
     }
     #[must_use]
     pub fn contains_key(&self, name: &Rc<str>) -> bool {
-        if self.variables.contains_key(name) {
-            true
-        } else if let Some(layer) = self.lower_layer {
-            layer.contains_key(name)
-        } else {
-            false
-        }
+        self.variables.contains_key(name)
+            || self
+                .lower_layer
+                .is_some_and(|layer| layer.contains_key(name))
     }
     #[must_use]
     pub fn create_layer(&'a self) -> Self {
