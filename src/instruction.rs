@@ -102,7 +102,7 @@ impl Instruction {
                     })
                 }
                 Rule::int | Rule::float | Rule::string | Rule::void => {
-                    let variable = Variable::try_from(pair).unwrap();
+                    let variable = Variable::try_from(pair)?;
                     Ok(Self::Variable(variable))
                 }
                 Rule::tuple => Tuple::create_instruction(pair, interpreter, local_variables),

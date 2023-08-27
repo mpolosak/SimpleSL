@@ -96,16 +96,22 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
     fn try_from(pair: Pair<Rule>) -> Result<Self> {
         match pair.as_rule() {
             Rule::int => {
-                let value = pair.as_str().trim().parse::<i64>().unwrap();
+                let Ok(value) = pair.as_str().trim().parse::<i64>() else {
+                    return Err(Error::CannotBeParsed(pair.as_str().into()));
+                };
                 Ok(Variable::Int(value))
             }
             Rule::float => {
-                let value = pair.as_str().trim().parse::<f64>().unwrap();
+                let Ok(value) = pair.as_str().trim().parse::<f64>() else {
+                    return Err(Error::CannotBeParsed(pair.as_str().into()));
+                };
                 Ok(Variable::Float(value))
             }
             Rule::string => {
                 let value = pair.into_inner().next().unwrap().as_str();
-                let value = unescaper::unescape(value).unwrap();
+                let Ok(value) = unescaper::unescape(value) else {
+                    return Err(Error::CannotBeParsed(format!("\"{value}\"").into()));
+                };
                 Ok(Variable::String(value.into()))
             }
             Rule::array => {
