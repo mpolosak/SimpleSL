@@ -28,13 +28,12 @@ impl At {
         let index = Instruction::new_expression(pair, interpreter, local_variables)?;
         let required_instruction_type = [Type::String, Type::Array(Type::Any.into())].into();
         let instruction_return_type = instruction.get_return_type();
-        match (
-            instruction_return_type.matches(&required_instruction_type),
-            index.get_return_type() == Type::Int,
-        ) {
-            (true, true) => Self::create_from_instructions(instruction, index),
-            (true, false) => Err(Error::WrongType("index".into(), Type::Int)),
-            (false, _) => Err(Error::CannotIndexInto(instruction_return_type)),
+        if index.get_return_type() != Type::Int {
+            Err(Error::WrongType("index".into(), Type::Int))
+        } else if !instruction_return_type.matches(&required_instruction_type) {
+            Err(Error::CannotIndexInto(instruction_return_type))
+        } else {
+            Self::create_from_instructions(instruction, index)
         }
     }
 }
@@ -82,7 +81,7 @@ impl GetReturnType for At {
             Type::String => Type::String,
             Type::Array(elements_type) => *elements_type,
             Type::EmptyArray => Type::Any,
-            _ => panic!(),
+            _ => unreachable!(),
         }
     }
 }
