@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use super::{
     exec_instructions,
     local_variable::LocalVariables,
@@ -36,28 +34,25 @@ impl CreateInstruction for Array {
 }
 impl Array {
     fn create_from_instructions(instructions: Box<[Instruction]>) -> Instruction {
-        let mut iter = instructions.iter().peekable();
-        if iter.peek().is_some() {
-            let element_type = iter
-                .map(Instruction::get_return_type)
-                .reduce(Type::concat)
-                .unwrap();
-            let var_type = Type::Array(element_type.into());
-            let mut array = Vec::new();
-            for instruction in &*instructions {
-                let Instruction::Variable(variable) = instruction else {
-                    return Self {
-                        instructions,
-                        var_type,
-                    }
-                    .into();
-                };
-                array.push(variable.clone());
-            }
-            Instruction::Variable(Variable::Array(array.into(), var_type))
-        } else {
-            Instruction::Variable(Variable::Array(Rc::new([]), Type::EmptyArray))
+        let var_type = instructions
+            .iter()
+            .map(Instruction::get_return_type)
+            .reduce(Type::concat)
+            .map_or(Type::EmptyArray, |element_type| {
+                Type::Array(element_type.into())
+            });
+        let mut array = Vec::new();
+        for instruction in &*instructions {
+            let Instruction::Variable(variable) = instruction else {
+                return Self {
+                    instructions,
+                    var_type,
+                }
+                .into();
+            };
+            array.push(variable.clone());
         }
+        Instruction::Variable(Variable::Array(array.into(), var_type))
     }
 }
 
