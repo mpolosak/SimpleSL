@@ -24,9 +24,8 @@ fn run_shell() -> Result<()> {
     loop {
         let readline = rl.readline("> ");
         match readline {
-            Ok(mut line) => {
+            Ok(line) => {
                 rl.add_history_entry(&line)?;
-                line = line.replace('\n', "");
                 if !line.is_empty() {
                     if let Err(error) = interpreter.parse_and_exec(&line) {
                         eprintln!("{error}");
