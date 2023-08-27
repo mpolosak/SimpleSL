@@ -6,7 +6,7 @@ use super::{
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
-    variable::{GetReturnType, Type, Variable},
+    variable::{GetReturnType, GetType, Type, Variable},
     Error, Result,
 };
 use pest::iterators::Pair;
@@ -90,28 +90,19 @@ impl GetReturnType for At {
 impl BaseInstruction for At {}
 
 fn at(variable: Variable, index: Variable) -> Result<Variable> {
-    match (variable, index) {
-        (Variable::String(string), Variable::Int(index)) => {
-            if index < 0 {
-                Err(Error::CannotBeNegative("index"))
-            } else if index as usize > string.len() {
-                Err(Error::IndexToBig)
-            } else {
-                let index = index as usize;
-                Ok(string.get(index..index).unwrap().into())
-            }
-        }
-        (Variable::Array(array, _), Variable::Int(index)) => {
-            if index < 0 {
-                return Err(Error::CannotBeNegative("index"));
-            }
-            let index = index as usize;
-            if index < array.len() {
-                Ok(array[index].clone())
-            } else {
-                Err(Error::IndexToBig)
-            }
-        }
-        _ => panic!(),
+    let Variable::Int(index) = index else {
+        return Err(Error::WrongType("index".into(), Type::Int));
+    };
+    if index < 0 {
+        return Err(Error::CannotBeNegative("index"));
+    }
+    let index = index as usize;
+    match variable {
+        Variable::String(string) => string
+            .get(index..index)
+            .ok_or(Error::IndexToBig)
+            .map(Variable::from),
+        Variable::Array(array, _) => array.get(index).ok_or(Error::IndexToBig).map(Clone::clone),
+        variable => Err(Error::CannotIndexInto(variable.get_type())),
     }
 }
