@@ -17,11 +17,7 @@ pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream 
     let attr = Attributes::parse(attr);
     let mut function = parse_macro_input!(function as ItemFn);
     let ident = function.sig.ident.clone();
-    let ident_str = if let Some(value) = attr.name {
-        value
-    } else {
-        ident.to_string().into()
-    };
+    let ident_str = attr.name.unwrap_or_else(|| ident.to_string().into());
     let params = function_params_from_itemfn(&mut function);
     let args = args_from_function_params(&params);
     let args_importing = args_import_from_function_params(&params);

@@ -227,10 +227,6 @@ pub fn get_return_type(function: &ItemFn, return_type: Option<TokenStream>) -> (
     let ReturnType::Type(_, syn_type) = &function.sig.output else {
         return (quote!(Type::Void), false);
     };
-    let return_type = if let Some(return_type) = return_type {
-        return_type
-    } else {
-        return_type_from_syn_type(syn_type)
-    };
+    let return_type = return_type.unwrap_or_else(|| return_type_from_syn_type(syn_type));
     (return_type, is_result(syn_type))
 }
