@@ -68,16 +68,12 @@ impl Add {
             }
             (array @ Variable::Array(_, Type::EmptyArray), _)
             | (_, array @ Variable::Array(_, Type::EmptyArray)) => array,
-            (Variable::Array(array, element_type), value)
-                if element_type == Type::Array(Type::String.into()) =>
-            {
-                array
-                    .iter()
-                    .cloned()
-                    .map(|element| Self::add(element, value.clone()))
-                    .collect()
-            }
-            (value, Variable::Array(array, _)) | (Variable::Array(array, _), value) => array
+            (Variable::Array(array, _), value) => array
+                .iter()
+                .cloned()
+                .map(|element| Self::add(element, value.clone()))
+                .collect(),
+            (value, Variable::Array(array, _)) => array
                 .iter()
                 .cloned()
                 .map(|element| Self::add(value.clone(), element))
