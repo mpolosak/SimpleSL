@@ -3,6 +3,7 @@ use crate::{parse::*, pest::Parser, stdlib::add_std_lib, variable::*, Error, Res
 use std::fs::read_to_string;
 use std::{collections::HashMap, rc::Rc};
 
+#[derive(Debug)]
 pub struct Interpreter<'a> {
     variables: VariableMap,
     lower_layer: Option<&'a Self>,
