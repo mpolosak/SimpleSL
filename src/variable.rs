@@ -178,13 +178,13 @@ impl From<Rc<Function>> for Variable {
 
 impl From<Rc<[Variable]>> for Variable {
     fn from(value: Rc<[Variable]>) -> Self {
-        let mut iter = value.iter().peekable();
-        let var_type = if iter.peek().is_some() {
-            let element_type = iter.map(Variable::get_type).reduce(Type::concat).unwrap();
-            Type::Array(element_type.into())
-        } else {
-            Type::EmptyArray
-        };
+        let var_type = value
+            .iter()
+            .map(Variable::get_type)
+            .reduce(Type::concat)
+            .map_or(Type::EmptyArray, |element_type| {
+                Type::Array(element_type.into())
+            });
         Self::Array(value, var_type)
     }
 }
@@ -240,7 +240,7 @@ impl FromIterator<Variable> for Variable {
 
 pub fn is_correct_variable_name(name: &str) -> bool {
     let Ok(parse) = SimpleSLParser::parse(Rule::ident, name) else {
-        return false
+        return false;
     };
     parse.as_str() == name
 }
