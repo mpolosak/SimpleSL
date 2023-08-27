@@ -69,13 +69,11 @@ impl<'a> Interpreter<'a> {
         Ok(instructions)
     }
     pub fn get_variable(&self, name: &str) -> Result<Variable> {
-        if let Some(variable) = self.variables.get(name) {
-            Ok(variable.clone())
-        } else if let Some(layer) = self.lower_layer {
-            layer.get_variable(name)
-        } else {
-            Err(Error::VariableDoesntExist(name.into()))
-        }
+        self.variables
+            .get(name)
+            .or_else(|| self.lower_layer?.variables.get(name))
+            .map(Clone::clone)
+            .ok_or_else(|| Error::VariableDoesntExist(name.into()))
     }
     pub fn insert(&mut self, name: Rc<str>, variable: Variable) {
         self.variables.insert(name, variable);
