@@ -90,20 +90,20 @@ impl Instruction {
                 Rule::expr => Self::new_expression(pair, interpreter, local_variables),
                 Rule::ident => {
                     let ident = pair.as_str();
-                    Ok(match local_variables.get(ident) {
-                        Some(LocalVariable::Variable(variable)) => Self::Variable(variable.clone()),
-                        Some(local_variable) => {
-                            Self::LocalVariable(ident.into(), local_variable.clone())
-                        }
-                        None => {
-                            let value = interpreter.get_variable(ident)?;
-                            Self::Variable(value)
-                        }
-                    })
+                    local_variables.get(ident).map_or_else(
+                        || interpreter.get_variable(ident).map(Instruction::from),
+                        |var| match var {
+                            LocalVariable::Variable(variable) => {
+                                Ok(Self::Variable(variable.clone()))
+                            }
+                            local_variable => {
+                                Ok(Self::LocalVariable(ident.into(), local_variable.clone()))
+                            }
+                        },
+                    )
                 }
                 Rule::int | Rule::float | Rule::string | Rule::void => {
-                    let variable = Variable::try_from(pair)?;
-                    Ok(Self::Variable(variable))
+                    Variable::try_from(pair).map(Instruction::from)
                 }
                 Rule::tuple => Tuple::create_instruction(pair, interpreter, local_variables),
                 Rule::array => Array::create_instruction(pair, interpreter, local_variables),
@@ -163,7 +163,7 @@ impl Exec for Instruction {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         match self {
             Self::Variable(var) => Ok(var.clone()),
-            Self::LocalVariable(name, _) => Ok(interpreter.get_variable(name).unwrap()),
+            Self::LocalVariable(name, _) => interpreter.get_variable(name),
             Self::AnonymousFunction(function) => function.exec(interpreter),
             Self::Tuple(function) => function.exec(interpreter),
             Self::Other(other) => other.exec(interpreter),
@@ -178,14 +178,15 @@ impl Recreate for Instruction {
         interpreter: &Interpreter,
     ) -> Result<Instruction> {
         match self {
-            Self::LocalVariable(name, var_type) => Ok(match local_variables.get(name) {
-                Some(LocalVariable::Variable(variable)) => Self::Variable(variable.clone()),
-                Some(_) => Self::LocalVariable(name.clone(), var_type.clone()),
-                None => {
-                    let variable = interpreter.get_variable(name).unwrap();
-                    Self::Variable(variable)
-                }
-            }),
+            Self::LocalVariable(ident, _) => local_variables.get(ident).map_or_else(
+                || interpreter.get_variable(ident).map(Instruction::from),
+                |var| match var {
+                    LocalVariable::Variable(variable) => Ok(Self::Variable(variable.clone())),
+                    local_variable => {
+                        Ok(Self::LocalVariable(ident.clone(), local_variable.clone()))
+                    }
+                },
+            ),
             Self::AnonymousFunction(function) => function.recreate(local_variables, interpreter),
             Self::Tuple(tuple) => tuple.recreate(local_variables, interpreter),
             Self::Variable(variable) => Ok(Self::Variable(variable.clone())),
