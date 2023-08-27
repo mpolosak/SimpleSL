@@ -52,10 +52,9 @@ impl MutCreateInstruction for FunctionDeclaration {
                 .map(|instruction| Instruction::new(instruction, interpreter, &mut local_variables))
                 .collect::<Result<Box<_>>>()
         }?;
-        let returned = match body.last() {
-            Some(instruction) => instruction.get_return_type(),
-            None => Type::Void,
-        };
+        let returned = body
+            .last()
+            .map_or(Type::Void, GetReturnType::get_return_type);
         if !returned.matches(&return_type) {
             return Err(Error::WrongReturn(return_type, returned));
         }
