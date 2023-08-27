@@ -63,10 +63,9 @@ impl Recreate for Block {
 
 impl GetReturnType for Block {
     fn get_return_type(&self) -> Type {
-        match self.instructions.last() {
-            Some(last) => last.get_return_type(),
-            None => Type::Void,
-        }
+        self.instructions
+            .last()
+            .map_or(Type::Void, GetReturnType::get_return_type)
     }
 }
 

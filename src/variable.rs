@@ -203,19 +203,13 @@ impl From<()> for Variable {
 
 impl<T: Into<Variable>> From<Option<T>> for Variable {
     fn from(value: Option<T>) -> Self {
-        match value {
-            Some(value) => value.into(),
-            None => Variable::Void,
-        }
+        value.map_or(Variable::Void, Into::into)
     }
 }
 
 impl<T: Into<Variable>> From<io::Result<T>> for Variable {
     fn from(value: io::Result<T>) -> Self {
-        match value {
-            Ok(value) => value.into(),
-            Err(error) => error.into(),
-        }
+        value.map_or_else(Into::into, Into::into)
     }
 }
 

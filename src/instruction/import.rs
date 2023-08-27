@@ -23,7 +23,8 @@ impl MutCreateInstruction for Import {
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
     ) -> Result<Instruction> {
-        let Variable::String(path) = Variable::try_from(pair.into_inner().next().unwrap()).unwrap() else {
+        let Variable::String(path) = Variable::try_from(pair.into_inner().next().unwrap()).unwrap()
+        else {
             panic!()
         };
         let instructions = interpreter.load(&path, local_variables)?;
@@ -61,10 +62,9 @@ impl Recreate for Import {
 
 impl GetReturnType for Import {
     fn get_return_type(&self) -> Type {
-        match self.instructions.last() {
-            Some(last) => last.get_return_type(),
-            None => Type::Void,
-        }
+        self.instructions
+            .last()
+            .map_or(Type::Void, GetReturnType::get_return_type)
     }
 }
 
