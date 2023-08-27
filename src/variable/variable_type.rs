@@ -88,10 +88,10 @@ impl FromStr for Type {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self> {
-        let Some(pair) = SimpleSLParser::parse(Rule::r#type, s)?.next() else {
-            return Err(Error::ArgumentDoesntContainType);
-        };
-        Ok(Self::from(pair))
+        SimpleSLParser::parse(Rule::r#type, s)?
+            .next()
+            .map(Self::from)
+            .ok_or(Error::ArgumentDoesntContainType)
     }
 }
 
