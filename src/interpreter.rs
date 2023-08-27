@@ -4,6 +4,7 @@ use std::fs::read_to_string;
 use std::{collections::HashMap, rc::Rc};
 
 #[derive(Debug)]
+#[must_use]
 pub struct Interpreter<'a> {
     variables: VariableMap,
     lower_layer: Option<&'a Self>,
@@ -12,7 +13,6 @@ pub struct Interpreter<'a> {
 type VariableMap = HashMap<Rc<str>, Variable>;
 
 impl<'a> Interpreter<'a> {
-    #[must_use]
     pub fn new() -> Self {
         let mut interpreter = Self {
             variables: VariableMap::new(),
@@ -71,7 +71,6 @@ impl<'a> Interpreter<'a> {
         self.variables.insert(name, variable);
     }
 
-    #[must_use]
     pub fn create_layer(&'a self) -> Self {
         Self {
             variables: VariableMap::new(),
