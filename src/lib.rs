@@ -9,6 +9,7 @@ extern crate pest;
 #[macro_use]
 extern crate pest_derive;
 pub use error::Error;
+pub use simplesl_macros::export_function;
 use std::fmt::{Debug, Display};
 
 pub type Result<T> = std::result::Result<T, Error>;
