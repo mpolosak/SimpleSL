@@ -1,5 +1,5 @@
 use rustyline::{error::ReadlineError, DefaultEditor};
-use simplesl::{interpreter::Interpreter, Error, Result};
+use simplesl::{Error, Interpreter, Result};
 use std::{env, process::ExitCode};
 
 fn main() -> ExitCode {
@@ -19,7 +19,7 @@ fn main() -> ExitCode {
 }
 
 fn run_shell() -> Result<()> {
-    let mut interpreter = Interpreter::new();
+    let mut interpreter = Interpreter::with_stdlib();
     let mut rl = DefaultEditor::new()?;
     loop {
         let readline = rl.readline("> ");
@@ -39,6 +39,6 @@ fn run_shell() -> Result<()> {
 }
 
 fn run_from_file(path: &str) -> Result<()> {
-    let mut interpreter = Interpreter::new();
+    let mut interpreter = Interpreter::with_stdlib();
     interpreter.load_and_exec(path).map(|_| ())
 }

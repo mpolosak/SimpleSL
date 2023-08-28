@@ -13,13 +13,19 @@ pub struct Interpreter<'a> {
 type VariableMap = HashMap<Rc<str>, Variable>;
 
 impl<'a> Interpreter<'a> {
-    pub fn new() -> Self {
-        let mut interpreter = Self {
-            variables: VariableMap::new(),
-            lower_layer: None,
-        };
+    /// Constructs a new Interpreter with simplesl stdlib
+    pub fn with_stdlib() -> Self {
+        let mut interpreter = Self::without_stdlib();
         add_std_lib(&mut interpreter);
         interpreter
+    }
+
+    /// Constructs a new Interpreter without stdlib
+    pub fn without_stdlib() -> Self {
+        Self {
+            variables: VariableMap::new(),
+            lower_layer: None,
+        }
     }
 
     pub fn exec(&mut self, instructions: &[Instruction]) -> Result<Variable> {
@@ -76,11 +82,5 @@ impl<'a> Interpreter<'a> {
             variables: VariableMap::new(),
             lower_layer: Some(self),
         }
-    }
-}
-
-impl Default for Interpreter<'_> {
-    fn default() -> Self {
-        Self::new()
     }
 }
