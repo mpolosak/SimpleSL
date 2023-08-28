@@ -1,8 +1,5 @@
-use crate::{
-    function,
-    interpreter::Interpreter,
-    variable::{Type, Variable},
-};
+use crate as simplesl;
+use crate::{interpreter::Interpreter, variable::Variable};
 use simplesl_macros::export_function;
 
 pub fn add_functions(interpreter: &mut Interpreter) {

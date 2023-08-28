@@ -1,4 +1,5 @@
-use crate::{function, interpreter::Interpreter, join, variable::*, Result};
+use crate as simplesl;
+use crate::{interpreter::Interpreter, join, variable::*, Result};
 use simplesl_macros::export_function;
 use std::io;
 

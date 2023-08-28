@@ -1,6 +1,6 @@
 use super::{GetReturnType, Type};
+use crate::pest::iterators::Pair;
 use crate::{join, parse::Rule};
-use pest::iterators::Pair;
 use std::{fmt::Display, iter::zip};
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]

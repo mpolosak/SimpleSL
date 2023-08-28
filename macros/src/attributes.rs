@@ -29,7 +29,9 @@ impl Attributes {
                 new.return_type = match value {
                     Expr::Lit(ExprLit {
                         lit: Lit::Str(lit), ..
-                    }) => Some(quote!({use std::str::FromStr; Type::from_str(#lit).unwrap()})),
+                    }) => Some(
+                        quote!({use std::str::FromStr; simplesl::variable::Type::from_str(#lit).unwrap()}),
+                    ),
                     _ => panic!("{path} must be bool"),
                 }
             }

@@ -1,12 +1,9 @@
+use crate as simplesl;
 mod convert;
 mod fs;
 mod iofunctions;
 mod string;
-use crate::{
-    function,
-    interpreter::Interpreter,
-    variable::{Type, Variable},
-};
+use crate::{interpreter::Interpreter, variable::Variable};
 use simplesl_macros::export_function;
 
 pub fn add_std_lib(interpreter: &mut Interpreter) {
