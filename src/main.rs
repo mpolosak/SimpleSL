@@ -1,5 +1,5 @@
 use rustyline::{error::ReadlineError, DefaultEditor};
-use simplesl::{Error, Interpreter, Result};
+use simplesl::{instruction::local_variable::LocalVariables, Error, Interpreter, Result};
 use std::{env, process::ExitCode};
 
 fn main() -> ExitCode {
@@ -27,7 +27,10 @@ fn run_shell() -> Result<()> {
             Ok(line) => {
                 rl.add_history_entry(&line)?;
                 if !line.is_empty() {
-                    if let Err(error) = interpreter.parse_and_exec(&line) {
+                    if let Err(error) = interpreter
+                        .parse_input(&line, &mut LocalVariables::new())
+                        .and_then(|instructions| interpreter.exec(&instructions))
+                    {
                         eprintln!("{error}");
                     }
                 }
@@ -40,5 +43,8 @@ fn run_shell() -> Result<()> {
 
 fn run_from_file(path: &str) -> Result<()> {
     let mut interpreter = Interpreter::with_stdlib();
-    interpreter.load_and_exec(path).map(|_| ())
+    interpreter
+        .load(path, &mut LocalVariables::new())
+        .and_then(|instructions| interpreter.exec(&instructions))
+        .map(|_| ())
 }

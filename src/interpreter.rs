@@ -40,11 +40,6 @@ impl<'a> Interpreter<'a> {
             .unwrap_or(Ok(Variable::Void))
     }
 
-    pub fn parse_and_exec(&mut self, input: &str) -> Result<Variable> {
-        let instructions = self.parse_input(input, &mut LocalVariables::new())?;
-        self.exec(&instructions)
-    }
-
     pub fn load(
         &self,
         path: &str,
@@ -54,12 +49,7 @@ impl<'a> Interpreter<'a> {
         self.parse_input(&contents, local_variables)
     }
 
-    pub fn load_and_exec(&mut self, path: &str) -> Result<Variable> {
-        let instructions = self.load(path, &mut LocalVariables::new())?;
-        self.exec(&instructions)
-    }
-
-    fn parse_input(
+    pub fn parse_input(
         &self,
         input: &str,
         local_variables: &mut LocalVariables,
