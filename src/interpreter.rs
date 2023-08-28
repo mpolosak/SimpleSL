@@ -28,6 +28,10 @@ impl<'a> Interpreter<'a> {
         }
     }
 
+    /// Executes all instructions in order  
+    /// If any of calls result in error stop executing and returns that error  
+    /// If all instructions get executed successfully returns result of last instruction
+    /// or Variable::Void if instructions is empty
     pub fn exec(&mut self, instructions: &[Instruction]) -> Result<Variable> {
         instructions
             .iter()
