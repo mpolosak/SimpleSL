@@ -4,7 +4,7 @@ use crate::{
     },
     interpreter::Interpreter,
     parse::Rule,
-    variable::{GetReturnType, GetType, Type, Variable},
+    variable::{ReturnType, Type, Typed, Variable},
     Error, Result,
 };
 use pest::iterators::Pair;
@@ -17,7 +17,7 @@ pub struct TypeFilter {
 
 impl TypeFilter {
     pub fn create_instruction(array: Instruction, var_type: Pair<Rule>) -> Result<Instruction> {
-        let array_type = array.get_return_type();
+        let array_type = array.return_type();
         let var_type = Type::from(var_type);
         match array_type {
             Type::Array(_) | Type::EmptyArray => Ok(Self { array, var_type }.into()),
@@ -32,7 +32,7 @@ impl Exec for TypeFilter {
         match array {
             Variable::Array(array, _) => Ok(array
                 .iter()
-                .filter(|element| element.get_type().matches(&self.var_type))
+                .filter(|element| element.as_type().matches(&self.var_type))
                 .cloned()
                 .collect()),
             array => panic!("Tried to do {array} ? {}", self.var_type),
@@ -55,8 +55,8 @@ impl Recreate for TypeFilter {
     }
 }
 
-impl GetReturnType for TypeFilter {
-    fn get_return_type(&self) -> Type {
+impl ReturnType for TypeFilter {
+    fn return_type(&self) -> Type {
         Type::Array(self.var_type.clone().into())
     }
 }

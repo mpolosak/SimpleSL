@@ -2,7 +2,7 @@ use crate::instruction::traits::{BaseInstruction, BinOp, CanBeUsed, CreateFromIn
 use crate::instruction::{Exec, Instruction};
 use crate::{
     interpreter::Interpreter,
-    variable::{GetReturnType, Type, Variable},
+    variable::{ReturnType, Type, Variable},
     Result,
 };
 
@@ -94,9 +94,9 @@ impl Exec for Add {
     }
 }
 
-impl GetReturnType for Add {
-    fn get_return_type(&self) -> Type {
-        match (self.lhs.get_return_type(), self.rhs.get_return_type()) {
+impl ReturnType for Add {
+    fn return_type(&self) -> Type {
+        match (self.lhs.return_type(), self.rhs.return_type()) {
             (Type::Array(element_type1), Type::Array(element_type2)) => Type::Array(
                 (element_type1.as_ref().clone() | element_type2.as_ref().clone()).into(),
             ),

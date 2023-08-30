@@ -140,10 +140,12 @@ impl BitOrAssign for Type {
         *self = self.clone() | rhs;
     }
 }
-pub trait GetType {
-    fn get_type(&self) -> Type;
+pub trait Typed {
+    /// Returns the Type of the &self
+    fn as_type(&self) -> Type;
 }
 
-pub trait GetReturnType {
-    fn get_return_type(&self) -> Type;
+pub trait ReturnType {
+    /// Returns the Type of Variable returned after &self gets executed
+    fn return_type(&self) -> Type;
 }

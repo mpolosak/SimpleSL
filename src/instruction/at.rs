@@ -6,7 +6,7 @@ use super::{
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
-    variable::{GetReturnType, GetType, Type, Variable},
+    variable::{ReturnType, Type, Typed, Variable},
     Error, Result,
 };
 use pest::iterators::Pair;
@@ -27,8 +27,8 @@ impl At {
         let pair = index.into_inner().next().unwrap();
         let index = Instruction::new_expression(pair, interpreter, local_variables)?;
         let required_instruction_type = [Type::String, Type::Array(Type::Any.into())].into();
-        let instruction_return_type = instruction.get_return_type();
-        if index.get_return_type() != Type::Int {
+        let instruction_return_type = instruction.return_type();
+        if index.return_type() != Type::Int {
             Err(Error::WrongType("index".into(), Type::Int))
         } else if !instruction_return_type.matches(&required_instruction_type) {
             Err(Error::CannotIndexInto(instruction_return_type))
@@ -75,9 +75,9 @@ impl Recreate for At {
     }
 }
 
-impl GetReturnType for At {
-    fn get_return_type(&self) -> Type {
-        match self.instruction.get_return_type() {
+impl ReturnType for At {
+    fn return_type(&self) -> Type {
+        match self.instruction.return_type() {
             Type::String => Type::String,
             Type::Array(elements_type) => *elements_type,
             Type::EmptyArray => Type::Any,
@@ -102,6 +102,6 @@ fn at(variable: Variable, index: Variable) -> Result<Variable> {
             .ok_or(Error::IndexToBig)
             .map(Variable::from),
         Variable::Array(array, _) => array.get(index).ok_or(Error::IndexToBig).map(Clone::clone),
-        variable => Err(Error::CannotIndexInto(variable.get_type())),
+        variable => Err(Error::CannotIndexInto(variable.as_type())),
     }
 }

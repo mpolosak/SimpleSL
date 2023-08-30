@@ -2,7 +2,7 @@ use crate::instruction::traits::{BaseInstruction, BinOp, CanBeUsed, CreateFromIn
 use crate::instruction::{Exec, Instruction};
 use crate::{
     interpreter::Interpreter,
-    variable::{GetReturnType, Type, Variable},
+    variable::{ReturnType, Type, Variable},
     Error, Result,
 };
 
@@ -83,13 +83,10 @@ impl Exec for Modulo {
     }
 }
 
-impl GetReturnType for Modulo {
-    fn get_return_type(&self) -> Type {
+impl ReturnType for Modulo {
+    fn return_type(&self) -> Type {
         if matches!(
-            (
-                self.dividend.get_return_type(),
-                self.divisor.get_return_type()
-            ),
+            (self.dividend.return_type(), self.divisor.return_type()),
             (Type::Array(_), _) | (_, Type::Array(_))
         ) {
             Type::Array(Type::Int.into())

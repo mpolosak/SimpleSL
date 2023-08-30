@@ -1,4 +1,4 @@
-use super::{GetReturnType, Type};
+use super::{ReturnType, Type};
 use crate::pest::iterators::Pair;
 use crate::{join, parse::Rule};
 use std::{fmt::Display, iter::zip};
@@ -39,8 +39,8 @@ impl Display for FunctionType {
     }
 }
 
-impl GetReturnType for FunctionType {
-    fn get_return_type(&self) -> Type {
+impl ReturnType for FunctionType {
+    fn return_type(&self) -> Type {
         self.return_type.clone()
     }
 }

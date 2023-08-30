@@ -7,7 +7,7 @@ use crate::{
     },
     interpreter::Interpreter,
     parse::Rule,
-    variable::{GetReturnType, Type, Variable},
+    variable::{ReturnType, Type, Variable},
     Error, Result,
 };
 use pest::iterators::Pair;
@@ -27,7 +27,7 @@ impl MutCreateInstruction for Match {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
         let expression = Instruction::new(pair, interpreter, local_variables)?;
-        let var_type = expression.get_return_type();
+        let var_type = expression.return_type();
         let arms = inner
             .map(|pair| MatchArm::new(pair, interpreter, local_variables))
             .collect::<Result<Box<[MatchArm]>>>()?;
@@ -80,11 +80,11 @@ impl Recreate for Match {
     }
 }
 
-impl GetReturnType for Match {
-    fn get_return_type(&self) -> Type {
+impl ReturnType for Match {
+    fn return_type(&self) -> Type {
         self.arms
             .iter()
-            .map(GetReturnType::get_return_type)
+            .map(ReturnType::return_type)
             .reduce(Type::concat)
             .unwrap_or_else(|| unreachable!("match statment without arms"))
     }

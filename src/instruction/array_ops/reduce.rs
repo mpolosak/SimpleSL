@@ -4,7 +4,7 @@ use crate::{
     },
     interpreter::Interpreter,
     parse::Rule,
-    variable::{function_type::FunctionType, GetReturnType, Type, Variable},
+    variable::{function_type::FunctionType, ReturnType, Type, Variable},
     Error, Result,
 };
 use pest::iterators::Pair;
@@ -26,7 +26,7 @@ impl Reduce {
     ) -> Result<Instruction> {
         let initial_value =
             Instruction::new_expression(initial_value, interpreter, local_variables)?;
-        let element_type = match array.get_return_type() {
+        let element_type = match array.return_type() {
             Type::Array(array) => array.as_ref().clone(),
             Type::EmptyArray => return Ok(initial_value),
             _ => {
@@ -36,11 +36,17 @@ impl Reduce {
                 ))
             }
         };
-        let Type::Function(function_type) = function.get_return_type() else{
-            return Err(Error::WrongType("function".into(), Type::Function(FunctionType{
-                params: [Type::Any, element_type].into(),
-                return_type: Type::Any }.into(),
-            )));
+        let Type::Function(function_type) = function.return_type() else {
+            return Err(Error::WrongType(
+                "function".into(),
+                Type::Function(
+                    FunctionType {
+                        params: [Type::Any, element_type].into(),
+                        return_type: Type::Any,
+                    }
+                    .into(),
+                ),
+            ));
         };
         if function_type.params.len() != 2 {
             return Err(Error::WrongType(
@@ -54,7 +60,7 @@ impl Reduce {
                 ),
             ));
         };
-        let initial_type = initial_value.get_return_type();
+        let initial_type = initial_value.return_type();
         let acc_type = function_type.params[0].clone();
         let current_type = function_type.params[1].clone();
         let return_type = function_type.return_type.clone();
@@ -115,10 +121,12 @@ impl Exec for Reduce {
     }
 }
 
-impl GetReturnType for Reduce {
-    fn get_return_type(&self) -> Type {
-        let Type::Function(function) = self.function.get_return_type() else {unreachable!()};
-        function.get_return_type() | self.initial_value.get_return_type()
+impl ReturnType for Reduce {
+    fn return_type(&self) -> Type {
+        let Type::Function(function) = self.function.return_type() else {
+            unreachable!()
+        };
+        function.return_type() | self.initial_value.return_type()
     }
 }
 

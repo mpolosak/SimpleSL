@@ -1,6 +1,6 @@
 use crate::instruction::traits::{BaseInstruction, BinOp, CanBeUsed, CreateFromInstructions};
 use crate::instruction::{Exec, Instruction};
-use crate::variable::{GetReturnType, Type};
+use crate::variable::{ReturnType, Type};
 use crate::{interpreter::Interpreter, variable::Variable, Result};
 
 #[derive(Debug)]
@@ -50,8 +50,8 @@ impl Exec for Equal {
     }
 }
 
-impl GetReturnType for Equal {
-    fn get_return_type(&self) -> crate::variable::Type {
+impl ReturnType for Equal {
+    fn return_type(&self) -> crate::variable::Type {
         Type::Int
     }
 }

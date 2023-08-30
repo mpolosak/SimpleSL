@@ -8,7 +8,7 @@ use super::{
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
-    variable::{GetReturnType, Type, Variable},
+    variable::{ReturnType, Type, Variable},
     Result,
 };
 use pest::iterators::Pair;
@@ -36,7 +36,7 @@ impl Array {
     fn create_from_instructions(instructions: Box<[Instruction]>) -> Instruction {
         let var_type = instructions
             .iter()
-            .map(Instruction::get_return_type)
+            .map(Instruction::return_type)
             .reduce(Type::concat)
             .map_or(Type::EmptyArray, |element_type| {
                 Type::Array(element_type.into())
@@ -74,8 +74,8 @@ impl Recreate for Array {
     }
 }
 
-impl GetReturnType for Array {
-    fn get_return_type(&self) -> Type {
+impl ReturnType for Array {
+    fn return_type(&self) -> Type {
         self.var_type.clone()
     }
 }

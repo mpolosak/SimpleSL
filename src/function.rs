@@ -9,7 +9,7 @@ pub use self::{
 use crate::{
     instruction::Exec,
     interpreter::Interpreter,
-    variable::{function_type::FunctionType, GetReturnType, GetType, Type, Variable},
+    variable::{function_type::FunctionType, ReturnType, Type, Typed, Variable},
     Result,
 };
 use std::{fmt, iter::zip, rc::Rc};
@@ -52,8 +52,8 @@ impl Function {
     }
 }
 
-impl GetType for Function {
-    fn get_type(&self) -> Type {
+impl Typed for Function {
+    fn as_type(&self) -> Type {
         let params: Box<[Type]> = self
             .params
             .iter()
@@ -68,15 +68,15 @@ impl GetType for Function {
     }
 }
 
-impl GetReturnType for Function {
-    fn get_return_type(&self) -> Type {
+impl ReturnType for Function {
+    fn return_type(&self) -> Type {
         self.return_type.clone()
     }
 }
 
 impl fmt::Display for Function {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let return_type = self.get_return_type();
+        let return_type = self.return_type();
         write!(f, "function({})->{return_type}", self.params)
     }
 }

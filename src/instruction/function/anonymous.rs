@@ -8,7 +8,7 @@ use crate::{
     function::{Body, Function, Param, Params},
     interpreter::Interpreter,
     parse::Rule,
-    variable::{function_type::FunctionType, GetReturnType, Type, Variable},
+    variable::{function_type::FunctionType, ReturnType, Type, Variable},
     Error, Result,
 };
 use pest::iterators::Pair;
@@ -42,9 +42,7 @@ impl CreateInstruction for AnonymousFunction {
             .map(|instruction| Instruction::new(instruction, interpreter, &mut local_variables))
             .collect::<Result<Box<_>>>()?;
 
-        let returned = body
-            .last()
-            .map_or(Type::Void, GetReturnType::get_return_type);
+        let returned = body.last().map_or(Type::Void, ReturnType::return_type);
         if !returned.matches(&return_type) {
             return Err(Error::WrongReturn(return_type, returned));
         }
@@ -115,8 +113,8 @@ impl From<AnonymousFunction> for Instruction {
     }
 }
 
-impl GetReturnType for AnonymousFunction {
-    fn get_return_type(&self) -> Type {
+impl ReturnType for AnonymousFunction {
+    fn return_type(&self) -> Type {
         let params: Box<[Type]> = self
             .params
             .iter()

@@ -8,7 +8,7 @@ use crate::instruction::{
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
-    variable::{GetReturnType, GetType, Type, Variable},
+    variable::{ReturnType, Type, Typed, Variable},
     Result,
 };
 use pest::iterators::Pair;
@@ -61,7 +61,7 @@ impl MutCreateInstruction for SetIfElse {
 impl Exec for SetIfElse {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let expression_result = self.expression.exec(interpreter)?;
-        let result_type = expression_result.get_type();
+        let result_type = expression_result.as_type();
         if result_type.matches(&self.var_type) {
             let mut interpreter = interpreter.create_layer();
             interpreter.insert(self.ident.clone(), expression_result);
@@ -101,10 +101,10 @@ impl Recreate for SetIfElse {
     }
 }
 
-impl GetReturnType for SetIfElse {
-    fn get_return_type(&self) -> Type {
-        let true_return_type = self.if_match.get_return_type();
-        let false_return_type = self.else_instruction.get_return_type();
+impl ReturnType for SetIfElse {
+    fn return_type(&self) -> Type {
+        let true_return_type = self.if_match.return_type();
+        let false_return_type = self.else_instruction.return_type();
         true_return_type | false_return_type
     }
 }

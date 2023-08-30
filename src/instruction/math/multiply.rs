@@ -2,7 +2,7 @@ use crate::instruction::traits::{BaseInstruction, BinOp, CanBeUsed, CreateFromIn
 use crate::instruction::{Exec, Instruction};
 use crate::{
     interpreter::Interpreter,
-    variable::{GetReturnType, Type, Variable},
+    variable::{ReturnType, Type, Variable},
     Result,
 };
 
@@ -80,9 +80,9 @@ impl Exec for Multiply {
     }
 }
 
-impl GetReturnType for Multiply {
-    fn get_return_type(&self) -> Type {
-        match (self.lhs.get_return_type(), self.rhs.get_return_type()) {
+impl ReturnType for Multiply {
+    fn return_type(&self) -> Type {
+        match (self.lhs.return_type(), self.rhs.return_type()) {
             (_, var_type @ Type::Array(_)) | (var_type, _) => var_type,
         }
     }

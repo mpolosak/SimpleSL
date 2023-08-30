@@ -13,7 +13,7 @@ use super::{local_variable::LocalVariables, Instruction};
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
-    variable::{GetReturnType, Variable},
+    variable::{ReturnType, Variable},
     Result,
 };
 use pest::iterators::Pair;
@@ -45,7 +45,7 @@ pub trait Recreate {
     ) -> Result<Instruction>;
 }
 
-pub trait BaseInstruction: Exec + Recreate + GetReturnType + Debug {}
+pub trait BaseInstruction: Exec + Recreate + ReturnType + Debug {}
 
 impl<T: BaseInstruction + 'static> From<T> for Instruction {
     fn from(value: T) -> Self {

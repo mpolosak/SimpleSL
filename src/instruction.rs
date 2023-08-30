@@ -37,7 +37,7 @@ use self::{
 use crate::{
     interpreter::Interpreter,
     parse::{Rule, PRATT_PARSER},
-    variable::{GetReturnType, GetType, Type, Variable},
+    variable::{ReturnType, Type, Typed, Variable},
     Result,
 };
 use pest::iterators::Pair;
@@ -195,14 +195,14 @@ impl Recreate for Instruction {
     }
 }
 
-impl GetReturnType for Instruction {
-    fn get_return_type(&self) -> Type {
+impl ReturnType for Instruction {
+    fn return_type(&self) -> Type {
         match self {
-            Self::Variable(variable) => variable.get_type(),
-            Self::AnonymousFunction(function) => function.get_return_type(),
-            Self::LocalVariable(_, local_variable) => local_variable.get_type(),
-            Self::Tuple(tuple) => tuple.get_return_type(),
-            Self::Other(other) => other.get_return_type(),
+            Self::Variable(variable) => variable.as_type(),
+            Self::AnonymousFunction(function) => function.return_type(),
+            Self::LocalVariable(_, local_variable) => local_variable.as_type(),
+            Self::Tuple(tuple) => tuple.return_type(),
+            Self::Other(other) => other.return_type(),
         }
     }
 }

@@ -2,7 +2,7 @@ use crate::instruction::traits::{BaseInstruction, BinOp, CanBeUsed, CreateFromIn
 use crate::instruction::{Exec, Instruction};
 use crate::{
     interpreter::Interpreter,
-    variable::{GetReturnType, Type, Variable},
+    variable::{ReturnType, Type, Variable},
     Result,
 };
 
@@ -93,12 +93,9 @@ impl Exec for Subtract {
     }
 }
 
-impl GetReturnType for Subtract {
-    fn get_return_type(&self) -> Type {
-        match (
-            self.minuend.get_return_type(),
-            self.subtrahend.get_return_type(),
-        ) {
+impl ReturnType for Subtract {
+    fn return_type(&self) -> Type {
+        match (self.minuend.return_type(), self.subtrahend.return_type()) {
             (_, var_type @ Type::Array(_)) | (var_type, _) => var_type,
         }
     }

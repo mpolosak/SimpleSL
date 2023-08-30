@@ -5,7 +5,7 @@ use super::{
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
-    variable::{GetReturnType, Type, Variable},
+    variable::{ReturnType, Type, Variable},
     Error, Result,
 };
 use pest::iterators::Pair;
@@ -26,7 +26,7 @@ impl CreateInstruction for ArrayRepeat {
         let value =
             Instruction::new_expression(inner.next().unwrap(), interpreter, local_variables)?;
         let len = Instruction::new_expression(inner.next().unwrap(), interpreter, local_variables)?;
-        if len.get_return_type() == Type::Int {
+        if len.return_type() == Type::Int {
             Self::create_from_instructions(value, len)
         } else {
             Err(Error::WrongType("len".into(), Type::Int))
@@ -52,7 +52,9 @@ impl ArrayRepeat {
 impl Exec for ArrayRepeat {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let value = self.value.exec(interpreter)?;
-        let Variable::Int(len) = self.len.exec(interpreter)? else {panic!()};
+        let Variable::Int(len) = self.len.exec(interpreter)? else {
+            panic!()
+        };
         if len >= 0 {
             Ok(std::iter::repeat(value).take(len as usize).collect())
         } else {
@@ -73,9 +75,9 @@ impl Recreate for ArrayRepeat {
     }
 }
 
-impl GetReturnType for ArrayRepeat {
-    fn get_return_type(&self) -> Type {
-        let element_type = self.value.get_return_type();
+impl ReturnType for ArrayRepeat {
+    fn return_type(&self) -> Type {
+        let element_type = self.value.return_type();
         Type::Array(element_type.into())
     }
 }

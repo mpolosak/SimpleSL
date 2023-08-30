@@ -1,7 +1,7 @@
 use super::Instruction;
 use crate::{
     function::{Param, Params},
-    variable::{function_type::FunctionType, GetReturnType, GetType, Type, Variable},
+    variable::{function_type::FunctionType, ReturnType, Type, Typed, Variable},
 };
 use std::{collections::HashMap, rc::Rc};
 
@@ -90,7 +90,7 @@ impl From<Type> for LocalVariable {
 
 impl From<&Instruction> for LocalVariable {
     fn from(value: &Instruction) -> Self {
-        let var_type = value.get_return_type();
+        let var_type = value.return_type();
         match (value, var_type) {
             (Instruction::Variable(variable), _) => Self::Variable(variable.clone()),
             (_, var_type) => Self::Other(var_type),
@@ -98,8 +98,8 @@ impl From<&Instruction> for LocalVariable {
     }
 }
 
-impl GetType for LocalVariable {
-    fn get_type(&self) -> Type {
+impl Typed for LocalVariable {
+    fn as_type(&self) -> Type {
         match self {
             LocalVariable::Function(params, return_type) => FunctionType {
                 return_type: return_type.clone(),
@@ -109,7 +109,7 @@ impl GetType for LocalVariable {
                     .collect(),
             }
             .into(),
-            LocalVariable::Variable(variable) => variable.get_type(),
+            LocalVariable::Variable(variable) => variable.as_type(),
             LocalVariable::Other(var_type) => var_type.clone(),
         }
     }

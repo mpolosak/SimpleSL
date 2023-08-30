@@ -4,7 +4,7 @@ use crate::{
         Exec, Instruction,
     },
     interpreter::Interpreter,
-    variable::{GetReturnType, Type, Variable},
+    variable::{ReturnType, Type, Variable},
     Result,
 };
 use std::{iter::zip, rc::Rc};
@@ -151,9 +151,9 @@ impl Exec for Map {
     }
 }
 
-impl GetReturnType for Map {
-    fn get_return_type(&self) -> Type {
-        let Type::Function(function_type) = self.function.get_return_type() else {
+impl ReturnType for Map {
+    fn return_type(&self) -> Type {
+        let Type::Function(function_type) = self.function.return_type() else {
             unreachable!()
         };
         Type::Array(function_type.return_type.clone().into())

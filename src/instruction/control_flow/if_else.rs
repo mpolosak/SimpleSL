@@ -5,7 +5,7 @@ use crate::instruction::{
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
-    variable::{GetReturnType, Type, Variable},
+    variable::{ReturnType, Type, Variable},
     Error, Result,
 };
 use pest::iterators::Pair;
@@ -27,7 +27,7 @@ impl MutCreateInstruction for IfElse {
         let mut inner = pair.into_inner();
         let condition_pair = inner.next().unwrap();
         let condition = Instruction::new(condition_pair, interpreter, local_variables)?;
-        if condition.get_return_type() != Type::Int {
+        if condition.return_type() != Type::Int {
             return Err(Error::WrongType("condition".into(), Type::Int));
         }
         let true_pair = inner.next().unwrap();
@@ -104,10 +104,10 @@ impl Recreate for IfElse {
     }
 }
 
-impl GetReturnType for IfElse {
-    fn get_return_type(&self) -> Type {
-        let true_return_type = self.if_true.get_return_type();
-        let false_return_type = self.if_false.get_return_type();
+impl ReturnType for IfElse {
+    fn return_type(&self) -> Type {
+        let true_return_type = self.if_true.return_type();
+        let false_return_type = self.if_false.return_type();
         true_return_type | false_return_type
     }
 }

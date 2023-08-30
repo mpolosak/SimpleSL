@@ -2,7 +2,7 @@ use crate::instruction::traits::{BaseInstruction, BinOp, CanBeUsed, CreateFromIn
 use crate::instruction::{Exec, Instruction};
 use crate::{
     interpreter::Interpreter,
-    variable::{GetReturnType, Type, Variable},
+    variable::{ReturnType, Type, Variable},
     Error, Result,
 };
 
@@ -89,9 +89,9 @@ impl Exec for Pow {
     }
 }
 
-impl GetReturnType for Pow {
-    fn get_return_type(&self) -> Type {
-        match (self.base.get_return_type(), self.exp.get_return_type()) {
+impl ReturnType for Pow {
+    fn return_type(&self) -> Type {
+        match (self.base.return_type(), self.exp.return_type()) {
             (_, var_type @ Type::Array(_)) | (var_type, _) => var_type,
         }
     }

@@ -4,7 +4,7 @@ use crate::{
         Exec, Instruction,
     },
     interpreter::Interpreter,
-    variable::{GetReturnType, Type, Variable},
+    variable::{ReturnType, Type, Variable},
     Result,
 };
 
@@ -87,9 +87,9 @@ impl Exec for Filter {
     }
 }
 
-impl GetReturnType for Filter {
-    fn get_return_type(&self) -> Type {
-        self.array.get_return_type()
+impl ReturnType for Filter {
+    fn return_type(&self) -> Type {
+        self.array.return_type()
     }
 }
 

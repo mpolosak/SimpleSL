@@ -5,7 +5,7 @@ use super::{
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
-    variable::{GetReturnType, Type, Variable},
+    variable::{ReturnType, Type, Variable},
     Result,
 };
 use pest::iterators::Pair;
@@ -60,13 +60,9 @@ impl Recreate for Tuple {
     }
 }
 
-impl GetReturnType for Tuple {
-    fn get_return_type(&self) -> Type {
-        let types = self
-            .elements
-            .iter()
-            .map(Instruction::get_return_type)
-            .collect();
+impl ReturnType for Tuple {
+    fn return_type(&self) -> Type {
+        let types = self.elements.iter().map(Instruction::return_type).collect();
         Type::Tuple(types)
     }
 }

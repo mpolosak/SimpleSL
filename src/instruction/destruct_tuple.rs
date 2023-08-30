@@ -9,7 +9,7 @@ use super::{
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
-    variable::{GetReturnType, Type, Variable},
+    variable::{ReturnType, Type, Variable},
     Error, Result,
 };
 use pest::iterators::Pair;
@@ -31,7 +31,7 @@ impl MutCreateInstruction for DestructTuple {
         let idents: Rc<[Rc<str>]> = pair.into_inner().map(|pair| pair.as_str().into()).collect();
         let pair = inner.next().unwrap();
         let instruction = Instruction::new(pair, interpreter, local_variables)?;
-        match instruction.get_return_type() {
+        match instruction.return_type() {
             Type::Tuple(types) if types.len() == idents.len() => {
                 let result = Self {
                     idents,
@@ -62,7 +62,7 @@ impl DestructTuple {
                 }
             }
             instruction => {
-                if let Type::Tuple(types) = instruction.get_return_type() {
+                if let Type::Tuple(types) = instruction.return_type() {
                     for (ident, var_type) in zip(self.idents.iter().cloned(), types.iter()) {
                         local_variables.insert(ident, var_type.clone().into());
                     }
@@ -103,9 +103,9 @@ impl Recreate for DestructTuple {
     }
 }
 
-impl GetReturnType for DestructTuple {
-    fn get_return_type(&self) -> Type {
-        self.instruction.get_return_type()
+impl ReturnType for DestructTuple {
+    fn return_type(&self) -> Type {
+        self.instruction.return_type()
     }
 }
 

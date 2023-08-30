@@ -5,7 +5,7 @@ use crate::{
     },
     interpreter::Interpreter,
     parse::Rule,
-    variable::{GetReturnType, GetType, Type, Variable},
+    variable::{ReturnType, Type, Typed, Variable},
     Result,
 };
 use pest::iterators::Pair;
@@ -73,7 +73,7 @@ impl MatchArm {
     pub fn covers(&self, variable: &Variable, interpreter: &mut Interpreter) -> Result<bool> {
         Ok(match self {
             MatchArm::Other(_) => true,
-            MatchArm::Type { var_type, .. } => variable.get_type().matches(var_type),
+            MatchArm::Type { var_type, .. } => variable.as_type().matches(var_type),
             MatchArm::Value(instructions, _) => {
                 for instruction in instructions.iter() {
                     let match_variable = instruction.exec(interpreter)?;
@@ -131,12 +131,12 @@ impl MatchArm {
     }
 }
 
-impl GetReturnType for MatchArm {
-    fn get_return_type(&self) -> Type {
+impl ReturnType for MatchArm {
+    fn return_type(&self) -> Type {
         match self {
             MatchArm::Type { instruction, .. }
             | MatchArm::Value(_, instruction)
-            | MatchArm::Other(instruction) => instruction.get_return_type(),
+            | MatchArm::Other(instruction) => instruction.return_type(),
         }
     }
 }

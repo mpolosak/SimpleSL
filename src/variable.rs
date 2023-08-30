@@ -4,7 +4,7 @@ mod variable_type;
 use crate::{function::Function, join_debug, parse::*, pest::Parser, Error, Result};
 use pest::iterators::Pair;
 use std::{fmt, io, rc::Rc, str::FromStr};
-pub use variable_type::{GetReturnType, GetType, Type};
+pub use variable_type::{ReturnType, Type, Typed};
 
 #[derive(Clone)]
 pub enum Variable {
@@ -17,16 +17,16 @@ pub enum Variable {
     Void,
 }
 
-impl GetType for Variable {
-    fn get_type(&self) -> Type {
+impl Typed for Variable {
+    fn as_type(&self) -> Type {
         match self {
             Variable::Int(_) => Type::Int,
             Variable::Float(_) => Type::Float,
             Variable::String(_) => Type::String,
-            Variable::Function(function) => function.get_type(),
+            Variable::Function(function) => function.as_type(),
             Variable::Array(_, var_type) => var_type.clone(),
             Variable::Tuple(elements) => {
-                let types = elements.iter().map(Variable::get_type).collect();
+                let types = elements.iter().map(Variable::as_type).collect();
                 Type::Tuple(types)
             }
             Variable::Void => Type::Void,
@@ -186,7 +186,7 @@ impl From<Rc<[Variable]>> for Variable {
     fn from(value: Rc<[Variable]>) -> Self {
         let var_type = value
             .iter()
-            .map(Variable::get_type)
+            .map(Variable::as_type)
             .reduce(Type::concat)
             .map_or(Type::EmptyArray, |element_type| {
                 Type::Array(element_type.into())

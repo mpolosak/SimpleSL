@@ -6,7 +6,7 @@ use super::{
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
-    variable::{GetReturnType, Type, Variable},
+    variable::{ReturnType, Type, Variable},
     Result,
 };
 use pest::iterators::Pair;
@@ -59,8 +59,8 @@ impl Recreate for Set {
 
 impl BaseInstruction for Set {}
 
-impl GetReturnType for Set {
-    fn get_return_type(&self) -> Type {
-        self.instruction.get_return_type()
+impl ReturnType for Set {
+    fn return_type(&self) -> Type {
+        self.instruction.return_type()
     }
 }

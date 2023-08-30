@@ -1,5 +1,5 @@
 use super::traits::{BinOp, CanBeUsed};
-use crate::variable::{GetReturnType, Type};
+use crate::variable::{ReturnType, Type};
 mod and;
 mod lshift;
 mod not;
@@ -26,10 +26,10 @@ impl<T: BitwiseBinOp> CanBeUsed for T {
     }
 }
 
-impl<T: BitwiseBinOp> GetReturnType for T {
-    fn get_return_type(&self) -> Type {
+impl<T: BitwiseBinOp> ReturnType for T {
+    fn return_type(&self) -> Type {
         if matches!(
-            (self.lhs().get_return_type(), self.rhs().get_return_type()),
+            (self.lhs().return_type(), self.rhs().return_type()),
             (Type::Array(_), _) | (_, Type::Array(_))
         ) {
             Type::Array(Type::Int.into())

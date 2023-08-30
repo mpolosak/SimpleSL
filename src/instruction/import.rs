@@ -7,7 +7,7 @@ use super::{
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
-    variable::{GetReturnType, Type, Variable},
+    variable::{ReturnType, Type, Variable},
     Result,
 };
 use pest::iterators::Pair;
@@ -60,11 +60,11 @@ impl Recreate for Import {
     }
 }
 
-impl GetReturnType for Import {
-    fn get_return_type(&self) -> Type {
+impl ReturnType for Import {
+    fn return_type(&self) -> Type {
         self.instructions
             .last()
-            .map_or(Type::Void, GetReturnType::get_return_type)
+            .map_or(Type::Void, ReturnType::return_type)
     }
 }
 

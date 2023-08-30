@@ -1,7 +1,7 @@
 use crate::{
     instruction::{local_variable::LocalVariables, Instruction},
     interpreter::Interpreter,
-    variable::{GetReturnType, Type, Variable},
+    variable::{ReturnType, Type, Variable},
     Error, Result,
 };
 
@@ -27,7 +27,7 @@ pub trait PrefixOp: Sized + Into<Instruction> {
         panic!("Tried to {} {num}", Self::SYMBOL)
     }
     fn create_instruction(instruction: Instruction) -> Result<Instruction> {
-        let return_type = instruction.get_return_type();
+        let return_type = instruction.return_type();
         if Self::can_be_used(&return_type) {
             Ok(Self::create_from_instruction(instruction))
         } else {
@@ -53,6 +53,6 @@ pub trait PrefixOp: Sized + Into<Instruction> {
         Ok(Self::create_from_instruction(instruction))
     }
     fn get_return_type(&self) -> Type {
-        self.instruction().get_return_type()
+        self.instruction().return_type()
     }
 }

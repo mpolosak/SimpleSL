@@ -4,7 +4,7 @@ use crate::{
     function::{check_args, Params},
     instruction::traits::BaseInstruction,
     interpreter::Interpreter,
-    variable::{function_type::FunctionType, GetReturnType, Type, Variable},
+    variable::{function_type::FunctionType, ReturnType, Type, Variable},
     Error, Result,
 };
 use crate::{
@@ -47,7 +47,7 @@ impl FunctionCall {
                 Ok(Self { function, args }.into())
             }
             instruction => {
-                Self::check_args_with_type("function", &instruction.get_return_type(), &args)?;
+                Self::check_args_with_type("function", &instruction.return_type(), &args)?;
                 Ok(Self { function, args }.into())
             }
         }
@@ -58,14 +58,14 @@ impl FunctionCall {
             params,
             &args
                 .iter()
-                .map(Instruction::get_return_type)
+                .map(Instruction::return_type)
                 .collect::<Box<[Type]>>(),
         )
     }
     fn check_args_with_type(pair_str: &str, var_type: &Type, args: &[Instruction]) -> Result<()> {
         let params = args
             .iter()
-            .map(Instruction::get_return_type)
+            .map(Instruction::return_type)
             .collect::<Box<[Type]>>();
         let expected = Type::Function(
             FunctionType {
@@ -104,9 +104,9 @@ impl Recreate for FunctionCall {
     }
 }
 
-impl GetReturnType for FunctionCall {
-    fn get_return_type(&self) -> Type {
-        let Type::Function(function_type) = self.function.get_return_type() else {
+impl ReturnType for FunctionCall {
+    fn return_type(&self) -> Type {
+        let Type::Function(function_type) = self.function.return_type() else {
             unreachable!();
         };
         function_type.return_type.clone()
