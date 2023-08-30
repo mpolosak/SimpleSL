@@ -3,7 +3,8 @@ use crate::{interpreter::Interpreter, variable::Variable};
 use simplesl_macros::export_function;
 use std::rc::Rc;
 
-pub fn add_functions(interpreter: &mut Interpreter) {
+/// Add string part of standard library to Interpreter
+pub fn add_string(interpreter: &mut Interpreter) {
     #[export_function(return_type = "[string]")]
     fn split(string: &str, pat: &str) -> Rc<[Variable]> {
         string
@@ -38,5 +39,14 @@ pub fn add_functions(interpreter: &mut Interpreter) {
     #[export_function]
     fn to_uppercase(string: &str) -> String {
         string.to_uppercase()
+    }
+
+    #[export_function]
+    fn len(#[var_type("[any]|string")] variable: Variable) -> usize {
+        match variable {
+            Variable::Array(array, _) => array.len(),
+            Variable::String(string) => string.len(),
+            _ => unreachable!(),
+        }
     }
 }

@@ -3,7 +3,8 @@ use crate::{interpreter::Interpreter, join, variable::*, Result};
 use simplesl_macros::export_function;
 use std::io;
 
-pub fn add_functions(interpreter: &mut Interpreter) {
+/// Add input/output part of standard library to Interpreter
+pub fn add_io(interpreter: &mut Interpreter) {
     #[export_function]
     fn print(var: Variable) {
         println!("{var}");

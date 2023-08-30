@@ -1,23 +1,14 @@
-use crate as simplesl;
 mod convert;
 mod fs;
-mod iofunctions;
+mod io;
 mod string;
-use crate::{interpreter::Interpreter, variable::Variable};
-use simplesl_macros::export_function;
+pub use self::{convert::add_convert, fs::add_fs, io::add_io, string::add_string};
+use crate::interpreter::Interpreter;
 
-pub fn add_std_lib(interpreter: &mut Interpreter) {
-    iofunctions::add_functions(interpreter);
-    convert::add_functions(interpreter);
-    string::add_functions(interpreter);
-    fs::add_functions(interpreter);
-
-    #[export_function]
-    fn len(#[var_type("[any]|string")] variable: Variable) -> usize {
-        match variable {
-            Variable::Array(array, _) => array.len(),
-            Variable::String(string) => string.len(),
-            _ => panic!(),
-        }
-    }
+/// Add all of standard library to Interpreter
+pub fn add_all(interpreter: &mut Interpreter) {
+    add_io(interpreter);
+    add_convert(interpreter);
+    add_string(interpreter);
+    add_fs(interpreter);
 }

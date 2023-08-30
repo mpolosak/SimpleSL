@@ -2,7 +2,8 @@ use crate as simplesl;
 use crate::{interpreter::Interpreter, variable::Variable};
 use simplesl_macros::export_function;
 
-pub fn add_functions(interpreter: &mut Interpreter) {
+/// Add type convertion part of standard library to Interpreter
+pub fn add_convert(interpreter: &mut Interpreter) {
     #[export_function]
     fn int_to_float(value: i64) -> f64 {
         value as f64

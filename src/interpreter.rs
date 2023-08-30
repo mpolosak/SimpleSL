@@ -1,7 +1,6 @@
 use crate::instruction::{local_variable::LocalVariables, Exec, Instruction};
-use crate::{parse::*, pest::Parser, stdlib::add_std_lib, variable::*, Error, Result};
-use std::fs::read_to_string;
-use std::{collections::HashMap, rc::Rc};
+use crate::{parse::*, pest::Parser, stdlib, variable::*, Error, Result};
+use std::{collections::HashMap, fs, rc::Rc};
 
 #[derive(Debug)]
 #[must_use]
@@ -16,7 +15,7 @@ impl<'a> Interpreter<'a> {
     /// Constructs a new Interpreter with simplesl stdlib
     pub fn with_stdlib() -> Self {
         let mut interpreter = Self::without_stdlib();
-        add_std_lib(&mut interpreter);
+        stdlib::add_all(&mut interpreter);
         interpreter
     }
 
@@ -45,7 +44,7 @@ impl<'a> Interpreter<'a> {
         path: &str,
         local_variables: &mut LocalVariables,
     ) -> Result<Box<[Instruction]>> {
-        let contents = read_to_string(path)?;
+        let contents = fs::read_to_string(path)?;
         self.parse_input(&contents, local_variables)
     }
 

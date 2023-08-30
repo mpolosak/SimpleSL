@@ -3,7 +3,8 @@ use crate::interpreter::Interpreter;
 use simplesl_macros::export_function;
 use std::{fs, io};
 
-pub fn add_functions(interpreter: &mut Interpreter) {
+/// Add filesystem part of standard library to Interpreter
+pub fn add_fs(interpreter: &mut Interpreter) {
     #[export_function]
     fn file_read_to_string(path: &str) -> io::Result<String> {
         fs::read_to_string(path)
