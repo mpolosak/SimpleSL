@@ -6,7 +6,7 @@ use crate::{
 };
 
 #[derive(Debug)]
-pub enum Body {
+pub(crate) enum Body {
     Lang(Box<[Instruction]>),
     Native(fn(&mut Interpreter) -> Result<Variable>),
 }

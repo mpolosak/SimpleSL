@@ -1,8 +1,8 @@
 mod body;
 mod check_args;
 mod param;
+pub(crate) use self::body::Body;
 pub use self::{
-    body::Body,
     check_args::check_args,
     param::{Param, Params},
 };
