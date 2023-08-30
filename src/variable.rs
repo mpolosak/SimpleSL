@@ -1,10 +1,11 @@
-pub mod function_type;
-pub mod type_set;
+mod function_type;
+mod type_set;
 mod variable_type;
 use crate::{function::Function, join_debug, parse::*, pest::Parser, Error, Result};
 use pest::iterators::Pair;
 use std::{fmt, io, rc::Rc, str::FromStr};
 pub use variable_type::{ReturnType, Type, Typed};
+pub use {function_type::FunctionType, type_set::TypeSet};
 
 #[derive(Clone)]
 pub enum Variable {

@@ -9,7 +9,7 @@ pub use self::{
 use crate::{
     instruction::Exec,
     interpreter::Interpreter,
-    variable::{function_type::FunctionType, ReturnType, Type, Typed, Variable},
+    variable::{FunctionType, ReturnType, Type, Typed, Variable},
     Result,
 };
 use std::{fmt, iter::zip, rc::Rc};

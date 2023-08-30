@@ -8,7 +8,7 @@ use crate::{
     function::{Body, Function, Param, Params},
     interpreter::Interpreter,
     parse::Rule,
-    variable::{function_type::FunctionType, ReturnType, Type, Variable},
+    variable::{FunctionType, ReturnType, Type, Variable},
     Error, Result,
 };
 use pest::iterators::Pair;

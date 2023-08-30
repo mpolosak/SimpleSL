@@ -1,7 +1,7 @@
 use super::Instruction;
 use crate::{
     function::{Param, Params},
-    variable::{function_type::FunctionType, ReturnType, Type, Typed, Variable},
+    variable::{FunctionType, ReturnType, Type, Typed, Variable},
 };
 use std::{collections::HashMap, rc::Rc};
 

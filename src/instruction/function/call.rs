@@ -4,7 +4,7 @@ use crate::{
     function::{check_args, Params},
     instruction::traits::BaseInstruction,
     interpreter::Interpreter,
-    variable::{function_type::FunctionType, ReturnType, Type, Variable},
+    variable::{FunctionType, ReturnType, Type, Variable},
     Error, Result,
 };
 use crate::{
