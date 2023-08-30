@@ -42,7 +42,7 @@ use crate::{
 };
 use pest::iterators::Pair;
 use std::rc::Rc;
-pub use traits::{CreateInstruction, Exec, MutCreateInstruction, Recreate};
+pub(crate) use traits::{CreateInstruction, Exec, MutCreateInstruction, Recreate};
 
 #[derive(Debug)]
 pub enum Instruction {
@@ -54,7 +54,7 @@ pub enum Instruction {
 }
 
 impl Instruction {
-    pub fn new(
+    pub(crate) fn new(
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
@@ -80,7 +80,7 @@ impl Instruction {
             rule => unreachable!("Unexpected rule: {rule:?}"),
         }
     }
-    pub fn new_expression(
+    pub(crate) fn new_expression(
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &LocalVariables,
@@ -213,7 +213,7 @@ impl From<Variable> for Instruction {
     }
 }
 
-pub fn recreate_instructions(
+pub(crate) fn recreate_instructions(
     instructions: &[Instruction],
     local_variables: &mut LocalVariables,
     interpreter: &Interpreter,
