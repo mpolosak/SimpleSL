@@ -16,13 +16,27 @@ use std::{fmt, iter::zip, rc::Rc};
 
 #[derive(Debug)]
 pub struct Function {
-    pub ident: Option<Rc<str>>,
-    pub params: Params,
-    pub body: Body,
-    pub return_type: Type,
+    pub(crate) ident: Option<Rc<str>>,
+    pub(crate) params: Params,
+    pub(crate) body: Body,
+    pub(crate) return_type: Type,
 }
 
 impl Function {
+    pub fn new(
+        ident: Option<Rc<str>>,
+        params: Params,
+        body: fn(&mut Interpreter) -> Result<Variable>,
+        return_type: Type,
+    ) -> Self {
+        Self {
+            ident,
+            params,
+            body: Body::Native(body),
+            return_type,
+        }
+    }
+
     pub fn exec(
         self: &Rc<Self>,
         interpreter: &mut Interpreter,

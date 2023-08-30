@@ -30,17 +30,15 @@ pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream 
             use std::rc::Rc;
             interpreter.insert(
                 #ident_str.into(),
-                simplesl::function::Function {
-                    ident: None,
-                    params: simplesl::function::Params(Rc::new([#params])),
-                    body: simplesl::function::Body::Native(
-                        |interpreter| {
-                            #args_importing
-                            #body
-                        }
-                    ),
-                    return_type: #return_type,
-                }.into(),
+                simplesl::function::Function::new(
+                    None,
+                    simplesl::function::Params(Rc::new([#params])),
+                    |interpreter| {
+                        #args_importing
+                        #body
+                    },
+                    #return_type,
+                ).into(),
             );
         }
     )
