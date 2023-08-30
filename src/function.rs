@@ -24,13 +24,12 @@ pub struct Function {
 
 impl Function {
     pub fn new(
-        ident: Option<Rc<str>>,
         params: Params,
         body: fn(&mut Interpreter) -> Result<Variable>,
         return_type: Type,
     ) -> Self {
         Self {
-            ident,
+            ident: None,
             params,
             body: Body::Native(body),
             return_type,

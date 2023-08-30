@@ -31,7 +31,6 @@ pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream 
             interpreter.insert(
                 #ident_str.into(),
                 simplesl::function::Function::new(
-                    None,
                     simplesl::function::Params(Rc::new([#params])),
                     |interpreter| {
                         #args_importing
