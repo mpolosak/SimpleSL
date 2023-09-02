@@ -27,11 +27,7 @@ impl<'a> Interpreter<'a> {
         }
     }
 
-    /// Executes all instructions in order  
-    /// If any of calls result in error stop executing and returns that error  
-    /// If all instructions get executed successfully returns result of last instruction
-    /// or Variable::Void if instructions is empty
-    pub fn exec(&mut self, instructions: &[Instruction]) -> Result<Variable> {
+    pub(crate) fn exec(&mut self, instructions: &[Instruction]) -> Result<Variable> {
         instructions
             .iter()
             .map(|instruction| instruction.exec(self))
@@ -39,7 +35,7 @@ impl<'a> Interpreter<'a> {
             .unwrap_or(Ok(Variable::Void))
     }
 
-    pub fn load(
+    pub(crate) fn load(
         &self,
         path: &str,
         local_variables: &mut LocalVariables,
@@ -48,7 +44,7 @@ impl<'a> Interpreter<'a> {
         self.parse_input(&contents, local_variables)
     }
 
-    pub fn parse_input(
+    fn parse_input(
         &self,
         input: &str,
         local_variables: &mut LocalVariables,

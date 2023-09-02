@@ -7,10 +7,10 @@ pub use self::{
     param::{Param, Params},
 };
 use crate::{
-    instruction::Exec,
+    instruction::{Exec, FunctionCall, Instruction},
     interpreter::Interpreter,
     variable::{FunctionType, ReturnType, Type, Typed, Variable},
-    Result,
+    Code, Result,
 };
 use std::{fmt, iter::zip, rc::Rc};
 
@@ -36,7 +36,20 @@ impl Function {
         }
     }
 
-    pub fn exec(
+    pub fn create_call(self: Rc<Self>, args: Vec<Variable>) -> Result<Code> {
+        let types = args.iter().map(Typed::as_type).collect::<Box<[Type]>>();
+        let args = args.into_iter().map(Instruction::from).collect();
+        check_args("function", &self.params, &types)?;
+        Ok(Code {
+            instructions: Rc::new([FunctionCall {
+                function: Variable::Function(self).into(),
+                args,
+            }
+            .into()]),
+        })
+    }
+
+    pub(crate) fn exec(
         self: &Rc<Self>,
         interpreter: &mut Interpreter,
         args: &[Variable],

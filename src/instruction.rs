@@ -25,7 +25,7 @@ use self::{
     comp::{Equal, Greater, GreaterOrEqual, Lower, LowerOrEqual},
     control_flow::{IfElse, Match, SetIfElse},
     destruct_tuple::DestructTuple,
-    function::{AnonymousFunction, FunctionCall, FunctionDeclaration},
+    function::{AnonymousFunction, FunctionDeclaration},
     import::Import,
     local_variable::{LocalVariable, LocalVariables},
     logic::{And, Not, Or},
@@ -40,6 +40,7 @@ use crate::{
     variable::{ReturnType, Type, Typed, Variable},
     Result,
 };
+pub(crate) use function::FunctionCall;
 use pest::iterators::Pair;
 use std::rc::Rc;
 pub(crate) use traits::{CreateInstruction, Exec, MutCreateInstruction, Recreate};
