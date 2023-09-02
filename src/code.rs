@@ -1,7 +1,7 @@
 use crate::{
     instruction::{local_variable::LocalVariables, Exec, Instruction},
     parse::{Rule, SimpleSLParser},
-    variable::Variable,
+    variable::{ReturnType, Type, Variable},
     Interpreter, Result,
 };
 use pest::Parser;
@@ -31,5 +31,13 @@ impl Code {
             .map(|instruction| instruction.exec(interpreter))
             .last()
             .unwrap_or(Ok(Variable::Void))
+    }
+}
+
+impl ReturnType for Code {
+    fn return_type(&self) -> Type {
+        self.instructions
+            .last()
+            .map_or(Type::Void, ReturnType::return_type)
     }
 }
