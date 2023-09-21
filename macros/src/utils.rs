@@ -100,6 +100,10 @@ fn arg_import_from_function_param(
         quote!(
             let #ident = #get_variable.clone();
         )
+    } else if param_type == "& Variable" {
+        quote!(
+            let #ident = #get_variable;
+        )
     } else if param_type == "& mut Interpreter" {
         quote!()
     } else {
@@ -147,7 +151,7 @@ fn type_from_str(attrs: &[Attribute], param_type: &str) -> TokenStream {
             panic!("Argument of type function must be precede by var_type attribute")
         };
         var_type
-    } else if param_type == "Variable" {
+    } else if param_type == "Variable" || param_type == "& Variable" {
         get_type_from_attrs(attrs).unwrap_or(quote!(simplesl::variable::Type::Any))
     } else {
         panic!("{param_type} type isn't allowed")
