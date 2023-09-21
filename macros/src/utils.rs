@@ -89,6 +89,13 @@ fn arg_import_from_function_param(
             };
             let #ident = #ident.clone();
         )
+    } else if param_type == "& Function" {
+        quote!(
+            let simplesl::variable::Variable::Function(#ident) = #get_variable else {
+                panic!()
+            };
+            let #ident = #ident.as_ref();
+        )
     } else if param_type == "Variable" {
         quote!(
             let #ident = #get_variable.clone();
@@ -135,7 +142,7 @@ fn type_from_str(attrs: &[Attribute], param_type: &str) -> TokenStream {
         get_type_from_attrs(attrs).unwrap_or(quote!(simplesl::variable::Type::Array(
             simplesl::variable::Type::Any.into()
         )))
-    } else if param_type == "Rc < Function >" {
+    } else if param_type == "Rc < Function >" || param_type == "& Function" {
         let Some(var_type) = get_type_from_attrs(attrs) else {
             panic!("Argument of type function must be precede by var_type attribute")
         };
