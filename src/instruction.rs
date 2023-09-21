@@ -38,7 +38,7 @@ use crate::{
     interpreter::Interpreter,
     parse::{Rule, PRATT_PARSER},
     variable::{ReturnType, Type, Typed, Variable},
-    Result,
+    Error, Result,
 };
 pub(crate) use function::FunctionCall;
 use pest::iterators::Pair;
@@ -92,7 +92,13 @@ impl Instruction {
                 Rule::ident => {
                     let ident = pair.as_str();
                     local_variables.get(ident).map_or_else(
-                        || interpreter.get_variable(ident).map(Instruction::from),
+                        || {
+                            interpreter
+                                .get_variable(ident)
+                                .map(Clone::clone)
+                                .map(Instruction::from)
+                                .ok_or_else(|| Error::VariableDoesntExist(ident.into()))
+                        },
                         |var| match var {
                             LocalVariable::Variable(variable) => {
                                 Ok(Self::Variable(variable.clone()))
@@ -164,7 +170,10 @@ impl Exec for Instruction {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         match self {
             Self::Variable(var) => Ok(var.clone()),
-            Self::LocalVariable(name, _) => interpreter.get_variable(name),
+            Self::LocalVariable(ident, _) => interpreter
+                .get_variable(ident)
+                .map(Clone::clone)
+                .ok_or_else(|| Error::VariableDoesntExist(ident.clone())),
             Self::AnonymousFunction(function) => function.exec(interpreter),
             Self::Tuple(function) => function.exec(interpreter),
             Self::Other(other) => other.exec(interpreter),
@@ -180,7 +189,13 @@ impl Recreate for Instruction {
     ) -> Result<Instruction> {
         match self {
             Self::LocalVariable(ident, _) => local_variables.get(ident).map_or_else(
-                || interpreter.get_variable(ident).map(Instruction::from),
+                || {
+                    interpreter
+                        .get_variable(ident)
+                        .map(Clone::clone)
+                        .map(Instruction::from)
+                        .ok_or_else(|| Error::VariableDoesntExist(ident.clone()))
+                },
                 |var| match var {
                     LocalVariable::Variable(variable) => Ok(Self::Variable(variable.clone())),
                     local_variable => {

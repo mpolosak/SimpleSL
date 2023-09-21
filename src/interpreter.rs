@@ -1,5 +1,5 @@
 use crate::instruction::{local_variable::LocalVariables, Exec, Instruction};
-use crate::{parse::*, pest::Parser, stdlib, variable::*, Error, Result};
+use crate::{parse::*, pest::Parser, stdlib, variable::*, Result};
 use std::{collections::HashMap, fs, rc::Rc};
 
 #[derive(Debug)]
@@ -55,12 +55,10 @@ impl<'a> Interpreter<'a> {
             .collect::<Result<_>>()?;
         Ok(instructions)
     }
-    pub fn get_variable(&self, name: &str) -> Result<Variable> {
+    pub fn get_variable(&self, name: &str) -> Option<&Variable> {
         self.variables
             .get(name)
             .or_else(|| self.lower_layer?.variables.get(name))
-            .map(Clone::clone)
-            .ok_or_else(|| Error::VariableDoesntExist(name.into()))
     }
     pub fn insert(&mut self, name: Rc<str>, variable: Variable) {
         self.variables.insert(name, variable);

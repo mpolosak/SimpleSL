@@ -41,53 +41,57 @@ fn arg_import_from_function_param(
     (ident, _attrs, param_type): &(Ident, Vec<Attribute>, String),
 ) -> TokenStream {
     let ident_str = ident.to_string();
+    let get_variable = quote!(interpreter.get_variable(#ident_str).unwrap());
     if param_type == "i64" {
         quote!(
-            let simplesl::variable::Variable::Int(#ident) = interpreter.get_variable(#ident_str)? else {
+            let simplesl::variable::Variable::Int(#ident) = *#get_variable else {
                 panic!()
             };
         )
     } else if param_type == "f64" {
         quote!(
-            let simplesl::variable::Variable::Float(#ident) = interpreter.get_variable(#ident_str)? else {
+            let simplesl::variable::Variable::Float(#ident) = *#get_variable else {
                 panic!()
             };
         )
     } else if param_type == "Rc < str >" {
         quote!(
-            let simplesl::variable::Variable::String(#ident) = interpreter.get_variable(#ident_str)? else {
+            let simplesl::variable::Variable::String(#ident) = #get_variable else {
                 panic!()
             };
+            let #ident = #ident.clone();
         )
     } else if param_type == "& str" {
         quote!(
-            let simplesl::variable::Variable::String(#ident) = interpreter.get_variable(#ident_str)? else {
+            let simplesl::variable::Variable::String(#ident) = #get_variable else {
                 panic!()
             };
             let #ident = #ident.as_ref();
         )
     } else if param_type == "Rc < [Variable] >" {
         quote!(
-            let simplesl::variable::Variable::Array(#ident, _) = interpreter.get_variable(#ident_str)? else {
+            let simplesl::variable::Variable::Array(#ident, _) = #get_variable else {
                 panic!()
             };
+            let #ident = #ident.clone();
         )
     } else if param_type == "& [Variable]" {
         quote!(
-            let simplesl::variable::Variable::Array(#ident, _) = interpreter.get_variable(#ident_str)? else {
+            let simplesl::variable::Variable::Array(#ident, _) = #get_variable else {
                 panic!()
             };
             let #ident = #ident.as_ref();
         )
     } else if param_type == "Rc < Function >" {
         quote!(
-            let simplesl::variable::Variable::Function(#ident) = interpreter.get_variable(#ident_str)? else {
+            let simplesl::variable::Variable::Function(#ident) = #get_variable else {
                 panic!()
             };
+            let #ident = #ident.clone();
         )
     } else if param_type == "Variable" {
         quote!(
-            let #ident = interpreter.get_variable(#ident_str)?;
+            let #ident = #get_variable.clone();
         )
     } else if param_type == "& mut Interpreter" {
         quote!()

@@ -5,7 +5,7 @@ use std::{fmt, rc::Rc};
 
 #[derive(Debug)]
 pub enum Error {
-    VariableDoesntExist(Box<str>),
+    VariableDoesntExist(Rc<str>),
     WrongType(Rc<str>, Type),
     WrongNumberOfArguments(Box<str>, usize),
     IndexToBig,
