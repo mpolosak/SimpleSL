@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::instruction::{
     local_variable::{LocalVariableMap, LocalVariables},
     recreate_instructions,
@@ -13,10 +15,10 @@ use crate::{
 };
 use pest::iterators::Pair;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct AnonymousFunction {
     pub params: Params,
-    body: Box<[Instruction]>,
+    body: Rc<[Instruction]>,
     return_type: Type,
 }
 
@@ -40,7 +42,7 @@ impl CreateInstruction for AnonymousFunction {
             local_variables.layer_from_map(LocalVariableMap::from(params.clone()));
         let body = inner
             .map(|instruction| Instruction::new(instruction, interpreter, &mut local_variables))
-            .collect::<Result<Box<_>>>()?;
+            .collect::<Result<Rc<_>>>()?;
 
         let returned = body.last().map_or(Type::Void, ReturnType::return_type);
         if !returned.matches(&return_type) {
@@ -52,7 +54,7 @@ impl CreateInstruction for AnonymousFunction {
 }
 
 impl AnonymousFunction {
-    fn create(params: Params, body: Box<[Instruction]>, return_type: Type) -> Instruction {
+    fn create(params: Params, body: Rc<[Instruction]>, return_type: Type) -> Instruction {
         if body
             .iter()
             .all(|instruction| matches!(instruction, Instruction::Variable(_)))

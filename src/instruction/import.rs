@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use super::{
     local_variable::LocalVariables,
     recreate_instructions,
@@ -14,7 +16,7 @@ use pest::iterators::Pair;
 
 #[derive(Debug)]
 pub struct Import {
-    instructions: Box<[Instruction]>,
+    instructions: Rc<[Instruction]>,
 }
 
 impl MutCreateInstruction for Import {
@@ -28,15 +30,10 @@ impl MutCreateInstruction for Import {
             unreachable!()
         };
         let instructions = interpreter.load(&path, local_variables)?;
-        if instructions
-            .iter()
-            .all(|instruction| matches!(instruction, Instruction::Variable(_)))
-        {
-            if let Some(Instruction::Variable(variable)) = instructions.last() {
-                Ok(Instruction::Variable(variable.clone()))
-            } else {
-                Ok(Instruction::Variable(Variable::Void))
-            }
+        if instructions.is_empty() {
+            Ok(Instruction::Variable(Variable::Void))
+        } else if let [element] = instructions.as_ref() {
+            Ok(element.clone())
         } else {
             Ok(Self { instructions }.into())
         }

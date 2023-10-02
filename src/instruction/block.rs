@@ -9,10 +9,11 @@ use crate::{
     Result,
 };
 use pest::iterators::Pair;
+use std::rc::Rc;
 
 #[derive(Debug)]
 pub struct Block {
-    instructions: Box<[Instruction]>,
+    instructions: Rc<[Instruction]>,
 }
 
 impl CreateInstruction for Block {
@@ -25,7 +26,7 @@ impl CreateInstruction for Block {
         let instructions = pair
             .into_inner()
             .map(|pair| Instruction::new(pair, interpreter, &mut local_variables))
-            .collect::<Result<Box<[Instruction]>>>()?;
+            .collect::<Result<Rc<[Instruction]>>>()?;
         if instructions
             .iter()
             .all(|instruction| matches!(instruction, Instruction::Variable(_)))

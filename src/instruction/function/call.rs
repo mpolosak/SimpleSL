@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use pest::iterators::Pair;
 
 use crate::{
@@ -22,7 +24,7 @@ use crate::{
 #[derive(Debug)]
 pub struct FunctionCall {
     pub function: Instruction,
-    pub args: Box<[Instruction]>,
+    pub args: Rc<[Instruction]>,
 }
 
 impl FunctionCall {
@@ -35,7 +37,7 @@ impl FunctionCall {
         let args = args
             .into_inner()
             .map(|pair| Instruction::new_expression(pair, interpreter, local_variables))
-            .collect::<Result<Box<_>>>()?;
+            .collect::<Result<Rc<_>>>()?;
         match &function {
             Instruction::Variable(Variable::Function(function2)) => {
                 Self::check_args_with_params("function", &function2.params, &args)?;

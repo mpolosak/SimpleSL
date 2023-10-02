@@ -3,7 +3,7 @@ mod can_be_used;
 mod create_bin_op;
 mod create_from_instructions;
 mod prefix_op;
-use std::fmt::Debug;
+use std::{fmt::Debug, rc::Rc};
 
 pub use self::{
     bin_op::BinOp, can_be_used::CanBeUsed, create_bin_op::CreateBinOp,
@@ -49,6 +49,6 @@ pub trait BaseInstruction: Exec + Recreate + ReturnType + Debug {}
 
 impl<T: BaseInstruction + 'static> From<T> for Instruction {
     fn from(value: T) -> Self {
-        Self::Other(Box::new(value))
+        Self::Other(Rc::new(value))
     }
 }

@@ -19,7 +19,7 @@ use std::rc::Rc;
 pub struct FunctionDeclaration {
     ident: Rc<str>,
     pub params: Params,
-    body: Box<[Instruction]>,
+    body: Rc<[Instruction]>,
     return_type: Type,
 }
 
@@ -51,7 +51,7 @@ impl MutCreateInstruction for FunctionDeclaration {
                 local_variables.layer_from_map(LocalVariableMap::from(params.clone()));
             inner
                 .map(|instruction| Instruction::new(instruction, interpreter, &mut local_variables))
-                .collect::<Result<Box<_>>>()
+                .collect::<Result<Rc<_>>>()
         }?;
         let returned = body.last().map_or(Type::Void, ReturnType::return_type);
         if !returned.matches(&return_type) {
@@ -69,7 +69,7 @@ impl MutCreateInstruction for FunctionDeclaration {
 
 impl FunctionDeclaration {
     fn create(
-        body: Box<[Instruction]>,
+        body: Rc<[Instruction]>,
         ident: Rc<str>,
         params: Params,
         return_type: Type,

@@ -12,10 +12,11 @@ use crate::{
     Result,
 };
 use pest::iterators::Pair;
+use std::rc::Rc;
 
 #[derive(Debug)]
 pub struct Array {
-    instructions: Box<[Instruction]>,
+    instructions: Rc<[Instruction]>,
     var_type: Type,
 }
 
@@ -28,12 +29,12 @@ impl CreateInstruction for Array {
         let inner = pair.into_inner();
         let instructions = inner
             .map(|arg| Instruction::new_expression(arg, interpreter, local_variables))
-            .collect::<Result<Box<_>>>()?;
+            .collect::<Result<Rc<_>>>()?;
         Ok(Self::create_from_instructions(instructions))
     }
 }
 impl Array {
-    fn create_from_instructions(instructions: Box<[Instruction]>) -> Instruction {
+    fn create_from_instructions(instructions: Rc<[Instruction]>) -> Instruction {
         let var_type = instructions
             .iter()
             .map(Instruction::return_type)

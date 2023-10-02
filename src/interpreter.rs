@@ -39,7 +39,7 @@ impl<'a> Interpreter<'a> {
         &self,
         path: &str,
         local_variables: &mut LocalVariables,
-    ) -> Result<Box<[Instruction]>> {
+    ) -> Result<Rc<[Instruction]>> {
         let contents = fs::read_to_string(path)?;
         self.parse_input(&contents, local_variables)
     }
@@ -48,12 +48,17 @@ impl<'a> Interpreter<'a> {
         &self,
         input: &str,
         local_variables: &mut LocalVariables,
-    ) -> Result<Box<[Instruction]>> {
+    ) -> Result<Rc<[Instruction]>> {
         let parse = SimpleSLParser::parse(Rule::input, input)?;
-        let instructions = parse
+        let mut instructions = parse
             .map(|pair| Instruction::new(pair, self, local_variables))
-            .collect::<Result<_>>()?;
-        Ok(instructions)
+            .collect::<Result<Vec<Instruction>>>()?;
+        let Some(last) = instructions.pop() else {
+            return Ok(Rc::from([]));
+        };
+        instructions.retain(|instruction| !matches!(instruction, Instruction::Variable(_)));
+        instructions.push(last);
+        Ok(instructions.into())
     }
     pub fn get_variable(&self, name: &str) -> Option<&Variable> {
         self.variables

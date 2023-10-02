@@ -18,7 +18,7 @@ pub enum MatchArm {
         var_type: Type,
         instruction: Instruction,
     },
-    Value(Box<[Instruction]>, Instruction),
+    Value(Rc<[Instruction]>, Instruction),
     Other(Instruction),
 }
 
@@ -49,7 +49,7 @@ impl MatchArm {
                 let inner_values = pair.into_inner();
                 let values = inner_values
                     .map(|pair| Instruction::new(pair, interpreter, local_variables))
-                    .collect::<Result<Box<[Instruction]>>>()?;
+                    .collect::<Result<Rc<[Instruction]>>>()?;
                 let pair = inner.next().unwrap();
                 let instruction = Instruction::new(pair, interpreter, local_variables)?;
                 Ok(Self::Value(values, instruction))

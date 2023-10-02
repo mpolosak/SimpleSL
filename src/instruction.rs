@@ -45,13 +45,13 @@ use pest::iterators::Pair;
 use std::rc::Rc;
 pub(crate) use traits::{CreateInstruction, Exec, MutCreateInstruction, Recreate};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Instruction {
     AnonymousFunction(AnonymousFunction),
     LocalVariable(Rc<str>, LocalVariable),
     Tuple(Tuple),
     Variable(Variable),
-    Other(Box<dyn BaseInstruction>),
+    Other(Rc<dyn BaseInstruction>),
 }
 
 impl Instruction {
@@ -233,7 +233,7 @@ pub(crate) fn recreate_instructions(
     instructions: &[Instruction],
     local_variables: &mut LocalVariables,
     interpreter: &Interpreter,
-) -> Result<Box<[Instruction]>> {
+) -> Result<Rc<[Instruction]>> {
     instructions
         .iter()
         .map(|instruction| instruction.recreate(local_variables, interpreter))

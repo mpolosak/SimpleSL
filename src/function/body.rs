@@ -4,10 +4,11 @@ use crate::{
     variable::Variable,
     Result,
 };
+use std::rc::Rc;
 
 #[derive(Debug)]
 pub(crate) enum Body {
-    Lang(Box<[Instruction]>),
+    Lang(Rc<[Instruction]>),
     Native(fn(&mut Interpreter) -> Result<Variable>),
 }
 
