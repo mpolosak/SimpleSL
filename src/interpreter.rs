@@ -1,3 +1,5 @@
+use pest::iterators::Pairs;
+
 use crate::instruction::{local_variable::LocalVariables, Exec, Instruction};
 use crate::{parse::*, pest::Parser, stdlib, variable::*, Result};
 use std::{collections::HashMap, fs, rc::Rc};
@@ -49,8 +51,16 @@ impl<'a> Interpreter<'a> {
         input: &str,
         local_variables: &mut LocalVariables,
     ) -> Result<Rc<[Instruction]>> {
-        let parse = SimpleSLParser::parse(Rule::input, input)?;
-        let mut instructions = parse
+        let pairs = SimpleSLParser::parse(Rule::input, input)?;
+        self.create_instructions(pairs, local_variables)
+    }
+
+    pub(crate) fn create_instructions(
+        &self,
+        pairs: Pairs<'_, Rule>,
+        local_variables: &mut LocalVariables,
+    ) -> Result<Rc<[Instruction]>> {
+        let mut instructions = pairs
             .map(|pair| Instruction::new(pair, self, local_variables))
             .collect::<Result<Vec<Instruction>>>()?;
         let Some(last) = instructions.pop() else {
@@ -60,6 +70,7 @@ impl<'a> Interpreter<'a> {
         instructions.push(last);
         Ok(instructions.into())
     }
+
     pub fn get_variable(&self, name: &str) -> Option<&Variable> {
         self.variables
             .get(name)
