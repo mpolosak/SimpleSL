@@ -23,19 +23,12 @@ impl CreateInstruction for Block {
         local_variables: &LocalVariables,
     ) -> Result<Instruction> {
         let mut local_variables = local_variables.create_layer();
-        let instructions = pair
-            .into_inner()
-            .map(|pair| Instruction::new(pair, interpreter, &mut local_variables))
-            .collect::<Result<Rc<[Instruction]>>>()?;
-        if instructions
-            .iter()
-            .all(|instruction| matches!(instruction, Instruction::Variable(_)))
-        {
-            if let Some(Instruction::Variable(variable)) = instructions.last() {
-                Ok(Instruction::Variable(variable.clone()))
-            } else {
-                Ok(Instruction::Variable(Variable::Void))
-            }
+        let instructions =
+            interpreter.create_instructions(pair.into_inner(), &mut local_variables)?;
+        if instructions.is_empty() {
+            Ok(Instruction::Variable(Variable::Void))
+        } else if let [element] = instructions.as_ref() {
+            Ok(element.clone())
         } else {
             Ok(Self { instructions }.into())
         }
