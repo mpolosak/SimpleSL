@@ -14,8 +14,19 @@ use std::rc::Rc;
 
 #[derive(Debug)]
 pub struct Set {
-    pub ident: Rc<str>,
-    pub instruction: Instruction,
+    ident: Rc<str>,
+    instruction: Instruction,
+}
+
+impl Set {
+    pub fn new(
+        ident: Rc<str>,
+        instruction: Instruction,
+        local_variables: &mut LocalVariables,
+    ) -> Self {
+        local_variables.insert(ident.clone(), (&instruction).into());
+        Self { ident, instruction }
+    }
 }
 
 impl MutCreateInstruction for Set {
@@ -28,8 +39,7 @@ impl MutCreateInstruction for Set {
         let ident: Rc<str> = inner.next().unwrap().as_str().into();
         let pair = inner.next().unwrap();
         let instruction = Instruction::new(pair, interpreter, local_variables)?;
-        local_variables.insert(ident.clone(), (&instruction).into());
-        Ok(Self { ident, instruction }.into())
+        Ok(Self::new(ident, instruction, local_variables).into())
     }
 }
 

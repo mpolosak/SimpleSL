@@ -90,12 +90,7 @@ impl FunctionDeclaration {
                 return_type,
             }
             .into();
-            local_variables.insert(ident.clone(), LocalVariable::Variable(variable.clone()));
-            Set {
-                ident,
-                instruction: Instruction::Variable(variable),
-            }
-            .into()
+            Set::new(ident, variable.into(), local_variables).into()
         } else {
             local_variables.insert(
                 ident.clone(),
