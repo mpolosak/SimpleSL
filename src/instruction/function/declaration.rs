@@ -41,7 +41,6 @@ impl MutCreateInstruction for FunctionDeclaration {
             Type::Void
         };
         let body = {
-            let mut local_variables = local_variables.create_layer();
             local_variables.insert(
                 ident.clone(),
                 LocalVariable::Function(params.clone(), return_type.clone()),
@@ -91,7 +90,6 @@ impl Recreate for FunctionDeclaration {
         interpreter: &Interpreter,
     ) -> Result<Instruction> {
         let body = {
-            let mut local_variables = local_variables.create_layer();
             local_variables.insert(
                 self.ident.clone(),
                 LocalVariable::Function(self.params.clone(), self.return_type.clone()),
