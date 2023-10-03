@@ -3,7 +3,6 @@ use crate::{
     instruction::{
         local_variable::{LocalVariable, LocalVariableMap, LocalVariables},
         recreate_instructions,
-        set::Set,
         traits::{BaseInstruction, MutCreateInstruction},
         Exec, Instruction, Recreate,
     },
@@ -55,53 +54,13 @@ impl MutCreateInstruction for FunctionDeclaration {
         if !returned.matches(&return_type) {
             return Err(Error::WrongReturn(return_type, returned));
         }
-        Ok(Self::create(
-            body,
+        Ok(Self {
             ident,
             params,
+            body,
             return_type,
-            local_variables,
-        ))
-    }
-}
-
-impl FunctionDeclaration {
-    fn create(
-        body: Rc<[Instruction]>,
-        ident: Rc<str>,
-        params: Params,
-        return_type: Type,
-        local_variables: &mut LocalVariables<'_>,
-    ) -> Instruction {
-        if body
-            .iter()
-            .all(|instruction| matches!(instruction, Instruction::Variable(_)))
-        {
-            /*
-                ident: None, because if all instructions are Instruction::Variable(_) it's known
-                that function never uses recursion
-            */
-            let variable: Variable = Function {
-                ident: None,
-                params,
-                body: Body::Lang(body),
-                return_type,
-            }
-            .into();
-            Set::new(ident, variable.into(), local_variables).into()
-        } else {
-            local_variables.insert(
-                ident.clone(),
-                LocalVariable::Function(params.clone(), return_type.clone()),
-            );
-            Self {
-                ident,
-                params,
-                body,
-                return_type,
-            }
-            .into()
         }
+        .into())
     }
 }
 
@@ -140,13 +99,13 @@ impl Recreate for FunctionDeclaration {
             let mut local_variables = local_variables.layer_from_map(self.params.clone().into());
             recreate_instructions(&self.body, &mut local_variables, interpreter)
         }?;
-        Ok(Self::create(
+        Ok(Self {
+            ident: self.ident.clone(),
+            params: self.params.clone(),
             body,
-            self.ident.clone(),
-            self.params.clone(),
-            self.return_type.clone(),
-            local_variables,
-        ))
+            return_type: self.return_type.clone(),
+        }
+        .into())
     }
 }
 
