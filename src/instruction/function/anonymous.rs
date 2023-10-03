@@ -28,7 +28,7 @@ impl CreateInstruction for AnonymousFunction {
         interpreter: &Interpreter,
         local_variables: &LocalVariables,
     ) -> Result<Instruction> {
-        let mut inner = pair.into_inner().peekable();
+        let mut inner = pair.into_inner();
         let params_pair = inner.next().unwrap();
         let params = Params(params_pair.into_inner().map(Param::from).collect());
         let return_type = if matches!(inner.peek(), Some(pair)
@@ -40,9 +40,7 @@ impl CreateInstruction for AnonymousFunction {
         };
         let mut local_variables =
             local_variables.layer_from_map(LocalVariableMap::from(params.clone()));
-        let body = inner
-            .map(|instruction| Instruction::new(instruction, interpreter, &mut local_variables))
-            .collect::<Result<Rc<_>>>()?;
+        let body = interpreter.create_instructions(inner, &mut local_variables)?;
 
         let returned = body.last().map_or(Type::Void, ReturnType::return_type);
         if !returned.matches(&return_type) {

@@ -49,9 +49,7 @@ impl MutCreateInstruction for FunctionDeclaration {
             );
             let mut local_variables =
                 local_variables.layer_from_map(LocalVariableMap::from(params.clone()));
-            inner
-                .map(|instruction| Instruction::new(instruction, interpreter, &mut local_variables))
-                .collect::<Result<Rc<_>>>()
+            interpreter.create_instructions(inner, &mut local_variables)
         }?;
         let returned = body.last().map_or(Type::Void, ReturnType::return_type);
         if !returned.matches(&return_type) {
