@@ -28,10 +28,11 @@ impl MatchArm {
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
     ) -> Result<Self> {
+        let mut inner = pair.into_inner();
+        let pair = inner.next().unwrap();
         match pair.as_rule() {
             Rule::match_type => {
-                let mut inner = pair.into_inner();
-                let ident: Rc<str> = inner.next().unwrap().as_str().into();
+                let ident: Rc<str> = pair.as_str().into();
                 let var_type = Type::from(inner.next().unwrap());
                 let pair = inner.next().unwrap();
                 let mut local_variables = local_variables.create_layer();
@@ -44,8 +45,6 @@ impl MatchArm {
                 })
             }
             Rule::match_value => {
-                let mut inner = pair.into_inner();
-                let pair = inner.next().unwrap();
                 let inner_values = pair.into_inner();
                 let values = inner_values
                     .map(|pair| Instruction::new(pair, interpreter, local_variables))
@@ -55,12 +54,10 @@ impl MatchArm {
                 Ok(Self::Value(values, instruction))
             }
             Rule::match_other => {
-                let mut inner = pair.into_inner();
-                let pair = inner.next().unwrap();
                 let instruction = Instruction::new(pair, interpreter, local_variables)?;
                 Ok(Self::Other(instruction))
             }
-            _ => panic!(),
+            _ => unreachable!(),
         }
     }
     pub fn is_covering_type(&self, checked_type: &Type) -> bool {

@@ -40,11 +40,11 @@ impl MutCreateInstruction for FunctionDeclaration {
         } else {
             Type::Void
         };
+        local_variables.insert(
+            ident.clone(),
+            LocalVariable::Function(params.clone(), return_type.clone()),
+        );
         let body = {
-            local_variables.insert(
-                ident.clone(),
-                LocalVariable::Function(params.clone(), return_type.clone()),
-            );
             let mut local_variables =
                 local_variables.layer_from_map(LocalVariableMap::from(params.clone()));
             interpreter.create_instructions(inner, &mut local_variables)
