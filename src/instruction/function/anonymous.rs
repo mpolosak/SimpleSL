@@ -47,33 +47,12 @@ impl CreateInstruction for AnonymousFunction {
             return Err(Error::WrongReturn(return_type, returned));
         }
 
-        Ok(Self::create(params, body, return_type))
-    }
-}
-
-impl AnonymousFunction {
-    fn create(params: Params, body: Rc<[Instruction]>, return_type: Type) -> Instruction {
-        if body
-            .iter()
-            .all(|instruction| matches!(instruction, Instruction::Variable(_)))
-        {
-            Instruction::Variable(
-                Function {
-                    ident: None,
-                    params,
-                    body: Body::Lang(body),
-                    return_type,
-                }
-                .into(),
-            )
-        } else {
-            Self {
-                params,
-                body,
-                return_type,
-            }
-            .into()
+        Ok(Self {
+            params,
+            body,
+            return_type,
         }
+        .into())
     }
 }
 
@@ -99,11 +78,12 @@ impl Recreate for AnonymousFunction {
     ) -> Result<Instruction> {
         let mut local_variables = local_variables.layer_from_map(self.params.clone().into());
         let body = recreate_instructions(&self.body, &mut local_variables, interpreter)?;
-        Ok(Self::create(
-            self.params.clone(),
+        Ok(Self {
+            params: self.params.clone(),
             body,
-            self.return_type.clone(),
-        ))
+            return_type: self.return_type.clone(),
+        }
+        .into())
     }
 }
 
