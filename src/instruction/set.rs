@@ -1,7 +1,7 @@
 use super::{
     local_variable::LocalVariables,
     traits::{BaseInstruction, Exec, Recreate},
-    Instruction,
+    Instruction, MutCreateInstruction,
 };
 use crate::{
     interpreter::Interpreter,
@@ -18,18 +18,18 @@ pub struct Set {
     pub instruction: Instruction,
 }
 
-impl Set {
-    pub fn new(
+impl MutCreateInstruction for Set {
+    fn create_instruction(
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Self> {
+    ) -> Result<Instruction> {
         let mut inner = pair.into_inner();
         let ident: Rc<str> = inner.next().unwrap().as_str().into();
         let pair = inner.next().unwrap();
         let instruction = Instruction::new(pair, interpreter, local_variables)?;
         local_variables.insert(ident.clone(), (&instruction).into());
-        Ok(Self { ident, instruction })
+        Ok(Self { ident, instruction }.into())
     }
 }
 

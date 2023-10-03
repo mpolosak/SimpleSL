@@ -61,7 +61,7 @@ impl Instruction {
         local_variables: &mut LocalVariables,
     ) -> Result<Self> {
         match pair.as_rule() {
-            Rule::set => Ok(Set::new(pair, interpreter, local_variables)?.into()),
+            Rule::set => Set::create_instruction(pair, interpreter, local_variables),
             Rule::destruct_tuple => {
                 DestructTuple::create_instruction(pair, interpreter, local_variables)
             }
