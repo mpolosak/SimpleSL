@@ -28,9 +28,10 @@ impl MatchArm {
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
     ) -> Result<Self> {
+        let match_rule = pair.as_rule();
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
-        match pair.as_rule() {
+        match match_rule {
             Rule::match_type => {
                 let ident: Rc<str> = pair.as_str().into();
                 let var_type = Type::from(inner.next().unwrap());
