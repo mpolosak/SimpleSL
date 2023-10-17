@@ -61,11 +61,11 @@ impl Reduce {
             ));
         };
         let initial_type = initial_value.return_type();
-        let acc_type = function_type.params[0].clone();
-        let current_type = function_type.params[1].clone();
-        let return_type = function_type.return_type.clone();
+        let acc_type = &function_type.params[0];
+        let current_type = &function_type.params[1];
+        let return_type = &function_type.return_type;
         let acc_expected = initial_type | return_type.clone();
-        if acc_expected.matches(&acc_type) && current_type.matches(&element_type) {
+        if acc_expected.matches(acc_type) && current_type.matches(&element_type) {
             Ok(Self {
                 array,
                 initial_value,
@@ -78,7 +78,7 @@ impl Reduce {
                 Type::Function(
                     FunctionType {
                         params: [acc_expected, element_type].into(),
-                        return_type,
+                        return_type: return_type.clone(),
                     }
                     .into(),
                 ),
