@@ -51,8 +51,9 @@ y(
     ()->(){print("Function")} // anonymous function
 )
 rec = (n: int){
-    if n {
-        rec()
+    if n>0 {
+        rec(n-1)
+        print(n)
     }
 } //recursion
 
