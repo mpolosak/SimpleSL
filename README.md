@@ -58,3 +58,36 @@ rec = (n: int){
 } //recursion
 
 ```
+Function arguments are always executed left to right
+### Operators
+#### Precedence
+| Precedence | Operator     | Description             | Associativity |
+| ---------- | ------------ | ----------------------- | ------------- |
+| 1          | []           | Array/string indexing   | Left-to-right |
+|            | ? type       | Array filtering by type |               |
+|            | ()           | Function call           |               |
+| 2          | !            | Logical NOT             | Right-to-left |
+|            | ~            | Bitwise NOT             |               |
+|            | -            | Unary minus             |               |
+| 3          | @            | Array map               | Left-to-right |
+|            | ?            | Array filtering         |               |
+|            | $ expression | Array reducing          |               |
+| 4          | **           | Exponentiation          |               |
+| 5          | *            | Multiplication          |               |
+|            | /            | Division                |               |
+|            | %            | Remainder               |               |
+| 6          | +            | Addition                |               |
+|            | -            | Subtraction             |               |
+| 7          | <<           | Bitwise left shift      |               |
+|            | >>           | Bitwise right shift     |               |
+| 8          | &            | Bitwise AND             |               |
+| 9          | ^            | XOR                     |               |
+| 10         | \|           | Bitwise OR              |               |
+| 11         | ==           | Equal                   |               |
+|            | !=           | Not equal               |               |
+|            | <            | Lower                   |               |
+|            | <=           | Lower or equal          |               |
+|            | >            | Greater                 |               |
+|            | >=           | Greater or equal        |               |
+| 12         | &&           | Logical AND             |               |
+| 13         | \|\|         | Logical OR              |               |
