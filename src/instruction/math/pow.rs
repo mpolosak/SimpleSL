@@ -48,7 +48,7 @@ impl CreateFromInstructions for Pow {
     fn create_from_instructions(base: Instruction, exp: Instruction) -> Result<Instruction> {
         match (base, exp) {
             (Instruction::Variable(base), Instruction::Variable(exp)) => {
-                Ok(Self::pow(base, exp)?.into())
+                Ok(Self::pow(&base, &exp)?.into())
             }
             (_, Instruction::Variable(Variable::Int(exp))) if exp < 0 => {
                 Err(Error::CannotBeNegative("exponent"))
@@ -59,22 +59,20 @@ impl CreateFromInstructions for Pow {
 }
 
 impl Pow {
-    fn pow(base: Variable, exp: Variable) -> Result<Variable> {
+    fn pow(base: &Variable, exp: &Variable) -> Result<Variable> {
         match (base, exp) {
-            (_, Variable::Int(exp)) if exp < 0 => Err(Error::CannotBeNegative("exponent")),
-            (Variable::Int(base), Variable::Int(exp)) => Ok((base.pow(exp as u32)).into()),
-            (Variable::Float(base), Variable::Float(exp)) => Ok((base.powf(exp)).into()),
+            (_, Variable::Int(exp)) if *exp < 0 => Err(Error::CannotBeNegative("exponent")),
+            (Variable::Int(base), Variable::Int(exp)) => Ok((base.pow(*exp as u32)).into()),
+            (Variable::Float(base), Variable::Float(exp)) => Ok((base.powf(*exp)).into()),
             (array @ Variable::Array(_, Type::EmptyArray), _)
-            | (_, array @ Variable::Array(_, Type::EmptyArray)) => Ok(array),
+            | (_, array @ Variable::Array(_, Type::EmptyArray)) => Ok(array.clone()),
             (value, Variable::Array(array, _)) => array
                 .iter()
-                .cloned()
-                .map(|element| Self::pow(value.clone(), element))
+                .map(|element| Self::pow(value, element))
                 .collect(),
             (Variable::Array(array, _), value) => array
                 .iter()
-                .cloned()
-                .map(|element| Self::pow(element, value.clone()))
+                .map(|element| Self::pow(element, value))
                 .collect(),
             (base, exp) => panic!("Tried to calc {base} {} {exp}", Self::SYMBOL),
         }
@@ -85,7 +83,7 @@ impl Exec for Pow {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let base = self.base.exec(interpreter)?;
         let exp = self.exp.exec(interpreter)?;
-        Pow::pow(base, exp)
+        Pow::pow(&base, &exp)
     }
 }
 
