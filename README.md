@@ -91,3 +91,11 @@ Function arguments are always executed left to right
 |            | >=           | Greater or equal        |               |
 | 12         | &&           | Logical AND             |               |
 | 13         | \|\|         | Logical OR              |               |
+
+#### @ - Array maping operator
+| lhs         | rhs                                            | result |
+| ----------- | ---------------------------------------------- | ------ |
+| [T]         | (value: T) -> S                                | [S]    |
+| [T]         | (index: int, value: T) -> S                    | [S]    |
+| (T, S, ...) | (value_t: T, value_s: S, ...) -> U             | [U]    |
+| (T, S, ...) | (index: int, value_t: T, value_s: S, ...) -> U | [U]    |
