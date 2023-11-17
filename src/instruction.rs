@@ -156,7 +156,9 @@ impl Instruction {
             })
             .map_postfix(|lhs, op| match op.as_rule() {
                 Rule::at => At::create_instruction(lhs?, op, interpreter, local_variables),
-                Rule::type_filter => TypeFilter::create_instruction(lhs?, op),
+                Rule::type_filter => {
+                    TypeFilter::create_instruction(lhs?, op.into_inner().next().unwrap())
+                }
                 Rule::function_call => {
                     FunctionCall::create_instruction(lhs?, op, interpreter, local_variables)
                 }

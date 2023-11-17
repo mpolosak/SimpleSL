@@ -116,7 +116,7 @@ impl From<Pair<'_, Rule>> for Type {
                 Type::Multi(Box::new(types))
             }
             Rule::any => Self::Any,
-            _ => panic!(),
+            rule => panic!("Type cannot be built from rule: {rule:?}"),
         }
     }
 }
