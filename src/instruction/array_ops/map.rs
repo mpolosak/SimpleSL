@@ -4,7 +4,7 @@ use crate::{
         Exec, Instruction,
     },
     interpreter::Interpreter,
-    variable::{ReturnType, Type, Variable},
+    variable::{Array, ReturnType, Type, Variable},
     Result,
 };
 use std::{iter::zip, rc::Rc};
@@ -87,7 +87,7 @@ impl Exec for Map {
         let array = self.array.exec(interpreter)?;
         let function = self.function.exec(interpreter)?;
         match (array, function) {
-            (Variable::Array(array, _), Variable::Function(function))
+            (Variable::Array(array), Variable::Function(function))
                 if function.params.len() == 1 =>
             {
                 array
@@ -96,7 +96,7 @@ impl Exec for Map {
                     .map(|var| function.exec(interpreter, &[var]))
                     .collect()
             }
-            (Variable::Array(array, _), Variable::Function(function)) => array
+            (Variable::Array(array), Variable::Function(function)) => array
                 .iter()
                 .cloned()
                 .enumerate()
@@ -105,10 +105,10 @@ impl Exec for Map {
             (Variable::Tuple(arrays), Variable::Function(function))
                 if function.params.len() == arrays.len() =>
             {
-                let arrays: Box<[&Rc<[Variable]>]> = arrays
+                let arrays: Box<[&Rc<Array>]> = arrays
                     .iter()
                     .map(|array| {
-                        if let Variable::Array(array, _) = array {
+                        if let Variable::Array(array) = array {
                             array
                         } else {
                             panic!()
@@ -127,10 +127,10 @@ impl Exec for Map {
             (Variable::Tuple(arrays), Variable::Function(function))
                 if function.params.len() == arrays.len() + 1 =>
             {
-                let arrays: Box<[&Rc<[Variable]>]> = arrays
+                let arrays: Box<[&Rc<Array>]> = arrays
                     .iter()
                     .map(|array| {
-                        if let Variable::Array(array, _) = array {
+                        if let Variable::Array(array) = array {
                             array
                         } else {
                             panic!()

@@ -1,11 +1,17 @@
+mod array;
 mod function_type;
 mod type_set;
 mod variable_type;
 use crate::{function::Function, join_debug, parse::*, pest::Parser, Error, Result};
 use pest::iterators::Pair;
-use std::{fmt, io, rc::Rc, str::FromStr};
+use std::{
+    fmt::{self},
+    io,
+    rc::Rc,
+    str::FromStr,
+};
 pub use variable_type::{ReturnType, Type, Typed};
-pub use {function_type::FunctionType, type_set::TypeSet};
+pub use {array::Array, function_type::FunctionType, type_set::TypeSet};
 
 #[derive(Clone)]
 pub enum Variable {
@@ -13,7 +19,7 @@ pub enum Variable {
     Float(f64),
     String(Rc<str>),
     Function(Rc<Function>),
-    Array(Rc<[Variable]>, Type),
+    Array(Rc<Array>),
     Tuple(Rc<[Variable]>),
     Void,
 }
@@ -25,7 +31,7 @@ impl Typed for Variable {
             Variable::Float(_) => Type::Float,
             Variable::String(_) => Type::String,
             Variable::Function(function) => function.as_type(),
-            Variable::Array(_, var_type) => var_type.clone(),
+            Variable::Array(array) => array.as_type(),
             Variable::Tuple(elements) => {
                 let types = elements.iter().map(Variable::as_type).collect();
                 Type::Tuple(types)
@@ -42,9 +48,7 @@ impl fmt::Display for Variable {
             Variable::Float(value) => write!(f, "{value}"),
             Variable::String(value) => write!(f, "{value}"),
             Variable::Function(function) => write!(f, "{function}"),
-            Variable::Array(array, _) => {
-                write!(f, "[{}]", join_debug(array, ", "))
-            }
+            Variable::Array(array) => write!(f, "{array}"),
             Variable::Tuple(elements) => write!(f, "({})", join_debug(elements, ", ")),
             Variable::Void => write!(f, "()"),
         }
@@ -84,7 +88,7 @@ impl PartialEq for Variable {
             (Variable::Float(value1), Variable::Float(value2)) => value1 == value2,
             (Variable::String(value1), Variable::String(value2)) => value1 == value2,
             (Variable::Function(value1), Variable::Function(value2)) => Rc::ptr_eq(value1, value2),
-            (Variable::Array(value1, _), Variable::Array(value2, _)) => value1 == value2,
+            (Variable::Array(value1), Variable::Array(value2)) => value1 == value2,
             (Variable::Void, Variable::Void) => true,
             _ => false,
         }
@@ -115,14 +119,10 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
                 };
                 Ok(Variable::String(value.into()))
             }
-            Rule::array => {
-                let array = pair
-                    .into_inner()
-                    .map(Self::try_from)
-                    .collect::<Result<Rc<[Variable]>>>()?;
-
-                Ok(Variable::from(array))
-            }
+            Rule::array => pair
+                .into_inner()
+                .map(Self::try_from)
+                .collect::<Result<Variable>>(),
             Rule::void => Ok(Variable::Void),
             _ => Err(Error::CannotBeParsed(pair.as_str().into())),
         }
@@ -192,7 +192,10 @@ impl From<Rc<[Variable]>> for Variable {
             .map_or(Type::EmptyArray, |element_type| {
                 Type::Array(element_type.into())
             });
-        Self::Array(value, var_type)
+        Self::Array(Rc::new(Array {
+            var_type,
+            elements: value,
+        }))
     }
 }
 
@@ -236,6 +239,12 @@ impl FromIterator<Variable> for Variable {
     fn from_iter<T: IntoIterator<Item = Variable>>(iter: T) -> Self {
         let elements: Rc<[Variable]> = iter.into_iter().collect();
         elements.into()
+    }
+}
+
+impl From<Array> for Variable {
+    fn from(value: Array) -> Self {
+        Variable::Array(value.into())
     }
 }
 

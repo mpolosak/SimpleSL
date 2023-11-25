@@ -60,12 +60,12 @@ impl Modulo {
         match (dividend, divisor) {
             (_, Variable::Int(0)) => Err(Error::ZeroModulo),
             (Variable::Int(dividend), Variable::Int(divisor)) => Ok((dividend % divisor).into()),
-            (Variable::Array(array, _), divisor @ Variable::Int(_)) => array
+            (Variable::Array(array), divisor @ Variable::Int(_)) => array
                 .iter()
                 .cloned()
                 .map(|dividend| Self::modulo(dividend, divisor.clone()))
                 .collect::<Result<Variable>>(),
-            (dividend @ Variable::Int(_), Variable::Array(array, _)) => array
+            (dividend @ Variable::Int(_), Variable::Array(array)) => array
                 .iter()
                 .cloned()
                 .map(|divisor| Self::modulo(dividend.clone(), divisor))

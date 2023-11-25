@@ -2,8 +2,8 @@ use super::BitwiseBinOp;
 use crate::instruction::traits::{BaseInstruction, BinOp, CreateFromInstructions};
 use crate::instruction::{Exec, Instruction};
 use crate::interpreter::Interpreter;
-use crate::variable::Variable;
-use crate::{variable::Type, Result};
+use crate::variable::{Type, Typed, Variable};
+use crate::Result;
 
 #[derive(Debug)]
 pub struct BitwiseAnd {
@@ -44,9 +44,12 @@ impl BitwiseAnd {
     fn bin_and(lhs: Variable, rhs: Variable) -> Variable {
         match (lhs, rhs) {
             (Variable::Int(lhs), Variable::Int(rhs)) => (lhs & rhs).into(),
-            (array @ Variable::Array(_, Type::EmptyArray), _)
-            | (_, array @ Variable::Array(_, Type::EmptyArray)) => array,
-            (value, Variable::Array(array, _)) | (Variable::Array(array, _), value) => array
+            (var @ Variable::Array(_), _) | (_, var @ Variable::Array(_))
+                if var.as_type() == Type::EmptyArray =>
+            {
+                var
+            }
+            (value, Variable::Array(array)) | (Variable::Array(array), value) => array
                 .iter()
                 .cloned()
                 .map(|element| Self::bin_and(element, value.clone()))

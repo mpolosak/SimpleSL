@@ -1,5 +1,6 @@
 use crate::instruction::traits::{BaseInstruction, BinOp, CanBeUsed, CreateFromInstructions};
 use crate::instruction::{Exec, Instruction};
+use crate::variable::Typed;
 use crate::{
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
@@ -58,13 +59,16 @@ impl CreateFromInstructions for And {
 impl And {
     fn and(lhs: Variable, rhs: Variable) -> Variable {
         match (lhs, rhs) {
-            (array @ Variable::Array(_, Type::EmptyArray), _)
-            | (_, array @ Variable::Array(_, Type::EmptyArray)) => array,
+            (array @ Variable::Array(_), _) | (_, array @ Variable::Array(_))
+                if array.as_type() == Type::EmptyArray =>
+            {
+                array
+            }
             (Variable::Int(_), Variable::Int(0)) | (Variable::Int(0), Variable::Int(_)) => {
                 Variable::Int(0)
             }
-            (Variable::Array(array, _), Variable::Int(0))
-            | (Variable::Int(0), Variable::Array(array, _)) => std::iter::repeat(Variable::Int(0))
+            (Variable::Array(array), Variable::Int(0))
+            | (Variable::Int(0), Variable::Array(array)) => std::iter::repeat(Variable::Int(0))
                 .take(array.len())
                 .collect(),
             (value, Variable::Int(_)) | (Variable::Int(_), value) => value,

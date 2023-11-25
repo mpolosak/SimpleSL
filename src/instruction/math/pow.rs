@@ -1,5 +1,6 @@
 use crate::instruction::traits::{BaseInstruction, BinOp, CanBeUsed, CreateFromInstructions};
 use crate::instruction::{Exec, Instruction};
+use crate::variable::Typed;
 use crate::{
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
@@ -64,13 +65,16 @@ impl Pow {
             (_, Variable::Int(exp)) if *exp < 0 => Err(Error::CannotBeNegative("exponent")),
             (Variable::Int(base), Variable::Int(exp)) => Ok((base.pow(*exp as u32)).into()),
             (Variable::Float(base), Variable::Float(exp)) => Ok((base.powf(*exp)).into()),
-            (array @ Variable::Array(_, Type::EmptyArray), _)
-            | (_, array @ Variable::Array(_, Type::EmptyArray)) => Ok(array.clone()),
-            (value, Variable::Array(array, _)) => array
+            (array @ Variable::Array(_), _) | (_, array @ Variable::Array(_))
+                if array.as_type() == Type::EmptyArray =>
+            {
+                Ok(array.clone())
+            }
+            (value, Variable::Array(array)) => array
                 .iter()
                 .map(|element| Self::pow(value, element))
                 .collect(),
-            (Variable::Array(array, _), value) => array
+            (Variable::Array(array), value) => array
                 .iter()
                 .map(|element| Self::pow(element, value))
                 .collect(),

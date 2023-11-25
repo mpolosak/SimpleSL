@@ -1,5 +1,6 @@
 use crate::instruction::traits::{BaseInstruction, BinOp, CanBeUsed, CreateFromInstructions};
 use crate::instruction::{Exec, Instruction};
+use crate::variable::Typed;
 use crate::{
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
@@ -63,17 +64,20 @@ impl Add {
             (Variable::String(value1), Variable::String(value2)) => {
                 format!("{value1}{value2}").into()
             }
-            (Variable::Array(array1, _), Variable::Array(array2, _)) => {
+            (Variable::Array(array1), Variable::Array(array2)) => {
                 array1.iter().chain(array2.iter()).cloned().collect()
             }
-            (array @ Variable::Array(_, Type::EmptyArray), _)
-            | (_, array @ Variable::Array(_, Type::EmptyArray)) => array,
-            (Variable::Array(array, _), value) => array
+            (array @ Variable::Array(_), _) | (_, array @ Variable::Array(_))
+                if array.as_type() == Type::EmptyArray =>
+            {
+                array
+            }
+            (Variable::Array(array), value) => array
                 .iter()
                 .cloned()
                 .map(|element| Self::add(element, value.clone()))
                 .collect(),
-            (value, Variable::Array(array, _)) => array
+            (value, Variable::Array(array)) => array
                 .iter()
                 .cloned()
                 .map(|element| Self::add(value.clone(), element))

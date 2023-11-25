@@ -1,5 +1,6 @@
 use crate::instruction::traits::{BaseInstruction, BinOp, CanBeUsed, CreateFromInstructions};
 use crate::instruction::{Exec, Instruction};
+use crate::variable::Typed;
 use crate::{
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
@@ -62,13 +63,15 @@ impl CreateFromInstructions for Or {
 impl Or {
     fn or(lhs: Variable, rhs: Variable) -> Variable {
         match (lhs, rhs) {
-            (value @ Variable::Array(_, Type::EmptyArray), _)
-            | (_, value @ Variable::Array(_, Type::EmptyArray))
-            | (value, Variable::Int(0))
-            | (Variable::Int(0), value) => value,
+            (array @ Variable::Array(_), _) | (_, array @ Variable::Array(_))
+                if array.as_type() == Type::EmptyArray =>
+            {
+                array
+            }
+            (value, Variable::Int(0)) | (Variable::Int(0), value) => value,
             (Variable::Int(_), Variable::Int(_)) => Variable::Int(1),
-            (Variable::Array(array, _), Variable::Int(_))
-            | (Variable::Int(_), Variable::Array(array, _)) => std::iter::repeat(Variable::Int(1))
+            (Variable::Array(array), Variable::Int(_))
+            | (Variable::Int(_), Variable::Array(array)) => std::iter::repeat(Variable::Int(1))
                 .take(array.len())
                 .collect(),
             (lhs, rhs) => panic!("Tried {lhs} {} {rhs} which is imposible", Self::SYMBOL),

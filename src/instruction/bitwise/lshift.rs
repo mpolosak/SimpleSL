@@ -1,10 +1,7 @@
 use crate::instruction::traits::{BaseInstruction, BinOp, CreateFromInstructions};
 use crate::instruction::{Exec, Instruction};
-use crate::{
-    interpreter::Interpreter,
-    variable::{Type, Variable},
-    Error, Result,
-};
+use crate::variable::{Type, Typed};
+use crate::{interpreter::Interpreter, variable::Variable, Error, Result};
 
 use super::BitwiseBinOp;
 
@@ -51,14 +48,17 @@ impl LShift {
         match (lhs, rhs) {
             (_, Variable::Int(rhs)) if !(0..=63).contains(&rhs) => Err(Error::OverflowShift),
             (Variable::Int(lhs), Variable::Int(rhs)) => Ok((lhs << rhs).into()),
-            (array @ Variable::Array(_, Type::EmptyArray), _)
-            | (_, array @ Variable::Array(_, Type::EmptyArray)) => Ok(array),
-            (value, Variable::Array(array, _)) => array
+            (var @ Variable::Array(_), _) | (_, var @ Variable::Array(_))
+                if var.as_type() == Type::EmptyArray =>
+            {
+                Ok(var)
+            }
+            (value, Variable::Array(array)) => array
                 .iter()
                 .cloned()
                 .map(|element| Self::lshift(value.clone(), element))
                 .collect(),
-            (Variable::Array(array, _), value) => array
+            (Variable::Array(array), value) => array
                 .iter()
                 .cloned()
                 .map(|element| Self::lshift(element, value.clone()))

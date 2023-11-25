@@ -30,7 +30,7 @@ impl Exec for TypeFilter {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let array = self.array.exec(interpreter)?;
         match array {
-            Variable::Array(array, _) => Ok(array
+            Variable::Array(array) => Ok(array
                 .iter()
                 .filter(|element| element.as_type().matches(&self.var_type))
                 .cloned()

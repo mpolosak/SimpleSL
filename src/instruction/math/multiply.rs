@@ -1,5 +1,6 @@
 use crate::instruction::traits::{BaseInstruction, BinOp, CanBeUsed, CreateFromInstructions};
 use crate::instruction::{Exec, Instruction};
+use crate::variable::Typed;
 use crate::{
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
@@ -60,9 +61,12 @@ impl Multiply {
         match (lhs, rhs) {
             (Variable::Int(lhs), Variable::Int(rhs)) => (lhs * rhs).into(),
             (Variable::Float(lhs), Variable::Float(rhs)) => (lhs * rhs).into(),
-            (array @ Variable::Array(_, Type::EmptyArray), _)
-            | (_, array @ Variable::Array(_, Type::EmptyArray)) => array,
-            (value, Variable::Array(array, _)) | (Variable::Array(array, _), value) => array
+            (array @ Variable::Array(_), _) | (_, array @ Variable::Array(_))
+                if array.as_type() == Type::EmptyArray =>
+            {
+                array
+            }
+            (value, Variable::Array(array)) | (Variable::Array(array), value) => array
                 .iter()
                 .cloned()
                 .map(|element| Self::multiply(element, value.clone()))

@@ -1,5 +1,6 @@
 use crate::instruction::traits::{BaseInstruction, BinOp, CanBeUsed, CreateFromInstructions};
 use crate::instruction::{Exec, Instruction};
+use crate::variable::Typed;
 use crate::{
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
@@ -66,14 +67,17 @@ impl Subtract {
         match (minuend, subtrahend) {
             (Variable::Int(lhs), Variable::Int(rhs)) => (lhs - rhs).into(),
             (Variable::Float(lhs), Variable::Float(rhs)) => (lhs - rhs).into(),
-            (array @ Variable::Array(_, Type::EmptyArray), _)
-            | (_, array @ Variable::Array(_, Type::EmptyArray)) => array,
-            (minuend, Variable::Array(array, _)) => array
+            (array @ Variable::Array(_), _) | (_, array @ Variable::Array(_))
+                if array.as_type() == Type::EmptyArray =>
+            {
+                array
+            }
+            (minuend, Variable::Array(array)) => array
                 .iter()
                 .cloned()
                 .map(|subtrahend| Self::subtract(minuend.clone(), subtrahend))
                 .collect(),
-            (Variable::Array(array, _), subtrahend) => array
+            (Variable::Array(array), subtrahend) => array
                 .iter()
                 .cloned()
                 .map(|minuend| Self::subtract(minuend, subtrahend.clone()))

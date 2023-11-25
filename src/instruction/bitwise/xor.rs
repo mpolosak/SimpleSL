@@ -1,10 +1,7 @@
 use crate::instruction::traits::{BaseInstruction, BinOp, CreateFromInstructions};
 use crate::instruction::{Exec, Instruction};
-use crate::{
-    interpreter::Interpreter,
-    variable::{Type, Variable},
-    Result,
-};
+use crate::variable::{Type, Typed};
+use crate::{interpreter::Interpreter, variable::Variable, Result};
 
 use super::BitwiseBinOp;
 
@@ -47,9 +44,12 @@ impl Xor {
     fn xor(lhs: Variable, rhs: Variable) -> Variable {
         match (lhs, rhs) {
             (Variable::Int(lhs), Variable::Int(rhs)) => (lhs ^ rhs).into(),
-            (array @ Variable::Array(_, Type::EmptyArray), _)
-            | (_, array @ Variable::Array(_, Type::EmptyArray)) => array,
-            (value, Variable::Array(array, _)) | (Variable::Array(array, _), value) => array
+            (array @ Variable::Array(_), _) | (_, array @ Variable::Array(_))
+                if array.as_type() == Type::EmptyArray =>
+            {
+                array
+            }
+            (value, Variable::Array(array)) | (Variable::Array(array), value) => array
                 .iter()
                 .cloned()
                 .map(|element| Self::xor(element, value.clone()))

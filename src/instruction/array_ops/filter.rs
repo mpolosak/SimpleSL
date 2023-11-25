@@ -60,7 +60,7 @@ impl Exec for Filter {
         let array = self.array.exec(interpreter)?;
         let function = self.function.exec(interpreter)?;
         match (array, function) {
-            (Variable::Array(array, _), Variable::Function(function))
+            (Variable::Array(array), Variable::Function(function))
                 if function.params.len() == 1 =>
             {
                 let mut new_array: Box<Vec<Variable>> = Box::default();
@@ -71,7 +71,7 @@ impl Exec for Filter {
                 }
                 Ok((*new_array).into())
             }
-            (Variable::Array(array, _), Variable::Function(function)) => {
+            (Variable::Array(array), Variable::Function(function)) => {
                 let mut new_array: Box<Vec<Variable>> = Box::default();
                 for (index, element) in array.iter().cloned().enumerate() {
                     if function.exec(interpreter, &[index.into(), element.clone()])?

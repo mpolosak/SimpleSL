@@ -111,7 +111,7 @@ impl Exec for Reduce {
         let initial_value = self.initial_value.exec(interpreter)?;
         let function = self.function.exec(interpreter)?;
         match (array, function) {
-            (Variable::Array(array, _), Variable::Function(function)) => {
+            (Variable::Array(array), Variable::Function(function)) => {
                 array.iter().try_fold(initial_value, |acc, current| {
                     function.exec(interpreter, &[acc, current.clone()])
                 })

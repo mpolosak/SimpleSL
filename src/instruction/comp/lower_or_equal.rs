@@ -49,12 +49,12 @@ impl LowerOrEqual {
         match (lhs, rhs) {
             (Variable::Int(lhs), Variable::Int(rhs)) => (lhs <= rhs).into(),
             (Variable::Float(lhs), Variable::Float(rhs)) => (lhs <= rhs).into(),
-            (lhs, Variable::Array(array, _)) => array
+            (lhs, Variable::Array(array)) => array
                 .iter()
                 .cloned()
                 .map(|rhs| Self::greater_or_equal(lhs.clone(), rhs))
                 .collect(),
-            (Variable::Array(array, _), rhs) => array
+            (Variable::Array(array), rhs) => array
                 .iter()
                 .cloned()
                 .map(|lhs| Self::greater_or_equal(lhs, rhs.clone()))

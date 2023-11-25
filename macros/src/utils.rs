@@ -70,14 +70,14 @@ fn arg_import_from_function_param(
         )
     } else if param_type == "Rc < [Variable] >" {
         quote!(
-            let simplesl::variable::Variable::Array(#ident, _) = #get_variable else {
+            let simplesl::variable::Variable::Array(#ident) = #get_variable else {
                 panic!()
             };
             let #ident = #ident.clone();
         )
     } else if param_type == "& [Variable]" {
         quote!(
-            let simplesl::variable::Variable::Array(#ident, _) = #get_variable else {
+            let simplesl::variable::Variable::Array(#ident) = #get_variable else {
                 panic!()
             };
             let #ident = #ident.as_ref();

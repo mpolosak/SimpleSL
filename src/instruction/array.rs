@@ -53,14 +53,24 @@ impl Array {
             };
             array.push(variable.clone());
         }
-        Instruction::Variable(Variable::Array(array.into(), var_type))
+        Instruction::Variable(Variable::Array(
+            crate::variable::Array {
+                var_type,
+                elements: array.into(),
+            }
+            .into(),
+        ))
     }
 }
 
 impl Exec for Array {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
-        let array = exec_instructions(&self.instructions, interpreter)?;
-        Ok(Variable::Array(array, self.var_type.clone()))
+        let elements = exec_instructions(&self.instructions, interpreter)?;
+        Ok(crate::variable::Array {
+            var_type: self.var_type.clone(),
+            elements,
+        }
+        .into())
     }
 }
 

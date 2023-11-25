@@ -16,7 +16,7 @@ pub trait PrefixOp: Sized + Into<Instruction> {
         match variable {
             Variable::Int(operand) => Self::calc_int(operand).into(),
             Variable::Float(operand) => Self::calc_float(operand).into(),
-            Variable::Array(array, _) => array.iter().cloned().map(Self::calc).collect(),
+            Variable::Array(array) => array.iter().cloned().map(Self::calc).collect(),
             operand => panic!("Tried to {} {operand}", Self::SYMBOL),
         }
     }

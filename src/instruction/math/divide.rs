@@ -67,18 +67,16 @@ impl Divide {
             (Variable::Float(dividend), Variable::Float(divisor)) => {
                 Ok((dividend / divisor).into())
             }
-            (Variable::Array(array, _), divisor @ (Variable::Int(_) | Variable::Float(_))) => array
+            (Variable::Array(array), divisor @ (Variable::Int(_) | Variable::Float(_))) => array
                 .iter()
                 .cloned()
                 .map(|dividend| Self::divide(dividend, divisor.clone()))
                 .collect::<Result<Variable>>(),
-            (dividend @ (Variable::Int(_) | Variable::Float(_)), Variable::Array(array, _)) => {
-                array
-                    .iter()
-                    .cloned()
-                    .map(|divisor| Self::divide(dividend.clone(), divisor))
-                    .collect::<Result<Variable>>()
-            }
+            (dividend @ (Variable::Int(_) | Variable::Float(_)), Variable::Array(array)) => array
+                .iter()
+                .cloned()
+                .map(|divisor| Self::divide(dividend.clone(), divisor))
+                .collect::<Result<Variable>>(),
             (dividend, divisor) => panic!("Tried to calc {dividend} {} {divisor}", Self::SYMBOL),
         }
     }
