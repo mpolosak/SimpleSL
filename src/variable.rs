@@ -248,6 +248,12 @@ impl From<Array> for Variable {
     }
 }
 
+impl From<Rc<Array>> for Variable {
+    fn from(value: Rc<Array>) -> Self {
+        Variable::Array(value)
+    }
+}
+
 pub fn is_correct_variable_name(name: &str) -> bool {
     let Ok(parse) = SimpleSLParser::parse(Rule::ident, name) else {
         return false;
