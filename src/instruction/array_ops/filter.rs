@@ -63,16 +63,16 @@ impl Exec for Filter {
             (Variable::Array(array), Variable::Function(function))
                 if function.params.len() == 1 =>
             {
-                let mut new_array: Box<Vec<Variable>> = Box::default();
+                let mut new_array: Vec<Variable> = Vec::new();
                 for element in array.iter().cloned() {
                     if function.exec(interpreter, &[element.clone()])? != Variable::Int(0) {
                         new_array.push(element);
                     }
                 }
-                Ok((*new_array).into())
+                Ok(new_array.into())
             }
             (Variable::Array(array), Variable::Function(function)) => {
-                let mut new_array: Box<Vec<Variable>> = Box::default();
+                let mut new_array: Vec<Variable> = Vec::new();
                 for (index, element) in array.iter().cloned().enumerate() {
                     if function.exec(interpreter, &[index.into(), element.clone()])?
                         != Variable::Int(0)
@@ -80,7 +80,7 @@ impl Exec for Filter {
                         new_array.push(element);
                     }
                 }
-                Ok((*new_array).into())
+                Ok(new_array.into())
             }
             (array, function) => panic!("Tried to do {array} {} {function}", Self::SYMBOL),
         }
