@@ -35,7 +35,7 @@ impl Type {
             (Self::Function(function_type), Self::Function(function_type2)) => {
                 function_type.matches(function_type2)
             }
-            (Self::Multi(types), Self::Multi(types2)) => types.is_subset(types2),
+            (Self::Multi(types), other) => types.iter().all(|var_type| var_type.matches(other)),
             (_, Self::Multi(types)) => types.iter().any(|var_type| self.matches(var_type)),
             (_, Self::Any) | (Self::EmptyArray, Self::Array(_)) => true,
             (Self::Array(element_type), Self::Array(element_type2)) => {
