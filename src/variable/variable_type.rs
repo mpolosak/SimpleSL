@@ -137,7 +137,17 @@ impl BitOr for Type {
 
 impl BitOrAssign for Type {
     fn bitor_assign(&mut self, rhs: Self) {
-        *self = self.clone() | rhs;
+        match (self, rhs) {
+            (first, second) if second.matches(first) => (),
+            (first, second) if first.matches(&second) => *first = second,
+            (Type::Multi(typeset), Type::Multi(typeset2)) => {
+                typeset.extend(typeset2.iter().cloned())
+            }
+            (Type::Multi(typeset), second) => {
+                typeset.insert(second);
+            }
+            (first, second) => *first = first.clone() | second,
+        }
     }
 }
 pub trait Typed {
