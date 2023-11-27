@@ -101,7 +101,7 @@ fn at(variable: Variable, index: Variable) -> Result<Variable> {
             .get(index..index)
             .ok_or(Error::IndexToBig)
             .map(Variable::from),
-        Variable::Array(array) => array.get(index).ok_or(Error::IndexToBig).map(Clone::clone),
+        Variable::Array(array) => array.get(index).ok_or(Error::IndexToBig).cloned(),
         variable => Err(Error::CannotIndexInto(variable.as_type())),
     }
 }

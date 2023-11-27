@@ -95,7 +95,7 @@ impl Instruction {
                         || {
                             interpreter
                                 .get_variable(ident)
-                                .map(Clone::clone)
+                                .cloned()
                                 .map(Instruction::from)
                                 .ok_or_else(|| Error::VariableDoesntExist(ident.into()))
                         },
@@ -174,7 +174,7 @@ impl Exec for Instruction {
             Self::Variable(var) => Ok(var.clone()),
             Self::LocalVariable(ident, _) => interpreter
                 .get_variable(ident)
-                .map(Clone::clone)
+                .cloned()
                 .ok_or_else(|| Error::VariableDoesntExist(ident.clone())),
             Self::AnonymousFunction(function) => function.exec(interpreter),
             Self::Tuple(function) => function.exec(interpreter),
@@ -194,7 +194,7 @@ impl Recreate for Instruction {
                 || {
                     interpreter
                         .get_variable(ident)
-                        .map(Clone::clone)
+                        .cloned()
                         .map(Instruction::from)
                         .ok_or_else(|| Error::VariableDoesntExist(ident.clone()))
                 },
