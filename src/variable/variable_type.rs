@@ -149,3 +149,41 @@ pub trait ReturnType {
     /// Returns the Type of Variable returned after &self gets executed
     fn return_type(&self) -> Type;
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::variable::Type;
+
+    #[test]
+    fn check_type_matches() {
+        let types = [
+            Type::Int,
+            Type::Float,
+            Type::Int,
+            Type::String,
+            Type::Int | Type::String,
+            Type::Array(Type::Any.into()),
+            Type::Tuple([Type::Float, Type::Int, Type::Int | Type::Float].into()),
+            Type::Void,
+            Type::EmptyArray,
+        ];
+        for var_type in types {
+            assert!(var_type.matches(&var_type));
+            assert!(var_type.matches(&Type::Any));
+            assert!(var_type.matches(&(var_type.clone() | Type::Int)));
+        }
+        let var_type = Type::Array(Type::Int.into()) | Type::Array(Type::Float.into());
+        let var_type2 = Type::Array((Type::Float | Type::Int).into());
+        assert!(var_type.matches(&var_type));
+        assert!(var_type.matches(&var_type2));
+        assert!(var_type2.matches(&var_type2));
+        assert!(!var_type2.matches(&var_type));
+        let var_type =
+            Type::Int | Type::Array(Type::Float.into()) | Type::Array(Type::String.into());
+        let var_type2 = Type::Int | Type::Array((Type::Float | Type::String).into());
+        assert!(var_type.matches(&var_type));
+        assert!(var_type.matches(&var_type2));
+        assert!(var_type2.matches(&var_type2));
+        assert!(!var_type2.matches(&var_type));
+    }
+}
