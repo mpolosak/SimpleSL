@@ -92,6 +92,43 @@ Function arguments are always executed left to right
 | 12         | &&           | Logical AND             |               |
 | 13         | \|\|         | Logical OR              |               |
 
+#### [] - Array/string indexing
+```
+array/string [index]
+```
+Index must be of type int. Indexing is 0-based. Indexing with values less than zero or greater than the length of the array/string results in an error.
+Indexing of a string returns a string containing an UTF-8 character on the given position. 
+
+#### ? type - Array filtering by type
+```
+array ? type
+```
+Filters array leaving only elements matching given type
+
+#### () - Function call
+```
+function (arguments)
+```
+Calls the function with given arguments.
+
+#### ! - Logical NOT
+| operand | result | description                              |
+| ------- | ------ | ---------------------------------------- |
+| int     | int    | Returns 1 when operand is 0, 1 otherwise |
+| [int]   | [int]  | Returns an array containing results of calling ! operator on each element of the given array |
+
+#### ~ - Bitwise NOT
+| operand | result | description                              |
+| ------- | ------ | ---------------------------------------- |
+| int     | int    | Negation of all bits                     |
+| [int]   | [int]  | Returns an array containing results of calling ~ operator on each element of the given array |
+
+#### - - Unary minus
+| operand      | result       | description                              |
+| ------------ | ------------ | ---------------------------------------- |
+| int \| float | int\|float   | Additive inverse                         |
+| [int\|float] | [int]  | Returns an array containing results of calling - operator on each element of the given array |
+
 #### @ - Array maping operator
 | lhs         | rhs                                            | result |
 | ----------- | ---------------------------------------------- | ------ |
@@ -99,3 +136,20 @@ Function arguments are always executed left to right
 | [T]         | (index: int, value: T) -> S                    | [S]    |
 | (T, S, ...) | (value_t: T, value_s: S, ...) -> U             | [U]    |
 | (T, S, ...) | (index: int, value_t: T, value_s: S, ...) -> U | [U]    |
+
+#### ? - Array filtering operator
+| lhs | rhs                           | result |
+| --- | ----------------------------- | -------|
+| [T] | (value: T) -> int             | [T]    |
+| [T] | (index: int, value: T) -> int | [T]    |
+
+Filters array using given function. Leaving only elements for which the function returned value other than zero.
+
+#### $ - Array reducing operator
+```
+array $ initial_value function
+```
+
+| lhs | initial value | rhs                            | result  |
+| --- | --------------| ------------------------------ | ------- |
+| [T] | S             | (acc: T \| U, current: S) -> U | T \| U  |
