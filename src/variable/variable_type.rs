@@ -20,11 +20,11 @@ pub enum Type {
     Float,
     String,
     Function(Rc<FunctionType>),
-    Array(Box<Type>),
-    Tuple(Box<[Type]>),
+    Array(Rc<Type>),
+    Tuple(Rc<[Type]>),
     EmptyArray,
     Void,
-    Multi(Box<TypeSet>),
+    Multi(Rc<TypeSet>),
     Any,
 }
 
@@ -55,11 +55,11 @@ impl Type {
             (Type::Any, _) | (_, Type::Any) => Type::Any,
             (first, second) if first == second => first,
             (Type::Multi(mut types), Type::Multi(types2)) => {
-                types.extend(types2.iter().cloned());
+                Rc::make_mut(&mut types).extend(types2.iter().cloned());
                 Type::Multi(types)
             }
             (Type::Multi(mut types), var_type) | (var_type, Type::Multi(mut types)) => {
-                types.insert(var_type);
+                Rc::make_mut(&mut types).insert(var_type);
                 Type::Multi(types)
             }
             (first, second) => Type::Multi(TypeSet::from([first, second]).into()),
@@ -113,7 +113,7 @@ impl From<Pair<'_, Rule>> for Type {
             }
             Rule::multi => {
                 let types = pair.into_inner().map(Type::from).collect();
-                Type::Multi(Box::new(types))
+                Type::Multi(Rc::new(types))
             }
             Rule::any => Self::Any,
             rule => panic!("Type cannot be built from rule: {rule:?}"),
@@ -123,7 +123,7 @@ impl From<Pair<'_, Rule>> for Type {
 
 impl From<[Type; 2]> for Type {
     fn from(value: [Type; 2]) -> Self {
-        Type::Multi(Box::new(value.into()))
+        Type::Multi(Rc::new(value.into()))
     }
 }
 
@@ -141,10 +141,10 @@ impl BitOrAssign for Type {
             (first, second) if second.matches(first) => (),
             (first, second) if first.matches(&second) => *first = second,
             (Type::Multi(typeset), Type::Multi(typeset2)) => {
-                typeset.extend(typeset2.iter().cloned())
+                Rc::make_mut(typeset).extend(typeset2.iter().cloned())
             }
             (Type::Multi(typeset), second) => {
-                typeset.insert(second);
+                Rc::make_mut(typeset).insert(second);
             }
             (first, second) => *first = first.clone() | second,
         }
@@ -162,6 +162,8 @@ pub trait ReturnType {
 
 #[cfg(test)]
 mod tests {
+    use std::rc::Rc;
+
     use crate::variable::Type;
 
     #[test]
@@ -173,7 +175,7 @@ mod tests {
             Type::String,
             Type::Int | Type::String,
             Type::Array(Type::Any.into()),
-            Type::Tuple([Type::Float, Type::Int, Type::Int | Type::Float].into()),
+            Type::Tuple(Rc::new([Type::Float, Type::Int, Type::Int | Type::Float])),
             Type::Void,
             Type::EmptyArray,
         ];
