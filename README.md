@@ -85,8 +85,8 @@ Function arguments are always executed left to right
 | 10         | \|           | Bitwise OR              |               |
 | 11         | ==           | Equal                   |               |
 |            | !=           | Not equal               |               |
-|            | <            | Lower                   |               |
-|            | <=           | Lower or equal          |               |
+|            | <            | Less                    |               |
+|            | <=           | Less or equal           |               |
 |            | >            | Greater                 |               |
 |            | >=           | Greater or equal        |               |
 | 12         | &&           | Logical AND             |               |
@@ -127,7 +127,7 @@ Calls the function with given arguments.
 | operand      | result       | description                              |
 | ------------ | ------------ | ---------------------------------------- |
 | int \| float | int\|float   | Additive inverse                         |
-| [int\|float] | [int]  | Returns an array containing results of calling - operator on each element of the given array |
+| [int\|float] | [int\|float] | Returns an array containing results of calling - operator on each element of the given array |
 
 #### @ - Array maping operator
 | lhs         | rhs                                            | result |
@@ -153,3 +153,160 @@ array $ initial_value function
 | lhs | initial value | rhs                            | result  |
 | --- | --------------| ------------------------------ | ------- |
 | [T] | S             | (acc: T \| U, current: S) -> U | T \| U  |
+
+#### ** - Exponentiation
+| lhs     | rhs     | result     | description |
+| ------- | ------- | ---------- | ------------|
+| int     | int     | int        | lhs to the power of rhs. rhs cannot be negative
+| float   | float   | float      | lhs to the power of rhs
+| [int]   | int     | [int]      | Returns an array containg all elements of lhs raised to the power of rhs
+| [float] | float   | [float]    | Returns an array containg all elements of lhs raised to the power of rhs
+| int     | [int]   | [int]      | 
+| float   | [float] | [float]    | 
+
+#### * - Multiplication
+| lhs     | rhs     | result     | description |
+| ------- | ------- | ---------- | ------------|
+| int     | int     | int        | lhs * rhs   |
+| float   | float   | float      | lhs * rhs   |
+| [int]   | int     | [int]      | Returns an array containg all elements of lhs multiplied by rhs
+| [float] | float   | [float]    | Returns an array containg all elements of lhs multiplied by rhs
+| int     | [int]   | [int]      | Returns an array containg all elements of rhs multiplied by lhs
+| float   | [float] | [float]    | Returns an array containg all elements of rhs multiplied by lhs
+
+#### / - Division
+| lhs     | rhs     | result     | description |
+| ------- | ------- | ---------- | ------------|
+| int     | int     | int        | lhs / rhs   |
+| float   | float   | float      | lhs / rhs   |
+| [int]   | int     | [int]      | Returns an array containg all elements of lhs divided by rhs
+| [float] | float   | [float]    | Returns an array containg all elements of lhs divided by rhs
+| int     | [int]   | [int]      | Returns an array containg results of dividing lhs by each element of rhs
+| float   | [float] | [float]    | Returns an array containg results of dividing lhs by each element of rhs
+
+#### % - Remainder
+| lhs     | rhs     | result     | description |
+| ------- | ------- | ---------- | ------------|
+| int     | int     | int        | lhs % rhs   |
+| [int]   | int     | [int]      | Returns an array containg remainders of dividing each element of lhs by rhs
+| int     | [int]   | [int]      | Returns an array containg remainders of dividing lhs by each element of rhs
+
+#### + - Addition/Concatenation
+| lhs      | rhs      | result     | description |
+| -------- | -------- | ---------- | ------------|
+| int      | int      | int        | lhs + rhs   |
+| float    | float    | float      | lhs + rhs   |
+| [int]    | int      | [int]      | Returns an array containg all elements of lhs incremented by rhs
+| [float]  | float    | [float]    | Returns an array containg all elements of lhs incremented by rhs
+| int      | [int]    | [int]      | Returns an array containg all elements of rhs incremented by lhs
+| float    | [float]  | [float]    | Returns an array containg all elements of rhs incremented by lhs
+| [T]      | [S]      | [T\|S]     | Array concatenation
+| string   | string   | string     | String concatenation
+| [string] | string   | [string]   | Returns an array containg result of concatinating rhs to the end of each string in array lhs
+| string   | [string] | [string]   | Returns an array containg result of concatinating lhs to the beging of each string in array rhs
+
+#### - - Subtration
+| lhs     | rhs     | result     | description |
+| ------- | ------- | ---------- | ------------|
+| int     | int     | int        | lhs - rhs   |
+| float   | float   | float      | lhs - rhs   |
+| [int]   | int     | [int]      | Returns an array containg all elements of lhs decremented by rhs
+| [float] | float   | [float]    | Returns an array containg all elements of lhs decremented by rhs
+| int     | [int]   | [int]      | Returns an array containg result of decrementing lhs by each element of rhs
+| float   | [float] | [float]    | Returns an array containg result of decrementing lhs by each element of rhs
+
+#### << - Bitwise left shift
+| lhs     | rhs     | result     | description |
+| ------- | ------- | ---------- | ----------- |
+| int     | int     | int        | Shift lhs rhs bits to left
+| [int]   | int     | [int]      | Returns an array containg result of shifting each element of lhs rhs bits to left 
+| int     | [int]   | [int]      |
+
+#### >> - Bitwise right shift
+| lhs     | rhs     | result     | description |
+| ------- | ------- | ---------- | ----------- |
+| int     | int     | int        | Shift lhs rhs bits to right
+| [int]   | int     | [int]      | Returns an array containg result of shifting each element of lhs rhs bits to right 
+| int     | [int]   | [int]      |
+
+#### & - Bitwise AND
+| lhs     | rhs     | result     | description |
+| ------- | ------- | ---------- | ----------- |
+| int     | int     | int        | Bitwise AND |
+| [int]   | int     | [int]      | Array containg result of & for each element of lhs and rhs
+| int     | [int]   | [int]      | Array containg result of & for each element of rhs and lhs
+
+#### ^ - XOR
+| lhs     | rhs     | result     | description |
+| ------- | ------- | ---------- | ----------- |
+| int     | int     | int        | Bitwise XOR |
+| [int]   | int     | [int]      | Array containg result of ^ for each element of lhs and rhs
+| int     | [int]   | [int]      | Array containg result of ^ for each element of rhs and lhs
+
+
+#### | - Bitwise OR
+| lhs     | rhs     | result     | description |
+| ------- | ------- | ---------- | ----------- |
+| int     | int     | int        | Bitwise OR  |
+| [int]   | int     | [int]      | Array containg result of \| for each element of lhs and rhs
+| int     | [int]   | [int]      | Array containg result of \| for each element of rhs and lhs
+
+#### - == Equal
+Returns 1 if the element on the right is equal to the element on the left, 0 - otherwise
+
+#### - != Not equal
+Returns 1 if the element on the right is not equal to the element on the left, 0 - otherwise
+
+#### < - Less
+| lhs     | rhs     | result   | description |
+| ------- | ------- | -------- | ------------|
+| int     | int     | int      | Returns 1 if the element on the left is less than the element on the right, 0 - otherwise
+| float   | float   | int      | Returns 1 if the element on the left is less than the element on the right, 0 - otherwise
+| [int]   | int     | [int]    | Returns an array containg result of comparing each element of lhs with rhs
+| [float] | float   | [int]    | Returns an array containg result of comparing each element of lhs with rhs
+| int     | [int]   | [int]    | Returns an array containg result of comparing each element of lhs with rhs
+| float   | [float] | [int]    | Returns an array containg result of comparing each element of lhs with rhs
+
+#### <= - Less or equal
+| lhs     | rhs     | result   | description |
+| ------- | ------- | -------- | ------------|
+| int     | int     | int      | Returns 1 if the element on the left is less than or equal to the element on the right, 0 - otherwise
+| float   | float   | int      | Returns 1 if the element on the left is less than or equal to the element on the right, 0 - otherwise
+| [int]   | int     | [int]    | Returns an array containg result of comparing each element of lhs with rhs
+| [float] | float   | [int]    | Returns an array containg result of comparing each element of lhs with rhs
+| int     | [int]   | [int]    | Returns an array containg result of comparing each element of lhs with rhs
+| float   | [float] | [int]    | Returns an array containg result of comparing each element of lhs with rhs
+
+#### > - Greater
+| lhs     | rhs     | result   | description |
+| ------- | ------- | -------- | ------------|
+| int     | int     | int      | Returns 1 if the element on the left is greater than the element on the right, 0 - otherwise
+| float   | float   | int      | Returns 1 if the element on the left is greater than the element on the right, 0 - otherwise
+| [int]   | int     | [int]    | Returns an array containg result of comparing each element of lhs with rhs
+| [float] | float   | [int]    | Returns an array containg result of comparing each element of lhs with rhs
+| int     | [int]   | [int]    | Returns an array containg result of comparing each element of lhs with rhs
+| float   | [float] | [int]    | Returns an array containg result of comparing each element of lhs with rhs
+
+#### >= - Greater or equal
+| lhs     | rhs     | result   | description |
+| ------- | ------- | -------- | ------------|
+| int     | int     | int      | Returns 1 if the element on the left is greater than or equal to the element on the right, 0 - otherwise
+| float   | float   | int      | Returns 1 if the element on the left is greater than or equal to the element on the right, 0 - otherwise
+| [int]   | int     | [int]    | Returns an array containg result of comparing each element of lhs with rhs
+| [float] | float   | [int]    | Returns an array containg result of comparing each element of lhs with rhs
+| int     | [int]   | [int]    | Returns an array containg result of comparing each element of rhs with lhs
+| float   | [float] | [int]    | Returns an array containg result of comparing each element of rhs with lhs
+
+#### && - Logical AND 
+| lhs     | rhs     | result     | description |
+| ------- | ------- | ---------- | ----------- |
+| int     | int     | int        | Non-zero if both lhs and rhs are non-zero, 0 - otherwise
+| [int]   | int     | [int]      | Array containg result of && for each element of lhs and rhs
+| int     | [int]   | [int]      | Array containg result of && for each element of rhs and lhs
+
+#### || - Logical OR
+| lhs     | rhs     | result     | description |
+| ------- | ------- | ---------- | ----------- |
+| int     | int     | int        | 0 if both lhs and rhs are zero, non-zero otherwise
+| [int]   | int     | [int]      | Array containg result of \|\| for each element of lhs and rhs
+| int     | [int]   | [int]      | Array containg result of \|\| for each element of rhs and lhs
