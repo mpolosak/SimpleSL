@@ -115,19 +115,19 @@ Calls the function with given arguments.
 | operand | result | description                              |
 | ------- | ------ | ---------------------------------------- |
 | int     | int    | Returns 1 when operand is 0, 1 otherwise |
-| [int]   | [int]  | Returns an array containing results of calling ! operator on each element of the given array |
+| [int]   | [int]  | Returns an array containing results of calling ! operator on each element of the given array
 
 #### ~ - Bitwise NOT
 | operand | result | description                              |
 | ------- | ------ | ---------------------------------------- |
 | int     | int    | Negation of all bits                     |
-| [int]   | [int]  | Returns an array containing results of calling ~ operator on each element of the given array |
+| [int]   | [int]  | Returns an array containing results of calling ~ operator on each element of the given array
 
 #### - - Unary minus
 | operand      | result       | description                              |
 | ------------ | ------------ | ---------------------------------------- |
 | int \| float | int\|float   | Additive inverse                         |
-| [int\|float] | [int\|float] | Returns an array containing results of calling - operator on each element of the given array |
+| [int\|float] | [int\|float] | Returns an array containing results of calling - operator on each element of the given array
 
 #### @ - Array maping operator
 | lhs         | rhs                                            | result |
@@ -161,8 +161,8 @@ array $ initial_value function
 | float   | float   | float      | lhs to the power of rhs
 | [int]   | int     | [int]      | Returns an array containg all elements of lhs raised to the power of rhs
 | [float] | float   | [float]    | Returns an array containg all elements of lhs raised to the power of rhs
-| int     | [int]   | [int]      | 
-| float   | [float] | [float]    | 
+| int     | [int]   | [int]      | Returns an array containg lhs raised to the power of each element of rhs
+| float   | [float] | [float]    | Returns an array containg lhs raised to the power of each element of rhs
 
 #### * - Multiplication
 | lhs     | rhs     | result     | description |
@@ -196,10 +196,10 @@ array $ initial_value function
 | -------- | -------- | ---------- | ------------|
 | int      | int      | int        | lhs + rhs   |
 | float    | float    | float      | lhs + rhs   |
-| [int]    | int      | [int]      | Returns an array containg all elements of lhs incremented by rhs
-| [float]  | float    | [float]    | Returns an array containg all elements of lhs incremented by rhs
-| int      | [int]    | [int]      | Returns an array containg all elements of rhs incremented by lhs
-| float    | [float]  | [float]    | Returns an array containg all elements of rhs incremented by lhs
+| [int]    | int      | [int]      | Returns an array containg all elements of lhs + rhs
+| [float]  | float    | [float]    | Returns an array containg all elements of lhs + rhs
+| int      | [int]    | [int]      | Returns an array containg all elements of rhs + lhs
+| float    | [float]  | [float]    | Returns an array containg all elements of rhs + lhs
 | [T]      | [S]      | [T\|S]     | Array concatenation
 | string   | string   | string     | String concatenation
 | [string] | string   | [string]   | Returns an array containg result of concatinating rhs to the end of each string in array lhs
@@ -210,24 +210,24 @@ array $ initial_value function
 | ------- | ------- | ---------- | ------------|
 | int     | int     | int        | lhs - rhs   |
 | float   | float   | float      | lhs - rhs   |
-| [int]   | int     | [int]      | Returns an array containg all elements of lhs decremented by rhs
-| [float] | float   | [float]    | Returns an array containg all elements of lhs decremented by rhs
-| int     | [int]   | [int]      | Returns an array containg result of decrementing lhs by each element of rhs
-| float   | [float] | [float]    | Returns an array containg result of decrementing lhs by each element of rhs
+| [int]   | int     | [int]      | Returns an array containg result of subtracting rhs from each element of lhs
+| [float] | float   | [float]    | Returns an array containg result of subtracting rhs from each element of lhs
+| int     | [int]   | [int]      | Returns an array containg result of subtracting each element of rhs from lhs
+| float   | [float] | [float]    | Returns an array containg result of subtracting each element of rhs from lhs
 
 #### << - Bitwise left shift
 | lhs     | rhs     | result     | description |
 | ------- | ------- | ---------- | ----------- |
 | int     | int     | int        | Shift lhs rhs bits to left
 | [int]   | int     | [int]      | Returns an array containg result of shifting each element of lhs rhs bits to left 
-| int     | [int]   | [int]      |
+| int     | [int]   | [int]      | Returns an array containg result of >> for lhs and each element of rhs
 
 #### >> - Bitwise right shift
 | lhs     | rhs     | result     | description |
 | ------- | ------- | ---------- | ----------- |
 | int     | int     | int        | Shift lhs rhs bits to right
 | [int]   | int     | [int]      | Returns an array containg result of shifting each element of lhs rhs bits to right 
-| int     | [int]   | [int]      |
+| int     | [int]   | [int]      | Returns an array containg result of >> for lhs and each element of rhs
 
 #### & - Bitwise AND
 | lhs     | rhs     | result     | description |
