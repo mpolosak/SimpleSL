@@ -57,3 +57,39 @@ This will create all parents directories
 ### renames(from: string, to: string) -> ()|(int|string)
 Renames file or directory from `from` to `to`.
 Returns () when succesful or tuple containg error number and message when something went wrong
+
+# Input/output
+This part of the standard library contains functions to write to a standard output and read from a standard output.
+
+## print(var: any)
+Prints variable to stdout.
+
+## print_array(array: [any], sep: string)
+Prints all elements of `array` separated by `sep`.
+
+## cgetline() -> string
+Reads line from stdin. Returns a string containg contents of the line. A newline charackter is removed from the returned string.
+
+# String
+This part of the standard library contains functions to deal with strings.
+
+## split(string: string, pat: string) -> [string]
+Splits 'string' on 'pat'.
+
+## replace(string: string, from: string, to: string) -> string
+Return an string that is a result of replacing all occurences of 'from' in 'string' with 'to'.
+
+## string_contains(string: string, pat: string) -> bool
+Returns 1 if `string` contains `pat`, 0 - otherwise.
+
+## chars(string: string) -> [string]
+Returns an array containing all UTF-8 characters of 'string'.
+
+## to_lowercase(string: string) -> string
+Returns the lowercase equivalent of `string`.
+
+## to_uppercase(string: string) -> string
+Returns the uppercase equivalent of `string`.
+
+## len(variable: [any]|string) -> int 
+Returns length of `variable`.
