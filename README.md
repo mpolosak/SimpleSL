@@ -1,6 +1,16 @@
 # SimpleSL
 SimpleSL is a scripting language i create in my free time.
 
+## Running binary
+Run script from a file:
+```
+cargo run examples/example1
+```
+Run repl:
+```
+cargo run
+```
+
 ## Syntax
 ### Hello world example
 ```
