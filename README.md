@@ -11,6 +11,18 @@ Run repl:
 cargo run
 ```
 
+## Running scripts from Rust
+```Rust
+use simplesl::{Code, Interpreter};
+
+fn main() {
+    let interpreter = Interpreter::with_stdlib();
+    let _ = Code::parse(&interpreter, "print(\"Hello world!\")")
+        .unwrap()
+        .exec();
+}
+```
+
 ## Syntax
 ### Hello world example
 ```
