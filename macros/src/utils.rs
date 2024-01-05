@@ -5,16 +5,14 @@ use quote::{__private::TokenStream, quote};
 pub fn function_params_from_itemfn(function: &mut ItemFn) -> Vec<(Ident, Vec<Attribute>, String)> {
     let mut result = Vec::new();
     for param in &mut function.sig.inputs {
-        match param {
-            syn::FnArg::Receiver(_) => panic!(),
-            syn::FnArg::Typed(PatType { pat, ty, attrs, .. }) => match *pat.clone() {
-                syn::Pat::Ident(PatIdent { ident, .. }) => {
-                    result.push((ident, attrs.clone(), quote!(#ty).to_string()));
-                    *attrs = Vec::new();
-                }
-                _ => panic!(),
-            },
-        }
+        let syn::FnArg::Typed(PatType { pat, ty, attrs, .. }) = param else {
+            panic!()
+        };
+        let syn::Pat::Ident(PatIdent { ident, .. }) = *pat.clone() else {
+            panic!()
+        };
+        result.push((ident, attrs.clone(), quote!(#ty).to_string()));
+        *attrs = Vec::new();
     }
     result
 }
