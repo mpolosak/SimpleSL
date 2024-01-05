@@ -40,72 +40,61 @@ fn arg_import_from_function_param(
 ) -> TokenStream {
     let ident_str = ident.to_string();
     let get_variable = quote!(interpreter.get_variable(#ident_str).unwrap());
-    if param_type == "i64" {
-        quote!(
+    match param_type.as_str() {
+        "i64" => quote!(
             let simplesl::variable::Variable::Int(#ident) = *#get_variable else {
                 panic!()
             };
-        )
-    } else if param_type == "f64" {
-        quote!(
+        ),
+        "f64" => quote!(
             let simplesl::variable::Variable::Float(#ident) = *#get_variable else {
                 panic!()
             };
-        )
-    } else if param_type == "Rc < str >" {
-        quote!(
+        ),
+        "Rc < str >" => quote!(
             let simplesl::variable::Variable::String(#ident) = #get_variable else {
                 panic!()
             };
             let #ident = #ident.clone();
-        )
-    } else if param_type == "& str" {
-        quote!(
+        ),
+        "& str" => quote!(
             let simplesl::variable::Variable::String(#ident) = #get_variable else {
                 panic!()
             };
             let #ident = #ident.as_ref();
-        )
-    } else if param_type == "Rc < [Variable] >" {
-        quote!(
+        ),
+        "Rc < [Variable] >" => quote!(
             let simplesl::variable::Variable::Array(#ident) = #get_variable else {
                 panic!()
             };
             let #ident = #ident.clone();
-        )
-    } else if param_type == "& [Variable]" {
-        quote!(
+        ),
+        "& [Variable]" => quote!(
             let simplesl::variable::Variable::Array(#ident) = #get_variable else {
                 panic!()
             };
             let #ident = #ident.as_ref();
-        )
-    } else if param_type == "Rc < Function >" {
-        quote!(
+        ),
+        "Rc < Function >" => quote!(
             let simplesl::variable::Variable::Function(#ident) = #get_variable else {
                 panic!()
             };
             let #ident = #ident.clone();
-        )
-    } else if param_type == "& Function" {
-        quote!(
+        ),
+        "& Function" => quote!(
             let simplesl::variable::Variable::Function(#ident) = #get_variable else {
                 panic!()
             };
             let #ident = #ident.as_ref();
-        )
-    } else if param_type == "Variable" {
-        quote!(
+        ),
+        "Variable" => quote!(
             let #ident = #get_variable.clone();
-        )
-    } else if param_type == "& Variable" {
-        quote!(
+        ),
+        "& Variable" => quote!(
             let #ident = #get_variable;
-        )
-    } else if param_type == "& mut Interpreter" {
-        quote!()
-    } else {
-        panic!("{param_type} type isn't allowed")
+        ),
+        "& mut Interpreter" => quote!(),
+        param_type => panic!("{param_type} type isn't allowed"),
     }
 }
 
@@ -134,25 +123,23 @@ fn param_from_function_param(
 }
 
 fn type_from_str(attrs: &[Attribute], param_type: &str) -> TokenStream {
-    if param_type == "i64" {
-        quote!(simplesl::variable::Type::Int)
-    } else if param_type == "f64" {
-        quote!(simplesl::variable::Type::Float)
-    } else if param_type == "Rc < str >" || param_type == "& str" {
-        quote!(simplesl::variable::Type::String)
-    } else if param_type == "Rc < [Variable] >" || param_type == "& [Variable]" {
-        get_type_from_attrs(attrs).unwrap_or(quote!(simplesl::variable::Type::Array(
-            simplesl::variable::Type::Any.into()
-        )))
-    } else if param_type == "Rc < Function >" || param_type == "& Function" {
-        let Some(var_type) = get_type_from_attrs(attrs) else {
-            panic!("Argument of type function must be precede by var_type attribute")
-        };
-        var_type
-    } else if param_type == "Variable" || param_type == "& Variable" {
-        get_type_from_attrs(attrs).unwrap_or(quote!(simplesl::variable::Type::Any))
-    } else {
-        panic!("{param_type} type isn't allowed")
+    match param_type {
+        "i64" => quote!(simplesl::variable::Type::Int),
+        "f64" => quote!(simplesl::variable::Type::Float),
+        "Rc < str >" | "& str" => quote!(simplesl::variable::Type::String),
+        "Rc < [Variable] >" | "& [Variable]" => get_type_from_attrs(attrs).unwrap_or(quote!(
+            simplesl::variable::Type::Array(simplesl::variable::Type::Any.into())
+        )),
+        "Rc < Function >" | "& Function" => {
+            let Some(var_type) = get_type_from_attrs(attrs) else {
+                panic!("Argument of type function must be precede by var_type attribute")
+            };
+            var_type
+        }
+        "Variable" | "& Variable" => {
+            get_type_from_attrs(attrs).unwrap_or(quote!(simplesl::variable::Type::Any))
+        }
+        param_type => panic!("{param_type} type isn't allowed"),
     }
 }
 
@@ -173,57 +160,39 @@ fn get_type_from_attrs(attrs: &[Attribute]) -> Option<TokenStream> {
 }
 
 fn return_type_from_syn_type(return_type: &Type) -> TokenStream {
-    let return_type = quote!(#return_type).to_string();
-    if return_type == "i64"
-        || return_type == "Result < i64 >"
-        || return_type == "bool"
-        || return_type == "Result < bool >"
-        || return_type == "usize"
-        || return_type == "Result < usize >"
-    {
-        quote!(simplesl::variable::Type::Int)
-    } else if return_type == "f64" || return_type == "Result < f64 >" {
-        quote!(simplesl::variable::Type::Float)
-    } else if return_type == "Rc < str >"
-        || return_type == "Result < Rc < str > >"
-        || return_type == "String"
-        || return_type == "Result < String >"
-        || return_type == "& str"
-        || return_type == "Result < & str >"
-    {
-        quote!(simplesl::variable::Type::String)
-    } else if return_type == "Rc < [Variable] >" || return_type == "Result < Rc < [Variable] > >" {
-        quote!(simplesl::variable::Type::Array(
-            simplesl::variable::Type::Any.into()
-        ))
-    } else if return_type.is_empty() {
-        quote!(simplesl::variable::Type::Void)
-    } else if return_type == "Variable" || return_type == "Result < Variable >" {
-        quote!(simplesl::variable::Type::Any)
-    } else if return_type == "io :: Result < String >"
-        || return_type == "std :: io :: Result < String >"
-    {
-        quote!({
+    match quote!(#return_type).to_string().as_str() {
+        "i64" | "Result < i64 >" | "bool" | "Result < bool >" | "usize" | "Result < usize >" => {
+            quote!(simplesl::variable::Type::Int)
+        }
+        "f64" | "Result < f64 >" => quote!(simplesl::variable::Type::Float),
+        "Rc < str >"
+        | "Result < Rc < str > >"
+        | "String"
+        | "Result < String >"
+        | "& str"
+        | "Result < & str >" => quote!(simplesl::variable::Type::String),
+        "Rc < [Variable] >" | "Result < Rc < [Variable] > >" => quote!(
+            simplesl::variable::Type::Array(simplesl::variable::Type::Any.into())
+        ),
+        "" => quote!(simplesl::variable::Type::Void),
+        "Variable" | "Result < Variable >" => quote!(simplesl::variable::Type::Any),
+        "io :: Result < String >" | "std :: io :: Result < String >" => quote!({
             use std::str::FromStr;
             simplesl::variable::Type::from_str("string|(int,string)").unwrap()
-        })
-    } else if return_type == "io :: Result < () >" || return_type == "std :: io :: Result < () >" {
-        quote!({
+        }),
+        "io :: Result < () >" | "std :: io :: Result < () >" => quote!({
             use std::str::FromStr;
             simplesl::variable::Type::from_str("()|(int,string)").unwrap()
-        })
-    } else if return_type == "Option < i64 >" {
-        quote!({
+        }),
+        "Option < i64 >" => quote!({
             use std::str::FromStr;
             simplesl::variable::Type::from_str("int|()").unwrap()
-        })
-    } else if return_type == "Option < f64 >" {
-        quote!({
+        }),
+        "Option < f64 >" => quote!({
             use std::str::FromStr;
             simplesl::variable::Type::from_str("float|()").unwrap()
-        })
-    } else {
-        panic!("{return_type} type isn't allowed")
+        }),
+        return_type => panic!("{return_type} type isn't allowed"),
     }
 }
 
