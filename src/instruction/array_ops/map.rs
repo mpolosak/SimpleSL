@@ -108,11 +108,10 @@ impl Exec for Map {
                 let arrays: Box<[&Rc<Array>]> = arrays
                     .iter()
                     .map(|array| {
-                        if let Variable::Array(array) = array {
-                            array
-                        } else {
-                            panic!()
-                        }
+                        let Variable::Array(array) = array else {
+                            unreachable!()
+                        };
+                        array
                     })
                     .collect();
                 let len = arrays.iter().map(|array| array.len()).min().unwrap();
@@ -130,11 +129,10 @@ impl Exec for Map {
                 let arrays: Box<[&Rc<Array>]> = arrays
                     .iter()
                     .map(|array| {
-                        if let Variable::Array(array) = array {
-                            array
-                        } else {
-                            panic!()
-                        }
+                        let Variable::Array(array) = array else {
+                            unreachable!()
+                        };
+                        array
                     })
                     .collect();
                 let len = arrays.iter().map(|array| array.len()).min().unwrap();
