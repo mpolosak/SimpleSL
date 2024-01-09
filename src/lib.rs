@@ -6,7 +6,6 @@ mod interpreter;
 mod parse;
 pub mod stdlib;
 pub mod variable;
-extern crate pest;
 #[macro_use]
 extern crate pest_derive;
 pub use simplesl_macros::export_function;

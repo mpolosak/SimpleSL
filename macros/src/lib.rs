@@ -1,7 +1,5 @@
 #![warn(clippy::pedantic)]
-extern crate proc_macro;
 use proc_macro::TokenStream;
-extern crate quote;
 use quote::quote;
 use syn::{parse_macro_input, ItemFn};
 mod attributes;

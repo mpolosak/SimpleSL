@@ -1,7 +1,6 @@
-use pest::iterators::Pairs;
-
 use crate::instruction::{local_variable::LocalVariables, Exec, Instruction};
-use crate::{parse::*, pest::Parser, stdlib, variable::*, Result};
+use crate::{parse::*, stdlib, variable::*, Result};
+use pest::{iterators::Pairs, Parser};
 use std::{collections::HashMap, fs, rc::Rc};
 
 #[derive(Debug)]

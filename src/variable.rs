@@ -2,8 +2,8 @@ mod array;
 mod function_type;
 mod type_set;
 mod variable_type;
-use crate::{function::Function, join_debug, parse::*, pest::Parser, Error, Result};
-use pest::iterators::Pair;
+use crate::{function::Function, join_debug, parse::*, Error, Result};
+use pest::{iterators::Pair, Parser};
 use std::{
     fmt::{self},
     io,

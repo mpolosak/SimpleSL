@@ -1,6 +1,5 @@
-use syn::{Attribute, Ident, ItemFn, MetaList, PatIdent, PatType, ReturnType, Type};
-extern crate quote;
 use quote::{__private::TokenStream, quote};
+use syn::{Attribute, Ident, ItemFn, MetaList, PatIdent, PatType, ReturnType, Type};
 
 pub fn function_params_from_itemfn(function: &mut ItemFn) -> Vec<(Ident, Vec<Attribute>, String)> {
     let mut result = Vec::new();
