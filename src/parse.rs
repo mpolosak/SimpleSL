@@ -29,3 +29,7 @@ lazy_static::lazy_static! {
             .op(Op::postfix(at) | Op::postfix(type_filter) | Op::postfix(function_call))
     };
 }
+
+pub fn unexpected(rule: Rule) -> ! {
+    unreachable!("Unexpected rule: {rule:?}")
+}

@@ -36,7 +36,7 @@ use self::{
 };
 use crate::{
     interpreter::Interpreter,
-    parse::{Rule, PRATT_PARSER},
+    parse::{unexpected, Rule, PRATT_PARSER},
     variable::{ReturnType, Type, Typed, Variable},
     Error, Result,
 };
@@ -78,7 +78,7 @@ impl Instruction {
                 FunctionDeclaration::create_instruction(pair, interpreter, local_variables)
             }
             Rule::expr => Self::new_expression(pair, interpreter, local_variables),
-            rule => unreachable!("Unexpected rule: {rule:?}"),
+            rule => unexpected(rule),
         }
     }
     pub(crate) fn new_expression(
@@ -116,13 +116,13 @@ impl Instruction {
                 Rule::function => {
                     AnonymousFunction::create_instruction(pair, interpreter, local_variables)
                 }
-                rule => unreachable!("Unexpected rule: {rule:?}"),
+                rule => unexpected(rule),
             })
             .map_prefix(|op, rhs| match op.as_rule() {
                 Rule::not => Not::create_instruction(rhs?),
                 Rule::bitwise_not => BitwiseNot::create_instruction(rhs?),
                 Rule::unary_minus => UnaryMinus::create_instruction(rhs?),
-                rule => unreachable!("Unexpected rule: {rule:?}"),
+                rule => unexpected(rule),
             })
             .map_infix(|lhs, op, rhs| match op.as_rule() {
                 Rule::pow => Pow::create_bin_op(lhs?, rhs?),
@@ -148,7 +148,7 @@ impl Instruction {
                 Rule::reduce => {
                     Reduce::create_instruction(lhs?, op, rhs?, local_variables, interpreter)
                 }
-                rule => unreachable!("Unexpected rule: {rule:?}"),
+                rule => unexpected(rule),
             })
             .map_postfix(|lhs, op| match op.as_rule() {
                 Rule::at => At::create_instruction(lhs?, op, interpreter, local_variables),
@@ -158,7 +158,7 @@ impl Instruction {
                 Rule::function_call => {
                     FunctionCall::create_instruction(lhs?, op, interpreter, local_variables)
                 }
-                rule => unreachable!("Unexpected rule: {rule:?}"),
+                rule => unexpected(rule),
             })
             .parse(pair.into_inner())
     }

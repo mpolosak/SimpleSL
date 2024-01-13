@@ -4,7 +4,7 @@ use crate::{
         recreate_instructions, Exec, Instruction, Recreate,
     },
     interpreter::Interpreter,
-    parse::Rule,
+    parse::{unexpected, Rule},
     variable::{ReturnType, Type, Typed, Variable},
     Result,
 };
@@ -58,7 +58,7 @@ impl MatchArm {
                 let instruction = Instruction::new(pair, interpreter, local_variables)?;
                 Ok(Self::Other(instruction))
             }
-            _ => unreachable!(),
+            rule => unexpected(rule),
         }
     }
     pub fn is_covering_type(&self, checked_type: &Type) -> bool {
