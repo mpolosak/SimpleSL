@@ -99,13 +99,9 @@ impl Instruction {
                                 .map(Instruction::from)
                                 .ok_or_else(|| Error::VariableDoesntExist(ident.into()))
                         },
-                        |var| match var {
-                            LocalVariable::Variable(variable) => {
-                                Ok(Self::Variable(variable.clone()))
-                            }
-                            local_variable => {
-                                Ok(Self::LocalVariable(ident.into(), local_variable.clone()))
-                            }
+                        |var| match var.clone() {
+                            LocalVariable::Variable(variable) => Ok(Self::Variable(variable)),
+                            local_variable => Ok(Self::LocalVariable(ident.into(), local_variable)),
                         },
                     )
                 }
@@ -198,11 +194,9 @@ impl Recreate for Instruction {
                         .map(Instruction::from)
                         .ok_or_else(|| Error::VariableDoesntExist(ident.clone()))
                 },
-                |var| match var {
-                    LocalVariable::Variable(variable) => Ok(Self::Variable(variable.clone())),
-                    local_variable => {
-                        Ok(Self::LocalVariable(ident.clone(), local_variable.clone()))
-                    }
+                |var| match var.clone() {
+                    LocalVariable::Variable(variable) => Ok(Self::Variable(variable)),
+                    local_variable => Ok(Self::LocalVariable(ident.clone(), local_variable)),
                 },
             ),
             Self::AnonymousFunction(function) => function.recreate(local_variables, interpreter),
