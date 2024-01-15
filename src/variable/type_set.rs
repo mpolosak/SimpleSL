@@ -7,14 +7,8 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-#[derive(Clone, Debug, Eq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TypeSet(pub HashSet<Type>);
-
-impl PartialEq for TypeSet {
-    fn eq(&self, other: &Self) -> bool {
-        self.symmetric_difference(other).count() == 0
-    }
-}
 
 impl Hash for TypeSet {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
