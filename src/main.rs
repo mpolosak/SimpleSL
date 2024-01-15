@@ -26,10 +26,11 @@ fn run_shell() -> Result<()> {
         match readline {
             Ok(line) => {
                 rl.add_history_entry(&line)?;
-                if let Err(error) = Code::parse(&interpreter, &line)
+                match Code::parse(&interpreter, &line)
                     .and_then(|code| code.exec_unscoped(&mut interpreter))
                 {
-                    eprintln!("{error}");
+                    Ok(result) => println!("{result}"),
+                    Err(error) => eprintln!("{error}"),
                 }
             }
             Err(ReadlineError::Interrupted | ReadlineError::Eof) => return Ok(()),
