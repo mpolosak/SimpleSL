@@ -156,7 +156,7 @@ mod tests {
         );
         assert_eq!(parse_and_exec("[] + 5"), Variable::from_str("[]"));
         assert_eq!(parse_and_exec("[] + 4.5"), Variable::from_str("[]"));
-        // assert_eq!(parse_and_exec(r#"[] + """#), Variable::from_str("[]"));
+        assert_eq!(parse_and_exec(r#"[] + """#), Variable::from_str("[]"));
         assert_eq!(
             parse_and_exec("4+4.5"),
             Err(Error::CannotDo2(Type::Int, "+", Type::Float))
