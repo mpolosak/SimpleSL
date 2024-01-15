@@ -35,7 +35,9 @@ impl CanBeUsed for Add {
             (Type::Int, Type::Int)
             | (Type::Float, Type::Float)
             | (Type::String, Type::String)
-            | (Type::Array(_), Type::Array(_)) => true,
+            | (Type::Array(_) | Type::EmptyArray, Type::Array(_) | Type::EmptyArray)
+            | (Type::EmptyArray, Type::Int | Type::Float | Type::String)
+            | (Type::Int | Type::Float | Type::String, Type::EmptyArray) => true,
             (Type::Array(element_type), var_type @ (Type::Int | Type::Float | Type::String))
             | (var_type @ (Type::Int | Type::Float | Type::String), Type::Array(element_type)) => {
                 element_type.as_ref() == var_type
