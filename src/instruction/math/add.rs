@@ -110,3 +110,84 @@ impl ReturnType for Add {
 }
 
 impl BaseInstruction for Add {}
+
+#[cfg(test)]
+mod tests {
+
+    use std::str::FromStr;
+
+    use crate::{
+        variable::{Type, Variable},
+        Code, Error, Interpreter,
+    };
+
+    #[test]
+    fn test_add_operator() {
+        assert_eq!(parse_and_exec("4+4"), Ok(Variable::Int(8)));
+        assert_eq!(parse_and_exec("4.5+0.5"), Ok(Variable::Float(5.0)));
+        assert_eq!(
+            parse_and_exec(r#""aa" + "B""#),
+            Ok(Variable::String("aaB".into()))
+        );
+        assert_eq!(
+            parse_and_exec("[5, 5, 6] + [5]"),
+            parse_and_exec("[5, 5, 6, 5]")
+        );
+        assert_eq!(parse_and_exec("[] + []"), Variable::from_str("[]"));
+        assert_eq!(
+            parse_and_exec(r#"[5, 5.5, "4"] + []"#),
+            parse_and_exec(r#"[5, 5.5, "4"]"#)
+        );
+        assert_eq!(
+            parse_and_exec(r#"[4, 5, 6] + 5"#),
+            parse_and_exec("[9, 10, 11]")
+        );
+        assert_eq!(
+            parse_and_exec(r#"[4.5, 5.7, 6.0] + 3.3"#),
+            parse_and_exec("[7.8, 9.0, 9.3]")
+        );
+        assert_eq!(
+            parse_and_exec(r#""7" + ["a", "aaa"]"#),
+            parse_and_exec(r#"["7a", "7aaa"]"#)
+        );
+        assert_eq!(
+            parse_and_exec(r#"["a", "aaa"]+"3""#),
+            parse_and_exec(r#"["a3", "aaa3"]"#)
+        );
+        assert_eq!(parse_and_exec("[] + 5"), Variable::from_str("[]"));
+        assert_eq!(parse_and_exec("[] + 4.5"), Variable::from_str("[]"));
+        // assert_eq!(parse_and_exec(r#"[] + """#), Variable::from_str("[]"));
+        assert_eq!(
+            parse_and_exec("4+4.5"),
+            Err(Error::CannotDo2(Type::Int, "+", Type::Float))
+        );
+        assert_eq!(
+            parse_and_exec(r#""4"+4.5"#),
+            Err(Error::CannotDo2(Type::String, "+", Type::Float))
+        );
+        assert_eq!(
+            parse_and_exec(r#""4"+4"#),
+            Err(Error::CannotDo2(Type::String, "+", Type::Int))
+        );
+        assert_eq!(
+            parse_and_exec(r#"[4]+4.5"#),
+            Err(Error::CannotDo2(
+                Type::Array(Type::Int.into()),
+                "+",
+                Type::Float
+            ))
+        );
+        assert_eq!(
+            parse_and_exec(r#"[4, 5.5]+4.5"#),
+            Err(Error::CannotDo2(
+                Type::Array((Type::Int | Type::Float).into()),
+                "+",
+                Type::Float
+            ))
+        )
+    }
+
+    fn parse_and_exec(script: &str) -> Result<Variable, crate::Error> {
+        Code::parse(&Interpreter::without_stdlib(), script).and_then(|code| code.exec())
+    }
+}
