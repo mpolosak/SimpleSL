@@ -121,6 +121,7 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
             }
             Rule::array => pair
                 .into_inner()
+                .map(|pair| pair.into_inner().next().unwrap())
                 .map(Self::try_from)
                 .collect::<Result<Variable>>(),
             Rule::void => Ok(Variable::Void),
@@ -263,6 +264,10 @@ pub fn is_correct_variable_name(name: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use std::rc::Rc;
+
+    use crate::variable::{Array, Type};
+
     #[test]
     fn check_is_correct_variable_name() {
         use crate::variable::is_correct_variable_name;
@@ -291,5 +296,33 @@ mod tests {
             Variable::from_str(r#""print" """#),
             Err(Error::TooManyVariables)
         );
+        assert_eq!(
+            Variable::from_str("[]"),
+            Ok(Variable::Array(
+                Array {
+                    var_type: Type::EmptyArray,
+                    elements: Rc::new([])
+                }
+                .into()
+            ))
+        );
+        assert_eq!(
+            Variable::from_str(r#"[4.5, 3, "a", []]"#),
+            Ok(Variable::from(Rc::<[Variable]>::from([
+                Variable::Float(4.5),
+                Variable::Int(3),
+                Variable::String("a".into()),
+                Variable::from(Rc::<[Variable]>::from([]))
+            ])))
+        );
+        assert_eq!(
+            Variable::from_str(r#"[[4.5, []]]"#),
+            Ok(Variable::from(Rc::<[Variable]>::from([Variable::from(
+                Rc::<[Variable]>::from([
+                    Variable::Float(4.5),
+                    Variable::from(Rc::<[Variable]>::from([]))
+                ])
+            ),])))
+        )
     }
 }
