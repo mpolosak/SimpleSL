@@ -244,6 +244,12 @@ impl From<Vec<Variable>> for Variable {
     }
 }
 
+impl<const N: usize> From<[Variable; N]> for Variable {
+    fn from(value: [Variable; N]) -> Self {
+        Array::from(value).into()
+    }
+}
+
 pub fn is_correct_variable_name(name: &str) -> bool {
     let Ok(parse) = SimpleSLParser::parse(Rule::ident, name) else {
         return false;
@@ -253,9 +259,6 @@ pub fn is_correct_variable_name(name: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use std::rc::Rc;
-
-    use crate::variable::{Array, Type};
 
     #[test]
     fn check_is_correct_variable_name() {
@@ -285,33 +288,22 @@ mod tests {
             Variable::from_str(r#""print" """#),
             Err(Error::TooManyVariables)
         );
-        assert_eq!(
-            Variable::from_str("[]"),
-            Ok(Variable::Array(
-                Array {
-                    var_type: Type::EmptyArray,
-                    elements: Rc::new([])
-                }
-                .into()
-            ))
-        );
+        assert_eq!(Variable::from_str("[]"), Ok(Variable::from([])));
         assert_eq!(
             Variable::from_str(r#"[4.5, 3, "a", []]"#),
-            Ok(Variable::from(Rc::<[Variable]>::from([
+            Ok(Variable::from([
                 Variable::Float(4.5),
                 Variable::Int(3),
                 Variable::String("a".into()),
-                Variable::from(Rc::<[Variable]>::from([]))
-            ])))
+                Variable::from([])
+            ]))
         );
         assert_eq!(
             Variable::from_str(r#"[[4.5, []]]"#),
-            Ok(Variable::from(Rc::<[Variable]>::from([Variable::from(
-                Rc::<[Variable]>::from([
-                    Variable::Float(4.5),
-                    Variable::from(Rc::<[Variable]>::from([]))
-                ])
-            ),])))
+            Ok(Variable::from([Variable::from([
+                Variable::Float(4.5),
+                Variable::from([])
+            ]),]))
         )
     }
 }
