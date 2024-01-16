@@ -1,24 +1,32 @@
 use rustyline::{error::ReadlineError, DefaultEditor};
-use simplesl::{Code, Error, Interpreter, Result};
+use simplesl::{Code, Interpreter, Result};
 use std::{env, fs, process::ExitCode};
 
 fn main() -> ExitCode {
     let args: Box<[String]> = env::args().collect();
     match &args[..] {
-        [_] => run_shell(),
-        [_, file] => run_from_file(file),
-        _ => Err(Error::TooManyArguments),
-    }
-    .map_or_else(
-        |error| {
-            eprintln!("{error}");
+        [_] => run_shell().map_or_else(
+            |error| {
+                eprintln!("{error}");
+                ExitCode::FAILURE
+            },
+            |_| ExitCode::SUCCESS,
+        ),
+        [_, file] => run_from_file(file).map_or_else(
+            |error| {
+                eprintln!("{error}");
+                ExitCode::FAILURE
+            },
+            |_| ExitCode::SUCCESS,
+        ),
+        _ => {
+            eprintln!("Too many arguments");
             ExitCode::FAILURE
-        },
-        |_| ExitCode::SUCCESS,
-    )
+        }
+    }
 }
 
-fn run_shell() -> Result<()> {
+fn run_shell() -> std::result::Result<(), ReadlineError> {
     let mut interpreter = Interpreter::with_stdlib();
     let mut rl = DefaultEditor::new()?;
     loop {
@@ -34,7 +42,7 @@ fn run_shell() -> Result<()> {
                 }
             }
             Err(ReadlineError::Interrupted | ReadlineError::Eof) => return Ok(()),
-            Err(err) => return Err(err.into()),
+            Err(err) => return Err(err),
         }
     }
 }
