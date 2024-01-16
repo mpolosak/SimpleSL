@@ -50,3 +50,24 @@ impl Display for Array {
         write!(f, "[{}]", join_debug(self, ", "))
     }
 }
+
+impl<T: Into<Rc<[Variable]>>> From<T> for Array {
+    fn from(value: T) -> Self {
+        let elements = value.into();
+        let var_type = elements
+            .iter()
+            .map(Variable::as_type)
+            .reduce(Type::concat)
+            .map_or(Type::EmptyArray, |element_type| {
+                Type::Array(element_type.into())
+            });
+        Array { var_type, elements }
+    }
+}
+
+impl FromIterator<Variable> for Array {
+    fn from_iter<T: IntoIterator<Item = Variable>>(iter: T) -> Self {
+        let elements: Rc<[Variable]> = iter.into_iter().collect();
+        elements.into()
+    }
+}

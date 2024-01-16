@@ -184,28 +184,6 @@ impl From<Rc<Function>> for Variable {
     }
 }
 
-impl From<Rc<[Variable]>> for Variable {
-    fn from(value: Rc<[Variable]>) -> Self {
-        let var_type = value
-            .iter()
-            .map(Variable::as_type)
-            .reduce(Type::concat)
-            .map_or(Type::EmptyArray, |element_type| {
-                Type::Array(element_type.into())
-            });
-        Self::Array(Rc::new(Array {
-            var_type,
-            elements: value,
-        }))
-    }
-}
-
-impl From<Vec<Variable>> for Variable {
-    fn from(value: Vec<Variable>) -> Self {
-        Rc::<[Self]>::from(value).into()
-    }
-}
-
 impl From<()> for Variable {
     fn from(_value: ()) -> Self {
         Self::Void
@@ -238,8 +216,7 @@ impl From<io::ErrorKind> for Variable {
 
 impl FromIterator<Variable> for Variable {
     fn from_iter<T: IntoIterator<Item = Variable>>(iter: T) -> Self {
-        let elements: Rc<[Variable]> = iter.into_iter().collect();
-        elements.into()
+        Array::from_iter(iter).into()
     }
 }
 
@@ -252,6 +229,18 @@ impl From<Array> for Variable {
 impl From<Rc<Array>> for Variable {
     fn from(value: Rc<Array>) -> Self {
         Variable::Array(value)
+    }
+}
+
+impl From<Rc<[Variable]>> for Variable {
+    fn from(value: Rc<[Variable]>) -> Self {
+        Array::from(value).into()
+    }
+}
+
+impl From<Vec<Variable>> for Variable {
+    fn from(value: Vec<Variable>) -> Self {
+        Array::from(value).into()
     }
 }
 
