@@ -27,6 +27,30 @@ pub enum Error {
     TooManyArguments,
 }
 
+impl PartialEq for Error {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::VariableDoesntExist(l0), Self::VariableDoesntExist(r0)) => l0 == r0,
+            (Self::WrongType(l0, l1), Self::WrongType(r0, r1)) => l0 == r0 && l1 == r1,
+            (Self::WrongNumberOfArguments(l0, l1), Self::WrongNumberOfArguments(r0, r1)) => {
+                l0 == r0 && l1 == r1
+            }
+            (Self::CannotBeNegative(l0), Self::CannotBeNegative(r0)) => l0 == r0,
+            (Self::CannotBeParsed(l0), Self::CannotBeParsed(r0)) => l0 == r0,
+            (Self::CannotIndexInto(l0), Self::CannotIndexInto(r0)) => l0 == r0,
+            (Self::IO(l0), Self::IO(r0)) => l0.to_string() == r0.to_string(),
+            (Self::Parsing(l0), Self::Parsing(r0)) => l0 == r0,
+            (Self::ReadlineError(l0), Self::ReadlineError(r0)) => l0.to_string() == r0.to_string(),
+            (Self::CannotDo(l0, l1), Self::CannotDo(r0, r1)) => l0 == r0 && l1 == r1,
+            (Self::CannotDo2(l0, l1, l2), Self::CannotDo2(r0, r1, r2)) => {
+                l0 == r0 && l1 == r1 && l2 == r2
+            }
+            (Self::WrongReturn(l0, l1), Self::WrongReturn(r0, r1)) => l0 == r0 && l1 == r1,
+            _ => core::mem::discriminant(self) == core::mem::discriminant(other),
+        }
+    }
+}
+
 impl std::error::Error for Error {}
 
 impl fmt::Display for Error {
@@ -104,11 +128,5 @@ impl From<std::io::Error> for Error {
 impl From<ReadlineError> for Error {
     fn from(value: ReadlineError) -> Self {
         Error::ReadlineError(value)
-    }
-}
-
-impl PartialEq for Error {
-    fn eq(&self, other: &Self) -> bool {
-        self.to_string() == other.to_string()
     }
 }
