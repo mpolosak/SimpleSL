@@ -94,7 +94,7 @@ impl Recreate for Reduce {
         interpreter: &Interpreter,
     ) -> Result<Instruction> {
         let array = self.array.recreate(local_variables, interpreter)?;
-        let initial_value = self.array.recreate(local_variables, interpreter)?;
+        let initial_value = self.initial_value.recreate(local_variables, interpreter)?;
         let function = self.function.recreate(local_variables, interpreter)?;
         Ok(Self {
             array,
