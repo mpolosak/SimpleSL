@@ -11,6 +11,7 @@ use std::{
     rc::Rc,
     str::FromStr,
 };
+pub use typle::typle;
 pub use {array::Array, function_type::FunctionType, type_set::TypeSet};
 
 #[derive(Clone)]
@@ -204,7 +205,7 @@ impl<T: Into<Variable>> From<io::Result<T>> for Variable {
 
 impl From<io::Error> for Variable {
     fn from(value: io::Error) -> Self {
-        Variable::Tuple(Rc::from([value.kind().into(), value.to_string().into()]))
+        (value.kind().into(), value.to_string().into()).into()
     }
 }
 
@@ -247,6 +248,14 @@ impl From<Vec<Variable>> for Variable {
 impl<const N: usize> From<[Variable; N]> for Variable {
     fn from(value: [Variable; N]) -> Self {
         Array::from(value).into()
+    }
+}
+
+#[typle(Tuple for 2..=12)]
+impl<T: Tuple<Variable>> From<T> for Variable {
+    fn from(value: T) -> Self {
+        let vars: [Variable; Tuple::LEN] = value.into();
+        Variable::Tuple(vars.into())
     }
 }
 
