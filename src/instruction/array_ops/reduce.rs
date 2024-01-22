@@ -110,14 +110,12 @@ impl Exec for Reduce {
         let array = self.array.exec(interpreter)?;
         let initial_value = self.initial_value.exec(interpreter)?;
         let function = self.function.exec(interpreter)?;
-        match (array, function) {
-            (Variable::Array(array), Variable::Function(function)) => {
-                array.iter().try_fold(initial_value, |acc, current| {
-                    function.exec(interpreter, &[acc, current.clone()])
-                })
-            }
-            (array, function) => panic!("Tried to do {array} ${initial_value} {function}"),
-        }
+        let (Variable::Array(array), Variable::Function(function)) = (&array, &function) else {
+            unreachable!("Tried to do {array} ${initial_value} {function}")
+        };
+        array.iter().try_fold(initial_value, |acc, current| {
+            function.exec(interpreter, &[acc, current.clone()])
+        })
     }
 }
 

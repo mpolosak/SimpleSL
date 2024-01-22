@@ -90,11 +90,10 @@ impl From<Type> for LocalVariable {
 
 impl From<&Instruction> for LocalVariable {
     fn from(value: &Instruction) -> Self {
-        let var_type = value.return_type();
-        match (value, var_type) {
-            (Instruction::Variable(variable), _) => Self::Variable(variable.clone()),
-            (_, var_type) => Self::Other(var_type),
-        }
+        let Instruction::Variable(variable) = value else {
+            return Self::Other(value.return_type());
+        };
+        Self::Variable(variable.clone())
     }
 }
 

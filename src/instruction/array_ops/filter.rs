@@ -59,31 +59,25 @@ impl Exec for Filter {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let array = self.array.exec(interpreter)?;
         let function = self.function.exec(interpreter)?;
-        match (array, function) {
-            (Variable::Array(array), Variable::Function(function))
-                if function.params.len() == 1 =>
-            {
-                let mut new_array: Vec<Variable> = Vec::new();
-                for element in array.iter().cloned() {
-                    if function.exec(interpreter, &[element.clone()])? != Variable::Int(0) {
-                        new_array.push(element);
-                    }
+        let (Variable::Array(array), Variable::Function(function)) = (&array, &function) else {
+            unreachable!("Tried to do {array} {} {function}", Self::SYMBOL)
+        };
+        let mut new_array: Vec<Variable> = Vec::new();
+        if function.params.len() == 1 {
+            for element in array.iter().cloned() {
+                if function.exec(interpreter, &[element.clone()])? != Variable::Int(0) {
+                    new_array.push(element);
                 }
-                Ok(new_array.into())
             }
-            (Variable::Array(array), Variable::Function(function)) => {
-                let mut new_array: Vec<Variable> = Vec::new();
-                for (index, element) in array.iter().cloned().enumerate() {
-                    if function.exec(interpreter, &[index.into(), element.clone()])?
-                        != Variable::Int(0)
-                    {
-                        new_array.push(element);
-                    }
+        } else {
+            for (index, element) in array.iter().cloned().enumerate() {
+                if function.exec(interpreter, &[index.into(), element.clone()])? != Variable::Int(0)
+                {
+                    new_array.push(element);
                 }
-                Ok(new_array.into())
             }
-            (array, function) => panic!("Tried to do {array} {} {function}", Self::SYMBOL),
         }
+        Ok(new_array.into())
     }
 }
 

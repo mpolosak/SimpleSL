@@ -29,14 +29,14 @@ impl TypeFilter {
 impl Exec for TypeFilter {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let array = self.array.exec(interpreter)?;
-        match array {
-            Variable::Array(array) => Ok(array
-                .iter()
-                .filter(|element| element.as_type().matches(&self.var_type))
-                .cloned()
-                .collect()),
-            array => panic!("Tried to do {array} ? {}", self.var_type),
-        }
+        let Variable::Array(array) = array else {
+            panic!("Tried to do {array} ? {}", self.var_type)
+        };
+        Ok(array
+            .iter()
+            .filter(|element| element.as_type().matches(&self.var_type))
+            .cloned()
+            .collect())
     }
 }
 
