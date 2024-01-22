@@ -154,7 +154,7 @@ impl ReturnType for Map {
         let Type::Function(function_type) = self.function.return_type() else {
             unreachable!()
         };
-        Type::Array(function_type.return_type.clone().into())
+        [function_type.return_type.clone()].into()
     }
 }
 

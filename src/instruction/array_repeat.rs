@@ -78,7 +78,7 @@ impl Recreate for ArrayRepeat {
 impl ReturnType for ArrayRepeat {
     fn return_type(&self) -> Type {
         let element_type = self.value.return_type();
-        Type::Array(element_type.into())
+        [element_type].into()
     }
 }
 

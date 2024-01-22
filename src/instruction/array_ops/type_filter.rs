@@ -57,7 +57,7 @@ impl Recreate for TypeFilter {
 
 impl ReturnType for TypeFilter {
     fn return_type(&self) -> Type {
-        Type::Array(self.var_type.clone().into())
+        [self.var_type.clone()].into()
     }
 }
 

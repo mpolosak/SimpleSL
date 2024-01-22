@@ -29,12 +29,7 @@ impl Reduce {
         let element_type = match array.return_type() {
             Type::Array(array) => array.as_ref().clone(),
             Type::EmptyArray => return Ok(initial_value),
-            _ => {
-                return Err(Error::WrongType(
-                    "array".into(),
-                    Type::Array(Type::Any.into()),
-                ))
-            }
+            _ => return Err(Error::WrongType("array".into(), [Type::Any].into())),
         };
         let Type::Function(function_type) = function.return_type() else {
             return Err(Error::WrongType(

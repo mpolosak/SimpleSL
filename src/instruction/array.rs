@@ -39,9 +39,7 @@ impl Array {
             .iter()
             .map(Instruction::return_type)
             .reduce(Type::concat)
-            .map_or(Type::EmptyArray, |element_type| {
-                Type::Array(element_type.into())
-            });
+            .map_or(Type::EmptyArray, |element_type| [element_type].into());
         let mut array = Vec::new();
         for instruction in &*instructions {
             let Instruction::Variable(variable) = instruction else {

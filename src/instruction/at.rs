@@ -26,7 +26,7 @@ impl At {
     ) -> Result<Instruction> {
         let pair = index.into_inner().next().unwrap();
         let index = Instruction::new_expression(pair, interpreter, local_variables)?;
-        let required_instruction_type = Type::String | Type::Array(Type::Any.into());
+        let required_instruction_type = Type::String | [Type::Any].into();
         let instruction_return_type = instruction.return_type();
         if index.return_type() != Type::Int {
             Err(Error::WrongType("index".into(), Type::Int))

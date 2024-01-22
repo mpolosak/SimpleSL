@@ -22,7 +22,7 @@ impl PrefixOp for UnaryMinus {
     }
 
     fn can_be_used(var_type: &Type) -> bool {
-        var_type.matches(&(Type::Int | Type::Float | Type::Array((Type::Float | Type::Int).into())))
+        var_type.matches(&(Type::Int | Type::Float | [Type::Float | Type::Int].into()))
     }
 
     fn calc_int(num: i64) -> i64 {

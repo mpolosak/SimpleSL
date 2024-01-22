@@ -144,6 +144,12 @@ impl BitOrAssign for Type {
         }
     }
 }
+
+impl From<[Type; 1]> for Type {
+    fn from([value]: [Type; 1]) -> Self {
+        Type::Array(value.into())
+    }
+}
 pub trait Typed {
     /// Returns the Type of the &self
     fn as_type(&self) -> Type;
@@ -168,7 +174,7 @@ mod tests {
             Type::Int,
             Type::String,
             Type::Int | Type::String,
-            Type::Array(Type::Any.into()),
+            [Type::Any].into(),
             Type::Tuple(Arc::new([Type::Float, Type::Int, Type::Int | Type::Float])),
             Type::Void,
             Type::EmptyArray,
@@ -178,15 +184,14 @@ mod tests {
             assert!(var_type.matches(&Type::Any));
             assert!(var_type.matches(&(var_type.clone() | Type::Int)));
         }
-        let var_type = Type::Array(Type::Int.into()) | Type::Array(Type::Float.into());
-        let var_type2 = Type::Array((Type::Float | Type::Int).into());
+        let var_type = Type::Array(Type::Int.into()) | [Type::Float].into();
+        let var_type2 = [Type::Float | Type::Int].into();
         assert!(var_type.matches(&var_type));
         assert!(var_type.matches(&var_type2));
         assert!(var_type2.matches(&var_type2));
         assert!(!var_type2.matches(&var_type));
-        let var_type =
-            Type::Int | Type::Array(Type::Float.into()) | Type::Array(Type::String.into());
-        let var_type2 = Type::Int | Type::Array((Type::Float | Type::String).into());
+        let var_type = Type::Int | [Type::Float].into() | [Type::String].into();
+        let var_type2 = Type::Int | [Type::Float | Type::String].into();
         assert!(var_type.matches(&var_type));
         assert!(var_type.matches(&var_type2));
         assert!(var_type2.matches(&var_type2));

@@ -91,7 +91,7 @@ impl ReturnType for And {
             (self.lhs.return_type(), self.rhs.return_type()),
             (Type::Array(_), _) | (_, Type::Array(_))
         ) {
-            Type::Array(Type::Int.into())
+            [Type::Int].into()
         } else {
             Type::Int
         }

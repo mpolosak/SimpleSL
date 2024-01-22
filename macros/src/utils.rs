@@ -126,9 +126,9 @@ fn type_from_str(attrs: &[Attribute], param_type: &str) -> TokenStream {
         "i64" => quote!(simplesl::variable::Type::Int),
         "f64" => quote!(simplesl::variable::Type::Float),
         "Rc < str >" | "& str" => quote!(simplesl::variable::Type::String),
-        "Rc < [Variable] >" | "& [Variable]" => get_type_from_attrs(attrs).unwrap_or(quote!(
-            simplesl::variable::Type::Array(simplesl::variable::Type::Any.into())
-        )),
+        "Rc < [Variable] >" | "& [Variable]" => {
+            get_type_from_attrs(attrs).unwrap_or(quote!([simplesl::variable::Type::Any].into()))
+        }
         "Rc < Function >" | "& Function" => {
             let Some(var_type) = get_type_from_attrs(attrs) else {
                 panic!("Argument of type function must be precede by var_type attribute")
@@ -170,9 +170,9 @@ fn return_type_from_syn_type(return_type: &Type) -> TokenStream {
         | "Result < String >"
         | "& str"
         | "Result < & str >" => quote!(simplesl::variable::Type::String),
-        "Rc < [Variable] >" | "Result < Rc < [Variable] > >" => quote!(
-            simplesl::variable::Type::Array(simplesl::variable::Type::Any.into())
-        ),
+        "Rc < [Variable] >" | "Result < Rc < [Variable] > >" => {
+            quote!([simplesl::variable::Type::Any].into())
+        }
         "" => quote!(simplesl::variable::Type::Void),
         "Variable" | "Result < Variable >" => quote!(simplesl::variable::Type::Any),
         "io :: Result < String >" | "std :: io :: Result < String >" => quote!({

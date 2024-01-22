@@ -92,10 +92,7 @@ mod tests {
             params: [
                 Type::Any,
                 Type::Int,
-                Type::Multi(
-                    TypeSet::from([Type::Float, Type::String, Type::Array(Type::Any.into())])
-                        .into(),
-                ),
+                Type::Multi(TypeSet::from([Type::Float, Type::String, [Type::Any].into()]).into()),
             ]
             .into(),
             return_type: Type::Int,

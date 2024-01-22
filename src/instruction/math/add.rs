@@ -173,16 +173,12 @@ mod tests {
         );
         assert_eq!(
             parse_and_exec(r#"[4]+4.5"#),
-            Err(Error::CannotDo2(
-                Type::Array(Type::Int.into()),
-                "+",
-                Type::Float
-            ))
+            Err(Error::CannotDo2([Type::Int].into(), "+", Type::Float))
         );
         assert_eq!(
             parse_and_exec(r#"[4, 5.5]+4.5"#),
             Err(Error::CannotDo2(
-                Type::Array((Type::Int | Type::Float).into()),
+                [Type::Int | Type::Float].into(),
                 "+",
                 Type::Float
             ))
