@@ -1,16 +1,16 @@
 mod array;
 mod function_type;
+mod r#type;
 mod type_set;
-mod variable_type;
 use crate::{function::Function, join_debug, parse::*, Error, Result};
 use pest::{iterators::Pair, Parser};
+pub use r#type::{ReturnType, Type, Typed};
 use std::{
     fmt::{self},
     io,
     rc::Rc,
     str::FromStr,
 };
-pub use variable_type::{ReturnType, Type, Typed};
 pub use {array::Array, function_type::FunctionType, type_set::TypeSet};
 
 #[derive(Clone)]
