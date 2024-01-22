@@ -13,6 +13,7 @@ use std::{
     str::FromStr,
     sync::Arc,
 };
+use typle::typle;
 
 #[derive(Clone, Debug, Hash, Eq, PartialEq)]
 pub enum Type {
@@ -158,6 +159,14 @@ impl From<[Type; 1]> for Type {
         Type::Array(value.into())
     }
 }
+
+#[typle(Tuple for 2..=12)]
+impl<T: Tuple<Type>> From<T> for Type {
+    fn from(value: T) -> Self {
+        let types: [Type; Tuple::LEN] = value.into();
+        Type::Tuple(types.into())
+    }
+}
 pub trait Typed {
     /// Returns the Type of the &self
     fn as_type(&self) -> Type;
@@ -170,7 +179,6 @@ pub trait ReturnType {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
 
     use crate::variable::Type;
 
@@ -183,7 +191,7 @@ mod tests {
             Type::String,
             Type::Int | Type::String,
             [Type::Any].into(),
-            Type::Tuple(Arc::new([Type::Float, Type::Int, Type::Int | Type::Float])),
+            (Type::Float, Type::Int, Type::Int | Type::Float).into(),
             Type::Void,
             Type::EmptyArray,
         ];
