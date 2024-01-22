@@ -121,11 +121,19 @@ impl From<Pair<'_, Rule>> for Type {
     }
 }
 
-impl BitOr for Type {
+impl<T: Into<Type>> BitOr<T> for Type {
     type Output = Self;
 
-    fn bitor(self, rhs: Self) -> Self::Output {
-        self.concat(rhs)
+    fn bitor(self, rhs: T) -> Self::Output {
+        self.concat(rhs.into())
+    }
+}
+
+impl BitOr<Type> for [Type; 1] {
+    type Output = Type;
+
+    fn bitor(self, rhs: Type) -> Self::Output {
+        Type::from(self).concat(rhs)
     }
 }
 
@@ -184,14 +192,14 @@ mod tests {
             assert!(var_type.matches(&Type::Any));
             assert!(var_type.matches(&(var_type.clone() | Type::Int)));
         }
-        let var_type = Type::Array(Type::Int.into()) | [Type::Float].into();
+        let var_type = Type::Array(Type::Int.into()) | [Type::Float];
         let var_type2 = [Type::Float | Type::Int].into();
         assert!(var_type.matches(&var_type));
         assert!(var_type.matches(&var_type2));
         assert!(var_type2.matches(&var_type2));
         assert!(!var_type2.matches(&var_type));
-        let var_type = Type::Int | [Type::Float].into() | [Type::String].into();
-        let var_type2 = Type::Int | [Type::Float | Type::String].into();
+        let var_type = Type::Int | [Type::Float] | [Type::String];
+        let var_type2 = Type::Int | [Type::Float | Type::String];
         assert!(var_type.matches(&var_type));
         assert!(var_type.matches(&var_type2));
         assert!(var_type2.matches(&var_type2));

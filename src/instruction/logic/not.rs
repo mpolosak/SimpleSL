@@ -22,7 +22,7 @@ impl PrefixOp for Not {
     }
 
     fn can_be_used(var_type: &Type) -> bool {
-        var_type.matches(&(Type::Int | [Type::Int].into()))
+        var_type.matches(&(Type::Int | [Type::Int]))
     }
 
     fn calc_int(num: i64) -> i64 {
