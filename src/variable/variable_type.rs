@@ -121,12 +121,6 @@ impl From<Pair<'_, Rule>> for Type {
     }
 }
 
-impl From<[Type; 2]> for Type {
-    fn from(value: [Type; 2]) -> Self {
-        Type::Multi(Arc::new(value.into()))
-    }
-}
-
 impl BitOr for Type {
     type Output = Self;
 
