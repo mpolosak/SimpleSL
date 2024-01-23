@@ -1,12 +1,11 @@
+mod bin_int_op;
 mod bin_op;
 mod can_be_used;
 mod create_bin_op;
 mod create_from_instructions;
 mod prefix_op;
-use std::{fmt::Debug, rc::Rc};
-
 pub use self::{
-    bin_op::BinOp, can_be_used::CanBeUsed, create_bin_op::CreateBinOp,
+    bin_int_op::BinIntOp, bin_op::BinOp, can_be_used::CanBeUsed, create_bin_op::CreateBinOp,
     create_from_instructions::CreateFromInstructions, prefix_op::PrefixOp,
 };
 use super::{local_variable::LocalVariables, Instruction};
@@ -17,6 +16,8 @@ use crate::{
     Result,
 };
 use pest::iterators::Pair;
+use std::{fmt::Debug, rc::Rc};
+
 pub trait CreateInstruction {
     fn create_instruction(
         pair: Pair<Rule>,

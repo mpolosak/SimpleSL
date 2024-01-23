@@ -1,9 +1,7 @@
-use crate::instruction::traits::{BaseInstruction, BinOp, CreateFromInstructions};
+use crate::instruction::traits::{BaseInstruction, BinIntOp, BinOp, CreateFromInstructions};
 use crate::instruction::{Exec, Instruction};
 use crate::variable::{Type, Typed};
 use crate::{interpreter::Interpreter, variable::Variable, Result};
-
-use super::BitwiseBinOp;
 
 #[derive(Debug)]
 pub struct Xor {
@@ -27,7 +25,7 @@ impl BinOp for Xor {
     }
 }
 
-impl BitwiseBinOp for Xor {}
+impl BinIntOp for Xor {}
 
 impl CreateFromInstructions for Xor {
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {

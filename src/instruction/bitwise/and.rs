@@ -1,5 +1,4 @@
-use super::BitwiseBinOp;
-use crate::instruction::traits::{BaseInstruction, BinOp, CreateFromInstructions};
+use crate::instruction::traits::{BaseInstruction, BinIntOp, BinOp, CreateFromInstructions};
 use crate::instruction::{Exec, Instruction};
 use crate::interpreter::Interpreter;
 use crate::variable::{Type, Typed, Variable};
@@ -27,7 +26,7 @@ impl BinOp for BitwiseAnd {
     }
 }
 
-impl BitwiseBinOp for BitwiseAnd {}
+impl BinIntOp for BitwiseAnd {}
 
 impl CreateFromInstructions for BitwiseAnd {
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {

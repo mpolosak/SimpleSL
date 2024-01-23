@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use crate::instruction::traits::{BaseInstruction, BinOp, CanBeUsed, CreateFromInstructions};
 use crate::instruction::{Exec, Instruction};
 use crate::variable::{Array, Typed};
@@ -6,6 +8,14 @@ use crate::{
     variable::{ReturnType, Type, Variable},
     Result,
 };
+use lazy_static::lazy_static;
+
+lazy_static! {
+    static ref ACCEPTED_TYPE: Type = Type::from_str(
+        "(int|[int], int|[int]) | (float|[float], float|[float]) | (string|[string], string|[string]) | ([any], [any])"
+    )
+    .unwrap();
+}
 
 #[derive(Debug)]
 pub struct Add {
@@ -31,19 +41,7 @@ impl BinOp for Add {
 
 impl CanBeUsed for Add {
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
-        match (lhs, rhs) {
-            (Type::Int, Type::Int)
-            | (Type::Float, Type::Float)
-            | (Type::String, Type::String)
-            | (Type::Array(_) | Type::EmptyArray, Type::Array(_) | Type::EmptyArray)
-            | (Type::EmptyArray, Type::Int | Type::Float | Type::String)
-            | (Type::Int | Type::Float | Type::String, Type::EmptyArray) => true,
-            (Type::Array(element_type), var_type @ (Type::Int | Type::Float | Type::String))
-            | (var_type @ (Type::Int | Type::Float | Type::String), Type::Array(element_type)) => {
-                element_type.as_ref() == var_type
-            }
-            _ => false,
-        }
+        Type::Tuple([lhs.clone(), rhs.clone()].into()).matches(&ACCEPTED_TYPE)
     }
 }
 

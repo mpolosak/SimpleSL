@@ -1,9 +1,9 @@
-use crate::instruction::traits::{BaseInstruction, BinOp, CanBeUsed, CreateFromInstructions};
+use crate::instruction::traits::{BaseInstruction, BinIntOp, BinOp, CreateFromInstructions};
 use crate::instruction::{Exec, Instruction};
 use crate::variable::Typed;
 use crate::{
     interpreter::Interpreter,
-    variable::{ReturnType, Type, Variable},
+    variable::{Type, Variable},
     Result,
 };
 
@@ -26,18 +26,6 @@ impl BinOp for And {
 
     fn construct(lhs: Instruction, rhs: Instruction) -> Self {
         Self { lhs, rhs }
-    }
-}
-
-impl CanBeUsed for And {
-    fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
-        match (lhs, rhs) {
-            (Type::Int | Type::EmptyArray, Type::Int) | (Type::Int, Type::EmptyArray) => true,
-            (Type::Array(var_type), Type::Int) | (Type::Int, Type::Array(var_type)) => {
-                var_type.as_ref() == &Type::Int
-            }
-            _ => false,
-        }
     }
 }
 
@@ -85,17 +73,5 @@ impl Exec for And {
     }
 }
 
-impl ReturnType for And {
-    fn return_type(&self) -> Type {
-        if matches!(
-            (self.lhs.return_type(), self.rhs.return_type()),
-            (Type::Array(_), _) | (_, Type::Array(_))
-        ) {
-            [Type::Int].into()
-        } else {
-            Type::Int
-        }
-    }
-}
-
 impl BaseInstruction for And {}
+impl BinIntOp for And {}

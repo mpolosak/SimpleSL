@@ -11,6 +11,7 @@ mod function;
 mod import;
 pub mod local_variable;
 mod logic;
+mod macros;
 mod math;
 mod set;
 mod traits;

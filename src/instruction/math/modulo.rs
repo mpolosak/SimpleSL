@@ -1,10 +1,6 @@
-use crate::instruction::traits::{BaseInstruction, BinOp, CanBeUsed, CreateFromInstructions};
+use crate::instruction::traits::{BaseInstruction, BinIntOp, BinOp, CreateFromInstructions};
 use crate::instruction::{Exec, Instruction};
-use crate::{
-    interpreter::Interpreter,
-    variable::{ReturnType, Type, Variable},
-    Error, Result,
-};
+use crate::{interpreter::Interpreter, variable::Variable, Error, Result};
 
 #[derive(Debug)]
 pub struct Modulo {
@@ -25,18 +21,6 @@ impl BinOp for Modulo {
 
     fn construct(dividend: Instruction, divisor: Instruction) -> Self {
         Self { dividend, divisor }
-    }
-}
-
-impl CanBeUsed for Modulo {
-    fn can_be_used(dividend: &Type, divisor: &Type) -> bool {
-        match (dividend, divisor) {
-            (Type::Int | Type::EmptyArray, Type::Int) | (Type::Int, Type::EmptyArray) => true,
-            (Type::Array(var_type), Type::Int) | (Type::Int, Type::Array(var_type)) => {
-                var_type.as_ref() == &Type::Int
-            }
-            _ => false,
-        }
     }
 }
 
@@ -83,17 +67,5 @@ impl Exec for Modulo {
     }
 }
 
-impl ReturnType for Modulo {
-    fn return_type(&self) -> Type {
-        if matches!(
-            (self.dividend.return_type(), self.divisor.return_type()),
-            (Type::Array(_), _) | (_, Type::Array(_))
-        ) {
-            [Type::Int].into()
-        } else {
-            Type::Int
-        }
-    }
-}
-
 impl BaseInstruction for Modulo {}
+impl BinIntOp for Modulo {}

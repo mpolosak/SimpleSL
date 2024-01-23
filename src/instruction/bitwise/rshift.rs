@@ -1,9 +1,7 @@
-use crate::instruction::traits::{BaseInstruction, BinOp, CreateFromInstructions};
+use crate::instruction::traits::{BaseInstruction, BinIntOp, BinOp, CreateFromInstructions};
 use crate::instruction::{Exec, Instruction};
 use crate::variable::{Type, Typed};
 use crate::{interpreter::Interpreter, variable::Variable, Error, Result};
-
-use super::BitwiseBinOp;
 
 #[derive(Debug)]
 pub struct RShift {
@@ -27,7 +25,7 @@ impl BinOp for RShift {
     }
 }
 
-impl BitwiseBinOp for RShift {}
+impl BinIntOp for RShift {}
 
 impl CreateFromInstructions for RShift {
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
