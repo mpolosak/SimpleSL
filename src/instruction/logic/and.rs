@@ -1,12 +1,11 @@
 use crate::binIntOp;
-use crate::instruction::traits::CreateFromInstructions;
 use crate::instruction::Instruction;
 use crate::variable::Typed;
 use crate::{variable::Variable, Result};
 
 binIntOp!(And, "&&");
 
-impl CreateFromInstructions for And {
+impl And {
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
         Ok(match (lhs, rhs) {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => Self::and(lhs, rhs).into(),
@@ -19,12 +18,11 @@ impl CreateFromInstructions for And {
             (lhs, rhs) => Self::construct(lhs, rhs).into(),
         })
     }
-}
 
-impl And {
     fn exec(lhs: Variable, rhs: Variable) -> Result<Variable> {
         Ok(Self::and(lhs, rhs))
     }
+
     fn and(lhs: Variable, rhs: Variable) -> Variable {
         match (lhs, rhs) {
             (array @ Variable::Array(_), _) | (_, array @ Variable::Array(_))

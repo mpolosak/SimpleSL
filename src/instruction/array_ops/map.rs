@@ -1,9 +1,6 @@
 use crate::{
     binOp,
-    instruction::{
-        traits::{CanBeUsed, CreateFromInstructions},
-        Exec, Instruction,
-    },
+    instruction::{traits::CanBeUsed, Exec, Instruction},
     interpreter::Interpreter,
     variable::{Array, ReturnType, Type, Variable},
     Result,
@@ -57,7 +54,7 @@ impl CanBeUsed for Map {
     }
 }
 
-impl CreateFromInstructions for Map {
+impl Map {
     fn create_from_instructions(array: Instruction, function: Instruction) -> Result<Instruction> {
         Ok(Self::construct(array, function).into())
     }

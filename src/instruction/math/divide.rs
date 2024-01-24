@@ -1,11 +1,10 @@
 use crate::binNumOp;
-use crate::instruction::traits::CreateFromInstructions;
 use crate::instruction::Instruction;
 use crate::{variable::Variable, Error, Result};
 
 binNumOp!(Divide, "/");
 
-impl CreateFromInstructions for Divide {
+impl Divide {
     fn create_from_instructions(
         dividend: Instruction,
         divisor: Instruction,
@@ -18,9 +17,7 @@ impl CreateFromInstructions for Divide {
             (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
         }
     }
-}
 
-impl Divide {
     fn exec(dividend: Variable, divisor: Variable) -> Result<Variable> {
         match (dividend, divisor) {
             (_, Variable::Int(0)) => Err(Error::ZeroDivision),

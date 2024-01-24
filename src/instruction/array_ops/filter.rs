@@ -1,9 +1,6 @@
 use crate::{
     binOp,
-    instruction::{
-        traits::{CanBeUsed, CreateFromInstructions},
-        Exec, Instruction,
-    },
+    instruction::{traits::CanBeUsed, Exec, Instruction},
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
     Result,
@@ -30,7 +27,7 @@ impl CanBeUsed for Filter {
     }
 }
 
-impl CreateFromInstructions for Filter {
+impl Filter {
     fn create_from_instructions(array: Instruction, function: Instruction) -> Result<Instruction> {
         Ok(Self::construct(array, function).into())
     }

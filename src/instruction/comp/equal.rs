@@ -1,5 +1,5 @@
 use crate::binOp;
-use crate::instruction::traits::{CanBeUsed, CreateFromInstructions};
+use crate::instruction::traits::CanBeUsed;
 use crate::instruction::{Exec, Instruction};
 use crate::variable::{ReturnType, Type};
 use crate::{interpreter::Interpreter, variable::Variable, Result};
@@ -12,7 +12,7 @@ impl CanBeUsed for Equal {
     }
 }
 
-impl CreateFromInstructions for Equal {
+impl Equal {
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
         match (lhs, rhs) {
             (Instruction::Variable(variable), Instruction::Variable(variable2)) => {

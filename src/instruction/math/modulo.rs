@@ -1,11 +1,10 @@
 use crate::binIntOp;
-use crate::instruction::traits::CreateFromInstructions;
 use crate::instruction::Instruction;
 use crate::{variable::Variable, Error, Result};
 
 binIntOp!(Modulo, "%");
 
-impl CreateFromInstructions for Modulo {
+impl Modulo {
     fn create_from_instructions(
         dividend: Instruction,
         divisor: Instruction,
@@ -18,9 +17,7 @@ impl CreateFromInstructions for Modulo {
             (dividend, divisor) => Ok(Self::construct(dividend, divisor).into()),
         }
     }
-}
 
-impl Modulo {
     fn exec(dividend: Variable, divisor: Variable) -> Result<Variable> {
         match (dividend, divisor) {
             (_, Variable::Int(0)) => Err(Error::ZeroModulo),

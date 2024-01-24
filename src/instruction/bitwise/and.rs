@@ -1,11 +1,10 @@
-use crate::instruction::traits::CreateFromInstructions;
 use crate::instruction::Instruction;
 use crate::variable::{Typed, Variable};
 use crate::{binIntOp, Result};
 
 binIntOp!(BitwiseAnd, "&");
 
-impl CreateFromInstructions for BitwiseAnd {
+impl BitwiseAnd {
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
         Ok(match (lhs, rhs) {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {

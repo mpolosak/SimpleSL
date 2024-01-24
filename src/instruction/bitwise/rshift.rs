@@ -1,12 +1,11 @@
 use crate::binIntOp;
-use crate::instruction::traits::CreateFromInstructions;
 use crate::instruction::Instruction;
 use crate::variable::Typed;
 use crate::{variable::Variable, Error, Result};
 
 binIntOp!(RShift, ">>");
 
-impl CreateFromInstructions for RShift {
+impl RShift {
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
         match (lhs, rhs) {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
@@ -18,9 +17,7 @@ impl CreateFromInstructions for RShift {
             (lhs, rhs) => Ok(Self::construct(lhs, rhs).into()),
         }
     }
-}
 
-impl RShift {
     fn exec(lhs: Variable, rhs: Variable) -> Result<Variable> {
         match (lhs, rhs) {
             (_, Variable::Int(rhs)) if !(0..=63).contains(&rhs) => Err(Error::OverflowShift),

@@ -1,12 +1,11 @@
 use crate::binNumOp;
-use crate::instruction::traits::CreateFromInstructions;
 use crate::instruction::Instruction;
 use crate::variable::Typed;
 use crate::{variable::Variable, Result};
 
 binNumOp!(Multiply, "*");
 
-impl CreateFromInstructions for Multiply {
+impl Multiply {
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
         match (lhs, rhs) {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
@@ -15,9 +14,7 @@ impl CreateFromInstructions for Multiply {
             (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
         }
     }
-}
 
-impl Multiply {
     fn exec(lhs: Variable, rhs: Variable) -> Result<Variable> {
         match (lhs, rhs) {
             (Variable::Int(lhs), Variable::Int(rhs)) => Ok((lhs * rhs).into()),

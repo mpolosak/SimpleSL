@@ -1,7 +1,4 @@
-use std::str::FromStr;
-
 use crate::binOpCBU;
-use crate::instruction::traits::CreateFromInstructions;
 use crate::instruction::{Exec, Instruction};
 use crate::variable::{Array, Typed};
 use crate::{
@@ -10,6 +7,7 @@ use crate::{
     Result,
 };
 use lazy_static::lazy_static;
+use std::str::FromStr;
 
 lazy_static! {
     static ref ACCEPTED_TYPE: Type = Type::from_str(
@@ -20,7 +18,7 @@ lazy_static! {
 
 binOpCBU!(Add, "+");
 
-impl CreateFromInstructions for Add {
+impl Add {
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
         match (lhs, rhs) {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
@@ -29,9 +27,7 @@ impl CreateFromInstructions for Add {
             (rhs, lhs) => Ok(Self::construct(lhs, rhs).into()),
         }
     }
-}
 
-impl Add {
     fn exec(lhs: Variable, rhs: Variable) -> Result<Variable> {
         match (lhs, rhs) {
             (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 + value2).into()),

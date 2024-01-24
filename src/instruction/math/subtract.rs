@@ -1,12 +1,11 @@
 use crate::binNumOp;
-use crate::instruction::traits::CreateFromInstructions;
 use crate::instruction::Instruction;
 use crate::variable::Typed;
 use crate::{variable::Variable, Result};
 
 binNumOp!(Subtract, "-");
 
-impl CreateFromInstructions for Subtract {
+impl Subtract {
     fn create_from_instructions(
         minuend: Instruction,
         subtrahend: Instruction,
@@ -18,9 +17,7 @@ impl CreateFromInstructions for Subtract {
             (minuend, subtrahend) => Ok(Self::construct(minuend, subtrahend).into()),
         }
     }
-}
 
-impl Subtract {
     fn exec(minuend: Variable, subtrahend: Variable) -> Result<Variable> {
         match (minuend, subtrahend) {
             (Variable::Int(lhs), Variable::Int(rhs)) => Ok((lhs - rhs).into()),

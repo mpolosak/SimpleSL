@@ -1,13 +1,12 @@
 use crate::binOpCBU;
 use crate::instruction::macros::bin_num_op::ACCEPTED_TYPE;
-use crate::instruction::traits::CreateFromInstructions;
 use crate::instruction::{Exec, Instruction};
 use crate::variable::{ReturnType, Type};
 use crate::{interpreter::Interpreter, variable::Variable, Result};
 
 binOpCBU!(LowerOrEqual, "<=");
 
-impl CreateFromInstructions for LowerOrEqual {
+impl LowerOrEqual {
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
         match (lhs, rhs) {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
@@ -16,12 +15,11 @@ impl CreateFromInstructions for LowerOrEqual {
             (lhs, rhs) => Ok(Self::construct(lhs, rhs).into()),
         }
     }
-}
 
-impl LowerOrEqual {
     fn exec(lhs: Variable, rhs: Variable) -> Result<Variable> {
         Ok(Self::lower_or_equal(lhs, rhs))
     }
+
     fn lower_or_equal(lhs: Variable, rhs: Variable) -> Variable {
         match (lhs, rhs) {
             (Variable::Int(lhs), Variable::Int(rhs)) => (lhs <= rhs).into(),

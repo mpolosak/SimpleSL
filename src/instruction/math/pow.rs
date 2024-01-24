@@ -1,12 +1,11 @@
 use crate::binNumOp;
-use crate::instruction::traits::CreateFromInstructions;
 use crate::instruction::Instruction;
 use crate::variable::Typed;
 use crate::{variable::Variable, Error, Result};
 
 binNumOp!(Pow, "*");
 
-impl CreateFromInstructions for Pow {
+impl Pow {
     fn create_from_instructions(base: Instruction, exp: Instruction) -> Result<Instruction> {
         match (base, exp) {
             (Instruction::Variable(base), Instruction::Variable(exp)) => {
@@ -18,9 +17,7 @@ impl CreateFromInstructions for Pow {
             (base, exp) => Ok(Self::construct(base, exp).into()),
         }
     }
-}
 
-impl Pow {
     fn exec(base: Variable, exp: Variable) -> Result<Variable> {
         match (base, exp) {
             (_, Variable::Int(exp)) if exp < 0 => Err(Error::CannotBeNegative("exponent")),

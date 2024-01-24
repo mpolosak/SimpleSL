@@ -1,13 +1,12 @@
 use crate::binOpCBU;
 use crate::instruction::macros::bin_num_op::ACCEPTED_TYPE;
-use crate::instruction::traits::CreateFromInstructions;
 use crate::instruction::{Exec, Instruction};
 use crate::variable::{ReturnType, Type};
 use crate::{interpreter::Interpreter, variable::Variable, Result};
 
 binOpCBU!(GreaterOrEqual, ">=");
 
-impl CreateFromInstructions for GreaterOrEqual {
+impl GreaterOrEqual {
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
         match (lhs, rhs) {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {

@@ -1,12 +1,11 @@
 use crate::binIntOp;
-use crate::instruction::traits::CreateFromInstructions;
 use crate::instruction::Instruction;
 use crate::variable::Typed;
 use crate::{variable::Variable, Result};
 
 binIntOp!(BitwiseOr, "|");
 
-impl CreateFromInstructions for BitwiseOr {
+impl BitwiseOr {
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
         Ok(match (lhs, rhs) {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
@@ -15,9 +14,7 @@ impl CreateFromInstructions for BitwiseOr {
             (lhs, rhs) => Self::construct(lhs, rhs).into(),
         })
     }
-}
 
-impl BitwiseOr {
     fn exec(lhs: Variable, rhs: Variable) -> Result<Variable> {
         Ok(Self::bin_or(lhs, rhs))
     }

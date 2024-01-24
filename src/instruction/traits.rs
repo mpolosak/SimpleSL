@@ -1,11 +1,7 @@
 mod bin_op;
 mod can_be_used;
-mod create_from_instructions;
 mod prefix_op;
-pub use self::{
-    bin_op::BinOp, can_be_used::CanBeUsed, create_from_instructions::CreateFromInstructions,
-    prefix_op::PrefixOp,
-};
+pub use self::{bin_op::BinOp, can_be_used::CanBeUsed, prefix_op::PrefixOp};
 use super::{local_variable::LocalVariables, Instruction};
 use crate::{
     interpreter::Interpreter,
