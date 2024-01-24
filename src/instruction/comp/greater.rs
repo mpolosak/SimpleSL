@@ -1,17 +1,11 @@
-use super::can_be_used;
-use crate::binOp;
-use crate::instruction::traits::{CanBeUsed, CreateFromInstructions};
+use crate::binOpCBU;
+use crate::instruction::macros::bin_num_op::ACCEPTED_TYPE;
+use crate::instruction::traits::CreateFromInstructions;
 use crate::instruction::{Exec, Instruction};
 use crate::variable::{ReturnType, Type};
 use crate::{interpreter::Interpreter, variable::Variable, Result};
 
-binOp!(Greater, ">");
-
-impl CanBeUsed for Greater {
-    fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
-        can_be_used(lhs, rhs)
-    }
-}
+binOpCBU!(Greater, ">");
 
 impl CreateFromInstructions for Greater {
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
@@ -25,6 +19,9 @@ impl CreateFromInstructions for Greater {
 }
 
 impl Greater {
+    fn exec(lhs: Variable, rhs: Variable) -> Result<Variable> {
+        Ok(Self::greater(lhs, rhs))
+    }
     fn greater(lhs: Variable, rhs: Variable) -> Variable {
         match (lhs, rhs) {
             (Variable::Int(lhs), Variable::Int(rhs)) => (lhs > rhs).into(),
@@ -41,14 +38,6 @@ impl Greater {
                 .collect(),
             (lhs, rhs) => panic!("Tried to do {lhs} {} {rhs}", Self::SYMBOL),
         }
-    }
-}
-
-impl Exec for Greater {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
-        let lhs = self.lhs.exec(interpreter)?;
-        let rhs = self.rhs.exec(interpreter)?;
-        Ok(Self::greater(lhs, rhs))
     }
 }
 
