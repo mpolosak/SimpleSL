@@ -2,7 +2,10 @@
 #[macro_export]
 macro_rules! binOp {
     ($T: ident, $symbol: literal) => {
-        use crate::instruction::traits::{BaseInstruction, BinOp};
+        use crate::instruction::{
+            local_variable::LocalVariables,
+            traits::{BaseInstruction, BinOp, Recreate},
+        };
         #[derive(Debug)]
         pub struct $T {
             lhs: Instruction,
@@ -34,6 +37,18 @@ macro_rules! binOp {
                 } else {
                     Err(crate::Error::CannotDo2(lhs_type, $symbol, rhs_type))
                 }
+            }
+        }
+
+        impl Recreate for $T {
+            fn recreate(
+                &self,
+                local_variables: &mut LocalVariables,
+                interpreter: &Interpreter,
+            ) -> Result<Instruction> {
+                let lhs = self.lhs.recreate(local_variables, interpreter)?;
+                let rhs = self.rhs.recreate(local_variables, interpreter)?;
+                Self::create_from_instructions(lhs, rhs)
             }
         }
     };
