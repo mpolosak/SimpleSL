@@ -24,7 +24,7 @@ impl Add {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
                 Self::exec(lhs, rhs).map(Instruction::from)
             }
-            (rhs, lhs) => Ok(Self::construct(lhs, rhs).into()),
+            (rhs, lhs) => Ok(Self { lhs, rhs }.into()),
         }
     }
 
@@ -53,10 +53,7 @@ impl Add {
                 .cloned()
                 .map(|element| Self::exec(value.clone(), element))
                 .collect(),
-            (lhs, rhs) => panic!(
-                "Tried to do {lhs} {} {rhs} which is imposible",
-                Self::SYMBOL
-            ),
+            (lhs, rhs) => panic!("Tried to do {lhs} + {rhs} which is imposible"),
         }
     }
 }

@@ -55,8 +55,8 @@ impl CanBeUsed for Map {
 }
 
 impl Map {
-    fn create_from_instructions(array: Instruction, function: Instruction) -> Result<Instruction> {
-        Ok(Self::construct(array, function).into())
+    fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
+        Ok(Self { lhs, rhs }.into())
     }
 }
 
@@ -122,7 +122,7 @@ impl Exec for Map {
                     })
                     .collect()
             }
-            (array, function) => panic!("Tried to do {array} {} {function}", Self::SYMBOL),
+            (array, function) => panic!("Tried to do {array} @ {function}"),
         }
     }
 }

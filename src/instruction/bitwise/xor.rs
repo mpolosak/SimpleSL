@@ -11,7 +11,7 @@ impl Xor {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
                 Ok(Self::xor(lhs, rhs).into())
             }
-            (lhs, rhs) => Ok(Self::construct(lhs, rhs).into()),
+            (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
         }
     }
 
@@ -32,10 +32,7 @@ impl Xor {
                 .cloned()
                 .map(|element| Self::xor(element, value.clone()))
                 .collect(),
-            (lhs, rhs) => panic!(
-                "Tried to do {lhs} {} {rhs} which is imposible",
-                Self::SYMBOL
-            ),
+            (lhs, rhs) => panic!("Tried to do {lhs} ^ {rhs} which is imposible"),
         }
     }
 }

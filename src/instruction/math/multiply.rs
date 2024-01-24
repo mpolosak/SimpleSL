@@ -29,7 +29,7 @@ impl Multiply {
                 .cloned()
                 .map(|element| Self::exec(element, value.clone()))
                 .collect(),
-            (lhs, rhs) => panic!("Tried to calc {lhs} {} {rhs}", Self::SYMBOL),
+            (lhs, rhs) => panic!("Tried to calc {lhs} * {rhs}"),
         }
     }
 }

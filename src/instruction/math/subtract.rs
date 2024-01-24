@@ -14,7 +14,7 @@ impl Subtract {
             (Instruction::Variable(minuend), Instruction::Variable(rhs)) => {
                 Self::exec(minuend, rhs).map(Instruction::from)
             }
-            (minuend, subtrahend) => Ok(Self::construct(minuend, subtrahend).into()),
+            (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
         }
     }
 
@@ -38,7 +38,7 @@ impl Subtract {
                 .map(|minuend| Self::exec(minuend, subtrahend.clone()))
                 .collect(),
             (minuend, subtrahend) => {
-                panic!("Tried to calc {minuend} {} {subtrahend}", Self::SYMBOL)
+                panic!("Tried to calc {minuend} - {subtrahend}")
             }
         }
     }

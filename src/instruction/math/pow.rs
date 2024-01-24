@@ -14,7 +14,7 @@ impl Pow {
             (_, Instruction::Variable(Variable::Int(exp))) if exp < 0 => {
                 Err(Error::CannotBeNegative("exponent"))
             }
-            (base, exp) => Ok(Self::construct(base, exp).into()),
+            (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
         }
     }
 
@@ -38,7 +38,7 @@ impl Pow {
                 .cloned()
                 .map(|element| Self::exec(element, value.clone()))
                 .collect(),
-            (base, exp) => panic!("Tried to calc {base} {} {exp}", Self::SYMBOL),
+            (base, exp) => panic!("Tried to calc {base} * {exp}"),
         }
     }
 }

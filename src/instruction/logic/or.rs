@@ -17,7 +17,7 @@ impl Or {
             {
                 Ok(instruction)
             }
-            (lhs, rhs) => Ok(Self::construct(lhs, rhs).into()),
+            (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
         }
     }
 
@@ -38,7 +38,7 @@ impl Or {
             | (Variable::Int(_), Variable::Array(array)) => std::iter::repeat(Variable::Int(1))
                 .take(array.len())
                 .collect(),
-            (lhs, rhs) => panic!("Tried {lhs} {} {rhs} which is imposible", Self::SYMBOL),
+            (lhs, rhs) => panic!("Tried {lhs} || {rhs} which is imposible"),
         }
     }
 }

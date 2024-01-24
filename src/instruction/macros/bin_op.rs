@@ -4,7 +4,7 @@ macro_rules! binOp {
     ($T: ident, $symbol: literal) => {
         use crate::instruction::{
             local_variable::LocalVariables,
-            traits::{BaseInstruction, BinOp, Recreate},
+            traits::{BaseInstruction, Recreate},
         };
         #[derive(Debug)]
         pub struct $T {
@@ -12,21 +12,6 @@ macro_rules! binOp {
             rhs: Instruction,
         }
 
-        impl BinOp for $T {
-            const SYMBOL: &'static str = $symbol;
-
-            fn lhs(&self) -> &Instruction {
-                &self.lhs
-            }
-
-            fn rhs(&self) -> &Instruction {
-                &self.rhs
-            }
-
-            fn construct(lhs: Instruction, rhs: Instruction) -> Self {
-                Self { lhs, rhs }
-            }
-        }
         impl BaseInstruction for $T {}
         impl $T {
             pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {

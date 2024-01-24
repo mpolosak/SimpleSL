@@ -12,7 +12,7 @@ impl Lower {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
                 Ok(Self::lower(lhs, rhs).into())
             }
-            (lhs, rhs) => Ok(Self::construct(lhs, rhs).into()),
+            (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
         }
     }
 
@@ -33,7 +33,7 @@ impl Lower {
                 .cloned()
                 .map(|lhs| Self::lower(lhs, rhs.clone()))
                 .collect(),
-            (lhs, rhs) => panic!("Tried to do {lhs} {} {rhs}", Self::SYMBOL),
+            (lhs, rhs) => panic!("Tried to do {lhs} < {rhs}"),
         }
     }
 }

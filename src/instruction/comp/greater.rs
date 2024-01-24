@@ -12,7 +12,7 @@ impl Greater {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
                 Ok(Self::greater(lhs, rhs).into())
             }
-            (lhs, rhs) => Ok(Self::construct(lhs, rhs).into()),
+            (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
         }
     }
 
@@ -34,7 +34,7 @@ impl Greater {
                 .cloned()
                 .map(|lhs| Self::greater(lhs, rhs.clone()))
                 .collect(),
-            (lhs, rhs) => panic!("Tried to do {lhs} {} {rhs}", Self::SYMBOL),
+            (lhs, rhs) => panic!("Tried to do {lhs} > {rhs}"),
         }
     }
 }

@@ -10,7 +10,7 @@ impl BitwiseAnd {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
                 Self::bin_and(lhs, rhs).into()
             }
-            (lhs, rhs) => Self::construct(lhs, rhs).into(),
+            (lhs, rhs) => Self { lhs, rhs }.into(),
         })
     }
 }
@@ -32,10 +32,7 @@ impl BitwiseAnd {
                 .cloned()
                 .map(|element| Self::bin_and(element, value.clone()))
                 .collect(),
-            (lhs, rhs) => panic!(
-                "Tried to do {lhs} {} {rhs} which is imposible",
-                Self::SYMBOL
-            ),
+            (lhs, rhs) => panic!("Tried to do {lhs} & {rhs} which is imposible"),
         }
     }
 }

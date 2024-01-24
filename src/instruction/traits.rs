@@ -1,7 +1,6 @@
-mod bin_op;
 mod can_be_used;
 mod prefix_op;
-pub use self::{bin_op::BinOp, can_be_used::CanBeUsed, prefix_op::PrefixOp};
+pub use self::{can_be_used::CanBeUsed, prefix_op::PrefixOp};
 use super::{local_variable::LocalVariables, Instruction};
 use crate::{
     interpreter::Interpreter,

@@ -35,7 +35,7 @@ impl Divide {
                 .cloned()
                 .map(|divisor| Self::exec(dividend.clone(), divisor))
                 .collect::<Result<Variable>>(),
-            (dividend, divisor) => panic!("Tried to calc {dividend} {} {divisor}", Self::SYMBOL),
+            (dividend, divisor) => panic!("Tried to calc {dividend} / {divisor}"),
         }
     }
 }

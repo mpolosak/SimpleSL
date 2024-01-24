@@ -14,7 +14,7 @@ impl Modulo {
                 Ok(Self::exec(dividend, divisor)?.into())
             }
             (_, Instruction::Variable(Variable::Int(0))) => Err(Error::ZeroModulo),
-            (dividend, divisor) => Ok(Self::construct(dividend, divisor).into()),
+            (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
         }
     }
 
@@ -32,7 +32,7 @@ impl Modulo {
                 .cloned()
                 .map(|divisor| Self::exec(dividend.clone(), divisor))
                 .collect::<Result<Variable>>(),
-            (dividend, divisor) => panic!("Tried to calc {dividend} {} {divisor}", Self::SYMBOL),
+            (dividend, divisor) => panic!("Tried to calc {dividend} % {divisor}"),
         }
     }
 }

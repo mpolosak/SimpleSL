@@ -14,7 +14,7 @@ impl RShift {
             (_, Instruction::Variable(Variable::Int(rhs))) if !(0..=63).contains(&rhs) => {
                 Err(Error::OverflowShift)
             }
-            (lhs, rhs) => Ok(Self::construct(lhs, rhs).into()),
+            (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
         }
     }
 
@@ -37,10 +37,7 @@ impl RShift {
                 .cloned()
                 .map(|element| Self::exec(element, value.clone()))
                 .collect(),
-            (lhs, rhs) => panic!(
-                "Tried to do {lhs} {} {rhs} which is imposible",
-                Self::SYMBOL
-            ),
+            (lhs, rhs) => panic!("Tried to do {lhs} >> {rhs} which is imposible"),
         }
     }
 }

@@ -12,7 +12,7 @@ impl GreaterOrEqual {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
                 Ok(Self::greater_or_equal(lhs, rhs).into())
             }
-            (lhs, rhs) => Ok(Self::construct(lhs, rhs).into()),
+            (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
         }
     }
 }
@@ -35,7 +35,7 @@ impl GreaterOrEqual {
                 .cloned()
                 .map(|lhs| Self::greater_or_equal(lhs, rhs.clone()))
                 .collect(),
-            (lhs, rhs) => panic!("Tried to do {lhs} {} {rhs}", Self::SYMBOL),
+            (lhs, rhs) => panic!("Tried to do {lhs} >= {rhs}"),
         }
     }
 }

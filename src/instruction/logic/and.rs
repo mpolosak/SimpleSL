@@ -15,7 +15,7 @@ impl And {
             {
                 instruction
             }
-            (lhs, rhs) => Self::construct(lhs, rhs).into(),
+            (lhs, rhs) => Self { lhs, rhs }.into(),
         })
     }
 
@@ -38,7 +38,7 @@ impl And {
                 .take(array.len())
                 .collect(),
             (value, Variable::Int(_)) | (Variable::Int(_), value) => value,
-            (lhs, rhs) => panic!("Tried {lhs} {} {rhs} which is imposible", Self::SYMBOL),
+            (lhs, rhs) => panic!("Tried {lhs} && {rhs} which is imposible"),
         }
     }
 }

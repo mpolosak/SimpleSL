@@ -11,7 +11,7 @@ impl BitwiseOr {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
                 Self::bin_or(lhs, rhs).into()
             }
-            (lhs, rhs) => Self::construct(lhs, rhs).into(),
+            (lhs, rhs) => Self { lhs, rhs }.into(),
         })
     }
 
@@ -31,10 +31,7 @@ impl BitwiseOr {
                 .cloned()
                 .map(|element| Self::bin_or(element, value.clone()))
                 .collect(),
-            (lhs, rhs) => panic!(
-                "Tried to do {lhs} {} {rhs} which is imposible",
-                Self::SYMBOL
-            ),
+            (lhs, rhs) => panic!("Tried to do {lhs} | {rhs} which is imposible"),
         }
     }
 }

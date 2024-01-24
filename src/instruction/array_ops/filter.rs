@@ -28,8 +28,8 @@ impl CanBeUsed for Filter {
 }
 
 impl Filter {
-    fn create_from_instructions(array: Instruction, function: Instruction) -> Result<Instruction> {
-        Ok(Self::construct(array, function).into())
+    fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
+        Ok(Self { lhs, rhs }.into())
     }
 }
 
@@ -38,7 +38,7 @@ impl Exec for Filter {
         let array = self.lhs.exec(interpreter)?;
         let function = self.rhs.exec(interpreter)?;
         let (Variable::Array(array), Variable::Function(function)) = (&array, &function) else {
-            unreachable!("Tried to do {array} {} {function}", Self::SYMBOL)
+            unreachable!("Tried to do {array} ? {function}")
         };
         let mut new_array: Vec<Variable> = Vec::new();
         if function.params.len() == 1 {

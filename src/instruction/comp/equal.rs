@@ -18,7 +18,7 @@ impl Equal {
             (Instruction::Variable(variable), Instruction::Variable(variable2)) => {
                 Ok(Instruction::Variable((variable == variable2).into()))
             }
-            (lhs, rhs) => Ok(Self::construct(lhs, rhs).into()),
+            (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
         }
     }
 }
