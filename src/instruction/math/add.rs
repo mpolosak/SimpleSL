@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
-use crate::instruction::traits::{BaseInstruction, BinOp, CanBeUsed, CreateFromInstructions};
+use crate::binOp;
+use crate::instruction::traits::CreateFromInstructions;
 use crate::instruction::{Exec, Instruction};
 use crate::variable::{Array, Typed};
 use crate::{
@@ -17,39 +18,13 @@ lazy_static! {
     .unwrap();
 }
 
-#[derive(Debug)]
-pub struct Add {
-    lhs: Instruction,
-    rhs: Instruction,
-}
-
-impl BinOp for Add {
-    const SYMBOL: &'static str = "+";
-
-    fn lhs(&self) -> &Instruction {
-        &self.lhs
-    }
-
-    fn rhs(&self) -> &Instruction {
-        &self.rhs
-    }
-
-    fn construct(lhs: Instruction, rhs: Instruction) -> Self {
-        Self { lhs, rhs }
-    }
-}
-
-impl CanBeUsed for Add {
-    fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
-        Type::Tuple([lhs.clone(), rhs.clone()].into()).matches(&ACCEPTED_TYPE)
-    }
-}
+binOp!(Add, "+");
 
 impl CreateFromInstructions for Add {
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
         match (lhs, rhs) {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
-                Ok(Self::add(lhs, rhs).into())
+                Self::exec(lhs, rhs).map(Instruction::from)
             }
             (rhs, lhs) => Ok(Self::construct(lhs, rhs).into()),
         }
@@ -57,44 +32,36 @@ impl CreateFromInstructions for Add {
 }
 
 impl Add {
-    fn add(lhs: Variable, rhs: Variable) -> Variable {
+    fn exec(lhs: Variable, rhs: Variable) -> Result<Variable> {
         match (lhs, rhs) {
-            (Variable::Int(value1), Variable::Int(value2)) => (value1 + value2).into(),
-            (Variable::Float(value1), Variable::Float(value2)) => (value1 + value2).into(),
+            (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 + value2).into()),
+            (Variable::Float(value1), Variable::Float(value2)) => Ok((value1 + value2).into()),
             (Variable::String(value1), Variable::String(value2)) => {
-                format!("{value1}{value2}").into()
+                Ok(format!("{value1}{value2}").into())
             }
             (Variable::Array(array1), Variable::Array(array2)) => {
-                Array::concat(array1, array2).into()
+                Ok(Array::concat(array1, array2).into())
             }
             (array @ Variable::Array(_), _) | (_, array @ Variable::Array(_))
                 if array.as_type() == Type::EmptyArray =>
             {
-                array
+                Ok(array)
             }
             (Variable::Array(array), value) => array
                 .iter()
                 .cloned()
-                .map(|element| Self::add(element, value.clone()))
+                .map(|element| Self::exec(element, value.clone()))
                 .collect(),
             (value, Variable::Array(array)) => array
                 .iter()
                 .cloned()
-                .map(|element| Self::add(value.clone(), element))
+                .map(|element| Self::exec(value.clone(), element))
                 .collect(),
             (lhs, rhs) => panic!(
                 "Tried to do {lhs} {} {rhs} which is imposible",
                 Self::SYMBOL
             ),
         }
-    }
-}
-
-impl Exec for Add {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
-        let lhs = self.lhs.exec(interpreter)?;
-        let rhs = self.rhs.exec(interpreter)?;
-        Ok(Self::add(lhs, rhs))
     }
 }
 
@@ -108,8 +75,6 @@ impl ReturnType for Add {
         }
     }
 }
-
-impl BaseInstruction for Add {}
 
 #[cfg(test)]
 mod tests {

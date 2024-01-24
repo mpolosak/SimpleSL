@@ -15,7 +15,7 @@ impl CreateFromInstructions for Divide {
                 Ok(Self::exec(dividend, divisor)?.into())
             }
             (_, Instruction::Variable(Variable::Int(0))) => Err(Error::ZeroDivision),
-            (dividend, divisor) => Ok(Self::construct(dividend, divisor).into()),
+            (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
         }
     }
 }

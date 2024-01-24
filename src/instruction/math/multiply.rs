@@ -12,7 +12,7 @@ impl CreateFromInstructions for Multiply {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
                 Self::exec(lhs, rhs).map(Instruction::from)
             }
-            (lhs, rhs) => Ok(Self::construct(lhs, rhs).into()),
+            (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
         }
     }
 }
