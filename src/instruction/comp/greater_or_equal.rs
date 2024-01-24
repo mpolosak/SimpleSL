@@ -1,31 +1,11 @@
-use crate::instruction::traits::{BaseInstruction, BinOp, CanBeUsed, CreateFromInstructions};
+use super::can_be_used;
+use crate::binOp;
+use crate::instruction::traits::{CanBeUsed, CreateFromInstructions};
 use crate::instruction::{Exec, Instruction};
 use crate::variable::{ReturnType, Type};
 use crate::{interpreter::Interpreter, variable::Variable, Result};
 
-use super::can_be_used;
-
-#[derive(Debug)]
-pub struct GreaterOrEqual {
-    lhs: Instruction,
-    rhs: Instruction,
-}
-
-impl BinOp for GreaterOrEqual {
-    const SYMBOL: &'static str = ">=";
-
-    fn lhs(&self) -> &Instruction {
-        &self.lhs
-    }
-
-    fn rhs(&self) -> &Instruction {
-        &self.rhs
-    }
-
-    fn construct(lhs: Instruction, rhs: Instruction) -> Self {
-        Self { lhs, rhs }
-    }
-}
+binOp!(GreaterOrEqual, ">=");
 
 impl CanBeUsed for GreaterOrEqual {
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
@@ -84,5 +64,3 @@ impl ReturnType for GreaterOrEqual {
         }
     }
 }
-
-impl BaseInstruction for GreaterOrEqual {}

@@ -1,31 +1,11 @@
-use crate::instruction::traits::{BaseInstruction, BinOp, CanBeUsed, CreateFromInstructions};
+use super::can_be_used;
+use crate::binOp;
+use crate::instruction::traits::{CanBeUsed, CreateFromInstructions};
 use crate::instruction::{Exec, Instruction};
 use crate::variable::{ReturnType, Type};
 use crate::{interpreter::Interpreter, variable::Variable, Result};
 
-use super::can_be_used;
-
-#[derive(Debug)]
-pub struct LowerOrEqual {
-    lhs: Instruction,
-    rhs: Instruction,
-}
-
-impl BinOp for LowerOrEqual {
-    const SYMBOL: &'static str = "<=";
-
-    fn lhs(&self) -> &Instruction {
-        &self.lhs
-    }
-
-    fn rhs(&self) -> &Instruction {
-        &self.rhs
-    }
-
-    fn construct(lhs: Instruction, rhs: Instruction) -> Self {
-        Self { lhs, rhs }
-    }
-}
+binOp!(LowerOrEqual, "<=");
 
 impl CanBeUsed for LowerOrEqual {
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
@@ -84,5 +64,3 @@ impl ReturnType for LowerOrEqual {
         }
     }
 }
-
-impl BaseInstruction for LowerOrEqual {}
