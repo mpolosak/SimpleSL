@@ -1,31 +1,10 @@
-use crate::instruction::traits::{BaseInstruction, BinIntOp, BinOp, CreateFromInstructions};
-use crate::instruction::{Exec, Instruction};
-use crate::variable::{Type, Typed};
-use crate::{interpreter::Interpreter, variable::Variable, Result};
+use crate::binIntOp;
+use crate::instruction::traits::CreateFromInstructions;
+use crate::instruction::Instruction;
+use crate::variable::Typed;
+use crate::{variable::Variable, Result};
 
-#[derive(Debug)]
-pub struct Xor {
-    lhs: Instruction,
-    rhs: Instruction,
-}
-
-impl BinOp for Xor {
-    const SYMBOL: &'static str = "^";
-
-    fn lhs(&self) -> &Instruction {
-        &self.lhs
-    }
-
-    fn rhs(&self) -> &Instruction {
-        &self.rhs
-    }
-
-    fn construct(lhs: Instruction, rhs: Instruction) -> Self {
-        Self { lhs, rhs }
-    }
-}
-
-impl BinIntOp for Xor {}
+binIntOp!(Xor, "^");
 
 impl CreateFromInstructions for Xor {
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
@@ -39,6 +18,9 @@ impl CreateFromInstructions for Xor {
 }
 
 impl Xor {
+    fn exec(lhs: Variable, rhs: Variable) -> Result<Variable> {
+        Ok(Self::xor(lhs, rhs))
+    }
     fn xor(lhs: Variable, rhs: Variable) -> Variable {
         match (lhs, rhs) {
             (Variable::Int(lhs), Variable::Int(rhs)) => (lhs ^ rhs).into(),
@@ -59,13 +41,3 @@ impl Xor {
         }
     }
 }
-
-impl Exec for Xor {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
-        let lhs = self.lhs.exec(interpreter)?;
-        let rhs = self.rhs.exec(interpreter)?;
-        Ok(Self::xor(lhs, rhs))
-    }
-}
-
-impl BaseInstruction for Xor {}

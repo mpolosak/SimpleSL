@@ -1,11 +1,10 @@
-mod bin_int_op;
 mod bin_op;
 mod can_be_used;
 mod create_bin_op;
 mod create_from_instructions;
 mod prefix_op;
 pub use self::{
-    bin_int_op::BinIntOp, bin_op::BinOp, can_be_used::CanBeUsed, create_bin_op::CreateBinOp,
+    bin_op::BinOp, can_be_used::CanBeUsed, create_bin_op::CreateBinOp,
     create_from_instructions::CreateFromInstructions, prefix_op::PrefixOp,
 };
 use super::{local_variable::LocalVariables, Instruction};

@@ -1,32 +1,9 @@
-use crate::instruction::traits::{BaseInstruction, BinIntOp, BinOp, CreateFromInstructions};
-use crate::instruction::{Exec, Instruction};
-use crate::interpreter::Interpreter;
-use crate::variable::{Type, Typed, Variable};
-use crate::Result;
+use crate::instruction::traits::CreateFromInstructions;
+use crate::instruction::Instruction;
+use crate::variable::{Typed, Variable};
+use crate::{binIntOp, Result};
 
-#[derive(Debug)]
-pub struct BitwiseAnd {
-    lhs: Instruction,
-    rhs: Instruction,
-}
-
-impl BinOp for BitwiseAnd {
-    const SYMBOL: &'static str = "&";
-
-    fn lhs(&self) -> &Instruction {
-        &self.lhs
-    }
-
-    fn rhs(&self) -> &Instruction {
-        &self.rhs
-    }
-
-    fn construct(lhs: Instruction, rhs: Instruction) -> Self {
-        Self { lhs, rhs }
-    }
-}
-
-impl BinIntOp for BitwiseAnd {}
+binIntOp!(BitwiseAnd, "&");
 
 impl CreateFromInstructions for BitwiseAnd {
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
@@ -40,6 +17,9 @@ impl CreateFromInstructions for BitwiseAnd {
 }
 
 impl BitwiseAnd {
+    fn exec(lhs: Variable, rhs: Variable) -> Result<Variable> {
+        Ok(Self::bin_and(lhs, rhs))
+    }
     fn bin_and(lhs: Variable, rhs: Variable) -> Variable {
         match (lhs, rhs) {
             (Variable::Int(lhs), Variable::Int(rhs)) => (lhs & rhs).into(),
@@ -60,13 +40,3 @@ impl BitwiseAnd {
         }
     }
 }
-
-impl Exec for BitwiseAnd {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
-        let lhs = self.lhs.exec(interpreter)?;
-        let rhs = self.rhs.exec(interpreter)?;
-        Ok(Self::bin_and(lhs, rhs))
-    }
-}
-
-impl BaseInstruction for BitwiseAnd {}

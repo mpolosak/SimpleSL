@@ -1,37 +1,16 @@
-use crate::instruction::traits::{BaseInstruction, BinIntOp, BinOp, CreateFromInstructions};
-use crate::instruction::{Exec, Instruction};
-use crate::variable::{Type, Typed};
-use crate::{interpreter::Interpreter, variable::Variable, Error, Result};
+use crate::binIntOp;
+use crate::instruction::traits::CreateFromInstructions;
+use crate::instruction::Instruction;
+use crate::variable::Typed;
+use crate::{variable::Variable, Error, Result};
 
-#[derive(Debug)]
-pub struct RShift {
-    lhs: Instruction,
-    rhs: Instruction,
-}
-
-impl BinOp for RShift {
-    const SYMBOL: &'static str = ">>";
-
-    fn lhs(&self) -> &Instruction {
-        &self.lhs
-    }
-
-    fn rhs(&self) -> &Instruction {
-        &self.rhs
-    }
-
-    fn construct(lhs: Instruction, rhs: Instruction) -> Self {
-        Self { lhs, rhs }
-    }
-}
-
-impl BinIntOp for RShift {}
+binIntOp!(RShift, ">>");
 
 impl CreateFromInstructions for RShift {
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
         match (lhs, rhs) {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
-                Ok(Self::rshift(lhs, rhs)?.into())
+                Ok(Self::exec(lhs, rhs)?.into())
             }
             (_, Instruction::Variable(Variable::Int(rhs))) if !(0..=63).contains(&rhs) => {
                 Err(Error::OverflowShift)
@@ -42,7 +21,7 @@ impl CreateFromInstructions for RShift {
 }
 
 impl RShift {
-    fn rshift(lhs: Variable, rhs: Variable) -> Result<Variable> {
+    fn exec(lhs: Variable, rhs: Variable) -> Result<Variable> {
         match (lhs, rhs) {
             (_, Variable::Int(rhs)) if !(0..=63).contains(&rhs) => Err(Error::OverflowShift),
             (Variable::Int(lhs), Variable::Int(rhs)) => Ok((lhs >> rhs).into()),
@@ -54,12 +33,12 @@ impl RShift {
             (value, Variable::Array(array)) => array
                 .iter()
                 .cloned()
-                .map(|element| Self::rshift(value.clone(), element))
+                .map(|element| Self::exec(value.clone(), element))
                 .collect(),
             (Variable::Array(array), value) => array
                 .iter()
                 .cloned()
-                .map(|element| Self::rshift(element, value.clone()))
+                .map(|element| Self::exec(element, value.clone()))
                 .collect(),
             (lhs, rhs) => panic!(
                 "Tried to do {lhs} {} {rhs} which is imposible",
@@ -68,13 +47,3 @@ impl RShift {
         }
     }
 }
-
-impl Exec for RShift {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
-        let lhs = self.lhs.exec(interpreter)?;
-        let rhs = self.rhs.exec(interpreter)?;
-        Self::rshift(lhs, rhs)
-    }
-}
-
-impl BaseInstruction for RShift {}
