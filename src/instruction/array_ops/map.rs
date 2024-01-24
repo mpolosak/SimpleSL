@@ -1,6 +1,7 @@
 use crate::{
+    binOp,
     instruction::{
-        traits::{BaseInstruction, BinOp, CanBeUsed, CreateFromInstructions},
+        traits::{CanBeUsed, CreateFromInstructions},
         Exec, Instruction,
     },
     interpreter::Interpreter,
@@ -9,27 +10,7 @@ use crate::{
 };
 use std::{iter::zip, rc::Rc};
 
-#[derive(Debug)]
-pub struct Map {
-    array: Instruction,
-    function: Instruction,
-}
-
-impl BinOp for Map {
-    const SYMBOL: &'static str = "@";
-
-    fn lhs(&self) -> &Instruction {
-        &self.array
-    }
-
-    fn rhs(&self) -> &Instruction {
-        &self.function
-    }
-
-    fn construct(array: Instruction, function: Instruction) -> Self {
-        Self { array, function }
-    }
-}
+binOp!(Map, "@");
 
 impl CanBeUsed for Map {
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
@@ -84,8 +65,8 @@ impl CreateFromInstructions for Map {
 
 impl Exec for Map {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
-        let array = self.array.exec(interpreter)?;
-        let function = self.function.exec(interpreter)?;
+        let array = self.lhs.exec(interpreter)?;
+        let function = self.rhs.exec(interpreter)?;
         match (array, function) {
             (Variable::Array(array), Variable::Function(function))
                 if function.params.len() == 1 =>
@@ -151,11 +132,9 @@ impl Exec for Map {
 
 impl ReturnType for Map {
     fn return_type(&self) -> Type {
-        let Type::Function(function_type) = self.function.return_type() else {
+        let Type::Function(function_type) = self.lhs.return_type() else {
             unreachable!()
         };
         [function_type.return_type.clone()].into()
     }
 }
-
-impl BaseInstruction for Map {}

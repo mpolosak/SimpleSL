@@ -1,6 +1,7 @@
 use crate::{
+    binOp,
     instruction::{
-        traits::{BaseInstruction, BinOp, CanBeUsed, CreateFromInstructions},
+        traits::{CanBeUsed, CreateFromInstructions},
         Exec, Instruction,
     },
     interpreter::Interpreter,
@@ -8,27 +9,7 @@ use crate::{
     Result,
 };
 
-#[derive(Debug)]
-pub struct Filter {
-    array: Instruction,
-    function: Instruction,
-}
-
-impl BinOp for Filter {
-    const SYMBOL: &'static str = "?";
-
-    fn lhs(&self) -> &Instruction {
-        &self.array
-    }
-
-    fn rhs(&self) -> &Instruction {
-        &self.function
-    }
-
-    fn construct(array: Instruction, function: Instruction) -> Self {
-        Self { array, function }
-    }
-}
+binOp!(Filter, "?");
 
 impl CanBeUsed for Filter {
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
@@ -57,8 +38,8 @@ impl CreateFromInstructions for Filter {
 
 impl Exec for Filter {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
-        let array = self.array.exec(interpreter)?;
-        let function = self.function.exec(interpreter)?;
+        let array = self.lhs.exec(interpreter)?;
+        let function = self.rhs.exec(interpreter)?;
         let (Variable::Array(array), Variable::Function(function)) = (&array, &function) else {
             unreachable!("Tried to do {array} {} {function}", Self::SYMBOL)
         };
@@ -83,8 +64,6 @@ impl Exec for Filter {
 
 impl ReturnType for Filter {
     fn return_type(&self) -> Type {
-        self.array.return_type()
+        self.lhs.return_type()
     }
 }
-
-impl BaseInstruction for Filter {}

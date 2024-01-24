@@ -2,7 +2,7 @@
 #[macro_export]
 macro_rules! binOp {
     ($T: ident, $symbol: literal) => {
-        use crate::instruction::traits::{BaseInstruction, BinOp, CanBeUsed};
+        use crate::instruction::traits::{BaseInstruction, BinOp};
         #[derive(Debug)]
         pub struct $T {
             lhs: Instruction,
@@ -25,19 +25,5 @@ macro_rules! binOp {
             }
         }
         impl BaseInstruction for $T {}
-
-        impl CanBeUsed for $T {
-            fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
-                Type::Tuple([lhs.clone(), rhs.clone()].into()).matches(&ACCEPTED_TYPE)
-            }
-        }
-
-        impl Exec for $T {
-            fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
-                let lhs = self.lhs.exec(interpreter)?;
-                let rhs = self.rhs.exec(interpreter)?;
-                Self::exec(lhs, rhs)
-            }
-        }
     };
 }

@@ -15,7 +15,7 @@ macro_rules! binIntOp {
             variable::{ReturnType, Type},
             Interpreter,
         };
-        crate::binOp!($T, $symbol);
+        crate::binOpCBU!($T, $symbol);
 
         impl ReturnType for $T {
             fn return_type(&self) -> Type {

@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use crate::binOp;
+use crate::binOpCBU;
 use crate::instruction::traits::CreateFromInstructions;
 use crate::instruction::{Exec, Instruction};
 use crate::variable::{Array, Typed};
@@ -18,7 +18,7 @@ lazy_static! {
     .unwrap();
 }
 
-binOp!(Add, "+");
+binOpCBU!(Add, "+");
 
 impl CreateFromInstructions for Add {
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
