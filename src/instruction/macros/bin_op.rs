@@ -25,5 +25,16 @@ macro_rules! binOp {
             }
         }
         impl BaseInstruction for $T {}
+        impl $T {
+            pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
+                let lhs_type = lhs.return_type();
+                let rhs_type = rhs.return_type();
+                if Self::can_be_used(&lhs_type, &rhs_type) {
+                    Self::create_from_instructions(lhs, rhs)
+                } else {
+                    Err(crate::Error::CannotDo2(lhs_type, $symbol, rhs_type))
+                }
+            }
+        }
     };
 }
