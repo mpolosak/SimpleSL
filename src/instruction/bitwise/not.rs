@@ -1,8 +1,8 @@
 use crate::instruction::local_variable::LocalVariables;
 use crate::instruction::traits::{BaseInstruction, PrefixOp};
-use crate::instruction::{Exec, Instruction, Recreate};
+use crate::instruction::{Instruction, Recreate};
 use crate::interpreter::Interpreter;
-use crate::variable::{Type, Variable};
+use crate::variable::Type;
 use crate::Result;
 
 #[derive(Debug)]
@@ -27,12 +27,6 @@ impl PrefixOp for BitwiseNot {
 
     fn calc_int(num: i64) -> i64 {
         !num
-    }
-}
-
-impl Exec for BitwiseNot {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
-        PrefixOp::exec(self, interpreter)
     }
 }
 

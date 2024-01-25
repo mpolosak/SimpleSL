@@ -1,8 +1,8 @@
 use crate::instruction::local_variable::LocalVariables;
 use crate::instruction::traits::{BaseInstruction, PrefixOp};
-use crate::instruction::{Exec, Instruction, Recreate};
+use crate::instruction::{Instruction, Recreate};
 use crate::interpreter::Interpreter;
-use crate::variable::{Type, Variable};
+use crate::variable::Type;
 use crate::Result;
 use lazy_static::lazy_static;
 use std::str::FromStr;
@@ -35,12 +35,6 @@ impl PrefixOp for UnaryMinus {
 
     fn calc_float(num: f64) -> f64 {
         -num
-    }
-}
-
-impl Exec for UnaryMinus {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
-        PrefixOp::exec(self, interpreter)
     }
 }
 

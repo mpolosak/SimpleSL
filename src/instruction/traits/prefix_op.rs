@@ -40,10 +40,6 @@ pub trait PrefixOp: Sized + Into<Instruction> {
             instruction => Self::construct(instruction).into(),
         }
     }
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
-        let result = self.instruction().exec(interpreter)?;
-        Ok(Self::calc(result))
-    }
     fn recreate(
         &self,
         local_variables: &mut LocalVariables,
@@ -57,5 +53,12 @@ pub trait PrefixOp: Sized + Into<Instruction> {
 impl<T: PrefixOp> ReturnType for T {
     fn return_type(&self) -> Type {
         self.instruction().return_type()
+    }
+}
+
+impl<T: PrefixOp> Exec for T {
+    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
+        let result = self.instruction().exec(interpreter)?;
+        Ok(Self::calc(result))
     }
 }

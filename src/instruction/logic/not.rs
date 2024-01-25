@@ -1,8 +1,8 @@
 use crate::instruction::local_variable::LocalVariables;
 use crate::instruction::traits::{BaseInstruction, PrefixOp};
-use crate::instruction::{Exec, Instruction, Recreate};
+use crate::instruction::{Instruction, Recreate};
 use crate::interpreter::Interpreter;
-use crate::variable::{Type, Variable};
+use crate::variable::Type;
 use crate::Result;
 use lazy_static::lazy_static;
 use std::str::FromStr;
@@ -33,12 +33,6 @@ impl PrefixOp for Not {
 
     fn calc_int(num: i64) -> i64 {
         i64::from(num == 0)
-    }
-}
-
-impl Exec for Not {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
-        PrefixOp::exec(self, interpreter)
     }
 }
 
