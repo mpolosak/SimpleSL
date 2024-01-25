@@ -2,7 +2,7 @@ use crate::instruction::local_variable::LocalVariables;
 use crate::instruction::traits::{BaseInstruction, PrefixOp};
 use crate::instruction::{Exec, Instruction, Recreate};
 use crate::interpreter::Interpreter;
-use crate::variable::{ReturnType, Type, Variable};
+use crate::variable::{Type, Variable};
 use crate::Result;
 
 #[derive(Debug)]
@@ -43,12 +43,6 @@ impl Recreate for BitwiseNot {
         interpreter: &Interpreter,
     ) -> Result<Instruction> {
         PrefixOp::recreate(self, local_variables, interpreter)
-    }
-}
-
-impl ReturnType for BitwiseNot {
-    fn return_type(&self) -> Type {
-        PrefixOp::get_return_type(self)
     }
 }
 

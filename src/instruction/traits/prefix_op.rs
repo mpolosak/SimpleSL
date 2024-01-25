@@ -52,7 +52,10 @@ pub trait PrefixOp: Sized + Into<Instruction> {
         let instruction = self.instruction().recreate(local_variables, interpreter)?;
         Ok(Self::create_from_instruction(instruction))
     }
-    fn get_return_type(&self) -> Type {
+}
+
+impl<T: PrefixOp> ReturnType for T {
+    fn return_type(&self) -> Type {
         self.instruction().return_type()
     }
 }

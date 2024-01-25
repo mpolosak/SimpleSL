@@ -2,7 +2,7 @@ use crate::instruction::local_variable::LocalVariables;
 use crate::instruction::traits::{BaseInstruction, PrefixOp};
 use crate::instruction::{Exec, Instruction, Recreate};
 use crate::interpreter::Interpreter;
-use crate::variable::{ReturnType, Type, Variable};
+use crate::variable::{Type, Variable};
 use crate::Result;
 use lazy_static::lazy_static;
 use std::str::FromStr;
@@ -51,12 +51,6 @@ impl Recreate for UnaryMinus {
         interpreter: &Interpreter,
     ) -> Result<Instruction> {
         PrefixOp::recreate(self, local_variables, interpreter)
-    }
-}
-
-impl ReturnType for UnaryMinus {
-    fn return_type(&self) -> Type {
-        PrefixOp::get_return_type(self)
     }
 }
 
