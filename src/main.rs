@@ -4,26 +4,26 @@ use std::{env, fs, process::ExitCode};
 
 fn main() -> ExitCode {
     let args: Box<[String]> = env::args().collect();
-    match &args[..] {
-        [_] => run_shell().map_or_else(
-            |error| {
-                eprintln!("{error}");
-                ExitCode::FAILURE
-            },
-            |_| ExitCode::SUCCESS,
-        ),
-        [_, file] => run_from_file(file).map_or_else(
-            |error| {
-                eprintln!("{error}");
-                ExitCode::FAILURE
-            },
-            |_| ExitCode::SUCCESS,
-        ),
-        _ => {
-            eprintln!("Too many arguments");
-            ExitCode::FAILURE
-        }
+    if args.len() > 2 {
+        eprintln!("Too many arguments");
+        return ExitCode::FAILURE;
     }
+    if args.len() == 2 {
+        return run_from_file(&args[1]).map_or_else(
+            |error| {
+                eprintln!("{error}");
+                ExitCode::FAILURE
+            },
+            |_| ExitCode::SUCCESS,
+        );
+    }
+    run_shell().map_or_else(
+        |error| {
+            eprintln!("{error}");
+            ExitCode::FAILURE
+        },
+        |_| ExitCode::SUCCESS,
+    )
 }
 
 fn run_shell() -> std::result::Result<(), ReadlineError> {
