@@ -1,9 +1,6 @@
-use crate::instruction::local_variable::LocalVariables;
-use crate::instruction::traits::{BaseInstruction, PrefixOp};
-use crate::instruction::{Instruction, Recreate};
-use crate::interpreter::Interpreter;
+use crate::instruction::traits::PrefixOp;
+use crate::instruction::Instruction;
 use crate::variable::Type;
-use crate::Result;
 
 #[derive(Debug)]
 pub struct BitwiseNot {
@@ -29,15 +26,3 @@ impl PrefixOp for BitwiseNot {
         !num
     }
 }
-
-impl Recreate for BitwiseNot {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction> {
-        PrefixOp::recreate(self, local_variables, interpreter)
-    }
-}
-
-impl BaseInstruction for BitwiseNot {}

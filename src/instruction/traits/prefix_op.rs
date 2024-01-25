@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use crate::{
     instruction::{local_variable::LocalVariables, Instruction},
     interpreter::Interpreter,
@@ -5,7 +7,7 @@ use crate::{
     Error, Result,
 };
 
-use super::{Exec, Recreate};
+use super::{BaseInstruction, Exec, Recreate};
 
 pub trait PrefixOp: Sized + Into<Instruction> {
     const SYMBOL: &'static str;
@@ -40,14 +42,6 @@ pub trait PrefixOp: Sized + Into<Instruction> {
             instruction => Self::construct(instruction).into(),
         }
     }
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction> {
-        let instruction = self.instruction().recreate(local_variables, interpreter)?;
-        Ok(Self::create_from_instruction(instruction))
-    }
 }
 
 impl<T: PrefixOp> ReturnType for T {
@@ -62,3 +56,16 @@ impl<T: PrefixOp> Exec for T {
         Ok(Self::calc(result))
     }
 }
+
+impl<T: PrefixOp> Recreate for T {
+    fn recreate(
+        &self,
+        local_variables: &mut LocalVariables,
+        interpreter: &Interpreter,
+    ) -> Result<Instruction> {
+        let instruction = self.instruction().recreate(local_variables, interpreter)?;
+        Ok(Self::create_from_instruction(instruction))
+    }
+}
+
+impl<T: PrefixOp + Debug> BaseInstruction for T {}
