@@ -15,23 +15,21 @@ pub use {code::Code, error::Error, interpreter::Interpreter};
 pub type Result<T> = std::result::Result<T, Error>;
 
 pub fn join(array: &[impl Display], separator: &str) -> String {
-    let mut result = String::new();
-    if let [elements @ .., last] = array {
-        for var in elements {
-            result += &format!("{var}{separator}");
-        }
-        result += &format!("{last}");
-    }
-    result
+    let [elements @ .., last] = array else {
+        return "".into();
+    };
+    let result = elements.iter().fold("".to_owned(), |acc, current| {
+        format!("{acc}{current}{separator}")
+    });
+    format!("{result}{last}")
 }
 
 pub fn join_debug(array: &[impl Debug], separator: &str) -> String {
-    let mut result = String::new();
-    if let [elements @ .., last] = array {
-        for var in elements {
-            result += &format!("{var:?}{separator}");
-        }
-        result += &format!("{last:?}");
-    }
-    result
+    let [elements @ .., last] = array else {
+        return "".into();
+    };
+    let result = elements.iter().fold("".to_owned(), |acc, current| {
+        format!("{acc}{current:?}{separator}")
+    });
+    format!("{result}{last:?}")
 }
