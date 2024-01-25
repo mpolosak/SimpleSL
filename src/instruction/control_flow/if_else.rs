@@ -83,24 +83,20 @@ impl Recreate for IfElse {
         interpreter: &Interpreter,
     ) -> Result<Instruction> {
         let condition = self.condition.recreate(local_variables, interpreter)?;
-        match condition {
-            Instruction::Variable(Variable::Int(0)) => {
-                self.if_true.recreate(local_variables, interpreter)
+        let Instruction::Variable(Variable::Int(condition)) = condition else {
+            let if_true = self.if_true.recreate(local_variables, interpreter)?;
+            let if_false = self.if_false.recreate(local_variables, interpreter)?;
+            return Ok(Self {
+                condition,
+                if_true,
+                if_false,
             }
-            Instruction::Variable(Variable::Int(_)) => {
-                self.if_false.recreate(local_variables, interpreter)
-            }
-            condition => {
-                let if_true = self.if_true.recreate(local_variables, interpreter)?;
-                let if_false = self.if_false.recreate(local_variables, interpreter)?;
-                Ok(Self {
-                    condition,
-                    if_true,
-                    if_false,
-                }
-                .into())
-            }
+            .into());
+        };
+        if condition == 0 {
+            return self.if_false.recreate(local_variables, interpreter);
         }
+        self.if_true.recreate(local_variables, interpreter)
     }
 }
 
