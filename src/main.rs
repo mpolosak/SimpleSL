@@ -31,18 +31,16 @@ fn run_shell() -> std::result::Result<(), ReadlineError> {
     let mut rl = DefaultEditor::new()?;
     loop {
         let readline = rl.readline("> ");
-        match readline {
-            Ok(line) => {
-                rl.add_history_entry(&line)?;
-                match Code::parse(&interpreter, &line)
-                    .and_then(|code| code.exec_unscoped(&mut interpreter))
-                {
-                    Ok(result) => println!("{result}"),
-                    Err(error) => eprintln!("{error}"),
-                }
-            }
+        let line = match readline {
+            Ok(line) => line,
             Err(ReadlineError::Interrupted | ReadlineError::Eof) => return Ok(()),
             Err(err) => return Err(err),
+        };
+        rl.add_history_entry(&line)?;
+        match Code::parse(&interpreter, &line).and_then(|code| code.exec_unscoped(&mut interpreter))
+        {
+            Ok(result) => println!("{result}"),
+            Err(error) => eprintln!("{error}"),
         }
     }
 }
