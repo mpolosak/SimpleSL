@@ -76,11 +76,10 @@ impl FunctionCall {
             }
             .into(),
         );
-        if var_type.matches(&expected) {
-            Ok(())
-        } else {
-            Err(Error::WrongType(pair_str.into(), expected))
+        if !var_type.matches(&expected) {
+            return Err(Error::WrongType(pair_str.into(), expected));
         }
+        Ok(())
     }
 }
 

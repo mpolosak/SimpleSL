@@ -25,12 +25,12 @@ impl At {
         let required_instruction_type = Type::String | [Type::Any];
         let instruction_return_type = instruction.return_type();
         if index.return_type() != Type::Int {
-            Err(Error::WrongType("index".into(), Type::Int))
-        } else if !instruction_return_type.matches(&required_instruction_type) {
-            Err(Error::CannotIndexInto(instruction_return_type))
-        } else {
-            Self::create_from_instructions(instruction, index)
+            return Err(Error::WrongType("index".into(), Type::Int));
         }
+        if !instruction_return_type.matches(&required_instruction_type) {
+            return Err(Error::CannotIndexInto(instruction_return_type));
+        }
+        Self::create_from_instructions(instruction, index)
     }
 }
 

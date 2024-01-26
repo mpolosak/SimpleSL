@@ -18,16 +18,16 @@ impl Array {
     /// Returns Rc<Array> containing all elements of array1 and array2
     pub fn concat(array1: Rc<Self>, array2: Rc<Self>) -> Rc<Self> {
         if array1.is_empty() {
-            array2
-        } else if array2.is_empty() {
-            array1
-        } else {
-            Self {
-                var_type: array1.var_type.clone() | array2.var_type.clone(),
-                elements: array1.iter().chain(array2.iter()).cloned().collect(),
-            }
-            .into()
+            return array2;
         }
+        if array2.is_empty() {
+            return array1;
+        }
+        Self {
+            var_type: array1.var_type.clone() | array2.var_type.clone(),
+            elements: array1.iter().chain(array2.iter()).cloned().collect(),
+        }
+        .into()
     }
 }
 

@@ -62,13 +62,12 @@ impl Exec for SetIfElse {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let expression_result = self.expression.exec(interpreter)?;
         let result_type = expression_result.as_type();
-        if result_type.matches(&self.var_type) {
-            let mut interpreter = interpreter.create_layer();
-            interpreter.insert(self.ident.clone(), expression_result);
-            self.if_match.exec(&mut interpreter)
-        } else {
-            self.else_instruction.exec(interpreter)
+        if !result_type.matches(&self.var_type) {
+            return self.else_instruction.exec(interpreter);
         }
+        let mut interpreter = interpreter.create_layer();
+        interpreter.insert(self.ident.clone(), expression_result);
+        self.if_match.exec(&mut interpreter)
     }
 }
 

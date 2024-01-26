@@ -31,11 +31,10 @@ macro_rules! prefixOp {
         impl $T {
             pub fn create_instruction(instruction: Instruction) -> Result<Instruction> {
                 let return_type = instruction.return_type();
-                if Self::can_be_used(&return_type) {
-                    Ok(Self::create_from_instruction(instruction))
-                } else {
-                    Err(Error::CannotDo($symbol, return_type))
+                if !Self::can_be_used(&return_type) {
+                    return Err(Error::CannotDo($symbol, return_type));
                 }
+                Ok(Self::create_from_instruction(instruction))
             }
 
             fn create_from_instruction(instruction: Instruction) -> Instruction {

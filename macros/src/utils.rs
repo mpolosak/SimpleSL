@@ -202,10 +202,9 @@ fn is_result(return_type: &Type) -> bool {
 
 pub fn get_body(is_result: bool, ident: &Ident, args: &TokenStream) -> TokenStream {
     if is_result {
-        quote!(Ok(#ident(#args)?.into()))
-    } else {
-        quote!(Ok(#ident(#args).into()))
+        return quote!(Ok(#ident(#args)?.into()));
     }
+    quote!(Ok(#ident(#args).into()))
 }
 
 pub fn get_return_type(function: &ItemFn, return_type: Option<TokenStream>) -> (TokenStream, bool) {

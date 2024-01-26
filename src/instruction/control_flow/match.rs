@@ -32,11 +32,10 @@ impl MutCreateInstruction for Match {
             .map(|pair| MatchArm::new(pair, interpreter, local_variables))
             .collect::<Result<Box<[MatchArm]>>>()?;
         let result = Self { expression, arms };
-        if result.is_covering_type(&var_type) {
-            Ok(result.into())
-        } else {
-            Err(Error::MatchNotCovered)
+        if !result.is_covering_type(&var_type) {
+            return Err(Error::MatchNotCovered);
         }
+        Ok(result.into())
     }
 }
 

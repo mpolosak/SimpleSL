@@ -26,12 +26,12 @@ impl CreateInstruction for Block {
         let instructions =
             interpreter.create_instructions(pair.into_inner(), &mut local_variables)?;
         if instructions.is_empty() {
-            Ok(Instruction::Variable(Variable::Void))
-        } else if let [element] = instructions.as_ref() {
-            Ok(element.clone())
-        } else {
-            Ok(Self { instructions }.into())
+            return Ok(Instruction::Variable(Variable::Void));
         }
+        if let [element] = instructions.as_ref() {
+            return Ok(element.clone());
+        }
+        Ok(Self { instructions }.into())
     }
 }
 

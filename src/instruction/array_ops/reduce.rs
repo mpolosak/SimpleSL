@@ -60,15 +60,8 @@ impl Reduce {
         let current_type = &function_type.params[1];
         let return_type = &function_type.return_type;
         let acc_expected = initial_type | return_type.clone();
-        if acc_expected.matches(acc_type) && current_type.matches(&element_type) {
-            Ok(Self {
-                array,
-                initial_value,
-                function,
-            }
-            .into())
-        } else {
-            Err(Error::WrongType(
+        if !acc_expected.matches(acc_type) || !current_type.matches(&element_type) {
+            return Err(Error::WrongType(
                 "function".into(),
                 Type::Function(
                     FunctionType {
@@ -77,8 +70,14 @@ impl Reduce {
                     }
                     .into(),
                 ),
-            ))
+            ));
         }
+        Ok(Self {
+            array,
+            initial_value,
+            function,
+        }
+        .into())
     }
 }
 

@@ -69,10 +69,9 @@ impl MutCreateInstruction for IfElse {
 impl Exec for IfElse {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         if self.condition.exec(interpreter)? == Variable::Int(0) {
-            self.if_false.exec(interpreter)
-        } else {
-            self.if_true.exec(interpreter)
+            return self.if_false.exec(interpreter);
         }
+        self.if_true.exec(interpreter)
     }
 }
 

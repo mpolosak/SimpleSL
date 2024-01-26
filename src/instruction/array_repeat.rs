@@ -26,11 +26,10 @@ impl CreateInstruction for ArrayRepeat {
         let value =
             Instruction::new_expression(inner.next().unwrap(), interpreter, local_variables)?;
         let len = Instruction::new_expression(inner.next().unwrap(), interpreter, local_variables)?;
-        if len.return_type() == Type::Int {
-            Self::create_from_instructions(value, len)
-        } else {
-            Err(Error::WrongType("len".into(), Type::Int))
+        if len.return_type() != Type::Int {
+            return Err(Error::WrongType("len".into(), Type::Int));
         }
+        Self::create_from_instructions(value, len)
     }
 }
 
@@ -55,11 +54,10 @@ impl Exec for ArrayRepeat {
         let Variable::Int(len) = self.len.exec(interpreter)? else {
             panic!()
         };
-        if len >= 0 {
-            Ok(std::iter::repeat(value).take(len as usize).collect())
-        } else {
-            Err(Error::CannotBeNegative("len"))
+        if len < 0 {
+            return Err(Error::CannotBeNegative("len"));
         }
+        Ok(std::iter::repeat(value).take(len as usize).collect())
     }
 }
 

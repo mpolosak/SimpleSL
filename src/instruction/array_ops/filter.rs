@@ -49,12 +49,11 @@ impl Exec for Filter {
                     new_array.push(element);
                 }
             }
-        } else {
-            for (index, element) in array.iter().cloned().enumerate() {
-                if function.exec(interpreter, &[index.into(), element.clone()])? != Variable::Int(0)
-                {
-                    new_array.push(element);
-                }
+            return Ok(new_array.into());
+        }
+        for (index, element) in array.iter().cloned().enumerate() {
+            if function.exec(interpreter, &[index.into(), element.clone()])? != Variable::Int(0) {
+                new_array.push(element);
             }
         }
         Ok(new_array.into())
