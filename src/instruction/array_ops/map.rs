@@ -12,46 +12,38 @@ binOp!(Map, "@");
 
 impl CanBeUsed for Map {
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
-        match (lhs, rhs) {
-            (Type::Array(element_type), Type::Function(function_type)) => {
-                let params = &function_type.params;
-                (params.len() == 1 && element_type.matches(&params[0]))
-                    || (params.len() == 2
-                        && Type::Int.matches(&params[0])
-                        && element_type.matches(&params[1]))
-            }
-            (Type::EmptyArray, Type::Function(function_type)) => {
-                function_type.params.len() == 1
-                    || (function_type.params.len() == 1
-                        && Type::Int.matches(&function_type.params[0]))
-            }
-            (Type::Tuple(types), Type::Function(function_type))
-                if function_type.params.len() == types.len() =>
-            {
-                zip(types.iter(), function_type.params.iter()).all(|(var_type, param_type)| {
-                    if let Type::Array(var_type) = var_type {
-                        var_type.matches(param_type)
-                    } else {
-                        false
-                    }
-                })
-            }
-            (Type::Tuple(types), Type::Function(function_type))
-                if function_type.params.len() == types.len() + 1 =>
-            {
-                let mut params_iter = function_type.params.iter();
-                let index_type = params_iter.next().unwrap();
-                Type::Int.matches(index_type)
-                    && zip(types.iter(), params_iter).all(|(var_type, param_type)| {
-                        if let Type::Array(var_type) = var_type {
-                            var_type.matches(param_type)
-                        } else {
-                            false
-                        }
-                    })
-            }
-            _ => false,
+        let Type::Function(function_type) = rhs else {
+            return false;
+        };
+        if lhs == &Type::EmptyArray {
+            return function_type.params.len() == 1
+                || (function_type.params.len() == 1
+                    && Type::Int.matches(&function_type.params[0]));
         }
+        if let Type::Array(element_type) = lhs {
+            let params = &function_type.params;
+            return (params.len() == 1 && element_type.matches(&params[0]))
+                || (params.len() == 2
+                    && Type::Int.matches(&params[0])
+                    && element_type.matches(&params[1]));
+        }
+        let Type::Tuple(types) = lhs else {
+            return false;
+        };
+        let mut params_iter = function_type.params.iter();
+        if function_type.params.len() == types.len() {
+            return zip(types.iter(), params_iter).all(|(var_type, param_type)| {
+                matches!(var_type, Type::Array(var_type) if var_type.matches(param_type))
+            });
+        }
+        if function_type.params.len() != types.len() + 1 {
+            return false;
+        }
+        let index_type = params_iter.next().unwrap();
+        Type::Int.matches(index_type)
+            && zip(types.iter(), params_iter).all(|(var_type, param_type)| {
+                matches!(var_type, Type::Array(var_type) if var_type.matches(param_type))
+            })
     }
 }
 
