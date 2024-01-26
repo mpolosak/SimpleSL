@@ -1,11 +1,8 @@
-mod can_be_used;
-mod prefix_op;
-pub use self::{can_be_used::CanBeUsed, prefix_op::PrefixOp};
 use super::{local_variable::LocalVariables, Instruction};
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
-    variable::{ReturnType, Variable},
+    variable::{ReturnType, Type, Variable},
     Result,
 };
 use pest::iterators::Pair;
@@ -45,4 +42,8 @@ impl<T: BaseInstruction + 'static> From<T> for Instruction {
     fn from(value: T) -> Self {
         Self::Other(Rc::new(value))
     }
+}
+
+pub trait CanBeUsed {
+    fn can_be_used(lhs: &Type, rhs: &Type) -> bool;
 }

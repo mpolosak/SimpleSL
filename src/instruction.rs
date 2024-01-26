@@ -32,7 +32,7 @@ use self::{
     logic::{And, Not, Or},
     math::{Add, Divide, Modulo, Multiply, Pow, Subtract, UnaryMinus},
     set::Set,
-    traits::{BaseInstruction, PrefixOp},
+    traits::BaseInstruction,
     tuple::Tuple,
 };
 use crate::{

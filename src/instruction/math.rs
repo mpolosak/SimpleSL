@@ -4,9 +4,14 @@ mod modulo;
 mod multiply;
 mod pow;
 mod subtract;
-mod unary_minus;
-
+use crate::prefixOp;
+use std::ops::Neg;
 pub use {
     add::Add, divide::Divide, modulo::Modulo, multiply::Multiply, pow::Pow, subtract::Subtract,
-    unary_minus::UnaryMinus,
 };
+
+fn neg<T: Neg<Output = T>>(num: T) -> T {
+    -num
+}
+
+prefixOp!(UnaryMinus, "-", num, neg);

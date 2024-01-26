@@ -4,7 +4,6 @@ mod not;
 mod or;
 mod rshift;
 mod xor;
-
-pub use {
-    and::BitwiseAnd, lshift::LShift, not::BitwiseNot, or::BitwiseOr, rshift::RShift, xor::Xor,
-};
+use crate::prefixOp;
+pub use {and::BitwiseAnd, lshift::LShift, or::BitwiseOr, rshift::RShift, xor::Xor};
+prefixOp!(BitwiseNot, "~", int, |num: i64| !num);
