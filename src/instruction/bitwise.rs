@@ -1,6 +1,5 @@
 mod and;
 mod lshift;
-mod not;
 mod or;
 mod rshift;
 mod xor;
