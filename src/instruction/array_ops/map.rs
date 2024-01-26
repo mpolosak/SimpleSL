@@ -1,5 +1,6 @@
 use crate::{
     binOp,
+    function::Function,
     instruction::{traits::CanBeUsed, Exec, Instruction},
     interpreter::Interpreter,
     variable::{Array, ReturnType, Type, Variable},
@@ -58,72 +59,67 @@ impl Map {
     fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
         Ok(Self { lhs, rhs }.into())
     }
+
+    fn zip_map(
+        interpreter: &mut Interpreter,
+        arrays: Rc<[Variable]>,
+        function: Rc<Function>,
+    ) -> Result<Variable> {
+        let arrays: Box<[&Rc<Array>]> = arrays
+            .iter()
+            .map(|array| {
+                let Variable::Array(array) = array else {
+                    unreachable!()
+                };
+                array
+            })
+            .collect();
+        let len = arrays.iter().map(|array| array.len()).min().unwrap();
+        if function.params.len() == arrays.len() {
+            return (0..len)
+                .map(|i| {
+                    let args: Box<[Variable]> =
+                        arrays.iter().map(|array| array[i].clone()).collect();
+                    function.exec(interpreter, &args)
+                })
+                .collect();
+        }
+        (0..len)
+            .map(|i| {
+                let mut args = vec![i.into()];
+                args.extend(arrays.iter().map(|array| array[i].clone()));
+                function.exec(interpreter, &args)
+            })
+            .collect()
+    }
 }
 
 impl Exec for Map {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let array = self.lhs.exec(interpreter)?;
         let function = self.rhs.exec(interpreter)?;
-        match (array, function) {
-            (Variable::Array(array), Variable::Function(function))
-                if function.params.len() == 1 =>
-            {
-                array
-                    .iter()
-                    .cloned()
-                    .map(|var| function.exec(interpreter, &[var]))
-                    .collect()
-            }
-            (Variable::Array(array), Variable::Function(function)) => array
+        let Variable::Function(function) = function else {
+            panic!("Tried to do {array} @ {function}")
+        };
+        if let Variable::Tuple(arrays) = array {
+            return Self::zip_map(interpreter, arrays, function);
+        }
+        let Variable::Array(array) = array else {
+            panic!("Tried to do {array} @ {function}")
+        };
+        if function.params.len() == 1 {
+            return array
                 .iter()
                 .cloned()
-                .enumerate()
-                .map(|(index, var)| function.exec(interpreter, &[index.into(), var]))
-                .collect(),
-            (Variable::Tuple(arrays), Variable::Function(function))
-                if function.params.len() == arrays.len() =>
-            {
-                let arrays: Box<[&Rc<Array>]> = arrays
-                    .iter()
-                    .map(|array| {
-                        let Variable::Array(array) = array else {
-                            unreachable!()
-                        };
-                        array
-                    })
-                    .collect();
-                let len = arrays.iter().map(|array| array.len()).min().unwrap();
-                (0..len)
-                    .map(|i| {
-                        let args: Box<[Variable]> =
-                            arrays.iter().map(|array| array[i].clone()).collect();
-                        function.exec(interpreter, &args)
-                    })
-                    .collect()
-            }
-            (Variable::Tuple(arrays), Variable::Function(function))
-                if function.params.len() == arrays.len() + 1 =>
-            {
-                let arrays: Box<[&Rc<Array>]> = arrays
-                    .iter()
-                    .map(|array| {
-                        let Variable::Array(array) = array else {
-                            unreachable!()
-                        };
-                        array
-                    })
-                    .collect();
-                let len = arrays.iter().map(|array| array.len()).min().unwrap();
-                (0..len)
-                    .map(|i| {
-                        let mut args = vec![i.into()];
-                        args.extend(arrays.iter().map(|array| array[i].clone()));
-                        function.exec(interpreter, &args)
-                    })
-                    .collect()
-            }
-            (array, function) => panic!("Tried to do {array} @ {function}"),
+                .map(|var| function.exec(interpreter, &[var]))
+                .collect();
         }
+        array
+            .iter()
+            .cloned()
+            .enumerate()
+            .map(|(index, var)| function.exec(interpreter, &[index.into(), var]))
+            .collect()
     }
 }
 
