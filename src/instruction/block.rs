@@ -28,9 +28,6 @@ impl CreateInstruction for Block {
         if instructions.is_empty() {
             return Ok(Instruction::Variable(Variable::Void));
         }
-        if let [element] = instructions.as_ref() {
-            return Ok(element.clone());
-        }
         Ok(Self { instructions }.into())
     }
 }
