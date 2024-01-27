@@ -10,8 +10,4 @@ pub use {
     add::Add, divide::Divide, modulo::Modulo, multiply::Multiply, pow::Pow, subtract::Subtract,
 };
 
-fn neg<T: Neg<Output = T>>(num: T) -> T {
-    -num
-}
-
-prefixOp!(UnaryMinus, "-", num, neg);
+prefixOp!(UnaryMinus, "-", num, Neg::neg);
