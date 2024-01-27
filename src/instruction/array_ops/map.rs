@@ -117,7 +117,7 @@ impl Exec for Map {
 
 impl ReturnType for Map {
     fn return_type(&self) -> Type {
-        let Type::Function(function_type) = self.lhs.return_type() else {
+        let Type::Function(function_type) = self.rhs.return_type() else {
             unreachable!()
         };
         [function_type.return_type.clone()].into()
