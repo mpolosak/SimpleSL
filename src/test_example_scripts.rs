@@ -143,3 +143,59 @@ fn test_fizzbuzz() -> Result<()> {
     );
     Ok(())
 }
+
+#[test]
+fn test_quick_sort() -> Result<()> {
+    let mut interpreter = Interpreter::with_stdlib();
+    let quick_sort = fs::read_to_string("example_scripts/quick_sort")?;
+    let result = Code::parse(&interpreter, &quick_sort)?.exec_unscoped(&mut interpreter)?;
+    assert_eq!(
+        result.as_type(),
+        FunctionType {
+            params: [[Type::Int].into()].into(),
+            return_type: [Type::Int].into()
+        }
+        .into()
+    );
+    let Variable::Function(sort) = interpreter.get_variable("sort").unwrap().clone() else {
+        panic!()
+    };
+    assert_eq!(
+        sort.create_call([[Variable::Int(9), Variable::Int(3), Variable::Int(6)].into()].into())?
+            .exec()?,
+        [Variable::Int(3), Variable::Int(6), Variable::Int(9)].into()
+    );
+    Ok(())
+}
+
+#[test]
+fn test_replace() -> Result<()> {
+    let mut interpreter = Interpreter::with_stdlib();
+    let replace = fs::read_to_string("example_scripts/replace")?;
+    let result = Code::parse(&interpreter, &replace)?.exec_unscoped(&mut interpreter)?;
+    assert_eq!(
+        result.as_type(),
+        FunctionType {
+            params: [[Type::Any].into(), Type::Int, Type::Int].into(),
+            return_type: [Type::Any].into()
+        }
+        .into()
+    );
+    let Variable::Function(replace) = interpreter.get_variable("replace").unwrap().clone() else {
+        panic!()
+    };
+    assert_eq!(
+        replace
+            .create_call(
+                [
+                    [Variable::Int(9), Variable::Int(3), Variable::Int(6)].into(),
+                    Variable::Int(0),
+                    Variable::Int(2)
+                ]
+                .into()
+            )?
+            .exec()?,
+        Variable::from([Variable::Int(6), Variable::Int(3), Variable::Int(9)])
+    );
+    Ok(())
+}
