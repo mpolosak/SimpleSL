@@ -31,20 +31,18 @@ impl MutCreateInstruction for DestructTuple {
         let idents: Rc<[Rc<str>]> = pair.into_inner().map(|pair| pair.as_str().into()).collect();
         let pair = inner.next().unwrap();
         let instruction = Instruction::new(pair, interpreter, local_variables)?;
-        match instruction.return_type() {
-            Type::Tuple(types) if types.len() == idents.len() => {
-                let result = Self {
-                    idents,
-                    instruction,
-                };
-                result.insert_local_variables(local_variables);
-                Ok(result.into())
-            }
-            _ => Err(Error::WrongType(
+        if !matches!(instruction.return_type(), Type::Tuple(types) if types.len() == idents.len()) {
+            return Err(Error::WrongType(
                 "instruction".into(),
                 Type::Tuple(std::iter::repeat(Type::Any).take(idents.len()).collect()),
-            )),
+            ));
         }
+        let result = Self {
+            idents,
+            instruction,
+        };
+        result.insert_local_variables(local_variables);
+        Ok(result.into())
     }
 }
 
