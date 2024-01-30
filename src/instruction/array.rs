@@ -64,11 +64,7 @@ impl Array {
 impl Exec for Array {
     fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
         let elements = exec_instructions(&self.instructions, interpreter)?;
-        Ok(crate::variable::Array {
-            var_type: self.var_type.clone(),
-            elements,
-        }
-        .into())
+        Ok(elements.into())
     }
 }
 
