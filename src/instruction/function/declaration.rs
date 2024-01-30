@@ -89,14 +89,12 @@ impl Recreate for FunctionDeclaration {
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
     ) -> Result<Instruction> {
-        let body = {
-            local_variables.insert(
-                self.ident.clone(),
-                LocalVariable::Function(self.params.clone(), self.return_type.clone()),
-            );
-            let mut local_variables = local_variables.layer_from_map(self.params.clone().into());
-            recreate_instructions(&self.body, &mut local_variables, interpreter)
-        }?;
+        local_variables.insert(
+            self.ident.clone(),
+            LocalVariable::Function(self.params.clone(), self.return_type.clone()),
+        );
+        let mut local_variables = local_variables.layer_from_map(self.params.clone().into());
+        let body = recreate_instructions(&self.body, &mut local_variables, interpreter)?;
         Ok(Self {
             ident: self.ident.clone(),
             params: self.params.clone(),

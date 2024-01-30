@@ -11,12 +11,8 @@ impl Or {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
                 Ok(Self::or(lhs, rhs).into())
             }
-            (Instruction::Variable(Variable::Int(value)), instruction)
-            | (instruction, Instruction::Variable(Variable::Int(value)))
-                if value == 0 =>
-            {
-                Ok(instruction)
-            }
+            (Instruction::Variable(Variable::Int(0)), instruction)
+            | (instruction, Instruction::Variable(Variable::Int(0))) => Ok(instruction),
             (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
         }
     }
