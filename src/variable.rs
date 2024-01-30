@@ -102,7 +102,7 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
         match pair.as_rule() {
             Rule::int => {
                 let Ok(value) = pair.as_str().trim().parse::<i64>() else {
-                    return Err(Error::CannotBeParsed(pair.as_str().into()));
+                    return Err(Error::IntegerOverflow(pair.as_str().into()));
                 };
                 Ok(Variable::Int(value))
             }

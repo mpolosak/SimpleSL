@@ -17,6 +17,7 @@ pub enum Error {
     MatchNotCovered,
     IO(std::io::Error),
     Parsing(Box<pest::error::Error<Rule>>),
+    IntegerOverflow(Box<str>),
     ArgumentDoesntContainType,
     CannotDo(&'static str, Type),
     CannotDo2(Type, &'static str, Type),
@@ -36,6 +37,7 @@ impl PartialEq for Error {
             (Self::CannotIndexInto(l0), Self::CannotIndexInto(r0)) => l0 == r0,
             (Self::IO(l0), Self::IO(r0)) => l0.to_string() == r0.to_string(),
             (Self::Parsing(l0), Self::Parsing(r0)) => l0 == r0,
+            (Self::IntegerOverflow(l0), Self::IntegerOverflow(r0)) => l0 == r0,
             (Self::CannotDo(l0, l1), Self::CannotDo(r0, r1)) => l0 == r0 && l1 == r1,
             (Self::CannotDo2(l0, l1, l2), Self::CannotDo2(r0, r1, r2)) => {
                 l0 == r0 && l1 == r1 && l2 == r2
@@ -88,6 +90,7 @@ impl fmt::Display for Error {
             }
             Self::IO(error) => write!(f, "{error}"),
             Self::Parsing(error) => write!(f, "{error}"),
+            Self::IntegerOverflow(value) => write!(f, "{value} is to big too fit in int type"),
             Self::ArgumentDoesntContainType => write!(f, "Argument doesn't contain type"),
             Self::CannotDo(op, var_type) => {
                 write!(f, "Cannot do {op} {var_type}")
