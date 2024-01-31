@@ -11,12 +11,12 @@ var = _{ float | int | array | array_repeat | string | function | void | tuple }
   void = {"()"}
   array = {"[" ~ expression_list ~ "]"}
   array_repeat = {"[" ~ expr ~ ";" ~ expr ~ "]"}
-  string = ${ "\"" ~ inner ~ "\"" }
+  string = ${ "\"" ~ inner ~ quotation_mark }
+    quotation_mark = {"\""}
     inner = @{ char* }
     char = {
         !("\"" | "\\") ~ ANY
-        | "\\" ~ ("\"" | "\\" | "b" | "f" | "n" | "r" | "t")
-        | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
+        | "\\" ~ ANY
     }
 primary = _{ ident | var | expr_in_brackets }
   expr_in_brackets = _{ "(" ~ expr ~ ")" }

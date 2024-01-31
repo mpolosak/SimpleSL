@@ -5,12 +5,7 @@ mod type_set;
 use crate::{function::Function, join_debug, parse::*, Error, Result};
 use pest::{iterators::Pair, Parser};
 pub use r#type::{ReturnType, Type, Typed};
-use std::{
-    fmt::{self},
-    io,
-    rc::Rc,
-    str::FromStr,
-};
+use std::{fmt, io, rc::Rc, str::FromStr};
 pub use typle::typle;
 pub use {array::Array, function_type::FunctionType, type_set::TypeSet};
 
@@ -114,10 +109,8 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
             }
             Rule::string => {
                 let value = pair.into_inner().next().unwrap().as_str();
-                let Ok(value) = unescaper::unescape(value) else {
-                    return Err(Error::CannotBeParsed(format!("\"{value}\"").into()));
-                };
-                Ok(Variable::String(value.into()))
+                let value = unescaper::unescape(value)?;
+                Ok(value.into())
             }
             Rule::array => pair
                 .into_inner()
