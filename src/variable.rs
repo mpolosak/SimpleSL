@@ -96,9 +96,13 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
     fn try_from(pair: Pair<Rule>) -> Result<Self> {
         fn parse_int(pair: Pair<Rule>, radix: u32) -> Result<Variable> {
             let str = pair.as_str();
-            let Ok(value) =
-                i64::from_str_radix(pair.into_inner().next().unwrap().as_str().trim(), radix)
-            else {
+            let inner = pair
+                .into_inner()
+                .next()
+                .unwrap()
+                .as_str()
+                .replace([' ', '_'], "");
+            let Ok(value) = i64::from_str_radix(&inner, radix) else {
                 return Err(Error::IntegerOverflow(str.into()));
             };
             Ok(Variable::Int(value))
@@ -110,7 +114,7 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
             Rule::decimal_int => parse_int(pair, 10),
             Rule::hexadecimal_int => parse_int(pair, 16),
             Rule::float => {
-                let Ok(value) = pair.as_str().trim().parse::<f64>() else {
+                let Ok(value) = pair.as_str().replace([' ', '_'], "").parse::<f64>() else {
                     return Err(Error::CannotBeParsed(pair.as_str().into()));
                 };
                 Ok(Variable::Float(value))
@@ -287,9 +291,16 @@ mod tests {
         use crate::Error;
         use std::str::FromStr;
         assert_eq!(Variable::from_str(" 15"), Ok(Variable::Int(15)));
+        assert_eq!(Variable::from_str(" 1__00_5__"), Ok(Variable::Int(1005)));
         assert_eq!(Variable::from_str(" 0b111 "), Ok(Variable::Int(0b111)));
+        assert_eq!(Variable::from_str(" 0b_1_11_ "), Ok(Variable::Int(0b111)));
         assert_eq!(Variable::from_str(" 0o176 "), Ok(Variable::Int(0o176)));
+        assert_eq!(Variable::from_str(" 0o_17__6_ "), Ok(Variable::Int(0o176)));
         assert_eq!(Variable::from_str(" 0xFA6 "), Ok(Variable::Int(0xFA6)));
+        assert_eq!(
+            Variable::from_str(" 0x__FA___6___ "),
+            Ok(Variable::Int(0xFA6))
+        );
         assert_eq!(Variable::from_str(" 7.5 "), Ok(Variable::Float(7.5)));
         assert_eq!(Variable::from_str("()"), Ok(Variable::Void));
         assert_eq!(
