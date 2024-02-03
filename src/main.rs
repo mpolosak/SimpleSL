@@ -3,7 +3,6 @@ use simplesl::{Code, Interpreter, Result};
 use std::{env, fs, process::ExitCode};
 
 fn main() -> ExitCode {
-    println!("X");
     let args: Box<[String]> = env::args().collect();
     if args.len() > 2 {
         eprintln!("Too many arguments");
