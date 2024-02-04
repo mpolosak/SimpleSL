@@ -302,6 +302,10 @@ mod tests {
             Ok(Variable::Int(0xFA6))
         );
         assert_eq!(Variable::from_str(" 7.5 "), Ok(Variable::Float(7.5)));
+        assert_eq!(Variable::from_str(" 5e25 "), Ok(Variable::Float(5e25)));
+        assert_eq!(Variable::from_str(" 6E_25 "), Ok(Variable::Float(6E25)));
+        assert_eq!(Variable::from_str(" 6E-25 "), Ok(Variable::Float(6E-25)));
+        assert_eq!(Variable::from_str(" 6.5e-5 "), Ok(Variable::Float(6.5e-5)));
         assert_eq!(Variable::from_str("()"), Ok(Variable::Void));
         assert_eq!(
             Variable::from_str(r#""print \"""#),
