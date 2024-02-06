@@ -44,13 +44,12 @@ impl MutCreateInstruction for FunctionDeclaration {
             ident.clone(),
             LocalVariable::Function(params.clone(), return_type.clone()),
         );
-        let body = {
-            let mut local_variables = local_variables.function_layer(
-                LocalVariableMap::from(params.clone()),
-                FunctionInfo::new(Some(ident.clone()), return_type.clone()),
-            );
-            interpreter.create_instructions(inner, &mut local_variables)
-        }?;
+
+        let mut local_variables = local_variables.function_layer(
+            LocalVariableMap::from(params.clone()),
+            FunctionInfo::new(Some(ident.clone()), return_type.clone()),
+        );
+        let body = interpreter.create_instructions(inner, &mut local_variables)?;
         let returned = body.last().map_or(Type::Void, ReturnType::return_type);
         if !returned.matches(&return_type) {
             return Err(Error::WrongReturn(return_type, returned));
