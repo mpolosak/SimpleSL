@@ -9,6 +9,7 @@ pub type LocalVariableMap = HashMap<Rc<str>, LocalVariable>;
 pub struct LocalVariables<'a> {
     variables: LocalVariableMap,
     lower_layer: Option<&'a Self>,
+    function: Option<FunctionInfo>,
 }
 
 impl<'a> LocalVariables<'a> {
@@ -17,6 +18,7 @@ impl<'a> LocalVariables<'a> {
         Self {
             variables: LocalVariableMap::new(),
             lower_layer: None,
+            function: None,
         }
     }
     pub fn insert(&mut self, name: Rc<str>, variable: LocalVariable) {
@@ -40,14 +42,23 @@ impl<'a> LocalVariables<'a> {
         Self {
             variables: LocalVariableMap::new(),
             lower_layer: Some(self),
+            function: None,
         }
     }
+
     #[must_use]
-    pub fn layer_from_map(&'a self, layer: LocalVariableMap) -> Self {
+    pub fn function_layer(&'a self, layer: LocalVariableMap, function: FunctionInfo) -> Self {
         Self {
             variables: layer,
             lower_layer: Some(self),
+            function: Some(function),
         }
+    }
+
+    pub fn function(&'a self) -> Option<&FunctionInfo> {
+        self.function
+            .as_ref()
+            .or_else(|| self.lower_layer.and_then(LocalVariables::function))
     }
 }
 
@@ -62,6 +73,7 @@ impl From<LocalVariableMap> for LocalVariables<'_> {
         Self {
             variables: value,
             lower_layer: None,
+            function: None,
         }
     }
 }
@@ -71,6 +83,7 @@ impl From<Params> for LocalVariables<'_> {
         Self {
             variables: value.into(),
             lower_layer: None,
+            function: None,
         }
     }
 }
@@ -111,5 +124,27 @@ impl Typed for LocalVariable {
             LocalVariable::Variable(variable) => variable.as_type(),
             LocalVariable::Other(var_type) => var_type.clone(),
         }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct FunctionInfo {
+    name: Option<Rc<str>>,
+    return_type: Type,
+}
+
+impl ReturnType for FunctionInfo {
+    fn return_type(&self) -> Type {
+        self.return_type.clone()
+    }
+}
+
+impl FunctionInfo {
+    pub fn new(name: Option<Rc<str>>, return_type: Type) -> Self {
+        Self { name, return_type }
+    }
+
+    pub fn name(&self) -> Option<Rc<str>> {
+        self.name.clone()
     }
 }

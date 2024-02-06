@@ -1,7 +1,5 @@
-use std::rc::Rc;
-
 use crate::instruction::{
-    local_variable::{LocalVariableMap, LocalVariables},
+    local_variable::{FunctionInfo, LocalVariableMap, LocalVariables},
     recreate_instructions,
     traits::{Exec, Recreate},
     CreateInstruction, Instruction,
@@ -14,6 +12,7 @@ use crate::{
     Error, Result,
 };
 use pest::iterators::Pair;
+use std::rc::Rc;
 
 #[derive(Clone, Debug)]
 pub struct AnonymousFunction {
@@ -38,8 +37,10 @@ impl CreateInstruction for AnonymousFunction {
         } else {
             Type::Void
         };
-        let mut local_variables =
-            local_variables.layer_from_map(LocalVariableMap::from(params.clone()));
+        let mut local_variables = local_variables.function_layer(
+            LocalVariableMap::from(params.clone()),
+            FunctionInfo::new(None, return_type.clone()),
+        );
         let body = interpreter.create_instructions(inner, &mut local_variables)?;
 
         let returned = body.last().map_or(Type::Void, ReturnType::return_type);
@@ -76,7 +77,10 @@ impl Recreate for AnonymousFunction {
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
     ) -> Result<Instruction> {
-        let mut local_variables = local_variables.layer_from_map(self.params.clone().into());
+        let mut local_variables = local_variables.function_layer(
+            self.params.clone().into(),
+            FunctionInfo::new(None, self.return_type.clone()),
+        );
         let body = recreate_instructions(&self.body, &mut local_variables, interpreter)?;
         Ok(Self {
             params: self.params.clone(),

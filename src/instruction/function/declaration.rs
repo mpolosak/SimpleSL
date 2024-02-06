@@ -1,7 +1,7 @@
 use crate::{
     function::{Body, Function, Param, Params},
     instruction::{
-        local_variable::{LocalVariable, LocalVariableMap, LocalVariables},
+        local_variable::{FunctionInfo, LocalVariable, LocalVariableMap, LocalVariables},
         recreate_instructions,
         traits::{BaseInstruction, MutCreateInstruction},
         Exec, Instruction, Recreate,
@@ -45,8 +45,10 @@ impl MutCreateInstruction for FunctionDeclaration {
             LocalVariable::Function(params.clone(), return_type.clone()),
         );
         let body = {
-            let mut local_variables =
-                local_variables.layer_from_map(LocalVariableMap::from(params.clone()));
+            let mut local_variables = local_variables.function_layer(
+                LocalVariableMap::from(params.clone()),
+                FunctionInfo::new(Some(ident.clone()), return_type.clone()),
+            );
             interpreter.create_instructions(inner, &mut local_variables)
         }?;
         let returned = body.last().map_or(Type::Void, ReturnType::return_type);
@@ -93,7 +95,10 @@ impl Recreate for FunctionDeclaration {
             self.ident.clone(),
             LocalVariable::Function(self.params.clone(), self.return_type.clone()),
         );
-        let mut local_variables = local_variables.layer_from_map(self.params.clone().into());
+        let mut local_variables = local_variables.function_layer(
+            self.params.clone().into(),
+            FunctionInfo::new(Some(self.ident.clone()), self.return_type.clone()),
+        );
         let body = recreate_instructions(&self.body, &mut local_variables, interpreter)?;
         Ok(Self {
             ident: self.ident.clone(),
