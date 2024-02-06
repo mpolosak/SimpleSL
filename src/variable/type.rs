@@ -27,12 +27,14 @@ pub enum Type {
     Void,
     Multi(Arc<TypeSet>),
     Any,
+    Never,
 }
 
 impl Type {
     #[must_use]
     pub fn matches(&self, other: &Self) -> bool {
         match (self, other) {
+            (Type::Never, _) => true,
             (Self::Function(function_type), Self::Function(function_type2)) => {
                 function_type.matches(function_type2)
             }
@@ -53,6 +55,7 @@ impl Type {
     #[must_use]
     pub fn concat(self, other: Self) -> Self {
         match (self, other) {
+            (Type::Never, other) | (other, Type::Never) => other,
             (Type::Any, _) | (_, Type::Any) => Type::Any,
             (first, second) if first == second => first,
             (Type::Multi(mut types), Type::Multi(types2)) => {
@@ -81,6 +84,7 @@ impl Display for Type {
             Self::Void => write!(f, "()"),
             Self::Multi(types) => write!(f, "{types}"),
             Self::Any => write!(f, "any"),
+            Self::Never => write!(f, "!"),
         }
     }
 }
@@ -196,6 +200,7 @@ mod tests {
             Type::EmptyArray,
         ];
         for var_type in types {
+            assert!(Type::Never.matches(&var_type));
             assert!(var_type.matches(&var_type));
             assert!(var_type.matches(&Type::Any));
             assert!(var_type.matches(&(var_type.clone() | Type::Int)));
