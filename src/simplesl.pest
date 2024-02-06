@@ -64,7 +64,7 @@ postfix_op = _{ type_filter | at | function_call }
   at = { "[" ~ expr ~ "]"  }
   function_call = {"("~expression_list~")"}
 stm = _{ block | if_else | if_stm | set_if_else | if_stm
-        | set_if_else | set_if | match | import | expr }
+        | set_if_else | set_if | match | import | return | expr }
   block = { "{" ~ line* ~ "}" }
   body = _{ block | expr }
   if_else = { "if" ~ expr ~ body ~ "else" ~ stm }
@@ -78,6 +78,7 @@ stm = _{ block | if_else | if_stm | set_if_else | if_stm
     match_other = { "=>" ~ body ~ "," }
     values = _{ (expr ~ ("," ~ expr)*)}
   import = { "import" ~ string }
+  return = { "return" ~ stm? }
 expression_list = _{ (expr ~ ("," ~ expr)*)?}
 line = _{ COMMENT* ~ (( function_declaration | set | destruct_tuple | stm ) ~  line_end?) }
 	line_end = _{ ";" }

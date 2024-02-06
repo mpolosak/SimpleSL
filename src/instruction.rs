@@ -13,6 +13,7 @@ pub mod local_variable;
 mod logic;
 mod macros;
 mod math;
+mod r#return;
 mod set;
 mod traits;
 mod tuple;
@@ -31,6 +32,7 @@ use self::{
     local_variable::{LocalVariable, LocalVariables},
     logic::{And, Not, Or},
     math::{Add, Divide, Modulo, Multiply, Pow, Subtract, UnaryMinus},
+    r#return::Return,
     set::Set,
     traits::BaseInstruction,
     tuple::Tuple,
@@ -78,6 +80,7 @@ impl Instruction {
             Rule::function_declaration => {
                 FunctionDeclaration::create_instruction(pair, interpreter, local_variables)
             }
+            Rule::r#return => Return::create_instruction(pair, interpreter, local_variables),
             Rule::expr => Self::new_expression(pair, interpreter, local_variables),
             rule => unexpected(rule),
         }
