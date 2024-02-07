@@ -6,7 +6,7 @@ use super::{
 use crate::{
     parse::Rule,
     variable::{ReturnType, Type, Variable},
-    Interpreter, Result,
+    Error, Interpreter, Result,
 };
 use pest::iterators::Pair;
 
@@ -21,6 +21,9 @@ impl MutCreateInstruction for Return {
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
     ) -> Result<Instruction> {
+        let Some(_function) = local_variables.function() else {
+            return Err(Error::ReturnOutsideFunction);
+        };
         let instruction = if let Some(pair) = pair.into_inner().next() {
             Instruction::new(pair, interpreter, local_variables)?
         } else {

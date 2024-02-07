@@ -23,6 +23,7 @@ pub enum Error {
     CannotDo(&'static str, Type),
     CannotDo2(Type, &'static str, Type),
     WrongReturn(Type, Type),
+    ReturnOutsideFunction,
 }
 
 impl PartialEq for Error {
@@ -108,6 +109,12 @@ impl fmt::Display for Error {
                     f,
                     "Type {returned} of variable that you want\
                     to return doesn't match declared return type {expected}"
+                )
+            }
+            Self::ReturnOutsideFunction => {
+                write!(
+                    f,
+                    "Return statment can only be used inside of function body"
                 )
             }
         }
