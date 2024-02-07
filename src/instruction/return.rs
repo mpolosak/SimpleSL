@@ -21,7 +21,7 @@ impl MutCreateInstruction for Return {
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
     ) -> Result<Instruction> {
-        let Some(_function) = local_variables.function() else {
+        let Some(function) = local_variables.function().cloned() else {
             return Err(Error::ReturnOutsideFunction);
         };
         let instruction = if let Some(pair) = pair.into_inner().next() {
@@ -29,6 +29,14 @@ impl MutCreateInstruction for Return {
         } else {
             Variable::Void.into()
         };
+        let returned = instruction.return_type();
+        if !returned.matches(function.return_type()) {
+            return Err(Error::WrongReturn {
+                function_name: function.name(),
+                function_return_type: function.return_type().clone(),
+                returned,
+            });
+        }
         Ok(Self { instruction }.into())
     }
 }

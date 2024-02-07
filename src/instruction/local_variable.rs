@@ -133,12 +133,6 @@ pub struct FunctionInfo {
     return_type: Type,
 }
 
-impl ReturnType for FunctionInfo {
-    fn return_type(&self) -> Type {
-        self.return_type.clone()
-    }
-}
-
 impl FunctionInfo {
     pub fn new(name: Option<Rc<str>>, return_type: Type) -> Self {
         Self { name, return_type }
@@ -146,5 +140,9 @@ impl FunctionInfo {
 
     pub fn name(&self) -> Option<Rc<str>> {
         self.name.clone()
+    }
+
+    pub fn return_type(&self) -> &Type {
+        &self.return_type
     }
 }

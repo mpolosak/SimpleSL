@@ -22,7 +22,11 @@ pub enum Error {
     ArgumentDoesntContainType,
     CannotDo(&'static str, Type),
     CannotDo2(Type, &'static str, Type),
-    WrongReturn(Type, Type),
+    WrongReturn {
+        function_name: Option<Rc<str>>,
+        function_return_type: Type,
+        returned: Type,
+    },
     ReturnOutsideFunction,
 }
 
@@ -47,7 +51,22 @@ impl PartialEq for Error {
             (Self::CannotDo2(l0, l1, l2), Self::CannotDo2(r0, r1, r2)) => {
                 l0 == r0 && l1 == r1 && l2 == r2
             }
-            (Self::WrongReturn(l0, l1), Self::WrongReturn(r0, r1)) => l0 == r0 && l1 == r1,
+            (
+                Self::WrongReturn {
+                    function_name,
+                    function_return_type,
+                    returned,
+                },
+                Self::WrongReturn {
+                    function_name: function_name2,
+                    function_return_type: function_return_type2,
+                    returned: returned2,
+                },
+            ) => {
+                function_name == function_name2
+                    && function_return_type == function_return_type2
+                    && returned == returned2
+            }
             _ => core::mem::discriminant(self) == core::mem::discriminant(other),
         }
     }
@@ -104,11 +123,19 @@ impl fmt::Display for Error {
             Self::CannotDo2(var_type1, op, var_type2) => {
                 write!(f, "Cannot do {var_type1} {op} {var_type2}")
             }
-            Self::WrongReturn(expected, returned) => {
+            Self::WrongReturn {
+                function_name,
+                function_return_type,
+                returned,
+            } => {
                 write!(
                     f,
-                    "Type {returned} of variable that you want\
-                    to return doesn't match declared return type {expected}"
+                    "Cannot return {returned} from function{}\n\
+                    Function{0} declared to return {function_return_type}",
+                    function_name
+                        .as_deref()
+                        .map(|value| format!(" {value}"))
+                        .unwrap_or("".into())
                 )
             }
             Self::ReturnOutsideFunction => {
