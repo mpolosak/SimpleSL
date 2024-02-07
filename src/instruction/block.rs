@@ -37,7 +37,11 @@ impl CreateInstruction for Block {
 impl Exec for Block {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let mut interpreter = interpreter.create_layer();
-        interpreter.exec(&self.instructions)
+        Ok(interpreter
+            .exec(&self.instructions)?
+            .last()
+            .cloned()
+            .unwrap_or(Variable::Void))
     }
 }
 

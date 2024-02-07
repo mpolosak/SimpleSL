@@ -241,13 +241,3 @@ pub(crate) fn recreate_instructions(
         .map(|instruction| instruction.recreate(local_variables, interpreter))
         .collect()
 }
-
-pub fn exec_instructions(
-    instructions: &[Instruction],
-    interpreter: &mut Interpreter,
-) -> std::result::Result<Rc<[Variable]>, ExecStop> {
-    instructions
-        .iter()
-        .map(|instruction| instruction.exec(interpreter))
-        .collect::<std::result::Result<Rc<_>, ExecStop>>()
-}

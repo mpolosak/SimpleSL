@@ -11,7 +11,6 @@ use crate::{
 };
 use crate::{
     instruction::{
-        exec_instructions,
         function::AnonymousFunction,
         local_variable::{LocalVariable, LocalVariables},
         recreate_instructions,
@@ -85,7 +84,7 @@ impl FunctionCall {
 
 impl Exec for FunctionCall {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let args = exec_instructions(&self.args, interpreter)?;
+        let args = interpreter.exec(&self.args)?;
         let Variable::Function(function) = self.function.exec(interpreter)? else {
             panic!("Tried to call not function")
         };

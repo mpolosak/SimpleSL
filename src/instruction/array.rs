@@ -1,5 +1,4 @@
 use super::{
-    exec_instructions,
     local_variable::LocalVariables,
     recreate_instructions,
     traits::{BaseInstruction, Exec, ExecResult, Recreate},
@@ -63,7 +62,7 @@ impl Array {
 
 impl Exec for Array {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let elements = exec_instructions(&self.instructions, interpreter)?;
+        let elements = interpreter.exec(&self.instructions)?;
         Ok(elements.into())
     }
 }

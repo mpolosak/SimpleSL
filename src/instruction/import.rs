@@ -42,7 +42,11 @@ impl MutCreateInstruction for Import {
 
 impl Exec for Import {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        interpreter.exec(&self.instructions)
+        Ok(interpreter
+            .exec(&self.instructions)?
+            .last()
+            .cloned()
+            .unwrap_or(Variable::Void))
     }
 }
 
