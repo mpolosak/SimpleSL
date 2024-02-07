@@ -1,14 +1,14 @@
 use crate::instruction::{
     local_variable::{FunctionInfo, LocalVariableMap, LocalVariables},
     recreate_instructions,
-    traits::{Exec, Recreate},
+    traits::{Exec, ExecResult, Recreate},
     CreateInstruction, Instruction,
 };
 use crate::{
     function::{Body, Function, Param, Params},
     interpreter::Interpreter,
     parse::Rule,
-    variable::{FunctionType, ReturnType, Type, Variable},
+    variable::{FunctionType, ReturnType, Type},
     Error, Result,
 };
 use pest::iterators::Pair;
@@ -58,7 +58,7 @@ impl CreateInstruction for AnonymousFunction {
 }
 
 impl Exec for AnonymousFunction {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let mut fn_local_variables = LocalVariables::from(self.params.clone());
         let body = recreate_instructions(&self.body, &mut fn_local_variables, interpreter)?;
         Ok(Function {

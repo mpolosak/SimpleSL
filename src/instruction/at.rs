@@ -1,4 +1,8 @@
-use super::{local_variable::LocalVariables, traits::BaseInstruction, Exec, Instruction, Recreate};
+use super::{
+    local_variable::LocalVariables,
+    traits::{BaseInstruction, ExecResult, ExecStop},
+    Exec, Instruction, Recreate,
+};
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
@@ -52,10 +56,10 @@ impl At {
 }
 
 impl Exec for At {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let result = self.instruction.exec(interpreter)?;
         let index = self.index.exec(interpreter)?;
-        at(result, index)
+        at(result, index).map_err(ExecStop::from)
     }
 }
 

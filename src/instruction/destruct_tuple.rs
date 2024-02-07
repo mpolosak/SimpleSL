@@ -2,7 +2,7 @@ use std::{iter::zip, rc::Rc};
 
 use super::{
     local_variable::{LocalVariable, LocalVariables},
-    traits::{BaseInstruction, MutCreateInstruction},
+    traits::{BaseInstruction, ExecResult, MutCreateInstruction},
     tuple::Tuple,
     Exec, Instruction, Recreate,
 };
@@ -72,7 +72,7 @@ impl DestructTuple {
 }
 
 impl Exec for DestructTuple {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let result = self.instruction.exec(interpreter)?;
         let Variable::Tuple(elements) = result else {
             panic!()

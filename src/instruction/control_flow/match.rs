@@ -2,12 +2,12 @@ use super::match_arm::MatchArm;
 use crate::{
     instruction::{
         local_variable::LocalVariables,
-        traits::{BaseInstruction, MutCreateInstruction},
+        traits::{BaseInstruction, ExecResult, MutCreateInstruction},
         Exec, Instruction, Recreate,
     },
     interpreter::Interpreter,
     parse::Rule,
-    variable::{ReturnType, Type, Variable},
+    variable::{ReturnType, Type},
     Error, Result,
 };
 use pest::iterators::Pair;
@@ -52,7 +52,7 @@ impl Match {
 }
 
 impl Exec for Match {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let variable = self.expression.exec(interpreter)?;
         for arm in self.arms.iter() {
             if arm.covers(&variable, interpreter)? {

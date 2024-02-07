@@ -2,7 +2,7 @@ use super::{
     exec_instructions,
     local_variable::LocalVariables,
     recreate_instructions,
-    traits::{BaseInstruction, Exec, Recreate},
+    traits::{BaseInstruction, Exec, ExecResult, Recreate},
     CreateInstruction, Instruction,
 };
 use crate::{
@@ -62,7 +62,7 @@ impl Array {
 }
 
 impl Exec for Array {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let elements = exec_instructions(&self.instructions, interpreter)?;
         Ok(elements.into())
     }

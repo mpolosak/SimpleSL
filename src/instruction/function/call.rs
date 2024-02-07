@@ -4,7 +4,7 @@ use pest::iterators::Pair;
 
 use crate::{
     function::{check_args, Params},
-    instruction::traits::BaseInstruction,
+    instruction::traits::{BaseInstruction, ExecResult, ExecStop},
     interpreter::Interpreter,
     variable::{FunctionType, ReturnType, Type, Variable},
     Error, Result,
@@ -84,12 +84,12 @@ impl FunctionCall {
 }
 
 impl Exec for FunctionCall {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let args = exec_instructions(&self.args, interpreter)?;
         let Variable::Function(function) = self.function.exec(interpreter)? else {
             panic!("Tried to call not function")
         };
-        function.exec(interpreter, &args)
+        function.exec(interpreter, &args).map_err(ExecStop::from)
     }
 }
 

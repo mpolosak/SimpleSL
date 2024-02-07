@@ -1,6 +1,8 @@
 use crate::{
     instruction::{
-        local_variable::LocalVariables, traits::BaseInstruction, Exec, Instruction, Recreate,
+        local_variable::LocalVariables,
+        traits::{BaseInstruction, ExecResult, ExecStop},
+        Exec, Instruction, Recreate,
     },
     interpreter::Interpreter,
     parse::Rule,
@@ -100,16 +102,19 @@ impl Recreate for Reduce {
 }
 
 impl Exec for Reduce {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let array = self.array.exec(interpreter)?;
         let initial_value = self.initial_value.exec(interpreter)?;
         let function = self.function.exec(interpreter)?;
         let (Variable::Array(array), Variable::Function(function)) = (&array, &function) else {
             unreachable!("Tried to do {array} ${initial_value} {function}")
         };
-        array.iter().try_fold(initial_value, |acc, current| {
-            function.exec(interpreter, &[acc, current.clone()])
-        })
+        array
+            .iter()
+            .try_fold(initial_value, |acc, current| {
+                function.exec(interpreter, &[acc, current.clone()])
+            })
+            .map_err(ExecStop::from)
     }
 }
 

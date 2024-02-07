@@ -1,6 +1,7 @@
 use super::{
-    local_variable::LocalVariables, traits::BaseInstruction, Exec, Instruction,
-    MutCreateInstruction, Recreate,
+    local_variable::LocalVariables,
+    traits::{BaseInstruction, ExecResult, ExecStop},
+    Exec, Instruction, MutCreateInstruction, Recreate,
 };
 use crate::{
     parse::Rule,
@@ -30,8 +31,9 @@ impl MutCreateInstruction for Return {
 }
 
 impl Exec for Return {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
-        self.instruction.exec(interpreter)
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
+        let value = self.instruction.exec(interpreter)?;
+        Err(ExecStop::Return(value))
     }
 }
 

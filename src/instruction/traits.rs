@@ -3,10 +3,10 @@ use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{ReturnType, Type, Variable},
-    Result,
+    Error, Result,
 };
 use pest::iterators::Pair;
-use std::{fmt::Debug, rc::Rc};
+use std::{fmt::Debug, rc::Rc, result};
 
 pub trait CreateInstruction {
     fn create_instruction(
@@ -25,7 +25,7 @@ pub trait MutCreateInstruction {
 }
 
 pub trait Exec {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable>;
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult;
 }
 
 pub trait Recreate {
@@ -46,4 +46,16 @@ impl<T: BaseInstruction + 'static> From<T> for Instruction {
 
 pub trait CanBeUsed {
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool;
+}
+
+pub type ExecResult = result::Result<Variable, ExecStop>;
+pub enum ExecStop {
+    Return(Variable),
+    Error(Error),
+}
+
+impl From<Error> for ExecStop {
+    fn from(value: Error) -> Self {
+        Self::Error(value)
+    }
 }

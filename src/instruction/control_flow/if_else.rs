@@ -1,4 +1,4 @@
-use crate::instruction::traits::BaseInstruction;
+use crate::instruction::traits::{BaseInstruction, ExecResult};
 use crate::instruction::{
     local_variable::LocalVariables, traits::MutCreateInstruction, Exec, Instruction, Recreate,
 };
@@ -67,7 +67,7 @@ impl MutCreateInstruction for IfElse {
 }
 
 impl Exec for IfElse {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         if self.condition.exec(interpreter)? == Variable::Int(0) {
             return self.if_false.exec(interpreter);
         }

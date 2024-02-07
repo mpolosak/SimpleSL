@@ -1,3 +1,4 @@
+use crate::instruction::ExecResult;
 use crate::instruction::{local_variable::LocalVariables, Exec, Instruction};
 use crate::{parse::*, stdlib, variable::*, Result};
 use pest::{iterators::Pairs, Parser};
@@ -28,7 +29,7 @@ impl<'a> Interpreter<'a> {
         }
     }
 
-    pub(crate) fn exec(&mut self, instructions: &[Instruction]) -> Result<Variable> {
+    pub(crate) fn exec(&mut self, instructions: &[Instruction]) -> ExecResult {
         instructions
             .iter()
             .map(|instruction| instruction.exec(self))

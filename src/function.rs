@@ -7,7 +7,7 @@ pub use self::{
     param::{Param, Params},
 };
 use crate::{
-    instruction::{Exec, FunctionCall, Instruction},
+    instruction::{ExecStop, FunctionCall, Instruction},
     interpreter::Interpreter,
     variable::{FunctionType, ReturnType, Type, Typed, Variable},
     Code, Result,
@@ -61,7 +61,16 @@ impl Function {
         for (arg, Param { var_type: _, name }) in zip(args, self.params.iter()) {
             interpreter.insert(name.clone(), arg.clone());
         }
-        self.body.exec(&mut interpreter)
+        let body = match &self.body {
+            Body::Lang(body) => body,
+            Body::Native(body) => return (body)(&mut interpreter),
+        };
+        match interpreter.exec(body) {
+            Ok(_) if self.return_type.matches(&Type::Void) => Ok(Variable::Void),
+            Ok(_) => unreachable!("Function returning non-void, ended with no return statment"),
+            Err(ExecStop::Return(var)) => Ok(var),
+            Err(ExecStop::Error(error)) => Err(error),
+        }
     }
 }
 

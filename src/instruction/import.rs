@@ -3,7 +3,7 @@ use std::rc::Rc;
 use super::{
     local_variable::LocalVariables,
     recreate_instructions,
-    traits::{BaseInstruction, MutCreateInstruction},
+    traits::{BaseInstruction, ExecResult, MutCreateInstruction},
     Exec, Instruction, Recreate,
 };
 use crate::{
@@ -41,7 +41,7 @@ impl MutCreateInstruction for Import {
 }
 
 impl Exec for Import {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         interpreter.exec(&self.instructions)
     }
 }

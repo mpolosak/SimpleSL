@@ -1,8 +1,8 @@
 use crate::binOp;
-use crate::instruction::traits::CanBeUsed;
+use crate::instruction::traits::{CanBeUsed, ExecResult};
 use crate::instruction::{Exec, Instruction};
 use crate::variable::{ReturnType, Type};
-use crate::{interpreter::Interpreter, variable::Variable, Result};
+use crate::{interpreter::Interpreter, Result};
 
 binOp!(Equal, "==");
 
@@ -24,7 +24,7 @@ impl Equal {
 }
 
 impl Exec for Equal {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let lhs = self.lhs.exec(interpreter)?;
         let rhs = self.rhs.exec(interpreter)?;
         Ok((lhs == rhs).into())

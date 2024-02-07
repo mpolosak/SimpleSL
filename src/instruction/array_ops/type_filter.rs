@@ -1,6 +1,8 @@
 use crate::{
     instruction::{
-        local_variable::LocalVariables, traits::BaseInstruction, Exec, Instruction, Recreate,
+        local_variable::LocalVariables,
+        traits::{BaseInstruction, ExecResult},
+        Exec, Instruction, Recreate,
     },
     interpreter::Interpreter,
     parse::Rule,
@@ -27,7 +29,7 @@ impl TypeFilter {
 }
 
 impl Exec for TypeFilter {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let array = self.array.exec(interpreter)?;
         let Variable::Array(array) = array else {
             panic!("Tried to do {array} ? {}", self.var_type)

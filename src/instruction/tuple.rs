@@ -1,8 +1,8 @@
 use std::rc::Rc;
 
 use super::{
-    exec_instructions, local_variable::LocalVariables, recreate_instructions, CreateInstruction,
-    Exec, Instruction, Recreate,
+    exec_instructions, local_variable::LocalVariables, recreate_instructions, traits::ExecResult,
+    CreateInstruction, Exec, Instruction, Recreate,
 };
 use crate::{
     interpreter::Interpreter,
@@ -45,7 +45,7 @@ impl Tuple {
 }
 
 impl Exec for Tuple {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let elements = exec_instructions(&self.elements, interpreter)?;
         Ok(Variable::Tuple(elements))
     }

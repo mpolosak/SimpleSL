@@ -3,12 +3,12 @@ use crate::{
     instruction::{
         local_variable::{FunctionInfo, LocalVariable, LocalVariableMap, LocalVariables},
         recreate_instructions,
-        traits::{BaseInstruction, MutCreateInstruction},
+        traits::{BaseInstruction, ExecResult, MutCreateInstruction},
         Exec, Instruction, Recreate,
     },
     interpreter::Interpreter,
     parse::Rule,
-    variable::{FunctionType, ReturnType, Type, Variable},
+    variable::{FunctionType, ReturnType, Type},
     Error, Result,
 };
 use pest::iterators::Pair;
@@ -65,7 +65,7 @@ impl MutCreateInstruction for FunctionDeclaration {
 }
 
 impl Exec for FunctionDeclaration {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let mut local_variables = LocalVariables::from(self.params.clone());
         local_variables.insert(
             self.ident.clone(),
