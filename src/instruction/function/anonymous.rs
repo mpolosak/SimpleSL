@@ -1,15 +1,18 @@
-use crate::instruction::{
-    local_variable::{FunctionInfo, LocalVariableMap, LocalVariables},
-    recreate_instructions,
-    traits::{Exec, ExecResult, Recreate},
-    CreateInstruction, Instruction,
-};
 use crate::{
     function::{Body, Function, Param, Params},
     interpreter::Interpreter,
     parse::Rule,
     variable::{FunctionType, ReturnType, Type},
     Result,
+};
+use crate::{
+    instruction::{
+        local_variable::{FunctionInfo, LocalVariableMap, LocalVariables},
+        recreate_instructions,
+        traits::{Exec, ExecResult, Recreate},
+        CreateInstruction, Instruction,
+    },
+    Error,
 };
 use pest::iterators::Pair;
 use std::rc::Rc;
@@ -42,7 +45,17 @@ impl CreateInstruction for AnonymousFunction {
             FunctionInfo::new(None, return_type.clone()),
         );
         let body = interpreter.create_instructions(inner, &mut local_variables)?;
-
+        if !Type::Void.matches(&return_type)
+            && !body
+                .iter()
+                .map(ReturnType::return_type)
+                .any(|var_type| var_type == Type::Never)
+        {
+            return Err(Error::MissingReturn {
+                function_name: None,
+                return_type,
+            });
+        }
         Ok(Self {
             params,
             body,

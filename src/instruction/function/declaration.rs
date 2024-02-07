@@ -9,7 +9,7 @@ use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{FunctionType, ReturnType, Type},
-    Result,
+    Error, Result,
 };
 use pest::iterators::Pair;
 use std::rc::Rc;
@@ -50,7 +50,17 @@ impl MutCreateInstruction for FunctionDeclaration {
             FunctionInfo::new(Some(ident.clone()), return_type.clone()),
         );
         let body = interpreter.create_instructions(inner, &mut local_variables)?;
-
+        if !Type::Void.matches(&return_type)
+            && !body
+                .iter()
+                .map(ReturnType::return_type)
+                .any(|var_type| var_type == Type::Never)
+        {
+            return Err(Error::MissingReturn {
+                function_name: Some(ident),
+                return_type,
+            });
+        }
         Ok(Self {
             ident,
             params,

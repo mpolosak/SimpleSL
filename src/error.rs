@@ -28,6 +28,10 @@ pub enum Error {
         returned: Type,
     },
     ReturnOutsideFunction,
+    MissingReturn {
+        function_name: Option<Rc<str>>,
+        return_type: Type,
+    },
 }
 
 impl PartialEq for Error {
@@ -144,6 +148,18 @@ impl fmt::Display for Error {
                     "Return statment can only be used inside of function body"
                 )
             }
+            Self::MissingReturn {
+                function_name,
+                return_type,
+            } => write!(
+                f,
+                "Function{} declared to return {return_type} may exit without returning any value\n\
+                add return statment at the end of the function or change return type of the function to include ()",
+                function_name
+                    .as_deref()
+                    .map(|value| format!(" {value}"))
+                    .unwrap_or("".into())
+            ),
         }
     }
 }
