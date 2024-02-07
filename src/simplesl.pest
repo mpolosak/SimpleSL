@@ -32,7 +32,7 @@ atom = _{ prefix_op? ~ primary ~ postfix_op? }
 expr = { (atom ~ (bin_op ~ atom)*) }
 bin_op = _{ comp | and | or | bitwise_and | bitwise_or | xor | lshift | rshift | pow | multiply | divide | add | subtract | modulo
             | map | filter | reduce }
-  comp = _{ equal | not_equal | greater | greater_equal | lower | lower_equal }
+  comp = _{ equal | not_equal | greater_equal | greater | lower_equal | lower }
     equal = { "==" }
     not_equal = { "!=" }
     lshift = { "<<" }
