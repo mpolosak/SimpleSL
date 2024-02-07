@@ -66,8 +66,7 @@ impl Function {
             Body::Native(body) => return (body)(&mut interpreter),
         };
         match interpreter.exec(body) {
-            Ok(_) if self.return_type.matches(&Type::Void) => Ok(Variable::Void),
-            Ok(_) => unreachable!("Function returning non-void, ended with no return statment"),
+            Ok(_) => Ok(Variable::Void),
             Err(ExecStop::Return(var)) => Ok(var),
             Err(ExecStop::Error(error)) => Err(error),
         }
