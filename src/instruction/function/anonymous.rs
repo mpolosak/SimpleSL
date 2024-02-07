@@ -9,7 +9,7 @@ use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{FunctionType, ReturnType, Type},
-    Error, Result,
+    Result,
 };
 use pest::iterators::Pair;
 use std::rc::Rc;
@@ -42,11 +42,6 @@ impl CreateInstruction for AnonymousFunction {
             FunctionInfo::new(None, return_type.clone()),
         );
         let body = interpreter.create_instructions(inner, &mut local_variables)?;
-
-        let returned = body.last().map_or(Type::Void, ReturnType::return_type);
-        if !returned.matches(&return_type) {
-            return Err(Error::WrongReturn(return_type, returned));
-        }
 
         Ok(Self {
             params,
