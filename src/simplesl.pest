@@ -66,7 +66,7 @@ postfix_op = _{ type_filter | at | function_call }
 stm = _{ block | if_else | if_stm | set_if_else | if_stm
         | set_if_else | set_if | match | import | return | expr }
   block = { "{" ~ line* ~ "}" }
-  body = _{ block | expr }
+  body = _{ block | return | expr }
   if_else = { "if" ~ expr ~ body ~ "else" ~ stm }
   if_stm = { "if" ~ expr ~ body }
   set_if_else = { "if" ~ ident ~ ":" ~ type ~ "=" ~ expr ~ body ~ "else" ~ stm }
