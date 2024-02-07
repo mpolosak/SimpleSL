@@ -1,13 +1,10 @@
 sort = (array: [int]) -> [int] {
-    if len(array) < 2 {
-        array;
-    } else {
-        first = array[0];
-        count = len(array?(item:int)->int{
-            item == first
-        });
-        array1 = array?(item:int)->int{item<first;};
-        array2 = array?(item:int)->int{first<item;};
-        sort(array1)+[first; count]+sort(array2)
-    };
+    if len(array) < 2 return array;
+    first = array[0];
+    count = len(array?(item:int)->int{
+        return item == first
+    });
+    array1 = array?(item:int)->int{return item<first;};
+    array2 = array?(item:int)->int{return first<item;};
+    return sort(array1)+[first; count]+sort(array2);
 };
