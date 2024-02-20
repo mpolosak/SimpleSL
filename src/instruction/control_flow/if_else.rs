@@ -23,7 +23,6 @@ impl MutCreateInstruction for IfElse {
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
     ) -> Result<Instruction> {
-        let rule = pair.as_rule();
         let mut inner = pair.into_inner();
         let condition_pair = inner.next().unwrap();
         let condition = Instruction::new(condition_pair, interpreter, local_variables)?;
@@ -31,38 +30,26 @@ impl MutCreateInstruction for IfElse {
             return Err(Error::WrongType("condition".into(), Type::Int));
         }
         let true_pair = inner.next().unwrap();
-        match (condition, rule) {
-            (Instruction::Variable(Variable::Int(0)), Rule::if_else) => {
-                let false_pair = inner.next().unwrap();
-                Instruction::new(false_pair, interpreter, local_variables)
+        let Instruction::Variable(Variable::Int(condition)) = condition else {
+            let if_true = Instruction::new(true_pair, interpreter, local_variables)?;
+            let if_false = inner.next().map_or_else(
+                || Ok(Variable::Void.into()),
+                |pair| Instruction::new(pair, interpreter, local_variables),
+            )?;
+            return Ok(Self {
+                condition,
+                if_true,
+                if_false,
             }
-            (Instruction::Variable(Variable::Int(0)), Rule::if_stm) => {
-                Ok(Instruction::Variable(Variable::Void))
-            }
-            (Instruction::Variable(Variable::Int(_)), _) => {
-                Instruction::new(true_pair, interpreter, local_variables)
-            }
-            (condition, Rule::if_else) => {
-                let if_true = Instruction::new(true_pair, interpreter, local_variables)?;
-                let false_pair = inner.next().unwrap();
-                let if_false = Instruction::new(false_pair, interpreter, local_variables)?;
-                Ok(Self {
-                    condition,
-                    if_true,
-                    if_false,
-                }
-                .into())
-            }
-            (condition, _) => {
-                let if_true = Instruction::new(true_pair, interpreter, local_variables)?;
-                Ok(Self {
-                    condition,
-                    if_true,
-                    if_false: Instruction::Variable(Variable::Void),
-                }
-                .into())
-            }
+            .into());
+        };
+        if condition == 0 {
+            return inner.next().map_or_else(
+                || Ok(Variable::Void.into()),
+                |pair| Instruction::new(pair, interpreter, local_variables),
+            );
         }
+        Instruction::new(true_pair, interpreter, local_variables)
     }
 }
 
