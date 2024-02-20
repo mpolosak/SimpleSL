@@ -84,7 +84,7 @@ impl ReturnType for Match {
             .iter()
             .map(ReturnType::return_type)
             .reduce(Type::concat)
-            .unwrap_or_else(|| unreachable!("match statment without arms"))
+            .expect("match statment without arms")
     }
 }
 
