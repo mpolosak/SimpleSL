@@ -35,7 +35,7 @@ impl Code {
         {
             Ok(var) => Ok(var),
             Err(ExecStop::Error(err)) => Err(err),
-            Err(_) => unreachable!("Return statment outside of function body"),
+            Err(_) => unreachable!("Return statement outside of function body"),
         }
     }
 }

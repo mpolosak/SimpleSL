@@ -145,7 +145,7 @@ impl fmt::Display for Error {
             Self::ReturnOutsideFunction => {
                 write!(
                     f,
-                    "Return statment can only be used inside of function body"
+                    "Return statement can only be used inside of function body"
                 )
             }
             Self::MissingReturn {
@@ -154,7 +154,7 @@ impl fmt::Display for Error {
             } => write!(
                 f,
                 "Function{} declared to return {return_type} may exit without returning any value\n\
-                add return statment at the end of the function or change return type of the function to include ()",
+                add return statement at the end of the function or change return type of the function to include ()",
                 function_name
                     .as_deref()
                     .map(|value| format!(" {value}"))

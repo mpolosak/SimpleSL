@@ -1,17 +1,17 @@
-# Statments
+# Statements
 ## import
 ```
 import path
 ```
 path is string literal
-Imports code from given path. Importing happens during parsing. Import statment is replaced with code written from file.
+Imports code from given path. Importing happens during parsing. Import statement is replaced with code written from file.
 
 ## return
 ```
-return statment?
+return statement?
 ```
 
-Exit function with result of executing given statment or () if no statment.
+Exit function with result of executing given statement or () if no statement.
 
 ## if
 ```
