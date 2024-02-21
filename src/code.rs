@@ -1,5 +1,5 @@
 use crate::{
-    instruction::{local_variable::LocalVariables, Exec, Instruction},
+    instruction::{local_variable::LocalVariables, Exec, ExecStop, Instruction},
     parse::{Rule, SimpleSLParser},
     variable::{ReturnType, Type, Variable},
     Interpreter, Result,
@@ -26,11 +26,17 @@ impl Code {
         self.exec_unscoped(&mut interpreter)
     }
     pub fn exec_unscoped(&self, interpreter: &mut Interpreter) -> Result<Variable> {
-        self.instructions
+        match self
+            .instructions
             .iter()
             .map(|instruction| instruction.exec(interpreter))
             .last()
             .unwrap_or(Ok(Variable::Void))
+        {
+            Ok(var) => Ok(var),
+            Err(ExecStop::Error(err)) => Err(err),
+            Err(_) => unreachable!("Return statement outside of function body"),
+        }
     }
 }
 

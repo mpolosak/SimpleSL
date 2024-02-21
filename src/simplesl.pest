@@ -1,4 +1,4 @@
-ident = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC|"_")* }
+ident = @{ !("return"~!(ASCII_ALPHANUMERIC|"_")) ~ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC|"_")* }
 var = _{ float | int | array | array_repeat | string | function | void | tuple }
   function = {params ~ return_type_decl? ~"{"~line*~"}"}
   param = {ident ~ ":" ~ type}
@@ -32,7 +32,7 @@ atom = _{ prefix_op? ~ primary ~ postfix_op? }
 expr = { (atom ~ (bin_op ~ atom)*) }
 bin_op = _{ comp | and | or | bitwise_and | bitwise_or | xor | lshift | rshift | pow | multiply | divide | add | subtract | modulo
             | map | filter | reduce }
-  comp = _{ equal | not_equal | greater | greater_equal | lower | lower_equal }
+  comp = _{ equal | not_equal | greater_equal | greater | lower_equal | lower }
     equal = { "==" }
     not_equal = { "!=" }
     lshift = { "<<" }
@@ -64,9 +64,9 @@ postfix_op = _{ type_filter | at | function_call }
   at = { "[" ~ expr ~ "]"  }
   function_call = {"("~expression_list~")"}
 stm = _{ block | if_else | if_stm | set_if_else | if_stm
-        | set_if_else | set_if | match | import | expr }
+        | set_if_else | set_if | match | import | return | expr }
   block = { "{" ~ line* ~ "}" }
-  body = _{ block | expr }
+  body = _{ block | return | expr }
   if_else = { "if" ~ expr ~ body ~ "else" ~ stm }
   if_stm = { "if" ~ expr ~ body }
   set_if_else = { "if" ~ ident ~ ":" ~ type ~ "=" ~ expr ~ body ~ "else" ~ stm }
@@ -78,8 +78,9 @@ stm = _{ block | if_else | if_stm | set_if_else | if_stm
     match_other = { "=>" ~ body ~ "," }
     values = _{ (expr ~ ("," ~ expr)*)}
   import = { "import" ~ string }
+  return = { "return" ~ stm? }
 expression_list = _{ (expr ~ ("," ~ expr)*)?}
-line = _{ COMMENT* ~ (( function_declaration | set | destruct_tuple | stm ) ~  line_end?) }
+line = _{ COMMENT* ~ (( return | function_declaration | set | destruct_tuple | stm ) ~  line_end?) }
 	line_end = _{ ";" }
   function_declaration = { ident ~ "=" ~ function }
   set = { ident ~ "=" ~ stm}

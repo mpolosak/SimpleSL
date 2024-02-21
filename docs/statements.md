@@ -1,9 +1,23 @@
-# Control Flow
-## if expression
+# Statements
+## import
+```
+import path
+```
+path is string literal
+Imports code from given path. Importing happens during parsing. Import statement is replaced with code written from file.
+
+## return
+```
+return statement?
+```
+
+Exit function with result of executing given statement or () if no statement.
+
+## if
 ```
 if condition instruction [else instruction]
 ```
-## if set expresion
+## if set
 ```
 if name:type = expression instruction [else instruction]
 ```

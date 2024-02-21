@@ -3,12 +3,12 @@ use crate::{
     instruction::{
         local_variable::{FunctionInfo, LocalVariable, LocalVariableMap, LocalVariables},
         recreate_instructions,
-        traits::{BaseInstruction, MutCreateInstruction},
+        traits::{BaseInstruction, ExecResult, MutCreateInstruction},
         Exec, Instruction, Recreate,
     },
     interpreter::Interpreter,
     parse::Rule,
-    variable::{FunctionType, ReturnType, Type, Variable},
+    variable::{FunctionType, ReturnType, Type},
     Error, Result,
 };
 use pest::iterators::Pair;
@@ -50,9 +50,16 @@ impl MutCreateInstruction for FunctionDeclaration {
             FunctionInfo::new(Some(ident.clone()), return_type.clone()),
         );
         let body = interpreter.create_instructions(inner, &mut local_variables)?;
-        let returned = body.last().map_or(Type::Void, ReturnType::return_type);
-        if !returned.matches(&return_type) {
-            return Err(Error::WrongReturn(return_type, returned));
+        if !Type::Void.matches(&return_type)
+            && !body
+                .iter()
+                .map(ReturnType::return_type)
+                .any(|var_type| var_type == Type::Never)
+        {
+            return Err(Error::MissingReturn {
+                function_name: Some(ident),
+                return_type,
+            });
         }
         Ok(Self {
             ident,
@@ -65,7 +72,7 @@ impl MutCreateInstruction for FunctionDeclaration {
 }
 
 impl Exec for FunctionDeclaration {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let mut local_variables = LocalVariables::from(self.params.clone());
         local_variables.insert(
             self.ident.clone(),

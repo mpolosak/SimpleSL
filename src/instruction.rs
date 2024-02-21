@@ -13,6 +13,7 @@ pub mod local_variable;
 mod logic;
 mod macros;
 mod math;
+mod r#return;
 mod set;
 mod traits;
 mod tuple;
@@ -31,6 +32,7 @@ use self::{
     local_variable::{LocalVariable, LocalVariables},
     logic::{And, Not, Or},
     math::{Add, Divide, Modulo, Multiply, Pow, Subtract, UnaryMinus},
+    r#return::Return,
     set::Set,
     traits::BaseInstruction,
     tuple::Tuple,
@@ -44,7 +46,9 @@ use crate::{
 pub(crate) use function::FunctionCall;
 use pest::iterators::Pair;
 use std::rc::Rc;
-pub(crate) use traits::{CreateInstruction, Exec, MutCreateInstruction, Recreate};
+pub(crate) use traits::{
+    CreateInstruction, Exec, ExecResult, ExecStop, MutCreateInstruction, Recreate,
+};
 
 #[derive(Debug, Clone)]
 pub enum Instruction {
@@ -78,6 +82,7 @@ impl Instruction {
             Rule::function_declaration => {
                 FunctionDeclaration::create_instruction(pair, interpreter, local_variables)
             }
+            Rule::r#return => Return::create_instruction(pair, interpreter, local_variables),
             Rule::expr => Self::new_expression(pair, interpreter, local_variables),
             rule => unexpected(rule),
         }
@@ -166,13 +171,13 @@ impl Instruction {
 }
 
 impl Exec for Instruction {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         match self {
             Self::Variable(var) => Ok(var.clone()),
             Self::LocalVariable(ident, _) => interpreter
                 .get_variable(ident)
                 .cloned()
-                .ok_or_else(|| Error::VariableDoesntExist(ident.clone())),
+                .ok_or_else(|| Error::VariableDoesntExist(ident.clone()).into()),
             Self::AnonymousFunction(function) => function.exec(interpreter),
             Self::Tuple(function) => function.exec(interpreter),
             Self::Other(other) => other.exec(interpreter),
@@ -235,14 +240,4 @@ pub(crate) fn recreate_instructions(
         .iter()
         .map(|instruction| instruction.recreate(local_variables, interpreter))
         .collect()
-}
-
-pub fn exec_instructions(
-    instructions: &[Instruction],
-    interpreter: &mut Interpreter,
-) -> Result<Rc<[Variable]>> {
-    instructions
-        .iter()
-        .map(|instruction| instruction.exec(interpreter))
-        .collect::<Result<Rc<_>>>()
 }

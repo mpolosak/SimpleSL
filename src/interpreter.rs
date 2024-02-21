@@ -1,3 +1,4 @@
+use crate::instruction::ExecStop;
 use crate::instruction::{local_variable::LocalVariables, Exec, Instruction};
 use crate::{parse::*, stdlib, variable::*, Result};
 use pest::{iterators::Pairs, Parser};
@@ -28,12 +29,14 @@ impl<'a> Interpreter<'a> {
         }
     }
 
-    pub(crate) fn exec(&mut self, instructions: &[Instruction]) -> Result<Variable> {
+    pub(crate) fn exec(
+        &mut self,
+        instructions: &[Instruction],
+    ) -> std::result::Result<Rc<[Variable]>, ExecStop> {
         instructions
             .iter()
             .map(|instruction| instruction.exec(self))
-            .last()
-            .unwrap_or(Ok(Variable::Void))
+            .collect()
     }
 
     pub(crate) fn load(

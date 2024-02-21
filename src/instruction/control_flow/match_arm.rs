@@ -1,7 +1,9 @@
 use crate::{
     instruction::{
         local_variable::{LocalVariable, LocalVariables},
-        recreate_instructions, Exec, Instruction, Recreate,
+        recreate_instructions,
+        traits::{ExecResult, ExecStop},
+        Exec, Instruction, Recreate,
     },
     interpreter::Interpreter,
     parse::{unexpected, Rule},
@@ -68,7 +70,11 @@ impl MatchArm {
             Self::Type { var_type, .. } => checked_type.matches(var_type),
         }
     }
-    pub fn covers(&self, variable: &Variable, interpreter: &mut Interpreter) -> Result<bool> {
+    pub fn covers(
+        &self,
+        variable: &Variable,
+        interpreter: &mut Interpreter,
+    ) -> std::result::Result<bool, ExecStop> {
         Ok(match self {
             MatchArm::Other(_) => true,
             MatchArm::Type { var_type, .. } => variable.as_type().matches(var_type),
@@ -83,7 +89,7 @@ impl MatchArm {
             }
         })
     }
-    pub fn exec(&self, variable: Variable, interpreter: &mut Interpreter) -> Result<Variable> {
+    pub fn exec(&self, variable: Variable, interpreter: &mut Interpreter) -> ExecResult {
         match self {
             MatchArm::Type {
                 ident, instruction, ..

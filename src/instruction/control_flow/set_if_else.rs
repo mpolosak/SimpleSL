@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use crate::instruction::{
     local_variable::{LocalVariable, LocalVariables},
-    traits::{BaseInstruction, MutCreateInstruction},
+    traits::{BaseInstruction, ExecResult, MutCreateInstruction},
     Exec, Instruction, Recreate,
 };
 use crate::{
@@ -59,7 +59,7 @@ impl MutCreateInstruction for SetIfElse {
 }
 
 impl Exec for SetIfElse {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let expression_result = self.expression.exec(interpreter)?;
         let result_type = expression_result.as_type();
         if !result_type.matches(&self.var_type) {

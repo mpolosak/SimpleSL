@@ -16,7 +16,7 @@ macro_rules! prefixOp {
     ($T: ident, $symbol: literal) => {
         use crate::instruction::{
             local_variable::LocalVariables,
-            traits::{Exec, Recreate},
+            traits::{Exec, ExecResult, Recreate},
             Instruction,
         };
         use crate::{
@@ -56,7 +56,7 @@ macro_rules! prefixOp {
         }
 
         impl Exec for $T {
-            fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
+            fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
                 let result = self.instruction.exec(interpreter)?;
                 Ok(Self::calc(result))
             }

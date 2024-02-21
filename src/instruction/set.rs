@@ -1,12 +1,12 @@
 use super::{
     local_variable::LocalVariables,
-    traits::{BaseInstruction, Exec, Recreate},
+    traits::{BaseInstruction, Exec, ExecResult, Recreate},
     Instruction, MutCreateInstruction,
 };
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
-    variable::{ReturnType, Type, Variable},
+    variable::{ReturnType, Type},
     Result,
 };
 use pest::iterators::Pair;
@@ -44,7 +44,7 @@ impl MutCreateInstruction for Set {
 }
 
 impl Exec for Set {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let result = self.instruction.exec(interpreter)?;
         interpreter.insert(self.ident.clone(), result.clone());
         Ok(result)

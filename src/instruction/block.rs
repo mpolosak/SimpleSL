@@ -1,5 +1,7 @@
 use super::{
-    local_variable::LocalVariables, recreate_instructions, traits::BaseInstruction,
+    local_variable::LocalVariables,
+    recreate_instructions,
+    traits::{BaseInstruction, ExecResult},
     CreateInstruction, Exec, Instruction, Recreate,
 };
 use crate::{
@@ -33,9 +35,13 @@ impl CreateInstruction for Block {
 }
 
 impl Exec for Block {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let mut interpreter = interpreter.create_layer();
-        interpreter.exec(&self.instructions)
+        Ok(interpreter
+            .exec(&self.instructions)?
+            .last()
+            .cloned()
+            .unwrap_or(Variable::Void))
     }
 }
 

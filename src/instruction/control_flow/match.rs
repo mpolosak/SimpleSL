@@ -2,12 +2,12 @@ use super::match_arm::MatchArm;
 use crate::{
     instruction::{
         local_variable::LocalVariables,
-        traits::{BaseInstruction, MutCreateInstruction},
+        traits::{BaseInstruction, ExecResult, MutCreateInstruction},
         Exec, Instruction, Recreate,
     },
     interpreter::Interpreter,
     parse::Rule,
-    variable::{ReturnType, Type, Variable},
+    variable::{ReturnType, Type},
     Error, Result,
 };
 use pest::iterators::Pair;
@@ -41,18 +41,17 @@ impl MutCreateInstruction for Match {
 
 impl Match {
     fn is_covering_type(&self, checked_type: &Type) -> bool {
-        match checked_type {
-            Type::Multi(types) => types.iter().all(|var_type| self.is_covering_type(var_type)),
-            checked_type => self
-                .arms
-                .iter()
-                .any(|arm| arm.is_covering_type(checked_type)),
+        if let Type::Multi(types) = checked_type {
+            return types.iter().all(|var_type| self.is_covering_type(var_type));
         }
+        self.arms
+            .iter()
+            .any(|arm| arm.is_covering_type(checked_type))
     }
 }
 
 impl Exec for Match {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let variable = self.expression.exec(interpreter)?;
         for arm in self.arms.iter() {
             if arm.covers(&variable, interpreter)? {
@@ -85,7 +84,7 @@ impl ReturnType for Match {
             .iter()
             .map(ReturnType::return_type)
             .reduce(Type::concat)
-            .unwrap_or_else(|| unreachable!("match statment without arms"))
+            .expect("match statement without arms")
     }
 }
 

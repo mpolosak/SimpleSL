@@ -1,7 +1,10 @@
 use crate::{
     binOp,
     function::Function,
-    instruction::{traits::CanBeUsed, Exec, Instruction},
+    instruction::{
+        traits::{CanBeUsed, ExecResult, ExecStop},
+        Exec, Instruction,
+    },
     interpreter::Interpreter,
     variable::{Array, ReturnType, Type, Variable},
     Result,
@@ -56,7 +59,7 @@ impl Map {
         interpreter: &mut Interpreter,
         arrays: Rc<[Variable]>,
         function: Rc<Function>,
-    ) -> Result<Variable> {
+    ) -> ExecResult {
         let arrays: Box<[&Rc<Array>]> = arrays
             .iter()
             .map(|array| {
@@ -68,26 +71,28 @@ impl Map {
             .collect();
         let len = arrays.iter().map(|array| array.len()).min().unwrap();
         if function.params.len() == arrays.len() {
-            return (0..len)
+            let array = (0..len)
                 .map(|i| {
                     let args: Box<[Variable]> =
                         arrays.iter().map(|array| array[i].clone()).collect();
                     function.exec(interpreter, &args)
                 })
-                .collect();
+                .collect::<Result<Variable>>()?;
+            return Ok(array);
         }
-        (0..len)
+        let array = (0..len)
             .map(|i| {
                 let mut args = vec![i.into()];
                 args.extend(arrays.iter().map(|array| array[i].clone()));
                 function.exec(interpreter, &args)
             })
-            .collect()
+            .collect::<Result<Variable>>()?;
+        Ok(array)
     }
 }
 
 impl Exec for Map {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let array = self.lhs.exec(interpreter)?;
         let function = self.rhs.exec(interpreter)?;
         let Variable::Function(function) = function else {
@@ -104,14 +109,16 @@ impl Exec for Map {
                 .iter()
                 .cloned()
                 .map(|var| function.exec(interpreter, &[var]))
-                .collect();
+                .collect::<Result<Variable>>()
+                .map_err(ExecStop::from);
         }
         array
             .iter()
             .cloned()
             .enumerate()
             .map(|(index, var)| function.exec(interpreter, &[index.into(), var]))
-            .collect()
+            .collect::<Result<Variable>>()
+            .map_err(ExecStop::from)
     }
 }
 

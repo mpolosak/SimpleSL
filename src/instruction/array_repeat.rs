@@ -1,6 +1,7 @@
 use super::{
-    local_variable::LocalVariables, traits::BaseInstruction, CreateInstruction, Exec, Instruction,
-    Recreate,
+    local_variable::LocalVariables,
+    traits::{BaseInstruction, ExecResult},
+    CreateInstruction, Exec, Instruction, Recreate,
 };
 use crate::{
     interpreter::Interpreter,
@@ -49,13 +50,13 @@ impl ArrayRepeat {
 }
 
 impl Exec for ArrayRepeat {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let value = self.value.exec(interpreter)?;
         let Variable::Int(len) = self.len.exec(interpreter)? else {
             panic!()
         };
         if len < 0 {
-            return Err(Error::CannotBeNegative("len"));
+            return Err(Error::CannotBeNegative("len").into());
         }
         Ok(std::iter::repeat(value).take(len as usize).collect())
     }

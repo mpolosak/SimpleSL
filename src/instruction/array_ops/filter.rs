@@ -1,6 +1,9 @@
 use crate::{
     binOp,
-    instruction::{traits::CanBeUsed, Exec, Instruction},
+    instruction::{
+        traits::{CanBeUsed, ExecResult},
+        Exec, Instruction,
+    },
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
     Result,
@@ -36,7 +39,7 @@ impl Filter {
 }
 
 impl Exec for Filter {
-    fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable> {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let array = self.lhs.exec(interpreter)?;
         let function = self.rhs.exec(interpreter)?;
         let (Variable::Array(array), Variable::Function(function)) = (&array, &function) else {

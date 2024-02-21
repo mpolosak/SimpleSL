@@ -54,7 +54,7 @@ print(tuple) //prints (5, 7.8, "value")
 ### Functions
 ```
 delta = (a: float, b: float, c: float) -> float {
-    b**2.0+4.0*a*c
+    return b**2.0+4.0*a*c
 } // function taking free arguments of type float and returning value of type float
 name = "Tom"
 x = (){
