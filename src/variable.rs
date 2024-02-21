@@ -284,6 +284,9 @@ mod tests {
         assert!(!is_correct_variable_name(""));
         assert!(!is_correct_variable_name("12"));
         assert!(!is_correct_variable_name("%"));
+        assert!(!is_correct_variable_name("return"));
+        assert!(is_correct_variable_name("return5"));
+        assert!(is_correct_variable_name("areturn"));
     }
     #[test]
     fn check_variable_from_str() {

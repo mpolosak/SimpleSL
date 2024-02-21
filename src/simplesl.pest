@@ -1,4 +1,4 @@
-ident = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC|"_")* }
+ident = @{ !("return"~!(ASCII_ALPHANUMERIC|"_")) ~ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC|"_")* }
 var = _{ float | int | array | array_repeat | string | function | void | tuple }
   function = {params ~ return_type_decl? ~"{"~line*~"}"}
   param = {ident ~ ":" ~ type}
@@ -80,7 +80,7 @@ stm = _{ block | if_else | if_stm | set_if_else | if_stm
   import = { "import" ~ string }
   return = { "return" ~ stm? }
 expression_list = _{ (expr ~ ("," ~ expr)*)?}
-line = _{ COMMENT* ~ (( function_declaration | set | destruct_tuple | stm ) ~  line_end?) }
+line = _{ COMMENT* ~ (( return | function_declaration | set | destruct_tuple | stm ) ~  line_end?) }
 	line_end = _{ ";" }
   function_declaration = { ident ~ "=" ~ function }
   set = { ident ~ "=" ~ stm}
