@@ -12,7 +12,7 @@ impl Pow {
                 Ok(Self::exec(base, exp)?.into())
             }
             (_, Instruction::Variable(Variable::Int(exp))) if exp < 0 => {
-                Err(Error::CannotBeNegative("exponent"))
+                Err(Error::NegativeExponent)
             }
             (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
         }
@@ -20,7 +20,7 @@ impl Pow {
 
     fn exec(base: Variable, exp: Variable) -> Result<Variable> {
         match (base, exp) {
-            (_, Variable::Int(exp)) if exp < 0 => Err(Error::CannotBeNegative("exponent")),
+            (_, Variable::Int(exp)) if exp < 0 => Err(Error::NegativeExponent),
             (Variable::Int(base), Variable::Int(exp)) => Ok((base.pow(exp as u32)).into()),
             (Variable::Float(base), Variable::Float(exp)) => Ok((base.powf(exp)).into()),
             (array @ Variable::Array(_), _) | (_, array @ Variable::Array(_))

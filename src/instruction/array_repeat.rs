@@ -37,9 +37,7 @@ impl CreateInstruction for ArrayRepeat {
 impl ArrayRepeat {
     fn create_from_instructions(value: Instruction, len: Instruction) -> Result<Instruction> {
         match (value, len) {
-            (_, Instruction::Variable(Variable::Int(len))) if len < 0 => {
-                Err(Error::CannotBeNegative("len"))
-            }
+            (_, Instruction::Variable(Variable::Int(len))) if len < 0 => Err(Error::NegativeLength),
             (Instruction::Variable(value), Instruction::Variable(Variable::Int(len))) => {
                 let variable: Variable = std::iter::repeat(value).take(len as usize).collect();
                 Ok(variable.into())
@@ -56,7 +54,7 @@ impl Exec for ArrayRepeat {
             panic!()
         };
         if len < 0 {
-            return Err(Error::CannotBeNegative("len").into());
+            return Err(Error::NegativeLength.into());
         }
         Ok(std::iter::repeat(value).take(len as usize).collect())
     }

@@ -7,7 +7,9 @@ pub enum Error {
     WrongType(Rc<str>, Type),
     WrongNumberOfArguments(Box<str>, usize),
     IndexToBig,
-    CannotBeNegative(&'static str),
+    NegativeIndex,
+    NegativeLength,
+    NegativeExponent,
     CannotBeParsed(Box<str>),
     CannotIndexInto(Type),
     TooManyVariables,
@@ -42,7 +44,6 @@ impl PartialEq for Error {
             (Self::WrongNumberOfArguments(l0, l1), Self::WrongNumberOfArguments(r0, r1)) => {
                 l0 == r0 && l1 == r1
             }
-            (Self::CannotBeNegative(l0), Self::CannotBeNegative(r0)) => l0 == r0,
             (Self::CannotBeParsed(l0), Self::CannotBeParsed(r0)) => l0 == r0,
             (Self::CannotIndexInto(l0), Self::CannotIndexInto(r0)) => l0 == r0,
             (Self::IO(l0), Self::IO(r0)) => l0.to_string() == r0.to_string(),
@@ -94,7 +95,9 @@ impl fmt::Display for Error {
                 write!(f, "{name} requires {num} args")
             }
             Self::IndexToBig => write!(f, "index must be lower than array size"),
-            Self::CannotBeNegative(ident) => write!(f, "{ident} cannot be negative"),
+            Self::NegativeIndex => write!(f, "cannot index with negative value"),
+            Self::NegativeLength => write!(f, "length of an array cannot be negative"),
+            Self::NegativeExponent => write!(f, "int value cannot be rised to a negative power"),
             Self::CannotBeParsed(text) => {
                 write!(f, "{text} cannot be parsed to variable")
             }
