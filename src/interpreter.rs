@@ -1,6 +1,6 @@
 use crate::instruction::ExecStop;
 use crate::instruction::{local_variable::LocalVariables, Exec, Instruction};
-use crate::{parse::*, stdlib, variable::*, Result};
+use crate::{parse::*, stdlib, variable::*, Error};
 use pest::{iterators::Pairs, Parser};
 use std::{collections::HashMap, fs, rc::Rc};
 
@@ -32,7 +32,7 @@ impl<'a> Interpreter<'a> {
     pub(crate) fn exec(
         &mut self,
         instructions: &[Instruction],
-    ) -> std::result::Result<Rc<[Variable]>, ExecStop> {
+    ) -> Result<Rc<[Variable]>, ExecStop> {
         instructions
             .iter()
             .map(|instruction| instruction.exec(self))
@@ -43,7 +43,7 @@ impl<'a> Interpreter<'a> {
         &self,
         path: &str,
         local_variables: &mut LocalVariables,
-    ) -> Result<Rc<[Instruction]>> {
+    ) -> Result<Rc<[Instruction]>, Error> {
         let contents = fs::read_to_string(path)?;
         self.parse_input(&contents, local_variables)
     }
@@ -52,7 +52,7 @@ impl<'a> Interpreter<'a> {
         &self,
         input: &str,
         local_variables: &mut LocalVariables,
-    ) -> Result<Rc<[Instruction]>> {
+    ) -> Result<Rc<[Instruction]>, Error> {
         let pairs = SimpleSLParser::parse(Rule::input, input)?;
         self.create_instructions(pairs, local_variables)
     }
@@ -61,10 +61,10 @@ impl<'a> Interpreter<'a> {
         &self,
         pairs: Pairs<'_, Rule>,
         local_variables: &mut LocalVariables,
-    ) -> Result<Rc<[Instruction]>> {
+    ) -> Result<Rc<[Instruction]>, Error> {
         let mut instructions = pairs
             .map(|pair| Instruction::new(pair, self, local_variables))
-            .collect::<Result<Vec<Instruction>>>()?;
+            .collect::<Result<Vec<Instruction>, Error>>()?;
         let Some(last) = instructions.pop() else {
             return Ok(Rc::from([]));
         };

@@ -1,23 +1,24 @@
 use crate::binIntOp;
 use crate::instruction::Instruction;
 use crate::variable::Typed;
-use crate::{variable::Variable, Result};
+use crate::variable::Variable;
 
 binIntOp!(Or, "||");
 
 impl Or {
-    fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
-        match (lhs, rhs) {
-            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
-                Ok(Self::or(lhs, rhs).into())
-            }
+    fn create_from_instructions(
+        lhs: Instruction,
+        rhs: Instruction,
+    ) -> Result<Instruction, ExecError> {
+        Ok(match (lhs, rhs) {
+            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => Self::or(lhs, rhs).into(),
             (Instruction::Variable(Variable::Int(0)), instruction)
-            | (instruction, Instruction::Variable(Variable::Int(0))) => Ok(instruction),
-            (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
-        }
+            | (instruction, Instruction::Variable(Variable::Int(0))) => instruction,
+            (lhs, rhs) => Self { lhs, rhs }.into(),
+        })
     }
 
-    fn exec(lhs: Variable, rhs: Variable) -> Result<Variable> {
+    fn exec(lhs: Variable, rhs: Variable) -> Result<Variable, ExecError> {
         Ok(Self::or(lhs, rhs))
     }
 

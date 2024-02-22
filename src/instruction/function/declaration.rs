@@ -9,7 +9,7 @@ use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{FunctionType, ReturnType, Type},
-    Error, Result,
+    Error, ExecError,
 };
 use pest::iterators::Pair;
 use std::rc::Rc;
@@ -27,7 +27,7 @@ impl MutCreateInstruction for FunctionDeclaration {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let ident: Rc<str> = inner.next().unwrap().as_str().into();
         let mut inner = inner.next().unwrap().into_inner();
@@ -96,7 +96,7 @@ impl Recreate for FunctionDeclaration {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, ExecError> {
         local_variables.insert(
             self.ident.clone(),
             LocalVariable::Function(self.params.clone(), self.return_type.clone()),

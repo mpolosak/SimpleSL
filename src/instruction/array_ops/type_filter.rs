@@ -7,7 +7,7 @@ use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{ReturnType, Type, Typed, Variable},
-    Error, Result,
+    Error, ExecError,
 };
 use pest::iterators::Pair;
 
@@ -18,7 +18,10 @@ pub struct TypeFilter {
 }
 
 impl TypeFilter {
-    pub fn create_instruction(array: Instruction, var_type: Pair<Rule>) -> Result<Instruction> {
+    pub fn create_instruction(
+        array: Instruction,
+        var_type: Pair<Rule>,
+    ) -> Result<Instruction, Error> {
         let array_type = array.return_type();
         let var_type = Type::from(var_type);
         match array_type {
@@ -47,7 +50,7 @@ impl Recreate for TypeFilter {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, ExecError> {
         let array = self.array.recreate(local_variables, interpreter)?;
         Ok(Self {
             array,

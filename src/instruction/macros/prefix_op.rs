@@ -21,7 +21,7 @@ macro_rules! prefixOp {
         };
         use crate::{
             variable::{ReturnType, Type, Variable},
-            Error, Interpreter, Result,
+            Error, ExecError, Interpreter,
         };
         #[derive(Debug)]
         pub struct $T {
@@ -29,7 +29,7 @@ macro_rules! prefixOp {
         }
         #[allow(dead_code)]
         impl $T {
-            pub fn create_instruction(instruction: Instruction) -> Result<Instruction> {
+            pub fn create_instruction(instruction: Instruction) -> Result<Instruction, Error> {
                 let return_type = instruction.return_type();
                 if !Self::can_be_used(&return_type) {
                     return Err(Error::CannotDo($symbol, return_type));
@@ -67,7 +67,7 @@ macro_rules! prefixOp {
                 &self,
                 local_variables: &mut LocalVariables,
                 interpreter: &Interpreter,
-            ) -> Result<Instruction> {
+            ) -> Result<Instruction, ExecError> {
                 let instruction = self.instruction.recreate(local_variables, interpreter)?;
                 Ok(Self::create_from_instruction(instruction))
             }

@@ -2,21 +2,24 @@ use crate::binOpCBU;
 use crate::instruction::macros::bin_num_op::ACCEPTED_TYPE;
 use crate::instruction::{Exec, Instruction};
 use crate::variable::{ReturnType, Type};
-use crate::{interpreter::Interpreter, variable::Variable, Result};
+use crate::{interpreter::Interpreter, variable::Variable};
 
 binOpCBU!(Greater, ">");
 
 impl Greater {
-    fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
-        match (lhs, rhs) {
+    fn create_from_instructions(
+        lhs: Instruction,
+        rhs: Instruction,
+    ) -> Result<Instruction, ExecError> {
+        Ok(match (lhs, rhs) {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
-                Ok(Self::greater(lhs, rhs).into())
+                Self::greater(lhs, rhs).into()
             }
-            (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
-        }
+            (lhs, rhs) => Self { lhs, rhs }.into(),
+        })
     }
 
-    fn exec(lhs: Variable, rhs: Variable) -> Result<Variable> {
+    fn exec(lhs: Variable, rhs: Variable) -> Result<Variable, ExecError> {
         Ok(Self::greater(lhs, rhs))
     }
 

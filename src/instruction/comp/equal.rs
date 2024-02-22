@@ -1,8 +1,8 @@
 use crate::binOp;
 use crate::instruction::traits::{CanBeUsed, ExecResult};
 use crate::instruction::{Exec, Instruction};
+use crate::interpreter::Interpreter;
 use crate::variable::{ReturnType, Type};
-use crate::{interpreter::Interpreter, Result};
 
 binOp!(Equal, "==");
 
@@ -13,7 +13,10 @@ impl CanBeUsed for Equal {
 }
 
 impl Equal {
-    fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
+    fn create_from_instructions(
+        lhs: Instruction,
+        rhs: Instruction,
+    ) -> Result<Instruction, ExecError> {
         match (lhs, rhs) {
             (Instruction::Variable(variable), Instruction::Variable(variable2)) => {
                 Ok(Instruction::Variable((variable == variable2).into()))

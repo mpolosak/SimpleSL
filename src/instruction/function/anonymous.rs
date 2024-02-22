@@ -3,7 +3,7 @@ use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{FunctionType, ReturnType, Type},
-    Result,
+    ExecError,
 };
 use crate::{
     instruction::{
@@ -29,7 +29,7 @@ impl CreateInstruction for AnonymousFunction {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &LocalVariables,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let params_pair = inner.next().unwrap();
         let params = Params(params_pair.into_inner().map(Param::from).collect());
@@ -84,7 +84,7 @@ impl Recreate for AnonymousFunction {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, ExecError> {
         let mut local_variables = local_variables.function_layer(
             self.params.clone().into(),
             FunctionInfo::new(None, self.return_type.clone()),

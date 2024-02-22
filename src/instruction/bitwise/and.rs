@@ -1,11 +1,14 @@
+use crate::binIntOp;
 use crate::instruction::Instruction;
 use crate::variable::{Typed, Variable};
-use crate::{binIntOp, Result};
 
 binIntOp!(BitwiseAnd, "&");
 
 impl BitwiseAnd {
-    fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
+    fn create_from_instructions(
+        lhs: Instruction,
+        rhs: Instruction,
+    ) -> Result<Instruction, ExecError> {
         Ok(match (lhs, rhs) {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
                 Self::bin_and(lhs, rhs).into()
@@ -16,7 +19,7 @@ impl BitwiseAnd {
 }
 
 impl BitwiseAnd {
-    fn exec(lhs: Variable, rhs: Variable) -> Result<Variable> {
+    fn exec(lhs: Variable, rhs: Variable) -> Result<Variable, ExecError> {
         Ok(Self::bin_and(lhs, rhs))
     }
     fn bin_and(lhs: Variable, rhs: Variable) -> Variable {

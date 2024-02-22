@@ -14,8 +14,6 @@ pub use simplesl_macros::export_function;
 use std::fmt::{Debug, Display};
 pub use {code::Code, error::Error, exec_error::ExecError, interpreter::Interpreter};
 
-pub type Result<T> = std::result::Result<T, Error>;
-
 pub fn join(array: &[impl Display], separator: &str) -> String {
     let [elements @ .., last] = array else {
         return "".into();

@@ -10,7 +10,7 @@ use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{ReturnType, Type, Variable},
-    Error, Result,
+    Error, ExecError,
 };
 use pest::iterators::Pair;
 
@@ -25,7 +25,7 @@ impl MutCreateInstruction for DestructTuple {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
         let idents: Rc<[Rc<str>]> = pair.into_inner().map(|pair| pair.as_str().into()).collect();
@@ -89,7 +89,7 @@ impl Recreate for DestructTuple {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, ExecError> {
         let instruction = self.instruction.recreate(local_variables, interpreter)?;
         let result = Self {
             idents: self.idents.clone(),

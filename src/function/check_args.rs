@@ -1,11 +1,11 @@
 use crate::{
     function::{Param, Params},
     variable::Type,
-    Error, Result,
+    Error,
 };
 use std::iter::zip;
 
-pub fn check_args(var_name: &str, params: &Params, args: &[Type]) -> Result<()> {
+pub fn check_args(var_name: &str, params: &Params, args: &[Type]) -> Result<(), Error> {
     if params.len() != args.len() {
         return Err(Error::WrongNumberOfArguments(var_name.into(), params.len()));
     }

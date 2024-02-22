@@ -4,7 +4,6 @@ use crate::variable::{Array, Typed};
 use crate::{
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
-    Result,
 };
 use lazy_static::lazy_static;
 use std::str::FromStr;
@@ -19,16 +18,19 @@ lazy_static! {
 binOpCBU!(Add, "+");
 
 impl Add {
-    fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
-        match (lhs, rhs) {
+    fn create_from_instructions(
+        lhs: Instruction,
+        rhs: Instruction,
+    ) -> Result<Instruction, ExecError> {
+        Ok(match (lhs, rhs) {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
-                Self::exec(lhs, rhs).map(Instruction::from)
+                Self::exec(lhs, rhs)?.into()
             }
-            (rhs, lhs) => Ok(Self { lhs, rhs }.into()),
-        }
+            (rhs, lhs) => Self { lhs, rhs }.into(),
+        })
     }
 
-    fn exec(lhs: Variable, rhs: Variable) -> Result<Variable> {
+    fn exec(lhs: Variable, rhs: Variable) -> Result<Variable, ExecError> {
         match (lhs, rhs) {
             (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 + value2).into()),
             (Variable::Float(value1), Variable::Float(value2)) => Ok((value1 + value2).into()),
@@ -142,6 +144,7 @@ mod tests {
     }
 
     fn parse_and_exec(script: &str) -> Result<Variable, crate::Error> {
-        Code::parse(&Interpreter::without_stdlib(), script).and_then(|code| code.exec())
+        Code::parse(&Interpreter::without_stdlib(), script)
+            .and_then(|code| code.exec().map_err(Error::from))
     }
 }

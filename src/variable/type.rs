@@ -2,7 +2,7 @@ use super::{function_type::FunctionType, type_set::TypeSet};
 use crate::{
     join,
     parse::{Rule, SimpleSLParser},
-    Error, Result,
+    Error,
 };
 use pest::{iterators::Pair, Parser};
 use std::{
@@ -92,7 +92,7 @@ impl Display for Type {
 impl FromStr for Type {
     type Err = Error;
 
-    fn from_str(s: &str) -> Result<Self> {
+    fn from_str(s: &str) -> Result<Self, Error> {
         SimpleSLParser::parse(Rule::r#type, s)?
             .next()
             .map(Self::from)

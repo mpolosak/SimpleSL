@@ -8,7 +8,7 @@ use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{ReturnType, Type, Variable},
-    Result,
+    Error, ExecError,
 };
 use pest::iterators::Pair;
 use std::rc::Rc;
@@ -23,7 +23,7 @@ impl CreateInstruction for Block {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &LocalVariables,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, Error> {
         let mut local_variables = local_variables.create_layer();
         let instructions =
             interpreter.create_instructions(pair.into_inner(), &mut local_variables)?;
@@ -50,7 +50,7 @@ impl Recreate for Block {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, ExecError> {
         let mut local_variables = local_variables.create_layer();
         let instructions =
             recreate_instructions(&self.instructions, &mut local_variables, interpreter)?;

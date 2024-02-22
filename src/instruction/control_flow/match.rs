@@ -8,7 +8,7 @@ use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{ReturnType, Type},
-    Error, Result,
+    Error, ExecError,
 };
 use pest::iterators::Pair;
 
@@ -23,14 +23,14 @@ impl MutCreateInstruction for Match {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
         let expression = Instruction::new(pair, interpreter, local_variables)?;
         let var_type = expression.return_type();
         let arms = inner
             .map(|pair| MatchArm::new(pair, interpreter, local_variables))
-            .collect::<Result<Box<[MatchArm]>>>()?;
+            .collect::<Result<Box<[MatchArm]>, Error>>()?;
         let result = Self { expression, arms };
         if !result.is_covering_type(&var_type) {
             return Err(Error::MatchNotCovered);
@@ -67,13 +67,13 @@ impl Recreate for Match {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, ExecError> {
         let expression = self.expression.recreate(local_variables, interpreter)?;
         let arms = self
             .arms
             .iter()
             .map(|arm| arm.recreate(local_variables, interpreter))
-            .collect::<Result<Box<[MatchArm]>>>()?;
+            .collect::<Result<Box<[MatchArm]>, ExecError>>()?;
         Ok(Self { expression, arms }.into())
     }
 }

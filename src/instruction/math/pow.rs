@@ -1,26 +1,28 @@
 use crate::binNumOp;
 use crate::instruction::Instruction;
-use crate::variable::Typed;
-use crate::{variable::Variable, Error, Result};
+use crate::variable::{Typed, Variable};
 
 binNumOp!(Pow, "*");
 
 impl Pow {
-    fn create_from_instructions(base: Instruction, exp: Instruction) -> Result<Instruction> {
+    fn create_from_instructions(
+        base: Instruction,
+        exp: Instruction,
+    ) -> Result<Instruction, ExecError> {
         match (base, exp) {
             (Instruction::Variable(base), Instruction::Variable(exp)) => {
                 Ok(Self::exec(base, exp)?.into())
             }
             (_, Instruction::Variable(Variable::Int(exp))) if exp < 0 => {
-                Err(Error::NegativeExponent)
+                Err(ExecError::NegativeExponent)
             }
             (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
         }
     }
 
-    fn exec(base: Variable, exp: Variable) -> Result<Variable> {
+    fn exec(base: Variable, exp: Variable) -> Result<Variable, ExecError> {
         match (base, exp) {
-            (_, Variable::Int(exp)) if exp < 0 => Err(Error::NegativeExponent),
+            (_, Variable::Int(exp)) if exp < 0 => Err(ExecError::NegativeExponent),
             (Variable::Int(base), Variable::Int(exp)) => Ok((base.pow(exp as u32)).into()),
             (Variable::Float(base), Variable::Float(exp)) => Ok((base.powf(exp)).into()),
             (array @ Variable::Array(_), _) | (_, array @ Variable::Array(_))

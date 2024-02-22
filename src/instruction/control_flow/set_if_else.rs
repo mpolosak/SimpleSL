@@ -1,15 +1,17 @@
 use std::rc::Rc;
 
-use crate::instruction::{
-    local_variable::{LocalVariable, LocalVariables},
-    traits::{BaseInstruction, ExecResult, MutCreateInstruction},
-    Exec, Instruction, Recreate,
+use crate::{
+    instruction::{
+        local_variable::{LocalVariable, LocalVariables},
+        traits::{BaseInstruction, ExecResult, MutCreateInstruction},
+        Exec, Instruction, Recreate,
+    },
+    Error, ExecError,
 };
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{ReturnType, Type, Typed, Variable},
-    Result,
 };
 use pest::iterators::Pair;
 
@@ -27,7 +29,7 @@ impl MutCreateInstruction for SetIfElse {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, Error> {
         let rule = pair.as_rule();
         let mut inner = pair.into_inner();
         let ident: Rc<str> = inner.next().unwrap().as_str().into();
@@ -76,7 +78,7 @@ impl Recreate for SetIfElse {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, ExecError> {
         let expression = self.expression.recreate(local_variables, interpreter)?;
         let if_match = {
             let mut local_variables = local_variables.create_layer();

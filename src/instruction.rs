@@ -41,7 +41,7 @@ use crate::{
     interpreter::Interpreter,
     parse::{unexpected, Rule, PRATT_PARSER},
     variable::{ReturnType, Type, Typed, Variable},
-    Error, Result,
+    Error, ExecError,
 };
 pub(crate) use function::FunctionCall;
 use pest::iterators::Pair;
@@ -64,7 +64,7 @@ impl Instruction {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Self> {
+    ) -> Result<Self, Error> {
         match pair.as_rule() {
             Rule::set => Set::create_instruction(pair, interpreter, local_variables),
             Rule::destruct_tuple => {
@@ -91,7 +91,7 @@ impl Instruction {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &LocalVariables,
-    ) -> Result<Self> {
+    ) -> Result<Self, Error> {
         PRATT_PARSER
             .map_primary(|pair| match pair.as_rule() {
                 Rule::expr => Self::new_expression(pair, interpreter, local_variables),
@@ -174,10 +174,10 @@ impl Exec for Instruction {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         match self {
             Self::Variable(var) => Ok(var.clone()),
-            Self::LocalVariable(ident, _) => interpreter
+            Self::LocalVariable(ident, _) => Ok(interpreter
                 .get_variable(ident)
                 .cloned()
-                .ok_or_else(|| Error::VariableDoesntExist(ident.clone()).into()),
+                .unwrap_or_else(|| panic!("Tried to get variable {ident} that doest exist"))),
             Self::AnonymousFunction(function) => function.exec(interpreter),
             Self::Tuple(function) => function.exec(interpreter),
             Self::Other(other) => other.exec(interpreter),
@@ -190,21 +190,21 @@ impl Recreate for Instruction {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, ExecError> {
         match self {
-            Self::LocalVariable(ident, _) => local_variables.get(ident).map_or_else(
+            Self::LocalVariable(ident, _) => Ok(local_variables.get(ident).map_or_else(
                 || {
                     interpreter
                         .get_variable(ident)
                         .cloned()
                         .map(Instruction::from)
-                        .ok_or_else(|| Error::VariableDoesntExist(ident.clone()))
+                        .unwrap_or_else(|| panic!("Tried to get variable {ident} that doest exist"))
                 },
                 |var| match var.clone() {
-                    LocalVariable::Variable(variable) => Ok(Self::Variable(variable)),
-                    local_variable => Ok(Self::LocalVariable(ident.clone(), local_variable)),
+                    LocalVariable::Variable(variable) => Self::Variable(variable),
+                    local_variable => Self::LocalVariable(ident.clone(), local_variable),
                 },
-            ),
+            )),
             Self::AnonymousFunction(function) => function.recreate(local_variables, interpreter),
             Self::Tuple(tuple) => tuple.recreate(local_variables, interpreter),
             Self::Variable(variable) => Ok(Self::Variable(variable.clone())),
@@ -235,7 +235,7 @@ pub(crate) fn recreate_instructions(
     instructions: &[Instruction],
     local_variables: &mut LocalVariables,
     interpreter: &Interpreter,
-) -> Result<Rc<[Instruction]>> {
+) -> Result<Rc<[Instruction]>, ExecError> {
     instructions
         .iter()
         .map(|instruction| instruction.recreate(local_variables, interpreter))

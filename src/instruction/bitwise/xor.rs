@@ -1,21 +1,21 @@
 use crate::binIntOp;
 use crate::instruction::Instruction;
-use crate::variable::Typed;
-use crate::{variable::Variable, Result};
+use crate::variable::{Typed, Variable};
 
 binIntOp!(Xor, "^");
 
 impl Xor {
-    fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
-        match (lhs, rhs) {
-            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
-                Ok(Self::xor(lhs, rhs).into())
-            }
-            (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
-        }
+    fn create_from_instructions(
+        lhs: Instruction,
+        rhs: Instruction,
+    ) -> Result<Instruction, ExecError> {
+        Ok(match (lhs, rhs) {
+            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => Self::xor(lhs, rhs).into(),
+            (lhs, rhs) => Self { lhs, rhs }.into(),
+        })
     }
 
-    fn exec(lhs: Variable, rhs: Variable) -> Result<Variable> {
+    fn exec(lhs: Variable, rhs: Variable) -> Result<Variable, ExecError> {
         Ok(Self::xor(lhs, rhs))
     }
 

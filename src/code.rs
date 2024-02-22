@@ -2,7 +2,7 @@ use crate::{
     instruction::{local_variable::LocalVariables, Exec, ExecStop, Instruction},
     parse::{Rule, SimpleSLParser},
     variable::{ReturnType, Type, Variable},
-    Interpreter, Result,
+    Error, ExecError, Interpreter,
 };
 use pest::Parser;
 use std::rc::Rc;
@@ -13,19 +13,19 @@ pub struct Code {
 }
 
 impl Code {
-    pub fn parse(interpreter: &Interpreter, script: &str) -> Result<Self> {
+    pub fn parse(interpreter: &Interpreter, script: &str) -> Result<Self, Error> {
         let parse = SimpleSLParser::parse(Rule::input, script)?;
         let mut local_variables = LocalVariables::new();
         let instructions = parse
             .map(|pair| Instruction::new(pair, interpreter, &mut local_variables))
-            .collect::<Result<_>>()?;
+            .collect::<Result<_, Error>>()?;
         Ok(Self { instructions })
     }
-    pub fn exec(&self) -> Result<Variable> {
+    pub fn exec(&self) -> Result<Variable, ExecError> {
         let mut interpreter = Interpreter::without_stdlib();
         self.exec_unscoped(&mut interpreter)
     }
-    pub fn exec_unscoped(&self, interpreter: &mut Interpreter) -> Result<Variable> {
+    pub fn exec_unscoped(&self, interpreter: &mut Interpreter) -> Result<Variable, ExecError> {
         match self
             .instructions
             .iter()

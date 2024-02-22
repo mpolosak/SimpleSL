@@ -3,10 +3,10 @@ use std::fs;
 
 use crate::{
     variable::{FunctionType, Type, Typed, Variable},
-    Code, Interpreter, Result,
+    Code, Error, Interpreter,
 };
 #[test]
-fn test_example1() -> Result<()> {
+fn test_example1() -> Result<(), Error> {
     let interpreter = Interpreter::with_stdlib();
     let example1 = fs::read_to_string("example_scripts/example1")?;
     let result = Code::parse(&interpreter, &example1)?.exec()?;
@@ -15,7 +15,7 @@ fn test_example1() -> Result<()> {
 }
 
 #[test]
-fn test_fib() -> Result<()> {
+fn test_fib() -> Result<(), Error> {
     let mut interpreter = Interpreter::with_stdlib();
     let fib = fs::read_to_string("example_scripts/fib")?;
     let result = Code::parse(&interpreter, &fib)?.exec_unscoped(&mut interpreter)?;
@@ -101,7 +101,7 @@ fn test_fib() -> Result<()> {
 }
 
 #[test]
-fn test_fizzbuzz() -> Result<()> {
+fn test_fizzbuzz() -> Result<(), Error> {
     let mut interpreter = Interpreter::with_stdlib();
     let fizzbuzz = fs::read_to_string("example_scripts/fizzbuzz")?;
     let result = Code::parse(&interpreter, &fizzbuzz)?.exec_unscoped(&mut interpreter)?;
@@ -145,7 +145,7 @@ fn test_fizzbuzz() -> Result<()> {
 }
 
 #[test]
-fn test_quick_sort() -> Result<()> {
+fn test_quick_sort() -> Result<(), Error> {
     let mut interpreter = Interpreter::with_stdlib();
     let quick_sort = fs::read_to_string("example_scripts/quick_sort")?;
     let result = Code::parse(&interpreter, &quick_sort)?.exec_unscoped(&mut interpreter)?;
@@ -169,7 +169,7 @@ fn test_quick_sort() -> Result<()> {
 }
 
 #[test]
-fn test_replace() -> Result<()> {
+fn test_replace() -> Result<(), Error> {
     let mut interpreter = Interpreter::with_stdlib();
     let replace = fs::read_to_string("example_scripts/replace")?;
     let result = Code::parse(&interpreter, &replace)?.exec_unscoped(&mut interpreter)?;

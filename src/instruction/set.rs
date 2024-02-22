@@ -7,7 +7,7 @@ use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{ReturnType, Type},
-    Result,
+    Error, ExecError,
 };
 use pest::iterators::Pair;
 use std::rc::Rc;
@@ -34,7 +34,7 @@ impl MutCreateInstruction for Set {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let ident: Rc<str> = inner.next().unwrap().as_str().into();
         let pair = inner.next().unwrap();
@@ -56,7 +56,7 @@ impl Recreate for Set {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, ExecError> {
         let instruction = self.instruction.recreate(local_variables, interpreter)?;
         local_variables.insert(self.ident.clone(), (&instruction).into());
         Ok(Self {

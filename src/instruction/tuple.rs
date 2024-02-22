@@ -8,7 +8,7 @@ use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{ReturnType, Type, Variable},
-    Result,
+    Error, ExecError,
 };
 use pest::iterators::Pair;
 
@@ -22,11 +22,11 @@ impl CreateInstruction for Tuple {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &LocalVariables,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, Error> {
         let elements = pair
             .into_inner()
             .map(|pair| Instruction::new_expression(pair, interpreter, local_variables))
-            .collect::<Result<Rc<[Instruction]>>>()?;
+            .collect::<Result<Rc<[Instruction]>, Error>>()?;
         Ok(Self::create_from_elements(elements))
     }
 }
@@ -56,7 +56,7 @@ impl Recreate for Tuple {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, ExecError> {
         let elements = recreate_instructions(&self.elements, local_variables, interpreter)?;
         Ok(Self::create_from_elements(elements))
     }

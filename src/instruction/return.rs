@@ -6,7 +6,7 @@ use super::{
 use crate::{
     parse::Rule,
     variable::{ReturnType, Type, Variable},
-    Error, Interpreter, Result,
+    Error, ExecError, Interpreter,
 };
 use pest::iterators::Pair;
 
@@ -20,7 +20,7 @@ impl MutCreateInstruction for Return {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, Error> {
         let Some(function) = local_variables.function().cloned() else {
             return Err(Error::ReturnOutsideFunction);
         };
@@ -53,7 +53,7 @@ impl Recreate for Return {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, ExecError> {
         let instruction = self.instruction.recreate(local_variables, interpreter)?;
         Ok(Return { instruction }.into())
     }

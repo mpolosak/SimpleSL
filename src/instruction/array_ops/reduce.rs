@@ -7,7 +7,7 @@ use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{FunctionType, ReturnType, Type, Variable},
-    Error, Result,
+    Error, ExecError,
 };
 use pest::iterators::Pair;
 
@@ -25,7 +25,7 @@ impl Reduce {
         function: Instruction,
         local_variables: &LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, Error> {
         let initial_value =
             Instruction::new_expression(initial_value, interpreter, local_variables)?;
         let element_type = match array.return_type() {
@@ -88,7 +88,7 @@ impl Recreate for Reduce {
         &self,
         local_variables: &mut crate::instruction::local_variable::LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, ExecError> {
         let array = self.array.recreate(local_variables, interpreter)?;
         let initial_value = self.initial_value.recreate(local_variables, interpreter)?;
         let function = self.function.recreate(local_variables, interpreter)?;

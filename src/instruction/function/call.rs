@@ -7,7 +7,7 @@ use crate::{
     instruction::traits::{BaseInstruction, ExecResult, ExecStop},
     interpreter::Interpreter,
     variable::{FunctionType, ReturnType, Type, Variable},
-    Error, Result,
+    Error, ExecError,
 };
 use crate::{
     instruction::{
@@ -32,11 +32,11 @@ impl FunctionCall {
         args: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &LocalVariables,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, Error> {
         let args = args
             .into_inner()
             .map(|pair| Instruction::new_expression(pair, interpreter, local_variables))
-            .collect::<Result<Rc<_>>>()?;
+            .collect::<Result<Rc<_>, Error>>()?;
         match &function {
             Instruction::Variable(Variable::Function(function2)) => {
                 Self::check_args_with_params("function", &function2.params, &args)?;
@@ -53,7 +53,11 @@ impl FunctionCall {
             }
         }
     }
-    fn check_args_with_params(pair_str: &str, params: &Params, args: &[Instruction]) -> Result<()> {
+    fn check_args_with_params(
+        pair_str: &str,
+        params: &Params,
+        args: &[Instruction],
+    ) -> Result<(), Error> {
         check_args(
             pair_str,
             params,
@@ -63,7 +67,11 @@ impl FunctionCall {
                 .collect::<Box<[Type]>>(),
         )
     }
-    fn check_args_with_type(pair_str: &str, var_type: &Type, args: &[Instruction]) -> Result<()> {
+    fn check_args_with_type(
+        pair_str: &str,
+        var_type: &Type,
+        args: &[Instruction],
+    ) -> Result<(), Error> {
         let params = args
             .iter()
             .map(Instruction::return_type)
@@ -97,7 +105,7 @@ impl Recreate for FunctionCall {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, ExecError> {
         let function = self.function.recreate(local_variables, interpreter)?;
         let args = recreate_instructions(&self.args, local_variables, interpreter)?;
         Ok(Self { function, args }.into())

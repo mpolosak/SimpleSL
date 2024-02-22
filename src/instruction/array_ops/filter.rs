@@ -6,7 +6,6 @@ use crate::{
     },
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
-    Result,
 };
 
 binOp!(Filter, "?");
@@ -33,7 +32,10 @@ impl CanBeUsed for Filter {
 }
 
 impl Filter {
-    fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
+    fn create_from_instructions(
+        lhs: Instruction,
+        rhs: Instruction,
+    ) -> Result<Instruction, ExecError> {
         Ok(Self { lhs, rhs }.into())
     }
 }

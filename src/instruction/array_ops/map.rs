@@ -7,7 +7,6 @@ use crate::{
     },
     interpreter::Interpreter,
     variable::{Array, ReturnType, Type, Variable},
-    Result,
 };
 use std::{iter::zip, rc::Rc};
 
@@ -51,7 +50,10 @@ impl CanBeUsed for Map {
 }
 
 impl Map {
-    fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
+    fn create_from_instructions(
+        lhs: Instruction,
+        rhs: Instruction,
+    ) -> Result<Instruction, ExecError> {
         Ok(Self { lhs, rhs }.into())
     }
 
@@ -77,7 +79,7 @@ impl Map {
                         arrays.iter().map(|array| array[i].clone()).collect();
                     function.exec(interpreter, &args)
                 })
-                .collect::<Result<Variable>>()?;
+                .collect::<Result<Variable, ExecError>>()?;
             return Ok(array);
         }
         let array = (0..len)
@@ -86,7 +88,7 @@ impl Map {
                 args.extend(arrays.iter().map(|array| array[i].clone()));
                 function.exec(interpreter, &args)
             })
-            .collect::<Result<Variable>>()?;
+            .collect::<Result<Variable, ExecError>>()?;
         Ok(array)
     }
 }
@@ -109,7 +111,7 @@ impl Exec for Map {
                 .iter()
                 .cloned()
                 .map(|var| function.exec(interpreter, &[var]))
-                .collect::<Result<Variable>>()
+                .collect::<Result<Variable, ExecError>>()
                 .map_err(ExecStop::from);
         }
         array
@@ -117,7 +119,7 @@ impl Exec for Map {
             .cloned()
             .enumerate()
             .map(|(index, var)| function.exec(interpreter, &[index.into(), var]))
-            .collect::<Result<Variable>>()
+            .collect::<Result<Variable, ExecError>>()
             .map_err(ExecStop::from)
     }
 }

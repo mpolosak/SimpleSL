@@ -10,7 +10,7 @@ use crate::{
     instruction::{ExecStop, FunctionCall, Instruction},
     interpreter::Interpreter,
     variable::{FunctionType, ReturnType, Type, Typed, Variable},
-    Code, Result,
+    Code, Error, ExecError,
 };
 use std::{fmt, iter::zip, rc::Rc};
 
@@ -25,7 +25,7 @@ pub struct Function {
 impl Function {
     pub fn new(
         params: Params,
-        body: fn(&mut Interpreter) -> Result<Variable>,
+        body: fn(&mut Interpreter) -> Result<Variable, ExecError>,
         return_type: Type,
     ) -> Self {
         Self {
@@ -36,7 +36,7 @@ impl Function {
         }
     }
 
-    pub fn create_call(self: Rc<Self>, args: Vec<Variable>) -> Result<Code> {
+    pub fn create_call(self: Rc<Self>, args: Vec<Variable>) -> Result<Code, Error> {
         let types = args.iter().map(Typed::as_type).collect::<Box<[Type]>>();
         let args = args.into_iter().map(Instruction::from).collect();
         check_args("function", &self.params, &types)?;
@@ -53,7 +53,7 @@ impl Function {
         self: &Rc<Self>,
         interpreter: &mut Interpreter,
         args: &[Variable],
-    ) -> Result<Variable> {
+    ) -> Result<Variable, ExecError> {
         let mut interpreter = interpreter.create_layer();
         if let Some(ident) = &self.ident {
             interpreter.insert(ident.clone(), self.clone().into())

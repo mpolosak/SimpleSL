@@ -2,11 +2,12 @@ use crate::instruction::traits::{BaseInstruction, ExecResult};
 use crate::instruction::{
     local_variable::LocalVariables, traits::MutCreateInstruction, Exec, Instruction, Recreate,
 };
+use crate::ExecError;
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{ReturnType, Type, Variable},
-    Error, Result,
+    Error,
 };
 use pest::iterators::Pair;
 
@@ -22,7 +23,7 @@ impl MutCreateInstruction for IfElse {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let condition_pair = inner.next().unwrap();
         let condition = Instruction::new(condition_pair, interpreter, local_variables)?;
@@ -67,7 +68,7 @@ impl Recreate for IfElse {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, ExecError> {
         let condition = self.condition.recreate(local_variables, interpreter)?;
         let Instruction::Variable(Variable::Int(condition)) = condition else {
             let if_true = self.if_true.recreate(local_variables, interpreter)?;

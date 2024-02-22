@@ -6,6 +6,7 @@ macro_rules! binOp {
             local_variable::LocalVariables,
             traits::{BaseInstruction, Recreate},
         };
+        use crate::{Error, ExecError};
         #[derive(Debug)]
         pub struct $T {
             lhs: Instruction,
@@ -14,14 +15,13 @@ macro_rules! binOp {
 
         impl BaseInstruction for $T {}
         impl $T {
-            pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction> {
+            pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
                 let lhs_type = lhs.return_type();
                 let rhs_type = rhs.return_type();
-                if Self::can_be_used(&lhs_type, &rhs_type) {
-                    Self::create_from_instructions(lhs, rhs)
-                } else {
-                    Err(crate::Error::CannotDo2(lhs_type, $symbol, rhs_type))
+                if !Self::can_be_used(&lhs_type, &rhs_type) {
+                    return Err(Error::CannotDo2(lhs_type, $symbol, rhs_type));
                 }
+                Ok(Self::create_from_instructions(lhs, rhs)?)
             }
         }
 
@@ -30,7 +30,7 @@ macro_rules! binOp {
                 &self,
                 local_variables: &mut LocalVariables,
                 interpreter: &Interpreter,
-            ) -> Result<Instruction> {
+            ) -> Result<Instruction, ExecError> {
                 let lhs = self.lhs.recreate(local_variables, interpreter)?;
                 let rhs = self.rhs.recreate(local_variables, interpreter)?;
                 Self::create_from_instructions(lhs, rhs)

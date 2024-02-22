@@ -2,7 +2,7 @@ mod array;
 mod function_type;
 mod r#type;
 mod type_set;
-use crate::{function::Function, join_debug, parse::*, Error, Result};
+use crate::{function::Function, join_debug, parse::*, Error};
 use pest::{iterators::Pair, Parser};
 pub use r#type::{ReturnType, Type, Typed};
 use std::{fmt, io, rc::Rc, str::FromStr};
@@ -65,7 +65,7 @@ impl fmt::Debug for Variable {
 impl FromStr for Variable {
     type Err = Error;
 
-    fn from_str(s: &str) -> Result<Self> {
+    fn from_str(s: &str) -> Result<Self, Error> {
         let s = s.trim();
         let parse = SimpleSLParser::parse(Rule::var, s)?;
         if parse.as_str() != s {
@@ -93,8 +93,8 @@ impl PartialEq for Variable {
 impl TryFrom<Pair<'_, Rule>> for Variable {
     type Error = Error;
 
-    fn try_from(pair: Pair<Rule>) -> Result<Self> {
-        fn parse_int(pair: Pair<Rule>, radix: u32) -> Result<Variable> {
+    fn try_from(pair: Pair<Rule>) -> Result<Self, Error> {
+        fn parse_int(pair: Pair<Rule>, radix: u32) -> Result<Variable, Error> {
             let str = pair.as_str();
             let inner = pair
                 .into_inner()
@@ -128,7 +128,7 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
                 .into_inner()
                 .map(|pair| pair.into_inner().next().unwrap())
                 .map(Self::try_from)
-                .collect::<Result<Variable>>(),
+                .collect::<Result<Variable, Error>>(),
             Rule::void => Ok(Variable::Void),
             _ => Err(Error::CannotBeParsed(pair.as_str().into())),
         }

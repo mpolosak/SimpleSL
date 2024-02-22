@@ -8,7 +8,7 @@ use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{ReturnType, Type, Variable},
-    Result,
+    Error, ExecError,
 };
 use pest::iterators::Pair;
 use std::rc::Rc;
@@ -24,11 +24,11 @@ impl CreateInstruction for Array {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &LocalVariables,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, Error> {
         let inner = pair.into_inner();
         let instructions = inner
             .map(|arg| Instruction::new_expression(arg, interpreter, local_variables))
-            .collect::<Result<Rc<_>>>()?;
+            .collect::<Result<Rc<_>, Error>>()?;
         Ok(Self::create_from_instructions(instructions))
     }
 }
@@ -72,7 +72,7 @@ impl Recreate for Array {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, ExecError> {
         let instructions = recreate_instructions(&self.instructions, local_variables, interpreter)?;
         Ok(Self::create_from_instructions(instructions))
     }
