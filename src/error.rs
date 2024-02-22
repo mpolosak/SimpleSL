@@ -1,4 +1,4 @@
-use crate::{parse::Rule, variable::Type};
+use crate::{parse::Rule, variable::Type, ExecError};
 use std::{fmt, rc::Rc};
 
 #[derive(Debug)]
@@ -182,5 +182,19 @@ impl From<std::io::Error> for Error {
 impl From<unescaper::Error> for Error {
     fn from(value: unescaper::Error) -> Self {
         Error::CannotUnescapeString(value)
+    }
+}
+
+impl From<ExecError> for Error {
+    fn from(value: ExecError) -> Self {
+        match value {
+            ExecError::IndexToBig => Self::IndexToBig,
+            ExecError::NegativeIndex => Self::NegativeIndex,
+            ExecError::NegativeLength => Self::NegativeLength,
+            ExecError::NegativeExponent => Self::NegativeExponent,
+            ExecError::ZeroDivision => Self::ZeroDivision,
+            ExecError::ZeroModulo => Self::ZeroModulo,
+            ExecError::OverflowShift => Self::OverflowShift,
+        }
     }
 }

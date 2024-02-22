@@ -1,5 +1,6 @@
 mod code;
 mod error;
+mod exec_error;
 pub mod function;
 mod instruction;
 mod interpreter;
@@ -11,7 +12,7 @@ pub mod variable;
 extern crate pest_derive;
 pub use simplesl_macros::export_function;
 use std::fmt::{Debug, Display};
-pub use {code::Code, error::Error, interpreter::Interpreter};
+pub use {code::Code, error::Error, exec_error::ExecError, interpreter::Interpreter};
 
 pub type Result<T> = std::result::Result<T, Error>;
 
