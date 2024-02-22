@@ -21,7 +21,6 @@ pub enum Error {
     Parsing(Box<pest::error::Error<Rule>>),
     IntegerOverflow(Box<str>),
     CannotUnescapeString(unescaper::Error),
-    ArgumentDoesntContainType,
     CannotDo(&'static str, Type),
     CannotDo2(Type, &'static str, Type),
     WrongReturn {
@@ -123,7 +122,6 @@ impl fmt::Display for Error {
             Self::Parsing(error) => write!(f, "{error}"),
             Self::IntegerOverflow(value) => write!(f, "{value} is to big too fit in int type"),
             Self::CannotUnescapeString(error) => write!(f, "{error}"),
-            Self::ArgumentDoesntContainType => write!(f, "Argument doesn't contain type"),
             Self::CannotDo(op, var_type) => {
                 write!(f, "Cannot do {op} {var_type}")
             }
