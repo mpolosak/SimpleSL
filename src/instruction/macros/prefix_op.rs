@@ -11,7 +11,6 @@ lazy_static! {
 }
 
 #[allow(clippy::crate_in_macro_def)]
-#[macro_export]
 macro_rules! prefixOp {
     ($T: ident, $symbol: literal) => {
         use crate::instruction::{
@@ -104,3 +103,5 @@ macro_rules! prefixOp {
         }
     };
 }
+
+pub(crate) use prefixOp;

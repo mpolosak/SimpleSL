@@ -1,5 +1,4 @@
 #[allow(clippy::crate_in_macro_def)]
-#[macro_export]
 macro_rules! binOp {
     ($T: ident, $symbol: literal) => {
         use crate::instruction::{
@@ -38,3 +37,4 @@ macro_rules! binOp {
         }
     };
 }
+pub(crate) use binOp;

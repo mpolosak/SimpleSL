@@ -1,5 +1,4 @@
-use crate::binIntOp;
-use crate::instruction::Instruction;
+use crate::instruction::{macros::binIntOp, Instruction};
 use crate::variable::Variable;
 
 binIntOp!(Modulo, "%");

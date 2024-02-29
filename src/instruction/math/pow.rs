@@ -1,5 +1,4 @@
-use crate::binNumOp;
-use crate::instruction::Instruction;
+use crate::instruction::{macros::binNumOp, Instruction};
 use crate::variable::{Typed, Variable};
 
 binNumOp!(Pow, "*");

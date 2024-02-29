@@ -9,7 +9,6 @@ lazy_static! {
 }
 
 #[allow(clippy::crate_in_macro_def)]
-#[macro_export]
 macro_rules! binNumOp {
     ($T: ident, $symbol: literal) => {
         use crate::instruction::macros::bin_num_op::ACCEPTED_TYPE;
@@ -18,7 +17,7 @@ macro_rules! binNumOp {
             variable::{ReturnType, Type},
             Interpreter,
         };
-        crate::binOpCBU!($T, $symbol);
+        crate::instruction::macros::binOpCBU!($T, $symbol);
 
         impl ReturnType for $T {
             fn return_type(&self) -> Type {
@@ -33,3 +32,5 @@ macro_rules! binNumOp {
         }
     };
 }
+
+pub(crate) use binNumOp;

@@ -1,5 +1,4 @@
-use crate::binOpCBU;
-use crate::instruction::macros::bin_num_op::ACCEPTED_TYPE;
+use crate::instruction::macros::{binOpCBU, bin_num_op::ACCEPTED_TYPE};
 use crate::instruction::{Exec, Instruction};
 use crate::variable::{ReturnType, Type};
 use crate::{interpreter::Interpreter, variable::Variable};

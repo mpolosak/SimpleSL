@@ -1,5 +1,4 @@
-use crate::binOpCBU;
-use crate::instruction::{Exec, Instruction};
+use crate::instruction::{macros::binOpCBU, Exec, Instruction};
 use crate::variable::{Array, Typed};
 use crate::{
     interpreter::Interpreter,

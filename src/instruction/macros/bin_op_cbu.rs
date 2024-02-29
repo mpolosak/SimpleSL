@@ -1,9 +1,8 @@
 #[allow(clippy::crate_in_macro_def)]
-#[macro_export]
 macro_rules! binOpCBU {
     ($T: ident, $symbol: literal) => {
         use crate::instruction::traits::{CanBeUsed, ExecResult, ExecStop};
-        crate::binOp!($T, $symbol);
+        crate::instruction::macros::binOp!($T, $symbol);
         impl CanBeUsed for $T {
             fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
                 Type::Tuple([lhs.clone(), rhs.clone()].into()).matches(&ACCEPTED_TYPE)
@@ -19,3 +18,4 @@ macro_rules! binOpCBU {
         }
     };
 }
+pub(crate) use binOpCBU;

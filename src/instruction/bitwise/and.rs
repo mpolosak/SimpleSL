@@ -1,5 +1,4 @@
-use crate::binIntOp;
-use crate::instruction::Instruction;
+use crate::instruction::{macros::binIntOp, Instruction};
 use crate::variable::{Typed, Variable};
 
 binIntOp!(BitwiseAnd, "&");
@@ -16,9 +15,6 @@ impl BitwiseAnd {
             (lhs, rhs) => Self { lhs, rhs }.into(),
         })
     }
-}
-
-impl BitwiseAnd {
     fn exec(lhs: Variable, rhs: Variable) -> Result<Variable, ExecError> {
         Ok(Self::bin_and(lhs, rhs))
     }
