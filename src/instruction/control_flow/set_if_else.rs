@@ -34,7 +34,7 @@ impl MutCreateInstruction for SetIfElse {
         let mut inner = pair.into_inner();
         let ident: Rc<str> = inner.next().unwrap().as_str().into();
         let pair = inner.next().unwrap();
-        let var_type = Type::from(pair);
+        let var_type = Type::from_pair(pair);
         let pair = inner.next().unwrap();
         let expression = Instruction::new(pair, interpreter, local_variables)?;
         let pair = inner.next().unwrap();

@@ -112,7 +112,7 @@ impl Instruction {
                     )
                 }
                 Rule::int | Rule::float | Rule::string | Rule::void => {
-                    Variable::try_from(pair).map(Instruction::from)
+                    Variable::from_pair(pair).map(Instruction::from)
                 }
                 Rule::tuple => Tuple::create_instruction(pair, interpreter, local_variables),
                 Rule::array => Array::create_instruction(pair, interpreter, local_variables),

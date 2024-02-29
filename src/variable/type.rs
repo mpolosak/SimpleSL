@@ -68,6 +68,29 @@ impl Type {
             (first, second) => Type::Multi(TypeSet::from([first, second]).into()),
         }
     }
+    pub(crate) fn from_pair(pair: Pair<'_, Rule>) -> Self {
+        match pair.as_rule() {
+            Rule::int_type => Self::Int,
+            Rule::float_type => Self::Float,
+            Rule::string_type => Self::String,
+            Rule::void => Self::Void,
+            Rule::function_type => FunctionType::from_pair(pair).into(),
+            Rule::array_type => {
+                let pair = pair.into_inner().next().unwrap();
+                Self::Array(Self::from_pair(pair).into())
+            }
+            Rule::tuple_type => {
+                let types = pair.into_inner().map(Type::from_pair).collect();
+                Self::Tuple(types)
+            }
+            Rule::multi => {
+                let types = pair.into_inner().map(Type::from_pair).collect();
+                Type::Multi(Arc::new(types))
+            }
+            Rule::any => Self::Any,
+            rule => panic!("Type cannot be built from rule: {rule:?}"),
+        }
+    }
 }
 
 impl Display for Type {
@@ -92,36 +115,9 @@ impl FromStr for Type {
     type Err = pest::error::Error<Rule>;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(SimpleSLParser::parse(Rule::r#type, s)?
-            .next()
-            .unwrap()
-            .into())
-    }
-}
-
-impl From<Pair<'_, Rule>> for Type {
-    fn from(pair: Pair<'_, Rule>) -> Self {
-        match pair.as_rule() {
-            Rule::int_type => Self::Int,
-            Rule::float_type => Self::Float,
-            Rule::string_type => Self::String,
-            Rule::void => Self::Void,
-            Rule::function_type => FunctionType::from(pair).into(),
-            Rule::array_type => {
-                let pair = pair.into_inner().next().unwrap();
-                Self::Array(Self::from(pair).into())
-            }
-            Rule::tuple_type => {
-                let types = pair.into_inner().map(Type::from).collect();
-                Self::Tuple(types)
-            }
-            Rule::multi => {
-                let types = pair.into_inner().map(Type::from).collect();
-                Type::Multi(Arc::new(types))
-            }
-            Rule::any => Self::Any,
-            rule => panic!("Type cannot be built from rule: {rule:?}"),
-        }
+        Ok(Type::from_pair(
+            SimpleSLParser::parse(Rule::r#type, s)?.next().unwrap(),
+        ))
     }
 }
 

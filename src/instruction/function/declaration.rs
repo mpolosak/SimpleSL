@@ -32,11 +32,11 @@ impl MutCreateInstruction for FunctionDeclaration {
         let ident: Rc<str> = inner.next().unwrap().as_str().into();
         let mut inner = inner.next().unwrap().into_inner();
         let params_pair = inner.next().unwrap();
-        let params = Params(params_pair.into_inner().map(Param::from).collect());
+        let params = Params(params_pair.into_inner().map(Param::from_pair).collect());
         let return_type = if matches!(inner.peek(), Some(pair)
             if pair.as_rule() == Rule::return_type_decl)
         {
-            Type::from(inner.next().unwrap().into_inner().next().unwrap())
+            Type::from_pair(inner.next().unwrap().into_inner().next().unwrap())
         } else {
             Type::Void
         };

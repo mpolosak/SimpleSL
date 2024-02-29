@@ -72,7 +72,7 @@ impl FromStr for Variable {
             return Err(Error::TooManyVariables);
         }
         let pairs: Box<[Pair<Rule>]> = parse.collect();
-        Self::try_from(pairs[0].clone())
+        Self::from_pair(pairs[0].clone())
     }
 }
 
@@ -90,29 +90,27 @@ impl PartialEq for Variable {
     }
 }
 
-impl TryFrom<Pair<'_, Rule>> for Variable {
-    type Error = Error;
-
-    fn try_from(pair: Pair<Rule>) -> Result<Self, Error> {
-        fn parse_int(pair: Pair<Rule>, radix: u32) -> Result<Variable, Error> {
-            let str = pair.as_str();
-            let inner = pair
-                .into_inner()
-                .next()
-                .unwrap()
-                .as_str()
-                .replace([' ', '_'], "");
-            let Ok(value) = i64::from_str_radix(&inner, radix) else {
-                return Err(Error::IntegerOverflow(str.into()));
-            };
-            Ok(Variable::Int(value))
-        }
+impl Variable {
+    fn parse_int(pair: Pair<Rule>, radix: u32) -> Result<Variable, Error> {
+        let str = pair.as_str();
+        let inner = pair
+            .into_inner()
+            .next()
+            .unwrap()
+            .as_str()
+            .replace([' ', '_'], "");
+        let Ok(value) = i64::from_str_radix(&inner, radix) else {
+            return Err(Error::IntegerOverflow(str.into()));
+        };
+        Ok(Variable::Int(value))
+    }
+    pub(crate) fn from_pair(pair: Pair<Rule>) -> Result<Self, Error> {
         match pair.as_rule() {
-            Rule::int => Self::try_from(pair.into_inner().next().unwrap()),
-            Rule::binary_int => parse_int(pair, 2),
-            Rule::octal_int => parse_int(pair, 8),
-            Rule::decimal_int => parse_int(pair, 10),
-            Rule::hexadecimal_int => parse_int(pair, 16),
+            Rule::int => Self::from_pair(pair.into_inner().next().unwrap()),
+            Rule::binary_int => Self::parse_int(pair, 2),
+            Rule::octal_int => Self::parse_int(pair, 8),
+            Rule::decimal_int => Self::parse_int(pair, 10),
+            Rule::hexadecimal_int => Self::parse_int(pair, 16),
             Rule::float => {
                 let Ok(value) = pair.as_str().replace([' ', '_'], "").parse::<f64>() else {
                     return Err(Error::CannotBeParsed(pair.as_str().into()));
@@ -127,7 +125,7 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
             Rule::array => pair
                 .into_inner()
                 .map(|pair| pair.into_inner().next().unwrap())
-                .map(Self::try_from)
+                .map(Self::from_pair)
                 .collect::<Result<Variable, Error>>(),
             Rule::void => Ok(Variable::Void),
             _ => Err(Error::CannotBeParsed(pair.as_str().into())),
