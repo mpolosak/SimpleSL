@@ -12,7 +12,6 @@ pub enum Error {
     NegativeExponent,
     CannotBeParsed(Box<str>),
     CannotIndexInto(Type),
-    TooManyVariables,
     ZeroDivision,
     ZeroModulo,
     OverflowShift,
@@ -102,9 +101,6 @@ impl fmt::Display for Error {
             }
             Self::CannotIndexInto(var_type) => {
                 write!(f, "Cannot index into value of type {var_type}")
-            }
-            Self::TooManyVariables => {
-                write!(f, "String contains more than one variable")
             }
             Self::ZeroDivision => {
                 write!(f, "Cannot divide by 0")

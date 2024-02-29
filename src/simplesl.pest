@@ -1,4 +1,5 @@
 ident = @{ !("return"~!(ASCII_ALPHANUMERIC|"_")) ~ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC|"_")* }
+only_var = _{var ~ &EOI}
 var = _{ float | int | array | array_repeat | string | function | void | tuple }
   function = {params ~ return_type_decl? ~"{"~line*~"}"}
   param = {ident ~ ":" ~ type}

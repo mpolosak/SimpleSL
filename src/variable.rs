@@ -67,10 +67,7 @@ impl FromStr for Variable {
 
     fn from_str(s: &str) -> Result<Self, Error> {
         let s = s.trim();
-        let parse = SimpleSLParser::parse(Rule::var, s)?;
-        if parse.as_str() != s {
-            return Err(Error::TooManyVariables);
-        }
+        let parse = SimpleSLParser::parse(Rule::only_var, s)?;
         let pairs: Box<[Pair<Rule>]> = parse.collect();
         Self::from_pair(pairs[0].clone())
     }
@@ -289,7 +286,6 @@ mod tests {
     #[test]
     fn check_variable_from_str() {
         use crate::variable::Variable;
-        use crate::Error;
         use std::str::FromStr;
         assert_eq!(Variable::from_str(" 15"), Ok(Variable::Int(15)));
         assert_eq!(Variable::from_str(" 1__00_5__"), Ok(Variable::Int(1005)));
@@ -312,10 +308,7 @@ mod tests {
             Variable::from_str(r#""print \"""#),
             Ok(Variable::String("print \"".into()))
         );
-        assert_eq!(
-            Variable::from_str(r#""print" """#),
-            Err(Error::TooManyVariables)
-        );
+        assert!(Variable::from_str(r#""print" """#).is_err());
         assert_eq!(Variable::from_str("[]"), Ok(Variable::from([])));
         assert_eq!(
             Variable::from_str(r#"[4.5, 3, "a", []]"#),
