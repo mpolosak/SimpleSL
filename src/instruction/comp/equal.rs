@@ -6,21 +6,18 @@ use crate::variable::{ReturnType, Type};
 binOp!(Equal, "==");
 
 impl CanBeUsed for Equal {
-    fn can_be_used(_lhs: &crate::variable::Type, _rhs: &crate::variable::Type) -> bool {
+    fn can_be_used(_: &Type, _: &Type) -> bool {
         true
     }
 }
 
 impl Equal {
-    fn create_from_instructions(
-        lhs: Instruction,
-        rhs: Instruction,
-    ) -> Result<Instruction, ExecError> {
+    fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         match (lhs, rhs) {
             (Instruction::Variable(variable), Instruction::Variable(variable2)) => {
-                Ok(Instruction::Variable((variable == variable2).into()))
+                Instruction::Variable((variable == variable2).into())
             }
-            (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
+            (lhs, rhs) => Self { lhs, rhs }.into(),
         }
     }
 }
@@ -34,7 +31,7 @@ impl Exec for Equal {
 }
 
 impl ReturnType for Equal {
-    fn return_type(&self) -> crate::variable::Type {
+    fn return_type(&self) -> Type {
         Type::Int
     }
 }

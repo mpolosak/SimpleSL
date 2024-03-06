@@ -17,32 +17,27 @@ lazy_static! {
 binOpCBU!(Add, "+");
 
 impl Add {
-    fn create_from_instructions(
-        lhs: Instruction,
-        rhs: Instruction,
-    ) -> Result<Instruction, ExecError> {
-        Ok(match (lhs, rhs) {
-            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
-                Self::exec(lhs, rhs)?.into()
-            }
+    fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
+        match (lhs, rhs) {
+            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => Self::exec(lhs, rhs).into(),
             (rhs, lhs) => Self { lhs, rhs }.into(),
-        })
+        }
     }
 
-    fn exec(lhs: Variable, rhs: Variable) -> Result<Variable, ExecError> {
+    fn exec(lhs: Variable, rhs: Variable) -> Variable {
         match (lhs, rhs) {
-            (Variable::Int(value1), Variable::Int(value2)) => Ok((value1 + value2).into()),
-            (Variable::Float(value1), Variable::Float(value2)) => Ok((value1 + value2).into()),
+            (Variable::Int(value1), Variable::Int(value2)) => (value1 + value2).into(),
+            (Variable::Float(value1), Variable::Float(value2)) => (value1 + value2).into(),
             (Variable::String(value1), Variable::String(value2)) => {
-                Ok(format!("{value1}{value2}").into())
+                format!("{value1}{value2}").into()
             }
             (Variable::Array(array1), Variable::Array(array2)) => {
-                Ok(Array::concat(array1, array2).into())
+                Array::concat(array1, array2).into()
             }
             (array @ Variable::Array(_), _) | (_, array @ Variable::Array(_))
                 if array.as_type() == Type::EmptyArray =>
             {
-                Ok(array)
+                array
             }
             (Variable::Array(array), value) => array
                 .iter()

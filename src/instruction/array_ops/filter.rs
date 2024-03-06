@@ -32,11 +32,8 @@ impl CanBeUsed for Filter {
 }
 
 impl Filter {
-    fn create_from_instructions(
-        lhs: Instruction,
-        rhs: Instruction,
-    ) -> Result<Instruction, ExecError> {
-        Ok(Self { lhs, rhs }.into())
+    fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
+        Self { lhs, rhs }.into()
     }
 }
 

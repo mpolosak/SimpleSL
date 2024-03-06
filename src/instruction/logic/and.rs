@@ -5,12 +5,9 @@ use crate::variable::Variable;
 binIntOp!(And, "&&");
 
 impl And {
-    fn create_from_instructions(
-        lhs: Instruction,
-        rhs: Instruction,
-    ) -> Result<Instruction, ExecError> {
-        Ok(match (lhs, rhs) {
-            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => Self::and(lhs, rhs).into(),
+    fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
+        match (lhs, rhs) {
+            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => Self::exec(lhs, rhs).into(),
             (Instruction::Variable(Variable::Int(value)), instruction)
             | (instruction, Instruction::Variable(Variable::Int(value)))
                 if value != 0 =>
@@ -18,14 +15,10 @@ impl And {
                 instruction
             }
             (lhs, rhs) => Self { lhs, rhs }.into(),
-        })
+        }
     }
 
-    fn exec(lhs: Variable, rhs: Variable) -> Result<Variable, ExecError> {
-        Ok(Self::and(lhs, rhs))
-    }
-
-    fn and(lhs: Variable, rhs: Variable) -> Variable {
+    fn exec(lhs: Variable, rhs: Variable) -> Variable {
         match (lhs, rhs) {
             (array @ Variable::Array(_), _) | (_, array @ Variable::Array(_))
                 if array.as_type() == Type::EmptyArray =>

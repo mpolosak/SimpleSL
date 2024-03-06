@@ -3,7 +3,7 @@ macro_rules! binOp {
     ($T: ident, $symbol: literal) => {
         use crate::instruction::{
             local_variable::LocalVariables,
-            traits::{BaseInstruction, Recreate},
+            traits::{BaseInstruction, Recreate, ToResult},
         };
         use crate::{Error, ExecError};
         #[derive(Debug)]
@@ -20,7 +20,7 @@ macro_rules! binOp {
                 if !Self::can_be_used(&lhs_type, &rhs_type) {
                     return Err(Error::CannotDo2(lhs_type, $symbol, rhs_type));
                 }
-                Ok(Self::create_from_instructions(lhs, rhs)?)
+                Self::create_from_instructions(lhs, rhs).to_result()
             }
         }
 
@@ -32,7 +32,7 @@ macro_rules! binOp {
             ) -> Result<Instruction, ExecError> {
                 let lhs = self.lhs.recreate(local_variables, interpreter)?;
                 let rhs = self.rhs.recreate(local_variables, interpreter)?;
-                Self::create_from_instructions(lhs, rhs)
+                Self::create_from_instructions(lhs, rhs).to_result()
             }
         }
     };
