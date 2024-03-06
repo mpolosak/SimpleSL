@@ -10,7 +10,7 @@ use crate::{
 };
 use std::{iter::zip, rc::Rc};
 
-binOp!(Map, "@");
+binOp!(Map, "@", cfi);
 
 impl CanBeUsed for Map {
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
@@ -50,10 +50,6 @@ impl CanBeUsed for Map {
 }
 
 impl Map {
-    fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
-        Self { lhs, rhs }.into()
-    }
-
     fn zip_map(
         interpreter: &mut Interpreter,
         arrays: Rc<[Variable]>,

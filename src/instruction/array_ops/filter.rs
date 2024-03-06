@@ -8,7 +8,7 @@ use crate::{
     variable::{ReturnType, Type, Variable},
 };
 
-binOp!(Filter, "?");
+binOp!(Filter, "?", cfi);
 
 impl CanBeUsed for Filter {
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
@@ -28,12 +28,6 @@ impl CanBeUsed for Filter {
                 || (params.len() == 2
                     && Type::Int.matches(&params[0])
                     && element_type.matches(&params[1])))
-    }
-}
-
-impl Filter {
-    fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
-        Self { lhs, rhs }.into()
     }
 }
 

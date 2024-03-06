@@ -36,5 +36,13 @@ macro_rules! binOp {
             }
         }
     };
+    ($T: ident, $symbol: literal, cfi) => {
+        binOp!($T, $symbol);
+        impl $T {
+            fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
+                Self { lhs, rhs }.into()
+            }
+        }
+    };
 }
 pub(crate) use binOp;
