@@ -17,21 +17,6 @@ impl FunctionType {
                 .all(|(type1, type2)| type2.matches(type1))
             && self.return_type.matches(&other.return_type)
     }
-    pub(crate) fn from_pair(pair: Pair<'_, Rule>) -> Self {
-        let mut return_type = Type::Any;
-        let mut params: Box<[Type]> = [].into();
-        for pair in pair.into_inner() {
-            if pair.as_rule() == Rule::function_type_params {
-                params = pair.into_inner().map(Type::from_pair).collect();
-            } else {
-                return_type = Type::from_pair(pair);
-            }
-        }
-        Self {
-            params,
-            return_type,
-        }
-    }
 }
 
 impl Display for FunctionType {
@@ -56,6 +41,24 @@ impl Display for FunctionType {
 impl ReturnType for FunctionType {
     fn return_type(&self) -> Type {
         self.return_type.clone()
+    }
+}
+
+impl From<Pair<'_, Rule>> for FunctionType {
+    fn from(pair: Pair<'_, Rule>) -> Self {
+        let mut return_type = Type::Any;
+        let mut params: Box<[Type]> = [].into();
+        for pair in pair.into_inner() {
+            if pair.as_rule() == Rule::function_type_params {
+                params = pair.into_inner().map(Type::from).collect();
+            } else {
+                return_type = Type::from(pair);
+            }
+        }
+        Self {
+            params,
+            return_type,
+        }
     }
 }
 

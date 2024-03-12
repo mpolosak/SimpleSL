@@ -25,7 +25,7 @@ impl MutCreateInstruction for Import {
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error> {
-        let Ok(Variable::String(path)) = Variable::from_pair(pair.into_inner().next().unwrap())
+        let Ok(Variable::String(path)) = Variable::try_from(pair.into_inner().next().unwrap())
         else {
             unreachable!()
         };

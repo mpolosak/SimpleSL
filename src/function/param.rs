@@ -14,12 +14,12 @@ impl fmt::Display for Param {
     }
 }
 
-impl Param {
-    pub(crate) fn from_pair(value: Pair<'_, Rule>) -> Self {
+impl From<Pair<'_, Rule>> for Param {
+    fn from(value: Pair<'_, Rule>) -> Self {
         let mut inner = value.into_inner();
         Self {
             name: inner.next().unwrap().as_str().into(),
-            var_type: Type::from_pair(inner.next().unwrap()),
+            var_type: Type::from(inner.next().unwrap()),
         }
     }
 }

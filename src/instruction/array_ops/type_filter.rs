@@ -23,7 +23,7 @@ impl TypeFilter {
         var_type: Pair<Rule>,
     ) -> Result<Instruction, Error> {
         let array_type = array.return_type();
-        let var_type = Type::from_pair(var_type);
+        let var_type = Type::from(var_type);
         match array_type {
             Type::Array(_) | Type::EmptyArray => Ok(Self { array, var_type }.into()),
             array_type => Err(Error::CannotDo2(array_type, "?", var_type)),
