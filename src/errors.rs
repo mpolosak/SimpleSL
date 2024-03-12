@@ -1,6 +1,6 @@
 mod error;
 mod exec_error;
-mod type_parsing_error;
+mod parse_type_error;
 pub use error::Error;
 pub use exec_error::ExecError;
-pub use type_parsing_error::TypeParsingError;
+pub use parse_type_error::ParseTypeError;

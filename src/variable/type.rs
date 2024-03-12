@@ -1,6 +1,6 @@
 use super::{function_type::FunctionType, type_set::TypeSet};
 use crate::{
-    errors::TypeParsingError,
+    errors::ParseTypeError,
     join,
     parse::{Rule, SimpleSLParser},
 };
@@ -90,11 +90,11 @@ impl Display for Type {
 }
 
 impl FromStr for Type {
-    type Err = TypeParsingError;
+    type Err = ParseTypeError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let Ok(mut pairs) = SimpleSLParser::parse(Rule::r#type, s) else {
-            return Err(TypeParsingError);
+            return Err(ParseTypeError);
         };
         Ok(Type::from(pairs.next().unwrap()))
     }
