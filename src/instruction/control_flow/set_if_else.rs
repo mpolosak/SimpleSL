@@ -30,7 +30,6 @@ impl MutCreateInstruction for SetIfElse {
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error> {
-        let rule = pair.as_rule();
         let mut inner = pair.into_inner();
         let ident: Rc<str> = inner.next().unwrap().as_str().into();
         let pair = inner.next().unwrap();
@@ -43,12 +42,10 @@ impl MutCreateInstruction for SetIfElse {
             local_variables.insert(ident.clone(), LocalVariable::Other(var_type.clone()));
             Instruction::new(pair, interpreter, &mut local_variables)?
         };
-        let else_instruction = if rule == Rule::set_if_else {
-            let pair = inner.next().unwrap();
-            Instruction::new(pair, interpreter, local_variables)?
-        } else {
-            Instruction::Variable(Variable::Void)
-        };
+        let else_instruction = inner
+            .next()
+            .map(|pair| Instruction::new(pair, interpreter, local_variables))
+            .unwrap_or(Ok(Instruction::Variable(Variable::Void)))?;
         Ok(Self {
             ident,
             var_type,
