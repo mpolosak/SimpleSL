@@ -50,11 +50,7 @@ impl CanBeUsed for Map {
 }
 
 impl Map {
-    fn zip_map(
-        interpreter: &mut Interpreter,
-        arrays: Rc<[Variable]>,
-        function: Rc<Function>,
-    ) -> ExecResult {
+    fn zip_map(arrays: Rc<[Variable]>, function: Rc<Function>) -> ExecResult {
         let arrays: Box<[&Rc<Array>]> = arrays
             .iter()
             .map(|array| {
@@ -70,7 +66,7 @@ impl Map {
                 .map(|i| {
                     let args: Box<[Variable]> =
                         arrays.iter().map(|array| array[i].clone()).collect();
-                    function.exec(interpreter, &args)
+                    function.exec(&args)
                 })
                 .collect::<Result<Variable, ExecError>>()?;
             return Ok(array);
@@ -79,7 +75,7 @@ impl Map {
             .map(|i| {
                 let mut args = vec![i.into()];
                 args.extend(arrays.iter().map(|array| array[i].clone()));
-                function.exec(interpreter, &args)
+                function.exec(&args)
             })
             .collect::<Result<Variable, ExecError>>()?;
         Ok(array)
@@ -94,7 +90,7 @@ impl Exec for Map {
             panic!("Tried to do {array} @ {function}")
         };
         if let Variable::Tuple(arrays) = array {
-            return Self::zip_map(interpreter, arrays, function);
+            return Self::zip_map(arrays, function);
         }
         let Variable::Array(array) = array else {
             panic!("Tried to do {array} @ {function}")
@@ -103,7 +99,7 @@ impl Exec for Map {
             return array
                 .iter()
                 .cloned()
-                .map(|var| function.exec(interpreter, &[var]))
+                .map(|var| function.exec(&[var]))
                 .collect::<Result<Variable, ExecError>>()
                 .map_err(ExecStop::from);
         }
@@ -111,7 +107,7 @@ impl Exec for Map {
             .iter()
             .cloned()
             .enumerate()
-            .map(|(index, var)| function.exec(interpreter, &[index.into(), var]))
+            .map(|(index, var)| function.exec(&[index.into(), var]))
             .collect::<Result<Variable, ExecError>>()
             .map_err(ExecStop::from)
     }

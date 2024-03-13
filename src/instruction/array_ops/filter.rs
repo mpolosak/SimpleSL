@@ -41,14 +41,14 @@ impl Exec for Filter {
         let mut new_array: Vec<Variable> = Vec::new();
         if function.params.len() == 1 {
             for element in array.iter().cloned() {
-                if function.exec(interpreter, &[element.clone()])? != Variable::Int(0) {
+                if function.exec(&[element.clone()])? != Variable::Int(0) {
                     new_array.push(element);
                 }
             }
             return Ok(new_array.into());
         }
         for (index, element) in array.iter().cloned().enumerate() {
-            if function.exec(interpreter, &[index.into(), element.clone()])? != Variable::Int(0) {
+            if function.exec(&[index.into(), element.clone()])? != Variable::Int(0) {
                 new_array.push(element);
             }
         }

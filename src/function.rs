@@ -49,12 +49,8 @@ impl Function {
         })
     }
 
-    pub(crate) fn exec(
-        self: &Rc<Self>,
-        interpreter: &mut Interpreter,
-        args: &[Variable],
-    ) -> Result<Variable, ExecError> {
-        let mut interpreter = interpreter.create_layer();
+    pub(crate) fn exec(self: &Rc<Self>, args: &[Variable]) -> Result<Variable, ExecError> {
+        let mut interpreter = Interpreter::without_stdlib();
         if let Some(ident) = &self.ident {
             interpreter.insert(ident.clone(), self.clone().into())
         }
