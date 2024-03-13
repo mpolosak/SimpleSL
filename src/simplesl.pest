@@ -64,12 +64,10 @@ postfix_op = _{ type_filter | at | function_call }
   type_filter = { "?" ~ type }
   at = { "[" ~ expr ~ "]"  }
   function_call = {"("~expression_list~")"}
-stm = _{ block | if_else | if_stm | set_if_else | if_stm
-        | set_if_else | set_if | match | import | return | expr }
+stm = _{ block | if_else | set_if_else | set_if_else | set_if | match | import | return | expr }
   block = { "{" ~ line* ~ "}" }
   body = _{ block | return | expr }
-  if_else = { "if" ~ expr ~ body ~ "else" ~ stm }
-  if_stm = { "if" ~ expr ~ body }
+  if_else = { "if" ~ expr ~ body ~ ("else" ~ stm)? }
   set_if_else = { "if" ~ ident ~ ":" ~ type ~ "=" ~ expr ~ body ~ "else" ~ stm }
   set_if = { "if" ~ ident ~ ":" ~ type ~ "=" ~ expr ~ body }
   match = { "match" ~ expr ~  "{" ~ match_arm* ~ "}" }

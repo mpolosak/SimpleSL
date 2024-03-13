@@ -72,9 +72,7 @@ impl Instruction {
             }
             Rule::block => Block::create_instruction(pair, interpreter, local_variables),
             Rule::import => Import::create_instruction(pair, interpreter, local_variables),
-            Rule::if_else | Rule::if_stm => {
-                IfElse::create_instruction(pair, interpreter, local_variables)
-            }
+            Rule::if_else => IfElse::create_instruction(pair, interpreter, local_variables),
             Rule::set_if_else | Rule::set_if => {
                 SetIfElse::create_instruction(pair, interpreter, local_variables)
             }
