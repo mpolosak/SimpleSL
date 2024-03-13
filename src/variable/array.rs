@@ -15,7 +15,7 @@ pub struct Array {
 }
 
 impl Array {
-    /// Returns Rc<Array> containing all elements of array1 and array2
+    /// Returns `Rc<Array>` containing all elements of array1 and array2
     pub fn concat(array1: Rc<Self>, array2: Rc<Self>) -> Rc<Self> {
         if array1.is_empty() {
             return array2;
