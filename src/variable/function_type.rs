@@ -44,6 +44,7 @@ impl ReturnType for FunctionType {
     }
 }
 
+#[doc(hidden)]
 impl From<Pair<'_, Rule>> for FunctionType {
     fn from(pair: Pair<'_, Rule>) -> Self {
         let mut return_type = Type::Any;

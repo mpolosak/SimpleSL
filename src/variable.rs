@@ -87,6 +87,7 @@ impl PartialEq for Variable {
     }
 }
 
+#[doc(hidden)]
 impl TryFrom<Pair<'_, Rule>> for Variable {
     type Error = Error;
 

@@ -100,6 +100,7 @@ impl FromStr for Type {
     }
 }
 
+#[doc(hidden)]
 impl From<Pair<'_, Rule>> for Type {
     fn from(pair: Pair<'_, Rule>) -> Self {
         match pair.as_rule() {

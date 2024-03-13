@@ -14,6 +14,7 @@ impl fmt::Display for Param {
     }
 }
 
+#[doc(hidden)]
 impl From<Pair<'_, Rule>> for Param {
     fn from(value: Pair<'_, Rule>) -> Self {
         let mut inner = value.into_inner();
