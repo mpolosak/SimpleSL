@@ -3,6 +3,7 @@ mod function_type;
 mod r#type;
 mod type_set;
 use crate::{function::Function, join_debug, parse::*, Error};
+use match_any::match_any;
 use pest::{iterators::Pair, Parser};
 pub use r#type::{ReturnType, Type, Typed};
 use std::{fmt, io, rc::Rc, str::FromStr};
@@ -75,14 +76,15 @@ impl FromStr for Variable {
 
 impl PartialEq for Variable {
     fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Variable::Int(value1), Variable::Int(value2)) => value1 == value2,
-            (Variable::Float(value1), Variable::Float(value2)) => value1 == value2,
-            (Variable::String(value1), Variable::String(value2)) => value1 == value2,
+        match_any! {(self, other),
+            (Variable::Array(value1), Variable::Array(value2))
+            | (Variable::Int(value1), Variable::Int(value2))
+            | (Variable::Float(value1), Variable::Float(value2))
+            | (Variable::String(value1), Variable::String(value2))
+            | (Variable::Tuple(value1), Variable::Tuple(value2)) => value1 == value2,
             (Variable::Function(value1), Variable::Function(value2)) => Rc::ptr_eq(value1, value2),
-            (Variable::Array(value1), Variable::Array(value2)) => value1 == value2,
             (Variable::Void, Variable::Void) => true,
-            _ => false,
+            _ => false
         }
     }
 }
