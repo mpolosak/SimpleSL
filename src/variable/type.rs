@@ -69,6 +69,29 @@ impl Type {
             (first, second) => Type::Multi(TypeSet::from([first, second]).into()),
         }
     }
+
+    /// Flatten self to single tuple
+    pub fn flatten_tuple(self) -> Option<Arc<[Type]>> {
+        match self {
+            Type::Tuple(tuple) => Some(tuple),
+            Type::Multi(multi) => {
+                let mut iter = multi.iter().cloned();
+                let first = iter.next().unwrap().flatten_tuple()?;
+                iter.map(Self::flatten_tuple).try_fold(first, |acc, curr| {
+                    let curr = curr?;
+                    if acc.len() != curr.len() {
+                        return None;
+                    }
+                    Some(
+                        zip(acc.iter().cloned(), curr.iter().cloned())
+                            .map(|(a, b)| a.concat(b))
+                            .collect(),
+                    )
+                })
+            }
+            _ => None,
+        }
+    }
 }
 
 impl Display for Type {
@@ -185,6 +208,8 @@ pub trait ReturnType {
 #[cfg(test)]
 mod tests {
 
+    use std::str::FromStr;
+
     use crate::variable::Type;
 
     #[test]
@@ -218,5 +243,58 @@ mod tests {
         assert!(var_type.matches(&var_type2));
         assert!(var_type2.matches(&var_type2));
         assert!(!var_type2.matches(&var_type));
+    }
+
+    #[test]
+    fn check_flatten_tuple() {
+        assert_eq!(
+            Type::from_str("(int, string)").unwrap().flatten_tuple(),
+            Some([Type::Int, Type::String].into())
+        );
+        assert_eq!(
+            Type::from_str("(int, string)|(string, int)")
+                .unwrap()
+                .flatten_tuple(),
+            Some([Type::Int | Type::String, Type::Int | Type::String].into())
+        );
+
+        assert_eq!(
+            Type::from_str("(int, string)|(string, int)|(any, (int, string))")
+                .unwrap()
+                .flatten_tuple(),
+            Some(
+                [
+                    Type::Any,
+                    Type::Int | Type::String | (Type::Int, Type::String)
+                ]
+                .into()
+            )
+        );
+
+        assert_eq!(
+            Type::from_str("(int, string, float)|(string, int, float)")
+                .unwrap()
+                .flatten_tuple(),
+            Some(
+                [
+                    Type::Int | Type::String,
+                    Type::Int | Type::String,
+                    Type::Float
+                ]
+                .into()
+            )
+        );
+        assert_eq!(
+            Type::from_str("int|(string, int, float)")
+                .unwrap()
+                .flatten_tuple(),
+            None
+        );
+        assert_eq!(
+            Type::from_str("(int, string)|(string, int, float)")
+                .unwrap()
+                .flatten_tuple(),
+            None
+        );
     }
 }
