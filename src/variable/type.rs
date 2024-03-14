@@ -92,6 +92,22 @@ impl Type {
             _ => None,
         }
     }
+
+    /// Returns type of element returned when indexing into
+    pub fn element_type(&self) -> Option<Type> {
+        match self {
+            Type::Array(element) => Some(element.as_ref().clone()),
+            Type::EmptyArray => Some(Type::Any),
+            Type::Multi(multi) => {
+                let mut iter = multi.iter();
+                let first = iter.next().unwrap().element_type()?;
+                iter.map(Self::element_type)
+                    .try_fold(first, |acc, curr| Some(acc | curr?))
+            }
+            Type::String => Some(Type::String),
+            _ => None,
+        }
+    }
 }
 
 impl Display for Type {
@@ -294,6 +310,46 @@ mod tests {
             Type::from_str("(int, string)|(string, int, float)")
                 .unwrap()
                 .flatten_tuple(),
+            None
+        );
+    }
+
+    #[test]
+    fn check_element_type() {
+        assert_eq!(
+            Type::from_str("[int]").unwrap().element_type(),
+            Some(Type::Int)
+        );
+        assert_eq!(
+            Type::from_str("string").unwrap().element_type(),
+            Some(Type::String)
+        );
+        assert_eq!(
+            Type::from_str("string|[string]").unwrap().element_type(),
+            Some(Type::String)
+        );
+        assert_eq!(
+            Type::from_str("string | [int]").unwrap().element_type(),
+            Some(Type::Int | Type::String)
+        );
+        assert_eq!(
+            Type::from_str("[float] | [int]").unwrap().element_type(),
+            Some(Type::Int | Type::Float)
+        );
+        assert_eq!(
+            Type::from_str("[int] | [string|float]")
+                .unwrap()
+                .element_type(),
+            Some(Type::Int | Type::String | Type::Float)
+        );
+        assert_eq!(Type::from_str("[any]|float").unwrap().element_type(), None);
+        assert_eq!(Type::from_str("int").unwrap().element_type(), None);
+        assert_eq!(Type::from_str("[int]|float").unwrap().element_type(), None);
+        assert_eq!(Type::from_str("any").unwrap().element_type(), None);
+        assert_eq!(
+            Type::from_str("string | (int, float)")
+                .unwrap()
+                .element_type(),
             None
         );
     }

@@ -77,12 +77,7 @@ impl Recreate for At {
 
 impl ReturnType for At {
     fn return_type(&self) -> Type {
-        match self.instruction.return_type() {
-            Type::String => Type::String,
-            Type::Array(elements_type) => elements_type.as_ref().clone(),
-            Type::EmptyArray => Type::Any,
-            _ => unreachable!(),
-        }
+        self.instruction.return_type().element_type().unwrap()
     }
 }
 
