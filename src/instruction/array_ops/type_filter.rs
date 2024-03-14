@@ -24,10 +24,10 @@ impl TypeFilter {
     ) -> Result<Instruction, Error> {
         let array_type = array.return_type();
         let var_type = Type::from(var_type);
-        match array_type {
-            Type::Array(_) | Type::EmptyArray => Ok(Self { array, var_type }.into()),
-            array_type => Err(Error::CannotDo2(array_type, "?", var_type)),
+        if !array_type.matches(&Type::Array(Type::Any.into())) {
+            return Err(Error::CannotDo2(array_type, "?", var_type));
         }
+        Ok(Self { array, var_type }.into())
     }
 }
 

@@ -102,7 +102,7 @@ impl Instruction {
         pair: Pair<'_, Rule>,
         interpreter: &Interpreter<'_>,
         local_variables: &LocalVariables<'_>,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Self, Error> {
         match pair.as_rule() {
             Rule::expr => Self::new_expression(pair, interpreter, local_variables),
             Rule::ident => {
