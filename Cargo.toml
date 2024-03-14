@@ -17,5 +17,5 @@ pest = "2.0"
 pest_derive = "2.0"
 unescaper = "0.1.0"
 lazy_static = "1.4.0"
-typle = "0.7.12"
+typle = "0.9.2"
 simplesl_macros = { path="macros", version="0.1.0" }

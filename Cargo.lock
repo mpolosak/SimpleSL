@@ -395,9 +395,9 @@ checksum = "42ff0bf0c66b8238c6f3b578df37d0b7848e55df8577b3f74f92a69acceeb825"
 
 [[package]]
 name = "typle"
-version = "0.7.12"
+version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6392c9da0c315a41c3c80086fd3a3bad723ffef69d8083362b2373028ac99f54"
+checksum = "b232ff114e537145aee2839c2f57fad491ea4cba6d5e605703154467cc9bd5db"
 dependencies = [
  "proc-macro-error",
  "proc-macro2",
