@@ -23,42 +23,41 @@ pub enum Variable {
 
 impl Typed for Variable {
     fn as_type(&self) -> Type {
-        match self {
+        match_any! {self,
             Variable::Int(_) => Type::Int,
             Variable::Float(_) => Type::Float,
             Variable::String(_) => Type::String,
-            Variable::Function(function) => function.as_type(),
-            Variable::Array(array) => array.as_type(),
+            Variable::Function(var) | Variable::Array(var) => var.as_type(),
             Variable::Tuple(elements) => {
                 let types = elements.iter().map(Variable::as_type).collect();
                 Type::Tuple(types)
-            }
-            Variable::Void => Type::Void,
+            },
+            Variable::Void => Type::Void
         }
     }
 }
 
 impl fmt::Display for Variable {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Variable::Int(value) => write!(f, "{value}"),
-            Variable::Float(value) => write!(f, "{value}"),
-            Variable::String(value) => write!(f, "{value}"),
-            Variable::Function(function) => write!(f, "{function}"),
-            Variable::Array(array) => write!(f, "{array}"),
+        match_any! {self,
+            Variable::Int(value)
+            | Variable::Float(value)
+            | Variable::String(value)
+            | Variable::Function(value)
+            | Variable::Array(value) => write!(f, "{value}"),
             Variable::Tuple(elements) => write!(f, "({})", join_debug(elements, ", ")),
-            Variable::Void => write!(f, "()"),
+            Variable::Void => write!(f, "()")
         }
     }
 }
 
 impl fmt::Debug for Variable {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Int(value) => write!(f, "{value:?}"),
-            Self::Float(value) => write!(f, "{value:?}"),
-            Self::String(value) => write!(f, "{value:?}"),
-            other => write!(f, "{other}"),
+        match_any! { self,
+            Self::Int(value)
+            | Self::Float(value)
+            | Self::String(value) => write!(f, "{value:?}"),
+            other => write!(f, "{other}")
         }
     }
 }

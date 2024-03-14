@@ -1,5 +1,6 @@
 use crate as simplesl;
 use crate::{interpreter::Interpreter, variable::Variable};
+use match_any::match_any;
 use simplesl_macros::export_function;
 use std::rc::Rc;
 
@@ -43,10 +44,9 @@ pub fn add_string(interpreter: &mut Interpreter) {
 
     #[export_function]
     fn len(#[var_type("[any]|string")] variable: Variable) -> usize {
-        match variable {
-            Variable::Array(array) => array.len(),
-            Variable::String(string) => string.len(),
-            _ => unreachable!(),
+        match_any! { variable,
+            Variable::Array(var) | Variable::String(var) => var.len(),
+            _ => unreachable!()
         }
     }
 }

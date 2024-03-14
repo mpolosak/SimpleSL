@@ -4,6 +4,7 @@ use crate::{
     join,
     parse::{Rule, SimpleSLParser},
 };
+use match_any::match_any;
 use pest::{iterators::Pair, Parser};
 use std::{
     fmt::Display,
@@ -33,23 +34,21 @@ pub enum Type {
 impl Type {
     #[must_use]
     pub fn matches(&self, other: &Self) -> bool {
-        match (self, other) {
+        match_any! { (self, other),
             (Type::Never, _) => true,
-            (Self::Function(function_type), Self::Function(function_type2)) => {
-                function_type.matches(function_type2)
-            }
+            (Self::Function(var_type), Self::Function(var_type2))
+            | (Self::Array(var_type), Self::Array(var_type2)) => {
+                var_type.matches(var_type2)
+            },
             (Self::Multi(types), other) => types.iter().all(|var_type| var_type.matches(other)),
             (_, Self::Multi(types)) => types.iter().any(|var_type| self.matches(var_type)),
             (_, Self::Any) | (Self::EmptyArray, Self::Array(_)) => true,
-            (Self::Array(element_type), Self::Array(element_type2)) => {
-                element_type.matches(element_type2)
-            }
             (Self::Tuple(types), Self::Tuple(types2)) => {
                 types.len() == types2.len()
                     && zip(types.iter(), types2.iter())
                         .all(|(var_type, var_type2)| var_type.matches(var_type2))
-            }
-            _ => self == other,
+            },
+            _ => self == other
         }
     }
     #[must_use]

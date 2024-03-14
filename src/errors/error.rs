@@ -1,4 +1,5 @@
 use crate::{parse::Rule, variable::Type, ExecError};
+use match_any::match_any;
 use std::{fmt, rc::Rc};
 
 #[derive(Debug)]
@@ -36,24 +37,21 @@ pub enum Error {
 
 impl PartialEq for Error {
     fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::VariableDoesntExist(l0), Self::VariableDoesntExist(r0)) => l0 == r0,
-            (Self::WrongType(l0, l1), Self::WrongType(r0, r1)) => l0 == r0 && l1 == r1,
-            (Self::WrongNumberOfArguments(l0, l1), Self::WrongNumberOfArguments(r0, r1)) => {
-                l0 == r0 && l1 == r1
-            }
-            (Self::CannotBeParsed(l0), Self::CannotBeParsed(r0)) => l0 == r0,
-            (Self::CannotIndexInto(l0), Self::CannotIndexInto(r0)) => l0 == r0,
-            (Self::IO(l0), Self::IO(r0)) => l0.to_string() == r0.to_string(),
-            (Self::Parsing(l0), Self::Parsing(r0)) => l0 == r0,
-            (Self::IntegerOverflow(l0), Self::IntegerOverflow(r0)) => l0 == r0,
-            (Self::CannotUnescapeString(l0), Self::CannotUnescapeString(r0)) => {
+        match_any! { (self, other),
+            (Self::VariableDoesntExist(l0), Self::VariableDoesntExist(r0))
+            | (Self::CannotBeParsed(l0), Self::CannotBeParsed(r0))
+            | (Self::CannotIndexInto(l0), Self::CannotIndexInto(r0))
+            | (Self::Parsing(l0), Self::Parsing(r0))
+            | (Self::IntegerOverflow(l0), Self::IntegerOverflow(r0)) => l0 == r0,
+            (Self::WrongType(l0, l1), Self::WrongType(r0, r1))
+            | (Self::WrongNumberOfArguments(l0, l1), Self::WrongNumberOfArguments(r0, r1))
+            | (Self::CannotDo(l0, l1), Self::CannotDo(r0, r1)) => l0 == r0 && l1 == r1,
+            (Self::IO(l0), Self::IO(r0)) | (Self::CannotUnescapeString(l0), Self::CannotUnescapeString(r0)) => {
                 l0.to_string() == r0.to_string()
-            }
-            (Self::CannotDo(l0, l1), Self::CannotDo(r0, r1)) => l0 == r0 && l1 == r1,
+            },
             (Self::CannotDo2(l0, l1, l2), Self::CannotDo2(r0, r1, r2)) => {
                 l0 == r0 && l1 == r1 && l2 == r2
-            }
+            },
             (
                 Self::WrongReturn {
                     function_name,
@@ -69,8 +67,8 @@ impl PartialEq for Error {
                 function_name == function_name2
                     && function_return_type == function_return_type2
                     && returned == returned2
-            }
-            _ => core::mem::discriminant(self) == core::mem::discriminant(other),
+            },
+            _ => core::mem::discriminant(self) == core::mem::discriminant(other)
         }
     }
 }

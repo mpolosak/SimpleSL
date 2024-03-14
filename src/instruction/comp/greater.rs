@@ -1,3 +1,5 @@
+use match_any::match_any;
+
 use crate::instruction::macros::{binOpCBU, bin_num_op::ACCEPTED_TYPE};
 use crate::instruction::{Exec, Instruction};
 use crate::variable::{ReturnType, Type};
@@ -14,9 +16,9 @@ impl Greater {
     }
 
     fn exec(lhs: Variable, rhs: Variable) -> Variable {
-        match (lhs, rhs) {
-            (Variable::Int(lhs), Variable::Int(rhs)) => (lhs > rhs).into(),
-            (Variable::Float(lhs), Variable::Float(rhs)) => (lhs > rhs).into(),
+        match_any! {(lhs, rhs),
+            (Variable::Int(lhs), Variable::Int(rhs)) | (Variable::Float(lhs), Variable::Float(rhs))
+                => (lhs > rhs).into(),
             (lhs, Variable::Array(array)) => array
                 .iter()
                 .cloned()
@@ -27,7 +29,7 @@ impl Greater {
                 .cloned()
                 .map(|lhs| Self::exec(lhs, rhs.clone()))
                 .collect(),
-            (lhs, rhs) => panic!("Tried to do {lhs} > {rhs}"),
+            (lhs, rhs) => panic!("Tried to do {lhs} > {rhs}")
         }
     }
 }

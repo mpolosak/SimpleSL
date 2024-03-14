@@ -44,6 +44,7 @@ use crate::{
     Error, ExecError,
 };
 pub(crate) use function::FunctionCall;
+use match_any::match_any;
 use pest::iterators::Pair;
 use std::rc::Rc;
 pub(crate) use traits::{
@@ -199,15 +200,14 @@ impl Instruction {
 
 impl Exec for Instruction {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        match self {
+        match_any! { self,
             Self::Variable(var) => Ok(var.clone()),
             Self::LocalVariable(ident, _) => interpreter
                 .get_variable(ident)
                 .cloned()
                 .ok_or_else(|| panic!("Tried to get variable {ident} that doest exist")),
-            Self::AnonymousFunction(function) => function.exec(interpreter),
-            Self::Tuple(function) => function.exec(interpreter),
-            Self::Other(other) => other.exec(interpreter),
+            Self::AnonymousFunction(ins) | Self::Tuple(ins) | Self::Other(ins)
+                => ins.exec(interpreter)
         }
     }
 }
@@ -218,7 +218,7 @@ impl Recreate for Instruction {
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
     ) -> Result<Instruction, ExecError> {
-        match self {
+        match_any! {self,
             Self::LocalVariable(ident, _) => Ok(local_variables.get(ident).map_or_else(
                 || {
                     interpreter
@@ -232,22 +232,18 @@ impl Recreate for Instruction {
                     local_variable => Self::LocalVariable(ident.clone(), local_variable),
                 },
             )),
-            Self::AnonymousFunction(function) => function.recreate(local_variables, interpreter),
-            Self::Tuple(tuple) => tuple.recreate(local_variables, interpreter),
             Self::Variable(variable) => Ok(Self::Variable(variable.clone())),
-            Self::Other(other) => other.recreate(local_variables, interpreter),
+            Self::AnonymousFunction(ins) | Self::Tuple(ins) | Self::Other(ins)
+                => ins.recreate(local_variables, interpreter)
         }
     }
 }
 
 impl ReturnType for Instruction {
     fn return_type(&self) -> Type {
-        match self {
-            Self::Variable(variable) => variable.as_type(),
-            Self::AnonymousFunction(function) => function.return_type(),
-            Self::LocalVariable(_, local_variable) => local_variable.as_type(),
-            Self::Tuple(tuple) => tuple.return_type(),
-            Self::Other(other) => other.return_type(),
+        match_any! { self,
+            Self::Variable(variable) | Self::LocalVariable(_, variable) => variable.as_type(),
+            Self::AnonymousFunction(ins) | Self::Tuple(ins) | Self::Other(ins) => ins.return_type()
         }
     }
 }
