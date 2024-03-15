@@ -167,10 +167,11 @@ impl From<Pair<'_, Rule>> for Type {
                 let types = pair.into_inner().map(Type::from).collect();
                 Self::Tuple(types)
             }
-            Rule::multi => {
-                let types = pair.into_inner().map(Type::from).collect();
-                Type::Multi(Arc::new(types))
-            }
+            Rule::multi => pair
+                .into_inner()
+                .map(Type::from)
+                .reduce(Type::concat)
+                .unwrap(),
             Rule::any => Self::Any,
             rule => panic!("Type cannot be built from rule: {rule:?}"),
         }
