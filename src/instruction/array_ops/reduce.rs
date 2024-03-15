@@ -28,12 +28,13 @@ impl Reduce {
     ) -> Result<Instruction, Error> {
         let initial_value =
             Instruction::new_expression(initial_value, interpreter, local_variables)?;
-        let element_type = match array.return_type() {
-            Type::Array(array) => array.as_ref().clone(),
-            Type::EmptyArray => return Ok(initial_value),
-            _ => return Err(Error::WrongType("array".into(), [Type::Any].into())),
+        let Some(element_type) = array.return_type().element_type() else {
+            return Err(Error::WrongType("array".into(), [Type::Any].into()));
         };
-        let Type::Function(function_type) = function.return_type() else {
+        if let Type::Never = element_type {
+            return Ok(initial_value);
+        }
+        let Some(return_type) = function.return_type().return_type() else {
             return Err(Error::WrongType(
                 "function".into(),
                 FunctionType {
@@ -43,30 +44,13 @@ impl Reduce {
                 .into(),
             ));
         };
-        if function_type.params.len() != 2 {
-            return Err(Error::WrongType(
-                "function".into(),
-                FunctionType {
-                    params: [Type::Any, element_type].into(),
-                    return_type: Type::Any,
-                }
-                .into(),
-            ));
-        };
-        let initial_type = initial_value.return_type();
-        let acc_type = &function_type.params[0];
-        let current_type = &function_type.params[1];
-        let return_type = &function_type.return_type;
-        let acc_expected = initial_type | return_type.clone();
-        if !acc_expected.matches(acc_type) || !current_type.matches(&element_type) {
-            return Err(Error::WrongType(
-                "function".into(),
-                FunctionType {
-                    params: [acc_expected, element_type].into(),
-                    return_type: return_type.clone(),
-                }
-                .into(),
-            ));
+        let acc_type = initial_value.return_type() | element_type.clone() | return_type.clone();
+        let expected_function = Type::from(FunctionType {
+            params: [acc_type, element_type].into(),
+            return_type,
+        });
+        if !function.return_type().matches(&expected_function) {
+            return Err(Error::WrongType("function".into(), expected_function));
         }
         Ok(Self {
             array,
@@ -114,10 +98,7 @@ impl Exec for Reduce {
 
 impl ReturnType for Reduce {
     fn return_type(&self) -> Type {
-        let Type::Function(function) = self.function.return_type() else {
-            unreachable!()
-        };
-        function.return_type() | self.initial_value.return_type()
+        self.function.return_type().return_type().unwrap() | self.initial_value.return_type()
     }
 }
 
