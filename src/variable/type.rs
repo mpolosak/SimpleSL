@@ -244,7 +244,66 @@ pub(crate) use parse_type;
 
 #[cfg(test)]
 mod tests {
-    use crate::variable::{parse_type, Type};
+    use std::str::FromStr;
+
+    use crate::{
+        errors::ParseTypeError,
+        variable::{parse_type, FunctionType, Type},
+    };
+
+    #[test]
+    fn from_str() {
+        assert_eq!(Type::from_str("int"), Ok(Type::Int));
+        assert_eq!(Type::from_str("float"), Ok(Type::Float));
+        assert_eq!(Type::from_str("string"), Ok(Type::String));
+        assert_eq!(Type::from_str("any"), Ok(Type::Any));
+        assert_eq!(Type::from_str("int"), Ok(Type::Int));
+        assert_eq!(Type::from_str("()"), Ok(Type::Void));
+        assert_eq!(
+            Type::from_str("function()->()"),
+            Ok(FunctionType {
+                params: [].into(),
+                return_type: Type::Void
+            }
+            .into())
+        );
+        assert_eq!(
+            Type::from_str("function(string, int|float)->(int|string)"),
+            Ok(FunctionType {
+                params: [Type::String, Type::Int | Type::Float].into(),
+                return_type: Type::Int | Type::String
+            }
+            .into())
+        );
+        assert_eq!(Type::from_str("[int]"), Ok([Type::Int].into()));
+        assert_eq!(Type::from_str("[float]"), Ok([Type::Float].into()));
+        assert_eq!(Type::from_str("[string]"), Ok([Type::String].into()));
+        assert_eq!(Type::from_str("[any]"), Ok([Type::Any].into()));
+        assert_eq!(Type::from_str("[int]"), Ok([Type::Int].into()));
+        assert_eq!(Type::from_str("[()]"), Ok([Type::Void].into()));
+        assert_eq!(
+            Type::from_str("[int | float]"),
+            Ok([Type::Int | Type::Float].into())
+        );
+        assert_eq!(
+            Type::from_str("(int, string)"),
+            Ok((Type::Int, Type::String).into())
+        );
+        assert_eq!(
+            Type::from_str("(int, string) | float"),
+            Ok(Type::from((Type::Int, Type::String)) | Type::Float)
+        );
+        assert_eq!(Type::from_str("(int)"), Err(ParseTypeError));
+        assert_eq!(
+            Type::from_str("function(string, int|float)->int|string"),
+            Ok(Type::from(FunctionType {
+                params: [Type::String, Type::Int | Type::Float].into(),
+                return_type: Type::Int
+            }) | Type::String)
+        );
+        assert_eq!(Type::from_str("any | float"), Ok(Type::Any));
+        assert_eq!(Type::from_str("[any | float]"), Ok([Type::Any].into()));
+    }
 
     #[test]
     fn check_type_matches() {
