@@ -36,25 +36,21 @@ impl Reduce {
         let Type::Function(function_type) = function.return_type() else {
             return Err(Error::WrongType(
                 "function".into(),
-                Type::Function(
-                    FunctionType {
-                        params: [Type::Any, element_type].into(),
-                        return_type: Type::Any,
-                    }
-                    .into(),
-                ),
+                FunctionType {
+                    params: [Type::Any, element_type].into(),
+                    return_type: Type::Any,
+                }
+                .into(),
             ));
         };
         if function_type.params.len() != 2 {
             return Err(Error::WrongType(
                 "function".into(),
-                Type::Function(
-                    FunctionType {
-                        params: [Type::Any, element_type].into(),
-                        return_type: Type::Any,
-                    }
-                    .into(),
-                ),
+                FunctionType {
+                    params: [Type::Any, element_type].into(),
+                    return_type: Type::Any,
+                }
+                .into(),
             ));
         };
         let initial_type = initial_value.return_type();
@@ -65,13 +61,11 @@ impl Reduce {
         if !acc_expected.matches(acc_type) || !current_type.matches(&element_type) {
             return Err(Error::WrongType(
                 "function".into(),
-                Type::Function(
-                    FunctionType {
-                        params: [acc_expected, element_type].into(),
-                        return_type: return_type.clone(),
-                    }
-                    .into(),
-                ),
+                FunctionType {
+                    params: [acc_expected, element_type].into(),
+                    return_type: return_type.clone(),
+                }
+                .into(),
             ));
         }
         Ok(Self {

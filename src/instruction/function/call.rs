@@ -76,13 +76,11 @@ impl FunctionCall {
             .iter()
             .map(Instruction::return_type)
             .collect::<Box<[Type]>>();
-        let expected = Type::Function(
-            FunctionType {
-                params,
-                return_type: Type::Any,
-            }
-            .into(),
-        );
+        let expected = FunctionType {
+            params,
+            return_type: Type::Any,
+        }
+        .into();
         if !var_type.matches(&expected) {
             return Err(Error::WrongType(pair_str.into(), expected));
         }

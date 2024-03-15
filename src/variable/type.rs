@@ -297,10 +297,10 @@ mod tests {
         assert_eq!(Type::from_str("(int)"), Err(ParseTypeError));
         assert_eq!(
             Type::from_str("function(string, int|float)->int|string"),
-            Ok(Type::from(FunctionType {
+            Ok(FunctionType {
                 params: [Type::String, Type::Int | Type::Float].into(),
                 return_type: Type::Int
-            }) | Type::String)
+            } | Type::String)
         );
         assert_eq!(Type::from_str("any | float"), Ok(Type::Any));
         assert_eq!(Type::from_str("[any | float]"), Ok([Type::Any].into()));

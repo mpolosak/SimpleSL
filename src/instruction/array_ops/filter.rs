@@ -15,19 +15,13 @@ impl CanBeUsed for Filter {
         let Some(element_type) = lhs.element_type() else {
             return false;
         };
-        let expected_function = Type::Function(
-            FunctionType {
-                params: [element_type.clone()].into(),
-                return_type: Type::Int,
-            }
-            .into(),
-        ) | Type::Function(
-            FunctionType {
-                params: [Type::Int, element_type].into(),
-                return_type: Type::Int,
-            }
-            .into(),
-        );
+        let expected_function = FunctionType {
+            params: [element_type.clone()].into(),
+            return_type: Type::Int,
+        } | FunctionType {
+            params: [Type::Int, element_type].into(),
+            return_type: Type::Int,
+        };
         rhs.matches(&expected_function)
     }
 }

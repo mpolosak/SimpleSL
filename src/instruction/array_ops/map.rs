@@ -20,19 +20,13 @@ impl CanBeUsed for Map {
         let Some(element_type) = lhs.element_type() else {
             return false;
         };
-        let expected_function = Type::Function(
-            FunctionType {
-                params: [element_type.clone()].into(),
-                return_type: Type::Any,
-            }
-            .into(),
-        ) | Type::Function(
-            FunctionType {
-                params: [Type::Int, element_type].into(),
-                return_type: Type::Any,
-            }
-            .into(),
-        );
+        let expected_function = FunctionType {
+            params: [element_type.clone()].into(),
+            return_type: Type::Any,
+        } | FunctionType {
+            params: [Type::Int, element_type].into(),
+            return_type: Type::Any,
+        };
         rhs.matches(&expected_function)
     }
 }
@@ -48,19 +42,13 @@ impl Map {
         };
         let mut extended_params = vec![Type::Int];
         extended_params.extend(params.iter().cloned());
-        let expected_function = Type::Function(
-            FunctionType {
-                params,
-                return_type: Type::Any,
-            }
-            .into(),
-        ) | Type::Function(
-            FunctionType {
-                params: extended_params.into(),
-                return_type: Type::Any,
-            }
-            .into(),
-        );
+        let expected_function = FunctionType {
+            params,
+            return_type: Type::Any,
+        } | FunctionType {
+            params: extended_params.into(),
+            return_type: Type::Any,
+        };
         rhs.matches(&expected_function)
     }
 

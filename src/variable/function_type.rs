@@ -1,7 +1,7 @@
 use super::{ReturnType, Type};
 use crate::{join, parse::Rule};
 use pest::iterators::Pair;
-use std::{fmt::Display, iter::zip};
+use std::{fmt::Display, iter::zip, ops::BitOr};
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct FunctionType {
@@ -16,6 +16,11 @@ impl FunctionType {
             && zip(self.params.iter(), other.params.iter())
                 .all(|(type1, type2)| type2.matches(type1))
             && self.return_type.matches(&other.return_type)
+    }
+
+    #[must_use]
+    pub fn concat(self, other: Self) -> Type {
+        Type::from(self) | Type::from(other)
     }
 }
 
@@ -41,6 +46,14 @@ impl Display for FunctionType {
 impl ReturnType for FunctionType {
     fn return_type(&self) -> Type {
         self.return_type.clone()
+    }
+}
+
+impl<T: Into<Type>> BitOr<T> for FunctionType {
+    type Output = Type;
+
+    fn bitor(self, rhs: T) -> Self::Output {
+        Type::concat(self.into(), rhs.into())
     }
 }
 
