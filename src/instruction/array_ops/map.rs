@@ -6,50 +6,64 @@ use crate::{
         Exec, Instruction,
     },
     interpreter::Interpreter,
-    variable::{Array, ReturnType, Type, Variable},
+    variable::{Array, FunctionType, ReturnType, Type, Variable},
 };
-use std::{iter::zip, rc::Rc};
+use std::rc::Rc;
 
 binOp!(Map, "@", cfi);
 
 impl CanBeUsed for Map {
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
-        let Type::Function(function_type) = rhs else {
+        if let Some(types) = lhs.clone().flatten_tuple() {
+            return Self::can_be_used_zip(&types, rhs);
+        }
+        let Some(element_type) = lhs.element_type() else {
             return false;
         };
-        if lhs == &Type::EmptyArray {
-            return function_type.params.len() == 1
-                || (function_type.params.len() == 1
-                    && Type::Int.matches(&function_type.params[0]));
-        }
-        if let Type::Array(element_type) = lhs {
-            let params = &function_type.params;
-            return (params.len() == 1 && element_type.matches(&params[0]))
-                || (params.len() == 2
-                    && Type::Int.matches(&params[0])
-                    && element_type.matches(&params[1]));
-        }
-        let Type::Tuple(types) = lhs else {
-            return false;
-        };
-        let mut params_iter = function_type.params.iter();
-        if function_type.params.len() == types.len() {
-            return zip(types.iter(), params_iter).all(|(var_type, param_type)| {
-                matches!(var_type, Type::Array(var_type) if var_type.matches(param_type))
-            });
-        }
-        if function_type.params.len() != types.len() + 1 {
-            return false;
-        }
-        let index_type = params_iter.next().unwrap();
-        Type::Int.matches(index_type)
-            && zip(types.iter(), params_iter).all(|(var_type, param_type)| {
-                matches!(var_type, Type::Array(var_type) if var_type.matches(param_type))
-            })
+        let expected_function = Type::Function(
+            FunctionType {
+                params: [element_type.clone()].into(),
+                return_type: Type::Any,
+            }
+            .into(),
+        ) | Type::Function(
+            FunctionType {
+                params: [Type::Int, element_type].into(),
+                return_type: Type::Any,
+            }
+            .into(),
+        );
+        rhs.matches(&expected_function)
     }
 }
 
 impl Map {
+    fn can_be_used_zip(types: &[Type], rhs: &Type) -> bool {
+        let Some(params) = types
+            .iter()
+            .map(Type::element_type)
+            .collect::<Option<Box<[Type]>>>()
+        else {
+            return false;
+        };
+        let mut extended_params = vec![Type::Int];
+        extended_params.extend(params.iter().cloned());
+        let expected_function = Type::Function(
+            FunctionType {
+                params,
+                return_type: Type::Any,
+            }
+            .into(),
+        ) | Type::Function(
+            FunctionType {
+                params: extended_params.into(),
+                return_type: Type::Any,
+            }
+            .into(),
+        );
+        rhs.matches(&expected_function)
+    }
+
     fn zip_map(arrays: Rc<[Variable]>, function: Rc<Function>) -> ExecResult {
         let arrays: Box<[&Rc<Array>]> = arrays
             .iter()
@@ -95,18 +109,14 @@ impl Exec for Map {
         let Variable::Array(array) = array else {
             panic!("Tried to do {array} @ {function}")
         };
+        let iter = array.iter().cloned();
         if function.params.len() == 1 {
-            return array
-                .iter()
-                .cloned()
+            return iter
                 .map(|var| function.exec(&[var]))
                 .collect::<Result<Variable, ExecError>>()
                 .map_err(ExecStop::from);
         }
-        array
-            .iter()
-            .cloned()
-            .enumerate()
+        iter.enumerate()
             .map(|(index, var)| function.exec(&[index.into(), var]))
             .collect::<Result<Variable, ExecError>>()
             .map_err(ExecStop::from)
@@ -119,5 +129,109 @@ impl ReturnType for Map {
             unreachable!()
         };
         [function_type.return_type.clone()].into()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        instruction::{array_ops::Map, traits::CanBeUsed},
+        variable::Type,
+    };
+    use std::str::FromStr;
+
+    fn parse_type(s: &str) -> Type {
+        Type::from_str(s).unwrap()
+    }
+
+    #[test]
+    fn can_be_used() {
+        let int_array = parse_type("[int]");
+        let float_array = parse_type("[float]");
+        // true
+        assert!(Map::can_be_used(
+            &int_array,
+            &parse_type("function(int)->int")
+        ));
+        assert!(Map::can_be_used(
+            &int_array,
+            &parse_type("function(int|float)->any")
+        ));
+        assert!(Map::can_be_used(
+            &int_array,
+            &parse_type("function(int, any)->int")
+        ));
+        assert!(Map::can_be_used(
+            &int_array,
+            &parse_type("function(any, any)->float")
+        ));
+        assert!(Map::can_be_used(
+            &(int_array.clone() | float_array.clone()),
+            &parse_type("function(int | float)->int")
+        ));
+        assert!(Map::can_be_used(
+            &(int_array.clone() | float_array.clone()),
+            &parse_type("function(int, int | float)->int")
+        ));
+        assert!(Map::can_be_used(
+            &(int_array.clone() | float_array.clone()),
+            &parse_type("function(any, any)->int")
+        ));
+        assert!(Map::can_be_used(
+            &int_array,
+            &parse_type("function(int)->int | function(any)->any")
+        ));
+        assert!(Map::can_be_used(
+            &int_array,
+            &parse_type("function(int, any)->int | function(any)->any")
+        ));
+        assert!(Map::can_be_used(
+            &int_array,
+            &parse_type("function(any, any)->float | function(int | float)->int")
+        ));
+        assert!(Map::can_be_used(
+            &(int_array.clone() | float_array.clone()),
+            &parse_type("function(int, int | float)->int | function(int | float)->float")
+        ));
+        assert!(Map::can_be_used(
+            &parse_type("([int], [float], [string])"),
+            &parse_type("function(int, float, string) -> any")
+        ));
+        assert!(Map::can_be_used(
+            &parse_type("([int], [float]|[string|int], [string])"),
+            &parse_type(
+                "function(int, int|float|string, string) -> float\
+            | function(int | float, any, any, any) -> any"
+            )
+        ));
+        assert!(Map::can_be_used(
+            &parse_type("([int], [float])|([string], [any])"),
+            &parse_type("function(int | string, any) -> any | function(any, any, any) -> ()")
+        ));
+        // false
+        assert!(!Map::can_be_used(
+            &(int_array.clone() | float_array.clone()),
+            &parse_type("function(int, int)->int")
+        ));
+        assert!(!Map::can_be_used(
+            &(int_array.clone() | float_array.clone()),
+            &parse_type("function(int, int | float, any)->int")
+        ));
+        assert!(!Map::can_be_used(
+            &(int_array.clone() | float_array.clone()),
+            &parse_type("function(any, float)->int")
+        ));
+        assert!(!Map::can_be_used(
+            &int_array,
+            &parse_type("function(int)->int | int")
+        ));
+        assert!(!Map::can_be_used(
+            &(int_array.clone() | Type::Float),
+            &parse_type("function(int, any)->int | function(any)->any")
+        ));
+        assert!(!Map::can_be_used(
+            &(int_array.clone() | Type::from((int_array.clone(), float_array.clone()))),
+            &parse_type("function(any, any)->float | function(int | float)->int")
+        ));
     }
 }
