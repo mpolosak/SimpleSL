@@ -71,7 +71,7 @@ impl From<FunctionType> for Type {
 
 #[cfg(test)]
 mod tests {
-    use crate::variable::{multi_type::MultiType, Type};
+    use crate::variable::Type;
 
     use super::FunctionType;
     #[test]
@@ -92,11 +92,7 @@ mod tests {
             params: [
                 Type::Any,
                 Type::Int,
-                Type::Multi(MultiType::from([
-                    Type::Float,
-                    Type::String,
-                    [Type::Any].into(),
-                ])),
+                Type::Float | Type::String | Type::from([Type::Any]),
             ]
             .into(),
             return_type: Type::Int,
@@ -106,13 +102,8 @@ mod tests {
             return_type: Type::Any,
         };
         let function_type3 = FunctionType {
-            params: [
-                Type::String,
-                Type::Int,
-                Type::Multi(MultiType::from([Type::Float, Type::String])),
-            ]
-            .into(),
-            return_type: Type::Multi(MultiType::from([Type::Float, Type::String, Type::Int])),
+            params: [Type::String, Type::Int, Type::Float | Type::String].into(),
+            return_type: Type::Float | Type::String | Type::Int,
         };
         assert!(function_type.matches(&function_type));
         assert!(function_type2.matches(&function_type2));
