@@ -119,6 +119,21 @@ impl Type {
             _ => None,
         }
     }
+
+    /// Returns type of element of array
+    pub fn element_type(&self) -> Option<Type> {
+        match self {
+            Type::Array(element) => Some(element.as_ref().clone()),
+            Type::EmptyArray => Some(Type::Never),
+            Type::Multi(multi) => {
+                let mut iter = multi.iter();
+                let first = iter.next().unwrap().element_type()?;
+                iter.map(Self::element_type)
+                    .try_fold(first, |acc, curr| Some(acc | curr?))
+            }
+            _ => None,
+        }
+    }
 }
 
 impl Display for Type {
@@ -383,7 +398,7 @@ mod tests {
     }
 
     #[test]
-    fn check_element_type() {
+    fn index_type() {
         assert_eq!(Type::EmptyArray.index_result(), Some(Type::Never));
         assert_eq!(
             (Type::EmptyArray | parse_type!("[int]")).index_result(),
@@ -437,5 +452,31 @@ mod tests {
         assert_eq!(parse_type!("int").return_type(), None);
         assert_eq!(parse_type!("string").return_type(), None);
         assert_eq!(parse_type!("function()->int | float").return_type(), None);
+    }
+
+    #[test]
+    fn element_type() {
+        assert_eq!(Type::EmptyArray.element_type(), Some(Type::Never));
+        assert_eq!(
+            (Type::EmptyArray | parse_type!("[int]")).element_type(),
+            Some(Type::Int)
+        );
+        assert_eq!(parse_type!("[int]").element_type(), Some(Type::Int));
+        assert_eq!(parse_type!("string").element_type(), None);
+        assert_eq!(parse_type!("string|[string]").element_type(), None);
+        assert_eq!(parse_type!("string | [int]").element_type(), None);
+        assert_eq!(
+            parse_type!("[float] | [int]").element_type(),
+            Some(Type::Int | Type::Float)
+        );
+        assert_eq!(
+            parse_type!("[int] | [string|float]").element_type(),
+            Some(Type::Int | Type::String | Type::Float)
+        );
+        assert_eq!(parse_type!("[any]|float").element_type(), None);
+        assert_eq!(parse_type!("int").element_type(), None);
+        assert_eq!(parse_type!("[int]|float").element_type(), None);
+        assert_eq!(parse_type!("any").element_type(), None);
+        assert_eq!(parse_type!("string | (int, float)").element_type(), None);
     }
 }
