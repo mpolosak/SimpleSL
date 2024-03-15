@@ -95,7 +95,7 @@ impl Type {
     pub fn element_type(&self) -> Option<Type> {
         match self {
             Type::Array(element) => Some(element.as_ref().clone()),
-            Type::EmptyArray => Some(Type::Any),
+            Type::EmptyArray => Some(Type::Never),
             Type::Multi(multi) => {
                 let mut iter = multi.iter();
                 let first = iter.next().unwrap().element_type()?;
@@ -324,6 +324,11 @@ mod tests {
 
     #[test]
     fn check_element_type() {
+        assert_eq!(Type::EmptyArray.element_type(), Some(Type::Never));
+        assert_eq!(
+            (Type::EmptyArray | parse_type!("[int]")).element_type(),
+            Some(Type::Int)
+        );
         assert_eq!(parse_type!("[int]").element_type(), Some(Type::Int));
         assert_eq!(parse_type!("string").element_type(), Some(Type::String));
         assert_eq!(
