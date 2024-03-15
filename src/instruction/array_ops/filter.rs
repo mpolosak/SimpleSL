@@ -73,56 +73,56 @@ mod tests {
     #[test]
     fn can_be_used() {
         assert!(Filter::can_be_used(
-            &parse_type("[]"),
-            &parse_type("(int)->int")
+            &Type::EmptyArray,
+            &parse_type!("function(int)->int")
         ));
         assert!(Filter::can_be_used(
-            &parse_type("[]"),
-            &parse_type("(int, float)->int")
+            &Type::EmptyArray,
+            &parse_type!("function(int, float)->int")
         ));
         assert!(!Filter::can_be_used(
-            &parse_type("[]"),
-            &parse_type("(int)->float")
-        ));
-        assert!(Filter::can_be_used(
-            &[Type::Int].into(),
-            &parse_type("(int)->int")
+            &Type::EmptyArray,
+            &parse_type!("function(int)->float")
         ));
         assert!(Filter::can_be_used(
             &[Type::Int].into(),
-            &parse_type("(int, any)->int")
+            &parse_type!("function(int)->int")
         ));
         assert!(Filter::can_be_used(
-            &parse_type("[int]|[float]"),
-            &parse_type("(int|float)->int")
+            &[Type::Int].into(),
+            &parse_type!("function(int, any)->int")
         ));
         assert!(Filter::can_be_used(
-            &parse_type("[int]|[float]"),
-            &parse_type("(any, any)->int")
+            &parse_type!("[int]|[float]"),
+            &parse_type!("function(int|float)->int")
         ));
         assert!(Filter::can_be_used(
-            &parse_type("[int]|[float|string]"),
-            &parse_type("(any, int|float|string)->int")
+            &parse_type!("[int]|[float]"),
+            &parse_type!("function(any, any)->int")
+        ));
+        assert!(Filter::can_be_used(
+            &parse_type!("[int]|[float|string]"),
+            &parse_type!("function(any, int|float|string)->int")
         ));
         assert!(!Filter::can_be_used(
-            &parse_type("int"),
-            &parse_type("(any, any)->int")
+            &parse_type!("int"),
+            &parse_type!("function(any, any)->int")
         ));
         assert!(!Filter::can_be_used(
-            &parse_type("[int]|float"),
-            &parse_type("(any, any)->int")
+            &parse_type!("[int]|float"),
+            &parse_type!("function(any, any)->int")
         ));
         assert!(!Filter::can_be_used(
-            &parse_type("[int]|[float]"),
-            &parse_type("(any, int)->int")
+            &parse_type!("[int]|[float]"),
+            &parse_type!("function(any, int)->int")
         ));
         assert!(!Filter::can_be_used(
-            &parse_type("[int]|[float]"),
-            &parse_type("(float, any)->int")
+            &parse_type!("[int]|[float]"),
+            &parse_type!("function(float, any)->int")
         ));
         assert!(!Filter::can_be_used(
-            &parse_type("[int]|[float]"),
-            &parse_type("string")
+            &parse_type!("[int]|[float]"),
+            &parse_type!("string")
         ))
     }
 }

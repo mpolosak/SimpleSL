@@ -15,7 +15,6 @@ use std::{
     sync::Arc,
 };
 use typle::typle;
-
 #[derive(Clone, Debug, Hash, Eq, PartialEq)]
 pub enum Type {
     Int,
@@ -234,9 +233,14 @@ pub trait ReturnType {
 }
 
 #[cfg(test)]
-pub(crate) fn parse_type(s: &str) -> Type {
-    Type::from_str(s).unwrap()
+macro_rules! parse_type {
+    ($s: literal) => {
+        $s.parse::<Type>().unwrap()
+    };
 }
+
+#[cfg(test)]
+pub(crate) use parse_type;
 
 #[cfg(test)]
 mod tests {
@@ -278,16 +282,16 @@ mod tests {
     #[test]
     fn check_flatten_tuple() {
         assert_eq!(
-            parse_type("(int, string)").flatten_tuple(),
+            parse_type!("(int, string)").flatten_tuple(),
             Some([Type::Int, Type::String].into())
         );
         assert_eq!(
-            parse_type("(int, string)|(string, int)").flatten_tuple(),
+            parse_type!("(int, string)|(string, int)").flatten_tuple(),
             Some([Type::Int | Type::String, Type::Int | Type::String].into())
         );
 
         assert_eq!(
-            parse_type("(int, string)|(string, int)|(any, (int, string))").flatten_tuple(),
+            parse_type!("(int, string)|(string, int)|(any, (int, string))").flatten_tuple(),
             Some(
                 [
                     Type::Any,
@@ -298,7 +302,7 @@ mod tests {
         );
 
         assert_eq!(
-            parse_type("(int, string, float)|(string, int, float)").flatten_tuple(),
+            parse_type!("(int, string, float)|(string, int, float)").flatten_tuple(),
             Some(
                 [
                     Type::Int | Type::String,
@@ -308,59 +312,65 @@ mod tests {
                 .into()
             )
         );
-        assert_eq!(parse_type("int|(string, int, float)").flatten_tuple(), None);
         assert_eq!(
-            parse_type("(int, string)|(string, int, float)").flatten_tuple(),
+            parse_type!("int|(string, int, float)").flatten_tuple(),
+            None
+        );
+        assert_eq!(
+            parse_type!("(int, string)|(string, int, float)").flatten_tuple(),
             None
         );
     }
 
     #[test]
     fn check_element_type() {
-        assert_eq!(parse_type("[int]").element_type(), Some(Type::Int));
-        assert_eq!(parse_type("string").element_type(), Some(Type::String));
+        assert_eq!(parse_type!("[int]").element_type(), Some(Type::Int));
+        assert_eq!(parse_type!("string").element_type(), Some(Type::String));
         assert_eq!(
-            parse_type("string|[string]").element_type(),
+            parse_type!("string|[string]").element_type(),
             Some(Type::String)
         );
         assert_eq!(
-            parse_type("string | [int]").element_type(),
+            parse_type!("string | [int]").element_type(),
             Some(Type::Int | Type::String)
         );
         assert_eq!(
-            parse_type("[float] | [int]").element_type(),
+            parse_type!("[float] | [int]").element_type(),
             Some(Type::Int | Type::Float)
         );
         assert_eq!(
-            parse_type("[int] | [string|float]").element_type(),
+            parse_type!("[int] | [string|float]").element_type(),
             Some(Type::Int | Type::String | Type::Float)
         );
-        assert_eq!(parse_type("[any]|float").element_type(), None);
-        assert_eq!(parse_type("int").element_type(), None);
-        assert_eq!(parse_type("[int]|float").element_type(), None);
-        assert_eq!(parse_type("any").element_type(), None);
-        assert_eq!(parse_type("string | (int, float)").element_type(), None);
+        assert_eq!(parse_type!("[any]|float").element_type(), None);
+        assert_eq!(parse_type!("int").element_type(), None);
+        assert_eq!(parse_type!("[int]|float").element_type(), None);
+        assert_eq!(parse_type!("any").element_type(), None);
+        assert_eq!(parse_type!("string | (int, float)").element_type(), None);
     }
 
     #[test]
     fn function_return_type() {
-        assert_eq!(parse_type("function()->int").return_type(), Some(Type::Int));
         assert_eq!(
-            parse_type("function()->int | function(int) -> float").return_type(),
+            parse_type!("function()->int").return_type(),
+            Some(Type::Int)
+        );
+        assert_eq!(
+            parse_type!("function()->int | function(int) -> float").return_type(),
             Some(Type::Int | Type::Float)
         );
         assert_eq!(
-            parse_type("function()->int | function(int) -> (float|string)").return_type(),
+            parse_type!("function()->int | function(int) -> (float|string)").return_type(),
             Some(Type::Float | Type::Int | Type::String)
         );
         assert_eq!(
-            parse_type("function()->int | function(int) -> float | function(int, int)->any")
+            parse_type!("function()->int | function(int) -> float | function(int, int)->any")
                 .return_type(),
             Some(Type::Any)
         );
-        assert_eq!(parse_type("float").return_type(), None);
-        assert_eq!(parse_type("int").return_type(), None);
-        assert_eq!(parse_type("string").return_type(), None);
-        assert_eq!(parse_type("function()->int | float").return_type(), None);
+        assert_eq!(parse_type!("float").return_type(), None);
+        assert_eq!(parse_type!("int").return_type(), None);
+        assert_eq!(parse_type!("string").return_type(), None);
+        assert_eq!(parse_type!("function()->int | float").return_type(), None);
     }
 }
