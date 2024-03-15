@@ -28,7 +28,7 @@ impl Reduce {
     ) -> Result<Instruction, Error> {
         let initial_value =
             Instruction::new_expression(initial_value, interpreter, local_variables)?;
-        let Some(element_type) = array.return_type().element_type() else {
+        let Some(element_type) = array.return_type().index_result() else {
             return Err(Error::WrongType("array".into(), [Type::Any].into()));
         };
         if let Type::Never = element_type {

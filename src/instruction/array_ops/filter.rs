@@ -12,7 +12,7 @@ binOp!(Filter, "?", cfi);
 
 impl CanBeUsed for Filter {
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
-        let Some(element_type) = lhs.element_type() else {
+        let Some(element_type) = lhs.index_result() else {
             return false;
         };
         let expected_function = FunctionType {

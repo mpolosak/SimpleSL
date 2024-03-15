@@ -77,7 +77,7 @@ impl Recreate for At {
 
 impl ReturnType for At {
     fn return_type(&self) -> Type {
-        self.instruction.return_type().element_type().unwrap()
+        self.instruction.return_type().index_result().unwrap()
     }
 }
 

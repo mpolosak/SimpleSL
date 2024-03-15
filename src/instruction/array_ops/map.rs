@@ -17,7 +17,7 @@ impl CanBeUsed for Map {
         if let Some(types) = lhs.clone().flatten_tuple() {
             return Self::can_be_used_zip(&types, rhs);
         }
-        let Some(element_type) = lhs.element_type() else {
+        let Some(element_type) = lhs.index_result() else {
             return false;
         };
         let expected_function = FunctionType {
@@ -35,7 +35,7 @@ impl Map {
     fn can_be_used_zip(types: &[Type], rhs: &Type) -> bool {
         let Some(params) = types
             .iter()
-            .map(Type::element_type)
+            .map(Type::index_result)
             .collect::<Option<Box<[Type]>>>()
         else {
             return false;

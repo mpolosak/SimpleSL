@@ -92,14 +92,14 @@ impl Type {
     }
 
     /// Returns type of element returned when indexing into
-    pub fn element_type(&self) -> Option<Type> {
+    pub fn index_result(&self) -> Option<Type> {
         match self {
             Type::Array(element) => Some(element.as_ref().clone()),
             Type::EmptyArray => Some(Type::Never),
             Type::Multi(multi) => {
                 let mut iter = multi.iter();
-                let first = iter.next().unwrap().element_type()?;
-                iter.map(Self::element_type)
+                let first = iter.next().unwrap().index_result()?;
+                iter.map(Self::index_result)
                     .try_fold(first, |acc, curr| Some(acc | curr?))
             }
             Type::String => Some(Type::String),
@@ -384,34 +384,34 @@ mod tests {
 
     #[test]
     fn check_element_type() {
-        assert_eq!(Type::EmptyArray.element_type(), Some(Type::Never));
+        assert_eq!(Type::EmptyArray.index_result(), Some(Type::Never));
         assert_eq!(
-            (Type::EmptyArray | parse_type!("[int]")).element_type(),
+            (Type::EmptyArray | parse_type!("[int]")).index_result(),
             Some(Type::Int)
         );
-        assert_eq!(parse_type!("[int]").element_type(), Some(Type::Int));
-        assert_eq!(parse_type!("string").element_type(), Some(Type::String));
+        assert_eq!(parse_type!("[int]").index_result(), Some(Type::Int));
+        assert_eq!(parse_type!("string").index_result(), Some(Type::String));
         assert_eq!(
-            parse_type!("string|[string]").element_type(),
+            parse_type!("string|[string]").index_result(),
             Some(Type::String)
         );
         assert_eq!(
-            parse_type!("string | [int]").element_type(),
+            parse_type!("string | [int]").index_result(),
             Some(Type::Int | Type::String)
         );
         assert_eq!(
-            parse_type!("[float] | [int]").element_type(),
+            parse_type!("[float] | [int]").index_result(),
             Some(Type::Int | Type::Float)
         );
         assert_eq!(
-            parse_type!("[int] | [string|float]").element_type(),
+            parse_type!("[int] | [string|float]").index_result(),
             Some(Type::Int | Type::String | Type::Float)
         );
-        assert_eq!(parse_type!("[any]|float").element_type(), None);
-        assert_eq!(parse_type!("int").element_type(), None);
-        assert_eq!(parse_type!("[int]|float").element_type(), None);
-        assert_eq!(parse_type!("any").element_type(), None);
-        assert_eq!(parse_type!("string | (int, float)").element_type(), None);
+        assert_eq!(parse_type!("[any]|float").index_result(), None);
+        assert_eq!(parse_type!("int").index_result(), None);
+        assert_eq!(parse_type!("[int]|float").index_result(), None);
+        assert_eq!(parse_type!("any").index_result(), None);
+        assert_eq!(parse_type!("string | (int, float)").index_result(), None);
     }
 
     #[test]
