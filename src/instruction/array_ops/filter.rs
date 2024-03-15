@@ -5,29 +5,30 @@ use crate::{
         Exec, Instruction,
     },
     interpreter::Interpreter,
-    variable::{ReturnType, Type, Variable},
+    variable::{FunctionType, ReturnType, Type, Variable},
 };
 
 binOp!(Filter, "?", cfi);
 
 impl CanBeUsed for Filter {
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
-        let Type::Function(function_type) = rhs else {
+        let Some(element_type) = lhs.element_type() else {
             return false;
         };
-        if lhs == &Type::EmptyArray {
-            return function_type.params.len() == 1 && function_type.return_type == Type::Int;
-        }
-        let Type::Array(element_type) = lhs else {
-            return false;
-        };
-
-        let params = &function_type.params;
-        function_type.return_type == Type::Int
-            && ((params.len() == 1 && element_type.matches(&params[0]))
-                || (params.len() == 2
-                    && Type::Int.matches(&params[0])
-                    && element_type.matches(&params[1])))
+        let expected_function = Type::Function(
+            FunctionType {
+                params: [element_type.clone()].into(),
+                return_type: Type::Int,
+            }
+            .into(),
+        ) | Type::Function(
+            FunctionType {
+                params: [Type::Int, element_type].into(),
+                return_type: Type::Int,
+            }
+            .into(),
+        );
+        rhs.matches(&expected_function)
     }
 }
 
@@ -59,5 +60,69 @@ impl Exec for Filter {
 impl ReturnType for Filter {
     fn return_type(&self) -> Type {
         self.lhs.return_type()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        instruction::{array_ops::Filter, traits::CanBeUsed},
+        variable::{parse_type, Type},
+    };
+
+    #[test]
+    fn can_be_used() {
+        assert!(Filter::can_be_used(
+            &parse_type("[]"),
+            &parse_type("(int)->int")
+        ));
+        assert!(Filter::can_be_used(
+            &parse_type("[]"),
+            &parse_type("(int, float)->int")
+        ));
+        assert!(!Filter::can_be_used(
+            &parse_type("[]"),
+            &parse_type("(int)->float")
+        ));
+        assert!(Filter::can_be_used(
+            &[Type::Int].into(),
+            &parse_type("(int)->int")
+        ));
+        assert!(Filter::can_be_used(
+            &[Type::Int].into(),
+            &parse_type("(int, any)->int")
+        ));
+        assert!(Filter::can_be_used(
+            &parse_type("[int]|[float]"),
+            &parse_type("(int|float)->int")
+        ));
+        assert!(Filter::can_be_used(
+            &parse_type("[int]|[float]"),
+            &parse_type("(any, any)->int")
+        ));
+        assert!(Filter::can_be_used(
+            &parse_type("[int]|[float|string]"),
+            &parse_type("(any, int|float|string)->int")
+        ));
+        assert!(!Filter::can_be_used(
+            &parse_type("int"),
+            &parse_type("(any, any)->int")
+        ));
+        assert!(!Filter::can_be_used(
+            &parse_type("[int]|float"),
+            &parse_type("(any, any)->int")
+        ));
+        assert!(!Filter::can_be_used(
+            &parse_type("[int]|[float]"),
+            &parse_type("(any, int)->int")
+        ));
+        assert!(!Filter::can_be_used(
+            &parse_type("[int]|[float]"),
+            &parse_type("(float, any)->int")
+        ));
+        assert!(!Filter::can_be_used(
+            &parse_type("[int]|[float]"),
+            &parse_type("string")
+        ))
     }
 }
