@@ -12,8 +12,7 @@ pub struct TypeSet(pub HashSet<Type>);
 
 impl Hash for TypeSet {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        let types: Box<[Type]> = Box::from(self.clone());
-        types.hash(state);
+        self.len().hash(state);
     }
 }
 
