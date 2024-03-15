@@ -4,7 +4,7 @@ mod array_repeat;
 mod at;
 mod bitwise;
 mod block;
-mod comp;
+pub mod comp;
 mod control_flow;
 mod destruct_tuple;
 mod function;
