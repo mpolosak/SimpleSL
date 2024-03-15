@@ -1,4 +1,4 @@
-use super::{function_type::FunctionType, type_set::TypeSet};
+use super::{function_type::FunctionType, multi::Multi};
 use crate::{
     errors::ParseTypeError,
     join,
@@ -25,7 +25,7 @@ pub enum Type {
     Tuple(Arc<[Type]>),
     EmptyArray,
     Void,
-    Multi(Arc<TypeSet>),
+    Multi(Arc<Multi>),
     Any,
     Never,
 }
@@ -64,7 +64,7 @@ impl Type {
                 Arc::make_mut(&mut types).insert(var_type);
                 Type::Multi(types)
             }
-            (first, second) => Type::Multi(TypeSet::from([first, second]).into()),
+            (first, second) => Type::Multi(Multi::from([first, second]).into()),
         }
     }
 

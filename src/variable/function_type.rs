@@ -71,7 +71,7 @@ impl From<FunctionType> for Type {
 
 #[cfg(test)]
 mod tests {
-    use crate::variable::{type_set::TypeSet, Type};
+    use crate::variable::{multi::Multi, Type};
 
     use super::FunctionType;
     #[test]
@@ -92,7 +92,7 @@ mod tests {
             params: [
                 Type::Any,
                 Type::Int,
-                Type::Multi(TypeSet::from([Type::Float, Type::String, [Type::Any].into()]).into()),
+                Type::Multi(Multi::from([Type::Float, Type::String, [Type::Any].into()]).into()),
             ]
             .into(),
             return_type: Type::Int,
@@ -105,10 +105,10 @@ mod tests {
             params: [
                 Type::String,
                 Type::Int,
-                Type::Multi(TypeSet::from([Type::Float, Type::String]).into()),
+                Type::Multi(Multi::from([Type::Float, Type::String]).into()),
             ]
             .into(),
-            return_type: Type::Multi(TypeSet::from([Type::Float, Type::String, Type::Int]).into()),
+            return_type: Type::Multi(Multi::from([Type::Float, Type::String, Type::Int]).into()),
         };
         assert!(function_type.matches(&function_type));
         assert!(function_type2.matches(&function_type2));

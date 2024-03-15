@@ -1,7 +1,7 @@
 mod array;
 mod function_type;
+mod multi;
 mod r#type;
-mod type_set;
 use crate::{function::Function, join_debug, parse::*, Error};
 use match_any::match_any;
 use pest::{iterators::Pair, Parser};
@@ -10,7 +10,7 @@ pub(crate) use r#type::parse_type;
 pub use r#type::{ReturnType, Type, Typed};
 use std::{fmt, io, rc::Rc, str::FromStr};
 pub use typle::typle;
-pub use {array::Array, function_type::FunctionType, type_set::TypeSet};
+pub use {array::Array, function_type::FunctionType, multi::Multi};
 
 #[derive(Clone)]
 pub enum Variable {
