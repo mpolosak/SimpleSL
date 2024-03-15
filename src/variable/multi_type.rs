@@ -5,52 +5,53 @@ use std::{
     fmt::Display,
     hash::Hash,
     ops::{Deref, DerefMut},
+    sync::Arc,
 };
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Multi(pub HashSet<Type>);
+pub struct MultiType(Arc<HashSet<Type>>);
 
-impl Hash for Multi {
+impl Hash for MultiType {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.len().hash(state);
     }
 }
 
-impl<const N: usize> From<[Type; N]> for Multi {
+impl<const N: usize> From<[Type; N]> for MultiType {
     fn from(value: [Type; N]) -> Self {
-        Self(value.into())
+        Self(HashSet::from(value).into())
     }
 }
 
-impl From<Multi> for Box<[Type]> {
-    fn from(value: Multi) -> Self {
-        value.0.into_iter().collect()
+impl From<MultiType> for Box<[Type]> {
+    fn from(value: MultiType) -> Self {
+        value.0.iter().cloned().collect()
     }
 }
 
-impl FromIterator<Type> for Multi {
+impl FromIterator<Type> for MultiType {
     fn from_iter<T: IntoIterator<Item = Type>>(iter: T) -> Self {
-        let types = iter.into_iter().collect();
-        Self(types)
+        let types: HashSet<_> = iter.into_iter().collect();
+        Self(types.into())
     }
 }
 
-impl Display for Multi {
+impl Display for MultiType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let types = Box::from(self.clone());
         write!(f, "{}", join(&types, "|"))
     }
 }
 
-impl Deref for Multi {
-    type Target = HashSet<Type>;
+impl Deref for MultiType {
+    type Target = Arc<HashSet<Type>>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl DerefMut for Multi {
+impl DerefMut for MultiType {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }

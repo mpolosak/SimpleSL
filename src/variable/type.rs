@@ -1,4 +1,4 @@
-use super::{function_type::FunctionType, multi::Multi};
+use super::{function_type::FunctionType, multi_type::MultiType};
 use crate::{
     errors::ParseTypeError,
     join,
@@ -25,7 +25,7 @@ pub enum Type {
     Tuple(Arc<[Type]>),
     EmptyArray,
     Void,
-    Multi(Arc<Multi>),
+    Multi(MultiType),
     Any,
     Never,
 }
@@ -64,7 +64,7 @@ impl Type {
                 Arc::make_mut(&mut types).insert(var_type);
                 Type::Multi(types)
             }
-            (first, second) => Type::Multi(Multi::from([first, second]).into()),
+            (first, second) => Type::Multi(MultiType::from([first, second])),
         }
     }
 
