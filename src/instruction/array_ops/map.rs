@@ -125,25 +125,17 @@ impl Exec for Map {
 
 impl ReturnType for Map {
     fn return_type(&self) -> Type {
-        let Type::Function(function_type) = self.rhs.return_type() else {
-            unreachable!()
-        };
-        [function_type.return_type.clone()].into()
+        [self.rhs.return_type().return_type().unwrap()].into()
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::variable::parse_type;
     use crate::{
         instruction::{array_ops::Map, traits::CanBeUsed},
         variable::Type,
     };
-    use std::str::FromStr;
-
-    fn parse_type(s: &str) -> Type {
-        Type::from_str(s).unwrap()
-    }
-
     #[test]
     fn can_be_used() {
         let int_array = parse_type("[int]");

@@ -5,6 +5,8 @@ mod type_set;
 use crate::{function::Function, join_debug, parse::*, Error};
 use match_any::match_any;
 use pest::{iterators::Pair, Parser};
+#[cfg(test)]
+pub(crate) use r#type::parse_type;
 pub use r#type::{ReturnType, Type, Typed};
 use std::{fmt, io, rc::Rc, str::FromStr};
 pub use typle::typle;
