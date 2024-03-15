@@ -1,9 +1,9 @@
-use match_any::match_any;
-
+use super::return_type;
 use crate::instruction::macros::{binOpCBU, bin_num_op::ACCEPTED_TYPE};
 use crate::instruction::{Exec, Instruction};
 use crate::variable::{ReturnType, Type};
 use crate::{interpreter::Interpreter, variable::Variable};
+use match_any::match_any;
 
 binOpCBU!(Lower, "<");
 
@@ -36,13 +36,8 @@ impl Lower {
 
 impl ReturnType for Lower {
     fn return_type(&self) -> Type {
-        if matches!(
-            (self.lhs.return_type(), self.rhs.return_type()),
-            (Type::Array(_), _) | (_, Type::Array(_))
-        ) {
-            [Type::Int].into()
-        } else {
-            Type::Int
-        }
+        let lhs = self.lhs.return_type();
+        let rhs = self.rhs.return_type();
+        return_type(lhs, rhs)
     }
 }

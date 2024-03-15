@@ -1,9 +1,9 @@
-use match_any::match_any;
-
+use super::return_type;
 use crate::instruction::macros::{binOpCBU, bin_num_op::ACCEPTED_TYPE};
 use crate::instruction::{Exec, Instruction};
 use crate::variable::{ReturnType, Type};
 use crate::{interpreter::Interpreter, variable::Variable};
+use match_any::match_any;
 
 binOpCBU!(GreaterOrEqual, ">=");
 
@@ -38,12 +38,8 @@ impl GreaterOrEqual {
 
 impl ReturnType for GreaterOrEqual {
     fn return_type(&self) -> Type {
-        if matches!(
-            (self.lhs.return_type(), self.rhs.return_type()),
-            (Type::Array(_), _) | (_, Type::Array(_))
-        ) {
-            return [Type::Int].into();
-        }
-        Type::Int
+        let lhs = self.lhs.return_type();
+        let rhs = self.rhs.return_type();
+        return_type(lhs, rhs)
     }
 }
