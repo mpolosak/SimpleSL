@@ -40,7 +40,7 @@ fn run_shell() -> Result<(), ReadlineError> {
         match Code::parse(&interpreter, &line)
             .and_then(|code| code.exec_unscoped(&mut interpreter).map_err(Error::from))
         {
-            Ok(result) => println!("{result}"),
+            Ok(result) => println!("{result:?}"),
             Err(error) => eprintln!("{error}"),
         }
     }
