@@ -85,7 +85,7 @@ impl BaseInstruction for At {}
 
 fn at(variable: Variable, index: Variable) -> Result<Variable, ExecError> {
     let Variable::Int(index) = index else {
-        unreachable!("Tried to index with negative value")
+        unreachable!("Tried to index with {}", index.as_type())
     };
     if index < 0 {
         return Err(ExecError::NegativeIndex);
@@ -93,10 +93,49 @@ fn at(variable: Variable, index: Variable) -> Result<Variable, ExecError> {
     let index = index as usize;
     match variable {
         Variable::String(string) => string
-            .get(index..index)
+            .get(index..=index)
             .ok_or(ExecError::IndexToBig)
             .map(Variable::from),
         Variable::Array(array) => array.get(index).ok_or(ExecError::IndexToBig).cloned(),
         variable => unreachable!("Tried to index into {}", variable.as_type()),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{instruction::at::at, variable::Variable, ExecError};
+    use std::str::FromStr;
+
+    #[test]
+    fn check_at() {
+        let array = Variable::from_str("[4, 5.5, \"var\"]").unwrap();
+        assert_eq!(at(array.clone(), Variable::Int(0)), Ok(Variable::Int(4)));
+        assert_eq!(
+            at(array.clone(), Variable::Int(1)),
+            Ok(Variable::Float(5.5))
+        );
+        assert_eq!(
+            at(array.clone(), Variable::Int(2)),
+            Ok(Variable::String("var".into()))
+        );
+        assert_eq!(
+            at(array.clone(), Variable::Int(-1)),
+            Err(ExecError::NegativeIndex)
+        );
+        assert_eq!(at(array, Variable::Int(3)), Err(ExecError::IndexToBig));
+        let string = Variable::String("tex".into());
+        assert_eq!(
+            at(string.clone(), Variable::Int(0)),
+            Ok(Variable::String("t".into()))
+        );
+        assert_eq!(
+            at(string.clone(), Variable::Int(2)),
+            Ok(Variable::String("x".into()))
+        );
+        assert_eq!(
+            at(string.clone(), Variable::Int(3)),
+            Err(ExecError::IndexToBig)
+        );
+        assert_eq!(at(string, Variable::Int(-1)), Err(ExecError::NegativeIndex))
     }
 }
