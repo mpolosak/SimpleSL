@@ -84,16 +84,16 @@ line = _{ COMMENT* ~ (( return | function_declaration | set | destruct_tuple | s
   set = { ident ~ "=" ~ stm}
   destruct_tuple = { destruct_idents ~ "=" ~ stm }
     destruct_idents =  {"(" ~ (ident ~ ("," ~ ident)*)? ~ ")"}
-type = _{ multi | standard_types | any }
+type = _{ multi | standard_types }
   int_type = {"int"}
   float_type = {"float"}
   string_type = {"string"}
   function_type = {"function" ~ function_type_params? ~ ("->" ~ return_type)?}
     function_type_params = {"(" ~ (type ~ ("," ~ type)*)? ~ ")"}
-    return_type = _{ standard_types | any | "(" ~ multi ~ ")" }
+    return_type = _{ standard_types | "(" ~ multi ~ ")" }
   array_type = { "[" ~ type ~ "]" }
   tuple_type = {"(" ~ (type ~ ("," ~ type)+) ~ ")"}
-  standard_types = _{ int_type | float_type | string_type | void | function_type | array_type | tuple_type }
+  standard_types = _{ int_type | float_type | string_type | void | function_type | array_type | tuple_type | any }
   multi = { ( standard_types ) ~ ( "|" ~ standard_types )+ }
   any = {"any"}
 input = _{ line* ~ &EOI}
