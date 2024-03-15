@@ -52,28 +52,49 @@ impl Add {
             (lhs, rhs) => panic!("Tried to do {lhs} + {rhs} which is imposible"),
         }
     }
+
+    fn return_type(lhs: Type, rhs: Type) -> Type {
+        if lhs == Type::EmptyArray && !Type::EmptyArray.matches(&rhs) {
+            return [rhs].into();
+        }
+        if rhs == Type::EmptyArray && !Type::EmptyArray.matches(&lhs) {
+            return [lhs].into();
+        }
+        let Some(lhs_element) = lhs.element_type() else {
+            if Type::EmptyArray.matches(&lhs) {
+                return lhs;
+            }
+            return rhs;
+        };
+        let Some(rhs_element) = rhs.element_type() else {
+            if Type::EmptyArray.matches(&rhs) {
+                return rhs;
+            }
+            return lhs;
+        };
+        if lhs_element == Type::Never && rhs_element == Type::Never {
+            return Type::EmptyArray;
+        }
+        [lhs_element | rhs_element].into()
+    }
 }
 
 impl ReturnType for Add {
     fn return_type(&self) -> Type {
-        match (self.lhs.return_type(), self.rhs.return_type()) {
-            (Type::Array(element_type1), Type::Array(element_type2)) => Type::Array(
-                (element_type1.as_ref().clone() | element_type2.as_ref().clone()).into(),
-            ),
-            (_, var_type @ Type::Array(_)) | (var_type, _) => var_type,
-        }
+        let lhs = self.lhs.return_type();
+        let rhs = self.rhs.return_type();
+        Self::return_type(lhs, rhs)
     }
 }
 
 #[cfg(test)]
 mod tests {
-
-    use std::str::FromStr;
-
     use crate::{
+        instruction::math::Add,
         variable::{Type, Variable},
         Code, Error, Interpreter,
     };
+    use std::str::FromStr;
 
     #[test]
     fn test_add_operator() {
@@ -135,6 +156,118 @@ mod tests {
                 Type::Float
             ))
         )
+    }
+
+    #[test]
+    fn return_type() {
+        // int
+        assert_eq!(Add::return_type(Type::Int, Type::Int), Type::Int);
+        assert_eq!(
+            Add::return_type(Type::Int, [Type::Int].into()),
+            [Type::Int].into()
+        );
+        assert_eq!(
+            Add::return_type([Type::Int].into(), Type::Int),
+            [Type::Int].into()
+        );
+        assert_eq!(
+            Add::return_type([Type::Int].into(), [Type::Int].into()),
+            [Type::Int].into()
+        );
+        assert_eq!(
+            Add::return_type([Type::Int].into(), [Type::Int] | Type::Int),
+            [Type::Int] | Type::Int
+        );
+        assert_eq!(
+            Add::return_type([Type::Int] | Type::Int, [Type::Int].into()),
+            [Type::Int] | Type::Int
+        );
+        // float
+        assert_eq!(Add::return_type(Type::Float, Type::Float), Type::Float);
+        assert_eq!(
+            Add::return_type(Type::Float, [Type::Float].into()),
+            [Type::Float].into()
+        );
+        assert_eq!(
+            Add::return_type([Type::Float].into(), Type::Float),
+            [Type::Float].into()
+        );
+        assert_eq!(
+            Add::return_type([Type::Float].into(), [Type::Float].into()),
+            [Type::Float].into()
+        );
+        assert_eq!(
+            Add::return_type([Type::Float].into(), [Type::Float] | Type::Float),
+            [Type::Float] | Type::Float
+        );
+        assert_eq!(
+            Add::return_type([Type::Float] | Type::Float, [Type::Float].into()),
+            [Type::Float] | Type::Float
+        );
+        // string
+        assert_eq!(Add::return_type(Type::String, Type::String), Type::String);
+        assert_eq!(
+            Add::return_type(Type::String, [Type::String].into()),
+            [Type::String].into()
+        );
+        assert_eq!(
+            Add::return_type([Type::String].into(), Type::String),
+            [Type::String].into()
+        );
+        assert_eq!(
+            Add::return_type([Type::String].into(), [Type::String].into()),
+            [Type::String].into()
+        );
+        assert_eq!(
+            Add::return_type([Type::String].into(), [Type::String] | Type::String),
+            [Type::String] | Type::String
+        );
+        assert_eq!(
+            Add::return_type([Type::String] | Type::String, [Type::String].into()),
+            [Type::String] | Type::String
+        );
+        // array + array
+        assert_eq!(
+            Add::return_type([Type::Int].into(), [Type::Float].into()),
+            [Type::Float | Type::Int].into()
+        );
+        assert_eq!(
+            Add::return_type([Type::Int].into(), [Type::Any].into()),
+            [Type::Any].into()
+        );
+        assert_eq!(
+            Add::return_type([Type::Int] | [Type::Float].into(), Type::EmptyArray),
+            [Type::Float | Type::Int].into()
+        );
+        assert_eq!(
+            Add::return_type(Type::EmptyArray, Type::EmptyArray),
+            Type::EmptyArray
+        );
+        // int | float | string + empty_array
+        assert_eq!(
+            Add::return_type(Type::Int, Type::EmptyArray),
+            [Type::Int].into()
+        );
+        assert_eq!(
+            Add::return_type(Type::EmptyArray, Type::Int),
+            [Type::Int].into()
+        );
+        assert_eq!(
+            Add::return_type(Type::Float, Type::EmptyArray),
+            [Type::Float].into()
+        );
+        assert_eq!(
+            Add::return_type(Type::EmptyArray, Type::Float),
+            [Type::Float].into()
+        );
+        assert_eq!(
+            Add::return_type(Type::String, Type::EmptyArray),
+            [Type::String].into()
+        );
+        assert_eq!(
+            Add::return_type(Type::EmptyArray, Type::String),
+            [Type::String].into()
+        );
     }
 
     fn parse_and_exec(script: &str) -> Result<Variable, crate::Error> {
