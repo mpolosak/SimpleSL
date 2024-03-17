@@ -1,7 +1,5 @@
-use super::{
-    macros::{binOpCBU, bin_num_op::ACCEPTED_TYPE},
-    Instruction,
-};
+use super::macros::ACCEPTED_INT_TYPE as ACCEPTED_TYPE;
+use super::{macros::binOpCBU, Instruction};
 use crate::variable::Variable;
 use duplicate::duplicate_item;
 use match_any::match_any;

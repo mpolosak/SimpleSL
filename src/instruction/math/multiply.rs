@@ -1,7 +1,8 @@
-use crate::instruction::{macros::binNumOp, Instruction};
+use crate::instruction::macros::ACCEPTED_NUM_TYPE as ACCEPTED_TYPE;
+use crate::instruction::{macros::binOpCBU, Instruction};
 use crate::variable::{Type, Typed, Variable};
 
-binNumOp!(Multiply, "*");
+binOpCBU!(Multiply, "*");
 
 impl Multiply {
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {

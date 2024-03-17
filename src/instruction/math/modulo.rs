@@ -1,11 +1,10 @@
-use crate::instruction::{
-    macros::{binIntOp, bin_int_op::ACCEPTED_TYPE},
-    Instruction,
-};
+use crate::instruction::macros::binOpCBU;
+use crate::instruction::macros::ACCEPTED_INT_TYPE as ACCEPTED_TYPE;
+use crate::instruction::Instruction;
 use crate::variable::Variable;
 use crate::ExecError;
 
-binIntOp!(Modulo, "%");
+binOpCBU!(Modulo, "%");
 
 impl Modulo {
     pub fn create_from_instructions(

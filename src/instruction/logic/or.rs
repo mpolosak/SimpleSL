@@ -1,11 +1,9 @@
-use crate::instruction::{
-    macros::{binIntOp, bin_int_op::ACCEPTED_TYPE},
-    Instruction,
-};
+use crate::instruction::macros::ACCEPTED_INT_TYPE as ACCEPTED_TYPE;
+use crate::instruction::{macros::binOpCBU, Instruction};
 use crate::variable::Variable;
 use crate::variable::{Type, Typed};
 
-binIntOp!(Or, "||");
+binOpCBU!(Or, "||");
 
 impl Or {
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {

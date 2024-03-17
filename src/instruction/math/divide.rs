@@ -1,8 +1,9 @@
-use crate::instruction::{macros::binNumOp, Instruction};
+use crate::instruction::macros::ACCEPTED_NUM_TYPE as ACCEPTED_TYPE;
+use crate::instruction::{macros::binOpCBU, Instruction};
 use crate::variable::Variable;
 use crate::ExecError;
 
-binNumOp!(Divide, "/");
+binOpCBU!(Divide, "/");
 
 impl Divide {
     pub fn create_from_instructions(

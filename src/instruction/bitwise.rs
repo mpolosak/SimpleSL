@@ -1,13 +1,11 @@
-use super::{
-    macros::{binIntOp, bin_int_op::ACCEPTED_TYPE},
-    Instruction,
-};
+use super::macros::ACCEPTED_INT_TYPE as ACCEPTED_TYPE;
+use super::{macros::binOpCBU, Instruction};
 use crate::variable::{Type, Typed, Variable};
 use duplicate::duplicate_item;
 
-binIntOp!(BitwiseAnd, "&");
-binIntOp!(BitwiseOr, "|");
-binIntOp!(Xor, "&");
+binOpCBU!(BitwiseAnd, "&");
+binOpCBU!(BitwiseOr, "|");
+binOpCBU!(Xor, "&");
 
 #[duplicate_item(
     bitwise op1 op2;
