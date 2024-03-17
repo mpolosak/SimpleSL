@@ -4,7 +4,7 @@ use crate::variable::{Typed, Variable};
 binNumOp!(Subtract, "-");
 
 impl Subtract {
-    fn create_from_instructions(minuend: Instruction, subtrahend: Instruction) -> Instruction {
+    pub fn create_from_instructions(minuend: Instruction, subtrahend: Instruction) -> Instruction {
         match (minuend, subtrahend) {
             (Instruction::Variable(minuend), Instruction::Variable(rhs)) => {
                 Self::exec(minuend, rhs).into()

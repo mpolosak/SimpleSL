@@ -13,7 +13,7 @@ binIntOp!(RShift, ">>");
     [LShift] [lhs << rhs] [>>]; [RShift] [lhs >> rhs] [>>];
 )]
 impl shift {
-    fn create_from_instructions(
+    pub fn create_from_instructions(
         lhs: Instruction,
         rhs: Instruction,
     ) -> Result<Instruction, ExecError> {

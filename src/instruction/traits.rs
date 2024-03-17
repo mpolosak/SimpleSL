@@ -1,3 +1,6 @@
+mod recreate;
+pub use self::recreate::Recreate;
+
 use super::{local_variable::LocalVariables, Instruction};
 use crate::{
     interpreter::Interpreter,
@@ -7,7 +10,6 @@ use crate::{
 };
 use pest::iterators::Pair;
 use std::{fmt::Debug, rc::Rc};
-
 pub trait CreateInstruction {
     fn create_instruction(
         pair: Pair<Rule>,
@@ -26,14 +28,6 @@ pub trait MutCreateInstruction {
 
 pub trait Exec {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult;
-}
-
-pub trait Recreate {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction, ExecError>;
 }
 
 pub trait BaseInstruction: Exec + Recreate + ReturnType + Debug {}

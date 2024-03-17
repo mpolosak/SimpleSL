@@ -8,7 +8,7 @@ use crate::ExecError;
 binIntOp!(Modulo, "%");
 
 impl Modulo {
-    fn create_from_instructions(
+    pub fn create_from_instructions(
         dividend: Instruction,
         divisor: Instruction,
     ) -> Result<Instruction, ExecError> {

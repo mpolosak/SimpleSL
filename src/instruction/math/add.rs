@@ -14,7 +14,7 @@ lazy_static! {
 binOpCBU!(Add, "+");
 
 impl Add {
-    fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
+    pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         match (lhs, rhs) {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => Self::exec(lhs, rhs).into(),
             (rhs, lhs) => Self { lhs, rhs }.into(),

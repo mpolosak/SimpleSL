@@ -26,7 +26,7 @@ macro_rules! prefixOp {
                 Ok(Self::create_from_instruction(instruction))
             }
 
-            fn create_from_instruction(instruction: Instruction) -> Instruction {
+            pub fn create_from_instruction(instruction: Instruction) -> Instruction {
                 match instruction {
                     Instruction::Variable(operand) => Self::calc(operand).into(),
                     instruction => Self { instruction }.into(),
@@ -48,17 +48,6 @@ macro_rules! prefixOp {
             fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
                 let result = self.instruction.exec(interpreter)?;
                 Ok(Self::calc(result))
-            }
-        }
-
-        impl Recreate for $T {
-            fn recreate(
-                &self,
-                local_variables: &mut LocalVariables,
-                interpreter: &Interpreter,
-            ) -> Result<Instruction, ExecError> {
-                let instruction = self.instruction.recreate(local_variables, interpreter)?;
-                Ok(Self::create_from_instruction(instruction))
             }
         }
 

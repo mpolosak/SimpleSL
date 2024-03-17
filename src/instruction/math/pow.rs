@@ -5,7 +5,7 @@ use crate::ExecError;
 binNumOp!(Pow, "*");
 
 impl Pow {
-    fn create_from_instructions(
+    pub fn create_from_instructions(
         base: Instruction,
         exp: Instruction,
     ) -> Result<Instruction, ExecError> {

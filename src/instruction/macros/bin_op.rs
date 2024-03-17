@@ -23,25 +23,11 @@ macro_rules! binOp {
                 traits::ToResult::to_result(Self::create_from_instructions(lhs, rhs))
             }
         }
-
-        impl crate::instruction::traits::Recreate for $T {
-            fn recreate(
-                &self,
-                local_variables: &mut crate::instruction::LocalVariables,
-                interpreter: &crate::Interpreter,
-            ) -> Result<crate::instruction::Instruction, crate::errors::ExecError> {
-                let lhs = self.lhs.recreate(local_variables, interpreter)?;
-                let rhs = self.rhs.recreate(local_variables, interpreter)?;
-                crate::instruction::traits::ToResult::to_result(Self::create_from_instructions(
-                    lhs, rhs,
-                ))
-            }
-        }
     };
     ($T: ident, $symbol: literal, cfi) => {
         binOp!($T, $symbol);
         impl $T {
-            fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
+            pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
                 Self { lhs, rhs }.into()
             }
         }

@@ -5,7 +5,7 @@ use crate::ExecError;
 binNumOp!(Divide, "/");
 
 impl Divide {
-    fn create_from_instructions(
+    pub fn create_from_instructions(
         dividend: Instruction,
         divisor: Instruction,
     ) -> Result<Instruction, ExecError> {

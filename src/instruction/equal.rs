@@ -12,7 +12,7 @@ impl CanBeUsed for Equal {
 }
 
 impl Equal {
-    fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
+    pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         match (lhs, rhs) {
             (Instruction::Variable(variable), Instruction::Variable(variable2)) => {
                 Instruction::Variable((variable == variable2).into())

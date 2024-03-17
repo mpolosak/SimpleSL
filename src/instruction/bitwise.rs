@@ -16,7 +16,7 @@ binIntOp!(Xor, "&");
     [Xor] [lhs ^ rhs] [^];
 )]
 impl bitwise {
-    fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
+    pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         match (lhs, rhs) {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => Self::exec(lhs, rhs).into(),
             (lhs, rhs) => Self { lhs, rhs }.into(),
