@@ -39,12 +39,6 @@ macro_rules! prefixOp {
             }
         }
 
-        impl crate::variable::ReturnType for $T {
-            fn return_type(&self) -> crate::variable::Type {
-                self.instruction.return_type()
-            }
-        }
-
         impl crate::instruction::BaseInstruction for $T {}
     };
 }

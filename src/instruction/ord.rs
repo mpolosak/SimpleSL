@@ -2,7 +2,7 @@ use super::{
     macros::{binOpCBU, bin_num_op::ACCEPTED_TYPE},
     Instruction,
 };
-use crate::variable::{ReturnType, Type, Variable};
+use crate::variable::Variable;
 use duplicate::duplicate_item;
 use match_any::match_any;
 
@@ -39,58 +39,5 @@ impl ord {
                 .collect(),
             (lhs, rhs) => panic!("Tried to do {lhs} {} {rhs}", stringify!(op))
         }
-    }
-}
-
-#[duplicate_item(
-    ord;
-    [Greater]; [GreaterOrEqual]; [Lower]; [LowerOrEqual];
-)]
-impl ReturnType for ord {
-    fn return_type(&self) -> Type {
-        let lhs = self.lhs.return_type();
-        let rhs = self.rhs.return_type();
-        return_type(lhs, rhs)
-    }
-}
-
-pub fn return_type(lhs: Type, rhs: Type) -> Type {
-    if lhs.matches(&[Type::Any].into()) || rhs.matches(&[Type::Any].into()) {
-        return [Type::Int].into();
-    }
-    if Type::from([Type::Never]).matches(&lhs) || Type::from([Type::Never]).matches(&rhs) {
-        return [Type::Int] | Type::Int;
-    }
-    Type::Int
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::{instruction::ord::return_type, variable::Type};
-
-    #[test]
-    fn test_return_type() {
-        assert_eq!(return_type(Type::Int, Type::Int), Type::Int);
-        assert_eq!(return_type(Type::Float, Type::Float), Type::Int);
-        assert_eq!(
-            return_type([Type::Int].into(), Type::Int),
-            [Type::Int].into()
-        );
-        assert_eq!(
-            return_type([Type::Float].into(), Type::Float),
-            [Type::Int].into()
-        );
-        assert_eq!(
-            return_type(Type::Float, [Type::Float].into()),
-            [Type::Int].into()
-        );
-        assert_eq!(
-            return_type(Type::Int, [Type::Int] | Type::Int),
-            [Type::Int] | Type::Int
-        );
-        assert_eq!(
-            return_type(Type::Float, [Type::Float] | Type::Float),
-            [Type::Int] | Type::Int
-        );
     }
 }

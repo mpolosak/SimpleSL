@@ -16,6 +16,7 @@ mod math;
 pub mod ord;
 mod prefix_op;
 mod r#return;
+mod return_type;
 mod set;
 mod shift;
 mod traits;

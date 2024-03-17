@@ -12,20 +12,7 @@ lazy_static! {
 macro_rules! binNumOp {
     ($T: ident, $symbol: literal) => {
         use crate::instruction::macros::bin_num_op::ACCEPTED_TYPE;
-        use crate::variable::{ReturnType, Type};
         crate::instruction::macros::binOpCBU!($T, $symbol);
-
-        impl ReturnType for $T {
-            fn return_type(&self) -> Type {
-                match (self.lhs.return_type(), self.rhs.return_type()) {
-                    (var_type @ Type::Array(_), _) | (_, var_type @ Type::Array(_)) => var_type,
-                    (Type::EmptyArray, var_type) | (var_type, Type::EmptyArray) => {
-                        [var_type].into()
-                    }
-                    (var_type, _) => var_type,
-                }
-            }
-        }
     };
 }
 

@@ -9,14 +9,6 @@ lazy_static! {
 macro_rules! binIntOp {
     ($T: ident, $symbol: literal) => {
         crate::instruction::macros::binOpCBU!($T, $symbol);
-
-        impl crate::variable::ReturnType for $T {
-            fn return_type(&self) -> crate::variable::Type {
-                let lhs = self.lhs.return_type();
-                let rhs = self.rhs.return_type();
-                crate::instruction::ord::return_type(lhs, rhs)
-            }
-        }
     };
 }
 
