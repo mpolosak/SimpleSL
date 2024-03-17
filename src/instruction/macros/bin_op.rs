@@ -3,16 +3,16 @@ macro_rules! binOp {
     ($T: ident, $symbol: literal) => {
         #[derive(Debug)]
         pub struct $T {
-            pub lhs: Instruction,
-            pub rhs: Instruction,
+            pub lhs: crate::instruction::Instruction,
+            pub rhs: crate::instruction::Instruction,
         }
 
         impl crate::instruction::traits::BaseInstruction for $T {}
         impl $T {
             pub fn create_op(
-                lhs: Instruction,
-                rhs: Instruction,
-            ) -> Result<Instruction, crate::errors::Error> {
+                lhs: crate::instruction::Instruction,
+                rhs: crate::instruction::Instruction,
+            ) -> Result<crate::instruction::Instruction, crate::errors::Error> {
                 use crate::variable::ReturnType;
                 let lhs_type = lhs.return_type();
                 let rhs_type = rhs.return_type();
@@ -29,7 +29,7 @@ macro_rules! binOp {
                 &self,
                 local_variables: &mut crate::instruction::LocalVariables,
                 interpreter: &crate::Interpreter,
-            ) -> Result<Instruction, crate::errors::ExecError> {
+            ) -> Result<crate::instruction::Instruction, crate::errors::ExecError> {
                 let lhs = self.lhs.recreate(local_variables, interpreter)?;
                 let rhs = self.rhs.recreate(local_variables, interpreter)?;
                 crate::instruction::traits::ToResult::to_result(Self::create_from_instructions(

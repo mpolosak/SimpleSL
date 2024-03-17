@@ -17,6 +17,7 @@ pub mod ord;
 mod prefix_op;
 mod r#return;
 mod set;
+mod shift;
 mod traits;
 mod tuple;
 use self::{
@@ -24,7 +25,7 @@ use self::{
     array_ops::{Filter, Map, Reduce, TypeFilter},
     array_repeat::ArrayRepeat,
     at::At,
-    bitwise::{BitwiseAnd, BitwiseOr, LShift, RShift, Xor},
+    bitwise::{BitwiseAnd, BitwiseOr, Xor},
     block::Block,
     control_flow::{IfElse, Match, SetIfElse},
     destruct_tuple::DestructTuple,
@@ -37,6 +38,7 @@ use self::{
     ord::{Greater, GreaterOrEqual, Lower, LowerOrEqual},
     r#return::Return,
     set::Set,
+    shift::{LShift, RShift},
     traits::BaseInstruction,
     tuple::Tuple,
 };
