@@ -1,12 +1,11 @@
-use super::macros::binOpCBU;
-use super::macros::ACCEPTED_INT_TYPE as ACCEPTED_TYPE;
+use super::bin_op::binOp;
 use crate::instruction::Instruction;
 use crate::variable::{Type, Typed, Variable};
 use crate::ExecError;
 use duplicate::duplicate_item;
 
-binOpCBU!(LShift, "<<");
-binOpCBU!(RShift, ">>");
+binOp!(LShift, "<<");
+binOp!(RShift, ">>");
 
 #[duplicate_item(
     shift op1 op2;

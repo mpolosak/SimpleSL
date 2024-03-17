@@ -1,5 +1,5 @@
 use crate::instruction::traits::{CanBeUsed, ExecResult};
-use crate::instruction::{macros::binOp, Exec, Instruction};
+use crate::instruction::{bin_op::binOp, Exec, Instruction};
 use crate::interpreter::Interpreter;
 use crate::variable::{ReturnType, Type};
 

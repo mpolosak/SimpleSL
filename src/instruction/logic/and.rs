@@ -1,9 +1,8 @@
-use crate::instruction::macros::ACCEPTED_INT_TYPE as ACCEPTED_TYPE;
-use crate::instruction::{macros::binOpCBU, Instruction};
+use crate::instruction::{bin_op::binOp, Instruction};
 use crate::variable::Variable;
 use crate::variable::{Type, Typed};
 
-binOpCBU!(And, "&&");
+binOp!(And, "&&");
 
 impl And {
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {

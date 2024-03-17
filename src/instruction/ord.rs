@@ -1,13 +1,12 @@
-use super::macros::ACCEPTED_INT_TYPE as ACCEPTED_TYPE;
-use super::{macros::binOpCBU, Instruction};
+use super::{bin_op::binOp, Instruction};
 use crate::variable::Variable;
 use duplicate::duplicate_item;
 use match_any::match_any;
 
-binOpCBU!(Greater, ">");
-binOpCBU!(GreaterOrEqual, ">=");
-binOpCBU!(Lower, "<");
-binOpCBU!(LowerOrEqual, "<=");
+binOp!(Greater, ">");
+binOp!(GreaterOrEqual, ">=");
+binOp!(Lower, "<");
+binOp!(LowerOrEqual, "<=");
 
 #[duplicate_item(
     ord op;

@@ -1,6 +1,6 @@
 use crate::{
     instruction::{
-        macros::binOp,
+        bin_op::binOp,
         traits::{CanBeUsed, ExecResult},
         Exec, Instruction,
     },

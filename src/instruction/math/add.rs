@@ -1,17 +1,8 @@
-use crate::instruction::{macros::binOpCBU, Instruction};
+use crate::instruction::{bin_op::binOp, Instruction};
 use crate::variable::{Array, Typed};
 use crate::variable::{ReturnType, Type, Variable};
-use lazy_static::lazy_static;
-use std::str::FromStr;
 
-lazy_static! {
-    static ref ACCEPTED_TYPE: Type = Type::from_str(
-        "(int|[int], int|[int]) | (float|[float], float|[float]) | (string|[string], string|[string]) | ([any], [any])"
-    )
-    .unwrap();
-}
-
-binOpCBU!(Add, "+");
+binOp!(Add, "+");
 
 impl Add {
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {

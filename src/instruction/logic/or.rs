@@ -1,9 +1,7 @@
-use crate::instruction::macros::ACCEPTED_INT_TYPE as ACCEPTED_TYPE;
-use crate::instruction::{macros::binOpCBU, Instruction};
-use crate::variable::Variable;
-use crate::variable::{Type, Typed};
+use crate::instruction::{bin_op::binOp, Instruction};
+use crate::variable::{Type, Typed, Variable};
 
-binOpCBU!(Or, "||");
+binOp!(Or, "||");
 
 impl Or {
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {

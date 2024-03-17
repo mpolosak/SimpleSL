@@ -1,15 +1,12 @@
+mod can_be_used;
 mod exec;
 mod recreate;
 use super::{local_variable::LocalVariables, Instruction};
-use crate::{
-    interpreter::Interpreter,
-    parse::Rule,
-    variable::{ReturnType, Type},
-    Error,
-};
+use crate::{interpreter::Interpreter, parse::Rule, variable::ReturnType, Error};
 use pest::iterators::Pair;
 use std::{fmt::Debug, rc::Rc};
 pub use {
+    can_be_used::CanBeUsed,
     exec::{Exec, ExecResult, ExecStop},
     recreate::Recreate,
 };
@@ -35,10 +32,6 @@ impl<T: BaseInstruction + 'static> From<T> for Instruction {
     fn from(value: T) -> Self {
         Self::Other(Rc::new(value))
     }
-}
-
-pub trait CanBeUsed {
-    fn can_be_used(lhs: &Type, rhs: &Type) -> bool;
 }
 
 pub trait ToResult<T, E> {

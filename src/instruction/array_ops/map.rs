@@ -1,7 +1,7 @@
 use crate::{
     function::Function,
     instruction::{
-        macros::binOp,
+        bin_op::binOp,
         traits::{CanBeUsed, ExecResult, ExecStop},
         Exec, Instruction,
     },
