@@ -1,6 +1,5 @@
 mod and;
-mod lshift;
 mod or;
-mod rshift;
+mod shift;
 mod xor;
-pub use {and::BitwiseAnd, lshift::LShift, or::BitwiseOr, rshift::RShift, xor::Xor};
+pub use {and::BitwiseAnd, or::BitwiseOr, shift::LShift, shift::RShift, xor::Xor};

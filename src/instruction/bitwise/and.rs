@@ -1,5 +1,8 @@
-use crate::instruction::{macros::binIntOp, Instruction};
-use crate::variable::{Typed, Variable};
+use crate::instruction::{
+    macros::{binIntOp, bin_int_op::ACCEPTED_TYPE},
+    Instruction,
+};
+use crate::variable::{Type, Typed, Variable};
 
 binIntOp!(BitwiseAnd, "&");
 

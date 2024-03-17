@@ -13,6 +13,7 @@ macro_rules! binOp {
                 lhs: Instruction,
                 rhs: Instruction,
             ) -> Result<Instruction, crate::errors::Error> {
+                use crate::variable::ReturnType;
                 let lhs_type = lhs.return_type();
                 let rhs_type = rhs.return_type();
                 use crate::instruction::traits::{self, CanBeUsed};
@@ -27,7 +28,7 @@ macro_rules! binOp {
             fn recreate(
                 &self,
                 local_variables: &mut crate::instruction::LocalVariables,
-                interpreter: &Interpreter,
+                interpreter: &crate::Interpreter,
             ) -> Result<Instruction, crate::errors::ExecError> {
                 let lhs = self.lhs.recreate(local_variables, interpreter)?;
                 let rhs = self.rhs.recreate(local_variables, interpreter)?;

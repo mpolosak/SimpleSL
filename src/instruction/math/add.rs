@@ -1,9 +1,6 @@
-use crate::instruction::{macros::binOpCBU, Exec, Instruction};
+use crate::instruction::{macros::binOpCBU, Instruction};
 use crate::variable::{Array, Typed};
-use crate::{
-    interpreter::Interpreter,
-    variable::{ReturnType, Type, Variable},
-};
+use crate::variable::{ReturnType, Type, Variable};
 use lazy_static::lazy_static;
 use std::str::FromStr;
 

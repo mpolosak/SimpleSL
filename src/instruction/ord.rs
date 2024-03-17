@@ -1,10 +1,8 @@
 use super::{
     macros::{binOpCBU, bin_num_op::ACCEPTED_TYPE},
-    traits::Exec,
     Instruction,
 };
 use crate::variable::{ReturnType, Type, Variable};
-use crate::Interpreter;
 use duplicate::duplicate_item;
 use match_any::match_any;
 

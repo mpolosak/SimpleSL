@@ -12,11 +12,7 @@ lazy_static! {
 macro_rules! binNumOp {
     ($T: ident, $symbol: literal) => {
         use crate::instruction::macros::bin_num_op::ACCEPTED_TYPE;
-        use crate::instruction::Exec;
-        use crate::{
-            variable::{ReturnType, Type},
-            Interpreter,
-        };
+        use crate::variable::{ReturnType, Type};
         crate::instruction::macros::binOpCBU!($T, $symbol);
 
         impl ReturnType for $T {

@@ -1,6 +1,9 @@
-use crate::instruction::{macros::binIntOp, Instruction};
-use crate::variable::Typed;
+use crate::instruction::{
+    macros::{binIntOp, bin_int_op::ACCEPTED_TYPE},
+    Instruction,
+};
 use crate::variable::Variable;
+use crate::variable::{Type, Typed};
 
 binIntOp!(Or, "||");
 
