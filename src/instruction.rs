@@ -4,15 +4,16 @@ mod array_repeat;
 mod at;
 mod bitwise;
 mod block;
-pub mod comp;
 mod control_flow;
 mod destruct_tuple;
+mod equal;
 mod function;
 mod import;
 pub mod local_variable;
 mod logic;
 mod macros;
 mod math;
+pub mod ord;
 mod prefix_op;
 mod r#return;
 mod set;
@@ -25,14 +26,15 @@ use self::{
     at::At,
     bitwise::{BitwiseAnd, BitwiseOr, LShift, RShift, Xor},
     block::Block,
-    comp::{Equal, Greater, GreaterOrEqual, Lower, LowerOrEqual},
     control_flow::{IfElse, Match, SetIfElse},
     destruct_tuple::DestructTuple,
+    equal::Equal,
     function::{AnonymousFunction, FunctionDeclaration},
     import::Import,
     local_variable::{LocalVariable, LocalVariables},
     logic::{And, Or},
     math::{Add, Divide, Modulo, Multiply, Pow, Subtract},
+    ord::{Greater, GreaterOrEqual, Lower, LowerOrEqual},
     r#return::Return,
     set::Set,
     traits::BaseInstruction,

@@ -7,6 +7,7 @@ use crate::{
     },
     interpreter::Interpreter,
     variable::{Array, FunctionType, ReturnType, Type, Variable},
+    ExecError,
 };
 use std::rc::Rc;
 

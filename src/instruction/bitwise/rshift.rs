@@ -1,6 +1,7 @@
 use crate::instruction::{macros::binIntOp, Instruction};
 use crate::variable::Typed;
 use crate::variable::Variable;
+use crate::ExecError;
 
 binIntOp!(RShift, ">>");
 

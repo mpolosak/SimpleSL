@@ -1,38 +1,39 @@
 #[allow(clippy::crate_in_macro_def)]
 macro_rules! binOp {
     ($T: ident, $symbol: literal) => {
-        use crate::instruction::{
-            local_variable::LocalVariables,
-            traits::{BaseInstruction, Recreate, ToResult},
-        };
-        use crate::{Error, ExecError};
         #[derive(Debug)]
         pub struct $T {
-            lhs: Instruction,
-            rhs: Instruction,
+            pub lhs: Instruction,
+            pub rhs: Instruction,
         }
 
-        impl BaseInstruction for $T {}
+        impl crate::instruction::traits::BaseInstruction for $T {}
         impl $T {
-            pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
+            pub fn create_op(
+                lhs: Instruction,
+                rhs: Instruction,
+            ) -> Result<Instruction, crate::errors::Error> {
                 let lhs_type = lhs.return_type();
                 let rhs_type = rhs.return_type();
+                use crate::instruction::traits::{self, CanBeUsed};
                 if !Self::can_be_used(&lhs_type, &rhs_type) {
-                    return Err(Error::CannotDo2(lhs_type, $symbol, rhs_type));
+                    return Err(crate::errors::Error::CannotDo2(lhs_type, $symbol, rhs_type));
                 }
-                Self::create_from_instructions(lhs, rhs).to_result()
+                traits::ToResult::to_result(Self::create_from_instructions(lhs, rhs))
             }
         }
 
-        impl Recreate for $T {
+        impl crate::instruction::traits::Recreate for $T {
             fn recreate(
                 &self,
-                local_variables: &mut LocalVariables,
+                local_variables: &mut crate::instruction::LocalVariables,
                 interpreter: &Interpreter,
-            ) -> Result<Instruction, ExecError> {
+            ) -> Result<Instruction, crate::errors::ExecError> {
                 let lhs = self.lhs.recreate(local_variables, interpreter)?;
                 let rhs = self.rhs.recreate(local_variables, interpreter)?;
-                Self::create_from_instructions(lhs, rhs).to_result()
+                crate::instruction::traits::ToResult::to_result(Self::create_from_instructions(
+                    lhs, rhs,
+                ))
             }
         }
     };

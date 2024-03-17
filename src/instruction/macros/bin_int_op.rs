@@ -9,7 +9,7 @@ lazy_static! {
 macro_rules! binIntOp {
     ($T: ident, $symbol: literal) => {
         use crate::instruction::macros::bin_num_op::ACCEPTED_TYPE;
-        use crate::instruction::{comp, Exec};
+        use crate::instruction::Exec;
         use crate::{
             variable::{ReturnType, Type},
             Interpreter,
@@ -20,7 +20,7 @@ macro_rules! binIntOp {
             fn return_type(&self) -> Type {
                 let lhs = self.lhs.return_type();
                 let rhs = self.rhs.return_type();
-                comp::return_type(lhs, rhs)
+                crate::instruction::ord::return_type(lhs, rhs)
             }
         }
     };

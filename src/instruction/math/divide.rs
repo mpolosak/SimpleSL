@@ -1,5 +1,6 @@
 use crate::instruction::{macros::binNumOp, Instruction};
 use crate::variable::Variable;
+use crate::ExecError;
 
 binNumOp!(Divide, "/");
 
