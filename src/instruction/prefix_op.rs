@@ -1,17 +1,20 @@
-mod r#macro;
-use crate::variable::Variable;
-use crate::Error;
+use super::traits::BaseInstruction;
+use crate::variable::{Type, Variable};
 use crate::{
     instruction::Instruction,
     parse::{unexpected, Rule},
+    Error,
 };
 use duplicate::duplicate_item;
+use lazy_static::lazy_static;
 use pest::iterators::Pair;
-use r#macro::{prefixOp, ACCEPTED_INT, ACCEPTED_NUM};
+use std::str::FromStr;
 
-prefixOp!(UnaryMinus, "-", ACCEPTED_NUM);
-prefixOp!(Not, "!", ACCEPTED_INT);
-prefixOp!(BitwiseNot, "~", ACCEPTED_INT);
+#[duplicate_item(T; [Not]; [BitwiseNot]; [UnaryMinus])]
+#[derive(Debug)]
+pub struct T {
+    pub instruction: Instruction,
+}
 
 impl Instruction {
     pub fn create_prefix(op: Pair<'_, Rule>, rhs: Self) -> Result<Self, Error> {
@@ -24,6 +27,33 @@ impl Instruction {
     }
 }
 
+#[duplicate_item(T symbol; [UnaryMinus] [-]; [Not] [!]; [BitwiseNot] [~])]
+impl T {
+    pub fn create_instruction(instruction: Instruction) -> Result<Instruction, Error> {
+        use crate::variable::ReturnType;
+        let return_type = instruction.return_type();
+        if !Self::can_be_used(&return_type) {
+            return Err(Error::CannotDo(stringify!(symbol), return_type));
+        }
+        Ok(Self::create_from_instruction(instruction))
+    }
+
+    pub fn create_from_instruction(instruction: Instruction) -> Instruction {
+        match instruction {
+            Instruction::Variable(operand) => Self::calc(operand).into(),
+            instruction => Self { instruction }.into(),
+        }
+    }
+}
+
+lazy_static! {
+    pub static ref ACCEPTED_INT: Type = Type::from_str("int|[int]").unwrap();
+}
+
+lazy_static! {
+    pub static ref ACCEPTED_NUM: Type = Type::from_str("int|float|[int|float]").unwrap();
+}
+
 impl UnaryMinus {
     pub fn calc(variable: Variable) -> Variable {
         match variable {
@@ -32,6 +62,10 @@ impl UnaryMinus {
             Variable::Array(array) => array.iter().cloned().map(Self::calc).collect(),
             operand => panic!("Tried to - {operand}"),
         }
+    }
+
+    fn can_be_used(var_type: &Type) -> bool {
+        var_type.matches(&ACCEPTED_INT)
     }
 }
 
@@ -44,4 +78,10 @@ impl T {
             operand => panic!("Tried to {} {operand}", stringify!(op2)),
         }
     }
+    fn can_be_used(var_type: &Type) -> bool {
+        var_type.matches(&ACCEPTED_INT)
+    }
 }
+
+#[duplicate_item(T; [Not]; [BitwiseNot]; [UnaryMinus])]
+impl BaseInstruction for T {}
