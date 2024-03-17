@@ -122,7 +122,7 @@ impl ReturnType for Map {
 mod tests {
     use crate::variable::parse_type;
     use crate::{
-        instruction::{array_ops::Map, traits::CanBeUsed},
+        instruction::{bin_op::Map, traits::CanBeUsed},
         variable::Type,
     };
     #[test]

@@ -1,47 +1,36 @@
 mod array;
-mod array_ops;
 mod array_repeat;
 mod at;
 mod bin_op;
-mod bitwise;
 mod block;
 mod control_flow;
 mod destruct_tuple;
-mod equal;
 mod function;
 mod import;
 pub mod local_variable;
-mod logic;
-mod math;
-pub mod ord;
 mod prefix_op;
 mod r#return;
 mod return_type;
 mod set;
-mod shift;
 mod traits;
 mod tuple;
+mod type_filter;
 use self::{
     array::Array,
-    array_ops::{Filter, Map, Reduce, TypeFilter},
     array_repeat::ArrayRepeat,
     at::At,
-    bitwise::{BitwiseAnd, BitwiseOr, Xor},
+    bin_op::*,
     block::Block,
     control_flow::{IfElse, Match, SetIfElse},
     destruct_tuple::DestructTuple,
-    equal::Equal,
     function::{AnonymousFunction, FunctionDeclaration},
     import::Import,
     local_variable::{LocalVariable, LocalVariables},
-    logic::{And, Or},
-    math::{Add, Divide, Modulo, Multiply, Pow, Subtract},
-    ord::{Greater, GreaterOrEqual, Lower, LowerOrEqual},
     r#return::Return,
     set::Set,
-    shift::{LShift, RShift},
     traits::BaseInstruction,
     tuple::Tuple,
+    type_filter::TypeFilter,
 };
 use crate::{
     interpreter::Interpreter,

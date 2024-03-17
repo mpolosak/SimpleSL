@@ -3,24 +3,19 @@ mod exec;
 mod recreate;
 use super::{
     array::Array,
-    array_ops::{Filter, Map, Reduce, TypeFilter},
     array_repeat::ArrayRepeat,
     at::At,
-    bitwise::{BitwiseAnd, BitwiseOr, Xor},
+    bin_op::*,
     block::Block,
     control_flow::{IfElse, Match, SetIfElse},
     destruct_tuple::DestructTuple,
-    equal::Equal,
     function::FunctionDeclaration,
     import::Import,
     local_variable::LocalVariables,
-    logic::{And, Or},
-    math::{Add, Divide, Modulo, Multiply, Pow, Subtract},
-    ord::{Greater, GreaterOrEqual, Lower, LowerOrEqual},
     prefix_op::{BitwiseNot, Not, UnaryMinus},
     r#return::Return,
     set::Set,
-    shift::{LShift, RShift},
+    type_filter::TypeFilter,
     FunctionCall, Instruction,
 };
 use crate::{interpreter::Interpreter, parse::Rule, variable::ReturnType, Error};

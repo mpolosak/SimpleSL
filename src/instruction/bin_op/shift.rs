@@ -1,4 +1,4 @@
-use super::bin_op::binOp;
+use super::binOp;
 use crate::instruction::Instruction;
 use crate::variable::{Type, Typed, Variable};
 use crate::ExecError;

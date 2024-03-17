@@ -3,15 +3,9 @@ use duplicate::duplicate_item;
 use crate::{
     errors::ExecError,
     instruction::{
-        array_ops::{Filter, Map},
-        bitwise::{BitwiseAnd, BitwiseOr, Xor},
-        equal::Equal,
+        bin_op::*,
         local_variable::LocalVariables,
-        logic::{And, Or},
-        math::{Add, Divide, Modulo, Multiply, Pow, Subtract},
-        ord::{Greater, GreaterOrEqual, Lower, LowerOrEqual},
         prefix_op::{BitwiseNot, Not, UnaryMinus},
-        shift::{LShift, RShift},
         Instruction,
     },
     Interpreter,

@@ -1,5 +1,8 @@
-use super::{bin_op::binOp, Instruction};
-use crate::variable::{Type, Typed, Variable};
+use super::binOp;
+use crate::{
+    instruction::Instruction,
+    variable::{Type, Typed, Variable},
+};
 use duplicate::duplicate_item;
 
 binOp!(BitwiseAnd, "&");

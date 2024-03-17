@@ -60,7 +60,7 @@ impl ReturnType for Filter {
 #[cfg(test)]
 mod tests {
     use crate::{
-        instruction::{array_ops::Filter, traits::CanBeUsed},
+        instruction::{bin_op::Filter, traits::CanBeUsed},
         variable::{parse_type, Type},
     };
 

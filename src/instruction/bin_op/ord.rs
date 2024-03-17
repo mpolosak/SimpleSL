@@ -1,5 +1,5 @@
-use super::{bin_op::binOp, Instruction};
-use crate::variable::Variable;
+use super::binOp;
+use crate::{instruction::Instruction, variable::Variable};
 use duplicate::duplicate_item;
 use match_any::match_any;
 

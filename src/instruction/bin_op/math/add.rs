@@ -78,7 +78,7 @@ impl ReturnType for Add {
 #[cfg(test)]
 mod tests {
     use crate::{
-        instruction::math::Add,
+        instruction::bin_op::Add,
         variable::{Type, Variable},
         Code, Error, Interpreter,
     };

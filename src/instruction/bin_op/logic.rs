@@ -1,4 +1,4 @@
-use super::{traits::CanBeUsed, Instruction};
+use crate::instruction::{traits::CanBeUsed, Instruction};
 use crate::{
     variable::{ReturnType, Type, Typed, Variable},
     Error,

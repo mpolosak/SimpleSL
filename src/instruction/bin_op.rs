@@ -1,3 +1,12 @@
+mod array_ops;
+mod bitwise;
+mod equal;
+mod logic;
+mod math;
+mod ord;
+mod shift;
+pub use {array_ops::*, bitwise::*, equal::*, logic::*, math::*, ord::*, shift::*};
+
 #[allow(clippy::crate_in_macro_def)]
 macro_rules! binOp {
     ($T: ident, $symbol: literal) => {

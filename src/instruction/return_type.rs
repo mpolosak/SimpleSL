@@ -1,10 +1,6 @@
 use super::{
-    bitwise::{BitwiseAnd, BitwiseOr, Xor},
-    logic::{And, Or},
-    math::{Divide, Modulo, Multiply, Pow, Subtract},
-    ord::{Greater, GreaterOrEqual, Lower, LowerOrEqual},
+    bin_op::*,
     prefix_op::{BitwiseNot, Not, UnaryMinus},
-    shift::{LShift, RShift},
 };
 use crate::variable::{ReturnType, Type};
 use duplicate::duplicate_item;

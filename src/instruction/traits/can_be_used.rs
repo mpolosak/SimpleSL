@@ -1,13 +1,4 @@
-use crate::{
-    instruction::{
-        bitwise::{BitwiseAnd, BitwiseOr, Xor},
-        logic::{And, Or},
-        math::{Add, Divide, Modulo, Multiply, Pow, Subtract},
-        ord::{Greater, GreaterOrEqual, Lower, LowerOrEqual},
-        shift::{LShift, RShift},
-    },
-    variable::Type,
-};
+use crate::{instruction::bin_op::*, variable::Type};
 use duplicate::duplicate_item;
 use lazy_static::lazy_static;
 use std::str::FromStr;

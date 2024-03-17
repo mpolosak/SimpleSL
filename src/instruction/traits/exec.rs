@@ -1,11 +1,7 @@
 use crate::{
     instruction::{
-        bitwise::{BitwiseAnd, BitwiseOr, Xor},
-        logic::{And, Or},
-        math::{Add, Divide, Modulo, Multiply, Pow, Subtract},
-        ord::{Greater, GreaterOrEqual, Lower, LowerOrEqual},
+        bin_op::*,
         prefix_op::{BitwiseNot, Not, UnaryMinus},
-        shift::{LShift, RShift},
     },
     variable::Variable,
     ExecError, Interpreter,
