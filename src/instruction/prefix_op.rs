@@ -1,14 +1,8 @@
 mod r#macro;
+use crate::Error;
 use crate::{
-    instruction::{
-        traits::{Exec, ExecResult},
-        Instruction,
-    },
+    instruction::Instruction,
     parse::{unexpected, Rule},
-};
-use crate::{
-    variable::{ReturnType, Type, Variable},
-    Error, Interpreter,
 };
 use pest::iterators::Pair;
 use r#macro::{prefixOp, ACCEPTED_INT, ACCEPTED_NUM};

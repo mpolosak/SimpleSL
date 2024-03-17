@@ -8,14 +8,6 @@ macro_rules! binOpCBU {
                     .matches(&ACCEPTED_TYPE)
             }
         }
-
-        impl crate::instruction::Exec for $T {
-            fn exec(&self, interpreter: &mut crate::Interpreter) -> crate::instruction::ExecResult {
-                let lhs = self.lhs.exec(interpreter)?;
-                let rhs = self.rhs.exec(interpreter)?;
-                crate::instruction::traits::ToResult::to_result(Self::exec(lhs, rhs))
-            }
-        }
     };
 }
 pub(crate) use binOpCBU;

@@ -17,7 +17,7 @@ impl Or {
         }
     }
 
-    fn exec(lhs: Variable, rhs: Variable) -> Variable {
+    pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
         match (lhs, rhs) {
             (array @ Variable::Array(_), _) | (_, array @ Variable::Array(_))
                 if array.as_type() == Type::EmptyArray =>

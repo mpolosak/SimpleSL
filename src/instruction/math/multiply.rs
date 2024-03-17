@@ -11,7 +11,7 @@ impl Multiply {
         }
     }
 
-    fn exec(lhs: Variable, rhs: Variable) -> Variable {
+    pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
         match (lhs, rhs) {
             (Variable::Int(lhs), Variable::Int(rhs)) => (lhs * rhs).into(),
             (Variable::Float(lhs), Variable::Float(rhs)) => (lhs * rhs).into(),

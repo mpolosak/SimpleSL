@@ -21,7 +21,7 @@ impl Add {
         }
     }
 
-    fn exec(lhs: Variable, rhs: Variable) -> Variable {
+    pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
         match (lhs, rhs) {
             (Variable::Int(value1), Variable::Int(value2)) => (value1 + value2).into(),
             (Variable::Float(value1), Variable::Float(value2)) => (value1 + value2).into(),

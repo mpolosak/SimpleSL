@@ -19,6 +19,7 @@ macro_rules! prefixOp {
         #[allow(dead_code)]
         impl $T {
             pub fn create_instruction(instruction: Instruction) -> Result<Instruction, Error> {
+                use crate::variable::ReturnType;
                 let return_type = instruction.return_type();
                 if !Self::can_be_used(&return_type) {
                     return Err(Error::CannotDo($symbol, return_type));
@@ -33,21 +34,14 @@ macro_rules! prefixOp {
                 }
             }
 
-            fn can_be_used(var_type: &Type) -> bool {
+            fn can_be_used(var_type: &crate::variable::Type) -> bool {
                 var_type.matches(&$accepted)
             }
         }
 
-        impl ReturnType for $T {
-            fn return_type(&self) -> Type {
+        impl crate::variable::ReturnType for $T {
+            fn return_type(&self) -> crate::variable::Type {
                 self.instruction.return_type()
-            }
-        }
-
-        impl Exec for $T {
-            fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-                let result = self.instruction.exec(interpreter)?;
-                Ok(Self::calc(result))
             }
         }
 
@@ -57,7 +51,8 @@ macro_rules! prefixOp {
         prefixOp!($T, $symbol, ACCEPTED_INT);
         #[allow(clippy::redundant_closure_call)]
         impl $T {
-            fn calc(variable: Variable) -> Variable {
+            pub fn calc(variable: crate::variable::Variable) -> crate::variable::Variable {
+                use crate::variable::Variable;
                 match variable {
                     Variable::Int(num) => $calc(num).into(),
                     Variable::Array(array) => array.iter().cloned().map(Self::calc).collect(),
@@ -69,7 +64,8 @@ macro_rules! prefixOp {
     ($T: ident, $symbol: literal, num, $calc: expr) => {
         prefixOp!($T, $symbol, ACCEPTED_NUM);
         impl $T {
-            fn calc(variable: Variable) -> Variable {
+            pub fn calc(variable: crate::variable::Variable) -> crate::variable::Variable {
+                use crate::variable::Variable;
                 match variable {
                     Variable::Int(num) => $calc(num).into(),
                     Variable::Float(num) => $calc(num).into(),

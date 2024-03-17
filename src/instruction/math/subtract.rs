@@ -13,7 +13,7 @@ impl Subtract {
         }
     }
 
-    fn exec(minuend: Variable, subtrahend: Variable) -> Variable {
+    pub fn exec(minuend: Variable, subtrahend: Variable) -> Variable {
         match (minuend, subtrahend) {
             (Variable::Int(lhs), Variable::Int(rhs)) => (lhs - rhs).into(),
             (Variable::Float(lhs), Variable::Float(rhs)) => (lhs - rhs).into(),

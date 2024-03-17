@@ -28,7 +28,7 @@ impl shift {
         }
     }
 
-    fn exec(lhs: Variable, rhs: Variable) -> Result<Variable, ExecError> {
+    pub fn exec(lhs: Variable, rhs: Variable) -> Result<Variable, ExecError> {
         match (lhs, rhs) {
             (_, Variable::Int(rhs)) if !(0..=63).contains(&rhs) => Err(ExecError::OverflowShift),
             (Variable::Int(lhs), Variable::Int(rhs)) => Ok((op1).into()),

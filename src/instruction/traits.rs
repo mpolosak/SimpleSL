@@ -1,15 +1,18 @@
+mod exec;
 mod recreate;
-pub use self::recreate::Recreate;
-
 use super::{local_variable::LocalVariables, Instruction};
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
-    variable::{ReturnType, Type, Variable},
-    Error, ExecError,
+    variable::{ReturnType, Type},
+    Error,
 };
 use pest::iterators::Pair;
 use std::{fmt::Debug, rc::Rc};
+pub use {
+    exec::{Exec, ExecResult, ExecStop},
+    recreate::Recreate,
+};
 pub trait CreateInstruction {
     fn create_instruction(
         pair: Pair<Rule>,
@@ -26,10 +29,6 @@ pub trait MutCreateInstruction {
     ) -> Result<Instruction, Error>;
 }
 
-pub trait Exec {
-    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult;
-}
-
 pub trait BaseInstruction: Exec + Recreate + ReturnType + Debug {}
 
 impl<T: BaseInstruction + 'static> From<T> for Instruction {
@@ -40,18 +39,6 @@ impl<T: BaseInstruction + 'static> From<T> for Instruction {
 
 pub trait CanBeUsed {
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool;
-}
-
-pub type ExecResult = Result<Variable, ExecStop>;
-pub enum ExecStop {
-    Return(Variable),
-    Error(ExecError),
-}
-
-impl From<ExecError> for ExecStop {
-    fn from(value: ExecError) -> Self {
-        Self::Error(value)
-    }
 }
 
 pub trait ToResult<T, E> {

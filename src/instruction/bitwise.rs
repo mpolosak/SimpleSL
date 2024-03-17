@@ -22,7 +22,7 @@ impl bitwise {
             (lhs, rhs) => Self { lhs, rhs }.into(),
         }
     }
-    fn exec(lhs: Variable, rhs: Variable) -> Variable {
+    pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
         match (lhs, rhs) {
             (Variable::Int(lhs), Variable::Int(rhs)) => (op1).into(),
             (var @ Variable::Array(_), _) | (_, var @ Variable::Array(_))
