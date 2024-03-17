@@ -1,6 +1,6 @@
 use super::{
     local_variable::LocalVariables,
-    traits::{BaseInstruction, ExecResult, ExecStop},
+    traits::{ExecResult, ExecStop},
     Exec, Instruction, Recreate,
 };
 use crate::{
@@ -80,8 +80,6 @@ impl ReturnType for At {
         self.instruction.return_type().index_result().unwrap()
     }
 }
-
-impl BaseInstruction for At {}
 
 fn at(variable: Variable, index: Variable) -> Result<Variable, ExecError> {
     let Variable::Int(index) = index else {

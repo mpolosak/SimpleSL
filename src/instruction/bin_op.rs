@@ -6,8 +6,6 @@ macro_rules! binOp {
             pub lhs: crate::instruction::Instruction,
             pub rhs: crate::instruction::Instruction,
         }
-
-        impl crate::instruction::traits::BaseInstruction for $T {}
         impl $T {
             pub fn create_op(
                 lhs: crate::instruction::Instruction,

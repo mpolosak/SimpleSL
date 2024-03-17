@@ -1,8 +1,30 @@
 mod can_be_used;
 mod exec;
 mod recreate;
-use super::{local_variable::LocalVariables, Instruction};
+use super::{
+    array::Array,
+    array_ops::{Filter, Map, Reduce, TypeFilter},
+    array_repeat::ArrayRepeat,
+    at::At,
+    bitwise::{BitwiseAnd, BitwiseOr, Xor},
+    block::Block,
+    control_flow::{IfElse, Match, SetIfElse},
+    destruct_tuple::DestructTuple,
+    equal::Equal,
+    function::FunctionDeclaration,
+    import::Import,
+    local_variable::LocalVariables,
+    logic::{And, Or},
+    math::{Add, Divide, Modulo, Multiply, Pow, Subtract},
+    ord::{Greater, GreaterOrEqual, Lower, LowerOrEqual},
+    prefix_op::{BitwiseNot, Not, UnaryMinus},
+    r#return::Return,
+    set::Set,
+    shift::{LShift, RShift},
+    FunctionCall, Instruction,
+};
 use crate::{interpreter::Interpreter, parse::Rule, variable::ReturnType, Error};
+use duplicate::duplicate_item;
 use pest::iterators::Pair;
 use std::{fmt::Debug, rc::Rc};
 pub use {
@@ -27,6 +49,15 @@ pub trait MutCreateInstruction {
 }
 
 pub trait BaseInstruction: Exec + Recreate + ReturnType + Debug {}
+
+#[duplicate_item(T; [Filter]; [Map]; [Reduce]; [TypeFilter]; [ArrayRepeat]; [Array]; [At];
+    [BitwiseAnd]; [BitwiseOr]; [BitwiseNot]; [Xor]; [And]; [Or]; [Add]; [Subtract]; [Pow];
+    [Multiply]; [Divide]; [Modulo]; [Equal]; [Greater]; [GreaterOrEqual]; [Lower];
+    [LowerOrEqual]; [LShift]; [RShift]; [UnaryMinus]; [Not]; [Block]; [IfElse]; [Match];
+    [SetIfElse]; [DestructTuple]; [FunctionCall]; [FunctionDeclaration]; [Import];
+    [Return]; [Set]
+)]
+impl BaseInstruction for T {}
 
 impl<T: BaseInstruction + 'static> From<T> for Instruction {
     fn from(value: T) -> Self {

@@ -3,7 +3,7 @@ use crate::{
     instruction::{
         local_variable::{FunctionInfo, LocalVariable, LocalVariableMap, LocalVariables},
         recreate_instructions,
-        traits::{BaseInstruction, ExecResult, MutCreateInstruction},
+        traits::{ExecResult, MutCreateInstruction},
         Exec, Instruction, Recreate,
     },
     interpreter::Interpreter,
@@ -131,5 +131,3 @@ impl ReturnType for FunctionDeclaration {
         .into()
     }
 }
-
-impl BaseInstruction for FunctionDeclaration {}

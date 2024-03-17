@@ -1,8 +1,6 @@
 use super::{
-    local_variable::LocalVariables,
-    recreate_instructions,
-    traits::{BaseInstruction, ExecResult},
-    CreateInstruction, Exec, Instruction, Recreate,
+    local_variable::LocalVariables, recreate_instructions, traits::ExecResult, CreateInstruction,
+    Exec, Instruction, Recreate,
 };
 use crate::{
     interpreter::Interpreter,
@@ -65,5 +63,3 @@ impl ReturnType for Block {
             .map_or(Type::Void, ReturnType::return_type)
     }
 }
-
-impl BaseInstruction for Block {}

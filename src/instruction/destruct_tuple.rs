@@ -2,7 +2,7 @@ use std::{iter::zip, rc::Rc};
 
 use super::{
     local_variable::{LocalVariable, LocalVariables},
-    traits::{BaseInstruction, ExecResult, MutCreateInstruction},
+    traits::{ExecResult, MutCreateInstruction},
     tuple::Tuple,
     Exec, Instruction, Recreate,
 };
@@ -101,5 +101,3 @@ impl ReturnType for DestructTuple {
         self.instruction.return_type()
     }
 }
-
-impl BaseInstruction for DestructTuple {}

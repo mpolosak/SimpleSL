@@ -3,7 +3,7 @@ use std::rc::Rc;
 use crate::{
     instruction::{
         local_variable::{LocalVariable, LocalVariables},
-        traits::{BaseInstruction, ExecResult, MutCreateInstruction},
+        traits::{ExecResult, MutCreateInstruction},
         Exec, Instruction, Recreate,
     },
     Error, ExecError,
@@ -106,5 +106,3 @@ impl ReturnType for SetIfElse {
         true_return_type | false_return_type
     }
 }
-
-impl BaseInstruction for SetIfElse {}

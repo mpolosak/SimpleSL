@@ -4,7 +4,7 @@ use pest::iterators::Pair;
 
 use crate::{
     function::{check_args, Params},
-    instruction::traits::{BaseInstruction, ExecResult, ExecStop},
+    instruction::traits::{ExecResult, ExecStop},
     interpreter::Interpreter,
     variable::{FunctionType, ReturnType, Type, Variable},
     Error, ExecError,
@@ -118,5 +118,3 @@ impl ReturnType for FunctionCall {
         function_type.return_type.clone()
     }
 }
-
-impl BaseInstruction for FunctionCall {}

@@ -2,7 +2,7 @@ use super::match_arm::MatchArm;
 use crate::{
     instruction::{
         local_variable::LocalVariables,
-        traits::{BaseInstruction, ExecResult, MutCreateInstruction},
+        traits::{ExecResult, MutCreateInstruction},
         Exec, Instruction, Recreate,
     },
     interpreter::Interpreter,
@@ -87,5 +87,3 @@ impl ReturnType for Match {
             .expect("match statement without arms")
     }
 }
-
-impl BaseInstruction for Match {}

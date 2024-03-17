@@ -1,7 +1,7 @@
 use crate::{
     instruction::{
         local_variable::LocalVariables,
-        traits::{BaseInstruction, ExecResult, ExecStop},
+        traits::{ExecResult, ExecStop},
         Exec, Instruction, Recreate,
     },
     interpreter::Interpreter,
@@ -101,5 +101,3 @@ impl ReturnType for Reduce {
         self.function.return_type().return_type().unwrap() | self.initial_value.return_type()
     }
 }
-
-impl BaseInstruction for Reduce {}

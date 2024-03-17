@@ -1,7 +1,6 @@
 use super::{
-    local_variable::LocalVariables,
-    traits::{BaseInstruction, ExecResult},
-    CreateInstruction, Exec, Instruction, Recreate,
+    local_variable::LocalVariables, traits::ExecResult, CreateInstruction, Exec, Instruction,
+    Recreate,
 };
 use crate::{
     interpreter::Interpreter,
@@ -83,5 +82,3 @@ impl ReturnType for ArrayRepeat {
         [element_type].into()
     }
 }
-
-impl BaseInstruction for ArrayRepeat {}

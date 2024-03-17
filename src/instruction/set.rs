@@ -1,6 +1,6 @@
 use super::{
     local_variable::LocalVariables,
-    traits::{BaseInstruction, Exec, ExecResult, Recreate},
+    traits::{Exec, ExecResult, Recreate},
     Instruction, MutCreateInstruction,
 };
 use crate::{
@@ -66,8 +66,6 @@ impl Recreate for Set {
         .into())
     }
 }
-
-impl BaseInstruction for Set {}
 
 impl ReturnType for Set {
     fn return_type(&self) -> Type {

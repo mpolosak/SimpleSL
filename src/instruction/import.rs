@@ -3,7 +3,7 @@ use std::rc::Rc;
 use super::{
     local_variable::LocalVariables,
     recreate_instructions,
-    traits::{BaseInstruction, ExecResult, MutCreateInstruction},
+    traits::{ExecResult, MutCreateInstruction},
     Exec, Instruction, Recreate,
 };
 use crate::{
@@ -68,5 +68,3 @@ impl ReturnType for Import {
             .map_or(Type::Void, ReturnType::return_type)
     }
 }
-
-impl BaseInstruction for Import {}

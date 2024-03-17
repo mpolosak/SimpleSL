@@ -1,7 +1,7 @@
 use super::{
     local_variable::LocalVariables,
     recreate_instructions,
-    traits::{BaseInstruction, Exec, ExecResult, Recreate},
+    traits::{Exec, ExecResult, Recreate},
     CreateInstruction, Instruction,
 };
 use crate::{
@@ -83,5 +83,3 @@ impl ReturnType for Array {
         self.var_type.clone()
     }
 }
-
-impl BaseInstruction for Array {}

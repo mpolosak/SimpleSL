@@ -1,6 +1,6 @@
 use super::{
     local_variable::LocalVariables,
-    traits::{BaseInstruction, ExecResult, ExecStop},
+    traits::{ExecResult, ExecStop},
     Exec, Instruction, MutCreateInstruction, Recreate,
 };
 use crate::{
@@ -64,5 +64,3 @@ impl ReturnType for Return {
         Type::Never
     }
 }
-
-impl BaseInstruction for Return {}

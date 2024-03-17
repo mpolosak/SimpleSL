@@ -1,8 +1,6 @@
 use crate::{
     instruction::{
-        local_variable::LocalVariables,
-        traits::{BaseInstruction, ExecResult},
-        Exec, Instruction, Recreate,
+        local_variable::LocalVariables, traits::ExecResult, Exec, Instruction, Recreate,
     },
     interpreter::Interpreter,
     parse::Rule,
@@ -65,5 +63,3 @@ impl ReturnType for TypeFilter {
         [self.var_type.clone()].into()
     }
 }
-
-impl BaseInstruction for TypeFilter {}

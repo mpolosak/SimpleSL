@@ -1,6 +1,6 @@
-use crate::instruction::traits::{BaseInstruction, ExecResult};
 use crate::instruction::{
-    local_variable::LocalVariables, traits::MutCreateInstruction, Exec, Instruction, Recreate,
+    local_variable::LocalVariables, traits::ExecResult, traits::MutCreateInstruction, Exec,
+    Instruction, Recreate,
 };
 use crate::ExecError;
 use crate::{
@@ -94,5 +94,3 @@ impl ReturnType for IfElse {
         true_return_type | false_return_type
     }
 }
-
-impl BaseInstruction for IfElse {}

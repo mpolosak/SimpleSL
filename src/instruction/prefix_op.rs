@@ -1,4 +1,3 @@
-use super::traits::BaseInstruction;
 use crate::variable::{Type, Variable};
 use crate::{
     instruction::Instruction,
@@ -82,6 +81,3 @@ impl T {
         var_type.matches(&ACCEPTED_INT)
     }
 }
-
-#[duplicate_item(T; [Not]; [BitwiseNot]; [UnaryMinus])]
-impl BaseInstruction for T {}
