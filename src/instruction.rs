@@ -13,6 +13,7 @@ pub mod local_variable;
 mod logic;
 mod macros;
 mod math;
+mod prefix_op;
 mod r#return;
 mod set;
 mod traits;
@@ -22,7 +23,7 @@ use self::{
     array_ops::{Filter, Map, Reduce, TypeFilter},
     array_repeat::ArrayRepeat,
     at::At,
-    bitwise::{BitwiseAnd, BitwiseNot, BitwiseOr, LShift, RShift, Xor},
+    bitwise::{BitwiseAnd, BitwiseOr, LShift, RShift, Xor},
     block::Block,
     comp::{Equal, Greater, GreaterOrEqual, Lower, LowerOrEqual},
     control_flow::{IfElse, Match, SetIfElse},
@@ -30,8 +31,8 @@ use self::{
     function::{AnonymousFunction, FunctionDeclaration},
     import::Import,
     local_variable::{LocalVariable, LocalVariables},
-    logic::{And, Not, Or},
-    math::{Add, Divide, Modulo, Multiply, Pow, Subtract, UnaryMinus},
+    logic::{And, Or},
+    math::{Add, Divide, Modulo, Multiply, Pow, Subtract},
     r#return::Return,
     set::Set,
     traits::BaseInstruction,
@@ -133,15 +134,6 @@ impl Instruction {
             Rule::function => {
                 AnonymousFunction::create_instruction(pair, interpreter, local_variables)
             }
-            rule => unexpected(rule),
-        }
-    }
-
-    fn create_prefix(op: Pair<'_, Rule>, rhs: Self) -> Result<Self, Error> {
-        match op.as_rule() {
-            Rule::not => Not::create_instruction(rhs),
-            Rule::bitwise_not => BitwiseNot::create_instruction(rhs),
-            Rule::unary_minus => UnaryMinus::create_instruction(rhs),
             rule => unexpected(rule),
         }
     }

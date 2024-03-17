@@ -10,18 +10,8 @@ lazy_static! {
     pub static ref ACCEPTED_NUM: Type = Type::from_str("int|float|[int|float]").unwrap();
 }
 
-#[allow(clippy::crate_in_macro_def)]
 macro_rules! prefixOp {
-    ($T: ident, $symbol: literal) => {
-        use crate::instruction::{
-            local_variable::LocalVariables,
-            traits::{Exec, ExecResult, Recreate},
-            Instruction,
-        };
-        use crate::{
-            variable::{ReturnType, Type, Variable},
-            Error, ExecError, Interpreter,
-        };
+    ($T: ident, $symbol: literal, $accepted: ident) => {
         #[derive(Debug)]
         pub struct $T {
             pub instruction: Instruction,
@@ -44,7 +34,7 @@ macro_rules! prefixOp {
             }
 
             fn can_be_used(var_type: &Type) -> bool {
-                var_type.matches(&ACCEPTED_TYPE)
+                var_type.matches(&$accepted)
             }
         }
 
@@ -75,8 +65,7 @@ macro_rules! prefixOp {
         impl crate::instruction::BaseInstruction for $T {}
     };
     ($T: ident, $symbol: literal, int, $calc: expr) => {
-        use crate::instruction::macros::prefix_op::ACCEPTED_INT as ACCEPTED_TYPE;
-        prefixOp!($T, $symbol);
+        prefixOp!($T, $symbol, ACCEPTED_INT);
         #[allow(clippy::redundant_closure_call)]
         impl $T {
             fn calc(variable: Variable) -> Variable {
@@ -89,8 +78,7 @@ macro_rules! prefixOp {
         }
     };
     ($T: ident, $symbol: literal, num, $calc: expr) => {
-        use crate::instruction::macros::prefix_op::ACCEPTED_INT as ACCEPTED_TYPE;
-        prefixOp!($T, $symbol);
+        prefixOp!($T, $symbol, ACCEPTED_NUM);
         impl $T {
             fn calc(variable: Variable) -> Variable {
                 match variable {
