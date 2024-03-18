@@ -47,6 +47,12 @@ pub fn return_type(lhs: Type, rhs: Type) -> Type {
     Type::Int
 }
 
+impl ReturnType for Equal {
+    fn return_type(&self) -> Type {
+        Type::Int
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{instruction::return_type::return_type, variable::Type};

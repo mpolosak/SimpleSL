@@ -45,3 +45,9 @@ impl CanBeUsed for Add {
         Type::Tuple([lhs.clone(), rhs.clone()].into()).matches(&ACCEPTED_TYPE)
     }
 }
+
+impl CanBeUsed for Equal {
+    fn can_be_used(_: &Type, _: &Type) -> bool {
+        true
+    }
+}

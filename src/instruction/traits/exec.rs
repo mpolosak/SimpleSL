@@ -38,7 +38,7 @@ impl Exec for T {
     [BitwiseAnd]; [BitwiseOr]; [Xor]; [And]; [Or];
     [Add]; [Subtract]; [Multiply]; [Divide]; [Modulo]; [Pow];
     [Greater]; [GreaterOrEqual]; [Lower]; [LowerOrEqual];
-    [LShift]; [RShift]
+    [LShift]; [RShift]; [Equal]
 )]
 impl Exec for T {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {

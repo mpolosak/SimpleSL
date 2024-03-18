@@ -1,5 +1,4 @@
 mod bitwise;
-mod equal;
 mod filter;
 mod logic;
 mod map;
@@ -12,7 +11,7 @@ use crate::{
         traits::{CanBeUsed, ToResult},
         Instruction,
     },
-    variable::ReturnType,
+    variable::{ReturnType, Variable},
     Error,
 };
 use duplicate::duplicate_item;
@@ -45,7 +44,7 @@ impl T {
 }
 
 #[duplicate_item(T; [Add]; [Multiply]; [Subtract]; [Greater]; [GreaterOrEqual]; [Lower];
-    [LowerOrEqual]; [BitwiseAnd]; [BitwiseOr]; [Xor])]
+    [LowerOrEqual]; [BitwiseAnd]; [BitwiseOr]; [Xor]; [Equal])]
 impl T {
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         match (lhs, rhs) {
@@ -59,5 +58,11 @@ impl T {
 impl T {
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         Self { lhs, rhs }.into()
+    }
+}
+
+impl Equal {
+    pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
+        (lhs == rhs).into()
     }
 }
