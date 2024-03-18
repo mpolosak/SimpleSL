@@ -1,8 +1,5 @@
 use super::{BitwiseAnd, BitwiseOr, Xor};
-use crate::{
-    instruction::Instruction,
-    variable::{Type, Typed, Variable},
-};
+use crate::variable::{Type, Typed, Variable};
 use duplicate::duplicate_item;
 
 #[duplicate_item(
@@ -12,12 +9,6 @@ use duplicate::duplicate_item;
     [Xor] [lhs ^ rhs] [^];
 )]
 impl bitwise {
-    pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
-        match (lhs, rhs) {
-            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => Self::exec(lhs, rhs).into(),
-            (lhs, rhs) => Self { lhs, rhs }.into(),
-        }
-    }
     pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
         match (lhs, rhs) {
             (Variable::Int(lhs), Variable::Int(rhs)) => (op1).into(),

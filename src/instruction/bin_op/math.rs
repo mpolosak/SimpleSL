@@ -2,21 +2,11 @@ mod add;
 mod divide;
 mod pow;
 use super::{Multiply, Subtract};
-use crate::{
-    instruction::Instruction,
-    variable::{Type, Typed, Variable},
-};
+use crate::variable::{Type, Typed, Variable};
 use duplicate::duplicate_item;
 
 #[duplicate_item(T op symbol; [Multiply] [lhs*rhs] [*]; [Subtract] [lhs-rhs] [-])]
 impl T {
-    pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
-        match (lhs, rhs) {
-            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => Self::exec(lhs, rhs).into(),
-            (lhs, rhs) => Self { lhs, rhs }.into(),
-        }
-    }
-
     pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
         match (lhs, rhs) {
             (Variable::Int(lhs), Variable::Int(rhs)) => (op).into(),

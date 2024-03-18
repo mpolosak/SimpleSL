@@ -1,16 +1,8 @@
 use crate::instruction::Add;
-use crate::instruction::Instruction;
 use crate::variable::{Array, Typed};
 use crate::variable::{ReturnType, Type, Variable};
 
 impl Add {
-    pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
-        match (lhs, rhs) {
-            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => Self::exec(lhs, rhs).into(),
-            (rhs, lhs) => Self { lhs, rhs }.into(),
-        }
-    }
-
     pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
         match (lhs, rhs) {
             (Variable::Int(value1), Variable::Int(value2)) => (value1 + value2).into(),

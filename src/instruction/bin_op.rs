@@ -44,6 +44,17 @@ impl T {
     }
 }
 
+#[duplicate_item(T; [Add]; [Multiply]; [Subtract]; [Greater]; [GreaterOrEqual]; [Lower];
+    [LowerOrEqual]; [BitwiseAnd]; [BitwiseOr]; [Xor])]
+impl T {
+    pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
+        match (lhs, rhs) {
+            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => Self::exec(lhs, rhs).into(),
+            (lhs, rhs) => Self { lhs, rhs }.into(),
+        }
+    }
+}
+
 #[duplicate_item(T; [Filter]; [Map])]
 impl T {
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {

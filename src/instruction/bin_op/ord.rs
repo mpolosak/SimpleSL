@@ -1,5 +1,5 @@
 use super::{Greater, GreaterOrEqual, Lower, LowerOrEqual};
-use crate::{instruction::Instruction, variable::Variable};
+use crate::variable::Variable;
 use duplicate::duplicate_item;
 use match_any::match_any;
 
@@ -8,13 +8,6 @@ use match_any::match_any;
     [Greater] [>]; [GreaterOrEqual] [>=]; [Lower] [<]; [LowerOrEqual] [<=];
 )]
 impl ord {
-    pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
-        match (lhs, rhs) {
-            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => Self::exec(lhs, rhs).into(),
-            (lhs, rhs) => Self { lhs, rhs }.into(),
-        }
-    }
-
     pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
         match_any! { (lhs, rhs),
             (Variable::Int(lhs), Variable::Int(rhs)) | (Variable::Float(lhs), Variable::Float(rhs))
