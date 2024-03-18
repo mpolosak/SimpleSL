@@ -1,29 +1,11 @@
-use crate::instruction::{traits::CanBeUsed, Instruction};
-use crate::{
-    variable::{ReturnType, Type, Typed, Variable},
-    Error,
-};
+use super::{And, Or};
+use crate::instruction::Instruction;
+use crate::variable::{Type, Typed, Variable};
 use duplicate::duplicate_item;
 use std::iter;
 
-#[duplicate_item(T; [And]; [Or])]
-#[derive(Debug)]
-pub struct T {
-    pub lhs: Instruction,
-    pub rhs: Instruction,
-}
-
 #[duplicate_item(logic symbol cond dv; [And] [&&] [value!=0] [0]; [Or] [||] [value==0] [1])]
 impl logic {
-    pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
-        let lhs_type = lhs.return_type();
-        let rhs_type = rhs.return_type();
-        if !Self::can_be_used(&lhs_type, &rhs_type) {
-            return Err(Error::CannotDo2(lhs_type, stringify!(symbol), rhs_type));
-        }
-        Ok(Self::create_from_instructions(lhs, rhs))
-    }
-
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         match (lhs, rhs) {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => Self::exec(lhs, rhs).into(),

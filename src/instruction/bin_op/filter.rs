@@ -1,14 +1,12 @@
+use super::Filter;
 use crate::{
     instruction::{
-        bin_op::binOp,
         traits::{CanBeUsed, ExecResult},
-        Exec, Instruction,
+        Exec,
     },
     interpreter::Interpreter,
     variable::{FunctionType, ReturnType, Type, Variable},
 };
-
-binOp!(Filter, "?", cfi);
 
 impl CanBeUsed for Filter {
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool {

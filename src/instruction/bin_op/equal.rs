@@ -1,9 +1,8 @@
+use super::Equal;
 use crate::instruction::traits::{CanBeUsed, ExecResult};
-use crate::instruction::{bin_op::binOp, Exec, Instruction};
+use crate::instruction::{Exec, Instruction};
 use crate::interpreter::Interpreter;
 use crate::variable::{ReturnType, Type};
-
-binOp!(Equal, "==");
 
 impl CanBeUsed for Equal {
     fn can_be_used(_: &Type, _: &Type) -> bool {

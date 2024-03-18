@@ -1,28 +1,13 @@
-use crate::instruction::{traits::CanBeUsed, Instruction};
-use crate::variable::{ReturnType, Variable};
-use crate::{Error, ExecError};
+use crate::instruction::Instruction;
+use crate::instruction::{Divide, Modulo};
+use crate::variable::Variable;
+use crate::ExecError;
 use duplicate::duplicate_item;
-
-#[duplicate_item(T; [Divide]; [Modulo])]
-#[derive(Debug)]
-pub struct T {
-    pub lhs: Instruction,
-    pub rhs: Instruction,
-}
 
 #[duplicate_item(T error operation symbol;
     [Divide] [ZeroDivision] [dividend / divisor] [/];
     [Modulo] [ZeroModulo] [dividend % divisor] [%])]
 impl T {
-    pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
-        let lhs_type = lhs.return_type();
-        let rhs_type = rhs.return_type();
-        if !Self::can_be_used(&lhs_type, &rhs_type) {
-            return Err(Error::CannotDo2(lhs_type, stringify!(symbol), rhs_type));
-        }
-        Self::create_from_instructions(lhs, rhs).map_err(Error::from)
-    }
-
     pub fn create_from_instructions(
         dividend: Instruction,
         divisor: Instruction,

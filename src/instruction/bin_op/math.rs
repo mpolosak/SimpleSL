@@ -1,20 +1,12 @@
 mod add;
 mod divide;
 mod pow;
-use super::binOp;
+use super::{Multiply, Subtract};
 use crate::{
     instruction::Instruction,
     variable::{Type, Typed, Variable},
 };
 use duplicate::duplicate_item;
-pub use {
-    add::Add,
-    divide::{Divide, Modulo},
-    pow::Pow,
-};
-
-binOp!(Multiply, "*");
-binOp!(Subtract, "-");
 
 #[duplicate_item(T op symbol; [Multiply] [lhs*rhs] [*]; [Subtract] [lhs-rhs] [-])]
 impl T {

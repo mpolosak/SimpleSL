@@ -1,11 +1,8 @@
-use super::binOp;
+use super::{LShift, RShift};
 use crate::instruction::Instruction;
 use crate::variable::{Type, Typed, Variable};
 use crate::ExecError;
 use duplicate::duplicate_item;
-
-binOp!(LShift, "<<");
-binOp!(RShift, ">>");
 
 #[duplicate_item(
     shift op1 op2;

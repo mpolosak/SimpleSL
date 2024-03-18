@@ -1,8 +1,7 @@
-use crate::instruction::{bin_op::binOp, Instruction};
+use crate::instruction::Add;
+use crate::instruction::Instruction;
 use crate::variable::{Array, Typed};
 use crate::variable::{ReturnType, Type, Variable};
-
-binOp!(Add, "+");
 
 impl Add {
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {

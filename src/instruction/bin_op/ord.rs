@@ -1,12 +1,7 @@
-use super::binOp;
+use super::{Greater, GreaterOrEqual, Lower, LowerOrEqual};
 use crate::{instruction::Instruction, variable::Variable};
 use duplicate::duplicate_item;
 use match_any::match_any;
-
-binOp!(Greater, ">");
-binOp!(GreaterOrEqual, ">=");
-binOp!(Lower, "<");
-binOp!(LowerOrEqual, "<=");
 
 #[duplicate_item(
     ord op;

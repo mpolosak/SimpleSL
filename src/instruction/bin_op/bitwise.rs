@@ -1,13 +1,9 @@
-use super::binOp;
+use super::{BitwiseAnd, BitwiseOr, Xor};
 use crate::{
     instruction::Instruction,
     variable::{Type, Typed, Variable},
 };
 use duplicate::duplicate_item;
-
-binOp!(BitwiseAnd, "&");
-binOp!(BitwiseOr, "|");
-binOp!(Xor, "&");
 
 #[duplicate_item(
     bitwise op1 op2;

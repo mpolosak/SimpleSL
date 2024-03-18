@@ -1,17 +1,15 @@
+use super::Map;
 use crate::{
     function::Function,
     instruction::{
-        bin_op::binOp,
         traits::{CanBeUsed, ExecResult, ExecStop},
-        Exec, Instruction,
+        Exec,
     },
     interpreter::Interpreter,
     variable::{Array, FunctionType, ReturnType, Type, Variable},
     ExecError,
 };
 use std::rc::Rc;
-
-binOp!(Map, "@", cfi);
 
 impl CanBeUsed for Map {
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool {

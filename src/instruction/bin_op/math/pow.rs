@@ -1,8 +1,7 @@
-use crate::instruction::{bin_op::binOp, Instruction};
+use crate::instruction::Instruction;
+use crate::instruction::Pow;
 use crate::variable::{Type, Typed, Variable};
 use crate::ExecError;
-
-binOp!(Pow, "*");
 
 impl Pow {
     pub fn create_from_instructions(
