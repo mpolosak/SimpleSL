@@ -1,11 +1,13 @@
-mod array_ops;
 mod bitwise;
 mod equal;
+mod filter;
 mod logic;
+mod map;
 mod math;
 mod ord;
+mod reduce;
 mod shift;
-pub use {array_ops::*, bitwise::*, equal::*, logic::*, math::*, ord::*, shift::*};
+pub use {bitwise::*, equal::*, filter::*, logic::*, map::*, math::*, ord::*, reduce::*, shift::*};
 
 #[allow(clippy::crate_in_macro_def)]
 macro_rules! binOp {
