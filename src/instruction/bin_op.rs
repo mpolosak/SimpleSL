@@ -3,7 +3,6 @@ mod filter;
 mod logic;
 mod map;
 mod math;
-mod ord;
 mod reduce;
 mod shift;
 use super::local_variable::LocalVariables;
