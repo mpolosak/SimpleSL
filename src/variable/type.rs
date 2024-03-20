@@ -276,7 +276,7 @@ mod tests {
         assert_eq!(Type::from_str("int"), Ok(Type::Int));
         assert_eq!(Type::from_str("()"), Ok(Type::Void));
         assert_eq!(
-            Type::from_str("function()->()"),
+            Type::from_str("()->()"),
             Ok(FunctionType {
                 params: [].into(),
                 return_type: Type::Void
@@ -284,7 +284,7 @@ mod tests {
             .into())
         );
         assert_eq!(
-            Type::from_str("function(string, int|float)->(int|string)"),
+            Type::from_str("(string, int|float)->(int|string)"),
             Ok(FunctionType {
                 params: [Type::String, Type::Int | Type::Float].into(),
                 return_type: Type::Int | Type::String
@@ -311,7 +311,7 @@ mod tests {
         );
         assert_eq!(Type::from_str("(int)"), Err(ParseTypeError));
         assert_eq!(
-            Type::from_str("function(string, int|float)->int|string"),
+            Type::from_str("(string, int|float)->int|string"),
             Ok(FunctionType {
                 params: [Type::String, Type::Int | Type::Float].into(),
                 return_type: Type::Int
@@ -431,27 +431,23 @@ mod tests {
 
     #[test]
     fn function_return_type() {
+        assert_eq!(parse_type!("()->int").return_type(), Some(Type::Int));
         assert_eq!(
-            parse_type!("function()->int").return_type(),
-            Some(Type::Int)
-        );
-        assert_eq!(
-            parse_type!("function()->int | function(int) -> float").return_type(),
+            parse_type!("()->int | (int) -> float").return_type(),
             Some(Type::Int | Type::Float)
         );
         assert_eq!(
-            parse_type!("function()->int | function(int) -> (float|string)").return_type(),
+            parse_type!("()->int | (int) -> (float|string)").return_type(),
             Some(Type::Float | Type::Int | Type::String)
         );
         assert_eq!(
-            parse_type!("function()->int | function(int) -> float | function(int, int)->any")
-                .return_type(),
+            parse_type!("()->int | (int) -> float | (int, int)->any").return_type(),
             Some(Type::Any)
         );
         assert_eq!(parse_type!("float").return_type(), None);
         assert_eq!(parse_type!("int").return_type(), None);
         assert_eq!(parse_type!("string").return_type(), None);
-        assert_eq!(parse_type!("function()->int | float").return_type(), None);
+        assert_eq!(parse_type!("()->int | float").return_type(), None);
     }
 
     #[test]

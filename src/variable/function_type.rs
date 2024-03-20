@@ -27,19 +27,9 @@ impl FunctionType {
 impl Display for FunctionType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if matches!(self.return_type, Type::Multi(_)) {
-            return write!(
-                f,
-                "function({})->({})",
-                join(&self.params, ", "),
-                self.return_type
-            );
+            return write!(f, "({})->({})", join(&self.params, ", "), self.return_type);
         }
-        write!(
-            f,
-            "function({})->{}",
-            join(&self.params, ", "),
-            self.return_type
-        )
+        write!(f, "({})->{}", join(&self.params, ", "), self.return_type)
     }
 }
 

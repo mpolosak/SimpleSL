@@ -10,7 +10,7 @@ pub struct Param {
 
 impl fmt::Display for Param {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}:{}", self.name, self.var_type)
+        write!(f, "{}: {}", self.name, self.var_type)
     }
 }
 

@@ -94,6 +94,6 @@ impl ReturnType for Function {
 impl fmt::Display for Function {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let return_type = self.return_type();
-        write!(f, "function({})->{return_type}", self.params)
+        write!(f, "({})->{return_type}", self.params)
     }
 }
