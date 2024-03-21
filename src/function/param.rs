@@ -30,7 +30,7 @@ pub struct Params(pub Arc<[Param]>);
 
 impl fmt::Display for Params {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", join(self, ", "))
+        write!(f, "{}", join(self.as_ref(), ", "))
     }
 }
 

@@ -145,7 +145,7 @@ impl Display for Type {
             Self::Function(function_type) => write!(f, "{function_type}"),
             Self::Array(var_type) => write!(f, "[{var_type}]"),
             Self::EmptyArray => write!(f, "[]"),
-            Self::Tuple(types) => write!(f, "({})", join(types, ", ")),
+            Self::Tuple(types) => write!(f, "({})", join(types.as_ref(), ", ")),
             Self::Void => write!(f, "()"),
             Self::Multi(types) => write!(f, "{types}"),
             Self::Any => write!(f, "any"),

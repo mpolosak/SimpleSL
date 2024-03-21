@@ -38,8 +38,7 @@ impl FromIterator<Type> for MultiType {
 
 impl Display for MultiType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let types = Box::from(self.clone());
-        write!(f, "{}", join(&types, "|"))
+        write!(f, "{}", join(self.as_ref(), "|"))
     }
 }
 

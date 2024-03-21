@@ -47,7 +47,7 @@ impl Deref for Array {
 
 impl Display for Array {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "[{}]", join_debug(self, ", "))
+        write!(f, "[{}]", join_debug(self.as_ref(), ", "))
     }
 }
 
