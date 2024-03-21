@@ -10,8 +10,8 @@ use super::{Type, Typed, Variable};
 
 #[derive(PartialEq)]
 pub struct Array {
-    pub var_type: Type,
-    pub elements: Arc<[Variable]>,
+    pub(crate) var_type: Type,
+    pub(crate) elements: Arc<[Variable]>,
 }
 
 impl Array {
