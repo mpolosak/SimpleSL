@@ -14,21 +14,17 @@ use std::fmt::{Debug, Display};
 pub use {code::Code, errors::Error, errors::ExecError, interpreter::Interpreter};
 
 pub fn join(array: &[impl Display], separator: &str) -> String {
-    let [elements @ .., last] = array else {
-        return "".into();
-    };
-    let result = elements.iter().fold("".to_owned(), |acc, current| {
-        format!("{acc}{current}{separator}")
-    });
-    format!("{result}{last}")
+    array
+        .iter()
+        .map(ToString::to_string)
+        .collect::<Box<_>>()
+        .join(separator)
 }
 
 pub fn join_debug(array: &[impl Debug], separator: &str) -> String {
-    let [elements @ .., last] = array else {
-        return "".into();
-    };
-    let result = elements.iter().fold("".to_owned(), |acc, current| {
-        format!("{acc}{current:?}{separator}")
-    });
-    format!("{result}{last:?}")
+    array
+        .iter()
+        .map(|element| format!("{element:?}"))
+        .collect::<Box<_>>()
+        .join(separator)
 }
