@@ -5,11 +5,11 @@ use crate::{
     Error, ExecError, Interpreter,
 };
 use pest::Parser;
-use std::rc::Rc;
+use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct Code {
-    pub(crate) instructions: Rc<[Instruction]>,
+    pub(crate) instructions: Arc<[Instruction]>,
 }
 
 impl Code {
@@ -45,5 +45,22 @@ impl ReturnType for Code {
         self.instructions
             .last()
             .map_or(Type::Void, ReturnType::return_type)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::Code;
+
+    #[test]
+    fn test_send() {
+        fn assert_send<T: Send>() {}
+        assert_send::<Code>();
+    }
+
+    #[test]
+    fn test_sync() {
+        fn assert_sync<T: Sync>() {}
+        assert_sync::<Code>();
     }
 }

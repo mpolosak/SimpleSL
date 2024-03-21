@@ -12,7 +12,7 @@ use crate::{
     variable::{FunctionType, ReturnType, Type, Typed, Variable},
     Code, Error, ExecError,
 };
-use std::{fmt, iter::zip, rc::Rc, sync::Arc};
+use std::{fmt, iter::zip, sync::Arc};
 
 #[derive(Debug)]
 pub struct Function {
@@ -41,7 +41,7 @@ impl Function {
         let args = args.into_iter().map(Instruction::from).collect();
         check_args("function", &self.params, &types)?;
         Ok(Code {
-            instructions: Rc::new([FunctionCall {
+            instructions: Arc::new([FunctionCall {
                 function: Variable::Function(self).into(),
                 args,
             }
