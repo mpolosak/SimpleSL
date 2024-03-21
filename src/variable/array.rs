@@ -1,7 +1,7 @@
 use std::{
     fmt::{self, Display},
     ops::Deref,
-    rc::Rc,
+    sync::Arc,
 };
 
 use crate::join_debug;
@@ -11,12 +11,12 @@ use super::{Type, Typed, Variable};
 #[derive(PartialEq)]
 pub struct Array {
     pub var_type: Type,
-    pub elements: Rc<[Variable]>,
+    pub elements: Arc<[Variable]>,
 }
 
 impl Array {
     /// Returns `Rc<Array>` containing all elements of array1 and array2
-    pub fn concat(array1: Rc<Self>, array2: Rc<Self>) -> Rc<Self> {
+    pub fn concat(array1: Arc<Self>, array2: Arc<Self>) -> Arc<Self> {
         if array1.is_empty() {
             return array2;
         }
@@ -51,7 +51,7 @@ impl Display for Array {
     }
 }
 
-impl<T: Into<Rc<[Variable]>>> From<T> for Array {
+impl<T: Into<Arc<[Variable]>>> From<T> for Array {
     fn from(value: T) -> Self {
         let elements = value.into();
         let var_type = elements
@@ -65,7 +65,7 @@ impl<T: Into<Rc<[Variable]>>> From<T> for Array {
 
 impl FromIterator<Variable> for Array {
     fn from_iter<T: IntoIterator<Item = Variable>>(iter: T) -> Self {
-        let elements: Rc<[Variable]> = iter.into_iter().collect();
+        let elements: Arc<[Variable]> = iter.into_iter().collect();
         elements.into()
     }
 }

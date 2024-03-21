@@ -1,10 +1,10 @@
 use crate::{instruction::local_variable::LocalVariableMap, join, parse::Rule, variable::Type};
 use pest::iterators::Pair;
-use std::{fmt, ops::Deref, rc::Rc};
+use std::{fmt, ops::Deref, sync::Arc};
 
 #[derive(Clone, Debug)]
 pub struct Param {
-    pub name: Rc<str>,
+    pub name: Arc<str>,
     pub var_type: Type,
 }
 
@@ -26,7 +26,7 @@ impl From<Pair<'_, Rule>> for Param {
 }
 
 #[derive(Clone, Debug)]
-pub struct Params(pub Rc<[Param]>);
+pub struct Params(pub Arc<[Param]>);
 
 impl fmt::Display for Params {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -35,7 +35,7 @@ impl fmt::Display for Params {
 }
 
 impl Deref for Params {
-    type Target = Rc<[Param]>;
+    type Target = Arc<[Param]>;
 
     fn deref(&self) -> &Self::Target {
         &self.0

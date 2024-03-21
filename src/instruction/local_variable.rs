@@ -3,9 +3,9 @@ use crate::{
     function::{Param, Params},
     variable::{FunctionType, ReturnType, Type, Typed, Variable},
 };
-use std::{collections::HashMap, rc::Rc};
+use std::{collections::HashMap, sync::Arc};
 
-pub type LocalVariableMap = HashMap<Rc<str>, LocalVariable>;
+pub type LocalVariableMap = HashMap<Arc<str>, LocalVariable>;
 pub struct LocalVariables<'a> {
     variables: LocalVariableMap,
     lower_layer: Option<&'a Self>,
@@ -21,7 +21,7 @@ impl<'a> LocalVariables<'a> {
             function: None,
         }
     }
-    pub fn insert(&mut self, name: Rc<str>, variable: LocalVariable) {
+    pub fn insert(&mut self, name: Arc<str>, variable: LocalVariable) {
         self.variables.insert(name, variable);
     }
     #[must_use]
@@ -31,7 +31,7 @@ impl<'a> LocalVariables<'a> {
             .or_else(|| self.lower_layer?.get(name))
     }
     #[must_use]
-    pub fn contains_key(&self, name: &Rc<str>) -> bool {
+    pub fn contains_key(&self, name: &Arc<str>) -> bool {
         self.variables.contains_key(name)
             || self
                 .lower_layer
@@ -129,16 +129,16 @@ impl Typed for LocalVariable {
 
 #[derive(Clone, Debug)]
 pub struct FunctionInfo {
-    name: Option<Rc<str>>,
+    name: Option<Arc<str>>,
     return_type: Type,
 }
 
 impl FunctionInfo {
-    pub fn new(name: Option<Rc<str>>, return_type: Type) -> Self {
+    pub fn new(name: Option<Arc<str>>, return_type: Type) -> Self {
         Self { name, return_type }
     }
 
-    pub fn name(&self) -> Option<Rc<str>> {
+    pub fn name(&self) -> Option<Arc<str>> {
         self.name.clone()
     }
 

@@ -15,12 +15,12 @@ use crate::{
     Error,
 };
 use pest::iterators::Pair;
-use std::rc::Rc;
+use std::sync::Arc;
 
 #[derive(Clone, Debug)]
 pub struct AnonymousFunction {
     pub params: Params,
-    body: Rc<[Instruction]>,
+    body: Arc<[Instruction]>,
     return_type: Type,
 }
 

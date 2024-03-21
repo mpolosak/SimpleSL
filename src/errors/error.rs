@@ -1,11 +1,11 @@
 use crate::{parse::Rule, variable::Type, ExecError};
 use match_any::match_any;
-use std::{fmt, rc::Rc};
+use std::{fmt, rc::Rc, sync::Arc};
 
 #[derive(Debug)]
 pub enum Error {
     VariableDoesntExist(Rc<str>),
-    WrongType(Rc<str>, Type),
+    WrongType(Arc<str>, Type),
     WrongNumberOfArguments(Box<str>, usize),
     IndexToBig,
     NegativeIndex,
@@ -24,13 +24,13 @@ pub enum Error {
     CannotDo(&'static str, Type),
     CannotDo2(Type, &'static str, Type),
     WrongReturn {
-        function_name: Option<Rc<str>>,
+        function_name: Option<Arc<str>>,
         function_return_type: Type,
         returned: Type,
     },
     ReturnOutsideFunction,
     MissingReturn {
-        function_name: Option<Rc<str>>,
+        function_name: Option<Arc<str>>,
         return_type: Type,
     },
 }

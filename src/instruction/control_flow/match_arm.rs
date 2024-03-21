@@ -11,16 +11,16 @@ use crate::{
     Error, ExecError,
 };
 use pest::iterators::Pair;
-use std::rc::Rc;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub enum MatchArm {
     Type {
-        ident: Rc<str>,
+        ident: Arc<str>,
         var_type: Type,
         instruction: Instruction,
     },
-    Value(Rc<[Instruction]>, Instruction),
+    Value(Arc<[Instruction]>, Instruction),
     Other(Instruction),
 }
 
@@ -35,7 +35,7 @@ impl MatchArm {
         let pair = inner.next().unwrap();
         match match_rule {
             Rule::match_type => {
-                let ident: Rc<str> = pair.as_str().into();
+                let ident: Arc<str> = pair.as_str().into();
                 let var_type = Type::from(inner.next().unwrap());
                 let pair = inner.next().unwrap();
                 let mut local_variables = local_variables.create_layer();
@@ -51,7 +51,7 @@ impl MatchArm {
                 let inner_values = pair.into_inner();
                 let values = inner_values
                     .map(|pair| Instruction::new(pair, interpreter, local_variables))
-                    .collect::<Result<Rc<[Instruction]>, Error>>()?;
+                    .collect::<Result<Arc<[Instruction]>, Error>>()?;
                 let pair = inner.next().unwrap();
                 let instruction = Instruction::new(pair, interpreter, local_variables)?;
                 Ok(Self::Value(values, instruction))

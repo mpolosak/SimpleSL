@@ -41,7 +41,7 @@ use crate::{
 pub(crate) use function::FunctionCall;
 use match_any::match_any;
 use pest::iterators::Pair;
-use std::rc::Rc;
+use std::sync::Arc;
 pub(crate) use traits::{
     CreateInstruction, Exec, ExecResult, ExecStop, MutCreateInstruction, Recreate,
 };
@@ -49,10 +49,10 @@ pub(crate) use traits::{
 #[derive(Debug, Clone)]
 pub enum Instruction {
     AnonymousFunction(AnonymousFunction),
-    LocalVariable(Rc<str>, LocalVariable),
+    LocalVariable(Arc<str>, LocalVariable),
     Tuple(Tuple),
     Variable(Variable),
-    Other(Rc<dyn BaseInstruction>),
+    Other(Arc<dyn BaseInstruction>),
 }
 
 impl Instruction {
@@ -211,7 +211,7 @@ pub(crate) fn recreate_instructions(
     instructions: &[Instruction],
     local_variables: &mut LocalVariables,
     interpreter: &Interpreter,
-) -> Result<Rc<[Instruction]>, ExecError> {
+) -> Result<Arc<[Instruction]>, ExecError> {
     instructions
         .iter()
         .map(|instruction| instruction.recreate(local_variables, interpreter))

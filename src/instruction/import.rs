@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use super::{
     local_variable::LocalVariables,
     recreate_instructions,
@@ -13,10 +11,11 @@ use crate::{
     Error, ExecError,
 };
 use pest::iterators::Pair;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Import {
-    instructions: Rc<[Instruction]>,
+    instructions: Arc<[Instruction]>,
 }
 
 impl MutCreateInstruction for Import {

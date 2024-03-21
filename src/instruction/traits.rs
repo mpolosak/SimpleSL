@@ -21,7 +21,7 @@ use super::{
 use crate::{interpreter::Interpreter, parse::Rule, variable::ReturnType, Error};
 use duplicate::duplicate_item;
 use pest::iterators::Pair;
-use std::{fmt::Debug, rc::Rc};
+use std::{fmt::Debug, sync::Arc};
 pub use {
     can_be_used::CanBeUsed,
     exec::{Exec, ExecResult, ExecStop},
@@ -43,7 +43,7 @@ pub trait MutCreateInstruction {
     ) -> Result<Instruction, Error>;
 }
 
-pub trait BaseInstruction: Exec + Recreate + ReturnType + Debug {}
+pub trait BaseInstruction: Exec + Recreate + ReturnType + Debug + Sync + Send {}
 
 #[duplicate_item(T; [Filter]; [Map]; [Reduce]; [TypeFilter]; [ArrayRepeat]; [Array]; [At];
     [BitwiseAnd]; [BitwiseOr]; [BitwiseNot]; [Xor]; [And]; [Or]; [Add]; [Subtract]; [Pow];
@@ -56,7 +56,7 @@ impl BaseInstruction for T {}
 
 impl<T: BaseInstruction + 'static> From<T> for Instruction {
     fn from(value: T) -> Self {
-        Self::Other(Rc::new(value))
+        Self::Other(Arc::new(value))
     }
 }
 

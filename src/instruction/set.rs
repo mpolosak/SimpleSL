@@ -10,17 +10,17 @@ use crate::{
     Error, ExecError,
 };
 use pest::iterators::Pair;
-use std::rc::Rc;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Set {
-    ident: Rc<str>,
+    ident: Arc<str>,
     instruction: Instruction,
 }
 
 impl Set {
     pub fn new(
-        ident: Rc<str>,
+        ident: Arc<str>,
         instruction: Instruction,
         local_variables: &mut LocalVariables,
     ) -> Self {
@@ -36,7 +36,7 @@ impl MutCreateInstruction for Set {
         local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
-        let ident: Rc<str> = inner.next().unwrap().as_str().into();
+        let ident: Arc<str> = inner.next().unwrap().as_str().into();
         let pair = inner.next().unwrap();
         let instruction = Instruction::new(pair, interpreter, local_variables)?;
         Ok(Self::new(ident, instruction, local_variables).into())

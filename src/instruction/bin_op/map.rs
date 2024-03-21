@@ -9,7 +9,7 @@ use crate::{
     variable::{Array, FunctionType, ReturnType, Type, Variable},
     ExecError,
 };
-use std::rc::Rc;
+use std::sync::Arc;
 
 impl CanBeUsed for Map {
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
@@ -51,8 +51,8 @@ impl Map {
         rhs.matches(&expected_function)
     }
 
-    fn zip_map(arrays: Rc<[Variable]>, function: Rc<Function>) -> ExecResult {
-        let arrays: Box<[&Rc<Array>]> = arrays
+    fn zip_map(arrays: Arc<[Variable]>, function: Arc<Function>) -> ExecResult {
+        let arrays: Box<[&Arc<Array>]> = arrays
             .iter()
             .map(|array| {
                 let Variable::Array(array) = array else {

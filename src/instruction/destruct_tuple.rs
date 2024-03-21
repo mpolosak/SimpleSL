@@ -1,5 +1,3 @@
-use std::{iter::zip, rc::Rc};
-
 use super::{
     local_variable::{LocalVariable, LocalVariables},
     traits::{ExecResult, MutCreateInstruction},
@@ -13,10 +11,11 @@ use crate::{
     Error, ExecError,
 };
 use pest::iterators::Pair;
+use std::{iter::zip, sync::Arc};
 
 #[derive(Debug)]
 pub struct DestructTuple {
-    idents: Rc<[Rc<str>]>,
+    idents: Arc<[Arc<str>]>,
     instruction: Instruction,
 }
 
@@ -28,7 +27,7 @@ impl MutCreateInstruction for DestructTuple {
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
-        let idents: Rc<[Rc<str>]> = pair.into_inner().map(|pair| pair.as_str().into()).collect();
+        let idents: Arc<[Arc<str>]> = pair.into_inner().map(|pair| pair.as_str().into()).collect();
         let pair = inner.next().unwrap();
         let instruction = Instruction::new(pair, interpreter, local_variables)?;
         let expected = Type::Tuple(std::iter::repeat(Type::Any).take(idents.len()).collect());

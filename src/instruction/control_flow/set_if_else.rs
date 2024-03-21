@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use crate::{
     instruction::{
         local_variable::{LocalVariable, LocalVariables},
@@ -14,10 +12,11 @@ use crate::{
     variable::{ReturnType, Type, Typed, Variable},
 };
 use pest::iterators::Pair;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct SetIfElse {
-    ident: Rc<str>,
+    ident: Arc<str>,
     var_type: Type,
     expression: Instruction,
     if_match: Instruction,
@@ -31,7 +30,7 @@ impl MutCreateInstruction for SetIfElse {
         local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
-        let ident: Rc<str> = inner.next().unwrap().as_str().into();
+        let ident: Arc<str> = inner.next().unwrap().as_str().into();
         let pair = inner.next().unwrap();
         let var_type = Type::from(pair);
         let pair = inner.next().unwrap();

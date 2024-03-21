@@ -9,11 +9,11 @@ use crate::{
     Error, ExecError,
 };
 use pest::iterators::Pair;
-use std::rc::Rc;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Block {
-    instructions: Rc<[Instruction]>,
+    instructions: Arc<[Instruction]>,
 }
 
 impl CreateInstruction for Block {

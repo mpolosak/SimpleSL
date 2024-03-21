@@ -11,11 +11,11 @@ use crate::{
     Error, ExecError,
 };
 use pest::iterators::Pair;
-use std::rc::Rc;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Array {
-    instructions: Rc<[Instruction]>,
+    instructions: Arc<[Instruction]>,
     var_type: Type,
 }
 
@@ -28,12 +28,12 @@ impl CreateInstruction for Array {
         let inner = pair.into_inner();
         let instructions = inner
             .map(|arg| Instruction::new_expression(arg, interpreter, local_variables))
-            .collect::<Result<Rc<_>, Error>>()?;
+            .collect::<Result<Arc<_>, Error>>()?;
         Ok(Self::create_from_instructions(instructions))
     }
 }
 impl Array {
-    fn create_from_instructions(instructions: Rc<[Instruction]>) -> Instruction {
+    fn create_from_instructions(instructions: Arc<[Instruction]>) -> Instruction {
         let var_type = instructions
             .iter()
             .map(Instruction::return_type)

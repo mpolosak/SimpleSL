@@ -8,7 +8,7 @@ use pest::{iterators::Pair, Parser};
 #[cfg(test)]
 pub(crate) use r#type::parse_type;
 pub use r#type::{ReturnType, Type, Typed};
-use std::{fmt, io, rc::Rc, str::FromStr};
+use std::{fmt, io, str::FromStr, sync::Arc};
 pub use typle::typle;
 pub use {array::Array, function_type::FunctionType, multi_type::MultiType};
 
@@ -16,10 +16,10 @@ pub use {array::Array, function_type::FunctionType, multi_type::MultiType};
 pub enum Variable {
     Int(i64),
     Float(f64),
-    String(Rc<str>),
-    Function(Rc<Function>),
-    Array(Rc<Array>),
-    Tuple(Rc<[Variable]>),
+    String(Arc<str>),
+    Function(Arc<Function>),
+    Array(Arc<Array>),
+    Tuple(Arc<[Variable]>),
     Void,
 }
 
@@ -83,7 +83,7 @@ impl PartialEq for Variable {
             | (Variable::Float(value1), Variable::Float(value2))
             | (Variable::String(value1), Variable::String(value2))
             | (Variable::Tuple(value1), Variable::Tuple(value2)) => value1 == value2,
-            (Variable::Function(value1), Variable::Function(value2)) => Rc::ptr_eq(value1, value2),
+            (Variable::Function(value1), Variable::Function(value2)) => Arc::ptr_eq(value1, value2),
             (Variable::Void, Variable::Void) => true,
             _ => false
         }
@@ -162,8 +162,8 @@ impl From<f64> for Variable {
     }
 }
 
-impl From<Rc<str>> for Variable {
-    fn from(value: Rc<str>) -> Self {
+impl From<Arc<str>> for Variable {
+    fn from(value: Arc<str>) -> Self {
         Self::String(value)
     }
 }
@@ -186,8 +186,8 @@ impl From<Function> for Variable {
     }
 }
 
-impl From<Rc<Function>> for Variable {
-    fn from(value: Rc<Function>) -> Self {
+impl From<Arc<Function>> for Variable {
+    fn from(value: Arc<Function>) -> Self {
         Self::Function(value)
     }
 }
@@ -234,14 +234,14 @@ impl From<Array> for Variable {
     }
 }
 
-impl From<Rc<Array>> for Variable {
-    fn from(value: Rc<Array>) -> Self {
+impl From<Arc<Array>> for Variable {
+    fn from(value: Arc<Array>) -> Self {
         Variable::Array(value)
     }
 }
 
-impl From<Rc<[Variable]>> for Variable {
-    fn from(value: Rc<[Variable]>) -> Self {
+impl From<Arc<[Variable]>> for Variable {
+    fn from(value: Arc<[Variable]>) -> Self {
         Array::from(value).into()
     }
 }
@@ -275,7 +275,19 @@ pub fn is_correct_variable_name(name: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use crate::variable::Variable;
 
+    #[test]
+    fn test_send() {
+        fn assert_send<T: Send>() {}
+        assert_send::<Variable>();
+    }
+
+    #[test]
+    fn test_sync() {
+        fn assert_sync<T: Sync>() {}
+        assert_sync::<Variable>();
+    }
     #[test]
     fn check_is_correct_variable_name() {
         use crate::variable::is_correct_variable_name;

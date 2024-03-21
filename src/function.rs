@@ -12,11 +12,11 @@ use crate::{
     variable::{FunctionType, ReturnType, Type, Typed, Variable},
     Code, Error, ExecError,
 };
-use std::{fmt, iter::zip, rc::Rc};
+use std::{fmt, iter::zip, rc::Rc, sync::Arc};
 
 #[derive(Debug)]
 pub struct Function {
-    pub(crate) ident: Option<Rc<str>>,
+    pub(crate) ident: Option<Arc<str>>,
     pub(crate) params: Params,
     pub(crate) body: Body,
     pub(crate) return_type: Type,
@@ -36,7 +36,7 @@ impl Function {
         }
     }
 
-    pub fn create_call(self: Rc<Self>, args: Vec<Variable>) -> Result<Code, Error> {
+    pub fn create_call(self: Arc<Self>, args: Vec<Variable>) -> Result<Code, Error> {
         let types = args.iter().map(Typed::as_type).collect::<Box<[Type]>>();
         let args = args.into_iter().map(Instruction::from).collect();
         check_args("function", &self.params, &types)?;
@@ -49,7 +49,7 @@ impl Function {
         })
     }
 
-    pub(crate) fn exec(self: &Rc<Self>, args: &[Variable]) -> Result<Variable, ExecError> {
+    pub(crate) fn exec(self: &Arc<Self>, args: &[Variable]) -> Result<Variable, ExecError> {
         let mut interpreter = Interpreter::without_stdlib();
         if let Some(ident) = &self.ident {
             interpreter.insert(ident.clone(), self.clone().into())

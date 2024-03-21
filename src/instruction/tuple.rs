@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use super::{
     local_variable::LocalVariables, recreate_instructions, traits::ExecResult, CreateInstruction,
     Exec, Instruction, Recreate,
@@ -11,10 +9,11 @@ use crate::{
     Error, ExecError,
 };
 use pest::iterators::Pair;
+use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct Tuple {
-    pub elements: Rc<[Instruction]>,
+    pub elements: Arc<[Instruction]>,
 }
 
 impl CreateInstruction for Tuple {
@@ -26,13 +25,13 @@ impl CreateInstruction for Tuple {
         let elements = pair
             .into_inner()
             .map(|pair| Instruction::new_expression(pair, interpreter, local_variables))
-            .collect::<Result<Rc<[Instruction]>, Error>>()?;
+            .collect::<Result<Arc<[Instruction]>, Error>>()?;
         Ok(Self::create_from_elements(elements))
     }
 }
 
 impl Tuple {
-    fn create_from_elements(elements: Rc<[Instruction]>) -> Instruction {
+    fn create_from_elements(elements: Arc<[Instruction]>) -> Instruction {
         let mut array = Vec::new();
         for instruction in &*elements {
             let Instruction::Variable(variable) = instruction else {

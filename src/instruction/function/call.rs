@@ -1,7 +1,3 @@
-use std::rc::Rc;
-
-use pest::iterators::Pair;
-
 use crate::{
     function::{check_args, Params},
     instruction::traits::{ExecResult, ExecStop},
@@ -19,11 +15,13 @@ use crate::{
     },
     parse::Rule,
 };
+use pest::iterators::Pair;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct FunctionCall {
     pub function: Instruction,
-    pub args: Rc<[Instruction]>,
+    pub args: Arc<[Instruction]>,
 }
 
 impl FunctionCall {
@@ -36,7 +34,7 @@ impl FunctionCall {
         let args = args
             .into_inner()
             .map(|pair| Instruction::new_expression(pair, interpreter, local_variables))
-            .collect::<Result<Rc<_>, Error>>()?;
+            .collect::<Result<Arc<_>, Error>>()?;
         match &function {
             Instruction::Variable(Variable::Function(function2)) => {
                 Self::check_args_with_params("function", &function2.params, &args)?;

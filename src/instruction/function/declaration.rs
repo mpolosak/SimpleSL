@@ -12,13 +12,13 @@ use crate::{
     Error, ExecError,
 };
 use pest::iterators::Pair;
-use std::rc::Rc;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct FunctionDeclaration {
-    ident: Rc<str>,
+    ident: Arc<str>,
     pub params: Params,
-    body: Rc<[Instruction]>,
+    body: Arc<[Instruction]>,
     return_type: Type,
 }
 
@@ -29,7 +29,7 @@ impl MutCreateInstruction for FunctionDeclaration {
         local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
-        let ident: Rc<str> = inner.next().unwrap().as_str().into();
+        let ident: Arc<str> = inner.next().unwrap().as_str().into();
         let mut inner = inner.next().unwrap().into_inner();
         let params_pair = inner.next().unwrap();
         let params = Params(params_pair.into_inner().map(Param::from).collect());
@@ -79,7 +79,7 @@ impl Exec for FunctionDeclaration {
             LocalVariable::Function(self.params.clone(), self.return_type.clone()),
         );
         let body = recreate_instructions(&self.body, &mut local_variables, interpreter)?;
-        let function: Rc<Function> = Function {
+        let function: Arc<Function> = Function {
             ident: Some(self.ident.clone()),
             params: self.params.clone(),
             body: Body::Lang(body),
