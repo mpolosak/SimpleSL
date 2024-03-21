@@ -57,11 +57,11 @@ impl Type {
             (Type::Any, _) | (_, Type::Any) => Type::Any,
             (first, second) if first == second => first,
             (Type::Multi(mut types), Type::Multi(types2)) => {
-                Arc::make_mut(&mut types).extend(types2.iter().cloned());
+                Arc::make_mut(&mut types.0).extend(types2.0.iter().cloned());
                 Type::Multi(types)
             }
             (Type::Multi(mut types), var_type) | (var_type, Type::Multi(mut types)) => {
-                Arc::make_mut(&mut types).insert(var_type);
+                Arc::make_mut(&mut types.0).insert(var_type);
                 Type::Multi(types)
             }
             (first, second) => Type::Multi(MultiType::from([first, second])),
@@ -215,10 +215,10 @@ impl BitOrAssign for Type {
             (first, second) if second.matches(first) => (),
             (first, second) if first.matches(&second) => *first = second,
             (Type::Multi(typeset), Type::Multi(typeset2)) => {
-                Arc::make_mut(typeset).extend(typeset2.iter().cloned())
+                Arc::make_mut(&mut typeset.0).extend(typeset2.iter().cloned())
             }
             (Type::Multi(typeset), second) => {
-                Arc::make_mut(typeset).insert(second);
+                Arc::make_mut(&mut typeset.0).insert(second);
             }
             (first, second) => *first = first.clone() | second,
         }

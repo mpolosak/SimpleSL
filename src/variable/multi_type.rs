@@ -1,19 +1,24 @@
 use super::Type;
 use crate::join;
 use std::{
-    collections::HashSet,
+    collections::{hash_set::Iter, HashSet},
     fmt::Display,
     hash::Hash,
-    ops::{Deref, DerefMut},
     sync::Arc,
 };
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct MultiType(Arc<HashSet<Type>>);
+pub struct MultiType(pub(crate) Arc<HashSet<Type>>);
+
+impl MultiType {
+    pub fn iter(&self) -> Iter<'_, Type> {
+        self.0.iter()
+    }
+}
 
 impl Hash for MultiType {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.len().hash(state);
+        self.0.len().hash(state);
     }
 }
 
@@ -25,20 +30,16 @@ impl<const N: usize> From<[Type; N]> for MultiType {
 
 impl Display for MultiType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", join(self.as_ref(), "|"))
+        write!(f, "{}", join(self, "|"))
     }
 }
 
-impl Deref for MultiType {
-    type Target = Arc<HashSet<Type>>;
+impl<'a> IntoIterator for &'a MultiType {
+    type Item = &'a Type;
 
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
+    type IntoIter = Iter<'a, Type>;
 
-impl DerefMut for MultiType {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter()
     }
 }
