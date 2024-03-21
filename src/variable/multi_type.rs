@@ -23,19 +23,6 @@ impl<const N: usize> From<[Type; N]> for MultiType {
     }
 }
 
-impl From<MultiType> for Box<[Type]> {
-    fn from(value: MultiType) -> Self {
-        value.0.iter().cloned().collect()
-    }
-}
-
-impl FromIterator<Type> for MultiType {
-    fn from_iter<T: IntoIterator<Item = Type>>(iter: T) -> Self {
-        let types: HashSet<_> = iter.into_iter().collect();
-        Self(types.into())
-    }
-}
-
 impl Display for MultiType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", join(self.as_ref(), "|"))
