@@ -5,7 +5,7 @@ mod map;
 mod math;
 mod reduce;
 mod shift;
-use super::local_variable::LocalVariables;
+use super::{array::Array, local_variable::LocalVariables};
 use crate::{
     instruction::{
         traits::{CanBeUsed, ToResult},
@@ -45,12 +45,38 @@ impl T {
     }
 }
 
-#[duplicate_item(T; [Add]; [Multiply]; [Subtract]; [Greater]; [GreaterOrEqual]; [Lower];
+#[duplicate_item(T; [Multiply]; [Subtract]; [Greater]; [GreaterOrEqual]; [Lower];
     [LowerOrEqual]; [BitwiseAnd]; [BitwiseOr]; [Xor]; [Equal])]
 impl T {
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         match (lhs, rhs) {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => Self::exec(lhs, rhs).into(),
+            (Instruction::Array(array), rhs) => {
+                let instructions = array
+                    .instructions
+                    .iter()
+                    .cloned()
+                    .map(|lhs| Self::create_from_instructions(lhs, rhs.clone()))
+                    .collect();
+                Array {
+                    instructions,
+                    var_type: array.var_type.clone(),
+                }
+                .into()
+            }
+            (lhs, Instruction::Array(array)) => {
+                let instructions = array
+                    .instructions
+                    .iter()
+                    .cloned()
+                    .map(|rhs| Self::create_from_instructions(lhs.clone(), rhs))
+                    .collect();
+                Array {
+                    instructions,
+                    var_type: array.var_type.clone(),
+                }
+                .into()
+            }
             (lhs, rhs) => Self { lhs, rhs }.into(),
         }
     }
