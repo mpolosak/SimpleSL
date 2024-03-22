@@ -1,4 +1,5 @@
 use crate::instruction::array::Array;
+use crate::instruction::array_repeat::ArrayRepeat;
 use crate::instruction::Instruction;
 use crate::instruction::{Divide, Modulo};
 use crate::variable::Variable;
@@ -41,6 +42,22 @@ impl T {
                 Ok(Array {
                     instructions,
                     var_type: array.var_type.clone(),
+                }
+                .into())
+            }
+            (Instruction::ArrayRepeat(array_repeat), rhs) => {
+                let value = Self::create_from_instructions(array_repeat.value.clone(), rhs)?;
+                Ok(ArrayRepeat {
+                    value,
+                    len: array_repeat.len.clone(),
+                }
+                .into())
+            }
+            (lhs, Instruction::ArrayRepeat(array_repeat)) => {
+                let value = Self::create_from_instructions(lhs, array_repeat.value.clone())?;
+                Ok(ArrayRepeat {
+                    value,
+                    len: array_repeat.len.clone(),
                 }
                 .into())
             }
