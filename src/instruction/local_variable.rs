@@ -1,3 +1,5 @@
+use match_any::match_any;
+
 use super::{function::AnonymousFunction, Instruction};
 use crate::{
     function::{Param, Params},
@@ -103,12 +105,12 @@ impl From<Type> for LocalVariable {
 
 impl From<&Instruction> for LocalVariable {
     fn from(value: &Instruction) -> Self {
-        match value {
+        match_any! { value,
             Instruction::AnonymousFunction(function) => function.into(),
             Instruction::LocalVariable(_, var) => var.clone(),
-            Instruction::Tuple(tuple) => tuple.return_type().into(),
             Instruction::Variable(var) => var.clone().into(),
-            Instruction::Other(ins) => ins.return_type().into(),
+            Instruction::Tuple(ins) | Instruction::Array(ins) | Instruction::Other(ins)
+                => ins.return_type().into()
         }
     }
 }

@@ -83,3 +83,9 @@ impl ReturnType for Array {
         self.var_type.clone()
     }
 }
+
+impl From<Array> for Instruction {
+    fn from(value: Array) -> Self {
+        Self::Array(value.into())
+    }
+}

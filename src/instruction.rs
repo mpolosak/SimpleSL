@@ -49,6 +49,7 @@ pub(crate) use traits::{
 #[derive(Debug, Clone)]
 pub enum Instruction {
     AnonymousFunction(AnonymousFunction),
+    Array(Arc<Array>),
     LocalVariable(Arc<str>, LocalVariable),
     Tuple(Tuple),
     Variable(Variable),
@@ -159,7 +160,7 @@ impl Exec for Instruction {
                 .get_variable(ident)
                 .cloned()
                 .ok_or_else(|| panic!("Tried to get variable {ident} that doest exist")),
-            Self::AnonymousFunction(ins) | Self::Tuple(ins) | Self::Other(ins)
+            Self::AnonymousFunction(ins) | Self::Array(ins) | Self::Tuple(ins) | Self::Other(ins)
                 => ins.exec(interpreter)
         }
     }
@@ -186,7 +187,7 @@ impl Recreate for Instruction {
                 },
             )),
             Self::Variable(variable) => Ok(Self::Variable(variable.clone())),
-            Self::AnonymousFunction(ins) | Self::Tuple(ins) | Self::Other(ins)
+            Self::AnonymousFunction(ins) | Self::Array(ins) | Self::Tuple(ins) | Self::Other(ins)
                 => ins.recreate(local_variables, interpreter)
         }
     }
@@ -196,7 +197,7 @@ impl ReturnType for Instruction {
     fn return_type(&self) -> Type {
         match_any! { self,
             Self::Variable(variable) | Self::LocalVariable(_, variable) => variable.as_type(),
-            Self::AnonymousFunction(ins) | Self::Tuple(ins) | Self::Other(ins) => ins.return_type()
+            Self::AnonymousFunction(ins) | Self::Array(ins) | Self::Tuple(ins) | Self::Other(ins) => ins.return_type()
         }
     }
 }
