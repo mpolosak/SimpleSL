@@ -103,10 +103,13 @@ impl From<Type> for LocalVariable {
 
 impl From<&Instruction> for LocalVariable {
     fn from(value: &Instruction) -> Self {
-        let Instruction::Variable(variable) = value else {
-            return Self::Other(value.return_type());
-        };
-        Self::Variable(variable.clone())
+        match value {
+            Instruction::AnonymousFunction(function) => function.into(),
+            Instruction::LocalVariable(_, var) => var.clone(),
+            Instruction::Tuple(tuple) => tuple.return_type().into(),
+            Instruction::Variable(var) => var.clone().into(),
+            Instruction::Other(ins) => ins.return_type().into(),
+        }
     }
 }
 
