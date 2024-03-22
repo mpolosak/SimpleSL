@@ -1,5 +1,5 @@
 use super::{
-    local_variable::{LocalVariable, LocalVariables},
+    local_variable::LocalVariables,
     traits::{ExecResult, MutCreateInstruction},
     tuple::Tuple,
     Exec, Instruction, Recreate,
@@ -47,8 +47,8 @@ impl DestructTuple {
     fn insert_local_variables(&self, local_variables: &mut LocalVariables) {
         match &self.instruction {
             Instruction::Variable(Variable::Tuple(elements)) => {
-                for (ident, element) in zip(self.idents.iter().cloned(), elements.iter()) {
-                    local_variables.insert(ident, LocalVariable::Variable(element.clone()));
+                for (ident, element) in zip(self.idents.iter().cloned(), elements.iter().cloned()) {
+                    local_variables.insert(ident, element.into());
                 }
             }
             Instruction::Tuple(Tuple { elements }) => {

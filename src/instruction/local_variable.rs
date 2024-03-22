@@ -110,6 +110,12 @@ impl From<&Instruction> for LocalVariable {
     }
 }
 
+impl From<Variable> for LocalVariable {
+    fn from(value: Variable) -> Self {
+        Self::Variable(value)
+    }
+}
+
 impl Typed for LocalVariable {
     fn as_type(&self) -> Type {
         match self {
