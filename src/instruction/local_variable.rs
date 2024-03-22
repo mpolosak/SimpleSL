@@ -1,4 +1,4 @@
-use super::Instruction;
+use super::{function::AnonymousFunction, Instruction};
 use crate::{
     function::{Param, Params},
     variable::{FunctionType, ReturnType, Type, Typed, Variable},
@@ -113,6 +113,12 @@ impl From<&Instruction> for LocalVariable {
 impl From<Variable> for LocalVariable {
     fn from(value: Variable) -> Self {
         Self::Variable(value)
+    }
+}
+
+impl From<&AnonymousFunction> for LocalVariable {
+    fn from(value: &AnonymousFunction) -> Self {
+        Self::Function(value.params.clone(), value.return_type())
     }
 }
 
