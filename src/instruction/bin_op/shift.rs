@@ -1,4 +1,5 @@
 use super::{LShift, RShift};
+use crate::instruction::array::Array;
 use crate::instruction::Instruction;
 use crate::variable::{Type, Typed, Variable};
 use crate::ExecError;
@@ -19,6 +20,32 @@ impl shift {
             }
             (_, Instruction::Variable(Variable::Int(rhs))) if !(0..=63).contains(&rhs) => {
                 Err(ExecError::OverflowShift)
+            }
+            (Instruction::Array(array), rhs) => {
+                let instructions = array
+                    .instructions
+                    .iter()
+                    .cloned()
+                    .map(|lhs| Self::create_from_instructions(lhs, rhs.clone()))
+                    .collect::<Result<_, _>>()?;
+                Ok(Array {
+                    instructions,
+                    var_type: array.var_type.clone(),
+                }
+                .into())
+            }
+            (lhs, Instruction::Array(array)) => {
+                let instructions = array
+                    .instructions
+                    .iter()
+                    .cloned()
+                    .map(|rhs| Self::create_from_instructions(lhs.clone(), rhs))
+                    .collect::<Result<_, _>>()?;
+                Ok(Array {
+                    instructions,
+                    var_type: array.var_type.clone(),
+                }
+                .into())
             }
             (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
         }
