@@ -10,6 +10,7 @@ use pest::iterators::Pair;
 use std::str::FromStr;
 
 use super::array::Array;
+use super::array_repeat::ArrayRepeat;
 
 #[duplicate_item(T; [Not]; [BitwiseNot]; [UnaryMinus])]
 #[derive(Debug)]
@@ -52,6 +53,14 @@ impl T {
                 Array {
                     instructions,
                     var_type: array.var_type.clone(),
+                }
+                .into()
+            }
+            Instruction::ArrayRepeat(array_repeat) => {
+                let value = Self::create_from_instruction(array_repeat.value.clone());
+                ArrayRepeat {
+                    value,
+                    len: array_repeat.len.clone(),
                 }
                 .into()
             }

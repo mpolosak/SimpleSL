@@ -12,8 +12,8 @@ use pest::iterators::Pair;
 
 #[derive(Debug)]
 pub struct ArrayRepeat {
-    value: Instruction,
-    len: Instruction,
+    pub value: Instruction,
+    pub len: Instruction,
 }
 
 impl CreateInstruction for ArrayRepeat {
