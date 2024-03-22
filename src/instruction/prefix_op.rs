@@ -9,6 +9,8 @@ use lazy_static::lazy_static;
 use pest::iterators::Pair;
 use std::str::FromStr;
 
+use super::array::Array;
+
 #[duplicate_item(T; [Not]; [BitwiseNot]; [UnaryMinus])]
 #[derive(Debug)]
 pub struct T {
@@ -40,6 +42,19 @@ impl T {
     pub fn create_from_instruction(instruction: Instruction) -> Instruction {
         match instruction {
             Instruction::Variable(operand) => Self::calc(operand).into(),
+            Instruction::Array(array) => {
+                let instructions = array
+                    .instructions
+                    .iter()
+                    .cloned()
+                    .map(Self::create_from_instruction)
+                    .collect();
+                Array {
+                    instructions,
+                    var_type: array.var_type.clone(),
+                }
+                .into()
+            }
             instruction => Self { instruction }.into(),
         }
     }

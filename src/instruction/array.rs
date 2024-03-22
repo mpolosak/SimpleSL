@@ -15,8 +15,8 @@ use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Array {
-    instructions: Arc<[Instruction]>,
-    var_type: Type,
+    pub instructions: Arc<[Instruction]>,
+    pub var_type: Type,
 }
 
 impl CreateInstruction for Array {
