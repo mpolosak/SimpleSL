@@ -2,7 +2,6 @@ mod can_be_used;
 mod exec;
 mod recreate;
 use super::{
-    array_repeat::ArrayRepeat,
     at::At,
     bin_op::*,
     block::Block,
@@ -44,7 +43,7 @@ pub trait MutCreateInstruction {
 
 pub trait BaseInstruction: Exec + Recreate + ReturnType + Debug + Sync + Send {}
 
-#[duplicate_item(T; [Filter]; [Map]; [Reduce]; [TypeFilter]; [ArrayRepeat]; [At];
+#[duplicate_item(T; [Filter]; [Map]; [Reduce]; [TypeFilter]; [At];
     [BitwiseAnd]; [BitwiseOr]; [BitwiseNot]; [Xor]; [And]; [Or]; [Add]; [Subtract]; [Pow];
     [Multiply]; [Divide]; [Modulo]; [Equal]; [Greater]; [GreaterOrEqual]; [Lower];
     [LowerOrEqual]; [LShift]; [RShift]; [UnaryMinus]; [Not]; [Block]; [IfElse]; [Match];

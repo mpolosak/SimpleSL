@@ -82,3 +82,9 @@ impl ReturnType for ArrayRepeat {
         [element_type].into()
     }
 }
+
+impl From<ArrayRepeat> for Instruction {
+    fn from(value: ArrayRepeat) -> Self {
+        Self::ArrayRepeat(value.into())
+    }
+}
