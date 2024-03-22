@@ -1,5 +1,5 @@
-use crate::instruction::Instruction;
-use crate::instruction::Pow;
+use crate::instruction::array::Array;
+use crate::instruction::{Instruction, Pow};
 use crate::variable::{Type, Typed, Variable};
 use crate::ExecError;
 
@@ -14,6 +14,32 @@ impl Pow {
             }
             (_, Instruction::Variable(Variable::Int(exp))) if exp < 0 => {
                 Err(ExecError::NegativeExponent)
+            }
+            (Instruction::Array(array), rhs) => {
+                let instructions = array
+                    .instructions
+                    .iter()
+                    .cloned()
+                    .map(|lhs| Self::create_from_instructions(lhs, rhs.clone()))
+                    .collect::<Result<_, _>>()?;
+                Ok(Array {
+                    instructions,
+                    var_type: array.var_type.clone(),
+                }
+                .into())
+            }
+            (lhs, Instruction::Array(array)) => {
+                let instructions = array
+                    .instructions
+                    .iter()
+                    .cloned()
+                    .map(|rhs| Self::create_from_instructions(lhs.clone(), rhs))
+                    .collect::<Result<_, _>>()?;
+                Ok(Array {
+                    instructions,
+                    var_type: array.var_type.clone(),
+                }
+                .into())
             }
             (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
         }
