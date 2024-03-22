@@ -1,4 +1,5 @@
 use super::{And, Or};
+use crate::instruction::array::Array;
 use crate::instruction::Instruction;
 use crate::variable::{Type, Typed, Variable};
 use duplicate::duplicate_item;
@@ -14,6 +15,32 @@ impl logic {
                 if cond =>
             {
                 instruction
+            }
+            (Instruction::Array(array), rhs) => {
+                let instructions = array
+                    .instructions
+                    .iter()
+                    .cloned()
+                    .map(|lhs| Self::create_from_instructions(lhs, rhs.clone()))
+                    .collect();
+                Array {
+                    instructions,
+                    var_type: array.var_type.clone(),
+                }
+                .into()
+            }
+            (lhs, Instruction::Array(array)) => {
+                let instructions = array
+                    .instructions
+                    .iter()
+                    .cloned()
+                    .map(|rhs| Self::create_from_instructions(lhs.clone(), rhs))
+                    .collect();
+                Array {
+                    instructions,
+                    var_type: array.var_type.clone(),
+                }
+                .into()
             }
             (lhs, rhs) => Self { lhs, rhs }.into(),
         }
