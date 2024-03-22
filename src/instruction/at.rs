@@ -50,6 +50,11 @@ impl At {
             (_, Instruction::Variable(Variable::Int(value))) if value < 0 => {
                 Err(ExecError::NegativeIndex)
             }
+            (Instruction::Array(array), Instruction::Variable(Variable::Int(value)))
+                if array.instructions.len() <= (value as usize) =>
+            {
+                Err(ExecError::IndexToBig)
+            }
             (instruction, index) => Ok(Self { instruction, index }.into()),
         }
     }
