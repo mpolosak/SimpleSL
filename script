@@ -1,7 +1,0 @@
-x = () -> function(int) -> int | function(int) -> float {
-    return (x: int)->int{
-        return 5;
-    };
-}
-
-[5, 4]@x()@print
