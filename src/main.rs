@@ -3,13 +3,13 @@ use simplesl::{Code, Error, Interpreter};
 use std::{env, fs, process::ExitCode};
 
 fn main() -> ExitCode {
-    let args: Box<[String]> = env::args().collect();
+    let mut args = env::args();
     if args.len() > 2 {
         eprintln!("Too many arguments");
         return ExitCode::FAILURE;
     }
-    if args.len() == 2 {
-        return run_from_file(&args[1]).map_or_else(
+    if let Some(path) = args.nth(1) {
+        return run_from_file(&path).map_or_else(
             |error| {
                 eprintln!("{error}");
                 ExitCode::FAILURE
