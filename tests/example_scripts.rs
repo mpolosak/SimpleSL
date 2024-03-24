@@ -1,7 +1,5 @@
-#![cfg(test)]
 use std::fs;
-
-use crate::{
+use simplesl::{
     variable::{FunctionType, Type, Typed, Variable},
     Code, Error, Interpreter,
 };

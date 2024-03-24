@@ -5,7 +5,6 @@ mod instruction;
 mod interpreter;
 mod parse;
 pub mod stdlib;
-mod test_example_scripts;
 pub mod variable;
 #[macro_use]
 extern crate pest_derive;
