@@ -41,7 +41,7 @@ pub fn return_type(lhs: Type, rhs: Type) -> Type {
     if lhs.matches(&[Type::Any].into()) || rhs.matches(&[Type::Any].into()) {
         return [Type::Int].into();
     }
-    if Type::from([Type::Never]).matches(&lhs) || Type::from([Type::Never]).matches(&rhs) {
+    if Type::EmptyArray.matches(&lhs) || Type::EmptyArray.matches(&rhs) {
         return [Type::Int] | Type::Int;
     }
     Type::Int
