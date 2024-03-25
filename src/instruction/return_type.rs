@@ -15,12 +15,31 @@ impl ReturnType for T {
 #[duplicate_item(T; [Multiply]; [Divide]; [Pow]; [Subtract])]
 impl ReturnType for T {
     fn return_type(&self) -> Type {
-        match (self.lhs.return_type(), self.rhs.return_type()) {
-            (var_type @ Type::Array(_), _) | (_, var_type @ Type::Array(_)) => var_type,
-            (Type::EmptyArray, var_type) | (var_type, Type::EmptyArray) => [var_type].into(),
-            (var_type, _) => var_type,
-        }
+        let lhs = self.lhs.return_type();
+        let rhs = self.rhs.return_type();
+        return_type_float(lhs, rhs)
     }
+}
+
+pub fn return_type_float(lhs: Type, rhs: Type) -> Type {
+    if (lhs.matches(&[Type::Int].into()) && rhs == Type::Int)
+        || (rhs.matches(&[Type::Int].into()) && lhs == Type::Int)
+    {
+        return [Type::Int].into();
+    }
+    if lhs.matches(&[Type::Float].into()) || rhs.matches(&[Type::Float].into()) {
+        return [Type::Float].into();
+    }
+    if Type::from([Type::Int]).matches(&lhs) || Type::from([Type::Int]).matches(&rhs) {
+        return [Type::Int] | Type::Int;
+    }
+    if Type::from([Type::Float]).matches(&lhs) || Type::from([Type::Float]).matches(&rhs) {
+        return [Type::Float] | Type::Float;
+    }
+    if lhs == Type::Int {
+        return Type::Int;
+    }
+    Type::Float
 }
 
 #[duplicate_item(
@@ -33,11 +52,11 @@ impl ReturnType for T {
     fn return_type(&self) -> Type {
         let lhs = self.lhs.return_type();
         let rhs = self.rhs.return_type();
-        return_type(lhs, rhs)
+        return_type_int(lhs, rhs)
     }
 }
 
-pub fn return_type(lhs: Type, rhs: Type) -> Type {
+pub fn return_type_int(lhs: Type, rhs: Type) -> Type {
     if lhs.matches(&[Type::Any].into()) || rhs.matches(&[Type::Any].into()) {
         return [Type::Int].into();
     }
@@ -55,31 +74,87 @@ impl ReturnType for Equal {
 
 #[cfg(test)]
 mod tests {
-    use crate::{instruction::return_type::return_type, variable::Type};
+    use crate::variable::Type;
 
     #[test]
-    fn test_return_type() {
-        assert_eq!(return_type(Type::Int, Type::Int), Type::Int);
-        assert_eq!(return_type(Type::Float, Type::Float), Type::Int);
+    fn return_type_int() {
+        use crate::instruction::return_type::return_type_int;
+        assert_eq!(return_type_int(Type::Int, Type::Int), Type::Int);
+        assert_eq!(return_type_int(Type::Float, Type::Float), Type::Int);
         assert_eq!(
-            return_type([Type::Int].into(), Type::Int),
+            return_type_int([Type::Int].into(), Type::Int),
             [Type::Int].into()
         );
         assert_eq!(
-            return_type([Type::Float].into(), Type::Float),
+            return_type_int([Type::Float].into(), Type::Float),
             [Type::Int].into()
         );
         assert_eq!(
-            return_type(Type::Float, [Type::Float].into()),
+            return_type_int(Type::Float, [Type::Float].into()),
             [Type::Int].into()
         );
         assert_eq!(
-            return_type(Type::Int, [Type::Int] | Type::Int),
+            return_type_int(Type::Int, [Type::Int] | Type::Int),
             [Type::Int] | Type::Int
         );
         assert_eq!(
-            return_type(Type::Float, [Type::Float] | Type::Float),
+            return_type_int(Type::Float, [Type::Float] | Type::Float),
             [Type::Int] | Type::Int
+        );
+    }
+
+    #[test]
+    fn return_type_float() {
+        use crate::instruction::return_type::return_type_float;
+        assert_eq!(return_type_float(Type::Int, Type::Int), Type::Int);
+        assert_eq!(return_type_float(Type::Float, Type::Float), Type::Float);
+        assert_eq!(
+            return_type_float([Type::Int].into(), Type::Int),
+            [Type::Int].into()
+        );
+        assert_eq!(
+            return_type_float(Type::Int, [Type::Int].into()),
+            [Type::Int].into()
+        );
+        assert_eq!(
+            return_type_float([Type::Float].into(), Type::Float),
+            [Type::Float].into()
+        );
+        assert_eq!(
+            return_type_float(Type::Float, [Type::Float].into()),
+            [Type::Float].into()
+        );
+        assert_eq!(
+            return_type_float(Type::Int, [Type::Int] | Type::Int),
+            [Type::Int] | Type::Int
+        );
+        assert_eq!(
+            return_type_float([Type::Int] | Type::Int, Type::Int),
+            [Type::Int] | Type::Int
+        );
+        assert_eq!(
+            return_type_float(Type::Float, [Type::Float] | Type::Float),
+            [Type::Float] | Type::Float
+        );
+        assert_eq!(
+            return_type_float([Type::Float] | Type::Float, Type::Float),
+            [Type::Float] | Type::Float
+        );
+        assert_eq!(
+            return_type_float(Type::Int, Type::EmptyArray),
+            [Type::Int].into()
+        );
+        assert_eq!(
+            return_type_float(Type::EmptyArray, Type::Int),
+            [Type::Int].into()
+        );
+        assert_eq!(
+            return_type_float(Type::Float, Type::EmptyArray),
+            [Type::Float].into()
+        );
+        assert_eq!(
+            return_type_float(Type::EmptyArray, Type::Float),
+            [Type::Float].into()
         );
     }
 }
