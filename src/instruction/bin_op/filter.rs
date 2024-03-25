@@ -2,7 +2,7 @@ use super::Filter;
 use crate::{
     instruction::{
         traits::{CanBeUsed, ExecResult},
-        Exec,
+        Exec, ExecStop,
     },
     interpreter::Interpreter,
     variable::{FunctionType, ReturnType, Type, Variable},
@@ -31,21 +31,28 @@ impl Exec for Filter {
         let (Variable::Array(array), Variable::Function(function)) = (&array, &function) else {
             unreachable!("Tried to do {array} ? {function}")
         };
-        let mut new_array: Vec<Variable> = Vec::new();
+        let array_iter = array.iter().cloned();
         if function.params.len() == 1 {
-            for element in array.iter().cloned() {
-                if function.exec(&[element.clone()])? != Variable::Int(0) {
-                    new_array.push(element);
-                }
-            }
-            return Ok(new_array.into());
+            return array_iter
+                .filter_map(|element| match function.exec(&[element.clone()]) {
+                    Ok(Variable::Int(0)) => None,
+                    Ok(_) => Some(Ok(element)),
+                    e @ Err(_) => Some(e),
+                })
+                .collect::<Result<_, _>>()
+                .map_err(ExecStop::from);
         }
-        for (index, element) in array.iter().cloned().enumerate() {
-            if function.exec(&[index.into(), element.clone()])? != Variable::Int(0) {
-                new_array.push(element);
-            }
-        }
-        Ok(new_array.into())
+        array_iter
+            .enumerate()
+            .filter_map(
+                |(index, element)| match function.exec(&[index.into(), element.clone()]) {
+                    Ok(Variable::Int(0)) => None,
+                    Ok(_) => Some(Ok(element)),
+                    e @ Err(_) => Some(e),
+                },
+            )
+            .collect::<Result<_, _>>()
+            .map_err(ExecStop::from)
     }
 }
 
