@@ -47,20 +47,14 @@ impl DestructTuple {
     fn insert_local_variables(&self, local_variables: &mut LocalVariables) {
         match &self.instruction {
             Instruction::Variable(Variable::Tuple(elements)) => {
-                for (ident, element) in zip(self.idents.iter().cloned(), elements.iter().cloned()) {
-                    local_variables.insert(ident, element.into());
-                }
+                local_variables.extend(zip(self.idents.iter().cloned(), elements.iter().cloned()))
             }
             Instruction::Tuple(Tuple { elements }) => {
-                for (ident, element) in zip(self.idents.iter().cloned(), elements.iter()) {
-                    local_variables.insert(ident, element.into());
-                }
+                local_variables.extend(zip(self.idents.iter().cloned(), elements.iter()))
             }
             instruction => {
                 let types = instruction.return_type().flatten_tuple().unwrap();
-                for (ident, var_type) in zip(self.idents.iter().cloned(), types.iter()) {
-                    local_variables.insert(ident, var_type.clone().into());
-                }
+                local_variables.extend(zip(self.idents.iter().cloned(), types.iter().cloned()))
             }
         }
     }
@@ -72,8 +66,8 @@ impl Exec for DestructTuple {
         let Variable::Tuple(elements) = result else {
             panic!()
         };
-        for (ident, element) in zip(self.idents.iter(), elements.iter()) {
-            interpreter.insert(ident.clone(), element.clone());
+        for (ident, element) in zip(self.idents.iter().cloned(), elements.iter().cloned()) {
+            interpreter.insert(ident, element);
         }
         Ok(Variable::Tuple(elements))
     }

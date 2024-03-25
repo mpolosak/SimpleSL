@@ -1,10 +1,9 @@
-use match_any::match_any;
-
 use super::{function::AnonymousFunction, Instruction};
 use crate::{
     function::{Param, Params},
     variable::{FunctionType, ReturnType, Type, Typed, Variable},
 };
+use match_any::match_any;
 use std::{collections::HashMap, sync::Arc};
 
 pub type LocalVariableMap = HashMap<Arc<str>, LocalVariable>;
@@ -61,6 +60,16 @@ impl<'a> LocalVariables<'a> {
         self.function
             .as_ref()
             .or_else(|| self.lower_layer.and_then(LocalVariables::function))
+    }
+}
+
+impl<V> Extend<(Arc<str>, V)> for LocalVariables<'_>
+where
+    V: Into<LocalVariable>,
+{
+    fn extend<T: IntoIterator<Item = (Arc<str>, V)>>(&mut self, iter: T) {
+        self.variables
+            .extend(iter.into_iter().map(|(ident, var)| (ident, var.into())));
     }
 }
 
