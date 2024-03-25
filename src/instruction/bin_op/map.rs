@@ -7,9 +7,8 @@ use crate::{
     },
     interpreter::Interpreter,
     variable::{Array, FunctionType, ReturnType, Type, Variable},
-    ExecError,
 };
-use std::sync::Arc;
+use std::{iter, sync::Arc};
 
 impl CanBeUsed for Map {
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
@@ -63,23 +62,24 @@ impl Map {
             .collect();
         let len = arrays.iter().map(|array| array.len()).min().unwrap();
         if function.params.len() == arrays.len() {
-            let array = (0..len)
+            return (0..len)
                 .map(|i| {
                     let args: Box<[Variable]> =
                         arrays.iter().map(|array| array[i].clone()).collect();
                     function.exec(&args)
                 })
-                .collect::<Result<Variable, ExecError>>()?;
-            return Ok(array);
+                .collect::<Result<_, _>>()
+                .map_err(ExecStop::from);
         }
-        let array = (0..len)
+        (0..len)
             .map(|i| {
-                let mut args = vec![i.into()];
-                args.extend(arrays.iter().map(|array| array[i].clone()));
+                let args: Box<[Variable]> = iter::once(Variable::from(i))
+                    .chain(arrays.iter().map(|array| array[i].clone()))
+                    .collect();
                 function.exec(&args)
             })
-            .collect::<Result<Variable, ExecError>>()?;
-        Ok(array)
+            .collect::<Result<_, _>>()
+            .map_err(ExecStop::from)
     }
 }
 
@@ -100,12 +100,12 @@ impl Exec for Map {
         if function.params.len() == 1 {
             return iter
                 .map(|var| function.exec(&[var]))
-                .collect::<Result<Variable, ExecError>>()
+                .collect::<Result<_, _>>()
                 .map_err(ExecStop::from);
         }
         iter.enumerate()
             .map(|(index, var)| function.exec(&[index.into(), var]))
-            .collect::<Result<Variable, ExecError>>()
+            .collect::<Result<_, _>>()
             .map_err(ExecStop::from)
     }
 }
