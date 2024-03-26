@@ -38,26 +38,26 @@ impl FunctionCall {
         match &function {
             Instruction::Variable(Variable::Function(function2)) => {
                 Self::check_args_with_params("function", &function2.params, &args)?;
-                Ok(Self { function, args }.into())
             }
-            Instruction::LocalVariable(_, LocalVariable::Function(params, _))
-            | Instruction::AnonymousFunction(AnonymousFunction { params, .. }) => {
+            Instruction::LocalVariable(ident, LocalVariable::Function(params, _)) => {
+                Self::check_args_with_params(ident, params, &args)?;
+            }
+            Instruction::AnonymousFunction(AnonymousFunction { params, .. }) => {
                 Self::check_args_with_params("function", params, &args)?;
-                Ok(Self { function, args }.into())
             }
             instruction => {
                 Self::check_args_with_type("function", &instruction.return_type(), &args)?;
-                Ok(Self { function, args }.into())
             }
-        }
+        };
+        Ok(Self { function, args }.into())
     }
     fn check_args_with_params(
-        pair_str: &str,
+        ident: &str,
         params: &Params,
         args: &[Instruction],
     ) -> Result<(), Error> {
         check_args(
-            pair_str,
+            ident,
             params,
             &args
                 .iter()
