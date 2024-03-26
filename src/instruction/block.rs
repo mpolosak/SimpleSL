@@ -26,7 +26,7 @@ impl CreateInstruction for Block {
         let instructions =
             interpreter.create_instructions(pair.into_inner(), &mut local_variables)?;
         if instructions.is_empty() {
-            return Ok(Instruction::Variable(Variable::Void));
+            return Ok(Variable::Void.into());
         }
         Ok(Self { instructions }.into())
     }

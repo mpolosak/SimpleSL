@@ -29,7 +29,7 @@ impl MutCreateInstruction for Import {
         };
         let instructions = interpreter.load(&path, local_variables)?;
         if instructions.is_empty() {
-            return Ok(Instruction::Variable(Variable::Void));
+            return Ok(Variable::Void.into());
         }
         if let [element] = instructions.as_ref() {
             return Ok(element.clone());

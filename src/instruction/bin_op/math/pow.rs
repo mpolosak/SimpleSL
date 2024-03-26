@@ -10,10 +10,10 @@ impl Pow {
         exp: Instruction,
     ) -> Result<Instruction, ExecError> {
         match (base, exp) {
-            (Instruction::Variable(base), Instruction::Variable(exp)) => {
+            (Instruction::Variable(_, base), Instruction::Variable(_, exp)) => {
                 Ok(Self::exec(base, exp)?.into())
             }
-            (_, Instruction::Variable(Variable::Int(exp))) if exp < 0 => {
+            (_, Instruction::Variable(_, Variable::Int(exp))) if exp < 0 => {
                 Err(ExecError::NegativeExponent)
             }
             (Instruction::Array(array), rhs) => {

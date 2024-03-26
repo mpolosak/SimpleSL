@@ -39,10 +39,10 @@ impl ArrayRepeat {
         len: Instruction,
     ) -> Result<Instruction, ExecError> {
         match (value, len) {
-            (_, Instruction::Variable(Variable::Int(len))) if len < 0 => {
+            (_, Instruction::Variable(_, Variable::Int(len))) if len < 0 => {
                 Err(ExecError::NegativeLength)
             }
-            (Instruction::Variable(value), Instruction::Variable(Variable::Int(len))) => {
+            (Instruction::Variable(_, value), Instruction::Variable(_, Variable::Int(len))) => {
                 let variable: Variable = std::iter::repeat(value).take(len as usize).collect();
                 Ok(variable.into())
             }

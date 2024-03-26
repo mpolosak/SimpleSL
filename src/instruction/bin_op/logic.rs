@@ -9,9 +9,11 @@ use std::iter;
 impl logic {
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         match (lhs, rhs) {
-            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => Self::exec(lhs, rhs).into(),
-            (Instruction::Variable(Variable::Int(value)), instruction)
-            | (instruction, Instruction::Variable(Variable::Int(value)))
+            (Instruction::Variable(_, lhs), Instruction::Variable(_, rhs)) => {
+                Self::exec(lhs, rhs).into()
+            }
+            (Instruction::Variable(_, Variable::Int(value)), instruction)
+            | (instruction, Instruction::Variable(_, Variable::Int(value)))
                 if cond =>
             {
                 instruction

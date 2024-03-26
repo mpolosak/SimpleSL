@@ -31,7 +31,7 @@ impl MutCreateInstruction for IfElse {
             return Err(Error::WrongType("condition".into(), Type::Int));
         }
         let true_pair = inner.next().unwrap();
-        let Instruction::Variable(Variable::Int(condition)) = condition else {
+        let Instruction::Variable(_, Variable::Int(condition)) = condition else {
             let if_true = Instruction::new(true_pair, interpreter, local_variables)?;
             let if_false = inner.next().map_or_else(
                 || Ok(Variable::Void.into()),
@@ -70,7 +70,7 @@ impl Recreate for IfElse {
         interpreter: &Interpreter,
     ) -> Result<Instruction, ExecError> {
         let condition = self.condition.recreate(local_variables, interpreter)?;
-        let Instruction::Variable(Variable::Int(condition)) = condition else {
+        let Instruction::Variable(_, Variable::Int(condition)) = condition else {
             let if_true = self.if_true.recreate(local_variables, interpreter)?;
             let if_false = self.if_false.recreate(local_variables, interpreter)?;
             return Ok(Self {

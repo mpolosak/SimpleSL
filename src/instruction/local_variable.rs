@@ -117,7 +117,7 @@ impl From<&Instruction> for LocalVariable {
         match_any! { value,
             Instruction::AnonymousFunction(function) => function.into(),
             Instruction::LocalVariable(_, var) => var.clone(),
-            Instruction::Variable(var) => var.clone().into(),
+            Instruction::Variable(_, var) => var.clone().into(),
             Instruction::Tuple(ins) | Instruction::Array(ins) | Instruction::ArrayRepeat(ins) | Instruction::Other(ins)
                 => ins.return_type().into()
         }

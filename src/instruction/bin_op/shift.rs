@@ -16,10 +16,10 @@ impl shift {
         rhs: Instruction,
     ) -> Result<Instruction, ExecError> {
         match (lhs, rhs) {
-            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
+            (Instruction::Variable(_, lhs), Instruction::Variable(_, rhs)) => {
                 Ok(Self::exec(lhs, rhs)?.into())
             }
-            (_, Instruction::Variable(Variable::Int(rhs))) if !(0..=63).contains(&rhs) => {
+            (_, Instruction::Variable(_, Variable::Int(rhs))) if !(0..=63).contains(&rhs) => {
                 Err(ExecError::OverflowShift)
             }
             (Instruction::Array(array), rhs) => {

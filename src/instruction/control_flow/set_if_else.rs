@@ -44,7 +44,7 @@ impl MutCreateInstruction for SetIfElse {
         let else_instruction = inner
             .next()
             .map(|pair| Instruction::new(pair, interpreter, local_variables))
-            .unwrap_or(Ok(Instruction::Variable(Variable::Void)))?;
+            .unwrap_or(Ok(Variable::Void.into()))?;
         Ok(Self {
             ident,
             var_type,

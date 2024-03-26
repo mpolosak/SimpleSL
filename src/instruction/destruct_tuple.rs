@@ -46,7 +46,7 @@ impl MutCreateInstruction for DestructTuple {
 impl DestructTuple {
     fn insert_local_variables(&self, local_variables: &mut LocalVariables) {
         match &self.instruction {
-            Instruction::Variable(Variable::Tuple(elements)) => {
+            Instruction::Variable(_, Variable::Tuple(elements)) => {
                 local_variables.extend(zip(self.idents.iter().cloned(), elements.iter().cloned()))
             }
             Instruction::Tuple(Tuple { elements }) => {

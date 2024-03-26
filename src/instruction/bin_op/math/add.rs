@@ -5,7 +5,9 @@ use crate::variable::{ReturnType, Type, Variable};
 impl Add {
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         match (lhs, rhs) {
-            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => Self::exec(lhs, rhs).into(),
+            (Instruction::Variable(_, lhs), Instruction::Variable(_, rhs)) => {
+                Self::exec(lhs, rhs).into()
+            }
             (lhs, rhs) => Self { lhs, rhs }.into(),
         }
     }

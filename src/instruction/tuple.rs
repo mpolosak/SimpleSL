@@ -34,12 +34,12 @@ impl Tuple {
     fn create_from_elements(elements: Arc<[Instruction]>) -> Instruction {
         let mut array = Vec::new();
         for instruction in &*elements {
-            let Instruction::Variable(variable) = instruction else {
+            let Instruction::Variable(_, variable) = instruction else {
                 return Self { elements }.into();
             };
             array.push(variable.clone());
         }
-        Instruction::Variable(Variable::Tuple(array.into()))
+        Variable::Tuple(array.into()).into()
     }
 }
 

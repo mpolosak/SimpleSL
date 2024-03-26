@@ -53,7 +53,7 @@ pub enum Instruction {
     ArrayRepeat(Arc<ArrayRepeat>),
     LocalVariable(Arc<str>, LocalVariable),
     Tuple(Tuple),
-    Variable(Variable),
+    Variable(Option<Arc<str>>, Variable),
     Other(Arc<dyn BaseInstruction>),
 }
 
@@ -110,17 +110,20 @@ impl Instruction {
                         interpreter
                             .get_variable(ident)
                             .cloned()
-                            .map(Instruction::from)
+                            .map(|var| Instruction::Variable(Some(ident.into()), var))
                             .ok_or_else(|| Error::VariableDoesntExist(ident.into()))
                     },
                     |var| match var.clone() {
-                        LocalVariable::Variable(variable) => Ok(Self::Variable(variable)),
+                        LocalVariable::Variable(variable) => {
+                            Ok(Self::Variable(Some(ident.into()), variable))
+                        }
                         local_variable => Ok(Self::LocalVariable(ident.into(), local_variable)),
                     },
                 )
             }
             Rule::int | Rule::float | Rule::string | Rule::void => {
-                Variable::try_from(pair).map(Instruction::from)
+                let str = pair.as_str().into();
+                Ok(Instruction::Variable(Some(str), Variable::try_from(pair)?))
             }
             Rule::tuple => Tuple::create_instruction(pair, interpreter, local_variables),
             Rule::array => Array::create_instruction(pair, interpreter, local_variables),
@@ -156,7 +159,7 @@ impl Instruction {
 impl Exec for Instruction {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         match_any! { self,
-            Self::Variable(var) => Ok(var.clone()),
+            Self::Variable(_, var) => Ok(var.clone()),
             Self::LocalVariable(ident, _) => interpreter
                 .get_variable(ident)
                 .cloned()
@@ -183,11 +186,11 @@ impl Recreate for Instruction {
                         .unwrap_or_else(|| panic!("Tried to get variable {ident} that doest exist"))
                 },
                 |var| match var.clone() {
-                    LocalVariable::Variable(variable) => Self::Variable(variable),
+                    LocalVariable::Variable(variable) => Self::Variable(Some(ident.clone()),variable),
                     local_variable => Self::LocalVariable(ident.clone(), local_variable),
                 },
             )),
-            Self::Variable(variable) => Ok(Self::Variable(variable.clone())),
+            Self::Variable(ident, variable) => Ok(Self::Variable(ident.clone(), variable.clone())),
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins) |  Self::Tuple(ins) | Self::Other(ins)
                 => ins.recreate(local_variables, interpreter)
         }
@@ -197,7 +200,7 @@ impl Recreate for Instruction {
 impl ReturnType for Instruction {
     fn return_type(&self) -> Type {
         match_any! { self,
-            Self::Variable(variable) | Self::LocalVariable(_, variable) => variable.as_type(),
+            Self::Variable(_, variable) | Self::LocalVariable(_, variable) => variable.as_type(),
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins) | Self::Tuple(ins) | Self::Other(ins) => ins.return_type()
         }
     }
@@ -205,7 +208,7 @@ impl ReturnType for Instruction {
 
 impl From<Variable> for Instruction {
     fn from(value: Variable) -> Self {
-        Self::Variable(value)
+        Self::Variable(None, value)
     }
 }
 

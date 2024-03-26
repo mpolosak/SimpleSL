@@ -44,13 +44,13 @@ impl At {
         index: Instruction,
     ) -> Result<Instruction, ExecError> {
         match (instruction, index) {
-            (Instruction::Variable(variable), Instruction::Variable(index)) => {
+            (Instruction::Variable(_, variable), Instruction::Variable(_, index)) => {
                 Ok(at(variable, index)?.into())
             }
-            (_, Instruction::Variable(Variable::Int(value))) if value < 0 => {
+            (_, Instruction::Variable(_, Variable::Int(value))) if value < 0 => {
                 Err(ExecError::NegativeIndex)
             }
-            (Instruction::Array(array), Instruction::Variable(Variable::Int(value)))
+            (Instruction::Array(array), Instruction::Variable(_, Variable::Int(value)))
                 if array.instructions.len() <= (value as usize) =>
             {
                 Err(ExecError::IndexToBig)

@@ -41,7 +41,7 @@ impl Array {
             .map_or(Type::EmptyArray, |element_type| [element_type].into());
         let mut array = Vec::new();
         for instruction in &*instructions {
-            let Instruction::Variable(variable) = instruction else {
+            let Instruction::Variable(_, variable) = instruction else {
                 return Self {
                     instructions,
                     var_type,
@@ -50,13 +50,15 @@ impl Array {
             };
             array.push(variable.clone());
         }
-        Instruction::Variable(Variable::Array(
+
+        Variable::Array(
             crate::variable::Array {
                 var_type,
                 elements: array.into(),
             }
             .into(),
-        ))
+        )
+        .into()
     }
 }
 
