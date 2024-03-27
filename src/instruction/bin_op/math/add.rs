@@ -1,5 +1,4 @@
 use crate::instruction::{Add, Instruction};
-use crate::variable::{Array, Typed};
 use crate::variable::{ReturnType, Type, Variable};
 
 impl Add {
@@ -13,32 +12,7 @@ impl Add {
     }
 
     pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
-        match (lhs, rhs) {
-            (Variable::Int(value1), Variable::Int(value2)) => (value1 + value2).into(),
-            (Variable::Float(value1), Variable::Float(value2)) => (value1 + value2).into(),
-            (Variable::String(value1), Variable::String(value2)) => {
-                format!("{value1}{value2}").into()
-            }
-            (Variable::Array(array1), Variable::Array(array2)) => {
-                Array::concat(array1, array2).into()
-            }
-            (array @ Variable::Array(_), _) | (_, array @ Variable::Array(_))
-                if array.as_type() == Type::EmptyArray =>
-            {
-                array
-            }
-            (Variable::Array(array), value) => array
-                .iter()
-                .cloned()
-                .map(|element| Self::exec(element, value.clone()))
-                .collect(),
-            (value, Variable::Array(array)) => array
-                .iter()
-                .cloned()
-                .map(|element| Self::exec(value.clone(), element))
-                .collect(),
-            (lhs, rhs) => panic!("Tried to do {lhs} + {rhs} which is imposible"),
-        }
+        (lhs + rhs).unwrap()
     }
 
     fn return_type(lhs: Type, rhs: Type) -> Type {
