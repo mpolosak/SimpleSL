@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use super::{
     local_variable::LocalVariables, recreate_instructions, traits::ExecResult, CreateInstruction,
     Exec, Instruction, Recreate,
@@ -8,13 +6,14 @@ use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{ReturnType, Type, Variable},
-    Result,
+    Error, ExecError,
 };
 use pest::iterators::Pair;
+use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct Tuple {
-    pub elements: Rc<[Instruction]>,
+    pub elements: Arc<[Instruction]>,
 }
 
 impl CreateInstruction for Tuple {
@@ -22,25 +21,25 @@ impl CreateInstruction for Tuple {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &LocalVariables,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, Error> {
         let elements = pair
             .into_inner()
             .map(|pair| Instruction::new_expression(pair, interpreter, local_variables))
-            .collect::<Result<Rc<[Instruction]>>>()?;
+            .collect::<Result<Arc<[Instruction]>, Error>>()?;
         Ok(Self::create_from_elements(elements))
     }
 }
 
 impl Tuple {
-    fn create_from_elements(elements: Rc<[Instruction]>) -> Instruction {
+    fn create_from_elements(elements: Arc<[Instruction]>) -> Instruction {
         let mut array = Vec::new();
         for instruction in &*elements {
-            let Instruction::Variable(variable) = instruction else {
+            let Instruction::Variable(_, variable) = instruction else {
                 return Self { elements }.into();
             };
             array.push(variable.clone());
         }
-        Instruction::Variable(Variable::Tuple(array.into()))
+        Variable::Tuple(array.into()).into()
     }
 }
 
@@ -56,7 +55,7 @@ impl Recreate for Tuple {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, ExecError> {
         let elements = recreate_instructions(&self.elements, local_variables, interpreter)?;
         Ok(Self::create_from_elements(elements))
     }

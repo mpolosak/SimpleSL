@@ -8,19 +8,19 @@ use crate::{
     interpreter::Interpreter,
     parse::{unexpected, Rule},
     variable::{ReturnType, Type, Typed, Variable},
-    Result,
+    Error, ExecError,
 };
 use pest::iterators::Pair;
-use std::rc::Rc;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub enum MatchArm {
     Type {
-        ident: Rc<str>,
+        ident: Arc<str>,
         var_type: Type,
         instruction: Instruction,
     },
-    Value(Rc<[Instruction]>, Instruction),
+    Value(Arc<[Instruction]>, Instruction),
     Other(Instruction),
 }
 
@@ -29,13 +29,13 @@ impl MatchArm {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Self> {
+    ) -> Result<Self, Error> {
         let match_rule = pair.as_rule();
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
         match match_rule {
             Rule::match_type => {
-                let ident: Rc<str> = pair.as_str().into();
+                let ident: Arc<str> = pair.as_str().into();
                 let var_type = Type::from(inner.next().unwrap());
                 let pair = inner.next().unwrap();
                 let mut local_variables = local_variables.create_layer();
@@ -51,7 +51,7 @@ impl MatchArm {
                 let inner_values = pair.into_inner();
                 let values = inner_values
                     .map(|pair| Instruction::new(pair, interpreter, local_variables))
-                    .collect::<Result<Rc<[Instruction]>>>()?;
+                    .collect::<Result<Arc<[Instruction]>, Error>>()?;
                 let pair = inner.next().unwrap();
                 let instruction = Instruction::new(pair, interpreter, local_variables)?;
                 Ok(Self::Value(values, instruction))
@@ -74,7 +74,7 @@ impl MatchArm {
         &self,
         variable: &Variable,
         interpreter: &mut Interpreter,
-    ) -> std::result::Result<bool, ExecStop> {
+    ) -> Result<bool, ExecStop> {
         Ok(match self {
             MatchArm::Other(_) => true,
             MatchArm::Type { var_type, .. } => variable.as_type().matches(var_type),
@@ -107,7 +107,7 @@ impl MatchArm {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Self> {
+    ) -> Result<Self, ExecError> {
         Ok(match self {
             Self::Type {
                 ident,

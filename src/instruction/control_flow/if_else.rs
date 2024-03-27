@@ -1,12 +1,13 @@
-use crate::instruction::traits::{BaseInstruction, ExecResult};
 use crate::instruction::{
-    local_variable::LocalVariables, traits::MutCreateInstruction, Exec, Instruction, Recreate,
+    local_variable::LocalVariables, traits::ExecResult, traits::MutCreateInstruction, Exec,
+    Instruction, Recreate,
 };
+use crate::ExecError;
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{ReturnType, Type, Variable},
-    Error, Result,
+    Error,
 };
 use pest::iterators::Pair;
 
@@ -22,7 +23,7 @@ impl MutCreateInstruction for IfElse {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let condition_pair = inner.next().unwrap();
         let condition = Instruction::new(condition_pair, interpreter, local_variables)?;
@@ -30,7 +31,7 @@ impl MutCreateInstruction for IfElse {
             return Err(Error::WrongType("condition".into(), Type::Int));
         }
         let true_pair = inner.next().unwrap();
-        let Instruction::Variable(Variable::Int(condition)) = condition else {
+        let Instruction::Variable(_, Variable::Int(condition)) = condition else {
             let if_true = Instruction::new(true_pair, interpreter, local_variables)?;
             let if_false = inner.next().map_or_else(
                 || Ok(Variable::Void.into()),
@@ -67,9 +68,9 @@ impl Recreate for IfElse {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, ExecError> {
         let condition = self.condition.recreate(local_variables, interpreter)?;
-        let Instruction::Variable(Variable::Int(condition)) = condition else {
+        let Instruction::Variable(_, Variable::Int(condition)) = condition else {
             let if_true = self.if_true.recreate(local_variables, interpreter)?;
             let if_false = self.if_false.recreate(local_variables, interpreter)?;
             return Ok(Self {
@@ -93,5 +94,3 @@ impl ReturnType for IfElse {
         true_return_type | false_return_type
     }
 }
-
-impl BaseInstruction for IfElse {}

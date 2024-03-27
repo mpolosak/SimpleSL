@@ -1,11 +1,12 @@
-use super::Instruction;
+use super::{function::AnonymousFunction, Instruction};
 use crate::{
     function::{Param, Params},
     variable::{FunctionType, ReturnType, Type, Typed, Variable},
 };
-use std::{collections::HashMap, rc::Rc};
+use match_any::match_any;
+use std::{collections::HashMap, sync::Arc};
 
-pub type LocalVariableMap = HashMap<Rc<str>, LocalVariable>;
+pub type LocalVariableMap = HashMap<Arc<str>, LocalVariable>;
 pub struct LocalVariables<'a> {
     variables: LocalVariableMap,
     lower_layer: Option<&'a Self>,
@@ -21,7 +22,7 @@ impl<'a> LocalVariables<'a> {
             function: None,
         }
     }
-    pub fn insert(&mut self, name: Rc<str>, variable: LocalVariable) {
+    pub fn insert(&mut self, name: Arc<str>, variable: LocalVariable) {
         self.variables.insert(name, variable);
     }
     #[must_use]
@@ -31,7 +32,7 @@ impl<'a> LocalVariables<'a> {
             .or_else(|| self.lower_layer?.get(name))
     }
     #[must_use]
-    pub fn contains_key(&self, name: &Rc<str>) -> bool {
+    pub fn contains_key(&self, name: &Arc<str>) -> bool {
         self.variables.contains_key(name)
             || self
                 .lower_layer
@@ -59,6 +60,16 @@ impl<'a> LocalVariables<'a> {
         self.function
             .as_ref()
             .or_else(|| self.lower_layer.and_then(LocalVariables::function))
+    }
+}
+
+impl<V> Extend<(Arc<str>, V)> for LocalVariables<'_>
+where
+    V: Into<LocalVariable>,
+{
+    fn extend<T: IntoIterator<Item = (Arc<str>, V)>>(&mut self, iter: T) {
+        self.variables
+            .extend(iter.into_iter().map(|(ident, var)| (ident, var.into())));
     }
 }
 
@@ -103,10 +114,25 @@ impl From<Type> for LocalVariable {
 
 impl From<&Instruction> for LocalVariable {
     fn from(value: &Instruction) -> Self {
-        let Instruction::Variable(variable) = value else {
-            return Self::Other(value.return_type());
-        };
-        Self::Variable(variable.clone())
+        match_any! { value,
+            Instruction::AnonymousFunction(function) => function.into(),
+            Instruction::LocalVariable(_, var) => var.clone(),
+            Instruction::Variable(_, var) => var.clone().into(),
+            Instruction::Tuple(ins) | Instruction::Array(ins) | Instruction::ArrayRepeat(ins) | Instruction::Other(ins)
+                => ins.return_type().into()
+        }
+    }
+}
+
+impl From<Variable> for LocalVariable {
+    fn from(value: Variable) -> Self {
+        Self::Variable(value)
+    }
+}
+
+impl From<&AnonymousFunction> for LocalVariable {
+    fn from(value: &AnonymousFunction) -> Self {
+        Self::Function(value.params.clone(), value.return_type())
     }
 }
 
@@ -129,16 +155,16 @@ impl Typed for LocalVariable {
 
 #[derive(Clone, Debug)]
 pub struct FunctionInfo {
-    name: Option<Rc<str>>,
+    name: Option<Arc<str>>,
     return_type: Type,
 }
 
 impl FunctionInfo {
-    pub fn new(name: Option<Rc<str>>, return_type: Type) -> Self {
+    pub fn new(name: Option<Arc<str>>, return_type: Type) -> Self {
         Self { name, return_type }
     }
 
-    pub fn name(&self) -> Option<Rc<str>> {
+    pub fn name(&self) -> Option<Arc<str>> {
         self.name.clone()
     }
 

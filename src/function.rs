@@ -10,13 +10,13 @@ use crate::{
     instruction::{ExecStop, FunctionCall, Instruction},
     interpreter::Interpreter,
     variable::{FunctionType, ReturnType, Type, Typed, Variable},
-    Code, Result,
+    Code, Error, ExecError,
 };
-use std::{fmt, iter::zip, rc::Rc};
+use std::{fmt, iter::zip, sync::Arc};
 
 #[derive(Debug)]
 pub struct Function {
-    pub(crate) ident: Option<Rc<str>>,
+    pub(crate) ident: Option<Arc<str>>,
     pub(crate) params: Params,
     pub(crate) body: Body,
     pub(crate) return_type: Type,
@@ -25,7 +25,7 @@ pub struct Function {
 impl Function {
     pub fn new(
         params: Params,
-        body: fn(&mut Interpreter) -> Result<Variable>,
+        body: fn(&mut Interpreter) -> Result<Variable, ExecError>,
         return_type: Type,
     ) -> Self {
         Self {
@@ -36,12 +36,12 @@ impl Function {
         }
     }
 
-    pub fn create_call(self: Rc<Self>, args: Vec<Variable>) -> Result<Code> {
+    pub fn create_call(self: Arc<Self>, args: Vec<Variable>) -> Result<Code, Error> {
         let types = args.iter().map(Typed::as_type).collect::<Box<[Type]>>();
         let args = args.into_iter().map(Instruction::from).collect();
         check_args("function", &self.params, &types)?;
         Ok(Code {
-            instructions: Rc::new([FunctionCall {
+            instructions: Arc::new([FunctionCall {
                 function: Variable::Function(self).into(),
                 args,
             }
@@ -49,12 +49,8 @@ impl Function {
         })
     }
 
-    pub(crate) fn exec(
-        self: &Rc<Self>,
-        interpreter: &mut Interpreter,
-        args: &[Variable],
-    ) -> Result<Variable> {
-        let mut interpreter = interpreter.create_layer();
+    pub(crate) fn exec(self: &Arc<Self>, args: &[Variable]) -> Result<Variable, ExecError> {
+        let mut interpreter = Interpreter::without_stdlib();
         if let Some(ident) = &self.ident {
             interpreter.insert(ident.clone(), self.clone().into())
         }
@@ -98,6 +94,6 @@ impl ReturnType for Function {
 impl fmt::Display for Function {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let return_type = self.return_type();
-        write!(f, "function({})->{return_type}", self.params)
+        write!(f, "({})->{return_type}", self.params)
     }
 }

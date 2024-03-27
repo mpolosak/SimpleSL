@@ -1,22 +1,21 @@
-use std::rc::Rc;
-
 use super::{
     local_variable::LocalVariables,
     recreate_instructions,
-    traits::{BaseInstruction, ExecResult, MutCreateInstruction},
+    traits::{ExecResult, MutCreateInstruction},
     Exec, Instruction, Recreate,
 };
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{ReturnType, Type, Variable},
-    Result,
+    Error, ExecError,
 };
 use pest::iterators::Pair;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Import {
-    instructions: Rc<[Instruction]>,
+    instructions: Arc<[Instruction]>,
 }
 
 impl MutCreateInstruction for Import {
@@ -24,14 +23,13 @@ impl MutCreateInstruction for Import {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction> {
-        let Ok(Variable::String(path)) = Variable::try_from(pair.into_inner().next().unwrap())
-        else {
+    ) -> Result<Instruction, Error> {
+        let Variable::String(path) = Variable::try_from(pair.into_inner().next().unwrap())? else {
             unreachable!()
         };
         let instructions = interpreter.load(&path, local_variables)?;
         if instructions.is_empty() {
-            return Ok(Instruction::Variable(Variable::Void));
+            return Ok(Variable::Void.into());
         }
         if let [element] = instructions.as_ref() {
             return Ok(element.clone());
@@ -55,7 +53,7 @@ impl Recreate for Import {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, ExecError> {
         let instructions = recreate_instructions(&self.instructions, local_variables, interpreter)?;
         Ok(Self { instructions }.into())
     }
@@ -68,5 +66,3 @@ impl ReturnType for Import {
             .map_or(Type::Void, ReturnType::return_type)
     }
 }
-
-impl BaseInstruction for Import {}

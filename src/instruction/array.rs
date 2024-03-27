@@ -1,22 +1,22 @@
 use super::{
     local_variable::LocalVariables,
     recreate_instructions,
-    traits::{BaseInstruction, Exec, ExecResult, Recreate},
+    traits::{Exec, ExecResult, Recreate},
     CreateInstruction, Instruction,
 };
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{ReturnType, Type, Variable},
-    Result,
+    Error, ExecError,
 };
 use pest::iterators::Pair;
-use std::rc::Rc;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Array {
-    instructions: Rc<[Instruction]>,
-    var_type: Type,
+    pub instructions: Arc<[Instruction]>,
+    pub var_type: Type,
 }
 
 impl CreateInstruction for Array {
@@ -24,16 +24,16 @@ impl CreateInstruction for Array {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &LocalVariables,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, Error> {
         let inner = pair.into_inner();
         let instructions = inner
             .map(|arg| Instruction::new_expression(arg, interpreter, local_variables))
-            .collect::<Result<Rc<_>>>()?;
+            .collect::<Result<Arc<_>, Error>>()?;
         Ok(Self::create_from_instructions(instructions))
     }
 }
 impl Array {
-    fn create_from_instructions(instructions: Rc<[Instruction]>) -> Instruction {
+    fn create_from_instructions(instructions: Arc<[Instruction]>) -> Instruction {
         let var_type = instructions
             .iter()
             .map(Instruction::return_type)
@@ -41,7 +41,7 @@ impl Array {
             .map_or(Type::EmptyArray, |element_type| [element_type].into());
         let mut array = Vec::new();
         for instruction in &*instructions {
-            let Instruction::Variable(variable) = instruction else {
+            let Instruction::Variable(_, variable) = instruction else {
                 return Self {
                     instructions,
                     var_type,
@@ -50,13 +50,15 @@ impl Array {
             };
             array.push(variable.clone());
         }
-        Instruction::Variable(Variable::Array(
+
+        Variable::Array(
             crate::variable::Array {
                 var_type,
                 elements: array.into(),
             }
             .into(),
-        ))
+        )
+        .into()
     }
 }
 
@@ -72,7 +74,7 @@ impl Recreate for Array {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, ExecError> {
         let instructions = recreate_instructions(&self.instructions, local_variables, interpreter)?;
         Ok(Self::create_from_instructions(instructions))
     }
@@ -84,4 +86,8 @@ impl ReturnType for Array {
     }
 }
 
-impl BaseInstruction for Array {}
+impl From<Array> for Instruction {
+    fn from(value: Array) -> Self {
+        Self::Array(value.into())
+    }
+}

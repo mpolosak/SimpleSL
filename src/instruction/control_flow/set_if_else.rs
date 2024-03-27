@@ -1,21 +1,22 @@
-use std::rc::Rc;
-
-use crate::instruction::{
-    local_variable::{LocalVariable, LocalVariables},
-    traits::{BaseInstruction, ExecResult, MutCreateInstruction},
-    Exec, Instruction, Recreate,
+use crate::{
+    instruction::{
+        local_variable::{LocalVariable, LocalVariables},
+        traits::{ExecResult, MutCreateInstruction},
+        Exec, Instruction, Recreate,
+    },
+    Error, ExecError,
 };
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{ReturnType, Type, Typed, Variable},
-    Result,
 };
 use pest::iterators::Pair;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct SetIfElse {
-    ident: Rc<str>,
+    ident: Arc<str>,
     var_type: Type,
     expression: Instruction,
     if_match: Instruction,
@@ -27,10 +28,9 @@ impl MutCreateInstruction for SetIfElse {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction> {
-        let rule = pair.as_rule();
+    ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
-        let ident: Rc<str> = inner.next().unwrap().as_str().into();
+        let ident: Arc<str> = inner.next().unwrap().as_str().into();
         let pair = inner.next().unwrap();
         let var_type = Type::from(pair);
         let pair = inner.next().unwrap();
@@ -41,12 +41,10 @@ impl MutCreateInstruction for SetIfElse {
             local_variables.insert(ident.clone(), LocalVariable::Other(var_type.clone()));
             Instruction::new(pair, interpreter, &mut local_variables)?
         };
-        let else_instruction = if rule == Rule::set_if_else {
-            let pair = inner.next().unwrap();
-            Instruction::new(pair, interpreter, local_variables)?
-        } else {
-            Instruction::Variable(Variable::Void)
-        };
+        let else_instruction = inner
+            .next()
+            .map(|pair| Instruction::new(pair, interpreter, local_variables))
+            .unwrap_or(Ok(Variable::Void.into()))?;
         Ok(Self {
             ident,
             var_type,
@@ -76,7 +74,7 @@ impl Recreate for SetIfElse {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, ExecError> {
         let expression = self.expression.recreate(local_variables, interpreter)?;
         let if_match = {
             let mut local_variables = local_variables.create_layer();
@@ -107,5 +105,3 @@ impl ReturnType for SetIfElse {
         true_return_type | false_return_type
     }
 }
-
-impl BaseInstruction for SetIfElse {}

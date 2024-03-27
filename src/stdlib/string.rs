@@ -1,15 +1,16 @@
 use crate as simplesl;
 use crate::{interpreter::Interpreter, variable::Variable};
+use match_any::match_any;
 use simplesl_macros::export_function;
-use std::rc::Rc;
+use std::sync::Arc;
 
 /// Add string part of standard library to Interpreter
 pub fn add_string(interpreter: &mut Interpreter) {
     #[export_function(return_type = "[string]")]
-    fn split(string: &str, pat: &str) -> Rc<[Variable]> {
+    fn split(string: &str, pat: &str) -> Arc<[Variable]> {
         string
             .split(pat)
-            .map(|slice| Variable::String(Rc::from(slice)))
+            .map(|slice| Variable::String(Arc::from(slice)))
             .collect()
     }
 
@@ -24,7 +25,7 @@ pub fn add_string(interpreter: &mut Interpreter) {
     }
 
     #[export_function(return_type = "[string]")]
-    fn chars(string: &str) -> Rc<[Variable]> {
+    fn chars(string: &str) -> Arc<[Variable]> {
         string
             .chars()
             .map(|char| Variable::String(char.to_string().into()))
@@ -43,10 +44,9 @@ pub fn add_string(interpreter: &mut Interpreter) {
 
     #[export_function]
     fn len(#[var_type("[any]|string")] variable: Variable) -> usize {
-        match variable {
-            Variable::Array(array) => array.len(),
-            Variable::String(string) => string.len(),
-            _ => unreachable!(),
+        match_any! { variable,
+            Variable::Array(var) | Variable::String(var) => var.len(),
+            _ => unreachable!()
         }
     }
 }

@@ -1,5 +1,5 @@
 use crate as simplesl;
-use crate::{interpreter::Interpreter, join, variable::*, Result};
+use crate::{interpreter::Interpreter, join, variable::*};
 use simplesl_macros::export_function;
 use std::io;
 
@@ -16,7 +16,7 @@ pub fn add_io(interpreter: &mut Interpreter) {
     }
 
     #[export_function]
-    fn cgetline() -> Result<String> {
+    fn cgetline() -> io::Result<String> {
         let mut input = String::new();
         io::stdin().read_line(&mut input)?;
         input = input.replace('\n', "");

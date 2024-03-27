@@ -1,26 +1,26 @@
 use super::{
     local_variable::LocalVariables,
-    traits::{BaseInstruction, Exec, ExecResult, Recreate},
+    traits::{Exec, ExecResult, Recreate},
     Instruction, MutCreateInstruction,
 };
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{ReturnType, Type},
-    Result,
+    Error, ExecError,
 };
 use pest::iterators::Pair;
-use std::rc::Rc;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Set {
-    ident: Rc<str>,
+    ident: Arc<str>,
     instruction: Instruction,
 }
 
 impl Set {
     pub fn new(
-        ident: Rc<str>,
+        ident: Arc<str>,
         instruction: Instruction,
         local_variables: &mut LocalVariables,
     ) -> Self {
@@ -34,9 +34,9 @@ impl MutCreateInstruction for Set {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
-        let ident: Rc<str> = inner.next().unwrap().as_str().into();
+        let ident: Arc<str> = inner.next().unwrap().as_str().into();
         let pair = inner.next().unwrap();
         let instruction = Instruction::new(pair, interpreter, local_variables)?;
         Ok(Self::new(ident, instruction, local_variables).into())
@@ -56,7 +56,7 @@ impl Recreate for Set {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, ExecError> {
         let instruction = self.instruction.recreate(local_variables, interpreter)?;
         local_variables.insert(self.ident.clone(), (&instruction).into());
         Ok(Self {
@@ -66,8 +66,6 @@ impl Recreate for Set {
         .into())
     }
 }
-
-impl BaseInstruction for Set {}
 
 impl ReturnType for Set {
     fn return_type(&self) -> Type {

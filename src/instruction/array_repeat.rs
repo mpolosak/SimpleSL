@@ -1,20 +1,19 @@
 use super::{
-    local_variable::LocalVariables,
-    traits::{BaseInstruction, ExecResult},
-    CreateInstruction, Exec, Instruction, Recreate,
+    local_variable::LocalVariables, traits::ExecResult, CreateInstruction, Exec, Instruction,
+    Recreate,
 };
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{ReturnType, Type, Variable},
-    Error, Result,
+    Error, ExecError,
 };
 use pest::iterators::Pair;
 
 #[derive(Debug)]
 pub struct ArrayRepeat {
-    value: Instruction,
-    len: Instruction,
+    pub value: Instruction,
+    pub len: Instruction,
 }
 
 impl CreateInstruction for ArrayRepeat {
@@ -22,7 +21,7 @@ impl CreateInstruction for ArrayRepeat {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &LocalVariables,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let value =
             Instruction::new_expression(inner.next().unwrap(), interpreter, local_variables)?;
@@ -30,17 +29,20 @@ impl CreateInstruction for ArrayRepeat {
         if len.return_type() != Type::Int {
             return Err(Error::WrongType("len".into(), Type::Int));
         }
-        Self::create_from_instructions(value, len)
+        Ok(Self::create_from_instructions(value, len)?)
     }
 }
 
 impl ArrayRepeat {
-    fn create_from_instructions(value: Instruction, len: Instruction) -> Result<Instruction> {
+    fn create_from_instructions(
+        value: Instruction,
+        len: Instruction,
+    ) -> Result<Instruction, ExecError> {
         match (value, len) {
-            (_, Instruction::Variable(Variable::Int(len))) if len < 0 => {
-                Err(Error::CannotBeNegative("len"))
+            (_, Instruction::Variable(_, Variable::Int(len))) if len < 0 => {
+                Err(ExecError::NegativeLength)
             }
-            (Instruction::Variable(value), Instruction::Variable(Variable::Int(len))) => {
+            (Instruction::Variable(_, value), Instruction::Variable(_, Variable::Int(len))) => {
                 let variable: Variable = std::iter::repeat(value).take(len as usize).collect();
                 Ok(variable.into())
             }
@@ -56,7 +58,7 @@ impl Exec for ArrayRepeat {
             panic!()
         };
         if len < 0 {
-            return Err(Error::CannotBeNegative("len").into());
+            return Err(ExecError::NegativeLength.into());
         }
         Ok(std::iter::repeat(value).take(len as usize).collect())
     }
@@ -67,7 +69,7 @@ impl Recreate for ArrayRepeat {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, ExecError> {
         let value = self.value.recreate(local_variables, interpreter)?;
         let len = self.len.recreate(local_variables, interpreter)?;
         Self::create_from_instructions(value, len)
@@ -81,4 +83,8 @@ impl ReturnType for ArrayRepeat {
     }
 }
 
-impl BaseInstruction for ArrayRepeat {}
+impl From<ArrayRepeat> for Instruction {
+    fn from(value: ArrayRepeat) -> Self {
+        Self::ArrayRepeat(value.into())
+    }
+}

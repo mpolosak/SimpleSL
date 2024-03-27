@@ -1,21 +1,19 @@
 use super::{
-    local_variable::LocalVariables,
-    recreate_instructions,
-    traits::{BaseInstruction, ExecResult},
-    CreateInstruction, Exec, Instruction, Recreate,
+    local_variable::LocalVariables, recreate_instructions, traits::ExecResult, CreateInstruction,
+    Exec, Instruction, Recreate,
 };
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{ReturnType, Type, Variable},
-    Result,
+    Error, ExecError,
 };
 use pest::iterators::Pair;
-use std::rc::Rc;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Block {
-    instructions: Rc<[Instruction]>,
+    instructions: Arc<[Instruction]>,
 }
 
 impl CreateInstruction for Block {
@@ -23,12 +21,12 @@ impl CreateInstruction for Block {
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &LocalVariables,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, Error> {
         let mut local_variables = local_variables.create_layer();
         let instructions =
             interpreter.create_instructions(pair.into_inner(), &mut local_variables)?;
         if instructions.is_empty() {
-            return Ok(Instruction::Variable(Variable::Void));
+            return Ok(Variable::Void.into());
         }
         Ok(Self { instructions }.into())
     }
@@ -50,7 +48,7 @@ impl Recreate for Block {
         &self,
         local_variables: &mut LocalVariables,
         interpreter: &Interpreter,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, ExecError> {
         let mut local_variables = local_variables.create_layer();
         let instructions =
             recreate_instructions(&self.instructions, &mut local_variables, interpreter)?;
@@ -65,5 +63,3 @@ impl ReturnType for Block {
             .map_or(Type::Void, ReturnType::return_type)
     }
 }
-
-impl BaseInstruction for Block {}

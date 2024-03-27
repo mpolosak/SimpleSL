@@ -50,7 +50,7 @@ fn arg_import_from_function_param(
                 panic!()
             };
         ),
-        "Rc < str >" => quote!(
+        "Arc < str >" => quote!(
             let simplesl::variable::Variable::String(#ident) = #get_variable else {
                 panic!()
             };
@@ -62,7 +62,7 @@ fn arg_import_from_function_param(
             };
             let #ident = #ident.as_ref();
         ),
-        "Rc < [Variable] >" => quote!(
+        "Arc < [Variable] >" => quote!(
             let simplesl::variable::Variable::Array(#ident) = #get_variable else {
                 panic!()
             };
@@ -74,7 +74,7 @@ fn arg_import_from_function_param(
             };
             let #ident = #ident.as_ref();
         ),
-        "Rc < Function >" => quote!(
+        "Arc < Function >" => quote!(
             let simplesl::variable::Variable::Function(#ident) = #get_variable else {
                 panic!()
             };
@@ -125,11 +125,11 @@ fn type_from_str(attrs: &[Attribute], param_type: &str) -> TokenStream {
     match param_type {
         "i64" => quote!(simplesl::variable::Type::Int),
         "f64" => quote!(simplesl::variable::Type::Float),
-        "Rc < str >" | "& str" => quote!(simplesl::variable::Type::String),
-        "Rc < [Variable] >" | "& [Variable]" => {
+        "Arc < str >" | "& str" => quote!(simplesl::variable::Type::String),
+        "Arc < [Variable] >" | "& [Variable]" => {
             get_type_from_attrs(attrs).unwrap_or(quote!([simplesl::variable::Type::Any].into()))
         }
-        "Rc < Function >" | "& Function" => {
+        "Arc < Function >" | "& Function" => {
             let Some(var_type) = get_type_from_attrs(attrs) else {
                 panic!("Argument of type function must be precede by var_type attribute")
             };
@@ -160,21 +160,26 @@ fn get_type_from_attrs(attrs: &[Attribute]) -> Option<TokenStream> {
 
 fn return_type_from_syn_type(return_type: &Type) -> TokenStream {
     match quote!(#return_type).to_string().as_str() {
-        "i64" | "Result < i64 >" | "bool" | "Result < bool >" | "usize" | "Result < usize >" => {
+        "i64"
+        | "Result < i64, ExecError >"
+        | "bool"
+        | "Result < bool, ExecError >"
+        | "usize"
+        | "Result < usize, ExecError >" => {
             quote!(simplesl::variable::Type::Int)
         }
-        "f64" | "Result < f64 >" => quote!(simplesl::variable::Type::Float),
-        "Rc < str >"
-        | "Result < Rc < str > >"
+        "f64" | "Result < f64, ExecError >" => quote!(simplesl::variable::Type::Float),
+        "Arc < str >"
+        | "Result < Arc < str >, ExecError >"
         | "String"
-        | "Result < String >"
+        | "Result < String, ExecError >"
         | "& str"
-        | "Result < & str >" => quote!(simplesl::variable::Type::String),
-        "Rc < [Variable] >" | "Result < Rc < [Variable] > >" => {
+        | "Result < & str, ExecError >" => quote!(simplesl::variable::Type::String),
+        "Arc < [Variable] >" | "Result < Arc < [Variable], ExecError > >" => {
             quote!([simplesl::variable::Type::Any].into())
         }
         "" => quote!(simplesl::variable::Type::Void),
-        "Variable" | "Result < Variable >" => quote!(simplesl::variable::Type::Any),
+        "Variable" | "Result < Variable, ExecError >" => quote!(simplesl::variable::Type::Any),
         "io :: Result < String >" | "std :: io :: Result < String >" => quote!({
             use std::str::FromStr;
             simplesl::variable::Type::from_str("string|(int,string)").unwrap()
