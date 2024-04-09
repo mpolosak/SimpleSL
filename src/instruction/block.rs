@@ -1,6 +1,6 @@
 use super::{
     local_variable::LocalVariables, recreate_instructions, traits::ExecResult, CreateInstruction,
-    Exec, Instruction, Recreate,
+    Exec, Instruction, InstructionWithStr, Recreate,
 };
 use crate::{
     interpreter::Interpreter,
@@ -13,7 +13,7 @@ use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Block {
-    instructions: Arc<[Instruction]>,
+    instructions: Arc<[InstructionWithStr]>,
 }
 
 impl CreateInstruction for Block {

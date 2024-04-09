@@ -7,7 +7,7 @@ pub use self::{
     param::{Param, Params},
 };
 use crate::{
-    instruction::{ExecStop, FunctionCall, Instruction},
+    instruction::{ExecStop, FunctionCall, InstructionWithStr},
     interpreter::Interpreter,
     variable::{FunctionType, ReturnType, Type, Typed, Variable},
     Code, Error, ExecError,
@@ -38,7 +38,7 @@ impl Function {
 
     pub fn create_call(self: Arc<Self>, args: Vec<Variable>) -> Result<Code, Error> {
         let types = args.iter().map(Typed::as_type).collect::<Box<[Type]>>();
-        let args = args.into_iter().map(Instruction::from).collect();
+        let args = args.into_iter().map(InstructionWithStr::from).collect();
         check_args("function", &self.params, &types)?;
         Ok(Code {
             instructions: Arc::new([FunctionCall {

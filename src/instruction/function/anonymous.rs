@@ -1,5 +1,6 @@
 use crate::{
     function::{Body, Function, Param, Params},
+    instruction::InstructionWithStr,
     interpreter::Interpreter,
     parse::Rule,
     variable::{FunctionType, ReturnType, Type},
@@ -20,7 +21,7 @@ use std::sync::Arc;
 #[derive(Clone, Debug)]
 pub struct AnonymousFunction {
     pub params: Params,
-    body: Arc<[Instruction]>,
+    body: Arc<[InstructionWithStr]>,
     return_type: Type,
 }
 

@@ -1,6 +1,6 @@
 use super::{And, Or};
 use crate::instruction::array::Array;
-use crate::instruction::Instruction;
+use crate::instruction::{Instruction, InstructionWithStr};
 use crate::variable::{Type, Typed, Variable};
 use duplicate::duplicate_item;
 use std::iter;
@@ -23,7 +23,15 @@ impl logic {
                     .instructions
                     .iter()
                     .cloned()
-                    .map(|lhs| Self::create_from_instructions(lhs, rhs.clone()))
+                    .map(
+                        |InstructionWithStr {
+                             instruction: lhs,
+                             str,
+                         }| {
+                            let instruction = Self::create_from_instructions(lhs, rhs.clone());
+                            InstructionWithStr { instruction, str }
+                        },
+                    )
                     .collect();
                 Array {
                     instructions,
@@ -36,7 +44,15 @@ impl logic {
                     .instructions
                     .iter()
                     .cloned()
-                    .map(|rhs| Self::create_from_instructions(lhs.clone(), rhs))
+                    .map(
+                        |InstructionWithStr {
+                             instruction: rhs,
+                             str,
+                         }| {
+                            let instruction = Self::create_from_instructions(lhs.clone(), rhs);
+                            InstructionWithStr { instruction, str }
+                        },
+                    )
                     .collect();
                 Array {
                     instructions,

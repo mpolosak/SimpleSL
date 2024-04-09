@@ -1,6 +1,6 @@
 use crate::instruction::array::Array;
 use crate::instruction::array_repeat::ArrayRepeat;
-use crate::instruction::{Instruction, Pow};
+use crate::instruction::{Instruction, InstructionWithStr, Pow};
 use crate::variable::{Type, Typed, Variable};
 use crate::ExecError;
 
@@ -21,7 +21,15 @@ impl Pow {
                     .instructions
                     .iter()
                     .cloned()
-                    .map(|lhs| Self::create_from_instructions(lhs, rhs.clone()))
+                    .map(
+                        |InstructionWithStr {
+                             instruction: lhs,
+                             str,
+                         }| {
+                            let instruction = Self::create_from_instructions(lhs, rhs.clone())?;
+                            Ok(InstructionWithStr { instruction, str })
+                        },
+                    )
                     .collect::<Result<_, _>>()?;
                 Ok(Array {
                     instructions,
@@ -34,7 +42,15 @@ impl Pow {
                     .instructions
                     .iter()
                     .cloned()
-                    .map(|rhs| Self::create_from_instructions(lhs.clone(), rhs))
+                    .map(
+                        |InstructionWithStr {
+                             instruction: rhs,
+                             str,
+                         }| {
+                            let instruction = Self::create_from_instructions(lhs.clone(), rhs)?;
+                            Ok(InstructionWithStr { instruction, str })
+                        },
+                    )
                     .collect::<Result<_, _>>()?;
                 Ok(Array {
                     instructions,

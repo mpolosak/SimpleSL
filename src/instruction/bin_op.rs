@@ -5,7 +5,9 @@ mod map;
 mod math;
 mod reduce;
 mod shift;
-use super::{array::Array, array_repeat::ArrayRepeat, local_variable::LocalVariables};
+use super::{
+    array::Array, array_repeat::ArrayRepeat, local_variable::LocalVariables, InstructionWithStr,
+};
 use crate::{
     instruction::{
         traits::{CanBeUsed, ToResult},
@@ -58,7 +60,15 @@ impl T {
                     .instructions
                     .iter()
                     .cloned()
-                    .map(|lhs| Self::create_from_instructions(lhs, rhs.clone()))
+                    .map(
+                        |InstructionWithStr {
+                             instruction: lhs,
+                             str,
+                         }| {
+                            let instruction = Self::create_from_instructions(lhs, rhs.clone());
+                            InstructionWithStr { instruction, str }
+                        },
+                    )
                     .collect();
                 Array {
                     instructions,
@@ -71,7 +81,15 @@ impl T {
                     .instructions
                     .iter()
                     .cloned()
-                    .map(|rhs| Self::create_from_instructions(lhs.clone(), rhs))
+                    .map(
+                        |InstructionWithStr {
+                             instruction: rhs,
+                             str,
+                         }| {
+                            let instruction = Self::create_from_instructions(lhs.clone(), rhs);
+                            InstructionWithStr { instruction, str }
+                        },
+                    )
                     .collect();
                 Array {
                     instructions,

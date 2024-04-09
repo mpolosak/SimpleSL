@@ -2,7 +2,7 @@ use super::{
     local_variable::LocalVariables,
     recreate_instructions,
     traits::{Exec, ExecResult, Recreate},
-    CreateInstruction, Instruction,
+    CreateInstruction, Instruction, InstructionWithStr,
 };
 use crate::{
     interpreter::Interpreter,
@@ -15,7 +15,7 @@ use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Array {
-    pub instructions: Arc<[Instruction]>,
+    pub instructions: Arc<[InstructionWithStr]>,
     pub var_type: Type,
 }
 
@@ -27,21 +27,25 @@ impl CreateInstruction for Array {
     ) -> Result<Instruction, Error> {
         let inner = pair.into_inner();
         let instructions = inner
-            .map(|arg| Instruction::new_expression(arg, interpreter, local_variables))
+            .map(|arg| InstructionWithStr::new_expression(arg, interpreter, local_variables))
             .collect::<Result<Arc<_>, Error>>()?;
         Ok(Self::create_from_instructions(instructions))
     }
 }
 impl Array {
-    fn create_from_instructions(instructions: Arc<[Instruction]>) -> Instruction {
+    fn create_from_instructions(instructions: Arc<[InstructionWithStr]>) -> Instruction {
         let var_type = instructions
             .iter()
-            .map(Instruction::return_type)
+            .map(ReturnType::return_type)
             .reduce(Type::concat)
             .map_or(Type::EmptyArray, |element_type| [element_type].into());
         let mut array = Vec::new();
         for instruction in &*instructions {
-            let Instruction::Variable(_, variable) = instruction else {
+            let InstructionWithStr {
+                instruction: Instruction::Variable(_, variable),
+                ..
+            } = instruction
+            else {
                 return Self {
                     instructions,
                     var_type,

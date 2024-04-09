@@ -2,7 +2,7 @@ use super::{
     local_variable::LocalVariables,
     recreate_instructions,
     traits::{ExecResult, MutCreateInstruction},
-    Exec, Instruction, Recreate,
+    Exec, Instruction, InstructionWithStr, Recreate,
 };
 use crate::{
     interpreter::Interpreter,
@@ -15,7 +15,7 @@ use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Import {
-    instructions: Arc<[Instruction]>,
+    instructions: Arc<[InstructionWithStr]>,
 }
 
 impl MutCreateInstruction for Import {
@@ -31,9 +31,9 @@ impl MutCreateInstruction for Import {
         if instructions.is_empty() {
             return Ok(Variable::Void.into());
         }
-        if let [element] = instructions.as_ref() {
-            return Ok(element.clone());
-        }
+        // if let [element] = instructions.as_ref() {
+        //     return Ok(element.clone());
+        // }
         Ok(Self { instructions }.into())
     }
 }

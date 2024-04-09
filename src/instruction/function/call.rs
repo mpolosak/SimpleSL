@@ -1,6 +1,9 @@
 use crate::{
     function::{check_args, Params},
-    instruction::traits::{ExecResult, ExecStop},
+    instruction::{
+        traits::{ExecResult, ExecStop},
+        InstructionWithStr,
+    },
     interpreter::Interpreter,
     variable::{FunctionType, ReturnType, Type, Variable},
     Error, ExecError,
@@ -21,7 +24,7 @@ use std::sync::Arc;
 #[derive(Debug)]
 pub struct FunctionCall {
     pub function: Instruction,
-    pub args: Arc<[Instruction]>,
+    pub args: Arc<[InstructionWithStr]>,
 }
 
 impl FunctionCall {
@@ -33,7 +36,7 @@ impl FunctionCall {
     ) -> Result<Instruction, Error> {
         let args = args
             .into_inner()
-            .map(|pair| Instruction::new_expression(pair, interpreter, local_variables))
+            .map(|pair| InstructionWithStr::new_expression(pair, interpreter, local_variables))
             .collect::<Result<Arc<_>, Error>>()?;
         match &function {
             Instruction::Variable(ident, Variable::Function(function2)) => {
@@ -58,25 +61,25 @@ impl FunctionCall {
     fn check_args_with_params(
         ident: &str,
         params: &Params,
-        args: &[Instruction],
+        args: &[InstructionWithStr],
     ) -> Result<(), Error> {
         check_args(
             ident,
             params,
             &args
                 .iter()
-                .map(Instruction::return_type)
+                .map(ReturnType::return_type)
                 .collect::<Box<[Type]>>(),
         )
     }
     fn check_args_with_type(
         pair_str: &str,
         var_type: &Type,
-        args: &[Instruction],
+        args: &[InstructionWithStr],
     ) -> Result<(), Error> {
         let params = args
             .iter()
-            .map(Instruction::return_type)
+            .map(ReturnType::return_type)
             .collect::<Box<[Type]>>();
         let expected = FunctionType {
             params,

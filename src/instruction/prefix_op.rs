@@ -11,6 +11,7 @@ use std::str::FromStr;
 
 use super::array::Array;
 use super::array_repeat::ArrayRepeat;
+use super::InstructionWithStr;
 
 #[duplicate_item(T; [Not]; [BitwiseNot]; [UnaryMinus])]
 #[derive(Debug)]
@@ -48,7 +49,10 @@ impl T {
                     .instructions
                     .iter()
                     .cloned()
-                    .map(Self::create_from_instruction)
+                    .map(|InstructionWithStr { instruction, str }| {
+                        let instruction = Self::create_from_instruction(instruction);
+                        InstructionWithStr { instruction, str }
+                    })
                     .collect();
                 Array {
                     instructions,

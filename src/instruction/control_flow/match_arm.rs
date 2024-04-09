@@ -3,7 +3,7 @@ use crate::{
         local_variable::{LocalVariable, LocalVariables},
         recreate_instructions,
         traits::{ExecResult, ExecStop},
-        Exec, Instruction, Recreate,
+        Exec, Instruction, InstructionWithStr, Recreate,
     },
     interpreter::Interpreter,
     parse::{unexpected, Rule},
@@ -20,7 +20,7 @@ pub enum MatchArm {
         var_type: Type,
         instruction: Instruction,
     },
-    Value(Arc<[Instruction]>, Instruction),
+    Value(Arc<[InstructionWithStr]>, Instruction),
     Other(Instruction),
 }
 
@@ -50,8 +50,8 @@ impl MatchArm {
             Rule::match_value => {
                 let inner_values = pair.into_inner();
                 let values = inner_values
-                    .map(|pair| Instruction::new(pair, interpreter, local_variables))
-                    .collect::<Result<Arc<[Instruction]>, Error>>()?;
+                    .map(|pair| InstructionWithStr::new(pair, interpreter, local_variables))
+                    .collect::<Result<Arc<[InstructionWithStr]>, Error>>()?;
                 let pair = inner.next().unwrap();
                 let instruction = Instruction::new(pair, interpreter, local_variables)?;
                 Ok(Self::Value(values, instruction))

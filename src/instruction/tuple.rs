@@ -1,6 +1,6 @@
 use super::{
     local_variable::LocalVariables, recreate_instructions, traits::ExecResult, CreateInstruction,
-    Exec, Instruction, Recreate,
+    Exec, Instruction, InstructionWithStr, Recreate,
 };
 use crate::{
     interpreter::Interpreter,
@@ -13,7 +13,7 @@ use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct Tuple {
-    pub elements: Arc<[Instruction]>,
+    pub elements: Arc<[InstructionWithStr]>,
 }
 
 impl CreateInstruction for Tuple {
@@ -24,17 +24,21 @@ impl CreateInstruction for Tuple {
     ) -> Result<Instruction, Error> {
         let elements = pair
             .into_inner()
-            .map(|pair| Instruction::new_expression(pair, interpreter, local_variables))
-            .collect::<Result<Arc<[Instruction]>, Error>>()?;
+            .map(|pair| InstructionWithStr::new_expression(pair, interpreter, local_variables))
+            .collect::<Result<Arc<[InstructionWithStr]>, Error>>()?;
         Ok(Self::create_from_elements(elements))
     }
 }
 
 impl Tuple {
-    fn create_from_elements(elements: Arc<[Instruction]>) -> Instruction {
+    fn create_from_elements(elements: Arc<[InstructionWithStr]>) -> Instruction {
         let mut array = Vec::new();
         for instruction in &*elements {
-            let Instruction::Variable(_, variable) = instruction else {
+            let InstructionWithStr {
+                instruction: Instruction::Variable(_, variable),
+                ..
+            } = instruction
+            else {
                 return Self { elements }.into();
             };
             array.push(variable.clone());
@@ -63,7 +67,7 @@ impl Recreate for Tuple {
 
 impl ReturnType for Tuple {
     fn return_type(&self) -> Type {
-        let types = self.elements.iter().map(Instruction::return_type).collect();
+        let types = self.elements.iter().map(ReturnType::return_type).collect();
         Type::Tuple(types)
     }
 }

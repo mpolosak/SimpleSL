@@ -4,7 +4,7 @@ use crate::{
         local_variable::{FunctionInfo, LocalVariable, LocalVariableMap, LocalVariables},
         recreate_instructions,
         traits::{ExecResult, MutCreateInstruction},
-        Exec, Instruction, Recreate,
+        Exec, Instruction, InstructionWithStr, Recreate,
     },
     interpreter::Interpreter,
     parse::Rule,
@@ -18,7 +18,7 @@ use std::sync::Arc;
 pub struct FunctionDeclaration {
     ident: Arc<str>,
     pub params: Params,
-    body: Arc<[Instruction]>,
+    body: Arc<[InstructionWithStr]>,
     return_type: Type,
 }
 

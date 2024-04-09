@@ -47,6 +47,56 @@ pub(crate) use traits::{
 };
 
 #[derive(Debug, Clone)]
+pub struct InstructionWithStr {
+    pub instruction: Instruction,
+    str: Arc<str>,
+}
+
+impl InstructionWithStr {
+    pub(crate) fn new(
+        pair: Pair<Rule>,
+        interpreter: &Interpreter,
+        local_variables: &mut LocalVariables,
+    ) -> Result<Self, Error> {
+        let str = pair.as_str().into();
+        let instruction = Instruction::new(pair, interpreter, local_variables)?;
+        Ok(Self { instruction, str })
+    }
+
+    pub(crate) fn new_expression(
+        pair: Pair<Rule>,
+        interpreter: &Interpreter,
+        local_variables: &LocalVariables,
+    ) -> Result<Self, Error> {
+        let str = pair.as_str().into();
+        let instruction = Instruction::new_expression(pair, interpreter, local_variables)?;
+        Ok(Self { instruction, str })
+    }
+}
+
+impl Exec for InstructionWithStr {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
+        self.instruction.exec(interpreter)
+    }
+}
+
+impl ReturnType for InstructionWithStr {
+    fn return_type(&self) -> Type {
+        self.instruction.return_type()
+    }
+}
+
+impl From<Variable> for InstructionWithStr {
+    fn from(value: Variable) -> Self {
+        let str = value.to_string().into();
+        Self {
+            instruction: Instruction::from(value),
+            str,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub enum Instruction {
     AnonymousFunction(AnonymousFunction),
     Array(Arc<Array>),
@@ -213,12 +263,16 @@ impl From<Variable> for Instruction {
 }
 
 pub(crate) fn recreate_instructions(
-    instructions: &[Instruction],
+    instructions: &[InstructionWithStr],
     local_variables: &mut LocalVariables,
     interpreter: &Interpreter,
-) -> Result<Arc<[Instruction]>, ExecError> {
+) -> Result<Arc<[InstructionWithStr]>, ExecError> {
     instructions
         .iter()
-        .map(|instruction| instruction.recreate(local_variables, interpreter))
+        .map(|InstructionWithStr { instruction, str }| {
+            let instruction = instruction.recreate(local_variables, interpreter)?;
+            let str = str.clone();
+            Ok(InstructionWithStr { instruction, str })
+        })
         .collect()
 }

@@ -49,9 +49,10 @@ impl DestructTuple {
             Instruction::Variable(_, Variable::Tuple(elements)) => {
                 local_variables.extend(zip(self.idents.iter().cloned(), elements.iter().cloned()))
             }
-            Instruction::Tuple(Tuple { elements }) => {
-                local_variables.extend(zip(self.idents.iter().cloned(), elements.iter()))
-            }
+            Instruction::Tuple(Tuple { elements }) => local_variables.extend(zip(
+                self.idents.iter().cloned(),
+                elements.iter().map(|ins| &ins.instruction),
+            )),
             instruction => {
                 let types = instruction.return_type().flatten_tuple().unwrap();
                 local_variables.extend(zip(self.idents.iter().cloned(), types.iter().cloned()))
