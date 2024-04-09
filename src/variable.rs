@@ -1,7 +1,6 @@
 mod array;
 mod function_type;
 mod multi_type;
-mod ops;
 mod r#type;
 use crate::{function::Function, join_debug, parse::*, Error};
 use match_any::match_any;
