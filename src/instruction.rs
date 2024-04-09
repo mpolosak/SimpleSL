@@ -49,7 +49,7 @@ pub(crate) use traits::{
 #[derive(Debug, Clone)]
 pub struct InstructionWithStr {
     pub instruction: Instruction,
-    str: Arc<str>,
+    pub str: Arc<str>,
 }
 
 impl InstructionWithStr {
@@ -70,6 +70,16 @@ impl InstructionWithStr {
     ) -> Result<Self, Error> {
         let str = pair.as_str().into();
         let instruction = Instruction::new_expression(pair, interpreter, local_variables)?;
+        Ok(Self { instruction, str })
+    }
+
+    fn recreate(
+        &self,
+        local_variables: &mut LocalVariables,
+        interpreter: &Interpreter,
+    ) -> Result<Self, ExecError> {
+        let instruction = self.instruction.recreate(local_variables, interpreter)?;
+        let str = self.str.clone();
         Ok(Self { instruction, str })
     }
 }
@@ -108,7 +118,7 @@ pub enum Instruction {
 }
 
 impl Instruction {
-    pub(crate) fn new(
+    fn new(
         pair: Pair<Rule>,
         interpreter: &Interpreter,
         local_variables: &mut LocalVariables,

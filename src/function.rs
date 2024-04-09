@@ -9,6 +9,7 @@ pub use self::{
 use crate::{
     instruction::{ExecStop, FunctionCall, InstructionWithStr},
     interpreter::Interpreter,
+    join,
     variable::{FunctionType, ReturnType, Type, Typed, Variable},
     Code, Error, ExecError,
 };
@@ -37,15 +38,18 @@ impl Function {
     }
 
     pub fn create_call(self: Arc<Self>, args: Vec<Variable>) -> Result<Code, Error> {
+        let ident = self.ident.clone().unwrap_or_else(|| Arc::from("function"));
+        let str = format!("{}({})", ident, join(args.iter(), ", ")).into();
         let types = args.iter().map(Typed::as_type).collect::<Box<[Type]>>();
         let args = args.into_iter().map(InstructionWithStr::from).collect();
-        check_args("function", &self.params, &types)?;
+        check_args(&ident, &self.params, &types)?;
+        let instruction = FunctionCall {
+            function: Variable::Function(self).into(),
+            args,
+        }
+        .into();
         Ok(Code {
-            instructions: Arc::new([FunctionCall {
-                function: Variable::Function(self).into(),
-                args,
-            }
-            .into()]),
+            instructions: Arc::new([InstructionWithStr { instruction, str }]),
         })
     }
 

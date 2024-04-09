@@ -3,7 +3,7 @@ use crate::{
     instruction::{
         local_variable::LocalVariables,
         traits::{ExecResult, MutCreateInstruction},
-        Exec, Instruction, Recreate,
+        Exec, Instruction, InstructionWithStr, Recreate,
     },
     interpreter::Interpreter,
     parse::Rule,
@@ -14,7 +14,7 @@ use pest::iterators::Pair;
 
 #[derive(Debug)]
 pub struct Match {
-    expression: Instruction,
+    expression: InstructionWithStr,
     arms: Box<[MatchArm]>,
 }
 
@@ -26,7 +26,7 @@ impl MutCreateInstruction for Match {
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
-        let expression = Instruction::new(pair, interpreter, local_variables)?;
+        let expression = InstructionWithStr::new(pair, interpreter, local_variables)?;
         let var_type = expression.return_type();
         let arms = inner
             .map(|pair| MatchArm::new(pair, interpreter, local_variables))

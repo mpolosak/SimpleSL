@@ -3,7 +3,7 @@ use crate::{
         local_variable::{LocalVariable, LocalVariables},
         recreate_instructions,
         traits::{ExecResult, ExecStop},
-        Exec, Instruction, InstructionWithStr, Recreate,
+        Exec, InstructionWithStr,
     },
     interpreter::Interpreter,
     parse::{unexpected, Rule},
@@ -18,10 +18,10 @@ pub enum MatchArm {
     Type {
         ident: Arc<str>,
         var_type: Type,
-        instruction: Instruction,
+        instruction: InstructionWithStr,
     },
-    Value(Arc<[InstructionWithStr]>, Instruction),
-    Other(Instruction),
+    Value(Arc<[InstructionWithStr]>, InstructionWithStr),
+    Other(InstructionWithStr),
 }
 
 impl MatchArm {
@@ -40,7 +40,7 @@ impl MatchArm {
                 let pair = inner.next().unwrap();
                 let mut local_variables = local_variables.create_layer();
                 local_variables.insert(ident.clone(), LocalVariable::Other(var_type.clone()));
-                let instruction = Instruction::new(pair, interpreter, &mut local_variables)?;
+                let instruction = InstructionWithStr::new(pair, interpreter, &mut local_variables)?;
                 Ok(Self::Type {
                     ident,
                     var_type,
@@ -53,11 +53,11 @@ impl MatchArm {
                     .map(|pair| InstructionWithStr::new(pair, interpreter, local_variables))
                     .collect::<Result<Arc<[InstructionWithStr]>, Error>>()?;
                 let pair = inner.next().unwrap();
-                let instruction = Instruction::new(pair, interpreter, local_variables)?;
+                let instruction = InstructionWithStr::new(pair, interpreter, local_variables)?;
                 Ok(Self::Value(values, instruction))
             }
             Rule::match_other => {
-                let instruction = Instruction::new(pair, interpreter, local_variables)?;
+                let instruction = InstructionWithStr::new(pair, interpreter, local_variables)?;
                 Ok(Self::Other(instruction))
             }
             rule => unexpected(rule),

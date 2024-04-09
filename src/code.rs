@@ -1,5 +1,5 @@
 use crate::{
-    instruction::{local_variable::LocalVariables, Exec, ExecStop, Instruction},
+    instruction::{local_variable::LocalVariables, Exec, ExecStop, InstructionWithStr},
     parse::{Rule, SimpleSLParser},
     variable::{ReturnType, Type, Variable},
     Error, ExecError, Interpreter,
@@ -9,7 +9,7 @@ use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct Code {
-    pub(crate) instructions: Arc<[Instruction]>,
+    pub(crate) instructions: Arc<[InstructionWithStr]>,
 }
 
 impl Code {
@@ -17,7 +17,7 @@ impl Code {
         let parse = SimpleSLParser::parse(Rule::input, script)?;
         let mut local_variables = LocalVariables::new();
         let instructions = parse
-            .map(|pair| Instruction::new(pair, interpreter, &mut local_variables))
+            .map(|pair| InstructionWithStr::new(pair, interpreter, &mut local_variables))
             .collect::<Result<_, Error>>()?;
         Ok(Self { instructions })
     }

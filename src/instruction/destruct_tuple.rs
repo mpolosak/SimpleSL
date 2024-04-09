@@ -2,7 +2,7 @@ use super::{
     local_variable::LocalVariables,
     traits::{ExecResult, MutCreateInstruction},
     tuple::Tuple,
-    Exec, Instruction, Recreate,
+    Exec, Instruction, InstructionWithStr, Recreate,
 };
 use crate::{
     interpreter::Interpreter,
@@ -16,7 +16,7 @@ use std::{iter::zip, sync::Arc};
 #[derive(Debug)]
 pub struct DestructTuple {
     idents: Arc<[Arc<str>]>,
-    instruction: Instruction,
+    instruction: InstructionWithStr,
 }
 
 impl MutCreateInstruction for DestructTuple {
@@ -29,7 +29,7 @@ impl MutCreateInstruction for DestructTuple {
         let pair = inner.next().unwrap();
         let idents: Arc<[Arc<str>]> = pair.into_inner().map(|pair| pair.as_str().into()).collect();
         let pair = inner.next().unwrap();
-        let instruction = Instruction::new(pair, interpreter, local_variables)?;
+        let instruction = InstructionWithStr::new(pair, interpreter, local_variables)?;
         let expected = Type::Tuple(std::iter::repeat(Type::Any).take(idents.len()).collect());
         if !instruction.return_type().matches(&expected) {
             return Err(Error::WrongType("instruction".into(), expected));
@@ -45,7 +45,7 @@ impl MutCreateInstruction for DestructTuple {
 
 impl DestructTuple {
     fn insert_local_variables(&self, local_variables: &mut LocalVariables) {
-        match &self.instruction {
+        match &self.instruction.instruction {
             Instruction::Variable(_, Variable::Tuple(elements)) => {
                 local_variables.extend(zip(self.idents.iter().cloned(), elements.iter().cloned()))
             }

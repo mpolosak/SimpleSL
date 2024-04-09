@@ -2,7 +2,7 @@ use crate::{
     instruction::{
         local_variable::{LocalVariable, LocalVariables},
         traits::{ExecResult, MutCreateInstruction},
-        Exec, Instruction, Recreate,
+        Exec, Instruction, InstructionWithStr, Recreate,
     },
     Error, ExecError,
 };
@@ -18,9 +18,9 @@ use std::sync::Arc;
 pub struct SetIfElse {
     ident: Arc<str>,
     var_type: Type,
-    expression: Instruction,
-    if_match: Instruction,
-    else_instruction: Instruction,
+    expression: InstructionWithStr,
+    if_match: InstructionWithStr,
+    else_instruction: InstructionWithStr,
 }
 
 impl MutCreateInstruction for SetIfElse {
@@ -34,16 +34,16 @@ impl MutCreateInstruction for SetIfElse {
         let pair = inner.next().unwrap();
         let var_type = Type::from(pair);
         let pair = inner.next().unwrap();
-        let expression = Instruction::new(pair, interpreter, local_variables)?;
+        let expression = InstructionWithStr::new(pair, interpreter, local_variables)?;
         let pair = inner.next().unwrap();
         let if_match = {
             let mut local_variables = local_variables.create_layer();
             local_variables.insert(ident.clone(), LocalVariable::Other(var_type.clone()));
-            Instruction::new(pair, interpreter, &mut local_variables)?
+            InstructionWithStr::new(pair, interpreter, &mut local_variables)?
         };
         let else_instruction = inner
             .next()
-            .map(|pair| Instruction::new(pair, interpreter, local_variables))
+            .map(|pair| InstructionWithStr::new(pair, interpreter, local_variables))
             .unwrap_or(Ok(Variable::Void.into()))?;
         Ok(Self {
             ident,

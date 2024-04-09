@@ -1,7 +1,7 @@
 use super::{
     local_variable::LocalVariables,
     traits::{ExecResult, ExecStop},
-    Exec, Instruction, MutCreateInstruction, Recreate,
+    Exec, Instruction, InstructionWithStr, MutCreateInstruction, Recreate,
 };
 use crate::{
     parse::Rule,
@@ -12,7 +12,7 @@ use pest::iterators::Pair;
 
 #[derive(Debug)]
 pub struct Return {
-    instruction: Instruction,
+    instruction: InstructionWithStr,
 }
 
 impl MutCreateInstruction for Return {
@@ -25,7 +25,7 @@ impl MutCreateInstruction for Return {
             return Err(Error::ReturnOutsideFunction);
         };
         let instruction = if let Some(pair) = pair.into_inner().next() {
-            Instruction::new(pair, interpreter, local_variables)?
+            InstructionWithStr::new(pair, interpreter, local_variables)?
         } else {
             Variable::Void.into()
         };

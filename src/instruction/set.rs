@@ -1,7 +1,7 @@
 use super::{
     local_variable::LocalVariables,
     traits::{Exec, ExecResult, Recreate},
-    Instruction, MutCreateInstruction,
+    Instruction, InstructionWithStr, MutCreateInstruction,
 };
 use crate::{
     interpreter::Interpreter,
@@ -15,16 +15,16 @@ use std::sync::Arc;
 #[derive(Debug)]
 pub struct Set {
     ident: Arc<str>,
-    instruction: Instruction,
+    instruction: InstructionWithStr,
 }
 
 impl Set {
     pub fn new(
         ident: Arc<str>,
-        instruction: Instruction,
+        instruction: InstructionWithStr,
         local_variables: &mut LocalVariables,
     ) -> Self {
-        local_variables.insert(ident.clone(), (&instruction).into());
+        local_variables.insert(ident.clone(), (&instruction.instruction).into());
         Self { ident, instruction }
     }
 }
@@ -38,7 +38,7 @@ impl MutCreateInstruction for Set {
         let mut inner = pair.into_inner();
         let ident: Arc<str> = inner.next().unwrap().as_str().into();
         let pair = inner.next().unwrap();
-        let instruction = Instruction::new(pair, interpreter, local_variables)?;
+        let instruction = InstructionWithStr::new(pair, interpreter, local_variables)?;
         Ok(Self::new(ident, instruction, local_variables).into())
     }
 }
@@ -58,7 +58,7 @@ impl Recreate for Set {
         interpreter: &Interpreter,
     ) -> Result<Instruction, ExecError> {
         let instruction = self.instruction.recreate(local_variables, interpreter)?;
-        local_variables.insert(self.ident.clone(), (&instruction).into());
+        local_variables.insert(self.ident.clone(), (&instruction.instruction).into());
         Ok(Self {
             ident: self.ident.clone(),
             instruction,
