@@ -35,7 +35,7 @@ impl Tuple {
         let mut array = Vec::new();
         for instruction in &*elements {
             let InstructionWithStr {
-                instruction: Instruction::Variable(_, variable),
+                instruction: Instruction::Variable(variable),
                 ..
             } = instruction
             else {
@@ -43,7 +43,7 @@ impl Tuple {
             };
             array.push(variable.clone());
         }
-        Variable::Tuple(array.into()).into()
+        Instruction::Variable(Variable::Tuple(array.into()))
     }
 }
 

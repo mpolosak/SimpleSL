@@ -39,12 +39,8 @@ impl FunctionCall {
             .map(|pair| InstructionWithStr::new_expression(pair, interpreter, local_variables))
             .collect::<Result<Arc<_>, Error>>()?;
         match &function {
-            Instruction::Variable(ident, Variable::Function(function2)) => {
-                Self::check_args_with_params(
-                    &ident.clone().unwrap_or("function".into()),
-                    &function2.params,
-                    &args,
-                )?;
+            Instruction::Variable(Variable::Function(function2)) => {
+                Self::check_args_with_params("function", &function2.params, &args)?;
             }
             Instruction::LocalVariable(ident, LocalVariable::Function(params, _)) => {
                 Self::check_args_with_params(ident, params, &args)?;

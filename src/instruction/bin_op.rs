@@ -52,9 +52,7 @@ impl T {
 impl T {
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         match (lhs, rhs) {
-            (Instruction::Variable(_, lhs), Instruction::Variable(_, rhs)) => {
-                Self::exec(lhs, rhs).into()
-            }
+            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => Self::exec(lhs, rhs).into(),
             (Instruction::Array(array), rhs) => {
                 let instructions = array
                     .instructions

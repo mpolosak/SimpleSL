@@ -1,10 +1,10 @@
 use crate::{parse::Rule, variable::Type, ExecError};
 use match_any::match_any;
-use std::{fmt, sync::Arc};
+use std::{fmt, rc::Rc, sync::Arc};
 
 #[derive(Debug)]
 pub enum Error {
-    VariableDoesntExist(Arc<str>),
+    VariableDoesntExist(Rc<str>),
     WrongType(Arc<str>, Type),
     WrongNumberOfArguments(Box<str>, usize),
     IndexToBig,

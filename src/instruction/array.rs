@@ -42,7 +42,7 @@ impl Array {
         let mut array = Vec::new();
         for instruction in &*instructions {
             let InstructionWithStr {
-                instruction: Instruction::Variable(_, variable),
+                instruction: Instruction::Variable(variable),
                 ..
             } = instruction
             else {
@@ -54,15 +54,13 @@ impl Array {
             };
             array.push(variable.clone());
         }
-
-        Variable::Array(
+        Instruction::Variable(Variable::Array(
             crate::variable::Array {
                 var_type,
                 elements: array.into(),
             }
             .into(),
-        )
-        .into()
+        ))
     }
 }
 

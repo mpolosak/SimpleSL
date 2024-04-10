@@ -45,23 +45,23 @@ impl At {
     ) -> Result<Instruction, ExecError> {
         match (instruction, index) {
             (
-                Instruction::Variable(_, variable),
+                Instruction::Variable(variable),
                 InstructionWithStr {
-                    instruction: Instruction::Variable(_, index),
+                    instruction: Instruction::Variable(index),
                     ..
                 },
             ) => Ok(at(variable, index)?.into()),
             (
                 _,
                 InstructionWithStr {
-                    instruction: Instruction::Variable(_, Variable::Int(value)),
+                    instruction: Instruction::Variable(Variable::Int(value)),
                     ..
                 },
             ) if value < 0 => Err(ExecError::NegativeIndex),
             (
                 Instruction::Array(array),
                 InstructionWithStr {
-                    instruction: Instruction::Variable(_, Variable::Int(value)),
+                    instruction: Instruction::Variable(Variable::Int(value)),
                     ..
                 },
             ) if array.instructions.len() <= (value as usize) => Err(ExecError::IndexToBig),

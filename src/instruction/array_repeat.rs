@@ -49,17 +49,17 @@ impl ArrayRepeat {
             (
                 _,
                 InstructionWithStr {
-                    instruction: Instruction::Variable(_, Variable::Int(len)),
+                    instruction: Instruction::Variable(Variable::Int(len)),
                     ..
                 },
             ) if len < 0 => Err(ExecError::NegativeLength),
             (
                 InstructionWithStr {
-                    instruction: Instruction::Variable(_, value),
+                    instruction: Instruction::Variable(value),
                     ..
                 },
                 InstructionWithStr {
-                    instruction: Instruction::Variable(_, Variable::Int(len)),
+                    instruction: Instruction::Variable(Variable::Int(len)),
                     ..
                 },
             ) => {

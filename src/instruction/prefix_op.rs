@@ -43,7 +43,7 @@ impl T {
 
     pub fn create_from_instruction(instruction: Instruction) -> Instruction {
         match instruction {
-            Instruction::Variable(_, operand) => Self::calc(operand).into(),
+            Instruction::Variable(operand) => Self::calc(operand).into(),
             Instruction::Array(array) => {
                 let instructions = array
                     .instructions

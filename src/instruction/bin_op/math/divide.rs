@@ -15,10 +15,10 @@ impl T {
         divisor: Instruction,
     ) -> Result<Instruction, ExecError> {
         match (dividend, divisor) {
-            (Instruction::Variable(_, dividend), Instruction::Variable(_, divisor)) => {
+            (Instruction::Variable(dividend), Instruction::Variable(divisor)) => {
                 Ok(Self::exec(dividend, divisor)?.into())
             }
-            (_, Instruction::Variable(_, Variable::Int(0))) => Err(ExecError::error),
+            (_, Instruction::Variable(Variable::Int(0))) => Err(ExecError::error),
             (Instruction::Array(array), rhs) => {
                 let instructions = array
                     .instructions
