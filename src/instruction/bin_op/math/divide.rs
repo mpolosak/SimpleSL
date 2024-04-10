@@ -62,7 +62,12 @@ impl T {
                 .into())
             }
             (Instruction::ArrayRepeat(array_repeat), rhs) => {
-                let value = Self::create_from_instructions(array_repeat.value.clone(), rhs)?;
+                let value =
+                    Self::create_from_instructions(array_repeat.value.instruction.clone(), rhs)?;
+                let value = InstructionWithStr {
+                    instruction: value,
+                    str: array_repeat.value.str.clone(),
+                };
                 Ok(ArrayRepeat {
                     value,
                     len: array_repeat.len.clone(),
@@ -70,7 +75,12 @@ impl T {
                 .into())
             }
             (lhs, Instruction::ArrayRepeat(array_repeat)) => {
-                let value = Self::create_from_instructions(lhs, array_repeat.value.clone())?;
+                let value =
+                    Self::create_from_instructions(lhs, array_repeat.value.instruction.clone())?;
+                let value = InstructionWithStr {
+                    instruction: value,
+                    str: array_repeat.value.str.clone(),
+                };
                 Ok(ArrayRepeat {
                     value,
                     len: array_repeat.len.clone(),

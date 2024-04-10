@@ -34,6 +34,7 @@ pub enum Error {
         function_name: Option<Arc<str>>,
         return_type: Type,
     },
+    WrongLengthType(Arc<str>),
 }
 
 impl PartialEq for Error {
@@ -160,6 +161,7 @@ impl fmt::Display for Error {
                     .map(|value| format!(" {value}"))
                     .unwrap_or("".into())
             ),
+            Self::WrongLengthType(str)=>write!(f, "Cannot create array of length {str}. Length must be int"),
         }
     }
 }

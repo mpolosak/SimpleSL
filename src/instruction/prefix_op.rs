@@ -61,7 +61,11 @@ impl T {
                 .into()
             }
             Instruction::ArrayRepeat(array_repeat) => {
-                let value = Self::create_from_instruction(array_repeat.value.clone());
+                let value = Self::create_from_instruction(array_repeat.value.instruction.clone());
+                let value = InstructionWithStr {
+                    instruction: value,
+                    str: array_repeat.value.str.clone(),
+                };
                 ArrayRepeat {
                     value,
                     len: array_repeat.len.clone(),
