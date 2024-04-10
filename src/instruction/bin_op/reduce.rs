@@ -24,10 +24,8 @@ impl Reduce {
         initial_value: Pair<Rule>,
         function: Instruction,
         local_variables: &LocalVariables,
-        interpreter: &Interpreter,
     ) -> Result<Instruction, Error> {
-        let initial_value =
-            Instruction::new_expression(initial_value, interpreter, local_variables)?;
+        let initial_value = Instruction::new_expression(initial_value, local_variables)?;
         let Some(element_type) = array.return_type().index_result() else {
             return Err(Error::WrongType("array".into(), [Type::Any].into()));
         };
@@ -65,11 +63,10 @@ impl Recreate for Reduce {
     fn recreate(
         &self,
         local_variables: &mut crate::instruction::local_variable::LocalVariables,
-        interpreter: &Interpreter,
     ) -> Result<Instruction, ExecError> {
-        let array = self.array.recreate(local_variables, interpreter)?;
-        let initial_value = self.initial_value.recreate(local_variables, interpreter)?;
-        let function = self.function.recreate(local_variables, interpreter)?;
+        let array = self.array.recreate(local_variables)?;
+        let initial_value = self.initial_value.recreate(local_variables)?;
+        let function = self.function.recreate(local_variables)?;
         Ok(Self {
             array,
             initial_value,

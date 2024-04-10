@@ -32,13 +32,12 @@ impl Set {
 impl MutCreateInstruction for Set {
     fn create_instruction(
         pair: Pair<Rule>,
-        interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let ident: Arc<str> = inner.next().unwrap().as_str().into();
         let pair = inner.next().unwrap();
-        let instruction = InstructionWithStr::new(pair, interpreter, local_variables)?;
+        let instruction = InstructionWithStr::new(pair, local_variables)?;
         Ok(Self::new(ident, instruction, local_variables).into())
     }
 }
@@ -52,12 +51,8 @@ impl Exec for Set {
 }
 
 impl Recreate for Set {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction, ExecError> {
-        let instruction = self.instruction.recreate(local_variables, interpreter)?;
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
+        let instruction = self.instruction.recreate(local_variables)?;
         local_variables.insert(self.ident.clone(), (&instruction.instruction).into());
         Ok(Self {
             ident: self.ident.clone(),

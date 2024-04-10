@@ -44,12 +44,8 @@ impl Exec for TypeFilter {
 }
 
 impl Recreate for TypeFilter {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction, ExecError> {
-        let array = self.array.recreate(local_variables, interpreter)?;
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
+        let array = self.array.recreate(local_variables)?;
         Ok(Self {
             array,
             var_type: self.var_type.clone(),

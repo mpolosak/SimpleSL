@@ -28,7 +28,6 @@ pub struct AnonymousFunction {
 impl CreateInstruction for AnonymousFunction {
     fn create_instruction(
         pair: Pair<Rule>,
-        interpreter: &Interpreter,
         local_variables: &LocalVariables,
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
@@ -45,7 +44,7 @@ impl CreateInstruction for AnonymousFunction {
             LocalVariableMap::from(params.clone()),
             FunctionInfo::new(None, return_type.clone()),
         );
-        let body = interpreter.create_instructions(inner, &mut local_variables)?;
+        let body = local_variables.create_instructions(inner)?;
         if !Type::Void.matches(&return_type)
             && !body
                 .iter()
@@ -68,8 +67,8 @@ impl CreateInstruction for AnonymousFunction {
 
 impl Exec for AnonymousFunction {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let mut fn_local_variables = LocalVariables::from(self.params.clone());
-        let body = recreate_instructions(&self.body, &mut fn_local_variables, interpreter)?;
+        let mut fn_local_variables = LocalVariables::from_params(self.params.clone(), interpreter);
+        let body = recreate_instructions(&self.body, &mut fn_local_variables)?;
         Ok(Function {
             ident: None,
             params: self.params.clone(),
@@ -81,16 +80,12 @@ impl Exec for AnonymousFunction {
 }
 
 impl Recreate for AnonymousFunction {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction, ExecError> {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
         let mut local_variables = local_variables.function_layer(
             self.params.clone().into(),
             FunctionInfo::new(None, self.return_type.clone()),
         );
-        let body = recreate_instructions(&self.body, &mut local_variables, interpreter)?;
+        let body = recreate_instructions(&self.body, &mut local_variables)?;
         Ok(Self {
             params: self.params.clone(),
             body,

@@ -15,9 +15,9 @@ pub struct Code {
 impl Code {
     pub fn parse(interpreter: &Interpreter, script: &str) -> Result<Self, Error> {
         let parse = SimpleSLParser::parse(Rule::input, script)?;
-        let mut local_variables = LocalVariables::new();
+        let mut local_variables = LocalVariables::new(interpreter);
         let instructions = parse
-            .map(|pair| InstructionWithStr::new(pair, interpreter, &mut local_variables))
+            .map(|pair| InstructionWithStr::new(pair, &mut local_variables))
             .collect::<Result<_, Error>>()?;
         Ok(Self { instructions })
     }

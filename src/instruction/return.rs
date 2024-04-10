@@ -18,14 +18,13 @@ pub struct Return {
 impl MutCreateInstruction for Return {
     fn create_instruction(
         pair: Pair<Rule>,
-        interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error> {
         let Some(function) = local_variables.function().cloned() else {
             return Err(Error::ReturnOutsideFunction);
         };
         let instruction = if let Some(pair) = pair.into_inner().next() {
-            InstructionWithStr::new(pair, interpreter, local_variables)?
+            InstructionWithStr::new(pair, local_variables)?
         } else {
             Variable::Void.into()
         };
@@ -49,12 +48,8 @@ impl Exec for Return {
 }
 
 impl Recreate for Return {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction, ExecError> {
-        let instruction = self.instruction.recreate(local_variables, interpreter)?;
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
+        let instruction = self.instruction.recreate(local_variables)?;
         Ok(Return { instruction }.into())
     }
 }

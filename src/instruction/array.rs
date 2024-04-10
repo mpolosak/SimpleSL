@@ -22,12 +22,11 @@ pub struct Array {
 impl CreateInstruction for Array {
     fn create_instruction(
         pair: Pair<Rule>,
-        interpreter: &Interpreter,
         local_variables: &LocalVariables,
     ) -> Result<Instruction, Error> {
         let inner = pair.into_inner();
         let instructions = inner
-            .map(|arg| InstructionWithStr::new_expression(arg, interpreter, local_variables))
+            .map(|arg| InstructionWithStr::new_expression(arg, local_variables))
             .collect::<Result<Arc<_>, Error>>()?;
         Ok(Self::create_from_instructions(instructions))
     }
@@ -72,12 +71,8 @@ impl Exec for Array {
 }
 
 impl Recreate for Array {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction, ExecError> {
-        let instructions = recreate_instructions(&self.instructions, local_variables, interpreter)?;
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
+        let instructions = recreate_instructions(&self.instructions, local_variables)?;
         Ok(Self::create_from_instructions(instructions))
     }
 }

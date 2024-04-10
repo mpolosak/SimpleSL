@@ -25,11 +25,7 @@ pub enum MatchArm {
 }
 
 impl MatchArm {
-    pub fn new(
-        pair: Pair<Rule>,
-        interpreter: &Interpreter,
-        local_variables: &mut LocalVariables,
-    ) -> Result<Self, Error> {
+    pub fn new(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<Self, Error> {
         let match_rule = pair.as_rule();
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
@@ -40,7 +36,7 @@ impl MatchArm {
                 let pair = inner.next().unwrap();
                 let mut local_variables = local_variables.create_layer();
                 local_variables.insert(ident.clone(), LocalVariable::Other(var_type.clone()));
-                let instruction = InstructionWithStr::new(pair, interpreter, &mut local_variables)?;
+                let instruction = InstructionWithStr::new(pair, &mut local_variables)?;
                 Ok(Self::Type {
                     ident,
                     var_type,
@@ -50,14 +46,14 @@ impl MatchArm {
             Rule::match_value => {
                 let inner_values = pair.into_inner();
                 let values = inner_values
-                    .map(|pair| InstructionWithStr::new(pair, interpreter, local_variables))
+                    .map(|pair| InstructionWithStr::new(pair, local_variables))
                     .collect::<Result<Arc<[InstructionWithStr]>, Error>>()?;
                 let pair = inner.next().unwrap();
-                let instruction = InstructionWithStr::new(pair, interpreter, local_variables)?;
+                let instruction = InstructionWithStr::new(pair, local_variables)?;
                 Ok(Self::Value(values, instruction))
             }
             Rule::match_other => {
-                let instruction = InstructionWithStr::new(pair, interpreter, local_variables)?;
+                let instruction = InstructionWithStr::new(pair, local_variables)?;
                 Ok(Self::Other(instruction))
             }
             rule => unexpected(rule),
@@ -103,11 +99,7 @@ impl MatchArm {
             }
         }
     }
-    pub fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Self, ExecError> {
+    pub fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Self, ExecError> {
         Ok(match self {
             Self::Type {
                 ident,
@@ -116,7 +108,7 @@ impl MatchArm {
             } => {
                 let mut local_variables = local_variables.create_layer();
                 local_variables.insert(ident.clone(), LocalVariable::Other(var_type.clone()));
-                let instruction = instruction.recreate(&mut local_variables, interpreter)?;
+                let instruction = instruction.recreate(&mut local_variables)?;
                 Self::Type {
                     ident: ident.clone(),
                     var_type: var_type.clone(),
@@ -124,13 +116,11 @@ impl MatchArm {
                 }
             }
             Self::Value(values, instruction) => {
-                let values = recreate_instructions(values, local_variables, interpreter)?;
-                let instruction = instruction.recreate(local_variables, interpreter)?;
+                let values = recreate_instructions(values, local_variables)?;
+                let instruction = instruction.recreate(local_variables)?;
                 Self::Value(values, instruction)
             }
-            MatchArm::Other(instruction) => {
-                Self::Other(instruction.recreate(local_variables, interpreter)?)
-            }
+            MatchArm::Other(instruction) => Self::Other(instruction.recreate(local_variables)?),
         })
     }
 }

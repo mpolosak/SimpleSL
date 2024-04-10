@@ -26,7 +26,6 @@ pub struct SetIfElse {
 impl MutCreateInstruction for SetIfElse {
     fn create_instruction(
         pair: Pair<Rule>,
-        interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
@@ -34,16 +33,16 @@ impl MutCreateInstruction for SetIfElse {
         let pair = inner.next().unwrap();
         let var_type = Type::from(pair);
         let pair = inner.next().unwrap();
-        let expression = InstructionWithStr::new(pair, interpreter, local_variables)?;
+        let expression = InstructionWithStr::new(pair, local_variables)?;
         let pair = inner.next().unwrap();
         let if_match = {
             let mut local_variables = local_variables.create_layer();
             local_variables.insert(ident.clone(), LocalVariable::Other(var_type.clone()));
-            InstructionWithStr::new(pair, interpreter, &mut local_variables)?
+            InstructionWithStr::new(pair, &mut local_variables)?
         };
         let else_instruction = inner
             .next()
-            .map(|pair| InstructionWithStr::new(pair, interpreter, local_variables))
+            .map(|pair| InstructionWithStr::new(pair, local_variables))
             .unwrap_or(Ok(Variable::Void.into()))?;
         Ok(Self {
             ident,
@@ -70,23 +69,17 @@ impl Exec for SetIfElse {
 }
 
 impl Recreate for SetIfElse {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction, ExecError> {
-        let expression = self.expression.recreate(local_variables, interpreter)?;
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
+        let expression = self.expression.recreate(local_variables)?;
         let if_match = {
             let mut local_variables = local_variables.create_layer();
             local_variables.insert(
                 self.ident.clone(),
                 LocalVariable::Other(self.var_type.clone()),
             );
-            self.if_match.recreate(&mut local_variables, interpreter)?
+            self.if_match.recreate(&mut local_variables)?
         };
-        let else_instruction = self
-            .else_instruction
-            .recreate(local_variables, interpreter)?;
+        let else_instruction = self.else_instruction.recreate(local_variables)?;
         Ok(Self {
             ident: self.ident.clone(),
             var_type: self.var_type.clone(),

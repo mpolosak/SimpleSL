@@ -22,21 +22,20 @@ pub struct IfElse {
 impl MutCreateInstruction for IfElse {
     fn create_instruction(
         pair: Pair<Rule>,
-        interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let condition_pair = inner.next().unwrap();
-        let condition = InstructionWithStr::new(condition_pair, interpreter, local_variables)?;
+        let condition = InstructionWithStr::new(condition_pair, local_variables)?;
         if condition.return_type() != Type::Int {
             return Err(Error::WrongType("condition".into(), Type::Int));
         }
         let true_pair = inner.next().unwrap();
         let Instruction::Variable(Variable::Int(condition)) = condition.instruction else {
-            let if_true = InstructionWithStr::new(true_pair, interpreter, local_variables)?;
+            let if_true = InstructionWithStr::new(true_pair, local_variables)?;
             let if_false = inner.next().map_or_else(
                 || Ok(Variable::Void.into()),
-                |pair| InstructionWithStr::new(pair, interpreter, local_variables),
+                |pair| InstructionWithStr::new(pair, local_variables),
             )?;
             return Ok(Self {
                 condition,
@@ -48,10 +47,10 @@ impl MutCreateInstruction for IfElse {
         if condition == 0 {
             return inner.next().map_or_else(
                 || Ok(Variable::Void.into()),
-                |pair| Instruction::new(pair, interpreter, local_variables),
+                |pair| Instruction::new(pair, local_variables),
             );
         }
-        Instruction::new(true_pair, interpreter, local_variables)
+        Instruction::new(true_pair, local_variables)
     }
 }
 
@@ -65,15 +64,11 @@ impl Exec for IfElse {
 }
 
 impl Recreate for IfElse {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction, ExecError> {
-        let condition = self.condition.recreate(local_variables, interpreter)?;
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
+        let condition = self.condition.recreate(local_variables)?;
         let Instruction::Variable(Variable::Int(condition)) = condition.instruction else {
-            let if_true = self.if_true.recreate(local_variables, interpreter)?;
-            let if_false = self.if_false.recreate(local_variables, interpreter)?;
+            let if_true = self.if_true.recreate(local_variables)?;
+            let if_false = self.if_false.recreate(local_variables)?;
             return Ok(Self {
                 condition,
                 if_true,
@@ -82,14 +77,9 @@ impl Recreate for IfElse {
             .into());
         };
         if condition == 0 {
-            return self
-                .if_false
-                .instruction
-                .recreate(local_variables, interpreter);
+            return self.if_false.instruction.recreate(local_variables);
         }
-        self.if_true
-            .instruction
-            .recreate(local_variables, interpreter)
+        self.if_true.instruction.recreate(local_variables)
     }
 }
 

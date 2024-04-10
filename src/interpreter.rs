@@ -1,9 +1,8 @@
-use crate::instruction::{local_variable::LocalVariables, Exec, Instruction};
+use crate::instruction::Exec;
 use crate::instruction::{ExecStop, InstructionWithStr};
-use crate::{parse::*, stdlib, variable::*, Error};
-use pest::{iterators::Pairs, Parser};
+use crate::{stdlib, variable::*};
+use std::collections::HashMap;
 use std::sync::Arc;
-use std::{collections::HashMap, fs};
 
 #[derive(Debug)]
 #[must_use]
@@ -38,48 +37,6 @@ impl<'a> Interpreter<'a> {
             .iter()
             .map(|instruction| instruction.exec(self))
             .collect()
-    }
-
-    pub(crate) fn load(
-        &self,
-        path: &str,
-        local_variables: &mut LocalVariables,
-    ) -> Result<Arc<[InstructionWithStr]>, Error> {
-        let contents = fs::read_to_string(path)?;
-        self.parse_input(&contents, local_variables)
-    }
-
-    fn parse_input(
-        &self,
-        input: &str,
-        local_variables: &mut LocalVariables,
-    ) -> Result<Arc<[InstructionWithStr]>, Error> {
-        let pairs = SimpleSLParser::parse(Rule::input, input)?;
-        self.create_instructions(pairs, local_variables)
-    }
-
-    pub(crate) fn create_instructions(
-        &self,
-        pairs: Pairs<'_, Rule>,
-        local_variables: &mut LocalVariables,
-    ) -> Result<Arc<[InstructionWithStr]>, Error> {
-        let mut instructions = pairs
-            .map(|pair| InstructionWithStr::new(pair, self, local_variables))
-            .collect::<Result<Vec<InstructionWithStr>, Error>>()?;
-        let Some(last) = instructions.pop() else {
-            return Ok(Arc::from([]));
-        };
-        instructions.retain(|instruction| {
-            !matches!(
-                instruction,
-                InstructionWithStr {
-                    instruction: Instruction::Variable(..),
-                    ..
-                }
-            )
-        });
-        instructions.push(last);
-        Ok(instructions.into())
     }
 
     pub fn get_variable(&self, name: &str) -> Option<&Variable> {

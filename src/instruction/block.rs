@@ -19,12 +19,10 @@ pub struct Block {
 impl CreateInstruction for Block {
     fn create_instruction(
         pair: Pair<Rule>,
-        interpreter: &Interpreter,
         local_variables: &LocalVariables,
     ) -> Result<Instruction, Error> {
         let mut local_variables = local_variables.create_layer();
-        let instructions =
-            interpreter.create_instructions(pair.into_inner(), &mut local_variables)?;
+        let instructions = local_variables.create_instructions(pair.into_inner())?;
         if instructions.is_empty() {
             return Ok(Instruction::Variable(Variable::Void));
         }
@@ -44,14 +42,9 @@ impl Exec for Block {
 }
 
 impl Recreate for Block {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction, ExecError> {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
         let mut local_variables = local_variables.create_layer();
-        let instructions =
-            recreate_instructions(&self.instructions, &mut local_variables, interpreter)?;
+        let instructions = recreate_instructions(&self.instructions, &mut local_variables)?;
         Ok(Self { instructions }.into())
     }
 }

@@ -16,7 +16,7 @@ use super::{
     type_filter::TypeFilter,
     FunctionCall, Instruction,
 };
-use crate::{interpreter::Interpreter, parse::Rule, variable::ReturnType, Error};
+use crate::{parse::Rule, variable::ReturnType, Error};
 use duplicate::duplicate_item;
 use pest::iterators::Pair;
 use std::{fmt::Debug, sync::Arc};
@@ -28,7 +28,6 @@ pub use {
 pub trait CreateInstruction {
     fn create_instruction(
         pair: Pair<Rule>,
-        interpreter: &Interpreter,
         local_variables: &LocalVariables,
     ) -> Result<Instruction, Error>;
 }
@@ -36,7 +35,6 @@ pub trait CreateInstruction {
 pub trait MutCreateInstruction {
     fn create_instruction(
         pair: Pair<Rule>,
-        interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error>;
 }

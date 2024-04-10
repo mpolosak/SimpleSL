@@ -25,7 +25,6 @@ pub struct FunctionDeclaration {
 impl MutCreateInstruction for FunctionDeclaration {
     fn create_instruction(
         pair: Pair<Rule>,
-        interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
@@ -49,7 +48,7 @@ impl MutCreateInstruction for FunctionDeclaration {
             LocalVariableMap::from(params.clone()),
             FunctionInfo::new(Some(ident.clone()), return_type.clone()),
         );
-        let body = interpreter.create_instructions(inner, &mut local_variables)?;
+        let body = local_variables.create_instructions(inner)?;
         if !Type::Void.matches(&return_type)
             && !body
                 .iter()
@@ -73,12 +72,12 @@ impl MutCreateInstruction for FunctionDeclaration {
 
 impl Exec for FunctionDeclaration {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let mut local_variables = LocalVariables::from(self.params.clone());
+        let mut local_variables = LocalVariables::from_params(self.params.clone(), interpreter);
         local_variables.insert(
             self.ident.clone(),
             LocalVariable::Function(self.params.clone(), self.return_type.clone()),
         );
-        let body = recreate_instructions(&self.body, &mut local_variables, interpreter)?;
+        let body = recreate_instructions(&self.body, &mut local_variables)?;
         let function: Arc<Function> = Function {
             ident: Some(self.ident.clone()),
             params: self.params.clone(),
@@ -92,11 +91,7 @@ impl Exec for FunctionDeclaration {
 }
 
 impl Recreate for FunctionDeclaration {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction, ExecError> {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
         local_variables.insert(
             self.ident.clone(),
             LocalVariable::Function(self.params.clone(), self.return_type.clone()),
@@ -105,7 +100,7 @@ impl Recreate for FunctionDeclaration {
             self.params.clone().into(),
             FunctionInfo::new(Some(self.ident.clone()), self.return_type.clone()),
         );
-        let body = recreate_instructions(&self.body, &mut local_variables, interpreter)?;
+        let body = recreate_instructions(&self.body, &mut local_variables)?;
         Ok(Self {
             ident: self.ident.clone(),
             params: self.params.clone(),

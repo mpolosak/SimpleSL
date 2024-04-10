@@ -15,7 +15,7 @@ use crate::{
     },
     parse::{unexpected, Rule},
     variable::{ReturnType, Variable},
-    Error, Interpreter,
+    Error,
 };
 use duplicate::duplicate_item;
 use pest::iterators::Pair;
@@ -145,7 +145,6 @@ impl Instruction {
         lhs: Self,
         rhs: Self,
         local_variables: &LocalVariables<'_>,
-        interpreter: &Interpreter<'_>,
     ) -> Result<Self, Error> {
         match op.as_rule() {
             Rule::pow => Pow::create_op(lhs, rhs),
@@ -168,7 +167,7 @@ impl Instruction {
             Rule::lshift => LShift::create_op(lhs, rhs),
             Rule::and => And::create_op(lhs, rhs),
             Rule::or => Or::create_op(lhs, rhs),
-            Rule::reduce => Reduce::create_instruction(lhs, op, rhs, local_variables, interpreter),
+            Rule::reduce => Reduce::create_instruction(lhs, op, rhs, local_variables),
             rule => unexpected(rule),
         }
     }

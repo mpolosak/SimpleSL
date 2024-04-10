@@ -21,13 +21,12 @@ pub struct Import {
 impl MutCreateInstruction for Import {
     fn create_instruction(
         pair: Pair<Rule>,
-        interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error> {
         let Variable::String(path) = Variable::try_from(pair.into_inner().next().unwrap())? else {
             unreachable!()
         };
-        let instructions = interpreter.load(&path, local_variables)?;
+        let instructions = local_variables.load(&path)?;
         if instructions.is_empty() {
             return Ok(Instruction::Variable(Variable::Void));
         }
@@ -49,12 +48,8 @@ impl Exec for Import {
 }
 
 impl Recreate for Import {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction, ExecError> {
-        let instructions = recreate_instructions(&self.instructions, local_variables, interpreter)?;
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
+        let instructions = recreate_instructions(&self.instructions, local_variables)?;
         Ok(Self { instructions }.into())
     }
 }

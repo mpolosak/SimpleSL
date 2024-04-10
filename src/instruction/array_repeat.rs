@@ -19,20 +19,11 @@ pub struct ArrayRepeat {
 impl CreateInstruction for ArrayRepeat {
     fn create_instruction(
         pair: Pair<Rule>,
-        interpreter: &Interpreter,
         local_variables: &LocalVariables,
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
-        let value = InstructionWithStr::new_expression(
-            inner.next().unwrap(),
-            interpreter,
-            local_variables,
-        )?;
-        let len = InstructionWithStr::new_expression(
-            inner.next().unwrap(),
-            interpreter,
-            local_variables,
-        )?;
+        let value = InstructionWithStr::new_expression(inner.next().unwrap(), local_variables)?;
+        let len = InstructionWithStr::new_expression(inner.next().unwrap(), local_variables)?;
         if len.return_type() != Type::Int {
             return Err(Error::WrongLengthType(len.str));
         }
@@ -85,13 +76,9 @@ impl Exec for ArrayRepeat {
 }
 
 impl Recreate for ArrayRepeat {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction, ExecError> {
-        let value = self.value.recreate(local_variables, interpreter)?;
-        let len = self.len.recreate(local_variables, interpreter)?;
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
+        let value = self.value.recreate(local_variables)?;
+        let len = self.len.recreate(local_variables)?;
         Self::create_from_instructions(value, len)
     }
 }

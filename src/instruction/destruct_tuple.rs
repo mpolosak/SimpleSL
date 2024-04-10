@@ -22,14 +22,13 @@ pub struct DestructTuple {
 impl MutCreateInstruction for DestructTuple {
     fn create_instruction(
         pair: Pair<Rule>,
-        interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
         let idents: Arc<[Arc<str>]> = pair.into_inner().map(|pair| pair.as_str().into()).collect();
         let pair = inner.next().unwrap();
-        let instruction = InstructionWithStr::new(pair, interpreter, local_variables)?;
+        let instruction = InstructionWithStr::new(pair, local_variables)?;
         let expected = Type::Tuple(std::iter::repeat(Type::Any).take(idents.len()).collect());
         if !instruction.return_type().matches(&expected) {
             return Err(Error::WrongType("instruction".into(), expected));
@@ -75,12 +74,8 @@ impl Exec for DestructTuple {
 }
 
 impl Recreate for DestructTuple {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction, ExecError> {
-        let instruction = self.instruction.recreate(local_variables, interpreter)?;
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
+        let instruction = self.instruction.recreate(local_variables)?;
         let result = Self {
             idents: self.idents.clone(),
             instruction,

@@ -19,12 +19,11 @@ pub struct Tuple {
 impl CreateInstruction for Tuple {
     fn create_instruction(
         pair: Pair<Rule>,
-        interpreter: &Interpreter,
         local_variables: &LocalVariables,
     ) -> Result<Instruction, Error> {
         let elements = pair
             .into_inner()
-            .map(|pair| InstructionWithStr::new_expression(pair, interpreter, local_variables))
+            .map(|pair| InstructionWithStr::new_expression(pair, local_variables))
             .collect::<Result<Arc<[InstructionWithStr]>, Error>>()?;
         Ok(Self::create_from_elements(elements))
     }
@@ -55,12 +54,8 @@ impl Exec for Tuple {
 }
 
 impl Recreate for Tuple {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction, ExecError> {
-        let elements = recreate_instructions(&self.elements, local_variables, interpreter)?;
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
+        let elements = recreate_instructions(&self.elements, local_variables)?;
         Ok(Self::create_from_elements(elements))
     }
 }

@@ -31,12 +31,11 @@ impl FunctionCall {
     pub fn create_instruction(
         function: Instruction,
         args: Pair<Rule>,
-        interpreter: &Interpreter,
         local_variables: &LocalVariables,
     ) -> Result<Instruction, Error> {
         let args = args
             .into_inner()
-            .map(|pair| InstructionWithStr::new_expression(pair, interpreter, local_variables))
+            .map(|pair| InstructionWithStr::new_expression(pair, local_variables))
             .collect::<Result<Arc<_>, Error>>()?;
         match &function {
             Instruction::Variable(Variable::Function(function2)) => {
@@ -100,13 +99,9 @@ impl Exec for FunctionCall {
 }
 
 impl Recreate for FunctionCall {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction, ExecError> {
-        let function = self.function.recreate(local_variables, interpreter)?;
-        let args = recreate_instructions(&self.args, local_variables, interpreter)?;
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
+        let function = self.function.recreate(local_variables)?;
+        let args = recreate_instructions(&self.args, local_variables)?;
         Ok(Self { function, args }.into())
     }
 }

@@ -21,11 +21,10 @@ impl At {
     pub fn create_instruction(
         instruction: Instruction,
         index: Pair<Rule>,
-        interpreter: &Interpreter,
         local_variables: &LocalVariables,
     ) -> Result<Instruction, Error> {
         let pair = index.into_inner().next().unwrap();
-        let index = InstructionWithStr::new_expression(pair, interpreter, local_variables)?;
+        let index = InstructionWithStr::new_expression(pair, local_variables)?;
         let required_instruction_type = Type::String | [Type::Any];
         let instruction_return_type = instruction.return_type();
         if index.return_type() != Type::Int {
@@ -79,13 +78,9 @@ impl Exec for At {
 }
 
 impl Recreate for At {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction, ExecError> {
-        let instruction = self.instruction.recreate(local_variables, interpreter)?;
-        let index = self.index.recreate(local_variables, interpreter)?;
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
+        let instruction = self.instruction.recreate(local_variables)?;
+        let index = self.index.recreate(local_variables)?;
         Self::create_from_instructions(instruction, index)
     }
 }

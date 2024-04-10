@@ -21,15 +21,14 @@ pub struct Match {
 impl MutCreateInstruction for Match {
     fn create_instruction(
         pair: Pair<Rule>,
-        interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
-        let expression = InstructionWithStr::new(pair, interpreter, local_variables)?;
+        let expression = InstructionWithStr::new(pair, local_variables)?;
         let var_type = expression.return_type();
         let arms = inner
-            .map(|pair| MatchArm::new(pair, interpreter, local_variables))
+            .map(|pair| MatchArm::new(pair, local_variables))
             .collect::<Result<Box<[MatchArm]>, Error>>()?;
         let result = Self { expression, arms };
         if !result.is_covering_type(&var_type) {
@@ -63,16 +62,12 @@ impl Exec for Match {
 }
 
 impl Recreate for Match {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction, ExecError> {
-        let expression = self.expression.recreate(local_variables, interpreter)?;
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
+        let expression = self.expression.recreate(local_variables)?;
         let arms = self
             .arms
             .iter()
-            .map(|arm| arm.recreate(local_variables, interpreter))
+            .map(|arm| arm.recreate(local_variables))
             .collect::<Result<Box<[MatchArm]>, ExecError>>()?;
         Ok(Self { expression, arms }.into())
     }
