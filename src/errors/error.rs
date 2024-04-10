@@ -13,6 +13,7 @@ pub enum Error {
     NegativeExponent,
     CannotBeParsed(Box<str>),
     CannotIndexInto(Type),
+    CannotIndexWith(Arc<str>),
     ZeroDivision,
     ZeroModulo,
     OverflowShift,
@@ -41,6 +42,7 @@ impl PartialEq for Error {
             (Self::VariableDoesntExist(l0), Self::VariableDoesntExist(r0))
             | (Self::CannotBeParsed(l0), Self::CannotBeParsed(r0))
             | (Self::CannotIndexInto(l0), Self::CannotIndexInto(r0))
+            | (Self::CannotIndexWith(l0), Self::CannotIndexWith(r0))
             | (Self::Parsing(l0), Self::Parsing(r0))
             | (Self::IntegerOverflow(l0), Self::IntegerOverflow(r0)) => l0 == r0,
             (Self::WrongType(l0, l1), Self::WrongType(r0, r1))
@@ -99,6 +101,9 @@ impl fmt::Display for Error {
             }
             Self::CannotIndexInto(var_type) => {
                 write!(f, "Cannot index into value of type {var_type}")
+            }
+            Self::CannotIndexWith(var_type) => {
+                write!(f, "Cannot index with {var_type}. Index must be int")
             }
             Self::ZeroDivision => {
                 write!(f, "Cannot divide by 0")

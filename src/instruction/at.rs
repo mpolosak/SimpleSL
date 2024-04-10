@@ -1,7 +1,7 @@
 use super::{
     local_variable::LocalVariables,
     traits::{ExecResult, ExecStop},
-    Exec, Instruction, Recreate,
+    Exec, Instruction, InstructionWithStr, Recreate,
 };
 use crate::{
     interpreter::Interpreter,
@@ -14,7 +14,7 @@ use pest::iterators::Pair;
 #[derive(Debug)]
 pub struct At {
     instruction: Instruction,
-    index: Instruction,
+    index: InstructionWithStr,
 }
 
 impl At {
@@ -25,11 +25,11 @@ impl At {
         local_variables: &LocalVariables,
     ) -> Result<Instruction, Error> {
         let pair = index.into_inner().next().unwrap();
-        let index = Instruction::new_expression(pair, interpreter, local_variables)?;
+        let index = InstructionWithStr::new_expression(pair, interpreter, local_variables)?;
         let required_instruction_type = Type::String | [Type::Any];
         let instruction_return_type = instruction.return_type();
         if index.return_type() != Type::Int {
-            return Err(Error::WrongType("index".into(), Type::Int));
+            return Err(Error::CannotIndexWith(index.str));
         }
         if !instruction_return_type.matches(&required_instruction_type) {
             return Err(Error::CannotIndexInto(instruction_return_type));
@@ -41,20 +41,30 @@ impl At {
 impl At {
     fn create_from_instructions(
         instruction: Instruction,
-        index: Instruction,
+        index: InstructionWithStr,
     ) -> Result<Instruction, ExecError> {
         match (instruction, index) {
-            (Instruction::Variable(_, variable), Instruction::Variable(_, index)) => {
-                Ok(at(variable, index)?.into())
-            }
-            (_, Instruction::Variable(_, Variable::Int(value))) if value < 0 => {
-                Err(ExecError::NegativeIndex)
-            }
-            (Instruction::Array(array), Instruction::Variable(_, Variable::Int(value)))
-                if array.instructions.len() <= (value as usize) =>
-            {
-                Err(ExecError::IndexToBig)
-            }
+            (
+                Instruction::Variable(_, variable),
+                InstructionWithStr {
+                    instruction: Instruction::Variable(_, index),
+                    ..
+                },
+            ) => Ok(at(variable, index)?.into()),
+            (
+                _,
+                InstructionWithStr {
+                    instruction: Instruction::Variable(_, Variable::Int(value)),
+                    ..
+                },
+            ) if value < 0 => Err(ExecError::NegativeIndex),
+            (
+                Instruction::Array(array),
+                InstructionWithStr {
+                    instruction: Instruction::Variable(_, Variable::Int(value)),
+                    ..
+                },
+            ) if array.instructions.len() <= (value as usize) => Err(ExecError::IndexToBig),
             (instruction, index) => Ok(Self { instruction, index }.into()),
         }
     }
