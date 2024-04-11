@@ -23,12 +23,14 @@ impl CreateInstruction for Array {
     fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &LocalVariables,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<InstructionWithStr, Error> {
+        let str = pair.as_str().into();
         let inner = pair.into_inner();
         let instructions = inner
             .map(|arg| InstructionWithStr::new_expression(arg, local_variables))
             .collect::<Result<Arc<_>, Error>>()?;
-        Ok(Self::create_from_instructions(instructions))
+        let instruction = Self::create_from_instructions(instructions);
+        Ok(InstructionWithStr { instruction, str })
     }
 }
 impl Array {

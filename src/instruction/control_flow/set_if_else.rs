@@ -27,7 +27,8 @@ impl MutCreateInstruction for SetIfElse {
     fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<InstructionWithStr, Error> {
+        let str = pair.as_str().into();
         let mut inner = pair.into_inner();
         let ident: Arc<str> = inner.next().unwrap().as_str().into();
         let pair = inner.next().unwrap();
@@ -44,14 +45,15 @@ impl MutCreateInstruction for SetIfElse {
             .next()
             .map(|pair| InstructionWithStr::new(pair, local_variables))
             .unwrap_or(Ok(Variable::Void.into()))?;
-        Ok(Self {
+        let instruction = Self {
             ident,
             var_type,
             expression,
             if_match,
             else_instruction,
         }
-        .into())
+        .into();
+        Ok(InstructionWithStr { instruction, str })
     }
 }
 

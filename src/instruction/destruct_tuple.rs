@@ -23,7 +23,8 @@ impl MutCreateInstruction for DestructTuple {
     fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<InstructionWithStr, Error> {
+        let str = pair.as_str().into();
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
         let idents: Arc<[Arc<str>]> = pair.into_inner().map(|pair| pair.as_str().into()).collect();
@@ -38,7 +39,8 @@ impl MutCreateInstruction for DestructTuple {
             instruction,
         };
         result.insert_local_variables(local_variables);
-        Ok(result.into())
+        let instruction = result.into();
+        Ok(InstructionWithStr { instruction, str })
     }
 }
 

@@ -19,7 +19,8 @@ impl MutCreateInstruction for Return {
     fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<InstructionWithStr, Error> {
+        let str = pair.as_str().into();
         let Some(function) = local_variables.function().cloned() else {
             return Err(Error::ReturnOutsideFunction);
         };
@@ -36,7 +37,8 @@ impl MutCreateInstruction for Return {
                 returned,
             });
         }
-        Ok(Self { instruction }.into())
+        let instruction = Self { instruction }.into();
+        Ok(InstructionWithStr { instruction, str })
     }
 }
 

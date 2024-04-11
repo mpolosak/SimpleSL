@@ -37,13 +37,22 @@ pub struct T {
     [LowerOrEqual] [<=]; [LShift] [<<]; [RShift] [>>]
 )]
 impl T {
-    pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
+    pub fn create_op(
+        lhs: InstructionWithStr,
+        rhs: InstructionWithStr,
+    ) -> Result<InstructionWithStr, Error> {
+        let str = format!("{} {} {}", lhs.str, stringify!(op), rhs.str).into();
         let lhs_type = lhs.return_type();
         let rhs_type = rhs.return_type();
         if !Self::can_be_used(&lhs_type, &rhs_type) {
             return Err(Error::CannotDo2(lhs_type, stringify!(op), rhs_type));
         }
-        Self::create_from_instructions(lhs, rhs).to_result()
+        let instruction: Result<Instruction, Error> =
+            Self::create_from_instructions(lhs.instruction, rhs.instruction).to_result();
+        Ok(InstructionWithStr {
+            instruction: instruction?,
+            str,
+        })
     }
 }
 
@@ -139,7 +148,7 @@ impl Equal {
     }
 }
 
-impl Instruction {
+impl InstructionWithStr {
     pub fn create_infix(
         op: Pair<'_, Rule>,
         lhs: Self,
@@ -167,7 +176,11 @@ impl Instruction {
             Rule::lshift => LShift::create_op(lhs, rhs),
             Rule::and => And::create_op(lhs, rhs),
             Rule::or => Or::create_op(lhs, rhs),
-            Rule::reduce => Reduce::create_instruction(lhs, op, rhs, local_variables),
+            Rule::reduce => {
+                let str = format!("{} {} {}", lhs.str, op.as_str(), rhs.str).into();
+                let instruction = Reduce::create_instruction(lhs, op, rhs, local_variables)?;
+                Ok(InstructionWithStr { instruction, str })
+            }
             rule => unexpected(rule),
         }
     }

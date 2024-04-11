@@ -2,7 +2,7 @@ use crate::{
     instruction::{
         local_variable::LocalVariables,
         traits::{ExecResult, ExecStop},
-        Exec, Instruction, Recreate,
+        Exec, Instruction, InstructionWithStr, Recreate,
     },
     interpreter::Interpreter,
     parse::Rule,
@@ -13,24 +13,24 @@ use pest::iterators::Pair;
 
 #[derive(Debug)]
 pub struct Reduce {
-    array: Instruction,
-    initial_value: Instruction,
-    function: Instruction,
+    array: InstructionWithStr,
+    initial_value: InstructionWithStr,
+    function: InstructionWithStr,
 }
 
 impl Reduce {
     pub fn create_instruction(
-        array: Instruction,
+        array: InstructionWithStr,
         initial_value: Pair<Rule>,
-        function: Instruction,
+        function: InstructionWithStr,
         local_variables: &LocalVariables,
     ) -> Result<Instruction, Error> {
-        let initial_value = Instruction::new_expression(initial_value, local_variables)?;
+        let initial_value = InstructionWithStr::new_expression(initial_value, local_variables)?;
         let Some(element_type) = array.return_type().index_result() else {
             return Err(Error::WrongType("array".into(), [Type::Any].into()));
         };
         if let Type::Never = element_type {
-            return Ok(initial_value);
+            return Ok(initial_value.instruction);
         }
         let Some(return_type) = function.return_type().return_type() else {
             return Err(Error::WrongType(

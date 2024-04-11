@@ -20,14 +20,16 @@ impl CreateInstruction for ArrayRepeat {
     fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &LocalVariables,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<InstructionWithStr, Error> {
+        let str = pair.as_str().into();
         let mut inner = pair.into_inner();
         let value = InstructionWithStr::new_expression(inner.next().unwrap(), local_variables)?;
         let len = InstructionWithStr::new_expression(inner.next().unwrap(), local_variables)?;
         if len.return_type() != Type::Int {
             return Err(Error::WrongLengthType(len.str));
         }
-        Ok(Self::create_from_instructions(value, len)?)
+        let instruction = Self::create_from_instructions(value, len)?;
+        Ok(InstructionWithStr { instruction, str })
     }
 }
 

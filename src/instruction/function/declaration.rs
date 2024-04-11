@@ -26,7 +26,8 @@ impl MutCreateInstruction for FunctionDeclaration {
     fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<InstructionWithStr, Error> {
+        let str = pair.as_str().into();
         let mut inner = pair.into_inner();
         let ident: Arc<str> = inner.next().unwrap().as_str().into();
         let mut inner = inner.next().unwrap().into_inner();
@@ -60,13 +61,14 @@ impl MutCreateInstruction for FunctionDeclaration {
                 return_type,
             });
         }
-        Ok(Self {
+        let instruction = Self {
             ident,
             params,
             body,
             return_type,
         }
-        .into())
+        .into();
+        Ok(InstructionWithStr { instruction, str })
     }
 }
 

@@ -29,7 +29,8 @@ impl CreateInstruction for AnonymousFunction {
     fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &LocalVariables,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<InstructionWithStr, Error> {
+        let str = pair.as_str().into();
         let mut inner = pair.into_inner();
         let params_pair = inner.next().unwrap();
         let params = Params(params_pair.into_inner().map(Param::from).collect());
@@ -56,12 +57,13 @@ impl CreateInstruction for AnonymousFunction {
                 return_type,
             });
         }
-        Ok(Self {
+        let instruction = Self {
             params,
             body,
             return_type,
         }
-        .into())
+        .into();
+        Ok(InstructionWithStr { instruction, str })
     }
 }
 

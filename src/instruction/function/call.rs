@@ -23,13 +23,13 @@ use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct FunctionCall {
-    pub function: Instruction,
+    pub function: InstructionWithStr,
     pub args: Arc<[InstructionWithStr]>,
 }
 
 impl FunctionCall {
     pub fn create_instruction(
-        function: Instruction,
+        function: InstructionWithStr,
         args: Pair<Rule>,
         local_variables: &LocalVariables,
     ) -> Result<Instruction, Error> {
@@ -37,7 +37,7 @@ impl FunctionCall {
             .into_inner()
             .map(|pair| InstructionWithStr::new_expression(pair, local_variables))
             .collect::<Result<Arc<_>, Error>>()?;
-        match &function {
+        match &function.instruction {
             Instruction::Variable(Variable::Function(function2)) => {
                 Self::check_args_with_params("function", &function2.params, &args)?;
             }

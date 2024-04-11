@@ -23,7 +23,8 @@ impl MutCreateInstruction for IfElse {
     fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<InstructionWithStr, Error> {
+        let str = pair.as_str().into();
         let mut inner = pair.into_inner();
         let condition_pair = inner.next().unwrap();
         let condition = InstructionWithStr::new(condition_pair, local_variables)?;
@@ -37,20 +38,21 @@ impl MutCreateInstruction for IfElse {
                 || Ok(Variable::Void.into()),
                 |pair| InstructionWithStr::new(pair, local_variables),
             )?;
-            return Ok(Self {
+            let instruction = Self {
                 condition,
                 if_true,
                 if_false,
             }
-            .into());
+            .into();
+            return Ok(InstructionWithStr { instruction, str });
         };
         if condition == 0 {
             return inner.next().map_or_else(
                 || Ok(Variable::Void.into()),
-                |pair| Instruction::new(pair, local_variables),
+                |pair| InstructionWithStr::new(pair, local_variables),
             );
         }
-        Instruction::new(true_pair, local_variables)
+        InstructionWithStr::new(true_pair, local_variables)
     }
 }
 

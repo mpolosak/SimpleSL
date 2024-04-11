@@ -13,13 +13,13 @@ use pest::iterators::Pair;
 
 #[derive(Debug)]
 pub struct At {
-    instruction: Instruction,
+    instruction: InstructionWithStr,
     index: InstructionWithStr,
 }
 
 impl At {
     pub fn create_instruction(
-        instruction: Instruction,
+        instruction: InstructionWithStr,
         index: Pair<Rule>,
         local_variables: &LocalVariables,
     ) -> Result<Instruction, Error> {
@@ -39,12 +39,15 @@ impl At {
 
 impl At {
     fn create_from_instructions(
-        instruction: Instruction,
+        instruction: InstructionWithStr,
         index: InstructionWithStr,
     ) -> Result<Instruction, ExecError> {
         match (instruction, index) {
             (
-                Instruction::Variable(variable),
+                InstructionWithStr {
+                    instruction: Instruction::Variable(variable),
+                    ..
+                },
                 InstructionWithStr {
                     instruction: Instruction::Variable(index),
                     ..
@@ -58,7 +61,10 @@ impl At {
                 },
             ) if value < 0 => Err(ExecError::NegativeIndex),
             (
-                Instruction::Array(array),
+                InstructionWithStr {
+                    instruction: Instruction::Array(array),
+                    ..
+                },
                 InstructionWithStr {
                     instruction: Instruction::Variable(Variable::Int(value)),
                     ..

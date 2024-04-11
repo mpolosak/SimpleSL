@@ -19,14 +19,17 @@ pub struct T {
     pub instruction: Instruction,
 }
 
-impl Instruction {
+impl InstructionWithStr {
     pub fn create_prefix(op: Pair<'_, Rule>, rhs: Self) -> Result<Self, Error> {
-        match op.as_rule() {
-            Rule::not => Not::create_instruction(rhs),
-            Rule::bitwise_not => BitwiseNot::create_instruction(rhs),
-            Rule::unary_minus => UnaryMinus::create_instruction(rhs),
+        let instruction = rhs.instruction;
+        let instruction = match op.as_rule() {
+            Rule::not => Not::create_instruction(instruction),
+            Rule::bitwise_not => BitwiseNot::create_instruction(instruction),
+            Rule::unary_minus => UnaryMinus::create_instruction(instruction),
             rule => unexpected(rule),
-        }
+        }?;
+        let str = format!("{} {}", op.as_str(), rhs.str).into();
+        Ok(Self { instruction, str })
     }
 }
 

@@ -22,7 +22,8 @@ impl MutCreateInstruction for Match {
     fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<InstructionWithStr, Error> {
+        let str = pair.as_str().into();
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
         let expression = InstructionWithStr::new(pair, local_variables)?;
@@ -34,7 +35,8 @@ impl MutCreateInstruction for Match {
         if !result.is_covering_type(&var_type) {
             return Err(Error::MatchNotCovered);
         }
-        Ok(result.into())
+        let instruction = result.into();
+        Ok(InstructionWithStr { instruction, str })
     }
 }
 

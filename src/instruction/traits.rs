@@ -14,7 +14,7 @@ use super::{
     r#return::Return,
     set::Set,
     type_filter::TypeFilter,
-    FunctionCall, Instruction,
+    FunctionCall, Instruction, InstructionWithStr,
 };
 use crate::{parse::Rule, variable::ReturnType, Error};
 use duplicate::duplicate_item;
@@ -29,14 +29,14 @@ pub trait CreateInstruction {
     fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &LocalVariables,
-    ) -> Result<Instruction, Error>;
+    ) -> Result<InstructionWithStr, Error>;
 }
 
 pub trait MutCreateInstruction {
     fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, Error>;
+    ) -> Result<InstructionWithStr, Error>;
 }
 
 pub trait BaseInstruction: Exec + Recreate + ReturnType + Debug + Sync + Send {}

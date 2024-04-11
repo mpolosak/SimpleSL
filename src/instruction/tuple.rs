@@ -20,12 +20,14 @@ impl CreateInstruction for Tuple {
     fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &LocalVariables,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<InstructionWithStr, Error> {
+        let str = pair.as_str().into();
         let elements = pair
             .into_inner()
             .map(|pair| InstructionWithStr::new_expression(pair, local_variables))
             .collect::<Result<Arc<[InstructionWithStr]>, Error>>()?;
-        Ok(Self::create_from_elements(elements))
+        let instruction = Self::create_from_elements(elements);
+        Ok(InstructionWithStr { instruction, str })
     }
 }
 

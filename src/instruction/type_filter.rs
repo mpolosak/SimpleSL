@@ -9,15 +9,17 @@ use crate::{
 };
 use pest::iterators::Pair;
 
+use super::InstructionWithStr;
+
 #[derive(Debug)]
 pub struct TypeFilter {
-    array: Instruction,
+    array: InstructionWithStr,
     var_type: Type,
 }
 
 impl TypeFilter {
     pub fn create_instruction(
-        array: Instruction,
+        array: InstructionWithStr,
         var_type: Pair<Rule>,
     ) -> Result<Instruction, Error> {
         let array_type = array.return_type();

@@ -20,13 +20,16 @@ impl CreateInstruction for Block {
     fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &LocalVariables,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<InstructionWithStr, Error> {
+        let str = pair.as_str().into();
         let mut local_variables = local_variables.create_layer();
         let instructions = local_variables.create_instructions(pair.into_inner())?;
-        if instructions.is_empty() {
-            return Ok(Instruction::Variable(Variable::Void));
-        }
-        Ok(Self { instructions }.into())
+        let instruction = if instructions.is_empty() {
+            Variable::Void.into()
+        } else {
+            Self { instructions }.into()
+        };
+        Ok(InstructionWithStr { instruction, str })
     }
 }
 

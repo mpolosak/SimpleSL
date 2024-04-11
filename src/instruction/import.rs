@@ -22,18 +22,20 @@ impl MutCreateInstruction for Import {
     fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<InstructionWithStr, Error> {
+        let str = pair.as_str().into();
         let Variable::String(path) = Variable::try_from(pair.into_inner().next().unwrap())? else {
             unreachable!()
         };
         let instructions = local_variables.load(&path)?;
         if instructions.is_empty() {
-            return Ok(Instruction::Variable(Variable::Void));
+            return Ok(Variable::Void.into());
         }
-        // if let [element] = instructions.as_ref() {
-        //     return Ok(element.clone());
-        // }
-        Ok(Self { instructions }.into())
+        if let [element] = instructions.as_ref() {
+            return Ok(element.clone());
+        }
+        let instruction = Self { instructions }.into();
+        Ok(InstructionWithStr { instruction, str })
     }
 }
 
