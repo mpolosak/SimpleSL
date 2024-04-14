@@ -39,16 +39,16 @@ impl FunctionCall {
             .collect::<Result<Arc<_>, Error>>()?;
         match &function.instruction {
             Instruction::Variable(Variable::Function(function2)) => {
-                Self::check_args_with_params("function", &function2.params, &args)?;
+                Self::check_args_with_params(&function.str, &function2.params, &args)?;
             }
             Instruction::LocalVariable(ident, LocalVariable::Function(params, _)) => {
                 Self::check_args_with_params(ident, params, &args)?;
             }
             Instruction::AnonymousFunction(AnonymousFunction { params, .. }) => {
-                Self::check_args_with_params("function", params, &args)?;
+                Self::check_args_with_params(&function.str, params, &args)?;
             }
             instruction => {
-                Self::check_args_with_type("function", &instruction.return_type(), &args)?;
+                Self::check_args_with_type(&function.str, &instruction.return_type(), &args)?;
             }
         };
         Ok(Self { function, args }.into())
