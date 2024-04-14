@@ -35,6 +35,7 @@ pub enum Error {
         return_type: Type,
     },
     WrongLengthType(Arc<str>),
+    NotAFunction(Arc<str>)
 }
 
 impl PartialEq for Error {
@@ -45,7 +46,8 @@ impl PartialEq for Error {
             | (Self::CannotIndexInto(l0), Self::CannotIndexInto(r0))
             | (Self::CannotIndexWith(l0), Self::CannotIndexWith(r0))
             | (Self::Parsing(l0), Self::Parsing(r0))
-            | (Self::IntegerOverflow(l0), Self::IntegerOverflow(r0)) => l0 == r0,
+            | (Self::IntegerOverflow(l0), Self::IntegerOverflow(r0))
+            | (Self::NotAFunction(l0), Self::NotAFunction(r0)) => l0 == r0,
             (Self::WrongType(l0, l1), Self::WrongType(r0, r1))
             | (Self::WrongNumberOfArguments(l0, l1), Self::WrongNumberOfArguments(r0, r1))
             | (Self::CannotDo(l0, l1), Self::CannotDo(r0, r1)) => l0 == r0 && l1 == r1,
@@ -162,6 +164,7 @@ impl fmt::Display for Error {
                     .unwrap_or("".into())
             ),
             Self::WrongLengthType(str)=>write!(f, "Cannot create array of length {str}. Length must be int"),
+            Self::NotAFunction(str) => write!(f, "Cannot call {str}. It is not a function")
         }
     }
 }

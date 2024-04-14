@@ -37,6 +37,10 @@ impl FunctionCall {
             .into_inner()
             .map(|pair| InstructionWithStr::new_expression(pair, local_variables))
             .collect::<Result<Arc<_>, Error>>()?;
+        let f_type = function.return_type();
+        if !f_type.is_function() {
+            return Err(Error::NotAFunction(function.str));
+        }
         match &function.instruction {
             Instruction::Variable(Variable::Function(function2)) => {
                 Self::check_args_with_params(&function.str, &function2.params, &args)?;
@@ -47,8 +51,8 @@ impl FunctionCall {
             Instruction::AnonymousFunction(AnonymousFunction { params, .. }) => {
                 Self::check_args_with_params(&function.str, params, &args)?;
             }
-            instruction => {
-                Self::check_args_with_type(&function.str, &instruction.return_type(), &args)?;
+            _ => {
+                Self::check_args_with_type(&function.str, &f_type, &args)?;
             }
         };
         Ok(Self { function, args }.into())

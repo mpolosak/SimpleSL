@@ -134,6 +134,17 @@ impl Type {
             _ => None,
         }
     }
+
+    /// Returns true if self is a function, false otherwise
+    pub fn is_function(&self) -> bool{
+        match self {
+            Self::Function(_) => true,
+            Self::Multi(multi) => {
+                multi.iter().all(Self::is_function)
+            }
+            _ => false
+        }
+    }
 }
 
 impl Display for Type {
