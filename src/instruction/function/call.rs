@@ -1,5 +1,5 @@
 use crate::{
-    function::{check_args, Params},
+    function::{Function, Params},
     instruction::{
         traits::{ExecResult, ExecStop},
         InstructionWithStr,
@@ -19,7 +19,7 @@ use crate::{
     parse::Rule,
 };
 use pest::iterators::Pair;
-use std::sync::Arc;
+use std::{iter::zip, sync::Arc};
 
 #[derive(Debug)]
 pub struct FunctionCall {
@@ -37,10 +37,6 @@ impl FunctionCall {
             .into_inner()
             .map(|pair| InstructionWithStr::new_expression(pair, local_variables))
             .collect::<Result<Arc<_>, Error>>()?;
-        let f_type = function.return_type();
-        if !f_type.is_function() {
-            return Err(Error::NotAFunction(function.str));
-        }
         match &function.instruction {
             Instruction::Variable(Variable::Function(function2)) => {
                 Self::check_args_with_params(&function.str, &function2.params, &args)?;
@@ -52,24 +48,49 @@ impl FunctionCall {
                 Self::check_args_with_params(&function.str, params, &args)?;
             }
             _ => {
+                let f_type = function.return_type();
+                if !f_type.is_function() {
+                    return Err(Error::NotAFunction(function.str));
+                }
                 Self::check_args_with_type(&function.str, &f_type, &args)?;
             }
         };
         Ok(Self { function, args }.into())
     }
+    pub fn create_from_variables(
+        ident: Arc<str>,
+        function: Arc<Function>,
+        args: Vec<Variable>,
+    ) -> Result<Instruction, Error> {
+        let args: Arc<[InstructionWithStr]> =
+            args.into_iter().map(InstructionWithStr::from).collect();
+        Self::check_args_with_params(&ident, &function.params, &args)?;
+        Ok(FunctionCall {
+            function: Variable::Function(function).into(),
+            args,
+        }
+        .into())
+    }
     fn check_args_with_params(
-        ident: &str,
+        ident: &Arc<str>,
         params: &Params,
         args: &[InstructionWithStr],
     ) -> Result<(), Error> {
-        check_args(
-            ident,
-            params,
-            &args
-                .iter()
-                .map(ReturnType::return_type)
-                .collect::<Box<[Type]>>(),
-        )
+        if params.len() != args.len() {
+            return Err(Error::WrongNumberOfArguments(ident.clone(), params.len()));
+        }
+        for (arg, param) in zip(args, params.iter()) {
+            let arg_type = arg.return_type();
+            if !arg_type.matches(&param.var_type) {
+                return Err(Error::WrongArgument {
+                    function: ident.clone(),
+                    param: param.clone(),
+                    given: arg.str.clone(),
+                    given_type: arg_type,
+                });
+            }
+        }
+        Ok(())
     }
     fn check_args_with_type(
         pair_str: &str,

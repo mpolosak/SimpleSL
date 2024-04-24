@@ -1,11 +1,7 @@
 mod body;
-mod check_args;
 mod param;
 pub(crate) use self::body::Body;
-pub use self::{
-    check_args::check_args,
-    param::{Param, Params},
-};
+pub use self::param::{Param, Params};
 use crate::{
     instruction::{ExecStop, FunctionCall, InstructionWithStr},
     interpreter::Interpreter,
@@ -40,14 +36,7 @@ impl Function {
     pub fn create_call(self: Arc<Self>, args: Vec<Variable>) -> Result<Code, Error> {
         let ident = self.ident.clone().unwrap_or_else(|| Arc::from("function"));
         let str = format!("{}({})", ident, join(args.iter(), ", ")).into();
-        let types = args.iter().map(Typed::as_type).collect::<Box<[Type]>>();
-        let args = args.into_iter().map(InstructionWithStr::from).collect();
-        check_args(&ident, &self.params, &types)?;
-        let instruction = FunctionCall {
-            function: Variable::Function(self).into(),
-            args,
-        }
-        .into();
+        let instruction = FunctionCall::create_from_variables(ident, self, args)?;
         Ok(Code {
             instructions: Arc::new([InstructionWithStr { instruction, str }]),
         })

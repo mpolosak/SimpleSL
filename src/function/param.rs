@@ -2,7 +2,7 @@ use crate::{instruction::local_variable::LocalVariableMap, join, parse::Rule, va
 use pest::iterators::Pair;
 use std::{fmt, ops::Deref, sync::Arc};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Param {
     pub name: Arc<str>,
     pub var_type: Type,

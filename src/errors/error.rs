@@ -1,4 +1,4 @@
-use crate::{parse::Rule, variable::Type, ExecError};
+use crate::{function::Param, parse::Rule, variable::Type, ExecError};
 use match_any::match_any;
 use std::{fmt, sync::Arc};
 
@@ -6,7 +6,7 @@ use std::{fmt, sync::Arc};
 pub enum Error {
     VariableDoesntExist(Arc<str>),
     WrongType(Arc<str>, Type),
-    WrongNumberOfArguments(Box<str>, usize),
+    WrongNumberOfArguments(Arc<str>, usize),
     IndexToBig,
     NegativeIndex,
     NegativeLength,
@@ -35,7 +35,13 @@ pub enum Error {
         return_type: Type,
     },
     WrongLengthType(Arc<str>),
-    NotAFunction(Arc<str>)
+    NotAFunction(Arc<str>),
+    WrongArgument {
+        function: Arc<str>,
+        param: Param,
+        given: Arc<str>,
+        given_type: Type,
+    },
 }
 
 impl PartialEq for Error {
@@ -72,6 +78,9 @@ impl PartialEq for Error {
                 function_name == function_name2
                     && function_return_type == function_return_type2
                     && returned == returned2
+            },
+            (Self::WrongArgument{ function: f, param: p, given: g, given_type: gt }, Self::WrongArgument{ function: f2, param: p2, given: g2, given_type: gt2 }) => {
+                f == f2 && p == p2 && g == g2 && gt == gt2
             },
             _ => core::mem::discriminant(self) == core::mem::discriminant(other)
         }
@@ -164,7 +173,10 @@ impl fmt::Display for Error {
                     .unwrap_or("".into())
             ),
             Self::WrongLengthType(str)=>write!(f, "Cannot create array of length {str}. Length must be int"),
-            Self::NotAFunction(str) => write!(f, "Cannot call {str}. It is not a function")
+            Self::NotAFunction(str) => write!(f, "Cannot call {str}. It is not a function"),
+            Self::WrongArgument { function, param, given, given_type }=>{
+                write!(f, "Argument {} of function {function} needs to be {}. But {given} that is {given_type} was given", param.name, param.var_type)
+            }
         }
     }
 }
