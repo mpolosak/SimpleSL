@@ -1,11 +1,11 @@
 use crate::{
-    function::{Function, Params},
+    function::{Function, Param, Params},
     instruction::{
         traits::{ExecResult, ExecStop},
         InstructionWithStr,
     },
     interpreter::Interpreter,
-    variable::{FunctionType, ReturnType, Type, Variable},
+    variable::{ReturnType, Type, Variable},
     Error, ExecError,
 };
 use crate::{
@@ -52,7 +52,18 @@ impl FunctionCall {
                 if !f_type.is_function() {
                     return Err(Error::NotAFunction(function.str));
                 }
-                Self::check_args_with_type(&function.str, &f_type, &args)?;
+                let Some(params) = f_type.params() else {
+                    return Err(Error::CannotDetermineParams(function.str));
+                };
+                let params = params
+                    .iter()
+                    .enumerate()
+                    .map(|(i, var_type)| Param {
+                        name: format!("#{i}").into(),
+                        var_type: var_type.clone(),
+                    })
+                    .collect();
+                Self::check_args_with_params(&function.str, &Params(params), &args)?;
             }
         };
         Ok(Self { function, args }.into())
@@ -89,25 +100,6 @@ impl FunctionCall {
                     given_type: arg_type,
                 });
             }
-        }
-        Ok(())
-    }
-    fn check_args_with_type(
-        pair_str: &str,
-        var_type: &Type,
-        args: &[InstructionWithStr],
-    ) -> Result<(), Error> {
-        let params = args
-            .iter()
-            .map(ReturnType::return_type)
-            .collect::<Arc<[Type]>>();
-        let expected = FunctionType {
-            params,
-            return_type: Type::Any,
-        }
-        .into();
-        if !var_type.matches(&expected) {
-            return Err(Error::WrongType(pair_str.into(), expected));
         }
         Ok(())
     }

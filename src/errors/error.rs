@@ -42,6 +42,7 @@ pub enum Error {
         given: Arc<str>,
         given_type: Type,
     },
+    CannotDetermineParams(Arc<str>),
 }
 
 impl PartialEq for Error {
@@ -53,7 +54,8 @@ impl PartialEq for Error {
             | (Self::CannotIndexWith(l0), Self::CannotIndexWith(r0))
             | (Self::Parsing(l0), Self::Parsing(r0))
             | (Self::IntegerOverflow(l0), Self::IntegerOverflow(r0))
-            | (Self::NotAFunction(l0), Self::NotAFunction(r0)) => l0 == r0,
+            | (Self::NotAFunction(l0), Self::NotAFunction(r0))
+            | (Self::CannotDetermineParams(l0), Self::CannotDetermineParams(r0)) => l0 == r0,
             (Self::WrongType(l0, l1), Self::WrongType(r0, r1))
             | (Self::WrongNumberOfArguments(l0, l1), Self::WrongNumberOfArguments(r0, r1))
             | (Self::CannotDo(l0, l1), Self::CannotDo(r0, r1)) => l0 == r0 && l1 == r1,
@@ -176,7 +178,8 @@ impl fmt::Display for Error {
             Self::NotAFunction(str) => write!(f, "Cannot call {str}. It is not a function"),
             Self::WrongArgument { function, param, given, given_type }=>{
                 write!(f, "Argument {} of function {function} needs to be {}. But {given} that is {given_type} was given", param.name, param.var_type)
-            }
+            },
+            Self::CannotDetermineParams(function) => write!(f, "Cannot determine params of function {function}"),
         }
     }
 }
