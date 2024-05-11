@@ -64,7 +64,7 @@ impl Function {
 
 impl Typed for Function {
     fn as_type(&self) -> Type {
-        let params: Box<[Type]> = self
+        let params: Arc<[Type]> = self
             .params
             .iter()
             .map(|Param { name: _, var_type }| var_type.clone())

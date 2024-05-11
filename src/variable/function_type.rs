@@ -1,11 +1,11 @@
 use super::{ReturnType, Type};
 use crate::{join, parse::Rule};
 use pest::iterators::Pair;
-use std::{fmt::Display, iter::zip, ops::BitOr};
+use std::{fmt::Display, iter::zip, ops::BitOr, sync::Arc};
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct FunctionType {
-    pub params: Box<[Type]>,
+    pub params: Arc<[Type]>,
     pub return_type: Type,
 }
 
@@ -61,7 +61,7 @@ impl<T: Into<Type>> BitOr<T> for FunctionType {
 impl From<Pair<'_, Rule>> for FunctionType {
     fn from(pair: Pair<'_, Rule>) -> Self {
         let mut pairs = pair.into_inner();
-        let params: Box<[Type]> = pairs.next().unwrap().into_inner().map(Type::from).collect();
+        let params: Arc<[Type]> = pairs.next().unwrap().into_inner().map(Type::from).collect();
         let return_type = Type::from(pairs.next().unwrap());
         Self {
             params,

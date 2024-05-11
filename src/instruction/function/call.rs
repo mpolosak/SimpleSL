@@ -100,7 +100,7 @@ impl FunctionCall {
         let params = args
             .iter()
             .map(ReturnType::return_type)
-            .collect::<Box<[Type]>>();
+            .collect::<Arc<[Type]>>();
         let expected = FunctionType {
             params,
             return_type: Type::Any,

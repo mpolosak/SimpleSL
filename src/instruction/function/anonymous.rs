@@ -105,7 +105,7 @@ impl From<AnonymousFunction> for Instruction {
 
 impl ReturnType for AnonymousFunction {
     fn return_type(&self) -> Type {
-        let params: Box<[Type]> = self
+        let params: Arc<[Type]> = self
             .params
             .iter()
             .map(|param| param.var_type.clone())

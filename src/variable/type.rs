@@ -147,6 +147,28 @@ impl Type {
         }
     }
 
+    pub fn params(&self) -> Option<Arc<[Type]>> {
+        match self {
+            Type::Function(function) => Some(function.params.clone()),
+            Type::Multi(multi) => {
+                let mut iter = multi.iter();
+                let first = iter.next().unwrap().params()?;
+                iter.map(Self::params).try_fold(first, |acc, curr| {
+                    let curr = curr?;
+                    if acc.len() != curr.len() {
+                        return None;
+                    }
+                    Some(
+                        zip(acc.iter(), curr.iter())
+                            .map(|(type1, type2)| type1.conjoin(type2))
+                            .collect(),
+                    )
+                })
+            }
+            _ => None,
+        }
+    }
+
     pub fn return_type(&self) -> Option<Type> {
         match self {
             Type::Function(function) => Some(function.return_type()),
@@ -542,6 +564,38 @@ mod tests {
         assert_eq!(parse_type!("[int]|float").index_result(), None);
         assert_eq!(parse_type!("any").index_result(), None);
         assert_eq!(parse_type!("string | (int, float)").index_result(), None);
+    }
+
+    #[test]
+    fn params() {
+        assert_eq!(parse_type!("()->int").params(), Some([].into()));
+        assert_eq!(parse_type!("(int)->int").params(), Some([Type::Int].into()));
+        assert_eq!(
+            parse_type!("(int)->int | (int|float)->()").params(),
+            Some([Type::Int].into())
+        );
+        assert_eq!(
+            parse_type!("(int)->int | (int|float)->() | (string) -> any").params(),
+            Some([Type::Never].into())
+        );
+        assert_eq!(
+            parse_type!("(int, float)->int | (int|float, float | string)->()").params(),
+            Some([Type::Int, Type::Float].into())
+        );
+        assert_eq!(
+            parse_type!("(int)->int | (int|float, float | string)->()").params(),
+            None
+        );
+        assert_eq!(
+            parse_type!("(int)->int | (int|float)->() | () -> any").params(),
+            None
+        );
+        assert_eq!(
+            parse_type!("(int)->int | (int|float)->() | any").params(),
+            None
+        );
+        assert_eq!(parse_type!("int").params(), None);
+        assert_eq!(parse_type!("float").params(), None);
     }
 
     #[test]

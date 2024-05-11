@@ -34,7 +34,7 @@ impl Map {
         let Some(params) = types
             .iter()
             .map(Type::index_result)
-            .collect::<Option<Box<[Type]>>>()
+            .collect::<Option<Arc<[Type]>>>()
         else {
             return false;
         };
