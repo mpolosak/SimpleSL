@@ -68,6 +68,46 @@ impl Type {
         }
     }
 
+    pub fn conjoin(&self, other: &Self) -> Self {
+        match (self, other) {
+            (first, second) if first == second => first.clone(),
+            (other, Type::Any) | (Type::Any, other) => other.clone(),
+            (Type::Array(elm1), Type::Array(elm2)) => Type::Array(elm1.conjoin(elm2).into()),
+            (Type::Tuple(types1), Type::Tuple(types2)) => {
+                if types1.len() != types2.len() {
+                    return Type::Never;
+                }
+                let types = zip(types1.iter(), types2.iter())
+                    .map(|(type1, type2)| type1.conjoin(type2))
+                    .collect();
+                Type::Tuple(types)
+            }
+            (Type::Multi(multi), other) | (other, Type::Multi(multi)) => multi
+                .iter()
+                .map(|var_type| var_type.conjoin(other))
+                .reduce(Type::concat)
+                .unwrap_or(Type::Never),
+            (Type::Function(fn1), Type::Function(fn2)) => {
+                if fn1.params.len() != fn2.params.len() {
+                    return Type::Never;
+                }
+                let return_type = fn1.return_type.conjoin(&fn2.return_type);
+                if return_type == Type::Never {
+                    return Type::Never;
+                }
+                let params = zip(fn1.params.iter().cloned(), fn2.params.iter().cloned())
+                    .map(|(type1, type2)| type1.concat(type2))
+                    .collect();
+                FunctionType {
+                    params,
+                    return_type,
+                }
+                .into()
+            }
+            _ => Type::Never,
+        }
+    }
+
     /// Flatten self to single tuple
     pub fn flatten_tuple(self) -> Option<Arc<[Type]>> {
         match self {
@@ -136,13 +176,11 @@ impl Type {
     }
 
     /// Returns true if self is a function, false otherwise
-    pub fn is_function(&self) -> bool{
+    pub fn is_function(&self) -> bool {
         match self {
             Self::Function(_) => true,
-            Self::Multi(multi) => {
-                multi.iter().all(Self::is_function)
-            }
-            _ => false
+            Self::Multi(multi) => multi.iter().all(Self::is_function),
+            _ => false,
         }
     }
 }
@@ -273,6 +311,8 @@ pub(crate) use parse_type;
 mod tests {
     use std::str::FromStr;
 
+    use itertools::iproduct;
+
     use crate::{
         errors::ParseTypeError,
         variable::{parse_type, FunctionType, Type},
@@ -363,6 +403,70 @@ mod tests {
         assert!(var_type.matches(&var_type2));
         assert!(var_type2.matches(&var_type2));
         assert!(!var_type2.matches(&var_type));
+    }
+
+    #[test]
+    fn conjoin() {
+        let types = [
+            Type::Int,
+            Type::Float,
+            Type::Int,
+            Type::String,
+            [Type::Any].into(),
+            (Type::Float, Type::String, Type::String | Type::Float).into(),
+            Type::from_str("(int, string)->float").unwrap(),
+        ];
+        for var_type in types.iter() {
+            assert_eq!(&var_type.conjoin(var_type), var_type);
+        }
+        iproduct!(&types, &types)
+            .filter(|(t1, t2)| t1 != t2)
+            .for_each(|(t1, t2)| assert_eq!(t1.conjoin(t2), Type::Never));
+        let types = [
+            (
+                parse_type!("int|float"),
+                parse_type!("float|string"),
+                parse_type!("float"),
+            ),
+            (
+                parse_type!("(int|float) -> (int|string)"),
+                parse_type!("(string) -> (int|float)"),
+                parse_type!("(int|float|string) -> int"),
+            ),
+            (
+                parse_type!("(int|float) -> string"),
+                parse_type!("(string) -> (int|float)"),
+                Type::Never,
+            ),
+            (
+                parse_type!("(int|float) -> (int|string)"),
+                parse_type!("(string, any) -> (int|float)"),
+                Type::Never,
+            ),
+            (
+                parse_type!("(int|float, string) -> ([int]|[float])"),
+                parse_type!("(string, any) -> [int|float]"),
+                parse_type!("(int|float|string, any) -> ([int]|[float])"),
+            ),
+            (
+                parse_type!("[int|float]"),
+                parse_type!("[int|string]"),
+                parse_type!("[int]"),
+            ),
+            (
+                parse_type!("(int, float)"),
+                parse_type!("(int, float, string)"),
+                Type::Never,
+            ),
+            (
+                parse_type!("(int|float, string)"),
+                parse_type!("(int|string, float|string)"),
+                parse_type!("(int, string)"),
+            ),
+        ];
+        for (type1, type2, result) in types {
+            assert_eq!(type1.conjoin(&type2), result);
+        }
     }
 
     #[test]

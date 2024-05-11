@@ -21,3 +21,6 @@ typle = "0.9.2"
 simplesl_macros = { path="macros", version="0.1.0" }
 match_any = "1.0.1"
 duplicate = "1"
+
+[dev-dependencies]
+itertools="0.12"
