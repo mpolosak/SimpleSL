@@ -3,7 +3,6 @@ use crate::instruction::{Divide, Modulo};
 use crate::variable::Variable;
 use crate::ExecError;
 use duplicate::duplicate_item;
-use match_any::match_any;
 use std::sync::Arc;
 
 #[duplicate_item(T error operation symbol;
@@ -14,20 +13,18 @@ impl T {
         dividend: Instruction,
         divisor: Instruction,
     ) -> Result<Instruction, ExecError> {
-        match_any! {(dividend, divisor),
+        match (dividend, divisor) {
             (Instruction::Variable(dividend), Instruction::Variable(divisor)) => {
                 Ok(Self::exec(dividend, divisor)?.into())
-            },
+            }
             (_, Instruction::Variable(Variable::Int(0))) => Err(ExecError::error),
-            (Instruction::ArrayRepeat(array), rhs)
-            => Arc::unwrap_or_clone(array)
+            (Instruction::ArrayRepeat(array), rhs) => Arc::unwrap_or_clone(array)
                 .try_map(|lhs| Self::create_from_instructions(lhs, rhs.clone()))
                 .map(Instruction::from),
-            (lhs, Instruction::ArrayRepeat(array))
-            => Arc::unwrap_or_clone(array)
+            (lhs, Instruction::ArrayRepeat(array)) => Arc::unwrap_or_clone(array)
                 .try_map(|rhs| Self::create_from_instructions(lhs.clone(), rhs))
                 .map(Instruction::from),
-            (lhs, rhs) => Ok(Self { lhs, rhs }.into())
+            (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
         }
     }
 
