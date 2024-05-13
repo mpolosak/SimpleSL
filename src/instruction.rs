@@ -140,6 +140,16 @@ impl InstructionWithStr {
             str: self.str,
         }
     }
+    pub fn try_map<F, E>(self, f: F) -> Result<Self, E>
+    where
+        F: FnOnce(Instruction) -> Result<Instruction, E>,
+    {
+        let instruction = f(self.instruction)?;
+        Ok(Self {
+            instruction,
+            str: self.str,
+        })
+    }
 }
 
 impl Exec for InstructionWithStr {

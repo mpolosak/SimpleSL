@@ -1,7 +1,9 @@
+use std::sync::Arc;
+
 use crate::instruction::array::Array;
 use crate::instruction::array_repeat::ArrayRepeat;
+use crate::instruction::Instruction;
 use crate::instruction::{Divide, Modulo};
-use crate::instruction::{Instruction, InstructionWithStr};
 use crate::variable::Variable;
 use crate::ExecError;
 use duplicate::duplicate_item;
@@ -24,15 +26,7 @@ impl T {
                     .instructions
                     .iter()
                     .cloned()
-                    .map(
-                        |InstructionWithStr {
-                             instruction: lhs,
-                             str,
-                         }| {
-                            let instruction = Self::create_from_instructions(lhs, rhs.clone())?;
-                            Ok(InstructionWithStr { instruction, str })
-                        },
-                    )
+                    .map(|iws| iws.try_map(|lhs| Self::create_from_instructions(lhs, rhs.clone())))
                     .collect::<Result<_, _>>()?;
                 Ok(Array {
                     instructions,
@@ -45,15 +39,7 @@ impl T {
                     .instructions
                     .iter()
                     .cloned()
-                    .map(
-                        |InstructionWithStr {
-                             instruction: rhs,
-                             str,
-                         }| {
-                            let instruction = Self::create_from_instructions(lhs.clone(), rhs)?;
-                            Ok(InstructionWithStr { instruction, str })
-                        },
-                    )
+                    .map(|iws| iws.try_map(|rhs| Self::create_from_instructions(lhs.clone(), rhs)))
                     .collect::<Result<_, _>>()?;
                 Ok(Array {
                     instructions,
@@ -62,28 +48,24 @@ impl T {
                 .into())
             }
             (Instruction::ArrayRepeat(array_repeat), rhs) => {
-                let value =
-                    Self::create_from_instructions(array_repeat.value.instruction.clone(), rhs)?;
-                let value = InstructionWithStr {
-                    instruction: value,
-                    str: array_repeat.value.str.clone(),
-                };
+                let array_repeat = Arc::unwrap_or_clone(array_repeat);
+                let value = array_repeat
+                    .value
+                    .try_map(|lhs| Self::create_from_instructions(lhs, rhs))?;
                 Ok(ArrayRepeat {
                     value,
-                    len: array_repeat.len.clone(),
+                    len: array_repeat.len,
                 }
                 .into())
             }
             (lhs, Instruction::ArrayRepeat(array_repeat)) => {
-                let value =
-                    Self::create_from_instructions(lhs, array_repeat.value.instruction.clone())?;
-                let value = InstructionWithStr {
-                    instruction: value,
-                    str: array_repeat.value.str.clone(),
-                };
+                let array_repeat = Arc::unwrap_or_clone(array_repeat);
+                let value = array_repeat
+                    .value
+                    .try_map(|rhs| Self::create_from_instructions(lhs, rhs))?;
                 Ok(ArrayRepeat {
                     value,
-                    len: array_repeat.len.clone(),
+                    len: array_repeat.len,
                 }
                 .into())
             }
