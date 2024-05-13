@@ -1,7 +1,6 @@
 use crate::instruction::InstructionWithStr;
 use crate::instruction::{
-    local_variable::LocalVariables, traits::ExecResult, traits::MutCreateInstruction, Exec,
-    Instruction, Recreate,
+    local_variable::LocalVariables, traits::ExecResult, Exec, Instruction, Recreate,
 };
 use crate::ExecError;
 use crate::{
@@ -19,12 +18,11 @@ pub struct IfElse {
     if_false: InstructionWithStr,
 }
 
-impl MutCreateInstruction for IfElse {
-    fn create_instruction(
+impl IfElse {
+    pub fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
-    ) -> Result<InstructionWithStr, Error> {
-        let str = pair.as_str().into();
+    ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let condition_pair = inner.next().unwrap();
         let condition = InstructionWithStr::new(condition_pair, local_variables)?;
@@ -38,21 +36,20 @@ impl MutCreateInstruction for IfElse {
                 || Ok(Variable::Void.into()),
                 |pair| InstructionWithStr::new(pair, local_variables),
             )?;
-            let instruction = Self {
+            return Ok(Self {
                 condition,
                 if_true,
                 if_false,
             }
-            .into();
-            return Ok(InstructionWithStr { instruction, str });
+            .into());
         };
         if condition == 0 {
             return inner.next().map_or_else(
                 || Ok(Variable::Void.into()),
-                |pair| InstructionWithStr::new(pair, local_variables),
+                |pair| InstructionWithStr::new(pair, local_variables).map(|iws| iws.instruction),
             );
         }
-        InstructionWithStr::new(true_pair, local_variables)
+        InstructionWithStr::new(true_pair, local_variables).map(|iws| iws.instruction)
     }
 }
 

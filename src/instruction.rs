@@ -42,9 +42,7 @@ pub(crate) use function::FunctionCall;
 use match_any::match_any;
 use pest::iterators::Pair;
 use std::sync::Arc;
-pub(crate) use traits::{
-    CreateInstruction, Exec, ExecResult, ExecStop, MutCreateInstruction, Recreate,
-};
+pub(crate) use traits::{CreateInstruction, Exec, ExecResult, ExecStop, Recreate};
 
 #[derive(Debug, Clone)]
 pub struct InstructionWithStr {
@@ -58,15 +56,13 @@ impl InstructionWithStr {
         if rule == Rule::expr {
             return Self::new_expression(pair, local_variables);
         }
-        if rule == Rule::if_else {
-            return IfElse::create_instruction(pair, local_variables);
-        }
         let str = pair.as_str().into();
         let instruction = match rule {
             Rule::set => Set::create_instruction(pair, local_variables),
             Rule::destruct_tuple => DestructTuple::create_instruction(pair, local_variables),
             Rule::block => Block::create_instruction(pair, local_variables),
             Rule::import => Import::create_instruction(pair, local_variables),
+            Rule::if_else => IfElse::create_instruction(pair, local_variables),
             Rule::set_if_else => SetIfElse::create_instruction(pair, local_variables),
             Rule::r#match => Match::create_instruction(pair, local_variables),
             Rule::function_declaration => {
