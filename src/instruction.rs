@@ -237,10 +237,6 @@ pub(crate) fn recreate_instructions(
 ) -> Result<Arc<[InstructionWithStr]>, ExecError> {
     instructions
         .iter()
-        .map(|InstructionWithStr { instruction, str }| {
-            let instruction = instruction.recreate(local_variables)?;
-            let str = str.clone();
-            Ok(InstructionWithStr { instruction, str })
-        })
+        .map(|iws| iws.recreate(local_variables))
         .collect()
 }
