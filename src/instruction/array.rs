@@ -75,21 +75,6 @@ impl Array {
             var_type: self.var_type,
         }
     }
-    pub fn try_map<F, E>(self, mut f: F) -> Result<Self, E>
-    where
-        F: FnMut(Instruction) -> Result<Instruction, E>,
-    {
-        let instructions = self
-            .instructions
-            .iter()
-            .cloned()
-            .map(|iws| iws.try_map(|ins| f(ins)))
-            .collect::<Result<_, E>>()?;
-        Ok(Array {
-            instructions,
-            var_type: self.var_type,
-        })
-    }
 }
 
 impl Exec for Array {
