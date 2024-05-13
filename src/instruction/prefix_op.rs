@@ -8,6 +8,7 @@ use duplicate::duplicate_item;
 use lazy_static::lazy_static;
 use pest::iterators::Pair;
 use std::str::FromStr;
+use std::sync::Arc;
 
 use super::array::Array;
 use super::array_repeat::ArrayRepeat;
@@ -52,10 +53,7 @@ impl T {
                     .instructions
                     .iter()
                     .cloned()
-                    .map(|InstructionWithStr { instruction, str }| {
-                        let instruction = Self::create_from_instruction(instruction);
-                        InstructionWithStr { instruction, str }
-                    })
+                    .map(|iws| iws.map(|instruction| Self::create_from_instruction(instruction)))
                     .collect();
                 Array {
                     instructions,
@@ -64,14 +62,13 @@ impl T {
                 .into()
             }
             Instruction::ArrayRepeat(array_repeat) => {
-                let value = Self::create_from_instruction(array_repeat.value.instruction.clone());
-                let value = InstructionWithStr {
-                    instruction: value,
-                    str: array_repeat.value.str.clone(),
-                };
+                let array_repeat = Arc::unwrap_or_clone(array_repeat);
+                let value = array_repeat
+                    .value
+                    .map(|instruction| Self::create_from_instruction(instruction));
                 ArrayRepeat {
                     value,
-                    len: array_repeat.len.clone(),
+                    len: array_repeat.len,
                 }
                 .into()
             }

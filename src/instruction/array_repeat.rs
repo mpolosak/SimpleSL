@@ -10,7 +10,7 @@ use crate::{
 };
 use pest::iterators::Pair;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ArrayRepeat {
     pub value: InstructionWithStr,
     pub len: InstructionWithStr,

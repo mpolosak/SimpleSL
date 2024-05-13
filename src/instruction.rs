@@ -130,6 +130,16 @@ impl InstructionWithStr {
         let str = self.str.clone();
         Ok(Self { instruction, str })
     }
+
+    pub fn map<F>(self, f: F) -> Self
+    where
+        F: FnOnce(Instruction) -> Instruction,
+    {
+        Self {
+            instruction: f(self.instruction),
+            str: self.str,
+        }
+    }
 }
 
 impl Exec for InstructionWithStr {
