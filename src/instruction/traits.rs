@@ -9,35 +9,20 @@ use super::{
     destruct_tuple::DestructTuple,
     function::FunctionDeclaration,
     import::Import,
-    local_variable::LocalVariables,
     prefix_op::{BitwiseNot, Not, UnaryMinus},
     r#return::Return,
     set::Set,
     type_filter::TypeFilter,
-    FunctionCall, Instruction, InstructionWithStr,
+    FunctionCall, Instruction,
 };
-use crate::{parse::Rule, variable::ReturnType, Error};
+use crate::variable::ReturnType;
 use duplicate::duplicate_item;
-use pest::iterators::Pair;
 use std::{fmt::Debug, sync::Arc};
 pub use {
     can_be_used::CanBeUsed,
     exec::{Exec, ExecResult, ExecStop},
     recreate::Recreate,
 };
-pub trait CreateInstruction {
-    fn create_instruction(
-        pair: Pair<Rule>,
-        local_variables: &LocalVariables,
-    ) -> Result<InstructionWithStr, Error>;
-}
-
-pub trait MutCreateInstruction {
-    fn create_instruction(
-        pair: Pair<Rule>,
-        local_variables: &mut LocalVariables,
-    ) -> Result<InstructionWithStr, Error>;
-}
 
 pub trait BaseInstruction: Exec + Recreate + ReturnType + Debug + Sync + Send {}
 
