@@ -31,7 +31,7 @@ primary = _{ ident | var | expr_in_brackets }
   expr_in_brackets = _{ "(" ~ expr ~ ")" }
 atom = _{ prefix_op? ~ primary ~ postfix_op? }
 expr = { (atom ~ (bin_op ~ atom)*) }
-bin_op = _{ comp | and | or | bitwise_and | bitwise_or | xor | lshift | rshift | pow | multiply | divide | add | subtract | modulo
+bin_op = _{ lshift | rshift | comp | and | or | bitwise_and | bitwise_or | xor | pow | multiply | divide | add | subtract | modulo
             | map | filter | reduce }
   comp = _{ equal | not_equal | greater_equal | greater | lower_equal | lower }
     equal = { "==" }
