@@ -1,3 +1,5 @@
+use super::array_repeat::ArrayRepeat;
+use super::InstructionWithStr;
 use crate::variable::{Type, Variable};
 use crate::{
     instruction::Instruction,
@@ -9,10 +11,6 @@ use lazy_static::lazy_static;
 use pest::iterators::Pair;
 use std::str::FromStr;
 use std::sync::Arc;
-
-use super::array::Array;
-use super::array_repeat::ArrayRepeat;
-use super::InstructionWithStr;
 
 #[duplicate_item(T; [Not]; [BitwiseNot]; [UnaryMinus])]
 #[derive(Debug)]
@@ -48,19 +46,9 @@ impl T {
     pub fn create_from_instruction(instruction: Instruction) -> Instruction {
         match instruction {
             Instruction::Variable(operand) => Self::calc(operand).into(),
-            Instruction::Array(array) => {
-                let instructions = array
-                    .instructions
-                    .iter()
-                    .cloned()
-                    .map(|iws| iws.map(|instruction| Self::create_from_instruction(instruction)))
-                    .collect();
-                Array {
-                    instructions,
-                    var_type: array.var_type.clone(),
-                }
-                .into()
-            }
+            Instruction::Array(array) => Arc::unwrap_or_clone(array)
+                .map(|instruction| Self::create_from_instruction(instruction))
+                .into(),
             Instruction::ArrayRepeat(array_repeat) => {
                 let array_repeat = Arc::unwrap_or_clone(array_repeat);
                 let value = array_repeat

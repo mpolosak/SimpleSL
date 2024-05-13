@@ -7,9 +7,7 @@ mod reduce;
 mod shift;
 use std::sync::Arc;
 
-use super::{
-    array::Array, array_repeat::ArrayRepeat, local_variable::LocalVariables, InstructionWithStr,
-};
+use super::{array_repeat::ArrayRepeat, local_variable::LocalVariables, InstructionWithStr};
 use crate::{
     instruction::{
         traits::{CanBeUsed, ToResult},
@@ -64,32 +62,12 @@ impl T {
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         match (lhs, rhs) {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => Self::exec(lhs, rhs).into(),
-            (Instruction::Array(array), rhs) => {
-                let instructions = array
-                    .instructions
-                    .iter()
-                    .cloned()
-                    .map(|iws| iws.map(|lhs| Self::create_from_instructions(lhs, rhs.clone())))
-                    .collect();
-                Array {
-                    instructions,
-                    var_type: array.var_type.clone(),
-                }
-                .into()
-            }
-            (lhs, Instruction::Array(array)) => {
-                let instructions = array
-                    .instructions
-                    .iter()
-                    .cloned()
-                    .map(|iws| iws.map(|rhs| Self::create_from_instructions(lhs.clone(), rhs)))
-                    .collect();
-                Array {
-                    instructions,
-                    var_type: array.var_type.clone(),
-                }
-                .into()
-            }
+            (Instruction::Array(array), rhs) => Arc::unwrap_or_clone(array)
+                .map(|lhs| Self::create_from_instructions(lhs, rhs.clone()))
+                .into(),
+            (lhs, Instruction::Array(array)) => Arc::unwrap_or_clone(array)
+                .map(|rhs| Self::create_from_instructions(lhs.clone(), rhs))
+                .into(),
             (Instruction::ArrayRepeat(array_repeat), rhs) => {
                 let array_repeat = Arc::unwrap_or_clone(array_repeat);
                 let value = array_repeat

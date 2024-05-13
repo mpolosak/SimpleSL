@@ -13,7 +13,7 @@ use crate::{
 use pest::iterators::Pair;
 use std::sync::Arc;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Array {
     pub instructions: Arc<[InstructionWithStr]>,
     pub var_type: Type,
@@ -59,6 +59,21 @@ impl Array {
             }
             .into(),
         ))
+    }
+    pub fn map<F>(self, mut f: F) -> Self
+    where
+        F: FnMut(Instruction) -> Instruction,
+    {
+        let instructions = self
+            .instructions
+            .iter()
+            .cloned()
+            .map(|iws| iws.map(|ins| f(ins)))
+            .collect();
+        Array {
+            instructions,
+            var_type: self.var_type,
+        }
     }
 }
 
