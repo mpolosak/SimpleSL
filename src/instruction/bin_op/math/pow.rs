@@ -1,4 +1,3 @@
-use crate::instruction::array_repeat::ArrayRepeat;
 use crate::instruction::{Instruction, Pow};
 use crate::variable::{Type, Typed, Variable};
 use crate::ExecError;
@@ -22,28 +21,12 @@ impl Pow {
             (lhs, Instruction::Array(array)) => Arc::unwrap_or_clone(array)
                 .try_map(|rhs| Self::create_from_instructions(lhs.clone(), rhs))
                 .map(Instruction::from),
-            (Instruction::ArrayRepeat(array_repeat), rhs) => {
-                let array_repeat = Arc::unwrap_or_clone(array_repeat);
-                let value = array_repeat
-                    .value
-                    .try_map(|lhs| Self::create_from_instructions(lhs, rhs))?;
-                Ok(ArrayRepeat {
-                    value,
-                    len: array_repeat.len,
-                }
-                .into())
-            }
-            (lhs, Instruction::ArrayRepeat(array_repeat)) => {
-                let array_repeat = Arc::unwrap_or_clone(array_repeat);
-                let value = array_repeat
-                    .value
-                    .try_map(|rhs| Self::create_from_instructions(lhs, rhs))?;
-                Ok(ArrayRepeat {
-                    value,
-                    len: array_repeat.len,
-                }
-                .into())
-            }
+            (Instruction::ArrayRepeat(array), rhs) => Arc::unwrap_or_clone(array)
+                .try_map(|lhs| Self::create_from_instructions(lhs, rhs.clone()))
+                .map(Instruction::from),
+            (lhs, Instruction::ArrayRepeat(array)) => Arc::unwrap_or_clone(array)
+                .try_map(|rhs| Self::create_from_instructions(lhs.clone(), rhs))
+                .map(Instruction::from),
             (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
         }
     }

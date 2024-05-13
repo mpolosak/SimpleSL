@@ -1,4 +1,3 @@
-use super::array_repeat::ArrayRepeat;
 use super::InstructionWithStr;
 use crate::variable::{Type, Variable};
 use crate::{
@@ -8,6 +7,7 @@ use crate::{
 };
 use duplicate::duplicate_item;
 use lazy_static::lazy_static;
+use match_any::match_any;
 use pest::iterators::Pair;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -44,23 +44,13 @@ impl T {
     }
 
     pub fn create_from_instruction(instruction: Instruction) -> Instruction {
-        match instruction {
+        match_any! { instruction,
             Instruction::Variable(operand) => Self::calc(operand).into(),
-            Instruction::Array(array) => Arc::unwrap_or_clone(array)
-                .map(|instruction| Self::create_from_instruction(instruction))
+            Instruction::Array(array)
+            | Instruction::ArrayRepeat(array) => Arc::unwrap_or_clone(array)
+                .map(Self::create_from_instruction)
                 .into(),
-            Instruction::ArrayRepeat(array_repeat) => {
-                let array_repeat = Arc::unwrap_or_clone(array_repeat);
-                let value = array_repeat
-                    .value
-                    .map(|instruction| Self::create_from_instruction(instruction));
-                ArrayRepeat {
-                    value,
-                    len: array_repeat.len,
-                }
-                .into()
-            }
-            instruction => Self { instruction }.into(),
+            instruction => Self { instruction }.into()
         }
     }
 }

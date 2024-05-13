@@ -5,9 +5,7 @@ mod map;
 mod math;
 mod reduce;
 mod shift;
-use std::sync::Arc;
-
-use super::{array_repeat::ArrayRepeat, local_variable::LocalVariables, InstructionWithStr};
+use super::{local_variable::LocalVariables, InstructionWithStr};
 use crate::{
     instruction::{
         traits::{CanBeUsed, ToResult},
@@ -20,6 +18,7 @@ use crate::{
 use duplicate::duplicate_item;
 use pest::iterators::Pair;
 pub use reduce::*;
+use std::sync::Arc;
 
 #[duplicate_item(T; [BitwiseAnd]; [BitwiseOr]; [Xor]; [Equal]; [Filter]; [Map]; [And]; [Or];
     [Add]; [Subtract]; [Multiply]; [Divide]; [Modulo]; [Pow]; [Greater]; [GreaterOrEqual];
@@ -68,28 +67,12 @@ impl T {
             (lhs, Instruction::Array(array)) => Arc::unwrap_or_clone(array)
                 .map(|rhs| Self::create_from_instructions(lhs.clone(), rhs))
                 .into(),
-            (Instruction::ArrayRepeat(array_repeat), rhs) => {
-                let array_repeat = Arc::unwrap_or_clone(array_repeat);
-                let value = array_repeat
-                    .value
-                    .map(|lhs| Self::create_from_instructions(lhs, rhs));
-                ArrayRepeat {
-                    value,
-                    len: array_repeat.len,
-                }
-                .into()
-            }
-            (lhs, Instruction::ArrayRepeat(array_repeat)) => {
-                let array_repeat = Arc::unwrap_or_clone(array_repeat);
-                let value = array_repeat
-                    .value
-                    .map(|rhs| Self::create_from_instructions(lhs, rhs));
-                ArrayRepeat {
-                    value,
-                    len: array_repeat.len,
-                }
-                .into()
-            }
+            (Instruction::ArrayRepeat(array_repeat), rhs) => Arc::unwrap_or_clone(array_repeat)
+                .map(|lhs| Self::create_from_instructions(lhs, rhs))
+                .into(),
+            (lhs, Instruction::ArrayRepeat(array_repeat)) => Arc::unwrap_or_clone(array_repeat)
+                .map(|rhs| Self::create_from_instructions(lhs, rhs))
+                .into(),
             (lhs, rhs) => Self { lhs, rhs }.into(),
         }
     }

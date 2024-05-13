@@ -1,9 +1,9 @@
-use crate::instruction::array_repeat::ArrayRepeat;
 use crate::instruction::Instruction;
 use crate::instruction::{Divide, Modulo};
 use crate::variable::Variable;
 use crate::ExecError;
 use duplicate::duplicate_item;
+use match_any::match_any;
 use std::sync::Arc;
 
 #[duplicate_item(T error operation symbol;
@@ -14,40 +14,20 @@ impl T {
         dividend: Instruction,
         divisor: Instruction,
     ) -> Result<Instruction, ExecError> {
-        match (dividend, divisor) {
+        match_any! {(dividend, divisor),
             (Instruction::Variable(dividend), Instruction::Variable(divisor)) => {
                 Ok(Self::exec(dividend, divisor)?.into())
-            }
+            },
             (_, Instruction::Variable(Variable::Int(0))) => Err(ExecError::error),
-            (Instruction::Array(array), rhs) => Arc::unwrap_or_clone(array)
+            (Instruction::Array(array), rhs)|(Instruction::ArrayRepeat(array), rhs)
+            => Arc::unwrap_or_clone(array)
                 .try_map(|lhs| Self::create_from_instructions(lhs, rhs.clone()))
                 .map(Instruction::from),
-            (lhs, Instruction::Array(array)) => Arc::unwrap_or_clone(array)
+            (lhs, Instruction::Array(array))|(lhs, Instruction::ArrayRepeat(array))
+            => Arc::unwrap_or_clone(array)
                 .try_map(|rhs| Self::create_from_instructions(lhs.clone(), rhs))
                 .map(Instruction::from),
-            (Instruction::ArrayRepeat(array_repeat), rhs) => {
-                let array_repeat = Arc::unwrap_or_clone(array_repeat);
-                let value = array_repeat
-                    .value
-                    .try_map(|lhs| Self::create_from_instructions(lhs, rhs))?;
-                Ok(ArrayRepeat {
-                    value,
-                    len: array_repeat.len,
-                }
-                .into())
-            }
-            (lhs, Instruction::ArrayRepeat(array_repeat)) => {
-                let array_repeat = Arc::unwrap_or_clone(array_repeat);
-                let value = array_repeat
-                    .value
-                    .try_map(|rhs| Self::create_from_instructions(lhs, rhs))?;
-                Ok(ArrayRepeat {
-                    value,
-                    len: array_repeat.len,
-                }
-                .into())
-            }
-            (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
+            (lhs, rhs) => Ok(Self { lhs, rhs }.into())
         }
     }
 
