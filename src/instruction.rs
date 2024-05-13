@@ -54,21 +54,28 @@ pub struct InstructionWithStr {
 
 impl InstructionWithStr {
     pub fn new(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<Self, Error> {
-        match pair.as_rule() {
+        let rule = pair.as_rule();
+        if rule == Rule::expr {
+            return Self::new_expression(pair, local_variables);
+        }
+        if rule == Rule::if_else {
+            return IfElse::create_instruction(pair, local_variables);
+        }
+        let str = pair.as_str().into();
+        let instruction = match rule {
             Rule::set => Set::create_instruction(pair, local_variables),
             Rule::destruct_tuple => DestructTuple::create_instruction(pair, local_variables),
             Rule::block => Block::create_instruction(pair, local_variables),
             Rule::import => Import::create_instruction(pair, local_variables),
-            Rule::if_else => IfElse::create_instruction(pair, local_variables),
             Rule::set_if_else => SetIfElse::create_instruction(pair, local_variables),
             Rule::r#match => Match::create_instruction(pair, local_variables),
             Rule::function_declaration => {
                 FunctionDeclaration::create_instruction(pair, local_variables)
             }
             Rule::r#return => Return::create_instruction(pair, local_variables),
-            Rule::expr => Self::new_expression(pair, local_variables),
             rule => unexpected(rule),
-        }
+        }?;
+        Ok(Self { instruction, str })
     }
 
     pub(crate) fn new_expression(

@@ -1,7 +1,7 @@
 use super::{
     local_variable::LocalVariables,
     traits::{ExecResult, ExecStop},
-    Exec, Instruction, InstructionWithStr, MutCreateInstruction, Recreate,
+    Exec, Instruction, InstructionWithStr, Recreate,
 };
 use crate::{
     parse::Rule,
@@ -15,12 +15,11 @@ pub struct Return {
     instruction: InstructionWithStr,
 }
 
-impl MutCreateInstruction for Return {
-    fn create_instruction(
+impl Return {
+    pub fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
-    ) -> Result<InstructionWithStr, Error> {
-        let str = pair.as_str().into();
+    ) -> Result<Instruction, Error> {
         let Some(function) = local_variables.function().cloned() else {
             return Err(Error::ReturnOutsideFunction);
         };
@@ -37,8 +36,7 @@ impl MutCreateInstruction for Return {
                 returned,
             });
         }
-        let instruction = Self { instruction }.into();
-        Ok(InstructionWithStr { instruction, str })
+        Ok(Self { instruction }.into())
     }
 }
 

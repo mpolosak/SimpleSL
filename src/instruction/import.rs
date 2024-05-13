@@ -1,8 +1,6 @@
 use super::{
-    local_variable::LocalVariables,
-    recreate_instructions,
-    traits::{ExecResult, MutCreateInstruction},
-    Exec, Instruction, InstructionWithStr, Recreate,
+    local_variable::LocalVariables, recreate_instructions, traits::ExecResult, Exec, Instruction,
+    InstructionWithStr, Recreate,
 };
 use crate::{
     interpreter::Interpreter,
@@ -18,12 +16,11 @@ pub struct Import {
     instructions: Arc<[InstructionWithStr]>,
 }
 
-impl MutCreateInstruction for Import {
-    fn create_instruction(
+impl Import {
+    pub fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
-    ) -> Result<InstructionWithStr, Error> {
-        let str = pair.as_str().into();
+    ) -> Result<Instruction, Error> {
         let Variable::String(path) = Variable::try_from(pair.into_inner().next().unwrap())? else {
             unreachable!()
         };
@@ -32,10 +29,9 @@ impl MutCreateInstruction for Import {
             return Ok(Variable::Void.into());
         }
         if let [element] = instructions.as_ref() {
-            return Ok(element.clone());
+            return Ok(element.instruction.clone());
         }
-        let instruction = Self { instructions }.into();
-        Ok(InstructionWithStr { instruction, str })
+        Ok(Self { instructions }.into())
     }
 }
 

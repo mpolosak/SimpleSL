@@ -1,8 +1,6 @@
 use super::{
-    local_variable::LocalVariables,
-    traits::{ExecResult, MutCreateInstruction},
-    tuple::Tuple,
-    Exec, Instruction, InstructionWithStr, Recreate,
+    local_variable::LocalVariables, traits::ExecResult, tuple::Tuple, Exec, Instruction,
+    InstructionWithStr, Recreate,
 };
 use crate::{
     interpreter::Interpreter,
@@ -19,12 +17,11 @@ pub struct DestructTuple {
     instruction: InstructionWithStr,
 }
 
-impl MutCreateInstruction for DestructTuple {
-    fn create_instruction(
+impl DestructTuple {
+    pub fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
-    ) -> Result<InstructionWithStr, Error> {
-        let str = pair.as_str().into();
+    ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
         let idents: Arc<[Arc<str>]> = pair.into_inner().map(|pair| pair.as_str().into()).collect();
@@ -39,12 +36,8 @@ impl MutCreateInstruction for DestructTuple {
             instruction,
         };
         result.insert_local_variables(local_variables);
-        let instruction = result.into();
-        Ok(InstructionWithStr { instruction, str })
+        Ok(result.into())
     }
-}
-
-impl DestructTuple {
     fn insert_local_variables(&self, local_variables: &mut LocalVariables) {
         match &self.instruction.instruction {
             Instruction::Variable(Variable::Tuple(elements)) => {

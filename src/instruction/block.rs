@@ -1,6 +1,6 @@
 use super::{
-    local_variable::LocalVariables, recreate_instructions, traits::ExecResult, CreateInstruction,
-    Exec, Instruction, InstructionWithStr, Recreate,
+    local_variable::LocalVariables, recreate_instructions, traits::ExecResult, Exec, Instruction,
+    InstructionWithStr, Recreate,
 };
 use crate::{
     interpreter::Interpreter,
@@ -16,20 +16,18 @@ pub struct Block {
     instructions: Arc<[InstructionWithStr]>,
 }
 
-impl CreateInstruction for Block {
-    fn create_instruction(
+impl Block {
+    pub fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &LocalVariables,
-    ) -> Result<InstructionWithStr, Error> {
-        let str = pair.as_str().into();
+    ) -> Result<Instruction, Error> {
         let mut local_variables = local_variables.create_layer();
         let instructions = local_variables.create_instructions(pair.into_inner())?;
-        let instruction = if instructions.is_empty() {
-            Variable::Void.into()
+        if instructions.is_empty() {
+            Ok(Variable::Void.into())
         } else {
-            Self { instructions }.into()
-        };
-        Ok(InstructionWithStr { instruction, str })
+            Ok(Self { instructions }.into())
+        }
     }
 }
 

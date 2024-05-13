@@ -3,7 +3,7 @@ use crate::{
     instruction::{
         local_variable::{FunctionInfo, LocalVariable, LocalVariableMap, LocalVariables},
         recreate_instructions,
-        traits::{ExecResult, MutCreateInstruction},
+        traits::ExecResult,
         Exec, Instruction, InstructionWithStr, Recreate,
     },
     interpreter::Interpreter,
@@ -22,12 +22,11 @@ pub struct FunctionDeclaration {
     return_type: Type,
 }
 
-impl MutCreateInstruction for FunctionDeclaration {
-    fn create_instruction(
+impl FunctionDeclaration {
+    pub fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
-    ) -> Result<InstructionWithStr, Error> {
-        let str = pair.as_str().into();
+    ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let ident: Arc<str> = inner.next().unwrap().as_str().into();
         let mut inner = inner.next().unwrap().into_inner();
@@ -61,14 +60,13 @@ impl MutCreateInstruction for FunctionDeclaration {
                 return_type,
             });
         }
-        let instruction = Self {
+        Ok(Self {
             ident,
             params,
             body,
             return_type,
         }
-        .into();
-        Ok(InstructionWithStr { instruction, str })
+        .into())
     }
 }
 

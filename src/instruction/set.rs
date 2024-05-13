@@ -1,7 +1,7 @@
 use super::{
     local_variable::LocalVariables,
     traits::{Exec, ExecResult, Recreate},
-    Instruction, InstructionWithStr, MutCreateInstruction,
+    Instruction, InstructionWithStr,
 };
 use crate::{
     interpreter::Interpreter,
@@ -27,20 +27,16 @@ impl Set {
         local_variables.insert(ident.clone(), (&instruction.instruction).into());
         Self { ident, instruction }
     }
-}
 
-impl MutCreateInstruction for Set {
-    fn create_instruction(
+    pub fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
-    ) -> Result<InstructionWithStr, Error> {
-        let str = pair.as_str().into();
+    ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let ident: Arc<str> = inner.next().unwrap().as_str().into();
         let pair = inner.next().unwrap();
         let instruction = InstructionWithStr::new(pair, local_variables)?;
-        let instruction = Self::new(ident, instruction, local_variables).into();
-        Ok(InstructionWithStr { instruction, str })
+        Ok(Self::new(ident, instruction, local_variables).into())
     }
 }
 

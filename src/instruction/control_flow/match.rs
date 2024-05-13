@@ -1,9 +1,8 @@
 use super::match_arm::MatchArm;
 use crate::{
     instruction::{
-        local_variable::LocalVariables,
-        traits::{ExecResult, MutCreateInstruction},
-        Exec, Instruction, InstructionWithStr, Recreate,
+        local_variable::LocalVariables, traits::ExecResult, Exec, Instruction, InstructionWithStr,
+        Recreate,
     },
     interpreter::Interpreter,
     parse::Rule,
@@ -18,12 +17,11 @@ pub struct Match {
     arms: Box<[MatchArm]>,
 }
 
-impl MutCreateInstruction for Match {
-    fn create_instruction(
+impl Match {
+    pub fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
-    ) -> Result<InstructionWithStr, Error> {
-        let str = pair.as_str().into();
+    ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
         let expression = InstructionWithStr::new(pair, local_variables)?;
@@ -35,12 +33,9 @@ impl MutCreateInstruction for Match {
         if !result.is_covering_type(&var_type) {
             return Err(Error::MatchNotCovered);
         }
-        let instruction = result.into();
-        Ok(InstructionWithStr { instruction, str })
+        Ok(result.into())
     }
-}
 
-impl Match {
     fn is_covering_type(&self, checked_type: &Type) -> bool {
         if let Type::Multi(types) = checked_type {
             return types.iter().all(|var_type| self.is_covering_type(var_type));
