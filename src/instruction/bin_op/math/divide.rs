@@ -19,11 +19,11 @@ impl T {
                 Ok(Self::exec(dividend, divisor)?.into())
             },
             (_, Instruction::Variable(Variable::Int(0))) => Err(ExecError::error),
-            (Instruction::Array(array), rhs)|(Instruction::ArrayRepeat(array), rhs)
+            (Instruction::ArrayRepeat(array), rhs)
             => Arc::unwrap_or_clone(array)
                 .try_map(|lhs| Self::create_from_instructions(lhs, rhs.clone()))
                 .map(Instruction::from),
-            (lhs, Instruction::Array(array))|(lhs, Instruction::ArrayRepeat(array))
+            (lhs, Instruction::ArrayRepeat(array))
             => Arc::unwrap_or_clone(array)
                 .try_map(|rhs| Self::create_from_instructions(lhs.clone(), rhs))
                 .map(Instruction::from),

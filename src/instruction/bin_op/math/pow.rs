@@ -15,12 +15,6 @@ impl Pow {
             (_, Instruction::Variable(Variable::Int(exp))) if exp < 0 => {
                 Err(ExecError::NegativeExponent)
             }
-            (Instruction::Array(array), rhs) => Arc::unwrap_or_clone(array)
-                .try_map(|lhs| Self::create_from_instructions(lhs, rhs.clone()))
-                .map(Instruction::from),
-            (lhs, Instruction::Array(array)) => Arc::unwrap_or_clone(array)
-                .try_map(|rhs| Self::create_from_instructions(lhs.clone(), rhs))
-                .map(Instruction::from),
             (Instruction::ArrayRepeat(array), rhs) => Arc::unwrap_or_clone(array)
                 .try_map(|lhs| Self::create_from_instructions(lhs, rhs.clone()))
                 .map(Instruction::from),

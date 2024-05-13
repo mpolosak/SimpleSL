@@ -3,7 +3,6 @@ use crate::instruction::Instruction;
 use crate::variable::{Type, Typed, Variable};
 use duplicate::duplicate_item;
 use std::iter;
-use std::sync::Arc;
 
 #[duplicate_item(logic symbol cond dv; [And] [&&] [value!=0] [0]; [Or] [||] [value==0] [1])]
 impl logic {
@@ -16,12 +15,6 @@ impl logic {
             {
                 instruction
             }
-            (Instruction::Array(array), rhs) => Arc::unwrap_or_clone(array)
-                .map(|lhs| Self::create_from_instructions(lhs, rhs.clone()))
-                .into(),
-            (lhs, Instruction::Array(array)) => Arc::unwrap_or_clone(array)
-                .map(|rhs| Self::create_from_instructions(lhs.clone(), rhs))
-                .into(),
             (lhs, rhs) => Self { lhs, rhs }.into(),
         }
     }

@@ -61,12 +61,6 @@ impl T {
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         match (lhs, rhs) {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => Self::exec(lhs, rhs).into(),
-            (Instruction::Array(array), rhs) => Arc::unwrap_or_clone(array)
-                .map(|lhs| Self::create_from_instructions(lhs, rhs.clone()))
-                .into(),
-            (lhs, Instruction::Array(array)) => Arc::unwrap_or_clone(array)
-                .map(|rhs| Self::create_from_instructions(lhs.clone(), rhs))
-                .into(),
             (Instruction::ArrayRepeat(array_repeat), rhs) => Arc::unwrap_or_clone(array_repeat)
                 .map(|lhs| Self::create_from_instructions(lhs, rhs))
                 .into(),
