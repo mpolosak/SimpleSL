@@ -1,12 +1,10 @@
-use std::sync::Arc;
-
-use crate::instruction::array::Array;
 use crate::instruction::array_repeat::ArrayRepeat;
 use crate::instruction::Instruction;
 use crate::instruction::{Divide, Modulo};
 use crate::variable::Variable;
 use crate::ExecError;
 use duplicate::duplicate_item;
+use std::sync::Arc;
 
 #[duplicate_item(T error operation symbol;
     [Divide] [ZeroDivision] [dividend / divisor] [/];
@@ -21,32 +19,12 @@ impl T {
                 Ok(Self::exec(dividend, divisor)?.into())
             }
             (_, Instruction::Variable(Variable::Int(0))) => Err(ExecError::error),
-            (Instruction::Array(array), rhs) => {
-                let instructions = array
-                    .instructions
-                    .iter()
-                    .cloned()
-                    .map(|iws| iws.try_map(|lhs| Self::create_from_instructions(lhs, rhs.clone())))
-                    .collect::<Result<_, _>>()?;
-                Ok(Array {
-                    instructions,
-                    var_type: array.var_type.clone(),
-                }
-                .into())
-            }
-            (lhs, Instruction::Array(array)) => {
-                let instructions = array
-                    .instructions
-                    .iter()
-                    .cloned()
-                    .map(|iws| iws.try_map(|rhs| Self::create_from_instructions(lhs.clone(), rhs)))
-                    .collect::<Result<_, _>>()?;
-                Ok(Array {
-                    instructions,
-                    var_type: array.var_type.clone(),
-                }
-                .into())
-            }
+            (Instruction::Array(array), rhs) => Arc::unwrap_or_clone(array)
+                .try_map(|lhs| Self::create_from_instructions(lhs, rhs.clone()))
+                .map(Instruction::from),
+            (lhs, Instruction::Array(array)) => Arc::unwrap_or_clone(array)
+                .try_map(|rhs| Self::create_from_instructions(lhs.clone(), rhs))
+                .map(Instruction::from),
             (Instruction::ArrayRepeat(array_repeat), rhs) => {
                 let array_repeat = Arc::unwrap_or_clone(array_repeat);
                 let value = array_repeat
