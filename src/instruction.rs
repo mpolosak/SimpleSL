@@ -52,25 +52,11 @@ pub struct InstructionWithStr {
 
 impl InstructionWithStr {
     pub fn new(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<Self, Error> {
-        let rule = pair.as_rule();
-        if rule == Rule::expr {
+        if pair.as_rule() == Rule::expr {
             return Self::new_expression(pair, local_variables);
         }
         let str = pair.as_str().into();
-        let instruction = match rule {
-            Rule::set => Set::create_instruction(pair, local_variables),
-            Rule::destruct_tuple => DestructTuple::create_instruction(pair, local_variables),
-            Rule::block => Block::create_instruction(pair, local_variables),
-            Rule::import => Import::create_instruction(pair, local_variables),
-            Rule::if_else => IfElse::create_instruction(pair, local_variables),
-            Rule::set_if_else => SetIfElse::create_instruction(pair, local_variables),
-            Rule::r#match => Match::create_instruction(pair, local_variables),
-            Rule::function_declaration => {
-                FunctionDeclaration::create_instruction(pair, local_variables)
-            }
-            Rule::r#return => Return::create_instruction(pair, local_variables),
-            rule => unexpected(rule),
-        }?;
+        let instruction = Instruction::new(pair, local_variables)?;
         Ok(Self { instruction, str })
     }
 
@@ -177,6 +163,29 @@ pub enum Instruction {
     Tuple(Tuple),
     Variable(Variable),
     Other(Arc<dyn BaseInstruction>),
+}
+
+impl Instruction {
+    pub fn new(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<Self, Error> {
+        match pair.as_rule() {
+            Rule::set => Set::create_instruction(pair, local_variables),
+            Rule::destruct_tuple => DestructTuple::create_instruction(pair, local_variables),
+            Rule::block => Block::create_instruction(pair, local_variables),
+            Rule::import => Import::create_instruction(pair, local_variables),
+            Rule::if_else => IfElse::create_instruction(pair, local_variables),
+            Rule::set_if_else => SetIfElse::create_instruction(pair, local_variables),
+            Rule::r#match => Match::create_instruction(pair, local_variables),
+            Rule::function_declaration => {
+                FunctionDeclaration::create_instruction(pair, local_variables)
+            }
+            Rule::r#return => Return::create_instruction(pair, local_variables),
+            Rule::expr => {
+                return InstructionWithStr::new_expression(pair, local_variables)
+                    .map(|iws| iws.instruction)
+            }
+            rule => unexpected(rule),
+        }
+    }
 }
 
 impl Exec for Instruction {

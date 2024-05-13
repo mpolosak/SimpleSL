@@ -46,10 +46,10 @@ impl IfElse {
         if condition == 0 {
             return inner.next().map_or_else(
                 || Ok(Variable::Void.into()),
-                |pair| InstructionWithStr::new(pair, local_variables).map(|iws| iws.instruction),
+                |pair| Instruction::new(pair, local_variables),
             );
         }
-        InstructionWithStr::new(true_pair, local_variables).map(|iws| iws.instruction)
+        Instruction::new(true_pair, local_variables)
     }
 }
 
