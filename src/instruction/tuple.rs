@@ -1,6 +1,6 @@
 use super::{
-    local_variable::LocalVariables, recreate_instructions, traits::ExecResult, CreateInstruction,
-    Exec, Instruction, InstructionWithStr, Recreate,
+    local_variable::LocalVariables, recreate_instructions, traits::ExecResult, Exec, Instruction,
+    InstructionWithStr, Recreate,
 };
 use crate::{
     interpreter::Interpreter,
@@ -16,22 +16,18 @@ pub struct Tuple {
     pub elements: Arc<[InstructionWithStr]>,
 }
 
-impl CreateInstruction for Tuple {
-    fn create_instruction(
+impl Tuple {
+    pub fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &LocalVariables,
-    ) -> Result<InstructionWithStr, Error> {
-        let str = pair.as_str().into();
+    ) -> Result<Instruction, Error> {
         let elements = pair
             .into_inner()
             .map(|pair| InstructionWithStr::new_expression(pair, local_variables))
             .collect::<Result<Arc<[InstructionWithStr]>, Error>>()?;
-        let instruction = Self::create_from_elements(elements);
-        Ok(InstructionWithStr { instruction, str })
+        Ok(Self::create_from_elements(elements))
     }
-}
 
-impl Tuple {
     fn create_from_elements(elements: Arc<[InstructionWithStr]>) -> Instruction {
         let mut array = Vec::new();
         for instruction in &*elements {

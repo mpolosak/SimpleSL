@@ -11,7 +11,7 @@ use crate::{
         local_variable::{FunctionInfo, LocalVariableMap, LocalVariables},
         recreate_instructions,
         traits::{Exec, ExecResult, Recreate},
-        CreateInstruction, Instruction,
+        Instruction,
     },
     Error,
 };
@@ -25,12 +25,11 @@ pub struct AnonymousFunction {
     return_type: Type,
 }
 
-impl CreateInstruction for AnonymousFunction {
-    fn create_instruction(
+impl AnonymousFunction {
+    pub fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &LocalVariables,
-    ) -> Result<InstructionWithStr, Error> {
-        let str = pair.as_str().into();
+    ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let params_pair = inner.next().unwrap();
         let params = Params(params_pair.into_inner().map(Param::from).collect());
@@ -57,13 +56,12 @@ impl CreateInstruction for AnonymousFunction {
                 return_type,
             });
         }
-        let instruction = Self {
+        Ok(Self {
             params,
             body,
             return_type,
         }
-        .into();
-        Ok(InstructionWithStr { instruction, str })
+        .into())
     }
 }
 

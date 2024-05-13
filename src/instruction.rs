@@ -42,7 +42,7 @@ pub(crate) use function::FunctionCall;
 use match_any::match_any;
 use pest::iterators::Pair;
 use std::sync::Arc;
-pub(crate) use traits::{CreateInstruction, Exec, ExecResult, ExecStop, Recreate};
+pub(crate) use traits::{Exec, ExecResult, ExecStop, Recreate};
 
 #[derive(Debug, Clone)]
 pub struct InstructionWithStr {
@@ -90,39 +90,36 @@ impl InstructionWithStr {
         pair: Pair<'_, Rule>,
         local_variables: &LocalVariables<'_>,
     ) -> Result<Self, Error> {
-        match pair.as_rule() {
-            Rule::expr => Self::new_expression(pair, local_variables),
-            Rule::ident => {
-                let str: Arc<str> = pair.as_str().into();
-                let instruction = local_variables.get(&str).map_or_else(
-                    || {
-                        local_variables
-                            .interpreter
-                            .get_variable(&str)
-                            .cloned()
-                            .map(Instruction::from)
-                            .ok_or_else(|| Error::VariableDoesntExist(str.clone()))
-                    },
-                    |var| match var.clone() {
-                        LocalVariable::Variable(variable) => Ok(Instruction::Variable(variable)),
-                        local_variable => {
-                            Ok(Instruction::LocalVariable(str.clone(), local_variable))
-                        }
-                    },
-                )?;
-                Ok(InstructionWithStr { instruction, str })
-            }
+        let rule = pair.as_rule();
+        if rule == Rule::expr {
+            return Self::new_expression(pair, local_variables);
+        }
+        let str: Arc<str> = pair.as_str().into();
+        let instruction = match rule {
+            Rule::ident => local_variables.get(&str).map_or_else(
+                || {
+                    local_variables
+                        .interpreter
+                        .get_variable(&str)
+                        .cloned()
+                        .map(Instruction::from)
+                        .ok_or_else(|| Error::VariableDoesntExist(str.clone()))
+                },
+                |var| match var.clone() {
+                    LocalVariable::Variable(variable) => Ok(Instruction::Variable(variable)),
+                    local_variable => Ok(Instruction::LocalVariable(str.clone(), local_variable)),
+                },
+            ),
             Rule::int | Rule::float | Rule::string | Rule::void => {
-                let str = pair.as_str().into();
-                let instruction = Variable::try_from(pair).map(Instruction::from)?;
-                Ok(InstructionWithStr { instruction, str })
+                Variable::try_from(pair).map(Instruction::from)
             }
             Rule::tuple => Tuple::create_instruction(pair, local_variables),
             Rule::array => Array::create_instruction(pair, local_variables),
             Rule::array_repeat => ArrayRepeat::create_instruction(pair, local_variables),
             Rule::function => AnonymousFunction::create_instruction(pair, local_variables),
             rule => unexpected(rule),
-        }
+        }?;
+        Ok(Self { instruction, str })
     }
 
     fn create_postfix(

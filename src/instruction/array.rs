@@ -2,7 +2,7 @@ use super::{
     local_variable::LocalVariables,
     recreate_instructions,
     traits::{Exec, ExecResult, Recreate},
-    CreateInstruction, Instruction, InstructionWithStr,
+    Instruction, InstructionWithStr,
 };
 use crate::{
     interpreter::Interpreter,
@@ -19,21 +19,18 @@ pub struct Array {
     pub var_type: Type,
 }
 
-impl CreateInstruction for Array {
-    fn create_instruction(
+impl Array {
+    pub fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &LocalVariables,
-    ) -> Result<InstructionWithStr, Error> {
-        let str = pair.as_str().into();
+    ) -> Result<Instruction, Error> {
         let inner = pair.into_inner();
         let instructions = inner
             .map(|arg| InstructionWithStr::new_expression(arg, local_variables))
             .collect::<Result<Arc<_>, Error>>()?;
-        let instruction = Self::create_from_instructions(instructions);
-        Ok(InstructionWithStr { instruction, str })
+        Ok(Self::create_from_instructions(instructions))
     }
-}
-impl Array {
+
     fn create_from_instructions(instructions: Arc<[InstructionWithStr]>) -> Instruction {
         let var_type = instructions
             .iter()

@@ -1,6 +1,6 @@
 use super::{
-    local_variable::LocalVariables, traits::ExecResult, CreateInstruction, Exec, Instruction,
-    InstructionWithStr, Recreate,
+    local_variable::LocalVariables, traits::ExecResult, Exec, Instruction, InstructionWithStr,
+    Recreate,
 };
 use crate::{
     interpreter::Interpreter,
@@ -16,24 +16,20 @@ pub struct ArrayRepeat {
     pub len: InstructionWithStr,
 }
 
-impl CreateInstruction for ArrayRepeat {
-    fn create_instruction(
+impl ArrayRepeat {
+    pub fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &LocalVariables,
-    ) -> Result<InstructionWithStr, Error> {
-        let str = pair.as_str().into();
+    ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let value = InstructionWithStr::new_expression(inner.next().unwrap(), local_variables)?;
         let len = InstructionWithStr::new_expression(inner.next().unwrap(), local_variables)?;
         if len.return_type() != Type::Int {
             return Err(Error::WrongLengthType(len.str));
         }
-        let instruction = Self::create_from_instructions(value, len)?;
-        Ok(InstructionWithStr { instruction, str })
+        Self::create_from_instructions(value, len).map_err(Error::from)
     }
-}
 
-impl ArrayRepeat {
     fn create_from_instructions(
         value: InstructionWithStr,
         len: InstructionWithStr,
