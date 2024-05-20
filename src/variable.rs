@@ -1,63 +1,65 @@
 mod array;
 mod function_type;
+mod multi_type;
 mod r#type;
-mod type_set;
-use crate::{function::Function, join_debug, parse::*, Error, Result};
+use crate::{function::Function, join_debug, parse::*, Error};
+use match_any::match_any;
 use pest::{iterators::Pair, Parser};
+#[cfg(test)]
+pub(crate) use r#type::parse_type;
 pub use r#type::{ReturnType, Type, Typed};
-use std::{fmt, io, rc::Rc, str::FromStr};
+use std::{fmt, io, str::FromStr, sync::Arc};
 pub use typle::typle;
-pub use {array::Array, function_type::FunctionType, type_set::TypeSet};
+pub use {array::Array, function_type::FunctionType, multi_type::MultiType};
 
 #[derive(Clone)]
 pub enum Variable {
     Int(i64),
     Float(f64),
-    String(Rc<str>),
-    Function(Rc<Function>),
-    Array(Rc<Array>),
-    Tuple(Rc<[Variable]>),
+    String(Arc<str>),
+    Function(Arc<Function>),
+    Array(Arc<Array>),
+    Tuple(Arc<[Variable]>),
     Void,
 }
 
 impl Typed for Variable {
     fn as_type(&self) -> Type {
-        match self {
+        match_any! {self,
             Variable::Int(_) => Type::Int,
             Variable::Float(_) => Type::Float,
             Variable::String(_) => Type::String,
-            Variable::Function(function) => function.as_type(),
-            Variable::Array(array) => array.as_type(),
+            Variable::Function(var) | Variable::Array(var) => var.as_type(),
             Variable::Tuple(elements) => {
                 let types = elements.iter().map(Variable::as_type).collect();
                 Type::Tuple(types)
-            }
-            Variable::Void => Type::Void,
+            },
+            Variable::Void => Type::Void
         }
     }
 }
 
 impl fmt::Display for Variable {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Variable::Int(value) => write!(f, "{value}"),
-            Variable::Float(value) => write!(f, "{value}"),
-            Variable::String(value) => write!(f, "{value}"),
-            Variable::Function(function) => write!(f, "{function}"),
-            Variable::Array(array) => write!(f, "{array}"),
-            Variable::Tuple(elements) => write!(f, "({})", join_debug(elements, ", ")),
-            Variable::Void => write!(f, "()"),
+        match_any! {self,
+            Variable::Int(value)
+            | Variable::Float(value)
+            | Variable::String(value)
+            | Variable::Function(value)
+            | Variable::Array(value) => write!(f, "{value}"),
+            Variable::Tuple(elements) => write!(f, "({})", join_debug(elements.as_ref(), ", ")),
+            Variable::Void => write!(f, "()")
         }
     }
 }
 
 impl fmt::Debug for Variable {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Int(value) => write!(f, "{value:?}"),
-            Self::Float(value) => write!(f, "{value:?}"),
-            Self::String(value) => write!(f, "{value:?}"),
-            other => write!(f, "{other}"),
+        match_any! { self,
+            Self::Int(value)
+            | Self::Float(value)
+            | Self::String(value) => write!(f, "{value:?}"),
+            other => write!(f, "{other}")
         }
     }
 }
@@ -65,12 +67,9 @@ impl fmt::Debug for Variable {
 impl FromStr for Variable {
     type Err = Error;
 
-    fn from_str(s: &str) -> Result<Self> {
+    fn from_str(s: &str) -> Result<Self, Error> {
         let s = s.trim();
-        let parse = SimpleSLParser::parse(Rule::var, s)?;
-        if parse.as_str() != s {
-            return Err(Error::TooManyVariables);
-        }
+        let parse = SimpleSLParser::parse(Rule::only_var, s)?;
         let pairs: Box<[Pair<Rule>]> = parse.collect();
         Self::try_from(pairs[0].clone())
     }
@@ -78,23 +77,27 @@ impl FromStr for Variable {
 
 impl PartialEq for Variable {
     fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Variable::Int(value1), Variable::Int(value2)) => value1 == value2,
-            (Variable::Float(value1), Variable::Float(value2)) => value1 == value2,
-            (Variable::String(value1), Variable::String(value2)) => value1 == value2,
-            (Variable::Function(value1), Variable::Function(value2)) => Rc::ptr_eq(value1, value2),
-            (Variable::Array(value1), Variable::Array(value2)) => value1 == value2,
+        match_any! {(self, other),
+            (Variable::Array(value1), Variable::Array(value2))
+            | (Variable::Int(value1), Variable::Int(value2))
+            | (Variable::Float(value1), Variable::Float(value2))
+            | (Variable::String(value1), Variable::String(value2))
+            | (Variable::Tuple(value1), Variable::Tuple(value2)) => value1 == value2,
+            (Variable::Function(value1), Variable::Function(value2)) => Arc::ptr_eq(value1, value2),
             (Variable::Void, Variable::Void) => true,
-            _ => false,
+            _ => false
         }
     }
 }
 
+impl Eq for Variable {}
+
+#[doc(hidden)]
 impl TryFrom<Pair<'_, Rule>> for Variable {
     type Error = Error;
 
-    fn try_from(pair: Pair<Rule>) -> Result<Self> {
-        fn parse_int(pair: Pair<Rule>, radix: u32) -> Result<Variable> {
+    fn try_from(pair: Pair<Rule>) -> Result<Self, Error> {
+        fn parse_int(pair: Pair<Rule>, radix: u32) -> Result<Variable, Error> {
             let str = pair.as_str();
             let inner = pair
                 .into_inner()
@@ -128,7 +131,7 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
                 .into_inner()
                 .map(|pair| pair.into_inner().next().unwrap())
                 .map(Self::try_from)
-                .collect::<Result<Variable>>(),
+                .collect::<Result<Variable, Error>>(),
             Rule::void => Ok(Variable::Void),
             _ => Err(Error::CannotBeParsed(pair.as_str().into())),
         }
@@ -159,8 +162,8 @@ impl From<f64> for Variable {
     }
 }
 
-impl From<Rc<str>> for Variable {
-    fn from(value: Rc<str>) -> Self {
+impl From<Arc<str>> for Variable {
+    fn from(value: Arc<str>) -> Self {
         Self::String(value)
     }
 }
@@ -183,8 +186,8 @@ impl From<Function> for Variable {
     }
 }
 
-impl From<Rc<Function>> for Variable {
-    fn from(value: Rc<Function>) -> Self {
+impl From<Arc<Function>> for Variable {
+    fn from(value: Arc<Function>) -> Self {
         Self::Function(value)
     }
 }
@@ -231,14 +234,14 @@ impl From<Array> for Variable {
     }
 }
 
-impl From<Rc<Array>> for Variable {
-    fn from(value: Rc<Array>) -> Self {
+impl From<Arc<Array>> for Variable {
+    fn from(value: Arc<Array>) -> Self {
         Variable::Array(value)
     }
 }
 
-impl From<Rc<[Variable]>> for Variable {
-    fn from(value: Rc<[Variable]>) -> Self {
+impl From<Arc<[Variable]>> for Variable {
+    fn from(value: Arc<[Variable]>) -> Self {
         Array::from(value).into()
     }
 }
@@ -272,7 +275,19 @@ pub fn is_correct_variable_name(name: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use crate::variable::Variable;
 
+    #[test]
+    fn test_send() {
+        fn assert_send<T: Send>() {}
+        assert_send::<Variable>();
+    }
+
+    #[test]
+    fn test_sync() {
+        fn assert_sync<T: Sync>() {}
+        assert_sync::<Variable>();
+    }
     #[test]
     fn check_is_correct_variable_name() {
         use crate::variable::is_correct_variable_name;
@@ -291,7 +306,6 @@ mod tests {
     #[test]
     fn check_variable_from_str() {
         use crate::variable::Variable;
-        use crate::Error;
         use std::str::FromStr;
         assert_eq!(Variable::from_str(" 15"), Ok(Variable::Int(15)));
         assert_eq!(Variable::from_str(" 1__00_5__"), Ok(Variable::Int(1005)));
@@ -314,10 +328,7 @@ mod tests {
             Variable::from_str(r#""print \"""#),
             Ok(Variable::String("print \"".into()))
         );
-        assert_eq!(
-            Variable::from_str(r#""print" """#),
-            Err(Error::TooManyVariables)
-        );
+        assert!(Variable::from_str(r#""print" """#).is_err());
         assert_eq!(Variable::from_str("[]"), Ok(Variable::from([])));
         assert_eq!(
             Variable::from_str(r#"[4.5, 3, "a", []]"#),

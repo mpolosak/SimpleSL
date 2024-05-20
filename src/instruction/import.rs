@@ -1,40 +1,35 @@
-use std::rc::Rc;
-
 use super::{
-    local_variable::LocalVariables,
-    recreate_instructions,
-    traits::{BaseInstruction, ExecResult, MutCreateInstruction},
-    Exec, Instruction, Recreate,
+    local_variable::LocalVariables, recreate_instructions, traits::ExecResult, Exec, Instruction,
+    InstructionWithStr, Recreate,
 };
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{ReturnType, Type, Variable},
-    Result,
+    Error, ExecError,
 };
 use pest::iterators::Pair;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Import {
-    instructions: Rc<[Instruction]>,
+    instructions: Arc<[InstructionWithStr]>,
 }
 
-impl MutCreateInstruction for Import {
-    fn create_instruction(
+impl Import {
+    pub fn create_instruction(
         pair: Pair<Rule>,
-        interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction> {
-        let Ok(Variable::String(path)) = Variable::try_from(pair.into_inner().next().unwrap())
-        else {
+    ) -> Result<Instruction, Error> {
+        let Variable::String(path) = Variable::try_from(pair.into_inner().next().unwrap())? else {
             unreachable!()
         };
-        let instructions = interpreter.load(&path, local_variables)?;
+        let instructions = local_variables.load(&path)?;
         if instructions.is_empty() {
-            return Ok(Instruction::Variable(Variable::Void));
+            return Ok(Variable::Void.into());
         }
         if let [element] = instructions.as_ref() {
-            return Ok(element.clone());
+            return Ok(element.instruction.clone());
         }
         Ok(Self { instructions }.into())
     }
@@ -51,12 +46,8 @@ impl Exec for Import {
 }
 
 impl Recreate for Import {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction> {
-        let instructions = recreate_instructions(&self.instructions, local_variables, interpreter)?;
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
+        let instructions = recreate_instructions(&self.instructions, local_variables)?;
         Ok(Self { instructions }.into())
     }
 }
@@ -68,5 +59,3 @@ impl ReturnType for Import {
             .map_or(Type::Void, ReturnType::return_type)
     }
 }
-
-impl BaseInstruction for Import {}

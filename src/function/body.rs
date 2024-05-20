@@ -1,8 +1,10 @@
-use crate::{instruction::Instruction, interpreter::Interpreter, variable::Variable, Result};
-use std::rc::Rc;
+use crate::{
+    instruction::InstructionWithStr, interpreter::Interpreter, variable::Variable, ExecError,
+};
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub(crate) enum Body {
-    Lang(Rc<[Instruction]>),
-    Native(fn(&mut Interpreter) -> Result<Variable>),
+    Lang(Arc<[InstructionWithStr]>),
+    Native(fn(&mut Interpreter) -> Result<Variable, ExecError>),
 }

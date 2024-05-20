@@ -1,226 +1,255 @@
 mod array;
-mod array_ops;
 mod array_repeat;
 mod at;
-mod bitwise;
+mod bin_op;
 mod block;
-mod comp;
 mod control_flow;
 mod destruct_tuple;
 mod function;
 mod import;
 pub mod local_variable;
-mod logic;
-mod macros;
-mod math;
+mod prefix_op;
 mod r#return;
+mod return_type;
 mod set;
 mod traits;
 mod tuple;
+mod type_filter;
 use self::{
     array::Array,
-    array_ops::{Filter, Map, Reduce, TypeFilter},
     array_repeat::ArrayRepeat,
     at::At,
-    bitwise::{BitwiseAnd, BitwiseNot, BitwiseOr, LShift, RShift, Xor},
+    bin_op::*,
     block::Block,
-    comp::{Equal, Greater, GreaterOrEqual, Lower, LowerOrEqual},
     control_flow::{IfElse, Match, SetIfElse},
     destruct_tuple::DestructTuple,
     function::{AnonymousFunction, FunctionDeclaration},
     import::Import,
     local_variable::{LocalVariable, LocalVariables},
-    logic::{And, Not, Or},
-    math::{Add, Divide, Modulo, Multiply, Pow, Subtract, UnaryMinus},
     r#return::Return,
     set::Set,
     traits::BaseInstruction,
     tuple::Tuple,
+    type_filter::TypeFilter,
 };
 use crate::{
     interpreter::Interpreter,
     parse::{unexpected, Rule, PRATT_PARSER},
     variable::{ReturnType, Type, Typed, Variable},
-    Error, Result,
+    Error, ExecError,
 };
 pub(crate) use function::FunctionCall;
+use match_any::match_any;
 use pest::iterators::Pair;
-use std::rc::Rc;
-pub(crate) use traits::{
-    CreateInstruction, Exec, ExecResult, ExecStop, MutCreateInstruction, Recreate,
-};
+use std::sync::Arc;
+pub(crate) use traits::{Exec, ExecResult, ExecStop, Recreate};
+
+#[derive(Debug, Clone)]
+pub struct InstructionWithStr {
+    pub instruction: Instruction,
+    pub str: Arc<str>,
+}
+
+impl InstructionWithStr {
+    pub fn new(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<Self, Error> {
+        if pair.as_rule() == Rule::expr {
+            return Self::new_expression(pair, local_variables);
+        }
+        let str = pair.as_str().into();
+        let instruction = Instruction::new(pair, local_variables)?;
+        Ok(Self { instruction, str })
+    }
+
+    pub(crate) fn new_expression(
+        pair: Pair<Rule>,
+        local_variables: &LocalVariables,
+    ) -> Result<Self, Error> {
+        PRATT_PARSER
+            .map_primary(|pair| Self::create_primary(pair, local_variables))
+            .map_prefix(|op, rhs| Self::create_prefix(op, rhs?))
+            .map_infix(|lhs, op, rhs| Self::create_infix(op, lhs?, rhs?, local_variables))
+            .map_postfix(|lhs, op| Self::create_postfix(op, lhs?, local_variables))
+            .parse(pair.into_inner())
+    }
+
+    fn create_primary(
+        pair: Pair<'_, Rule>,
+        local_variables: &LocalVariables<'_>,
+    ) -> Result<Self, Error> {
+        let rule = pair.as_rule();
+        if rule == Rule::expr {
+            return Self::new_expression(pair, local_variables);
+        }
+        let str: Arc<str> = pair.as_str().into();
+        let instruction = match rule {
+            Rule::ident => local_variables.get(&str).map_or_else(
+                || {
+                    local_variables
+                        .interpreter
+                        .get_variable(&str)
+                        .cloned()
+                        .map(Instruction::from)
+                        .ok_or_else(|| Error::VariableDoesntExist(str.clone()))
+                },
+                |var| match var.clone() {
+                    LocalVariable::Variable(variable) => Ok(Instruction::Variable(variable)),
+                    local_variable => Ok(Instruction::LocalVariable(str.clone(), local_variable)),
+                },
+            ),
+            Rule::int | Rule::float | Rule::string | Rule::void => {
+                Variable::try_from(pair).map(Instruction::from)
+            }
+            Rule::tuple => Tuple::create_instruction(pair, local_variables),
+            Rule::array => Array::create_instruction(pair, local_variables),
+            Rule::array_repeat => ArrayRepeat::create_instruction(pair, local_variables),
+            Rule::function => AnonymousFunction::create_instruction(pair, local_variables),
+            rule => unexpected(rule),
+        }?;
+        Ok(Self { instruction, str })
+    }
+
+    fn create_postfix(
+        op: Pair<'_, Rule>,
+        lhs: Self,
+        local_variables: &LocalVariables<'_>,
+    ) -> Result<Self, Error> {
+        let str = format!("{} {}", lhs.str, op.as_str()).into();
+        let instruction = match op.as_rule() {
+            Rule::at => At::create_instruction(lhs, op, local_variables),
+            Rule::type_filter => {
+                TypeFilter::create_instruction(lhs, op.into_inner().next().unwrap())
+            }
+            Rule::function_call => FunctionCall::create_instruction(lhs, op, local_variables),
+            rule => unexpected(rule),
+        }?;
+        Ok(Self { instruction, str })
+    }
+
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Self, ExecError> {
+        let instruction = self.instruction.recreate(local_variables)?;
+        let str = self.str.clone();
+        Ok(Self { instruction, str })
+    }
+
+    pub fn map<F>(self, f: F) -> Self
+    where
+        F: FnOnce(Instruction) -> Instruction,
+    {
+        Self {
+            instruction: f(self.instruction),
+            str: self.str,
+        }
+    }
+    pub fn try_map<F, E>(self, f: F) -> Result<Self, E>
+    where
+        F: FnOnce(Instruction) -> Result<Instruction, E>,
+    {
+        let instruction = f(self.instruction)?;
+        Ok(Self {
+            instruction,
+            str: self.str,
+        })
+    }
+}
+
+impl Exec for InstructionWithStr {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
+        self.instruction.exec(interpreter)
+    }
+}
+
+impl ReturnType for InstructionWithStr {
+    fn return_type(&self) -> Type {
+        self.instruction.return_type()
+    }
+}
+
+impl From<Variable> for InstructionWithStr {
+    fn from(value: Variable) -> Self {
+        let str = value.to_string().into();
+        Self {
+            instruction: Instruction::from(value),
+            str,
+        }
+    }
+}
 
 #[derive(Debug, Clone)]
 pub enum Instruction {
     AnonymousFunction(AnonymousFunction),
-    LocalVariable(Rc<str>, LocalVariable),
+    Array(Arc<Array>),
+    ArrayRepeat(Arc<ArrayRepeat>),
+    LocalVariable(Arc<str>, LocalVariable),
     Tuple(Tuple),
     Variable(Variable),
-    Other(Rc<dyn BaseInstruction>),
+    Other(Arc<dyn BaseInstruction>),
 }
 
 impl Instruction {
-    pub(crate) fn new(
-        pair: Pair<Rule>,
-        interpreter: &Interpreter,
-        local_variables: &mut LocalVariables,
-    ) -> Result<Self> {
+    pub fn new(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<Self, Error> {
         match pair.as_rule() {
-            Rule::set => Set::create_instruction(pair, interpreter, local_variables),
-            Rule::destruct_tuple => {
-                DestructTuple::create_instruction(pair, interpreter, local_variables)
-            }
-            Rule::block => Block::create_instruction(pair, interpreter, local_variables),
-            Rule::import => Import::create_instruction(pair, interpreter, local_variables),
-            Rule::if_else | Rule::if_stm => {
-                IfElse::create_instruction(pair, interpreter, local_variables)
-            }
-            Rule::set_if_else | Rule::set_if => {
-                SetIfElse::create_instruction(pair, interpreter, local_variables)
-            }
-            Rule::r#match => Match::create_instruction(pair, interpreter, local_variables),
+            Rule::set => Set::create_instruction(pair, local_variables),
+            Rule::destruct_tuple => DestructTuple::create_instruction(pair, local_variables),
+            Rule::block => Block::create_instruction(pair, local_variables),
+            Rule::import => Import::create_instruction(pair, local_variables),
+            Rule::if_else => IfElse::create_instruction(pair, local_variables),
+            Rule::set_if_else => SetIfElse::create_instruction(pair, local_variables),
+            Rule::r#match => Match::create_instruction(pair, local_variables),
             Rule::function_declaration => {
-                FunctionDeclaration::create_instruction(pair, interpreter, local_variables)
+                FunctionDeclaration::create_instruction(pair, local_variables)
             }
-            Rule::r#return => Return::create_instruction(pair, interpreter, local_variables),
-            Rule::expr => Self::new_expression(pair, interpreter, local_variables),
+            Rule::r#return => Return::create_instruction(pair, local_variables),
+            Rule::expr => {
+                return InstructionWithStr::new_expression(pair, local_variables)
+                    .map(|iws| iws.instruction)
+            }
             rule => unexpected(rule),
         }
-    }
-    pub(crate) fn new_expression(
-        pair: Pair<Rule>,
-        interpreter: &Interpreter,
-        local_variables: &LocalVariables,
-    ) -> Result<Self> {
-        PRATT_PARSER
-            .map_primary(|pair| match pair.as_rule() {
-                Rule::expr => Self::new_expression(pair, interpreter, local_variables),
-                Rule::ident => {
-                    let ident = pair.as_str();
-                    local_variables.get(ident).map_or_else(
-                        || {
-                            interpreter
-                                .get_variable(ident)
-                                .cloned()
-                                .map(Instruction::from)
-                                .ok_or_else(|| Error::VariableDoesntExist(ident.into()))
-                        },
-                        |var| match var.clone() {
-                            LocalVariable::Variable(variable) => Ok(Self::Variable(variable)),
-                            local_variable => Ok(Self::LocalVariable(ident.into(), local_variable)),
-                        },
-                    )
-                }
-                Rule::int | Rule::float | Rule::string | Rule::void => {
-                    Variable::try_from(pair).map(Instruction::from)
-                }
-                Rule::tuple => Tuple::create_instruction(pair, interpreter, local_variables),
-                Rule::array => Array::create_instruction(pair, interpreter, local_variables),
-                Rule::array_repeat => {
-                    ArrayRepeat::create_instruction(pair, interpreter, local_variables)
-                }
-                Rule::function => {
-                    AnonymousFunction::create_instruction(pair, interpreter, local_variables)
-                }
-                rule => unexpected(rule),
-            })
-            .map_prefix(|op, rhs| match op.as_rule() {
-                Rule::not => Not::create_instruction(rhs?),
-                Rule::bitwise_not => BitwiseNot::create_instruction(rhs?),
-                Rule::unary_minus => UnaryMinus::create_instruction(rhs?),
-                rule => unexpected(rule),
-            })
-            .map_infix(|lhs, op, rhs| match op.as_rule() {
-                Rule::pow => Pow::create_op(lhs?, rhs?),
-                Rule::multiply => Multiply::create_op(lhs?, rhs?),
-                Rule::add => Add::create_op(lhs?, rhs?),
-                Rule::subtract => Subtract::create_op(lhs?, rhs?),
-                Rule::divide => Divide::create_op(lhs?, rhs?),
-                Rule::modulo => Modulo::create_op(lhs?, rhs?),
-                Rule::equal => Equal::create_op(lhs?, rhs?),
-                Rule::lower => Lower::create_op(lhs?, rhs?),
-                Rule::lower_equal => LowerOrEqual::create_op(lhs?, rhs?),
-                Rule::greater => Greater::create_op(lhs?, rhs?),
-                Rule::greater_equal => GreaterOrEqual::create_op(lhs?, rhs?),
-                Rule::map => Map::create_op(lhs?, rhs?),
-                Rule::filter => Filter::create_op(lhs?, rhs?),
-                Rule::bitwise_and => BitwiseAnd::create_op(lhs?, rhs?),
-                Rule::bitwise_or => BitwiseOr::create_op(lhs?, rhs?),
-                Rule::xor => Xor::create_op(lhs?, rhs?),
-                Rule::rshift => RShift::create_op(lhs?, rhs?),
-                Rule::lshift => LShift::create_op(lhs?, rhs?),
-                Rule::and => And::create_op(lhs?, rhs?),
-                Rule::or => Or::create_op(lhs?, rhs?),
-                Rule::reduce => {
-                    Reduce::create_instruction(lhs?, op, rhs?, local_variables, interpreter)
-                }
-                rule => unexpected(rule),
-            })
-            .map_postfix(|lhs, op| match op.as_rule() {
-                Rule::at => At::create_instruction(lhs?, op, interpreter, local_variables),
-                Rule::type_filter => {
-                    TypeFilter::create_instruction(lhs?, op.into_inner().next().unwrap())
-                }
-                Rule::function_call => {
-                    FunctionCall::create_instruction(lhs?, op, interpreter, local_variables)
-                }
-                rule => unexpected(rule),
-            })
-            .parse(pair.into_inner())
     }
 }
 
 impl Exec for Instruction {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        match self {
+        match_any! { self,
             Self::Variable(var) => Ok(var.clone()),
             Self::LocalVariable(ident, _) => interpreter
                 .get_variable(ident)
                 .cloned()
-                .ok_or_else(|| Error::VariableDoesntExist(ident.clone()).into()),
-            Self::AnonymousFunction(function) => function.exec(interpreter),
-            Self::Tuple(function) => function.exec(interpreter),
-            Self::Other(other) => other.exec(interpreter),
+                .ok_or_else(|| panic!("Tried to get variable {ident} that doest exist")),
+            Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins) | Self::Tuple(ins) | Self::Other(ins)
+                => ins.exec(interpreter)
         }
     }
 }
 
 impl Recreate for Instruction {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction> {
-        match self {
-            Self::LocalVariable(ident, _) => local_variables.get(ident).map_or_else(
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
+        match_any! {self,
+            Self::LocalVariable(ident, _) => Ok(local_variables.get(ident).map_or_else(
                 || {
-                    interpreter
+                    local_variables.interpreter
                         .get_variable(ident)
                         .cloned()
                         .map(Instruction::from)
-                        .ok_or_else(|| Error::VariableDoesntExist(ident.clone()))
+                        .unwrap_or_else(|| panic!("Tried to get variable {ident} that doest exist"))
                 },
                 |var| match var.clone() {
-                    LocalVariable::Variable(variable) => Ok(Self::Variable(variable)),
-                    local_variable => Ok(Self::LocalVariable(ident.clone(), local_variable)),
+                    LocalVariable::Variable(variable) => Self::Variable(variable),
+                    local_variable => Self::LocalVariable(ident.clone(), local_variable),
                 },
-            ),
-            Self::AnonymousFunction(function) => function.recreate(local_variables, interpreter),
-            Self::Tuple(tuple) => tuple.recreate(local_variables, interpreter),
+            )),
             Self::Variable(variable) => Ok(Self::Variable(variable.clone())),
-            Self::Other(other) => other.recreate(local_variables, interpreter),
+            Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins) |  Self::Tuple(ins) | Self::Other(ins)
+                => ins.recreate(local_variables)
         }
     }
 }
 
 impl ReturnType for Instruction {
     fn return_type(&self) -> Type {
-        match self {
-            Self::Variable(variable) => variable.as_type(),
-            Self::AnonymousFunction(function) => function.return_type(),
-            Self::LocalVariable(_, local_variable) => local_variable.as_type(),
-            Self::Tuple(tuple) => tuple.return_type(),
-            Self::Other(other) => other.return_type(),
+        match_any! { self,
+            Self::Variable(variable) | Self::LocalVariable(_, variable) => variable.as_type(),
+            Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins) | Self::Tuple(ins) | Self::Other(ins) => ins.return_type()
         }
     }
 }
@@ -232,12 +261,11 @@ impl From<Variable> for Instruction {
 }
 
 pub(crate) fn recreate_instructions(
-    instructions: &[Instruction],
+    instructions: &[InstructionWithStr],
     local_variables: &mut LocalVariables,
-    interpreter: &Interpreter,
-) -> Result<Rc<[Instruction]>> {
+) -> Result<Arc<[InstructionWithStr]>, ExecError> {
     instructions
         .iter()
-        .map(|instruction| instruction.recreate(local_variables, interpreter))
+        .map(|iws| iws.recreate(local_variables))
         .collect()
 }

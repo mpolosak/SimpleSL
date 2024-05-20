@@ -1,8 +1,8 @@
-use crate::instruction::ExecStop;
-use crate::instruction::{local_variable::LocalVariables, Exec, Instruction};
-use crate::{parse::*, stdlib, variable::*, Result};
-use pest::{iterators::Pairs, Parser};
-use std::{collections::HashMap, fs, rc::Rc};
+use crate::instruction::Exec;
+use crate::instruction::{ExecStop, InstructionWithStr};
+use crate::{stdlib, variable::*};
+use std::collections::HashMap;
+use std::sync::Arc;
 
 #[derive(Debug)]
 #[must_use]
@@ -11,7 +11,7 @@ pub struct Interpreter<'a> {
     lower_layer: Option<&'a Self>,
 }
 
-type VariableMap = HashMap<Rc<str>, Variable>;
+type VariableMap = HashMap<Arc<str>, Variable>;
 
 impl<'a> Interpreter<'a> {
     /// Constructs a new Interpreter with simplesl stdlib
@@ -31,46 +31,12 @@ impl<'a> Interpreter<'a> {
 
     pub(crate) fn exec(
         &mut self,
-        instructions: &[Instruction],
-    ) -> std::result::Result<Rc<[Variable]>, ExecStop> {
+        instructions: &[InstructionWithStr],
+    ) -> Result<Arc<[Variable]>, ExecStop> {
         instructions
             .iter()
             .map(|instruction| instruction.exec(self))
             .collect()
-    }
-
-    pub(crate) fn load(
-        &self,
-        path: &str,
-        local_variables: &mut LocalVariables,
-    ) -> Result<Rc<[Instruction]>> {
-        let contents = fs::read_to_string(path)?;
-        self.parse_input(&contents, local_variables)
-    }
-
-    fn parse_input(
-        &self,
-        input: &str,
-        local_variables: &mut LocalVariables,
-    ) -> Result<Rc<[Instruction]>> {
-        let pairs = SimpleSLParser::parse(Rule::input, input)?;
-        self.create_instructions(pairs, local_variables)
-    }
-
-    pub(crate) fn create_instructions(
-        &self,
-        pairs: Pairs<'_, Rule>,
-        local_variables: &mut LocalVariables,
-    ) -> Result<Rc<[Instruction]>> {
-        let mut instructions = pairs
-            .map(|pair| Instruction::new(pair, self, local_variables))
-            .collect::<Result<Vec<Instruction>>>()?;
-        let Some(last) = instructions.pop() else {
-            return Ok(Rc::from([]));
-        };
-        instructions.retain(|instruction| !matches!(instruction, Instruction::Variable(_)));
-        instructions.push(last);
-        Ok(instructions.into())
     }
 
     pub fn get_variable(&self, name: &str) -> Option<&Variable> {
@@ -78,7 +44,7 @@ impl<'a> Interpreter<'a> {
             .get(name)
             .or_else(|| self.lower_layer?.variables.get(name))
     }
-    pub fn insert(&mut self, name: Rc<str>, variable: Variable) {
+    pub fn insert(&mut self, name: Arc<str>, variable: Variable) {
         self.variables.insert(name, variable);
     }
 

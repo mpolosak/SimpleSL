@@ -1,44 +1,41 @@
 use super::{
     local_variable::LocalVariables,
-    traits::{BaseInstruction, Exec, ExecResult, Recreate},
-    Instruction, MutCreateInstruction,
+    traits::{Exec, ExecResult, Recreate},
+    Instruction, InstructionWithStr,
 };
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{ReturnType, Type},
-    Result,
+    Error, ExecError,
 };
 use pest::iterators::Pair;
-use std::rc::Rc;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Set {
-    ident: Rc<str>,
-    instruction: Instruction,
+    ident: Arc<str>,
+    instruction: InstructionWithStr,
 }
 
 impl Set {
     pub fn new(
-        ident: Rc<str>,
-        instruction: Instruction,
+        ident: Arc<str>,
+        instruction: InstructionWithStr,
         local_variables: &mut LocalVariables,
     ) -> Self {
-        local_variables.insert(ident.clone(), (&instruction).into());
+        local_variables.insert(ident.clone(), (&instruction.instruction).into());
         Self { ident, instruction }
     }
-}
 
-impl MutCreateInstruction for Set {
-    fn create_instruction(
+    pub fn create_instruction(
         pair: Pair<Rule>,
-        interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
-        let ident: Rc<str> = inner.next().unwrap().as_str().into();
+        let ident: Arc<str> = inner.next().unwrap().as_str().into();
         let pair = inner.next().unwrap();
-        let instruction = Instruction::new(pair, interpreter, local_variables)?;
+        let instruction = InstructionWithStr::new(pair, local_variables)?;
         Ok(Self::new(ident, instruction, local_variables).into())
     }
 }
@@ -52,13 +49,9 @@ impl Exec for Set {
 }
 
 impl Recreate for Set {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction> {
-        let instruction = self.instruction.recreate(local_variables, interpreter)?;
-        local_variables.insert(self.ident.clone(), (&instruction).into());
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
+        let instruction = self.instruction.recreate(local_variables)?;
+        local_variables.insert(self.ident.clone(), (&instruction.instruction).into());
         Ok(Self {
             ident: self.ident.clone(),
             instruction,
@@ -66,8 +59,6 @@ impl Recreate for Set {
         .into())
     }
 }
-
-impl BaseInstruction for Set {}
 
 impl ReturnType for Set {
     fn return_type(&self) -> Type {

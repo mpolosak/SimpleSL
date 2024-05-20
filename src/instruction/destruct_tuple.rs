@@ -1,41 +1,46 @@
-use std::{iter::zip, rc::Rc};
-
 use super::{
-    local_variable::{LocalVariable, LocalVariables},
-    traits::{BaseInstruction, ExecResult, MutCreateInstruction},
-    tuple::Tuple,
-    Exec, Instruction, Recreate,
+    local_variable::LocalVariables, traits::ExecResult, tuple::Tuple, Exec, Instruction,
+    InstructionWithStr, Recreate,
 };
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{ReturnType, Type, Variable},
-    Error, Result,
+    Error, ExecError,
 };
 use pest::iterators::Pair;
+use std::{iter::zip, sync::Arc};
 
 #[derive(Debug)]
 pub struct DestructTuple {
-    idents: Rc<[Rc<str>]>,
-    instruction: Instruction,
+    idents: Arc<[Arc<str>]>,
+    instruction: InstructionWithStr,
 }
 
-impl MutCreateInstruction for DestructTuple {
-    fn create_instruction(
+impl DestructTuple {
+    pub fn create_instruction(
         pair: Pair<Rule>,
-        interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
-        let idents: Rc<[Rc<str>]> = pair.into_inner().map(|pair| pair.as_str().into()).collect();
+        let idents: Arc<[Arc<str>]> = pair.into_inner().map(|pair| pair.as_str().into()).collect();
         let pair = inner.next().unwrap();
-        let instruction = Instruction::new(pair, interpreter, local_variables)?;
-        if !matches!(instruction.return_type(), Type::Tuple(types) if types.len() == idents.len()) {
-            return Err(Error::WrongType(
-                "instruction".into(),
-                Type::Tuple(std::iter::repeat(Type::Any).take(idents.len()).collect()),
-            ));
+        let instruction = InstructionWithStr::new(pair, local_variables)?;
+        let return_type = instruction.return_type();
+        if !return_type.is_tuple() {
+            return Err(Error::NotATuple(instruction.str));
+        }
+        let Some(len) = return_type.tuple_len() else {
+            return Err(Error::CannotDetermineLength(instruction.str));
+        };
+        let idents_len = idents.len();
+        if len != idents_len {
+            return Err(Error::WrongLength {
+                ins: instruction.str,
+                len,
+                idents_len,
+            });
         }
         let result = Self {
             idents,
@@ -44,28 +49,18 @@ impl MutCreateInstruction for DestructTuple {
         result.insert_local_variables(local_variables);
         Ok(result.into())
     }
-}
-
-impl DestructTuple {
     fn insert_local_variables(&self, local_variables: &mut LocalVariables) {
-        match &self.instruction {
+        match &self.instruction.instruction {
             Instruction::Variable(Variable::Tuple(elements)) => {
-                for (ident, element) in zip(self.idents.iter().cloned(), elements.iter()) {
-                    local_variables.insert(ident, LocalVariable::Variable(element.clone()));
-                }
+                local_variables.extend(zip(self.idents.iter().cloned(), elements.iter().cloned()))
             }
-            Instruction::Tuple(Tuple { elements }) => {
-                for (ident, element) in zip(self.idents.iter().cloned(), elements.iter()) {
-                    local_variables.insert(ident, element.into());
-                }
-            }
+            Instruction::Tuple(Tuple { elements }) => local_variables.extend(zip(
+                self.idents.iter().cloned(),
+                elements.iter().map(|ins| &ins.instruction),
+            )),
             instruction => {
-                let Type::Tuple(types) = instruction.return_type() else {
-                    unreachable!()
-                };
-                for (ident, var_type) in zip(self.idents.iter().cloned(), types.iter()) {
-                    local_variables.insert(ident, var_type.clone().into());
-                }
+                let types = instruction.return_type().flatten_tuple().unwrap();
+                local_variables.extend(zip(self.idents.iter().cloned(), types.iter().cloned()))
             }
         }
     }
@@ -77,20 +72,16 @@ impl Exec for DestructTuple {
         let Variable::Tuple(elements) = result else {
             panic!()
         };
-        for (ident, element) in zip(self.idents.iter(), elements.iter()) {
-            interpreter.insert(ident.clone(), element.clone());
+        for (ident, element) in zip(self.idents.iter().cloned(), elements.iter().cloned()) {
+            interpreter.insert(ident, element);
         }
         Ok(Variable::Tuple(elements))
     }
 }
 
 impl Recreate for DestructTuple {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction> {
-        let instruction = self.instruction.recreate(local_variables, interpreter)?;
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
+        let instruction = self.instruction.recreate(local_variables)?;
         let result = Self {
             idents: self.idents.clone(),
             instruction,
@@ -105,5 +96,3 @@ impl ReturnType for DestructTuple {
         self.instruction.return_type()
     }
 }
-
-impl BaseInstruction for DestructTuple {}

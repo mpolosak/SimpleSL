@@ -1,27 +1,42 @@
-use super::Instruction;
+use super::{function::AnonymousFunction, Instruction, InstructionWithStr};
 use crate::{
     function::{Param, Params},
+    parse::{Rule, SimpleSLParser},
     variable::{FunctionType, ReturnType, Type, Typed, Variable},
+    Error, Interpreter,
 };
-use std::{collections::HashMap, rc::Rc};
+use match_any::match_any;
+use pest::{iterators::Pairs, Parser};
+use std::{collections::HashMap, fs, sync::Arc};
 
-pub type LocalVariableMap = HashMap<Rc<str>, LocalVariable>;
+pub type LocalVariableMap = HashMap<Arc<str>, LocalVariable>;
 pub struct LocalVariables<'a> {
     variables: LocalVariableMap,
     lower_layer: Option<&'a Self>,
     function: Option<FunctionInfo>,
+    pub interpreter: &'a Interpreter<'a>,
 }
 
 impl<'a> LocalVariables<'a> {
     #[must_use]
-    pub fn new() -> Self {
+    pub fn new(interpreter: &'a Interpreter) -> Self {
         Self {
             variables: LocalVariableMap::new(),
             lower_layer: None,
             function: None,
+            interpreter,
         }
     }
-    pub fn insert(&mut self, name: Rc<str>, variable: LocalVariable) {
+
+    pub fn from_params(params: Params, interpreter: &'a Interpreter) -> Self {
+        Self {
+            variables: LocalVariableMap::from(params),
+            lower_layer: None,
+            function: None,
+            interpreter,
+        }
+    }
+    pub fn insert(&mut self, name: Arc<str>, variable: LocalVariable) {
         self.variables.insert(name, variable);
     }
     #[must_use]
@@ -31,7 +46,7 @@ impl<'a> LocalVariables<'a> {
             .or_else(|| self.lower_layer?.get(name))
     }
     #[must_use]
-    pub fn contains_key(&self, name: &Rc<str>) -> bool {
+    pub fn contains_key(&self, name: &Arc<str>) -> bool {
         self.variables.contains_key(name)
             || self
                 .lower_layer
@@ -43,6 +58,7 @@ impl<'a> LocalVariables<'a> {
             variables: LocalVariableMap::new(),
             lower_layer: Some(self),
             function: None,
+            interpreter: self.interpreter,
         }
     }
 
@@ -52,6 +68,7 @@ impl<'a> LocalVariables<'a> {
             variables: layer,
             lower_layer: Some(self),
             function: Some(function),
+            interpreter: self.interpreter,
         }
     }
 
@@ -60,31 +77,48 @@ impl<'a> LocalVariables<'a> {
             .as_ref()
             .or_else(|| self.lower_layer.and_then(LocalVariables::function))
     }
-}
 
-impl Default for LocalVariables<'_> {
-    fn default() -> Self {
-        Self::new()
+    pub(crate) fn load(&mut self, path: &str) -> Result<Arc<[InstructionWithStr]>, Error> {
+        let contents = fs::read_to_string(path)?;
+        self.parse_input(&contents)
+    }
+
+    pub(crate) fn parse_input(&mut self, input: &str) -> Result<Arc<[InstructionWithStr]>, Error> {
+        let pairs = SimpleSLParser::parse(Rule::input, input)?;
+        self.create_instructions(pairs)
+    }
+
+    pub(crate) fn create_instructions(
+        &mut self,
+        pairs: Pairs<'_, Rule>,
+    ) -> Result<Arc<[InstructionWithStr]>, Error> {
+        let mut instructions = pairs
+            .map(|pair| InstructionWithStr::new(pair, self))
+            .collect::<Result<Vec<InstructionWithStr>, Error>>()?;
+        let Some(last) = instructions.pop() else {
+            return Ok(Arc::from([]));
+        };
+        instructions.retain(|instruction| {
+            !matches!(
+                instruction,
+                InstructionWithStr {
+                    instruction: Instruction::Variable(..),
+                    ..
+                }
+            )
+        });
+        instructions.push(last);
+        Ok(instructions.into())
     }
 }
 
-impl From<LocalVariableMap> for LocalVariables<'_> {
-    fn from(value: LocalVariableMap) -> Self {
-        Self {
-            variables: value,
-            lower_layer: None,
-            function: None,
-        }
-    }
-}
-
-impl From<Params> for LocalVariables<'_> {
-    fn from(value: Params) -> Self {
-        Self {
-            variables: value.into(),
-            lower_layer: None,
-            function: None,
-        }
+impl<V> Extend<(Arc<str>, V)> for LocalVariables<'_>
+where
+    V: Into<LocalVariable>,
+{
+    fn extend<T: IntoIterator<Item = (Arc<str>, V)>>(&mut self, iter: T) {
+        self.variables
+            .extend(iter.into_iter().map(|(ident, var)| (ident, var.into())));
     }
 }
 
@@ -103,10 +137,25 @@ impl From<Type> for LocalVariable {
 
 impl From<&Instruction> for LocalVariable {
     fn from(value: &Instruction) -> Self {
-        let Instruction::Variable(variable) = value else {
-            return Self::Other(value.return_type());
-        };
-        Self::Variable(variable.clone())
+        match_any! { value,
+            Instruction::AnonymousFunction(function) => function.into(),
+            Instruction::LocalVariable(_, var) => var.clone(),
+            Instruction::Variable(var) => var.clone().into(),
+            Instruction::Tuple(ins) | Instruction::Array(ins) | Instruction::ArrayRepeat(ins) | Instruction::Other(ins)
+                => ins.return_type().into()
+        }
+    }
+}
+
+impl From<Variable> for LocalVariable {
+    fn from(value: Variable) -> Self {
+        Self::Variable(value)
+    }
+}
+
+impl From<&AnonymousFunction> for LocalVariable {
+    fn from(value: &AnonymousFunction) -> Self {
+        Self::Function(value.params.clone(), value.return_type())
     }
 }
 
@@ -129,16 +178,16 @@ impl Typed for LocalVariable {
 
 #[derive(Clone, Debug)]
 pub struct FunctionInfo {
-    name: Option<Rc<str>>,
+    name: Option<Arc<str>>,
     return_type: Type,
 }
 
 impl FunctionInfo {
-    pub fn new(name: Option<Rc<str>>, return_type: Type) -> Self {
+    pub fn new(name: Option<Arc<str>>, return_type: Type) -> Self {
         Self { name, return_type }
     }
 
-    pub fn name(&self) -> Option<Rc<str>> {
+    pub fn name(&self) -> Option<Arc<str>> {
         self.name.clone()
     }
 

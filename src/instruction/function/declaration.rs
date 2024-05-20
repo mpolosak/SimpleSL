@@ -3,33 +3,32 @@ use crate::{
     instruction::{
         local_variable::{FunctionInfo, LocalVariable, LocalVariableMap, LocalVariables},
         recreate_instructions,
-        traits::{BaseInstruction, ExecResult, MutCreateInstruction},
-        Exec, Instruction, Recreate,
+        traits::ExecResult,
+        Exec, Instruction, InstructionWithStr, Recreate,
     },
     interpreter::Interpreter,
     parse::Rule,
     variable::{FunctionType, ReturnType, Type},
-    Error, Result,
+    Error, ExecError,
 };
 use pest::iterators::Pair;
-use std::rc::Rc;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct FunctionDeclaration {
-    ident: Rc<str>,
+    ident: Arc<str>,
     pub params: Params,
-    body: Rc<[Instruction]>,
+    body: Arc<[InstructionWithStr]>,
     return_type: Type,
 }
 
-impl MutCreateInstruction for FunctionDeclaration {
-    fn create_instruction(
+impl FunctionDeclaration {
+    pub fn create_instruction(
         pair: Pair<Rule>,
-        interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
-        let ident: Rc<str> = inner.next().unwrap().as_str().into();
+        let ident: Arc<str> = inner.next().unwrap().as_str().into();
         let mut inner = inner.next().unwrap().into_inner();
         let params_pair = inner.next().unwrap();
         let params = Params(params_pair.into_inner().map(Param::from).collect());
@@ -49,7 +48,7 @@ impl MutCreateInstruction for FunctionDeclaration {
             LocalVariableMap::from(params.clone()),
             FunctionInfo::new(Some(ident.clone()), return_type.clone()),
         );
-        let body = interpreter.create_instructions(inner, &mut local_variables)?;
+        let body = local_variables.create_instructions(inner)?;
         if !Type::Void.matches(&return_type)
             && !body
                 .iter()
@@ -73,13 +72,13 @@ impl MutCreateInstruction for FunctionDeclaration {
 
 impl Exec for FunctionDeclaration {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let mut local_variables = LocalVariables::from(self.params.clone());
+        let mut local_variables = LocalVariables::from_params(self.params.clone(), interpreter);
         local_variables.insert(
             self.ident.clone(),
             LocalVariable::Function(self.params.clone(), self.return_type.clone()),
         );
-        let body = recreate_instructions(&self.body, &mut local_variables, interpreter)?;
-        let function: Rc<Function> = Function {
+        let body = recreate_instructions(&self.body, &mut local_variables)?;
+        let function: Arc<Function> = Function {
             ident: Some(self.ident.clone()),
             params: self.params.clone(),
             body: Body::Lang(body),
@@ -92,11 +91,7 @@ impl Exec for FunctionDeclaration {
 }
 
 impl Recreate for FunctionDeclaration {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction> {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
         local_variables.insert(
             self.ident.clone(),
             LocalVariable::Function(self.params.clone(), self.return_type.clone()),
@@ -105,7 +100,7 @@ impl Recreate for FunctionDeclaration {
             self.params.clone().into(),
             FunctionInfo::new(Some(self.ident.clone()), self.return_type.clone()),
         );
-        let body = recreate_instructions(&self.body, &mut local_variables, interpreter)?;
+        let body = recreate_instructions(&self.body, &mut local_variables)?;
         Ok(Self {
             ident: self.ident.clone(),
             params: self.params.clone(),
@@ -118,7 +113,7 @@ impl Recreate for FunctionDeclaration {
 
 impl ReturnType for FunctionDeclaration {
     fn return_type(&self) -> Type {
-        let params: Box<[Type]> = self
+        let params: Arc<[Type]> = self
             .params
             .iter()
             .map(|Param { name: _, var_type }| var_type.clone())
@@ -131,5 +126,3 @@ impl ReturnType for FunctionDeclaration {
         .into()
     }
 }
-
-impl BaseInstruction for FunctionDeclaration {}

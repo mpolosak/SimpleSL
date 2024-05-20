@@ -1,61 +1,58 @@
-use super::{local_variable::LocalVariables, Instruction};
-use crate::{
-    interpreter::Interpreter,
-    parse::Rule,
-    variable::{ReturnType, Type, Variable},
-    Error, Result,
+mod can_be_used;
+mod exec;
+mod recreate;
+use super::{
+    at::At,
+    bin_op::*,
+    block::Block,
+    control_flow::{IfElse, Match, SetIfElse},
+    destruct_tuple::DestructTuple,
+    function::FunctionDeclaration,
+    import::Import,
+    prefix_op::{BitwiseNot, Not, UnaryMinus},
+    r#return::Return,
+    set::Set,
+    type_filter::TypeFilter,
+    FunctionCall, Instruction,
 };
-use pest::iterators::Pair;
-use std::{fmt::Debug, rc::Rc, result};
+use crate::variable::ReturnType;
+use duplicate::duplicate_item;
+use std::{fmt::Debug, sync::Arc};
+pub use {
+    can_be_used::CanBeUsed,
+    exec::{Exec, ExecResult, ExecStop},
+    recreate::Recreate,
+};
 
-pub trait CreateInstruction {
-    fn create_instruction(
-        pair: Pair<Rule>,
-        interpreter: &Interpreter,
-        local_variables: &LocalVariables,
-    ) -> Result<Instruction>;
-}
+pub trait BaseInstruction: Exec + Recreate + ReturnType + Debug + Sync + Send {}
 
-pub trait MutCreateInstruction {
-    fn create_instruction(
-        pair: Pair<Rule>,
-        interpreter: &Interpreter,
-        local_variables: &mut LocalVariables,
-    ) -> Result<Instruction>;
-}
-
-pub trait Exec {
-    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult;
-}
-
-pub trait Recreate {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction>;
-}
-
-pub trait BaseInstruction: Exec + Recreate + ReturnType + Debug {}
+#[duplicate_item(T; [Filter]; [Map]; [Reduce]; [TypeFilter]; [At];
+    [BitwiseAnd]; [BitwiseOr]; [BitwiseNot]; [Xor]; [And]; [Or]; [Add]; [Subtract]; [Pow];
+    [Multiply]; [Divide]; [Modulo]; [Equal]; [Greater]; [GreaterOrEqual]; [Lower];
+    [LowerOrEqual]; [LShift]; [RShift]; [UnaryMinus]; [Not]; [Block]; [IfElse]; [Match];
+    [SetIfElse]; [DestructTuple]; [FunctionCall]; [FunctionDeclaration]; [Import];
+    [Return]; [Set]
+)]
+impl BaseInstruction for T {}
 
 impl<T: BaseInstruction + 'static> From<T> for Instruction {
     fn from(value: T) -> Self {
-        Self::Other(Rc::new(value))
+        Self::Other(Arc::new(value))
     }
 }
 
-pub trait CanBeUsed {
-    fn can_be_used(lhs: &Type, rhs: &Type) -> bool;
+pub trait ToResult<T, E> {
+    fn to_result(self) -> Result<T, E>;
 }
 
-pub type ExecResult = result::Result<Variable, ExecStop>;
-pub enum ExecStop {
-    Return(Variable),
-    Error(Error),
+impl<T, E> ToResult<T, E> for T {
+    fn to_result(self) -> Result<T, E> {
+        Ok(self)
+    }
 }
 
-impl From<Error> for ExecStop {
-    fn from(value: Error) -> Self {
-        Self::Error(value)
+impl<T, E0, E1: From<E0>> ToResult<T, E1> for Result<T, E0> {
+    fn to_result(self) -> Result<T, E1> {
+        self.map_err(E1::from)
     }
 }

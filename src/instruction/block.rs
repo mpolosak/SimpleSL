@@ -1,36 +1,33 @@
 use super::{
-    local_variable::LocalVariables,
-    recreate_instructions,
-    traits::{BaseInstruction, ExecResult},
-    CreateInstruction, Exec, Instruction, Recreate,
+    local_variable::LocalVariables, recreate_instructions, traits::ExecResult, Exec, Instruction,
+    InstructionWithStr, Recreate,
 };
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{ReturnType, Type, Variable},
-    Result,
+    Error, ExecError,
 };
 use pest::iterators::Pair;
-use std::rc::Rc;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Block {
-    instructions: Rc<[Instruction]>,
+    instructions: Arc<[InstructionWithStr]>,
 }
 
-impl CreateInstruction for Block {
-    fn create_instruction(
+impl Block {
+    pub fn create_instruction(
         pair: Pair<Rule>,
-        interpreter: &Interpreter,
         local_variables: &LocalVariables,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, Error> {
         let mut local_variables = local_variables.create_layer();
-        let instructions =
-            interpreter.create_instructions(pair.into_inner(), &mut local_variables)?;
+        let instructions = local_variables.create_instructions(pair.into_inner())?;
         if instructions.is_empty() {
-            return Ok(Instruction::Variable(Variable::Void));
+            Ok(Variable::Void.into())
+        } else {
+            Ok(Self { instructions }.into())
         }
-        Ok(Self { instructions }.into())
     }
 }
 
@@ -46,14 +43,9 @@ impl Exec for Block {
 }
 
 impl Recreate for Block {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction> {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
         let mut local_variables = local_variables.create_layer();
-        let instructions =
-            recreate_instructions(&self.instructions, &mut local_variables, interpreter)?;
+        let instructions = recreate_instructions(&self.instructions, &mut local_variables)?;
         Ok(Self { instructions }.into())
     }
 }
@@ -65,5 +57,3 @@ impl ReturnType for Block {
             .map_or(Type::Void, ReturnType::return_type)
     }
 }
-
-impl BaseInstruction for Block {}

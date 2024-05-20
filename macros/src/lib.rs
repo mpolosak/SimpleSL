@@ -25,11 +25,11 @@ pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream 
     quote!(
         #function
         {
-            use std::rc::Rc;
+            use std::sync::Arc;
             interpreter.insert(
                 #ident_str.into(),
                 simplesl::function::Function::new(
-                    simplesl::function::Params(Rc::new([#params])),
+                    simplesl::function::Params(Arc::new([#params])),
                     |interpreter| {
                         #args_importing
                         #body

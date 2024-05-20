@@ -1,35 +1,35 @@
 use crate::{
     function::{Body, Function, Param, Params},
+    instruction::InstructionWithStr,
     interpreter::Interpreter,
     parse::Rule,
     variable::{FunctionType, ReturnType, Type},
-    Result,
+    ExecError,
 };
 use crate::{
     instruction::{
         local_variable::{FunctionInfo, LocalVariableMap, LocalVariables},
         recreate_instructions,
         traits::{Exec, ExecResult, Recreate},
-        CreateInstruction, Instruction,
+        Instruction,
     },
     Error,
 };
 use pest::iterators::Pair;
-use std::rc::Rc;
+use std::sync::Arc;
 
 #[derive(Clone, Debug)]
 pub struct AnonymousFunction {
     pub params: Params,
-    body: Rc<[Instruction]>,
+    body: Arc<[InstructionWithStr]>,
     return_type: Type,
 }
 
-impl CreateInstruction for AnonymousFunction {
-    fn create_instruction(
+impl AnonymousFunction {
+    pub fn create_instruction(
         pair: Pair<Rule>,
-        interpreter: &Interpreter,
         local_variables: &LocalVariables,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let params_pair = inner.next().unwrap();
         let params = Params(params_pair.into_inner().map(Param::from).collect());
@@ -44,7 +44,7 @@ impl CreateInstruction for AnonymousFunction {
             LocalVariableMap::from(params.clone()),
             FunctionInfo::new(None, return_type.clone()),
         );
-        let body = interpreter.create_instructions(inner, &mut local_variables)?;
+        let body = local_variables.create_instructions(inner)?;
         if !Type::Void.matches(&return_type)
             && !body
                 .iter()
@@ -67,8 +67,8 @@ impl CreateInstruction for AnonymousFunction {
 
 impl Exec for AnonymousFunction {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let mut fn_local_variables = LocalVariables::from(self.params.clone());
-        let body = recreate_instructions(&self.body, &mut fn_local_variables, interpreter)?;
+        let mut fn_local_variables = LocalVariables::from_params(self.params.clone(), interpreter);
+        let body = recreate_instructions(&self.body, &mut fn_local_variables)?;
         Ok(Function {
             ident: None,
             params: self.params.clone(),
@@ -80,16 +80,12 @@ impl Exec for AnonymousFunction {
 }
 
 impl Recreate for AnonymousFunction {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction> {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
         let mut local_variables = local_variables.function_layer(
             self.params.clone().into(),
             FunctionInfo::new(None, self.return_type.clone()),
         );
-        let body = recreate_instructions(&self.body, &mut local_variables, interpreter)?;
+        let body = recreate_instructions(&self.body, &mut local_variables)?;
         Ok(Self {
             params: self.params.clone(),
             body,
@@ -107,7 +103,7 @@ impl From<AnonymousFunction> for Instruction {
 
 impl ReturnType for AnonymousFunction {
     fn return_type(&self) -> Type {
-        let params: Box<[Type]> = self
+        let params: Arc<[Type]> = self
             .params
             .iter()
             .map(|param| param.var_type.clone())

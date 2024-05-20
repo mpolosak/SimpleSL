@@ -1,19 +1,20 @@
 use crate::{instruction::local_variable::LocalVariableMap, join, parse::Rule, variable::Type};
 use pest::iterators::Pair;
-use std::{fmt, ops::Deref, rc::Rc};
+use std::{fmt, ops::Deref, sync::Arc};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Param {
-    pub name: Rc<str>,
+    pub name: Arc<str>,
     pub var_type: Type,
 }
 
 impl fmt::Display for Param {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}:{}", self.name, self.var_type)
+        write!(f, "{}: {}", self.name, self.var_type)
     }
 }
 
+#[doc(hidden)]
 impl From<Pair<'_, Rule>> for Param {
     fn from(value: Pair<'_, Rule>) -> Self {
         let mut inner = value.into_inner();
@@ -25,16 +26,16 @@ impl From<Pair<'_, Rule>> for Param {
 }
 
 #[derive(Clone, Debug)]
-pub struct Params(pub Rc<[Param]>);
+pub struct Params(pub Arc<[Param]>);
 
 impl fmt::Display for Params {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", join(self, ", "))
+        write!(f, "{}", join(self.as_ref(), ", "))
     }
 }
 
 impl Deref for Params {
-    type Target = Rc<[Param]>;
+    type Target = Arc<[Param]>;
 
     fn deref(&self) -> &Self::Target {
         &self.0

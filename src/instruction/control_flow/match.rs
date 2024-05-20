@@ -1,45 +1,41 @@
 use super::match_arm::MatchArm;
 use crate::{
     instruction::{
-        local_variable::LocalVariables,
-        traits::{BaseInstruction, ExecResult, MutCreateInstruction},
-        Exec, Instruction, Recreate,
+        local_variable::LocalVariables, traits::ExecResult, Exec, Instruction, InstructionWithStr,
+        Recreate,
     },
     interpreter::Interpreter,
     parse::Rule,
     variable::{ReturnType, Type},
-    Error, Result,
+    Error, ExecError,
 };
 use pest::iterators::Pair;
 
 #[derive(Debug)]
 pub struct Match {
-    expression: Instruction,
+    expression: InstructionWithStr,
     arms: Box<[MatchArm]>,
 }
 
-impl MutCreateInstruction for Match {
-    fn create_instruction(
+impl Match {
+    pub fn create_instruction(
         pair: Pair<Rule>,
-        interpreter: &Interpreter,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
-        let expression = Instruction::new(pair, interpreter, local_variables)?;
+        let expression = InstructionWithStr::new(pair, local_variables)?;
         let var_type = expression.return_type();
         let arms = inner
-            .map(|pair| MatchArm::new(pair, interpreter, local_variables))
-            .collect::<Result<Box<[MatchArm]>>>()?;
+            .map(|pair| MatchArm::new(pair, local_variables))
+            .collect::<Result<Box<[MatchArm]>, Error>>()?;
         let result = Self { expression, arms };
         if !result.is_covering_type(&var_type) {
             return Err(Error::MatchNotCovered);
         }
         Ok(result.into())
     }
-}
 
-impl Match {
     fn is_covering_type(&self, checked_type: &Type) -> bool {
         if let Type::Multi(types) = checked_type {
             return types.iter().all(|var_type| self.is_covering_type(var_type));
@@ -63,17 +59,13 @@ impl Exec for Match {
 }
 
 impl Recreate for Match {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction> {
-        let expression = self.expression.recreate(local_variables, interpreter)?;
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
+        let expression = self.expression.recreate(local_variables)?;
         let arms = self
             .arms
             .iter()
-            .map(|arm| arm.recreate(local_variables, interpreter))
-            .collect::<Result<Box<[MatchArm]>>>()?;
+            .map(|arm| arm.recreate(local_variables))
+            .collect::<Result<Box<[MatchArm]>, ExecError>>()?;
         Ok(Self { expression, arms }.into())
     }
 }
@@ -87,5 +79,3 @@ impl ReturnType for Match {
             .expect("match statement without arms")
     }
 }
-
-impl BaseInstruction for Match {}

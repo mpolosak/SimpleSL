@@ -1,13 +1,12 @@
-use std::rc::Rc;
-
-use pest::iterators::Pair;
-
 use crate::{
-    function::{check_args, Params},
-    instruction::traits::{BaseInstruction, ExecResult, ExecStop},
+    function::{Function, Param, Params},
+    instruction::{
+        traits::{ExecResult, ExecStop},
+        InstructionWithStr,
+    },
     interpreter::Interpreter,
-    variable::{FunctionType, ReturnType, Type, Variable},
-    Error, Result,
+    variable::{ReturnType, Type, Variable},
+    Error, ExecError,
 };
 use crate::{
     instruction::{
@@ -19,64 +18,88 @@ use crate::{
     },
     parse::Rule,
 };
+use pest::iterators::Pair;
+use std::{iter::zip, sync::Arc};
 
 #[derive(Debug)]
 pub struct FunctionCall {
-    pub function: Instruction,
-    pub args: Rc<[Instruction]>,
+    pub function: InstructionWithStr,
+    pub args: Arc<[InstructionWithStr]>,
 }
 
 impl FunctionCall {
     pub fn create_instruction(
-        function: Instruction,
+        function: InstructionWithStr,
         args: Pair<Rule>,
-        interpreter: &Interpreter,
         local_variables: &LocalVariables,
-    ) -> Result<Instruction> {
+    ) -> Result<Instruction, Error> {
         let args = args
             .into_inner()
-            .map(|pair| Instruction::new_expression(pair, interpreter, local_variables))
-            .collect::<Result<Rc<_>>>()?;
-        match &function {
+            .map(|pair| InstructionWithStr::new_expression(pair, local_variables))
+            .collect::<Result<Arc<_>, Error>>()?;
+        match &function.instruction {
             Instruction::Variable(Variable::Function(function2)) => {
-                Self::check_args_with_params("function", &function2.params, &args)?;
-                Ok(Self { function, args }.into())
+                Self::check_args_with_params(&function.str, &function2.params, &args)?;
             }
-            Instruction::LocalVariable(_, LocalVariable::Function(params, _))
-            | Instruction::AnonymousFunction(AnonymousFunction { params, .. }) => {
-                Self::check_args_with_params("function", params, &args)?;
-                Ok(Self { function, args }.into())
+            Instruction::LocalVariable(ident, LocalVariable::Function(params, _)) => {
+                Self::check_args_with_params(ident, params, &args)?;
             }
-            instruction => {
-                Self::check_args_with_type("function", &instruction.return_type(), &args)?;
-                Ok(Self { function, args }.into())
+            Instruction::AnonymousFunction(AnonymousFunction { params, .. }) => {
+                Self::check_args_with_params(&function.str, params, &args)?;
             }
+            _ => {
+                let f_type = function.return_type();
+                if !f_type.is_function() {
+                    return Err(Error::NotAFunction(function.str));
+                }
+                let Some(params) = f_type.params() else {
+                    return Err(Error::CannotDetermineParams(function.str));
+                };
+                let params = params
+                    .iter()
+                    .enumerate()
+                    .map(|(i, var_type)| Param {
+                        name: format!("#{i}").into(),
+                        var_type: var_type.clone(),
+                    })
+                    .collect();
+                Self::check_args_with_params(&function.str, &Params(params), &args)?;
+            }
+        };
+        Ok(Self { function, args }.into())
+    }
+    pub fn create_from_variables(
+        ident: Arc<str>,
+        function: Arc<Function>,
+        args: Vec<Variable>,
+    ) -> Result<Instruction, Error> {
+        let args: Arc<[InstructionWithStr]> =
+            args.into_iter().map(InstructionWithStr::from).collect();
+        Self::check_args_with_params(&ident, &function.params, &args)?;
+        Ok(FunctionCall {
+            function: Variable::Function(function).into(),
+            args,
         }
+        .into())
     }
-    fn check_args_with_params(pair_str: &str, params: &Params, args: &[Instruction]) -> Result<()> {
-        check_args(
-            pair_str,
-            params,
-            &args
-                .iter()
-                .map(Instruction::return_type)
-                .collect::<Box<[Type]>>(),
-        )
-    }
-    fn check_args_with_type(pair_str: &str, var_type: &Type, args: &[Instruction]) -> Result<()> {
-        let params = args
-            .iter()
-            .map(Instruction::return_type)
-            .collect::<Box<[Type]>>();
-        let expected = Type::Function(
-            FunctionType {
-                params,
-                return_type: Type::Any,
+    fn check_args_with_params(
+        ident: &Arc<str>,
+        params: &Params,
+        args: &[InstructionWithStr],
+    ) -> Result<(), Error> {
+        if params.len() != args.len() {
+            return Err(Error::WrongNumberOfArguments(ident.clone(), params.len()));
+        }
+        for (arg, param) in zip(args, params.iter()) {
+            let arg_type = arg.return_type();
+            if !arg_type.matches(&param.var_type) {
+                return Err(Error::WrongArgument {
+                    function: ident.clone(),
+                    param: param.clone(),
+                    given: arg.str.clone(),
+                    given_type: arg_type,
+                });
             }
-            .into(),
-        );
-        if !var_type.matches(&expected) {
-            return Err(Error::WrongType(pair_str.into(), expected));
         }
         Ok(())
     }
@@ -88,18 +111,14 @@ impl Exec for FunctionCall {
         let Variable::Function(function) = self.function.exec(interpreter)? else {
             panic!("Tried to call not function")
         };
-        function.exec(interpreter, &args).map_err(ExecStop::from)
+        function.exec(&args).map_err(ExecStop::from)
     }
 }
 
 impl Recreate for FunctionCall {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-        interpreter: &Interpreter,
-    ) -> Result<Instruction> {
-        let function = self.function.recreate(local_variables, interpreter)?;
-        let args = recreate_instructions(&self.args, local_variables, interpreter)?;
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
+        let function = self.function.recreate(local_variables)?;
+        let args = recreate_instructions(&self.args, local_variables)?;
         Ok(Self { function, args }.into())
     }
 }
@@ -112,5 +131,3 @@ impl ReturnType for FunctionCall {
         function_type.return_type.clone()
     }
 }
-
-impl BaseInstruction for FunctionCall {}

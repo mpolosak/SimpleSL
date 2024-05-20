@@ -1,0 +1,39 @@
+use duplicate::duplicate_item;
+
+use crate::{
+    errors::ExecError,
+    instruction::{
+        bin_op::*,
+        local_variable::LocalVariables,
+        prefix_op::{BitwiseNot, Not, UnaryMinus},
+        Instruction,
+    },
+};
+
+use super::ToResult;
+
+pub trait Recreate {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError>;
+}
+
+#[duplicate_item(T; [UnaryMinus]; [BitwiseNot]; [Not])]
+impl Recreate for T {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
+        let instruction = self.instruction.recreate(local_variables)?;
+        Ok(Self::create_from_instruction(instruction))
+    }
+}
+
+#[duplicate_item(
+    T;
+    [Add]; [Subtract]; [Multiply]; [Divide]; [Modulo]; [Pow]; [And]; [Or];
+    [BitwiseAnd]; [BitwiseOr]; [Xor]; [Equal]; [Greater]; [GreaterOrEqual];
+    [Lower]; [LowerOrEqual]; [Filter]; [Map]; [LShift]; [RShift]
+)]
+impl Recreate for T {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
+        let lhs = self.lhs.recreate(local_variables)?;
+        let rhs = self.rhs.recreate(local_variables)?;
+        Self::create_from_instructions(lhs, rhs).to_result()
+    }
+}

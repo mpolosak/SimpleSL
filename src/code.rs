@@ -1,31 +1,31 @@
 use crate::{
-    instruction::{local_variable::LocalVariables, Exec, ExecStop, Instruction},
+    instruction::{local_variable::LocalVariables, Exec, ExecStop, InstructionWithStr},
     parse::{Rule, SimpleSLParser},
     variable::{ReturnType, Type, Variable},
-    Interpreter, Result,
+    Error, ExecError, Interpreter,
 };
 use pest::Parser;
-use std::rc::Rc;
+use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct Code {
-    pub(crate) instructions: Rc<[Instruction]>,
+    pub(crate) instructions: Arc<[InstructionWithStr]>,
 }
 
 impl Code {
-    pub fn parse(interpreter: &Interpreter, script: &str) -> Result<Self> {
+    pub fn parse(interpreter: &Interpreter, script: &str) -> Result<Self, Error> {
         let parse = SimpleSLParser::parse(Rule::input, script)?;
-        let mut local_variables = LocalVariables::new();
+        let mut local_variables = LocalVariables::new(interpreter);
         let instructions = parse
-            .map(|pair| Instruction::new(pair, interpreter, &mut local_variables))
-            .collect::<Result<_>>()?;
+            .map(|pair| InstructionWithStr::new(pair, &mut local_variables))
+            .collect::<Result<_, Error>>()?;
         Ok(Self { instructions })
     }
-    pub fn exec(&self) -> Result<Variable> {
+    pub fn exec(&self) -> Result<Variable, ExecError> {
         let mut interpreter = Interpreter::without_stdlib();
         self.exec_unscoped(&mut interpreter)
     }
-    pub fn exec_unscoped(&self, interpreter: &mut Interpreter) -> Result<Variable> {
+    pub fn exec_unscoped(&self, interpreter: &mut Interpreter) -> Result<Variable, ExecError> {
         match self
             .instructions
             .iter()
@@ -45,5 +45,22 @@ impl ReturnType for Code {
         self.instructions
             .last()
             .map_or(Type::Void, ReturnType::return_type)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::Code;
+
+    #[test]
+    fn test_send() {
+        fn assert_send<T: Send>() {}
+        assert_send::<Code>();
+    }
+
+    #[test]
+    fn test_sync() {
+        fn assert_sync<T: Sync>() {}
+        assert_sync::<Code>();
     }
 }
