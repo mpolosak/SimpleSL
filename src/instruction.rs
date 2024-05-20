@@ -12,6 +12,7 @@ mod prefix_op;
 mod r#return;
 mod return_type;
 mod set;
+mod sum;
 mod traits;
 mod tuple;
 mod type_filter;
@@ -28,6 +29,7 @@ use self::{
     local_variable::{LocalVariable, LocalVariables},
     r#return::Return,
     set::Set,
+    sum::create_sum,
     traits::BaseInstruction,
     tuple::Tuple,
     type_filter::TypeFilter,
@@ -120,6 +122,7 @@ impl InstructionWithStr {
                 TypeFilter::create_instruction(lhs, op.into_inner().next().unwrap())
             }
             Rule::function_call => FunctionCall::create_instruction(lhs, op, local_variables),
+            Rule::sum => create_sum(lhs),
             rule => unexpected(rule),
         }?;
         Ok(Self { instruction, str })
