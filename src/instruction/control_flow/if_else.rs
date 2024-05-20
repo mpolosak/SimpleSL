@@ -1,13 +1,12 @@
-use crate::instruction::InstructionWithStr;
 use crate::instruction::{
-    local_variable::LocalVariables, traits::ExecResult, Exec, Instruction, Recreate,
+    local_variable::LocalVariables, traits::ExecResult, Exec, Instruction, InstructionWithStr,
+    Recreate,
 };
-use crate::ExecError;
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
     variable::{ReturnType, Type, Variable},
-    Error,
+    Error, ExecError,
 };
 use pest::iterators::Pair;
 
@@ -26,8 +25,9 @@ impl IfElse {
         let mut inner = pair.into_inner();
         let condition_pair = inner.next().unwrap();
         let condition = InstructionWithStr::new(condition_pair, local_variables)?;
-        if condition.return_type() != Type::Int {
-            return Err(Error::WrongType("condition".into(), Type::Int));
+        let return_type = condition.return_type();
+        if return_type != Type::Int {
+            return Err(Error::WrongCondition(condition.str, return_type));
         }
         let true_pair = inner.next().unwrap();
         let Instruction::Variable(Variable::Int(condition)) = condition.instruction else {
