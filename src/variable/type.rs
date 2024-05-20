@@ -214,6 +214,24 @@ impl Type {
             _ => false,
         }
     }
+
+    pub fn tuple_len(&self) -> Option<usize> {
+        match self {
+            Self::Tuple(types) => Some(types.len()),
+            Self::Multi(multi) => {
+                let mut iter = multi.iter();
+                let first = iter.next().unwrap().tuple_len()?;
+                iter.map(Self::tuple_len).try_fold(first, |acc, curr| {
+                    if acc == curr? {
+                        Some(acc)
+                    } else {
+                        None
+                    }
+                })
+            }
+            _ => None,
+        }
+    }
 }
 
 impl Display for Type {
