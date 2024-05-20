@@ -45,6 +45,12 @@ pub enum Error {
     CannotDetermineParams(Arc<str>),
     CannotReduce(Arc<str>),
     NotATuple(Arc<str>),
+    CannotDetermineLength(Arc<str>),
+    WrongLength {
+        ins: Arc<str>,
+        len: usize,
+        idents_len: usize,
+    },
 }
 
 impl PartialEq for Error {
@@ -59,6 +65,7 @@ impl PartialEq for Error {
             | (Self::NotAFunction(l0), Self::NotAFunction(r0))
             | (Self::NotATuple(l0), Self::NotATuple(r0))
             | (Self::CannotDetermineParams(l0), Self::CannotDetermineParams(r0))
+            | (Self::CannotDetermineLength(l0), Self::CannotDetermineLength(r0))
             | (Self::CannotReduce(l0), Self::CannotReduce(r0)) => l0 == r0,
             (Self::WrongType(l0, l1), Self::WrongType(r0, r1))
             | (Self::WrongNumberOfArguments(l0, l1), Self::WrongNumberOfArguments(r0, r1))
@@ -85,9 +92,14 @@ impl PartialEq for Error {
                     && function_return_type == function_return_type2
                     && returned == returned2
             },
-            (Self::WrongArgument{ function: f, param: p, given: g, given_type: gt }, Self::WrongArgument{ function: f2, param: p2, given: g2, given_type: gt2 }) => {
-                f == f2 && p == p2 && g == g2 && gt == gt2
-            },
+            (
+                Self::WrongArgument{ function: f, param: p, given: g, given_type: gt },
+                Self::WrongArgument{ function: f2, param: p2, given: g2, given_type: gt2 }
+            ) => f == f2 && p == p2 && g == g2 && gt == gt2,
+            (
+                Self::WrongLength{ ins, len, idents_len },
+                Self::WrongLength{ ins: ins2, len: len2, idents_len: idents_len2 }
+            ) => ins==ins2 && len == len2 && idents_len == idents_len2,
             _ => core::mem::discriminant(self) == core::mem::discriminant(other)
         }
     }
@@ -184,8 +196,11 @@ impl fmt::Display for Error {
                 write!(f, "Argument {} of function {function} needs to be {}. But {given} that is {given_type} was given", param.name, param.var_type)
             },
             Self::CannotDetermineParams(function) => write!(f, "Cannot determine params of function {function}"),
+            Self::CannotDetermineLength(tuple) => write!(f, "Cannot determine length of {tuple}"),
             Self::CannotReduce(given) => write!(f, "Cannot reduce {given}. It is not an array"),
             Self::NotATuple(str) => write!(f, "Cannot destruct {str}. It is not a tuple"),
+            Self::WrongLength { ins, len: length, idents_len: expected_length }
+                => write!(f, "{ins} has {length} elements but {expected_length} idents were given")
         }
     }
 }

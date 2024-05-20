@@ -31,9 +31,16 @@ impl DestructTuple {
         if !return_type.is_tuple() {
             return Err(Error::NotATuple(instruction.str));
         }
-        let expected = Type::Tuple(std::iter::repeat(Type::Any).take(idents.len()).collect());
-        if !return_type.matches(&expected) {
-            return Err(Error::WrongType("instruction".into(), expected));
+        let Some(len) = return_type.tuple_len() else {
+            return Err(Error::CannotDetermineLength(instruction.str));
+        };
+        let idents_len = idents.len();
+        if len != idents_len {
+            return Err(Error::WrongLength {
+                ins: instruction.str,
+                len,
+                idents_len,
+            });
         }
         let result = Self {
             idents,
