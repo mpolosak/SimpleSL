@@ -27,8 +27,12 @@ impl DestructTuple {
         let idents: Arc<[Arc<str>]> = pair.into_inner().map(|pair| pair.as_str().into()).collect();
         let pair = inner.next().unwrap();
         let instruction = InstructionWithStr::new(pair, local_variables)?;
+        let return_type = instruction.return_type();
+        if !return_type.is_tuple() {
+            return Err(Error::NotATuple(instruction.str));
+        }
         let expected = Type::Tuple(std::iter::repeat(Type::Any).take(idents.len()).collect());
-        if !instruction.return_type().matches(&expected) {
+        if !return_type.matches(&expected) {
             return Err(Error::WrongType("instruction".into(), expected));
         }
         let result = Self {

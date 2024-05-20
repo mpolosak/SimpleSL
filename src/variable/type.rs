@@ -205,6 +205,15 @@ impl Type {
             _ => false,
         }
     }
+
+    /// Returns true if self is a tuple, false otherwise
+    pub fn is_tuple(&self) -> bool {
+        match self {
+            Self::Tuple(_) => true,
+            Self::Multi(multi) => multi.iter().all(Self::is_tuple),
+            _ => false,
+        }
+    }
 }
 
 impl Display for Type {

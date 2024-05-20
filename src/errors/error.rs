@@ -44,6 +44,7 @@ pub enum Error {
     },
     CannotDetermineParams(Arc<str>),
     CannotReduce(Arc<str>),
+    NotATuple(Arc<str>),
 }
 
 impl PartialEq for Error {
@@ -56,6 +57,7 @@ impl PartialEq for Error {
             | (Self::Parsing(l0), Self::Parsing(r0))
             | (Self::IntegerOverflow(l0), Self::IntegerOverflow(r0))
             | (Self::NotAFunction(l0), Self::NotAFunction(r0))
+            | (Self::NotATuple(l0), Self::NotATuple(r0))
             | (Self::CannotDetermineParams(l0), Self::CannotDetermineParams(r0))
             | (Self::CannotReduce(l0), Self::CannotReduce(r0)) => l0 == r0,
             (Self::WrongType(l0, l1), Self::WrongType(r0, r1))
@@ -183,6 +185,7 @@ impl fmt::Display for Error {
             },
             Self::CannotDetermineParams(function) => write!(f, "Cannot determine params of function {function}"),
             Self::CannotReduce(given) => write!(f, "Cannot reduce {given}. It is not an array"),
+            Self::NotATuple(str) => write!(f, "Cannot destruct {str}. It is not a tuple"),
         }
     }
 }
