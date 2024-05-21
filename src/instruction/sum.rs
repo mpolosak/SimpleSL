@@ -89,12 +89,7 @@ pub struct IntSum {
 
 impl IntSum {
     fn calc(array: Arc<Array>) -> Variable {
-        let sum = array.iter().fold(0, |acc, curr| {
-            let Variable::Int(curr) = curr else {
-                panic!("Unexpected value")
-            };
-            acc + curr
-        });
+        let sum = array.iter().map(|var| var.as_int().unwrap()).sum();
         Variable::Int(sum)
     }
 }
@@ -112,12 +107,7 @@ pub struct FloatSum {
 
 impl FloatSum {
     fn calc(array: Arc<Array>) -> Variable {
-        let sum = array.iter().fold(0.0, |acc, curr| {
-            let Variable::Float(curr) = curr else {
-                panic!("Unexpected value")
-            };
-            acc + curr
-        });
+        let sum = array.iter().map(|var| var.as_float().unwrap()).sum();
         Variable::Float(sum)
     }
 }
