@@ -139,9 +139,7 @@ impl Recreate for T {
 #[duplicate_item(T; [IntSum]; [FloatSum])]
 impl Exec for T {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let Variable::Array(array) = self.array.exec(interpreter)? else {
-            unreachable!("Tried to calc {} $+", self.array.str)
-        };
+        let array = self.array.exec(interpreter)?.into_array().unwrap();
         Ok(Self::calc(array).into())
     }
 }

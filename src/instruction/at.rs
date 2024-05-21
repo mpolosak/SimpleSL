@@ -98,9 +98,7 @@ impl ReturnType for At {
 }
 
 fn at(variable: Variable, index: Variable) -> Result<Variable, ExecError> {
-    let Variable::Int(index) = index else {
-        unreachable!("Tried to index with {}", index.as_type())
-    };
+    let index = index.into_int().unwrap();
     if index < 0 {
         return Err(ExecError::NegativeIndex);
     }

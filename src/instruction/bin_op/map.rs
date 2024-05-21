@@ -53,12 +53,7 @@ impl Map {
     fn zip_map(arrays: Arc<[Variable]>, function: Arc<Function>) -> ExecResult {
         let arrays: Box<[&Arc<Array>]> = arrays
             .iter()
-            .map(|array| {
-                let Variable::Array(array) = array else {
-                    unreachable!()
-                };
-                array
-            })
+            .map(|array| array.as_array().unwrap())
             .collect();
         let len = arrays.iter().map(|array| array.len()).min().unwrap();
         if function.params.len() == arrays.len() {
@@ -86,16 +81,11 @@ impl Map {
 impl Exec for Map {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let array = self.lhs.exec(interpreter)?;
-        let function = self.rhs.exec(interpreter)?;
-        let Variable::Function(function) = function else {
-            panic!("Tried to do {array} @ {function}")
-        };
+        let function = self.rhs.exec(interpreter)?.into_function().unwrap();
         if let Variable::Tuple(arrays) = array {
             return Self::zip_map(arrays, function);
         }
-        let Variable::Array(array) = array else {
-            panic!("Tried to do {array} @ {function}")
-        };
+        let array = array.into_array().unwrap();
         let iter = array.iter().cloned();
         if function.params.len() == 1 {
             return iter

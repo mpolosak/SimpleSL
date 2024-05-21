@@ -38,63 +38,39 @@ fn arg_import_from_function_param(
     (ident, _attrs, param_type): &(Ident, Vec<Attribute>, String),
 ) -> TokenStream {
     let ident_str = ident.to_string();
-    let get_variable = quote!(interpreter.get_variable(#ident_str).unwrap());
-    match param_type.as_str() {
+    let unwrap = match param_type.as_str() {
         "i64" => quote!(
-            let simplesl::variable::Variable::Int(#ident) = *#get_variable else {
-                panic!()
-            };
+            .clone().into_int().unwrap();
         ),
         "f64" => quote!(
-            let simplesl::variable::Variable::Float(#ident) = *#get_variable else {
-                panic!()
-            };
+            .clone().into_float().unwrap();
         ),
         "Arc < str >" => quote!(
-            let simplesl::variable::Variable::String(#ident) = #get_variable else {
-                panic!()
-            };
-            let #ident = #ident.clone();
+           .clone().into_string().unwrap();
         ),
         "& str" => quote!(
-            let simplesl::variable::Variable::String(#ident) = #get_variable else {
-                panic!()
-            };
-            let #ident = #ident.as_ref();
+            .as_string().unwrap();
         ),
         "Arc < [Variable] >" => quote!(
-            let simplesl::variable::Variable::Array(#ident) = #get_variable else {
-                panic!()
-            };
-            let #ident = #ident.clone();
+            .into_array().unwrap();
         ),
         "& [Variable]" => quote!(
-            let simplesl::variable::Variable::Array(#ident) = #get_variable else {
-                panic!()
-            };
-            let #ident = #ident.as_ref();
+            .as_array().unwrap();
         ),
         "Arc < Function >" => quote!(
-            let simplesl::variable::Variable::Function(#ident) = #get_variable else {
-                panic!()
-            };
-            let #ident = #ident.clone();
+            .clone().into_function().unwrap();
         ),
         "& Function" => quote!(
-            let simplesl::variable::Variable::Function(#ident) = #get_variable else {
-                panic!()
-            };
-            let #ident = #ident.as_ref();
+            .as_function().unwrap();
         ),
         "Variable" => quote!(
-            let #ident = #get_variable.clone();
+            .clone();
         ),
-        "& Variable" => quote!(
-            let #ident = #get_variable;
-        ),
-        "& mut Interpreter" => quote!(),
+        "& Variable" => quote!(),
+        "& mut Interpreter" => return quote!(),
         param_type => panic!("{param_type} type isn't allowed"),
-    }
+    };
+    quote!(let #ident = interpreter.get_variable(#ident_str).unwrap()#unwrap)
 }
 
 pub fn params_from_function_params(params: &[(Ident, Vec<Attribute>, String)]) -> TokenStream {

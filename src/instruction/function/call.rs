@@ -108,9 +108,7 @@ impl FunctionCall {
 impl Exec for FunctionCall {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let args = interpreter.exec(&self.args)?;
-        let Variable::Function(function) = self.function.exec(interpreter)? else {
-            panic!("Tried to call not function")
-        };
+        let function = self.function.exec(interpreter)?.into_function().unwrap();
         function.exec(&args).map_err(ExecStop::from)
     }
 }

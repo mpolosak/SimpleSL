@@ -1,8 +1,8 @@
-use std::fs;
 use simplesl::{
     variable::{FunctionType, Type, Typed, Variable},
     Code, Error, Interpreter,
 };
+use std::fs;
 #[test]
 fn test_example1() -> Result<(), Error> {
     let interpreter = Interpreter::with_stdlib();
@@ -25,9 +25,7 @@ fn test_fib() -> Result<(), Error> {
         }
         .into()
     );
-    let Variable::Function(array_fib) = result else {
-        panic!()
-    };
+    let array_fib = result.into_function().unwrap();
     assert_eq!(
         array_fib.create_call([Variable::Int(3)].into())?.exec()?,
         [Variable::Int(0), Variable::Int(1), Variable::Int(1)].into()
@@ -42,9 +40,7 @@ fn test_fib() -> Result<(), Error> {
         }
         .into()
     );
-    let Variable::Function(int) = int.clone() else {
-        panic!()
-    };
+    let int = int.clone().into_function().unwrap();
     assert_eq!(
         int.clone()
             .create_call([Variable::Int(3), Variable::Int(0)].into())?
@@ -76,9 +72,7 @@ fn test_fib() -> Result<(), Error> {
         }
         .into()
     );
-    let Variable::Function(fib) = fib.clone() else {
-        panic!()
-    };
+    let fib = fib.clone().into_function().unwrap();
     assert_eq!(
         fib.create_call([Variable::Int(8)].into())?.exec()?,
         Variable::Int(21)
@@ -114,11 +108,12 @@ fn test_fizzbuzz() -> Result<(), Error> {
         }
         .into()
     );
-    let Variable::Function(int) = fizzbuzz.clone() else {
-        panic!()
-    };
+    let fizzbuzz = fizzbuzz.clone().into_function().unwrap();
     assert_eq!(
-        int.clone().create_call([Variable::Int(3)].into())?.exec()?,
+        fizzbuzz
+            .clone()
+            .create_call([Variable::Int(3)].into())?
+            .exec()?,
         Variable::String("Fizz".into())
     );
 
@@ -131,9 +126,7 @@ fn test_fizzbuzz() -> Result<(), Error> {
         }
         .into()
     );
-    let Variable::Function(iota) = iota.clone() else {
-        panic!()
-    };
+    let iota = iota.clone().into_function().unwrap();
     assert_eq!(
         iota.create_call([Variable::Int(3), Variable::Int(3)].into())?
             .exec()?,
@@ -155,9 +148,12 @@ fn test_quick_sort() -> Result<(), Error> {
         }
         .into()
     );
-    let Variable::Function(sort) = interpreter.get_variable("sort").unwrap().clone() else {
-        panic!()
-    };
+    let sort = interpreter
+        .get_variable("sort")
+        .unwrap()
+        .clone()
+        .into_function()
+        .unwrap();
     assert_eq!(
         sort.create_call([[Variable::Int(9), Variable::Int(3), Variable::Int(6)].into()].into())?
             .exec()?,
@@ -179,9 +175,12 @@ fn test_replace() -> Result<(), Error> {
         }
         .into()
     );
-    let Variable::Function(replace) = interpreter.get_variable("replace").unwrap().clone() else {
-        panic!()
-    };
+    let replace = interpreter
+        .get_variable("replace")
+        .unwrap()
+        .clone()
+        .into_function()
+        .unwrap();
     assert_eq!(
         replace
             .create_call(

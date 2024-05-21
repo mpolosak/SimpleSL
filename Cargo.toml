@@ -21,6 +21,7 @@ typle = "0.10.2"
 simplesl_macros = { path="macros", version="0.1.0" }
 match_any = "1.0.1"
 duplicate = "1"
+enum-as-inner = "0.6.0"
 
 [dev-dependencies]
 itertools="0.13.0"

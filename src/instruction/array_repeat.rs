@@ -83,9 +83,7 @@ impl ArrayRepeat {
 impl Exec for ArrayRepeat {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let value = self.value.exec(interpreter)?;
-        let Variable::Int(len) = self.len.exec(interpreter)? else {
-            panic!()
-        };
+        let len = self.len.exec(interpreter)?.into_int().unwrap();
         if len < 0 {
             return Err(ExecError::NegativeLength.into());
         }

@@ -4,7 +4,7 @@ use crate::{
     },
     interpreter::Interpreter,
     parse::Rule,
-    variable::{ReturnType, Type, Typed, Variable},
+    variable::{ReturnType, Type, Typed},
     Error, ExecError,
 };
 use pest::iterators::Pair;
@@ -33,10 +33,7 @@ impl TypeFilter {
 
 impl Exec for TypeFilter {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let array = self.array.exec(interpreter)?;
-        let Variable::Array(array) = array else {
-            panic!("Tried to do {array} ? {}", self.var_type)
-        };
+        let array = self.array.exec(interpreter)?.into_array().unwrap();
         Ok(array
             .iter()
             .filter(|element| element.as_type().matches(&self.var_type))

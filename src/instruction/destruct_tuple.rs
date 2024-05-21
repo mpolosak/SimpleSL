@@ -68,10 +68,7 @@ impl DestructTuple {
 
 impl Exec for DestructTuple {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let result = self.instruction.exec(interpreter)?;
-        let Variable::Tuple(elements) = result else {
-            panic!()
-        };
+        let elements = self.instruction.exec(interpreter)?.into_tuple().unwrap();
         for (ident, element) in zip(self.idents.iter().cloned(), elements.iter().cloned()) {
             interpreter.insert(ident, element);
         }

@@ -21,9 +21,9 @@ impl Import {
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error> {
-        let Variable::String(path) = Variable::try_from(pair.into_inner().next().unwrap())? else {
-            unreachable!()
-        };
+        let path = Variable::try_from(pair.into_inner().next().unwrap())?
+            .into_string()
+            .unwrap();
         let instructions = local_variables.load(&path)?;
         if instructions.is_empty() {
             return Ok(Variable::Void.into());

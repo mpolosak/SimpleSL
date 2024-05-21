@@ -3,6 +3,7 @@ mod function_type;
 mod multi_type;
 mod r#type;
 use crate::{function::Function, join_debug, parse::*, Error};
+use enum_as_inner::EnumAsInner;
 use match_any::match_any;
 use pest::{iterators::Pair, Parser};
 #[cfg(test)]
@@ -12,7 +13,7 @@ use std::{fmt, io, str::FromStr, sync::Arc};
 pub use typle::typle;
 pub use {array::Array, function_type::FunctionType, multi_type::MultiType};
 
-#[derive(Clone)]
+#[derive(Clone, EnumAsInner)]
 pub enum Variable {
     Int(i64),
     Float(f64),
