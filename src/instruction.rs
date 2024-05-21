@@ -9,10 +9,10 @@ mod function;
 mod import;
 pub mod local_variable;
 mod prefix_op;
+mod reduce;
 mod r#return;
 mod return_type;
 mod set;
-mod sum;
 mod traits;
 mod tuple;
 mod type_filter;
@@ -28,8 +28,8 @@ use self::{
     import::Import,
     local_variable::{LocalVariable, LocalVariables},
     r#return::Return,
+    reduce::{create_product, create_sum},
     set::Set,
-    sum::create_sum,
     traits::BaseInstruction,
     tuple::Tuple,
     type_filter::TypeFilter,
@@ -123,6 +123,7 @@ impl InstructionWithStr {
             }
             Rule::function_call => FunctionCall::create_instruction(lhs, op, local_variables),
             Rule::sum => create_sum(lhs),
+            Rule::product => create_product(lhs),
             rule => unexpected(rule),
         }?;
         Ok(Self { instruction, str })

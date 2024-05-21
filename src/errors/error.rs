@@ -56,6 +56,7 @@ pub enum Error {
     },
     WrongCondition(Arc<str>, Type),
     CannotSum(Arc<str>, Type),
+    CannotProduct(Arc<str>, Type),
 }
 
 impl PartialEq for Error {
@@ -76,7 +77,8 @@ impl PartialEq for Error {
             | (Self::WrongCondition(l0, l1), Self::WrongCondition(r0, r1))
             | (Self::WrongNumberOfArguments(l0, l1), Self::WrongNumberOfArguments(r0, r1))
             | (Self::CannotDo(l0, l1), Self::CannotDo(r0, r1))
-            | (Self::CannotSum(l0, l1), Self::CannotSum(r0, r1)) => l0 == r0 && l1 == r1,
+            | (Self::CannotSum(l0, l1), Self::CannotSum(r0, r1))
+            | (Self::CannotProduct(l0, l1), Self::CannotProduct(r0, r1)) => l0 == r0 && l1 == r1,
             (Self::IO(l0), Self::IO(r0)) | (Self::CannotUnescapeString(l0), Self::CannotUnescapeString(r0)) => {
                 l0.to_string() == r0.to_string()
             },
@@ -209,7 +211,10 @@ impl fmt::Display for Error {
             Self::WrongLength { ins, len: length, idents_len: expected_length }
                 => write!(f, "{ins} has {length} elements but {expected_length} idents were given"),
             Self::WrongCondition(ins, var_type) => write!(f, "Condition must be int but {ins} which is {var_type} was given"),
-            Self::CannotSum(ins, var_type) => write!(f, "Cannot {ins} $+. Operand need to be [int] or [float] but {ins} which is {var_type} was given")
+            Self::CannotSum(ins, var_type)
+                => write!(f, "Cannot {ins} $+. Operand need to be [int] or [float] but {ins} which is {var_type} was given"),
+            Self::CannotProduct(ins, var_type)
+                => write!(f, "Cannot {ins} $*. Operand need to be [int] or [float] but {ins} which is {var_type} was given")
         }
     }
 }

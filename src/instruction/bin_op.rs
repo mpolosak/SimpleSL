@@ -3,9 +3,8 @@ mod filter;
 mod logic;
 mod map;
 mod math;
-mod reduce;
 mod shift;
-use super::{local_variable::LocalVariables, InstructionWithStr};
+use super::{local_variable::LocalVariables, reduce::Reduce, InstructionWithStr};
 use crate::{
     instruction::{
         traits::{CanBeUsed, ToResult},
@@ -17,7 +16,6 @@ use crate::{
 };
 use duplicate::duplicate_item;
 use pest::iterators::Pair;
-pub use reduce::*;
 use std::sync::Arc;
 
 #[duplicate_item(T; [BitwiseAnd]; [BitwiseOr]; [Xor]; [Equal]; [Filter]; [Map]; [And]; [Or];

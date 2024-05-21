@@ -1,8 +1,8 @@
-pub use self::sums_float_sum::*;
-pub use self::sums_int_sum::*;
-pub use self::sums_string_sum::*;
-use super::{
-    array_repeat::ArrayRepeat, local_variable::LocalVariable, Add, Instruction, InstructionWithStr,
+pub use self::product_float_product::FloatProduct;
+pub use self::product_int_product::IntProduct;
+use crate::instruction::Pow;
+use crate::instruction::{
+    array_repeat::ArrayRepeat, local_variable::LocalVariable, Instruction, InstructionWithStr,
     Multiply,
 };
 use crate::{
@@ -12,20 +12,15 @@ use crate::{
 use duplicate::duplicate_item;
 use std::sync::Arc;
 
-pub fn create_sum(array: InstructionWithStr) -> Result<Instruction, Error> {
+pub fn create_product(array: InstructionWithStr) -> Result<Instruction, Error> {
     match array.instruction {
         Instruction::Variable(Variable::Array(array)) if array.as_type() == [Type::Int].into() => {
-            Ok(IntSum::calc(array).into())
+            Ok(IntProduct::calc(array).into())
         }
         Instruction::Variable(Variable::Array(array))
             if array.as_type() == [Type::Float].into() =>
         {
-            Ok(FloatSum::calc(array).into())
-        }
-        Instruction::Variable(Variable::Array(array))
-            if array.as_type() == [Type::String].into() =>
-        {
-            Ok(StringSum::calc(array).into())
+            Ok(FloatProduct::calc(array).into())
         }
         Instruction::ArrayRepeat(array_repeat)
             if array_repeat
@@ -34,10 +29,7 @@ pub fn create_sum(array: InstructionWithStr) -> Result<Instruction, Error> {
                 .matches(&(Type::Int | Type::Float)) =>
         {
             let ArrayRepeat { value, len } = Arc::unwrap_or_clone(array_repeat);
-            Ok(Multiply::create_from_instructions(
-                value.instruction,
-                len.instruction,
-            ))
+            Pow::create_from_instructions(value.instruction, len.instruction).map_err(Error::from)
         }
         Instruction::Array(array)
             if array.var_type == [Type::Int].into()
@@ -49,7 +41,7 @@ pub fn create_sum(array: InstructionWithStr) -> Result<Instruction, Error> {
                 .iter()
                 .cloned()
                 .map(|iws| iws.instruction)
-                .reduce(|acc, curr| Add::create_from_instructions(acc, curr))
+                .reduce(|acc, curr| Multiply::create_from_instructions(acc, curr))
                 .unwrap())
         }
         instruction @ Instruction::LocalVariable(_, LocalVariable::Other(_))
@@ -59,7 +51,7 @@ pub fn create_sum(array: InstructionWithStr) -> Result<Instruction, Error> {
                 instruction,
                 str: array.str,
             };
-            Ok(IntSum { array }.into())
+            Ok(IntProduct { array }.into())
         }
         instruction @ Instruction::LocalVariable(_, LocalVariable::Other(_))
             if instruction.return_type() == [Type::Float].into() =>
@@ -68,23 +60,14 @@ pub fn create_sum(array: InstructionWithStr) -> Result<Instruction, Error> {
                 instruction,
                 str: array.str,
             };
-            Ok(FloatSum { array }.into())
-        }
-        instruction @ Instruction::LocalVariable(_, LocalVariable::Other(_))
-            if instruction.return_type() == [Type::String].into() =>
-        {
-            let array = InstructionWithStr {
-                instruction,
-                str: array.str,
-            };
-            Ok(StringSum { array }.into())
+            Ok(FloatProduct { array }.into())
         }
         instruction @ Instruction::Other(_) if instruction.return_type() == [Type::Int].into() => {
             let array = InstructionWithStr {
                 instruction,
                 str: array.str,
             };
-            Ok(IntSum { array }.into())
+            Ok(IntProduct { array }.into())
         }
         instruction @ Instruction::Other(_)
             if instruction.return_type() == [Type::Float].into() =>
@@ -93,23 +76,14 @@ pub fn create_sum(array: InstructionWithStr) -> Result<Instruction, Error> {
                 instruction,
                 str: array.str,
             };
-            Ok(FloatSum { array }.into())
+            Ok(FloatProduct { array }.into())
         }
-        instruction @ Instruction::Other(_)
-            if instruction.return_type() == [Type::String].into() =>
-        {
-            let array = InstructionWithStr {
-                instruction,
-                str: array.str,
-            };
-            Ok(StringSum { array }.into())
-        }
-        ins => Err(Error::CannotSum(array.str, ins.return_type())),
+        ins => Err(Error::CannotProduct(array.str, ins.return_type())),
     }
 }
 
-#[duplicate_item(T R; [IntSum] [Int]; [FloatSum] [Float]; [StringSum] [String])]
-mod sums {
+#[duplicate_item(T R; [IntProduct] [Int]; [FloatProduct] [Float])]
+mod product {
     use crate::{
         instruction::{
             local_variable::LocalVariables, Exec, ExecResult, Instruction, InstructionWithStr,
@@ -145,26 +119,16 @@ mod sums {
     }
 }
 
-impl IntSum {
+impl IntProduct {
     fn calc(array: Arc<Array>) -> Variable {
-        let sum = array.iter().map(|var| var.as_int().unwrap()).sum();
+        let sum = array.iter().map(|var| var.as_int().unwrap()).product();
         Variable::Int(sum)
     }
 }
 
-impl FloatSum {
+impl FloatProduct {
     fn calc(array: Arc<Array>) -> Variable {
-        let sum = array.iter().map(|var| var.as_float().unwrap()).sum();
+        let sum = array.iter().map(|var| var.as_float().unwrap()).product();
         Variable::Float(sum)
-    }
-}
-
-impl StringSum {
-    fn calc(array: Arc<Array>) -> Variable {
-        let sum: String = array
-            .iter()
-            .map(|var| var.as_string().unwrap())
-            .fold(String::new(), |acc, curr| format!("{acc}{curr}"));
-        Variable::from(sum)
     }
 }

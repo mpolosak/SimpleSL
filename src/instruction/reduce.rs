@@ -1,3 +1,5 @@
+mod product;
+mod sum;
 use crate::{
     instruction::{
         local_variable::LocalVariables,
@@ -10,6 +12,8 @@ use crate::{
     Error, ExecError,
 };
 use pest::iterators::Pair;
+pub use product::*;
+pub use sum::*;
 
 #[derive(Debug)]
 pub struct Reduce {
