@@ -1,5 +1,7 @@
 mod all;
 mod any;
+mod bitand;
+mod bitor;
 mod product;
 mod sum;
 use crate::{
@@ -15,6 +17,8 @@ use crate::{
 };
 pub use all::*;
 pub use any::*;
+pub use bitand::*;
+pub use bitor::*;
 use pest::iterators::Pair;
 pub use product::*;
 pub use sum::*;

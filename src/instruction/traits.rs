@@ -11,7 +11,10 @@ use super::{
     import::Import,
     prefix_op::{BitwiseNot, Not, UnaryMinus},
     r#return::Return,
-    reduce::{All, Any, FloatProduct, FloatSum, IntProduct, IntSum, Reduce, StringSum},
+    reduce::{
+        All, Any, BitAndReduce, BitOrReduce, FloatProduct, FloatSum, IntProduct, IntSum, Reduce,
+        StringSum,
+    },
     set::Set,
     type_filter::TypeFilter,
     FunctionCall, Instruction,
@@ -32,7 +35,8 @@ pub trait BaseInstruction: Exec + Recreate + ReturnType + Debug + Sync + Send {}
     [Multiply]; [Divide]; [Modulo]; [Equal]; [Greater]; [GreaterOrEqual]; [Lower];
     [LowerOrEqual]; [LShift]; [RShift]; [UnaryMinus]; [Not]; [Block]; [IfElse]; [Match];
     [SetIfElse]; [DestructTuple]; [FunctionCall]; [FunctionDeclaration]; [Import];
-    [Return]; [Set]; [FloatSum]; [IntSum]; [StringSum]; [IntProduct]; [FloatProduct]; [All]; [Any]
+    [Return]; [Set]; [FloatSum]; [IntSum]; [StringSum]; [IntProduct]; [FloatProduct]; [All]; [Any];
+    [BitAndReduce]; [BitOrReduce]
 )]
 impl BaseInstruction for T {}
 
