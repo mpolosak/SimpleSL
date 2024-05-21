@@ -28,7 +28,7 @@ use self::{
     import::Import,
     local_variable::{LocalVariable, LocalVariables},
     r#return::Return,
-    reduce::{create_product, create_sum},
+    reduce::{create_all, create_product, create_sum},
     set::Set,
     traits::BaseInstruction,
     tuple::Tuple,
@@ -124,6 +124,7 @@ impl InstructionWithStr {
             Rule::function_call => FunctionCall::create_instruction(lhs, op, local_variables),
             Rule::sum => create_sum(lhs),
             Rule::product => create_product(lhs),
+            Rule::all => create_all(lhs),
             rule => unexpected(rule),
         }?;
         Ok(Self { instruction, str })
