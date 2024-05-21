@@ -1,11 +1,13 @@
+pub use self::sums_float_sum::*;
+pub use self::sums_int_sum::*;
+pub use self::sums_string_sum::*;
 use super::{
-    array_repeat::ArrayRepeat,
-    local_variable::{LocalVariable, LocalVariables},
-    Add, Exec, ExecResult, Instruction, InstructionWithStr, Multiply, Recreate,
+    array_repeat::ArrayRepeat, local_variable::LocalVariable, Add, Instruction, InstructionWithStr,
+    Multiply,
 };
 use crate::{
     variable::{Array, ReturnType, Type, Typed, Variable},
-    Error, ExecError, Interpreter,
+    Error,
 };
 use duplicate::duplicate_item;
 use std::sync::Arc;
@@ -20,6 +22,11 @@ pub fn create_sum(array: InstructionWithStr) -> Result<Instruction, Error> {
         {
             Ok(FloatSum::calc(array).into())
         }
+        Instruction::Variable(Variable::Array(array))
+            if array.as_type() == [Type::String].into() =>
+        {
+            Ok(StringSum::calc(array).into())
+        }
         Instruction::ArrayRepeat(array_repeat)
             if array_repeat
                 .value
@@ -33,7 +40,9 @@ pub fn create_sum(array: InstructionWithStr) -> Result<Instruction, Error> {
             ))
         }
         Instruction::Array(array)
-            if array.var_type == [Type::Int].into() || array.var_type == [Type::Float].into() =>
+            if array.var_type == [Type::Int].into()
+                || array.var_type == [Type::Float].into()
+                || array.var_type == [Type::String].into() =>
         {
             Ok(array
                 .instructions
@@ -61,6 +70,15 @@ pub fn create_sum(array: InstructionWithStr) -> Result<Instruction, Error> {
             };
             Ok(FloatSum { array }.into())
         }
+        instruction @ Instruction::LocalVariable(_, LocalVariable::Other(_))
+            if instruction.return_type() == [Type::String].into() =>
+        {
+            let array = InstructionWithStr {
+                instruction,
+                str: array.str,
+            };
+            Ok(StringSum { array }.into())
+        }
         instruction @ Instruction::Other(_) if instruction.return_type() == [Type::Int].into() => {
             let array = InstructionWithStr {
                 instruction,
@@ -68,7 +86,6 @@ pub fn create_sum(array: InstructionWithStr) -> Result<Instruction, Error> {
             };
             Ok(IntSum { array }.into())
         }
-
         instruction @ Instruction::Other(_)
             if instruction.return_type() == [Type::Float].into() =>
         {
@@ -78,13 +95,54 @@ pub fn create_sum(array: InstructionWithStr) -> Result<Instruction, Error> {
             };
             Ok(FloatSum { array }.into())
         }
+        instruction @ Instruction::Other(_)
+            if instruction.return_type() == [Type::String].into() =>
+        {
+            let array = InstructionWithStr {
+                instruction,
+                str: array.str,
+            };
+            Ok(StringSum { array }.into())
+        }
         ins => Err(Error::CannotSum(array.str, ins.return_type())),
     }
 }
 
-#[derive(Debug)]
-pub struct IntSum {
-    array: InstructionWithStr,
+#[duplicate_item(T R; [IntSum] [Int]; [FloatSum] [Float]; [StringSum] [String])]
+mod sums {
+    use crate::{
+        instruction::{
+            local_variable::LocalVariables, Exec, ExecResult, Instruction, InstructionWithStr,
+            Recreate,
+        },
+        variable::{ReturnType, Type},
+        ExecError, Interpreter,
+    };
+
+    #[derive(Debug)]
+    pub struct T {
+        pub array: InstructionWithStr,
+    }
+
+    impl ReturnType for T {
+        fn return_type(&self) -> Type {
+            [Type::R].into()
+        }
+    }
+
+    impl Recreate for T {
+        fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
+            let array = self.array.recreate(local_variables)?;
+            Ok(Self { array }.into())
+        }
+    }
+
+    impl Exec for T {
+        fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
+            let array = self.array.exec(interpreter)?.into_array().unwrap();
+            Ok(Self::calc(array).into())
+        }
+    }
 }
 
 impl IntSum {
@@ -94,17 +152,6 @@ impl IntSum {
     }
 }
 
-impl ReturnType for IntSum {
-    fn return_type(&self) -> Type {
-        [Type::Int].into()
-    }
-}
-
-#[derive(Debug)]
-pub struct FloatSum {
-    array: InstructionWithStr,
-}
-
 impl FloatSum {
     fn calc(array: Arc<Array>) -> Variable {
         let sum = array.iter().map(|var| var.as_float().unwrap()).sum();
@@ -112,24 +159,12 @@ impl FloatSum {
     }
 }
 
-impl ReturnType for FloatSum {
-    fn return_type(&self) -> Type {
-        [Type::Float].into()
-    }
-}
-
-#[duplicate_item(T; [IntSum]; [FloatSum])]
-impl Recreate for T {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let array = self.array.recreate(local_variables)?;
-        Ok(Self { array }.into())
-    }
-}
-
-#[duplicate_item(T; [IntSum]; [FloatSum])]
-impl Exec for T {
-    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let array = self.array.exec(interpreter)?.into_array().unwrap();
-        Ok(Self::calc(array).into())
+impl StringSum {
+    fn calc(array: Arc<Array>) -> Variable {
+        let sum: String = array
+            .iter()
+            .map(|var| var.as_string().unwrap())
+            .fold(String::new(), |acc, curr| format!("{acc}{curr}"));
+        Variable::from(sum)
     }
 }
