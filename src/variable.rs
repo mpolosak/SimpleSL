@@ -128,11 +128,22 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
                 let value = unescaper::unescape(value)?;
                 Ok(value.into())
             }
-            Rule::array => pair
-                .into_inner()
-                .map(|pair| pair.into_inner().next().unwrap())
-                .map(Self::try_from)
-                .collect::<Result<Variable, Error>>(),
+            Rule::array => {
+                let elements = pair
+                    .into_inner()
+                    .map(|pair| pair.into_inner().next().unwrap())
+                    .map(Self::try_from)
+                    .collect::<Result<Arc<[Variable]>, Error>>()?;
+                let Some(var_type) = elements
+                    .iter()
+                    .map(Typed::as_type)
+                    .reduce(Type::concat)
+                    .map(|var_type| Type::Array(var_type.into()))
+                else {
+                    panic!("Tried to use [] to create empty array")
+                };
+                Ok(Array { var_type, elements }.into())
+            }
             Rule::void => Ok(Variable::Void),
             _ => Err(Error::CannotBeParsed(pair.as_str().into())),
         }
@@ -330,22 +341,5 @@ mod tests {
             Ok(Variable::String("print \"".into()))
         );
         assert!(Variable::from_str(r#""print" """#).is_err());
-        assert_eq!(Variable::from_str("[]"), Ok(Variable::from([])));
-        assert_eq!(
-            Variable::from_str(r#"[4.5, 3, "a", []]"#),
-            Ok(Variable::from([
-                Variable::Float(4.5),
-                Variable::Int(3),
-                Variable::String("a".into()),
-                Variable::from([])
-            ]))
-        );
-        assert_eq!(
-            Variable::from_str(r#"[[4.5, []]]"#),
-            Ok(Variable::from([Variable::from([
-                Variable::Float(4.5),
-                Variable::from([])
-            ]),]))
-        )
     }
 }

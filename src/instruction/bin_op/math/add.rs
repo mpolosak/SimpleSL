@@ -66,7 +66,6 @@ mod tests {
         variable::{Type, Variable},
         Code, Error, Interpreter,
     };
-    use std::str::FromStr;
 
     #[test]
     fn test_add_operator() {
@@ -79,11 +78,6 @@ mod tests {
         assert_eq!(
             parse_and_exec("[5, 5, 6] + [5]"),
             parse_and_exec("[5, 5, 6, 5]")
-        );
-        assert_eq!(parse_and_exec("[] + []"), Variable::from_str("[]"));
-        assert_eq!(
-            parse_and_exec(r#"[5, 5.5, "4"] + []"#),
-            parse_and_exec(r#"[5, 5.5, "4"]"#)
         );
         assert_eq!(
             parse_and_exec(r#"[4, 5, 6] + 5"#),
@@ -101,9 +95,6 @@ mod tests {
             parse_and_exec(r#"["a", "aaa"]+"3""#),
             parse_and_exec(r#"["a3", "aaa3"]"#)
         );
-        assert_eq!(parse_and_exec("[] + 5"), Variable::from_str("[]"));
-        assert_eq!(parse_and_exec("[] + 4.5"), Variable::from_str("[]"));
-        assert_eq!(parse_and_exec(r#"[] + """#), Variable::from_str("[]"));
         assert_eq!(
             parse_and_exec("4+4.5"),
             Err(Error::CannotDo2(Type::Int, "+", Type::Float))

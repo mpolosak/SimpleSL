@@ -2,10 +2,10 @@ use super::Filter;
 use crate::{
     instruction::{
         traits::{CanBeUsed, ExecResult},
-        Exec, ExecStop,
+        Exec,
     },
     interpreter::Interpreter,
-    variable::{FunctionType, ReturnType, Type, Variable},
+    variable::{Array, FunctionType, ReturnType, Type, Variable},
 };
 
 impl CanBeUsed for Filter {
@@ -32,27 +32,28 @@ impl Exec for Filter {
             unreachable!("Tried to do {array} ? {function}")
         };
         let array_iter = array.iter().cloned();
-        if function.params.len() == 1 {
-            return array_iter
+        let elements = if function.params.len() == 1 {
+            array_iter
                 .filter_map(|element| match function.exec(&[element.clone()]) {
                     Ok(Variable::Int(0)) => None,
                     Ok(_) => Some(Ok(element)),
                     e @ Err(_) => Some(e),
                 })
                 .collect::<Result<_, _>>()
-                .map_err(ExecStop::from);
-        }
-        array_iter
-            .enumerate()
-            .filter_map(
-                |(index, element)| match function.exec(&[index.into(), element.clone()]) {
-                    Ok(Variable::Int(0)) => None,
-                    Ok(_) => Some(Ok(element)),
-                    e @ Err(_) => Some(e),
-                },
-            )
-            .collect::<Result<_, _>>()
-            .map_err(ExecStop::from)
+        } else {
+            array_iter
+                .enumerate()
+                .filter_map(|(index, element)| {
+                    match function.exec(&[index.into(), element.clone()]) {
+                        Ok(Variable::Int(0)) => None,
+                        Ok(_) => Some(Ok(element)),
+                        e @ Err(_) => Some(e),
+                    }
+                })
+                .collect::<Result<_, _>>()
+        }?;
+        let var_type = array.var_type.clone();
+        Ok(Array { var_type, elements }.into())
     }
 }
 
