@@ -2,7 +2,7 @@ use crate::instruction::local_variable::LocalVariables;
 use crate::instruction::{local_variable::LocalVariable, Instruction, InstructionWithStr};
 use crate::instruction::{Exec, ExecResult, Recreate, Xor};
 use crate::{
-    variable::{Array, ReturnType, Type, Typed, Variable},
+    variable::{Array, ReturnType, Type, Variable},
     Error,
 };
 use crate::{ExecError, Interpreter};
@@ -10,7 +10,7 @@ use std::sync::Arc;
 
 pub fn create_bitor_reduce(array: InstructionWithStr) -> Result<Instruction, Error> {
     match array.instruction {
-        Instruction::Variable(Variable::Array(array)) if array.as_type() == [Type::Int].into() => {
+        Instruction::Variable(Variable::Array(array)) if array.element_type() == &Type::Int => {
             Ok(BitOrReduce::calc(array).into())
         }
         Instruction::ArrayRepeat(array_repeat)
@@ -18,7 +18,7 @@ pub fn create_bitor_reduce(array: InstructionWithStr) -> Result<Instruction, Err
         {
             Ok(array_repeat.value.instruction.clone())
         }
-        Instruction::Array(array) if array.var_type == [Type::Int].into() => Ok(array
+        Instruction::Array(array) if array.element_type == Type::Int => Ok(array
             .instructions
             .iter()
             .cloned()

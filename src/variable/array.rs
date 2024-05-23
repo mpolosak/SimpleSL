@@ -10,7 +10,7 @@ use super::{Type, Typed, Variable};
 
 #[derive(PartialEq)]
 pub struct Array {
-    pub(crate) var_type: Type,
+    pub(crate) element_type: Type,
     pub(crate) elements: Arc<[Variable]>,
 }
 
@@ -24,22 +24,29 @@ impl Array {
             return array1;
         }
         Self {
-            var_type: array1.var_type.clone() | array2.var_type.clone(),
+            element_type: array1.element_type.clone() | array2.element_type.clone(),
             elements: array1.iter().chain(array2.iter()).cloned().collect(),
         }
         .into()
     }
 
     pub fn new_repeat(value: Variable, len: usize) -> Self {
-        let var_type = [value.as_type()].into();
+        let element_type = value.as_type();
         let elements = std::iter::repeat(value).take(len).collect();
-        Self { var_type, elements }
+        Self {
+            element_type,
+            elements,
+        }
+    }
+
+    pub fn element_type(&self) -> &Type {
+        &self.element_type
     }
 }
 
 impl Typed for Array {
     fn as_type(&self) -> Type {
-        self.var_type.clone()
+        [self.element_type.clone()].into()
     }
 }
 
@@ -60,12 +67,14 @@ impl Display for Array {
 impl<T: Into<Arc<[Variable]>>> From<T> for Array {
     fn from(value: T) -> Self {
         let elements = value.into();
-        let var_type = elements
+        let element_type = elements
             .iter()
             .map(Variable::as_type)
             .reduce(Type::concat)
-            .map(|element_type| [element_type].into())
             .unwrap();
-        Array { var_type, elements }
+        Array {
+            element_type,
+            elements,
+        }
     }
 }

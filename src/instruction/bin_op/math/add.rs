@@ -26,8 +26,12 @@ impl Add {
                     .cloned()
                     .map(|lhs| Self::exec(lhs, rhs.clone()))
                     .collect();
-                let var_type = array.var_type.clone();
-                Array { var_type, elements }.into()
+                let element_type = array.element_type().clone();
+                Array {
+                    element_type,
+                    elements,
+                }
+                .into()
             }
             (lhs, Variable::Array(array)) => {
                 let elements = array
@@ -35,8 +39,12 @@ impl Add {
                     .cloned()
                     .map(|rhs| Self::exec(lhs.clone(), rhs))
                     .collect();
-                let var_type = array.var_type.clone();
-                Array { var_type, elements }.into()
+                let element_type = array.element_type().clone();
+                Array {
+                    element_type,
+                    elements,
+                }
+                .into()
             }
             (lhs, rhs) => panic!("Tried to do {lhs} + {rhs} which is imposible"),
         }

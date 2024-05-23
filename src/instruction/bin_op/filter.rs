@@ -52,8 +52,12 @@ impl Exec for Filter {
                 })
                 .collect::<Result<_, _>>()
         }?;
-        let var_type = array.var_type.clone();
-        Ok(Array { var_type, elements }.into())
+        let element_type = array.element_type().clone();
+        Ok(Array {
+            element_type,
+            elements,
+        }
+        .into())
     }
 }
 

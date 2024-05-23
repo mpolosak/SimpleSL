@@ -70,8 +70,12 @@ impl UnaryMinus {
             Variable::Float(num) => (-num).into(),
             Variable::Array(array) => {
                 let elements = array.iter().cloned().map(Self::calc).collect();
-                let var_type = array.var_type.clone();
-                Array { var_type, elements }.into()
+                let element_type = array.element_type().clone();
+                Array {
+                    element_type,
+                    elements,
+                }
+                .into()
             }
             operand => panic!("Tried to - {operand}"),
         }
@@ -89,8 +93,12 @@ impl T {
             Variable::Int(num) => (op1).into(),
             Variable::Array(array) => {
                 let elements = array.iter().cloned().map(Self::calc).collect();
-                let var_type = array.var_type.clone();
-                Array { var_type, elements }.into()
+                let element_type = array.element_type().clone();
+                Array {
+                    element_type,
+                    elements,
+                }
+                .into()
             }
             operand => panic!("Tried to {} {operand}", stringify!(op2)),
         }

@@ -14,7 +14,7 @@ use std::sync::Arc;
 
 pub fn create_sum(array: InstructionWithStr) -> Result<Instruction, Error> {
     match array.instruction {
-        Instruction::Variable(Variable::Array(array)) if array.as_type() == [Type::Int].into() => {
+        Instruction::Variable(Variable::Array(array)) if array.element_type() == &Type::Int => {
             Ok(IntSum::calc(array).into())
         }
         Instruction::Variable(Variable::Array(array))
@@ -40,9 +40,9 @@ pub fn create_sum(array: InstructionWithStr) -> Result<Instruction, Error> {
             ))
         }
         Instruction::Array(array)
-            if array.var_type == [Type::Int].into()
-                || array.var_type == [Type::Float].into()
-                || array.var_type == [Type::String].into() =>
+            if array.element_type == Type::Int
+                || array.element_type == Type::Float
+                || array.element_type == Type::String =>
         {
             Ok(array
                 .instructions

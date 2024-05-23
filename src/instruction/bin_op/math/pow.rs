@@ -36,8 +36,12 @@ impl Pow {
                     .cloned()
                     .map(|exp| Self::exec(base.clone(), exp))
                     .collect::<Result<Arc<_>, _>>()?;
-                let var_type = array.var_type.clone();
-                Ok(Array { var_type, elements }.into())
+                let element_type = array.element_type().clone();
+                Ok(Array {
+                    element_type,
+                    elements,
+                }
+                .into())
             }
             (Variable::Array(array), exp) => {
                 let elements = array
@@ -45,8 +49,12 @@ impl Pow {
                     .cloned()
                     .map(|base| Self::exec(base, exp.clone()))
                     .collect::<Result<Arc<_>, _>>()?;
-                let var_type = array.var_type.clone();
-                Ok(Array { var_type, elements }.into())
+                let element_type = array.element_type().clone();
+                Ok(Array {
+                    element_type,
+                    elements,
+                }
+                .into())
             }
             (base, exp) => panic!("Tried to calc {base} * {exp}"),
         }

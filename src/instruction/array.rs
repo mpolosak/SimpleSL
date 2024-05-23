@@ -16,7 +16,7 @@ use std::sync::Arc;
 #[derive(Debug, Clone)]
 pub struct Array {
     pub instructions: Arc<[InstructionWithStr]>,
-    pub var_type: Type,
+    pub element_type: Type,
 }
 
 impl Array {
@@ -32,11 +32,10 @@ impl Array {
     }
 
     fn create_from_instructions(instructions: Arc<[InstructionWithStr]>) -> Instruction {
-        let var_type = instructions
+        let element_type = instructions
             .iter()
             .map(ReturnType::return_type)
             .reduce(Type::concat)
-            .map(|element_type| [element_type].into())
             .unwrap();
         let mut array = Vec::new();
         for instruction in &*instructions {
@@ -47,7 +46,7 @@ impl Array {
             else {
                 return Self {
                     instructions,
-                    var_type,
+                    element_type,
                 }
                 .into();
             };
@@ -55,7 +54,7 @@ impl Array {
         }
         Instruction::Variable(Variable::Array(
             crate::variable::Array {
-                var_type,
+                element_type,
                 elements: array.into(),
             }
             .into(),
@@ -73,7 +72,7 @@ impl Array {
             .collect();
         Array {
             instructions,
-            var_type: self.var_type,
+            element_type: self.element_type,
         }
     }
 }
@@ -94,7 +93,7 @@ impl Recreate for Array {
 
 impl ReturnType for Array {
     fn return_type(&self) -> Type {
-        self.var_type.clone()
+        [self.element_type.clone()].into()
     }
 }
 

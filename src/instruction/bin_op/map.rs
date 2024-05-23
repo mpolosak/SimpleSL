@@ -74,8 +74,12 @@ impl Map {
                 })
                 .collect::<Result<_, _>>()
         }?;
-        let var_type = [function.return_type()].into();
-        Ok(variable::Array { var_type, elements }.into())
+        let element_type = function.return_type().into();
+        Ok(variable::Array {
+            element_type,
+            elements,
+        }
+        .into())
     }
 }
 
@@ -96,8 +100,12 @@ impl Exec for Map {
                 .map(|(index, var)| function.exec(&[index.into(), var]))
                 .collect::<Result<_, _>>()
         }?;
-        let var_type = [function.return_type()].into();
-        Ok(Array { var_type, elements }.into())
+        let element_type = function.return_type();
+        Ok(Array {
+            element_type,
+            elements,
+        }
+        .into())
     }
 }
 
