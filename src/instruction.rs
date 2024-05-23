@@ -29,8 +29,7 @@ use self::{
     local_variable::{LocalVariable, LocalVariables},
     r#return::Return,
     reduce::{
-        create_all, create_any, create_bitand_reduce, create_bitor_reduce, create_product,
-        create_sum,
+        create_all, create_any, create_bitand_reduce, create_bitor_reduce, create_product, Sum,
     },
     set::Set,
     traits::BaseInstruction,
@@ -125,7 +124,7 @@ impl InstructionWithStr {
                 TypeFilter::create_instruction(lhs, op.into_inner().next().unwrap())
             }
             Rule::function_call => FunctionCall::create_instruction(lhs, op, local_variables),
-            Rule::sum => create_sum(lhs),
+            Rule::sum => Sum::create(lhs),
             Rule::product => create_product(lhs),
             Rule::all => create_all(lhs),
             Rule::reduce_any => create_any(lhs),

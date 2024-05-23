@@ -212,7 +212,7 @@ impl fmt::Display for Error {
                 => write!(f, "{ins} has {length} elements but {expected_length} idents were given"),
             Self::WrongCondition(ins, var_type) => write!(f, "Condition must be int but {ins} which is {var_type} was given"),
             Self::CannotSum(ins, var_type)
-                => write!(f, "Cannot {ins} $+. Operand need to be [int] or [float] but {ins} which is {var_type} was given"),
+                => write!(f, "Cannot {ins} $+. Operand need to be [int]|[float]|[string] but {ins} which is {var_type} was given"),
             Self::CannotProduct(ins, var_type)
                 => write!(f, "Cannot {ins} $*. Operand need to be [int] or [float] but {ins} which is {var_type} was given")
         }
