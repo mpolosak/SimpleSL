@@ -20,16 +20,24 @@ impl Add {
             (Variable::Array(array1), Variable::Array(array2)) => {
                 Array::concat(array1, array2).into()
             }
-            (Variable::Array(array), value) => array
-                .iter()
-                .cloned()
-                .map(|element| Self::exec(element, value.clone()))
-                .collect(),
-            (value, Variable::Array(array)) => array
-                .iter()
-                .cloned()
-                .map(|element| Self::exec(value.clone(), element))
-                .collect(),
+            (Variable::Array(array), rhs) => {
+                let elements = array
+                    .iter()
+                    .cloned()
+                    .map(|lhs| Self::exec(lhs, rhs.clone()))
+                    .collect();
+                let var_type = array.var_type.clone();
+                Array { var_type, elements }.into()
+            }
+            (lhs, Variable::Array(array)) => {
+                let elements = array
+                    .iter()
+                    .cloned()
+                    .map(|rhs| Self::exec(lhs.clone(), rhs))
+                    .collect();
+                let var_type = array.var_type.clone();
+                Array { var_type, elements }.into()
+            }
             (lhs, rhs) => panic!("Tried to do {lhs} + {rhs} which is imposible"),
         }
     }

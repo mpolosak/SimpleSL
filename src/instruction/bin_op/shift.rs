@@ -1,6 +1,6 @@
 use super::{LShift, RShift};
 use crate::instruction::Instruction;
-use crate::variable::Variable;
+use crate::variable::{Array, Variable};
 use crate::ExecError;
 use duplicate::duplicate_item;
 use std::sync::Arc;
@@ -35,16 +35,24 @@ impl shift {
         match (lhs, rhs) {
             (_, Variable::Int(rhs)) if !(0..=63).contains(&rhs) => Err(ExecError::OverflowShift),
             (Variable::Int(lhs), Variable::Int(rhs)) => Ok((op1).into()),
-            (value, Variable::Array(array)) => array
-                .iter()
-                .cloned()
-                .map(|element| Self::exec(value.clone(), element))
-                .collect(),
-            (Variable::Array(array), value) => array
-                .iter()
-                .cloned()
-                .map(|element| Self::exec(element, value.clone()))
-                .collect(),
+            (value, Variable::Array(array)) => {
+                let elements = array
+                    .iter()
+                    .cloned()
+                    .map(|rhs| Self::exec(value.clone(), rhs))
+                    .collect::<Result<Arc<_>, _>>()?;
+                let var_type = array.var_type.clone();
+                Ok(Array { var_type, elements }.into())
+            }
+            (Variable::Array(array), value) => {
+                let elements = array
+                    .iter()
+                    .cloned()
+                    .map(|lhs| Self::exec(lhs, value.clone()))
+                    .collect::<Result<Arc<_>, _>>()?;
+                let var_type = array.var_type.clone();
+                Ok(Array { var_type, elements }.into())
+            }
             (lhs, rhs) => panic!(
                 "Tried to do {lhs} {} {rhs} which is imposible",
                 stringify!(op2)

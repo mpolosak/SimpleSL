@@ -2,11 +2,11 @@ use super::Map;
 use crate::{
     function::Function,
     instruction::{
-        traits::{CanBeUsed, ExecResult, ExecStop},
+        traits::{CanBeUsed, ExecResult},
         Exec,
     },
     interpreter::Interpreter,
-    variable::{Array, FunctionType, ReturnType, Type, Variable},
+    variable::{self, Array, FunctionType, ReturnType, Type, Variable},
 };
 use std::{iter, sync::Arc};
 
@@ -56,25 +56,26 @@ impl Map {
             .map(|array| array.as_array().unwrap())
             .collect();
         let len = arrays.iter().map(|array| array.len()).min().unwrap();
-        if function.params.len() == arrays.len() {
-            return (0..len)
+        let elements = if function.params.len() == arrays.len() {
+            (0..len)
                 .map(|i| {
                     let args: Box<[Variable]> =
                         arrays.iter().map(|array| array[i].clone()).collect();
                     function.exec(&args)
                 })
                 .collect::<Result<_, _>>()
-                .map_err(ExecStop::from);
-        }
-        (0..len)
-            .map(|i| {
-                let args: Box<[Variable]> = iter::once(Variable::from(i))
-                    .chain(arrays.iter().map(|array| array[i].clone()))
-                    .collect();
-                function.exec(&args)
-            })
-            .collect::<Result<_, _>>()
-            .map_err(ExecStop::from)
+        } else {
+            (0..len)
+                .map(|i| {
+                    let args: Box<[Variable]> = iter::once(Variable::from(i))
+                        .chain(arrays.iter().map(|array| array[i].clone()))
+                        .collect();
+                    function.exec(&args)
+                })
+                .collect::<Result<_, _>>()
+        }?;
+        let var_type = [function.return_type()].into();
+        Ok(variable::Array { var_type, elements }.into())
     }
 }
 
@@ -87,16 +88,16 @@ impl Exec for Map {
         }
         let array = array.into_array().unwrap();
         let iter = array.iter().cloned();
-        if function.params.len() == 1 {
-            return iter
-                .map(|var| function.exec(&[var]))
+        let elements = if function.params.len() == 1 {
+            iter.map(|var| function.exec(&[var]))
                 .collect::<Result<_, _>>()
-                .map_err(ExecStop::from);
-        }
-        iter.enumerate()
-            .map(|(index, var)| function.exec(&[index.into(), var]))
-            .collect::<Result<_, _>>()
-            .map_err(ExecStop::from)
+        } else {
+            iter.enumerate()
+                .map(|(index, var)| function.exec(&[index.into(), var]))
+                .collect::<Result<_, _>>()
+        }?;
+        let var_type = [function.return_type()].into();
+        Ok(Array { var_type, elements }.into())
     }
 }
 

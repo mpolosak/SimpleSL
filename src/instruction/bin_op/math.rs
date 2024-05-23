@@ -2,7 +2,7 @@ mod add;
 mod divide;
 mod pow;
 use super::{Greater, GreaterOrEqual, Lower, LowerOrEqual, Multiply, Subtract};
-use crate::variable::Variable;
+use crate::variable::{Array, Variable};
 use duplicate::duplicate_item;
 use match_any::match_any;
 
@@ -15,16 +15,24 @@ impl ord {
         match_any! { (lhs, rhs),
             (Variable::Int(lhs), Variable::Int(rhs)) | (Variable::Float(lhs), Variable::Float(rhs))
                 => (lhs op rhs).into(),
-            (lhs, Variable::Array(array)) => array
-                .iter()
-                .cloned()
-                .map(|rhs| Self::exec(lhs.clone(), rhs))
-                .collect(),
-            (Variable::Array(array), rhs) => array
-                .iter()
-                .cloned()
-                .map(|lhs| Self::exec(lhs, rhs.clone()))
-                .collect(),
+            (lhs, Variable::Array(array)) => {
+                let elements = array
+                    .iter()
+                    .cloned()
+                    .map(|rhs| Self::exec(lhs.clone(), rhs))
+                    .collect();
+                let var_type = array.var_type.clone();
+                Array { var_type, elements }.into()
+            },
+            (Variable::Array(array), rhs) => {
+                let elements = array
+                    .iter()
+                    .cloned()
+                    .map(|lhs| Self::exec(lhs, rhs.clone()))
+                    .collect();
+                let var_type = array.var_type.clone();
+                Array { var_type, elements }.into()
+            },
             (lhs, rhs) => panic!("Tried to do {lhs} {} {rhs}", stringify!(op))
         }
     }

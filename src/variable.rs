@@ -234,12 +234,6 @@ impl From<io::ErrorKind> for Variable {
     }
 }
 
-impl FromIterator<Variable> for Variable {
-    fn from_iter<T: IntoIterator<Item = Variable>>(iter: T) -> Self {
-        Array::from_iter(iter).into()
-    }
-}
-
 impl From<Array> for Variable {
     fn from(value: Array) -> Self {
         Variable::Array(value.into())

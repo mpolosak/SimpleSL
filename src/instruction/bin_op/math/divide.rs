@@ -1,6 +1,6 @@
 use crate::instruction::Instruction;
 use crate::instruction::{Divide, Modulo};
-use crate::variable::Variable;
+use crate::variable::{Array, Variable};
 use crate::ExecError;
 use duplicate::duplicate_item;
 use std::sync::Arc;
@@ -35,16 +35,24 @@ impl T {
             (Variable::Float(dividend), Variable::Float(divisor)) => {
                 Ok((dividend / divisor).into())
             }
-            (Variable::Array(array), divisor @ (Variable::Int(_) | Variable::Float(_))) => array
-                .iter()
-                .cloned()
-                .map(|dividend| Self::exec(dividend, divisor.clone()))
-                .collect::<Result<Variable, ExecError>>(),
-            (dividend @ (Variable::Int(_) | Variable::Float(_)), Variable::Array(array)) => array
-                .iter()
-                .cloned()
-                .map(|divisor| Self::exec(dividend.clone(), divisor))
-                .collect::<Result<Variable, ExecError>>(),
+            (Variable::Array(array), divisor @ (Variable::Int(_) | Variable::Float(_))) => {
+                let elements = array
+                    .iter()
+                    .cloned()
+                    .map(|dividend| Self::exec(dividend, divisor.clone()))
+                    .collect::<Result<_, _>>()?;
+                let var_type = array.var_type.clone();
+                Ok(Array { var_type, elements }.into())
+            }
+            (dividend @ (Variable::Int(_) | Variable::Float(_)), Variable::Array(array)) => {
+                let elements = array
+                    .iter()
+                    .cloned()
+                    .map(|divisor| Self::exec(dividend.clone(), divisor))
+                    .collect::<Result<Arc<_>, _>>()?;
+                let var_type = array.var_type.clone();
+                Ok(Array { var_type, elements }.into())
+            }
             (dividend, divisor) => {
                 panic!("Tried to calc {dividend} {} {divisor}", stringify!(symbol))
             }

@@ -1,5 +1,5 @@
 use crate::instruction::{Instruction, Pow};
-use crate::variable::Variable;
+use crate::variable::{Array, Variable};
 use crate::ExecError;
 use std::sync::Arc;
 
@@ -30,16 +30,24 @@ impl Pow {
             (_, Variable::Int(exp)) if exp < 0 => Err(ExecError::NegativeExponent),
             (Variable::Int(base), Variable::Int(exp)) => Ok((base.pow(exp as u32)).into()),
             (Variable::Float(base), Variable::Float(exp)) => Ok((base.powf(exp)).into()),
-            (value, Variable::Array(array)) => array
-                .iter()
-                .cloned()
-                .map(|element| Self::exec(value.clone(), element))
-                .collect(),
-            (Variable::Array(array), value) => array
-                .iter()
-                .cloned()
-                .map(|element| Self::exec(element, value.clone()))
-                .collect(),
+            (base, Variable::Array(array)) => {
+                let elements = array
+                    .iter()
+                    .cloned()
+                    .map(|exp| Self::exec(base.clone(), exp))
+                    .collect::<Result<Arc<_>, _>>()?;
+                let var_type = array.var_type.clone();
+                Ok(Array { var_type, elements }.into())
+            }
+            (Variable::Array(array), exp) => {
+                let elements = array
+                    .iter()
+                    .cloned()
+                    .map(|base| Self::exec(base, exp.clone()))
+                    .collect::<Result<Arc<_>, _>>()?;
+                let var_type = array.var_type.clone();
+                Ok(Array { var_type, elements }.into())
+            }
             (base, exp) => panic!("Tried to calc {base} * {exp}"),
         }
     }

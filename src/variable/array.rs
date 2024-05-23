@@ -63,10 +63,3 @@ impl<T: Into<Arc<[Variable]>>> From<T> for Array {
         Array { var_type, elements }
     }
 }
-
-impl FromIterator<Variable> for Array {
-    fn from_iter<T: IntoIterator<Item = Variable>>(iter: T) -> Self {
-        let elements: Arc<[Variable]> = iter.into_iter().collect();
-        elements.into()
-    }
-}
