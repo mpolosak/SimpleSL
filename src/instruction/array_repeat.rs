@@ -5,7 +5,7 @@ use super::{
 use crate::{
     interpreter::Interpreter,
     parse::Rule,
-    variable::{Array, ReturnType, Type, Typed, Variable},
+    variable::{Array, ReturnType, Type, Variable},
     Error, ExecError,
 };
 use pest::iterators::Pair;
@@ -51,11 +51,9 @@ impl ArrayRepeat {
                     instruction: Instruction::Variable(Variable::Int(len)),
                     ..
                 },
-            ) => {
-                let var_type = [value.as_type()].into();
-                let elements = std::iter::repeat(value).take(len as usize).collect();
-                Ok(Instruction::Variable(Array { var_type, elements }.into()))
-            }
+            ) => Ok(Instruction::Variable(
+                Array::new_repeat(value, len as usize).into(),
+            )),
             (value, len) => Ok(Self { value, len }.into()),
         }
     }
@@ -88,9 +86,7 @@ impl Exec for ArrayRepeat {
         if len < 0 {
             return Err(ExecError::NegativeLength.into());
         }
-        let var_type = [value.as_type()].into();
-        let elements = std::iter::repeat(value).take(len as usize).collect();
-        Ok(Array { var_type, elements }.into())
+        Ok(Array::new_repeat(value, len as usize).into())
     }
 }
 

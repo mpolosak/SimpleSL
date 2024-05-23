@@ -29,6 +29,12 @@ impl Array {
         }
         .into()
     }
+
+    pub fn new_repeat(value: Variable, len: usize) -> Self {
+        let var_type = [value.as_type()].into();
+        let elements = std::iter::repeat(value).take(len).collect();
+        Self { var_type, elements }
+    }
 }
 
 impl Typed for Array {

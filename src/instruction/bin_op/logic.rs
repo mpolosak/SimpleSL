@@ -2,7 +2,6 @@ use super::{And, Or};
 use crate::instruction::Instruction;
 use crate::variable::{Array, Variable};
 use duplicate::duplicate_item;
-use std::iter;
 
 #[duplicate_item(logic symbol cond dv; [And] [&&] [value!=0] [0]; [Or] [||] [value==0] [1])]
 impl logic {
@@ -23,9 +22,7 @@ impl logic {
         match (lhs, rhs) {
             (result, Variable::Int(value)) | (Variable::Int(value), result) if cond => result,
             (Variable::Array(array), _) | (_, Variable::Array(array)) => {
-                let elements = iter::repeat(Variable::Int(dv)).take(array.len()).collect();
-                let var_type = array.var_type.clone();
-                Array { var_type, elements }.into()
+                Array::new_repeat(Variable::Int(dv), array.len()).into()
             }
             _ => Variable::Int(dv),
         }
