@@ -1,5 +1,5 @@
 use crate::instruction::{Instruction, Pow};
-use crate::variable::{Type, Typed, Variable};
+use crate::variable::Variable;
 use crate::ExecError;
 use std::sync::Arc;
 
@@ -30,11 +30,6 @@ impl Pow {
             (_, Variable::Int(exp)) if exp < 0 => Err(ExecError::NegativeExponent),
             (Variable::Int(base), Variable::Int(exp)) => Ok((base.pow(exp as u32)).into()),
             (Variable::Float(base), Variable::Float(exp)) => Ok((base.powf(exp)).into()),
-            (array @ Variable::Array(_), _) | (_, array @ Variable::Array(_))
-                if array.as_type() == Type::EmptyArray =>
-            {
-                Ok(array.clone())
-            }
             (value, Variable::Array(array)) => array
                 .iter()
                 .cloned()

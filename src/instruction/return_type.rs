@@ -60,7 +60,9 @@ pub fn return_type_int(lhs: Type, rhs: Type) -> Type {
     if lhs.matches(&[Type::Any].into()) || rhs.matches(&[Type::Any].into()) {
         return [Type::Int].into();
     }
-    if Type::EmptyArray.matches(&lhs) || Type::EmptyArray.matches(&rhs) {
+    if Type::Array(Type::Never.into()).matches(&lhs)
+        || Type::Array(Type::Never.into()).matches(&rhs)
+    {
         return [Type::Int] | Type::Int;
     }
     Type::Int
@@ -139,22 +141,6 @@ mod tests {
         assert_eq!(
             return_type_float([Type::Float] | Type::Float, Type::Float),
             [Type::Float] | Type::Float
-        );
-        assert_eq!(
-            return_type_float(Type::Int, Type::EmptyArray),
-            [Type::Int].into()
-        );
-        assert_eq!(
-            return_type_float(Type::EmptyArray, Type::Int),
-            [Type::Int].into()
-        );
-        assert_eq!(
-            return_type_float(Type::Float, Type::EmptyArray),
-            [Type::Float].into()
-        );
-        assert_eq!(
-            return_type_float(Type::EmptyArray, Type::Float),
-            [Type::Float].into()
         );
     }
 }

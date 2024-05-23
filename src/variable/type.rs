@@ -23,7 +23,6 @@ pub enum Type {
     Function(Arc<FunctionType>),
     Array(Arc<Type>),
     Tuple(Arc<[Type]>),
-    EmptyArray,
     Void,
     Multi(MultiType),
     Any,
@@ -41,7 +40,7 @@ impl Type {
             },
             (Self::Multi(types), other) => types.iter().all(|var_type| var_type.matches(other)),
             (_, Self::Multi(types)) => types.iter().any(|var_type| self.matches(var_type)),
-            (_, Self::Any) | (Self::EmptyArray, Self::Array(_)) => true,
+            (_, Self::Any) => true,
             (Self::Tuple(types), Self::Tuple(types2)) => {
                 types.len() == types2.len()
                     && zip(types.iter(), types2.iter())
@@ -135,7 +134,6 @@ impl Type {
     pub fn index_result(&self) -> Option<Type> {
         match self {
             Type::Array(element) => Some(element.as_ref().clone()),
-            Type::EmptyArray => Some(Type::Never),
             Type::Multi(multi) => {
                 let mut iter = multi.iter();
                 let first = iter.next().unwrap().index_result()?;
@@ -186,7 +184,6 @@ impl Type {
     pub fn element_type(&self) -> Option<Type> {
         match self {
             Type::Array(element) => Some(element.as_ref().clone()),
-            Type::EmptyArray => Some(Type::Never),
             Type::Multi(multi) => {
                 let mut iter = multi.iter();
                 let first = iter.next().unwrap().element_type()?;
@@ -242,7 +239,6 @@ impl Display for Type {
             Self::String => write!(f, "string"),
             Self::Function(function_type) => write!(f, "{function_type}"),
             Self::Array(var_type) => write!(f, "[{var_type}]"),
-            Self::EmptyArray => write!(f, "[]"),
             Self::Tuple(types) => write!(f, "({})", join(types.as_ref(), ", ")),
             Self::Void => write!(f, "()"),
             Self::Multi(types) => write!(f, "{types}"),
@@ -432,7 +428,6 @@ mod tests {
             [Type::Any].into(),
             (Type::Float, Type::Int, Type::Int | Type::Float).into(),
             Type::Void,
-            Type::EmptyArray,
         ];
         for var_type in types {
             assert!(Type::Never.matches(&var_type));
@@ -563,11 +558,6 @@ mod tests {
 
     #[test]
     fn index_type() {
-        assert_eq!(Type::EmptyArray.index_result(), Some(Type::Never));
-        assert_eq!(
-            (Type::EmptyArray | parse_type!("[int]")).index_result(),
-            Some(Type::Int)
-        );
         assert_eq!(parse_type!("[int]").index_result(), Some(Type::Int));
         assert_eq!(parse_type!("string").index_result(), Some(Type::String));
         assert_eq!(
@@ -648,11 +638,6 @@ mod tests {
 
     #[test]
     fn element_type() {
-        assert_eq!(Type::EmptyArray.element_type(), Some(Type::Never));
-        assert_eq!(
-            (Type::EmptyArray | parse_type!("[int]")).element_type(),
-            Some(Type::Int)
-        );
         assert_eq!(parse_type!("[int]").element_type(), Some(Type::Int));
         assert_eq!(parse_type!("string").element_type(), None);
         assert_eq!(parse_type!("string|[string]").element_type(), None);

@@ -72,18 +72,6 @@ mod tests {
     #[test]
     fn can_be_used() {
         assert!(Filter::can_be_used(
-            &Type::EmptyArray,
-            &parse_type!("(int)->int")
-        ));
-        assert!(Filter::can_be_used(
-            &Type::EmptyArray,
-            &parse_type!("(int, float)->int")
-        ));
-        assert!(!Filter::can_be_used(
-            &Type::EmptyArray,
-            &parse_type!("(int)->float")
-        ));
-        assert!(Filter::can_be_used(
             &[Type::Int].into(),
             &parse_type!("(int)->int")
         ));

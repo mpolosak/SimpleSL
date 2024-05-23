@@ -1,6 +1,6 @@
 use super::{And, Or};
 use crate::instruction::Instruction;
-use crate::variable::{Type, Typed, Variable};
+use crate::variable::Variable;
 use duplicate::duplicate_item;
 use std::iter;
 
@@ -21,11 +21,6 @@ impl logic {
 
     pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
         match (lhs, rhs) {
-            (array @ Variable::Array(_), _) | (_, array @ Variable::Array(_))
-                if array.as_type() == Type::EmptyArray =>
-            {
-                array
-            }
             (result, Variable::Int(value)) | (Variable::Int(value), result) if cond => result,
             (Variable::Array(array), _) | (_, Variable::Array(array)) => {
                 iter::repeat(Variable::Int(dv)).take(array.len()).collect()

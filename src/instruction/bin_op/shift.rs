@@ -1,6 +1,6 @@
 use super::{LShift, RShift};
 use crate::instruction::Instruction;
-use crate::variable::{Type, Typed, Variable};
+use crate::variable::Variable;
 use crate::ExecError;
 use duplicate::duplicate_item;
 use std::sync::Arc;
@@ -35,11 +35,6 @@ impl shift {
         match (lhs, rhs) {
             (_, Variable::Int(rhs)) if !(0..=63).contains(&rhs) => Err(ExecError::OverflowShift),
             (Variable::Int(lhs), Variable::Int(rhs)) => Ok((op1).into()),
-            (var @ Variable::Array(_), _) | (_, var @ Variable::Array(_))
-                if var.as_type() == Type::EmptyArray =>
-            {
-                Ok(var)
-            }
             (value, Variable::Array(array)) => array
                 .iter()
                 .cloned()

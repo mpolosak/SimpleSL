@@ -36,7 +36,8 @@ impl Array {
             .iter()
             .map(ReturnType::return_type)
             .reduce(Type::concat)
-            .map_or(Type::EmptyArray, |element_type| [element_type].into());
+            .map(|element_type| [element_type].into())
+            .unwrap();
         let mut array = Vec::new();
         for instruction in &*instructions {
             let InstructionWithStr {

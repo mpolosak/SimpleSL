@@ -1,5 +1,5 @@
 use crate::instruction::{Add, Instruction};
-use crate::variable::{Array, Typed};
+use crate::variable::Array;
 use crate::variable::{ReturnType, Type, Variable};
 
 impl Add {
@@ -20,11 +20,6 @@ impl Add {
             (Variable::Array(array1), Variable::Array(array2)) => {
                 Array::concat(array1, array2).into()
             }
-            (array @ Variable::Array(_), _) | (_, array @ Variable::Array(_))
-                if array.as_type() == Type::EmptyArray =>
-            {
-                array
-            }
             (Variable::Array(array), value) => array
                 .iter()
                 .cloned()
@@ -40,27 +35,18 @@ impl Add {
     }
 
     fn return_type(lhs: Type, rhs: Type) -> Type {
-        if lhs == Type::EmptyArray && !Type::EmptyArray.matches(&rhs) {
-            return [rhs].into();
-        }
-        if rhs == Type::EmptyArray && !Type::EmptyArray.matches(&lhs) {
-            return [lhs].into();
-        }
         let Some(lhs_element) = lhs.element_type() else {
-            if Type::EmptyArray.matches(&lhs) {
+            if Type::Array(Type::Never.into()).matches(&lhs) {
                 return lhs;
             }
             return rhs;
         };
         let Some(rhs_element) = rhs.element_type() else {
-            if Type::EmptyArray.matches(&rhs) {
+            if Type::Array(Type::Never.into()).matches(&rhs) {
                 return rhs;
             }
             return lhs;
         };
-        if lhs_element == Type::Never && rhs_element == Type::Never {
-            return Type::EmptyArray;
-        }
         [lhs_element | rhs_element].into()
     }
 }
@@ -220,39 +206,6 @@ mod tests {
         assert_eq!(
             Add::return_type([Type::Int].into(), [Type::Any].into()),
             [Type::Any].into()
-        );
-        assert_eq!(
-            Add::return_type([Type::Int] | [Type::Float].into(), Type::EmptyArray),
-            [Type::Float | Type::Int].into()
-        );
-        assert_eq!(
-            Add::return_type(Type::EmptyArray, Type::EmptyArray),
-            Type::EmptyArray
-        );
-        // int | float | string + empty_array
-        assert_eq!(
-            Add::return_type(Type::Int, Type::EmptyArray),
-            [Type::Int].into()
-        );
-        assert_eq!(
-            Add::return_type(Type::EmptyArray, Type::Int),
-            [Type::Int].into()
-        );
-        assert_eq!(
-            Add::return_type(Type::Float, Type::EmptyArray),
-            [Type::Float].into()
-        );
-        assert_eq!(
-            Add::return_type(Type::EmptyArray, Type::Float),
-            [Type::Float].into()
-        );
-        assert_eq!(
-            Add::return_type(Type::String, Type::EmptyArray),
-            [Type::String].into()
-        );
-        assert_eq!(
-            Add::return_type(Type::EmptyArray, Type::String),
-            [Type::String].into()
         );
     }
 

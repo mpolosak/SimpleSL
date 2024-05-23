@@ -58,7 +58,8 @@ impl<T: Into<Arc<[Variable]>>> From<T> for Array {
             .iter()
             .map(Variable::as_type)
             .reduce(Type::concat)
-            .map_or(Type::EmptyArray, |element_type| [element_type].into());
+            .map(|element_type| [element_type].into())
+            .unwrap();
         Array { var_type, elements }
     }
 }
