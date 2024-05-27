@@ -1,16 +1,17 @@
 use crate::instruction::local_variable::LocalVariables;
-use crate::instruction::{local_variable::LocalVariable, Instruction, InstructionWithStr};
 use crate::instruction::{BitwiseAnd, Exec, ExecResult, Recreate};
+use crate::instruction::{Instruction, InstructionWithStr};
 use crate::{
     variable::{Array, ReturnType, Type, Variable},
     Error,
 };
 use crate::{ExecError, Interpreter};
-use std::sync::Arc;
 
 pub fn create_bitand_reduce(array: InstructionWithStr) -> Result<Instruction, Error> {
-    match array.instruction {
-        Instruction::Variable(Variable::Array(array)) if array.element_type() == &Type::Int => {
+    match &array.instruction {
+        Instruction::Variable(Variable::Array(array))
+            if array.element_type().matches(&Type::Int) =>
+        {
             Ok(BitAndReduce::calc(array).into())
         }
         Instruction::ArrayRepeat(array_repeat)
@@ -25,20 +26,7 @@ pub fn create_bitand_reduce(array: InstructionWithStr) -> Result<Instruction, Er
             .map(|iws| iws.instruction)
             .reduce(|acc, curr| BitwiseAnd::create_from_instructions(acc, curr))
             .unwrap()),
-        instruction @ Instruction::LocalVariable(_, LocalVariable::Other(_))
-            if instruction.return_type() == [Type::Int].into() =>
-        {
-            let array = InstructionWithStr {
-                instruction,
-                str: array.str,
-            };
-            Ok(BitAndReduce { array }.into())
-        }
-        instruction @ Instruction::Other(_) if instruction.return_type() == [Type::Int].into() => {
-            let array = InstructionWithStr {
-                instruction,
-                str: array.str,
-            };
+        instruction if instruction.return_type().matches(&[Type::Int].into()) => {
             Ok(BitAndReduce { array }.into())
         }
         ins => Err(Error::CannotProduct(array.str, ins.return_type())),
@@ -51,7 +39,7 @@ pub struct BitAndReduce {
 }
 
 impl BitAndReduce {
-    fn calc(array: Arc<Array>) -> Variable {
+    fn calc(array: &Array) -> Variable {
         let sum = array
             .iter()
             .map(|var| var.as_int().unwrap())
@@ -62,13 +50,16 @@ impl BitAndReduce {
 
 impl ReturnType for BitAndReduce {
     fn return_type(&self) -> Type {
-        [Type::Int].into()
+        Type::Int.into()
     }
 }
 
 impl Recreate for BitAndReduce {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
         let array = self.array.recreate(local_variables)?;
+        if let Instruction::Variable(Variable::Array(array)) = &self.array.instruction {
+            return Ok(Self::calc(array).into());
+        }
         Ok(Self { array }.into())
     }
 }
@@ -76,6 +67,6 @@ impl Recreate for BitAndReduce {
 impl Exec for BitAndReduce {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let array = self.array.exec(interpreter)?.into_array().unwrap();
-        Ok(Self::calc(array).into())
+        Ok(Self::calc(&array).into())
     }
 }
