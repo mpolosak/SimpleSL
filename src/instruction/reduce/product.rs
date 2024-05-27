@@ -1,134 +1,103 @@
-pub use self::product_float_product::FloatProduct;
-pub use self::product_int_product::IntProduct;
-use crate::instruction::Pow;
-use crate::instruction::{
-    array_repeat::ArrayRepeat, local_variable::LocalVariable, Instruction, InstructionWithStr,
-    Multiply,
-};
+use crate::instruction::local_variable::LocalVariables;
+use crate::instruction::{array_repeat::ArrayRepeat, Instruction, InstructionWithStr, Multiply};
+use crate::instruction::{Exec, ExecResult, Pow, Recreate};
 use crate::{
     variable::{Array, ReturnType, Type, Typed, Variable},
     Error,
 };
-use duplicate::duplicate_item;
+use crate::{ExecError, Interpreter};
 use std::sync::Arc;
 
-pub fn create_product(array: InstructionWithStr) -> Result<Instruction, Error> {
-    match array.instruction {
-        Instruction::Variable(Variable::Array(array)) if array.element_type() == &Type::Int => {
-            Ok(IntProduct::calc(array).into())
+#[derive(Debug)]
+pub struct Product {
+    pub array: InstructionWithStr,
+}
+
+impl Product {
+    pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
+        match &array.instruction {
+            Instruction::Variable(Variable::Array(array)) if array.element_type() == &Type::Int => {
+                Ok(Self::calc_int(&array).into())
+            }
+            Instruction::Variable(Variable::Array(array))
+                if array.as_type() == [Type::Float].into() =>
+            {
+                Ok(Self::calc_float(&array).into())
+            }
+            Instruction::ArrayRepeat(array_repeat)
+                if array_repeat
+                    .value
+                    .return_type()
+                    .matches(&(Type::Int | Type::Float)) =>
+            {
+                let ArrayRepeat { value, len } = Arc::unwrap_or_clone(array_repeat.clone());
+                Pow::create_from_instructions(value.instruction, len.instruction)
+                    .map_err(Error::from)
+            }
+            Instruction::Array(array)
+                if array.element_type == Type::Int
+                    || array.element_type == Type::Float
+                    || array.element_type == Type::String =>
+            {
+                Ok(array
+                    .instructions
+                    .iter()
+                    .cloned()
+                    .map(|iws| iws.instruction)
+                    .reduce(|acc, curr| Multiply::create_from_instructions(acc, curr))
+                    .unwrap())
+            }
+            instruction
+                if instruction
+                    .return_type()
+                    .matches(&([Type::Int] | [Type::Float].into())) =>
+            {
+                Ok(Self { array }.into())
+            }
+            ins => Err(Error::CannotProduct(array.str, ins.return_type())),
         }
-        Instruction::Variable(Variable::Array(array))
-            if array.as_type() == [Type::Float].into() =>
-        {
-            Ok(FloatProduct::calc(array).into())
+    }
+
+    fn calc(array: &Array) -> Variable {
+        match array.element_type() {
+            Type::Int => Self::calc_int(&array),
+            Type::Float => Self::calc_float(&array),
+            element_type => unreachable!("Tried to calculate product of [{element_type}]"),
         }
-        Instruction::ArrayRepeat(array_repeat)
-            if array_repeat
-                .value
-                .return_type()
-                .matches(&(Type::Int | Type::Float)) =>
-        {
-            let ArrayRepeat { value, len } = Arc::unwrap_or_clone(array_repeat);
-            Pow::create_from_instructions(value.instruction, len.instruction).map_err(Error::from)
-        }
-        Instruction::Array(array)
-            if array.element_type == Type::Int
-                || array.element_type == Type::Float
-                || array.element_type == Type::String =>
-        {
-            Ok(array
-                .instructions
-                .iter()
-                .cloned()
-                .map(|iws| iws.instruction)
-                .reduce(|acc, curr| Multiply::create_from_instructions(acc, curr))
-                .unwrap())
-        }
-        instruction @ Instruction::LocalVariable(_, LocalVariable::Other(_))
-            if instruction.return_type() == [Type::Int].into() =>
-        {
-            let array = InstructionWithStr {
-                instruction,
-                str: array.str,
-            };
-            Ok(IntProduct { array }.into())
-        }
-        instruction @ Instruction::LocalVariable(_, LocalVariable::Other(_))
-            if instruction.return_type() == [Type::Float].into() =>
-        {
-            let array = InstructionWithStr {
-                instruction,
-                str: array.str,
-            };
-            Ok(FloatProduct { array }.into())
-        }
-        instruction @ Instruction::Other(_) if instruction.return_type() == [Type::Int].into() => {
-            let array = InstructionWithStr {
-                instruction,
-                str: array.str,
-            };
-            Ok(IntProduct { array }.into())
-        }
-        instruction @ Instruction::Other(_)
-            if instruction.return_type() == [Type::Float].into() =>
-        {
-            let array = InstructionWithStr {
-                instruction,
-                str: array.str,
-            };
-            Ok(FloatProduct { array }.into())
-        }
-        ins => Err(Error::CannotProduct(array.str, ins.return_type())),
+    }
+
+    fn calc_int(array: &Array) -> Variable {
+        let product = array.iter().map(|var| var.as_int().unwrap()).product();
+        Variable::Int(product)
+    }
+
+    fn calc_float(array: &Array) -> Variable {
+        let product = array.iter().map(|var| var.as_float().unwrap()).product();
+        Variable::Float(product)
     }
 }
 
-#[duplicate_item(T R; [IntProduct] [Int]; [FloatProduct] [Float])]
-mod product {
-    use crate::{
-        instruction::{
-            local_variable::LocalVariables, Exec, ExecResult, Instruction, InstructionWithStr,
-            Recreate,
-        },
-        variable::{ReturnType, Type},
-        ExecError, Interpreter,
-    };
-
-    #[derive(Debug)]
-    pub struct T {
-        pub array: InstructionWithStr,
-    }
-
-    impl ReturnType for T {
-        fn return_type(&self) -> Type {
-            [Type::R].into()
+impl Recreate for Product {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
+        let array = self.array.recreate(local_variables)?;
+        if let Instruction::Variable(Variable::Array(array)) = &self.array.instruction {
+            return Ok(Self::calc(array).into());
         }
-    }
-
-    impl Recreate for T {
-        fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-            let array = self.array.recreate(local_variables)?;
-            Ok(Self { array }.into())
-        }
-    }
-
-    impl Exec for T {
-        fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-            let array = self.array.exec(interpreter)?.into_array().unwrap();
-            Ok(Self::calc(array).into())
-        }
+        Ok(Self { array }.into())
     }
 }
 
-impl IntProduct {
-    fn calc(array: Arc<Array>) -> Variable {
-        let sum = array.iter().map(|var| var.as_int().unwrap()).product();
-        Variable::Int(sum)
+impl Exec for Product {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
+        let Variable::Array(array) = self.array.exec(interpreter)? else {
+            unreachable!("Tried to sum not array")
+        };
+        Ok(Self::calc(&array))
     }
 }
 
-impl FloatProduct {
-    fn calc(array: Arc<Array>) -> Variable {
-        let sum = array.iter().map(|var| var.as_float().unwrap()).product();
-        Variable::Float(sum)
+impl ReturnType for Product {
+    fn return_type(&self) -> Type {
+        self.array.return_type().element_type().unwrap()
     }
 }

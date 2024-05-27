@@ -214,7 +214,7 @@ impl fmt::Display for Error {
             Self::CannotSum(ins, var_type)
                 => write!(f, "Cannot {ins} $+. Operand need to be [int]|[float]|[string] but {ins} which is {var_type} was given"),
             Self::CannotProduct(ins, var_type)
-                => write!(f, "Cannot {ins} $*. Operand need to be [int] or [float] but {ins} which is {var_type} was given")
+                => write!(f, "Cannot {ins} $*. Operand need to be [int]|[float] but {ins} which is {var_type} was given")
         }
     }
 }
