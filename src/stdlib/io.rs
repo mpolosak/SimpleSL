@@ -6,7 +6,7 @@ use std::io;
 /// Add input/output part of standard library to Interpreter
 pub fn add_io(interpreter: &mut Interpreter) {
     #[export_function]
-    fn print(var: Variable) {
+    fn print(var: &Variable) {
         println!("{var}");
     }
 

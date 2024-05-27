@@ -33,7 +33,7 @@ pub fn add_convert(interpreter: &mut Interpreter) {
     }
 
     #[export_function]
-    fn to_string(variable: Variable) -> String {
+    fn to_string(variable: &Variable) -> String {
         variable.to_string()
     }
 }
