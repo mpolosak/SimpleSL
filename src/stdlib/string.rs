@@ -43,7 +43,7 @@ pub fn add_string(interpreter: &mut Interpreter) {
     }
 
     #[export_function]
-    fn len(#[var_type("[any]|string")] variable: Variable) -> usize {
+    fn len(#[var_type("[any]|string")] variable: &Variable) -> usize {
         match_any! { variable,
             Variable::Array(var) | Variable::String(var) => var.len(),
             _ => unreachable!()
