@@ -3,7 +3,7 @@
 ## Convert
 This part of standard library contains functions related to converting variables and parsing strings.
 
-### int_to_float(value: int) -> float
+### to_float(value: int|float) -> float
 Converts value to float
 
 ### int_to_float(value: float) -> int
