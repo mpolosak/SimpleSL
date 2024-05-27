@@ -40,37 +40,37 @@ fn arg_import_from_function_param(
     let ident_str = ident.to_string();
     let unwrap = match param_type.as_str() {
         "i64" => quote!(
-            .clone().into_int().unwrap();
+            .clone().into_int().unwrap()
         ),
         "f64" => quote!(
-            .clone().into_float().unwrap();
+            .clone().into_float().unwrap()
         ),
         "Arc < str >" => quote!(
-           .clone().into_string().unwrap();
+           .clone().into_string().unwrap()
         ),
         "& str" => quote!(
-            .as_string().unwrap();
+            .as_string().unwrap()
         ),
         "Arc < [Variable] >" => quote!(
-            .into_array().unwrap();
+            .into_array().unwrap()
         ),
         "& [Variable]" => quote!(
-            .as_array().unwrap();
+            .as_array().unwrap()
         ),
         "Arc < Function >" => quote!(
-            .clone().into_function().unwrap();
+            .clone().into_function().unwrap()
         ),
         "& Function" => quote!(
-            .as_function().unwrap();
+            .as_function().unwrap()
         ),
         "Variable" => quote!(
             .clone();
         ),
-        "& Variable" => return quote!(let #ident = interpreter.get_variable(#ident_str).unwrap();),
+        "& Variable" => quote!(),
         "& mut Interpreter" => return quote!(),
         param_type => panic!("{param_type} type isn't allowed"),
     };
-    quote!(let #ident = interpreter.get_variable(#ident_str).unwrap()#unwrap)
+    quote!(let #ident = interpreter.get_variable(#ident_str).unwrap()#unwrap;)
 }
 
 pub fn params_from_function_params(params: &[(Ident, Vec<Attribute>, String)]) -> TokenStream {
