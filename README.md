@@ -25,12 +25,12 @@ fn main() {
 
 ## Syntax
 ### Hello world example
-```
+```SimpleSL
 print("Hello world")
 ```
 ### Comments
 Comment works like in C or Rust
-```
+```SimpleSL
 // One line comment
 /* 
 Multiline comment
@@ -38,7 +38,7 @@ Multiline comment
 print("Hello world"/* Comment */)
 ```
 ### Variables
-```
+```SimpleSL
 x = 5 // int
 y = 5.0 // float
 text = "Hello\n world" // string
@@ -52,7 +52,7 @@ tuple = (5, 7.8, "value") // tuple
 print(tuple) //prints (5, 7.8, "value")
 ```
 ### Functions
-```
+```SimpleSL
 delta = (a: float, b: float, c: float) -> float {
     return b**2.0+4.0*a*c
 } // function taking free arguments of type float and returning value of type float
