@@ -55,8 +55,12 @@ pub enum Error {
         idents_len: usize,
     },
     WrongCondition(Arc<str>, Type),
-    CannotSum(Arc<str>, Type),
-    CannotProduct(Arc<str>, Type),
+    IncorectPostfixOperatorOperand {
+        ins: Arc<str>,
+        op: &'static str,
+        expected: Type,
+        given: Type,
+    },
 }
 
 impl PartialEq for Error {
@@ -77,8 +81,7 @@ impl PartialEq for Error {
             | (Self::WrongCondition(l0, l1), Self::WrongCondition(r0, r1))
             | (Self::WrongNumberOfArguments(l0, l1), Self::WrongNumberOfArguments(r0, r1))
             | (Self::CannotDo(l0, l1), Self::CannotDo(r0, r1))
-            | (Self::CannotSum(l0, l1), Self::CannotSum(r0, r1))
-            | (Self::CannotProduct(l0, l1), Self::CannotProduct(r0, r1)) => l0 == r0 && l1 == r1,
+             => l0 == r0 && l1 == r1,
             (Self::IO(l0), Self::IO(r0)) | (Self::CannotUnescapeString(l0), Self::CannotUnescapeString(r0)) => {
                 l0.to_string() == r0.to_string()
             },
@@ -109,6 +112,10 @@ impl PartialEq for Error {
                 Self::WrongLength{ ins, len, idents_len },
                 Self::WrongLength{ ins: ins2, len: len2, idents_len: idents_len2 }
             ) => ins==ins2 && len == len2 && idents_len == idents_len2,
+            (
+                Self::IncorectPostfixOperatorOperand{ins, op, expected, given },
+                Self::IncorectPostfixOperatorOperand{ins:ins2, op: op2, expected: expected2, given: given2 })
+                => ins == ins2 && op == op2 && expected == expected2 && given == given2,
             _ => core::mem::discriminant(self) == core::mem::discriminant(other)
         }
     }
@@ -211,10 +218,8 @@ impl fmt::Display for Error {
             Self::WrongLength { ins, len: length, idents_len: expected_length }
                 => write!(f, "{ins} has {length} elements but {expected_length} idents were given"),
             Self::WrongCondition(ins, var_type) => write!(f, "Condition must be int but {ins} which is {var_type} was given"),
-            Self::CannotSum(ins, var_type)
-                => write!(f, "Cannot {ins} $+. Operand need to be [int]|[float]|[string] but {ins} which is {var_type} was given"),
-            Self::CannotProduct(ins, var_type)
-                => write!(f, "Cannot {ins} $*. Operand need to be [int]|[float] but {ins} which is {var_type} was given")
+            Self::IncorectPostfixOperatorOperand { ins, op, expected, given }
+                => write!(f, "Cannot {ins} {op}. Operand need to be {expected} but {ins} which is {given} was given"),
         }
     }
 }

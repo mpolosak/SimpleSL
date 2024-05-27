@@ -63,7 +63,12 @@ impl Sum {
             {
                 Ok(Self { array }.into())
             }
-            ins => Err(Error::CannotSum(array.str, ins.return_type())),
+            ins => Err(Error::IncorectPostfixOperatorOperand {
+                ins: array.str,
+                op: "$+",
+                expected: [Type::Int] | [Type::Float].into() | [Type::String],
+                given: ins.return_type(),
+            }),
         }
     }
 

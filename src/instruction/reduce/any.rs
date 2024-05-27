@@ -27,7 +27,12 @@ pub fn create_any(array: InstructionWithStr) -> Result<Instruction, Error> {
             .reduce(|acc, curr| Or::create_from_instructions(acc, curr))
             .unwrap()),
         instruction if instruction.return_type() == [Type::Int].into() => Ok(Any { array }.into()),
-        ins => Err(Error::CannotProduct(array.str, ins.return_type())),
+        ins => Err(Error::IncorectPostfixOperatorOperand {
+            ins: array.str,
+            op: "$||",
+            expected: [Type::Int].into(),
+            given: ins.return_type(),
+        }),
     }
 }
 

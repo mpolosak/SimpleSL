@@ -54,7 +54,12 @@ impl Product {
             {
                 Ok(Self { array }.into())
             }
-            ins => Err(Error::CannotProduct(array.str, ins.return_type())),
+            ins => Err(Error::IncorectPostfixOperatorOperand {
+                ins: array.str,
+                op: "$*",
+                expected: [Type::Int] | [Type::Float].into(),
+                given: ins.return_type(),
+            }),
         }
     }
 

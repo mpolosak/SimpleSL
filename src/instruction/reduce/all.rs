@@ -29,7 +29,12 @@ pub fn create_all(array: InstructionWithStr) -> Result<Instruction, Error> {
         instruction if instruction.return_type().matches(&[Type::Int].into()) => {
             Ok(All { array }.into())
         }
-        ins => Err(Error::CannotProduct(array.str, ins.return_type())),
+        ins => Err(Error::IncorectPostfixOperatorOperand {
+            ins: array.str,
+            op: "$&&",
+            expected: [Type::Int].into(),
+            given: ins.return_type(),
+        }),
     }
 }
 
