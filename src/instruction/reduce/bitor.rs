@@ -50,7 +50,7 @@ impl BitOrReduce {
 
 impl ReturnType for BitOrReduce {
     fn return_type(&self) -> Type {
-        [Type::Int].into()
+        Type::Int.into()
     }
 }
 
