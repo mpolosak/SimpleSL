@@ -66,7 +66,7 @@ fn arg_import_from_function_param(
         "Variable" => quote!(
             .clone();
         ),
-        "& Variable" => quote!(),
+        "& Variable" => return quote!(let #ident = interpreter.get_variable(#ident_str).unwrap();),
         "& mut Interpreter" => return quote!(),
         param_type => panic!("{param_type} type isn't allowed"),
     };
