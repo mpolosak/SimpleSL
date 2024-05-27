@@ -11,6 +11,12 @@
 | 3          | @            | Array map               | Left-to-right |
 |            | ?            | Array filtering         |               |
 |            | $ expression | Array reducing          |               |
+|            | $+           | Array sum               |               |
+|            | $*           | Array product           |               |
+|            | $&&          | Logical and reduce(all) |               |
+|            | $\|\|        | Logical or reduce (any) |               |
+|            | $&           | Bitwise and reduce      |               |
+|            | $\|          | Bitwise or reduce       |               |
 | 4          | **           | Exponentiation          |               |
 | 5          | *            | Multiplication          |               |
 |            | /            | Division                |               |
@@ -92,6 +98,76 @@ array $ initial_value function
 | lhs | initial value | rhs                            | result  |
 | --- | --------------| ------------------------------ | ------- |
 | [T] | S             | (acc: T \| U, current: S) -> U | T \| U  |
+
+## $+ - Array sum
+```
+array $+
+```
+| lhs     | result  |
+| ------- | ------- |
+| [int]   | int     |
+| [float] | float   |
+| [string]| string  |
+
+Calculates sum of all element of array.
+
+## $* - Array product
+```
+array $*
+```
+| lhs     | result  |
+| ------- | ------- |
+| [int]   | int     |
+| [float] | float   |
+
+Calculates product of all element of array.
+
+## $&& - Logical and reduce (all)
+```
+array $&&
+```
+| lhs     | result  |
+| ------- | ------- |
+| [int]   | int     |
+
+Returns non-zero value if all elements of array are non-zero, 0 otherwise
+
+
+## $|| - Logical and reduce (any)
+```
+array $||
+```
+| lhs     | result  |
+| ------- | ------- |
+| [int]   | int     |
+
+Returns non-zero value if any of elements of array is non-zero, 0 otherwise
+
+## $& - Bitwise and reduce
+```
+array $&
+```
+| lhs     | result  |
+| ------- | ------- |
+| [int]   | int     |
+
+Equivalent of:
+```
+array $~0 (acc: int, curr: int) -> int {return acc & curr}
+```
+
+## $| - Bitwise or reduce
+```
+array $|
+```
+| lhs     | result  |
+| ------- | ------- |
+| [int]   | int     |
+
+Equivalent of:
+```
+array $0 (acc: int, curr: int) -> int {return acc | curr}
+```
 
 ## ** - Exponentiation
 | lhs     | rhs     | result     | description |
