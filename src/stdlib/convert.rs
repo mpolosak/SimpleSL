@@ -14,6 +14,15 @@ pub fn add_convert(interpreter: &mut Interpreter) {
     }
 
     #[export_function]
+    fn to_int(#[var_type("int|float")] value: &Variable) -> i64 {
+        match value {
+            Variable::Int(value) => *value,
+            Variable::Float(value) => *value as i64,
+            _ => unreachable!("value required to be int | float"),
+        }
+    }
+
+    #[export_function]
     fn float_to_int(value: f64) -> i64 {
         value as i64
     }

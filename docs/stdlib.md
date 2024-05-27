@@ -6,7 +6,7 @@ This part of standard library contains functions related to converting variables
 ### to_float(value: int|float) -> float
 Converts value to float
 
-### int_to_float(value: float) -> int
+### to_int(value: int|float) -> int
 Converts value to int
 
 ### parse_int(string: string) -> int|()
