@@ -1,16 +1,17 @@
 use crate::instruction::local_variable::LocalVariables;
-use crate::instruction::{local_variable::LocalVariable, Instruction, InstructionWithStr};
 use crate::instruction::{Exec, ExecResult, Or, Recreate};
+use crate::instruction::{Instruction, InstructionWithStr};
 use crate::{
     variable::{Array, ReturnType, Type, Variable},
     Error,
 };
 use crate::{ExecError, Interpreter};
-use std::sync::Arc;
 
 pub fn create_any(array: InstructionWithStr) -> Result<Instruction, Error> {
-    match array.instruction {
-        Instruction::Variable(Variable::Array(array)) if array.element_type() == &Type::Int => {
+    match &array.instruction {
+        Instruction::Variable(Variable::Array(array))
+            if array.element_type().matches(&Type::Int) =>
+        {
             Ok(Any::calc(array).into())
         }
         Instruction::ArrayRepeat(array_repeat)
@@ -18,29 +19,14 @@ pub fn create_any(array: InstructionWithStr) -> Result<Instruction, Error> {
         {
             Ok(array_repeat.value.instruction.clone())
         }
-        Instruction::Array(array) if array.element_type == Type::Int => Ok(array
+        Instruction::Array(array) if array.element_type.matches(&Type::Int) => Ok(array
             .instructions
             .iter()
             .cloned()
             .map(|iws| iws.instruction)
             .reduce(|acc, curr| Or::create_from_instructions(acc, curr))
             .unwrap()),
-        instruction @ Instruction::LocalVariable(_, LocalVariable::Other(_))
-            if instruction.return_type() == [Type::Int].into() =>
-        {
-            let array = InstructionWithStr {
-                instruction,
-                str: array.str,
-            };
-            Ok(Any { array }.into())
-        }
-        instruction @ Instruction::Other(_) if instruction.return_type() == [Type::Int].into() => {
-            let array = InstructionWithStr {
-                instruction,
-                str: array.str,
-            };
-            Ok(Any { array }.into())
-        }
+        instruction if instruction.return_type() == [Type::Int].into() => Ok(Any { array }.into()),
         ins => Err(Error::CannotProduct(array.str, ins.return_type())),
     }
 }
@@ -51,7 +37,7 @@ pub struct Any {
 }
 
 impl Any {
-    fn calc(array: Arc<Array>) -> Variable {
+    fn calc(array: &Array) -> Variable {
         let sum = array.iter().any(|var| *var.as_int().unwrap() != 0);
         Variable::from(sum)
     }
@@ -59,13 +45,16 @@ impl Any {
 
 impl ReturnType for Any {
     fn return_type(&self) -> Type {
-        [Type::Int].into()
+        Type::Int.into()
     }
 }
 
 impl Recreate for Any {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
         let array = self.array.recreate(local_variables)?;
+        if let Instruction::Variable(Variable::Array(array)) = &self.array.instruction {
+            return Ok(Self::calc(array).into());
+        }
         Ok(Self { array }.into())
     }
 }
@@ -73,6 +62,6 @@ impl Recreate for Any {
 impl Exec for Any {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let array = self.array.exec(interpreter)?.into_array().unwrap();
-        Ok(Self::calc(array).into())
+        Ok(Self::calc(&array).into())
     }
 }
