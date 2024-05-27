@@ -66,7 +66,7 @@ x() // still prints "Hello Tom"
 print = (vars: any) {
 } // function are availible after they are created and can be overwritten
 x() // but this still works as before
-y = (f: function()->()){
+y = (f: ()->()){
     f()
 } // function y takes function as argument and exec it
 y(
