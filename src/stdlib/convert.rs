@@ -23,11 +23,6 @@ pub fn add_convert(interpreter: &mut Interpreter) {
     }
 
     #[export_function]
-    fn float_to_int(value: f64) -> i64 {
-        value as i64
-    }
-
-    #[export_function]
     fn parse_int(string: &str) -> Option<i64> {
         string.parse::<i64>().ok()
     }
