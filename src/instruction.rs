@@ -36,13 +36,13 @@ use self::{
 };
 use crate::{
     interpreter::Interpreter,
-    parse::{unexpected, Rule, PRATT_PARSER},
     variable::{ReturnType, Type, Typed, Variable},
     Error, ExecError,
 };
 pub(crate) use function::FunctionCall;
 use match_any::match_any;
 use pest::iterators::Pair;
+use simplesl_parser::{unexpected, Rule, PRATT_PARSER};
 use std::sync::Arc;
 pub(crate) use traits::{Exec, ExecResult, ExecStop, Recreate};
 

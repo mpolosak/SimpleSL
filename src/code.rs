@@ -1,10 +1,10 @@
 use crate::{
     instruction::{local_variable::LocalVariables, Exec, ExecStop, InstructionWithStr},
-    parse::{Rule, SimpleSLParser},
     variable::{ReturnType, Type, Variable},
     Error, ExecError, Interpreter,
 };
 use pest::Parser;
+use simplesl_parser::{Rule, SimpleSLParser};
 use std::sync::Arc;
 
 #[derive(Debug, Clone)]

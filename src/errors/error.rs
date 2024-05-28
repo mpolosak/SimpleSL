@@ -1,5 +1,6 @@
-use crate::{function::Param, parse::Rule, variable::Type, ExecError};
+use crate::{function::Param, variable::Type, ExecError};
 use match_any::match_any;
+use simplesl_parser::Rule;
 use std::{
     fmt::{self},
     sync::Arc,

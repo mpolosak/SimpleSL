@@ -7,11 +7,11 @@ use crate::{
         Exec, Instruction, InstructionWithStr, Recreate,
     },
     interpreter::Interpreter,
-    parse::Rule,
     variable::{FunctionType, ReturnType, Type},
     Error, ExecError,
 };
 use pest::iterators::Pair;
+use simplesl_parser::Rule;
 use std::sync::Arc;
 
 #[derive(Debug)]

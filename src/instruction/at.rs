@@ -5,11 +5,11 @@ use super::{
 };
 use crate::{
     interpreter::Interpreter,
-    parse::Rule,
     variable::{ReturnType, Type, Typed, Variable},
     Error, ExecError,
 };
 use pest::iterators::Pair;
+use simplesl_parser::Rule;
 
 #[derive(Debug)]
 pub struct At {

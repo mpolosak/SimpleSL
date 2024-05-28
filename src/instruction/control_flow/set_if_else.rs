@@ -8,10 +8,10 @@ use crate::{
 };
 use crate::{
     interpreter::Interpreter,
-    parse::Rule,
     variable::{ReturnType, Type, Typed, Variable},
 };
 use pest::iterators::Pair;
+use simplesl_parser::Rule;
 use std::sync::Arc;
 
 #[derive(Debug)]

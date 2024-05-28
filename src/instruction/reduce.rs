@@ -11,7 +11,6 @@ use crate::{
         Exec, Instruction, InstructionWithStr, Recreate,
     },
     interpreter::Interpreter,
-    parse::Rule,
     variable::{FunctionType, ReturnType, Type, Variable},
     Error, ExecError,
 };
@@ -21,6 +20,7 @@ pub use bitand::*;
 pub use bitor::*;
 use pest::iterators::Pair;
 pub use product::*;
+use simplesl_parser::Rule;
 pub use sum::*;
 
 #[derive(Debug)]

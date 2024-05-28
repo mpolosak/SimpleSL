@@ -5,11 +5,11 @@ use crate::{
         Recreate,
     },
     interpreter::Interpreter,
-    parse::Rule,
     variable::{ReturnType, Type},
     Error, ExecError,
 };
 use pest::iterators::Pair;
+use simplesl_parser::Rule;
 
 #[derive(Debug)]
 pub struct Match {

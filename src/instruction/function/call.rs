@@ -1,3 +1,10 @@
+use crate::instruction::{
+    function::AnonymousFunction,
+    local_variable::{LocalVariable, LocalVariables},
+    recreate_instructions,
+    traits::{Exec, Recreate},
+    Instruction,
+};
 use crate::{
     function::{Function, Param, Params},
     instruction::{
@@ -8,17 +15,8 @@ use crate::{
     variable::{ReturnType, Type, Variable},
     Error, ExecError,
 };
-use crate::{
-    instruction::{
-        function::AnonymousFunction,
-        local_variable::{LocalVariable, LocalVariables},
-        recreate_instructions,
-        traits::{Exec, Recreate},
-        Instruction,
-    },
-    parse::Rule,
-};
 use pest::iterators::Pair;
+use simplesl_parser::Rule;
 use std::{iter::zip, sync::Arc};
 
 #[derive(Debug)]

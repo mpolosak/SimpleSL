@@ -2,7 +2,6 @@ use crate::{
     function::{Body, Function, Param, Params},
     instruction::InstructionWithStr,
     interpreter::Interpreter,
-    parse::Rule,
     variable::{FunctionType, ReturnType, Type},
     ExecError,
 };
@@ -16,6 +15,7 @@ use crate::{
     Error,
 };
 use pest::iterators::Pair;
+use simplesl_parser::Rule;
 use std::sync::Arc;
 
 #[derive(Clone, Debug)]

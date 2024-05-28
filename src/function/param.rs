@@ -1,5 +1,6 @@
-use crate::{instruction::local_variable::LocalVariableMap, join, parse::Rule, variable::Type};
+use crate::{instruction::local_variable::LocalVariableMap, join, variable::Type};
 use pest::iterators::Pair;
+use simplesl_parser::Rule;
 use std::{fmt, ops::Deref, sync::Arc};
 
 #[derive(Clone, Debug, PartialEq, Eq)]

@@ -1,14 +1,11 @@
 use super::InstructionWithStr;
 use crate::variable::{Array, Type, Variable};
-use crate::{
-    instruction::Instruction,
-    parse::{unexpected, Rule},
-    Error,
-};
+use crate::{instruction::Instruction, Error};
 use duplicate::duplicate_item;
 use lazy_static::lazy_static;
 use match_any::match_any;
 use pest::iterators::Pair;
+use simplesl_parser::{unexpected, Rule};
 use std::str::FromStr;
 use std::sync::Arc;
 

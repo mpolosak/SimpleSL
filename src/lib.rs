@@ -3,11 +3,8 @@ mod errors;
 pub mod function;
 mod instruction;
 mod interpreter;
-mod parse;
 pub mod stdlib;
 pub mod variable;
-#[macro_use]
-extern crate pest_derive;
 pub use simplesl_macros::export_function;
 use std::fmt::{Debug, Display};
 pub use {code::Code, errors::Error, errors::ExecError, interpreter::Interpreter};

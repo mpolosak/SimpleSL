@@ -1,12 +1,12 @@
 use super::{function::AnonymousFunction, Instruction, InstructionWithStr};
 use crate::{
     function::{Param, Params},
-    parse::{Rule, SimpleSLParser},
     variable::{FunctionType, ReturnType, Type, Typed, Variable},
     Error, Interpreter,
 };
 use match_any::match_any;
 use pest::{iterators::Pairs, Parser};
+use simplesl_parser::{Rule, SimpleSLParser};
 use std::{collections::HashMap, fs, sync::Arc};
 
 pub type LocalVariableMap = HashMap<Arc<str>, LocalVariable>;

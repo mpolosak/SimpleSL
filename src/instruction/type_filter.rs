@@ -1,15 +1,14 @@
+use super::InstructionWithStr;
 use crate::{
     instruction::{
         local_variable::LocalVariables, traits::ExecResult, Exec, Instruction, Recreate,
     },
     interpreter::Interpreter,
-    parse::Rule,
     variable::{Array, ReturnType, Type, Typed},
     Error, ExecError,
 };
 use pest::iterators::Pair;
-
-use super::InstructionWithStr;
+use simplesl_parser::Rule;
 
 #[derive(Debug)]
 pub struct TypeFilter {

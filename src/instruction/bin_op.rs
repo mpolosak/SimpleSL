@@ -10,12 +10,12 @@ use crate::{
         traits::{CanBeUsed, ToResult},
         Instruction,
     },
-    parse::{unexpected, Rule},
     variable::{ReturnType, Variable},
     Error,
 };
 use duplicate::duplicate_item;
 use pest::iterators::Pair;
+use simplesl_parser::{unexpected, Rule};
 use std::sync::Arc;
 
 #[duplicate_item(T; [BitwiseAnd]; [BitwiseOr]; [Xor]; [Equal]; [Filter]; [Map]; [And]; [Or];

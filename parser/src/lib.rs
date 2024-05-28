@@ -1,4 +1,5 @@
 use pest::pratt_parser::PrattParser;
+use pest_derive::Parser;
 
 #[derive(Parser)]
 #[grammar = "simplesl.pest"]

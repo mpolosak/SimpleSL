@@ -4,11 +4,11 @@ use super::{
 };
 use crate::{
     interpreter::Interpreter,
-    parse::Rule,
     variable::{Array, ReturnType, Type, Variable},
     Error, ExecError,
 };
 use pest::iterators::Pair;
+use simplesl_parser::Rule;
 
 #[derive(Debug, Clone)]
 pub struct ArrayRepeat {

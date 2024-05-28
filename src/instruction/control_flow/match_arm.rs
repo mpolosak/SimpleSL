@@ -6,11 +6,11 @@ use crate::{
         Exec, InstructionWithStr,
     },
     interpreter::Interpreter,
-    parse::{unexpected, Rule},
     variable::{ReturnType, Type, Typed, Variable},
     Error, ExecError,
 };
 use pest::iterators::Pair;
+use simplesl_parser::{unexpected, Rule};
 use std::sync::Arc;
 
 #[derive(Debug)]

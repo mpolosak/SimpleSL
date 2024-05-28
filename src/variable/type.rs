@@ -1,11 +1,8 @@
 use super::{function_type::FunctionType, multi_type::MultiType};
-use crate::{
-    errors::ParseTypeError,
-    join,
-    parse::{Rule, SimpleSLParser},
-};
+use crate::{errors::ParseTypeError, join};
 use match_any::match_any;
 use pest::{iterators::Pair, Parser};
+use simplesl_parser::{Rule, SimpleSLParser};
 use std::{
     fmt::Display,
     hash::Hash,
