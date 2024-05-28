@@ -6,8 +6,6 @@ use crate::{function::Function, join_debug, Error};
 use enum_as_inner::EnumAsInner;
 use match_any::match_any;
 use pest::{iterators::Pair, Parser};
-#[cfg(test)]
-pub(crate) use r#type::parse_type;
 pub use r#type::{ReturnType, Type, Typed};
 use simplesl_parser::{Rule, SimpleSLParser};
 use std::{fmt, io, str::FromStr, sync::Arc};
