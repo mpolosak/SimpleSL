@@ -445,7 +445,9 @@ dependencies = [
 name = "simplesl_macros"
 version = "0.1.0"
 dependencies = [
+ "pest",
  "quote",
+ "simplesl_parser",
  "syn 2.0.48",
 ]
 
