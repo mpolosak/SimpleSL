@@ -3,12 +3,14 @@ use super::{
     traits::{ExecResult, ExecStop},
     Exec, Instruction, InstructionWithStr, Recreate,
 };
+use crate as simplesl;
 use crate::{
     interpreter::Interpreter,
     variable::{ReturnType, Type, Typed, Variable},
     Error, ExecError,
 };
 use pest::iterators::Pair;
+use simplesl_macros::var_type;
 use simplesl_parser::Rule;
 
 #[derive(Debug)]
@@ -25,9 +27,9 @@ impl At {
     ) -> Result<Instruction, Error> {
         let pair = index.into_inner().next().unwrap();
         let index = InstructionWithStr::new_expression(pair, local_variables)?;
-        let required_instruction_type = Type::String | [Type::Any];
+        let required_instruction_type = var_type!(string | [any]);
         let instruction_return_type = instruction.return_type();
-        if index.return_type() != Type::Int {
+        if index.return_type() != var_type!(int) {
             return Err(Error::CannotIndexWith(index.str));
         }
         if !instruction_return_type.matches(&required_instruction_type) {

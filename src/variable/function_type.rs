@@ -79,18 +79,20 @@ impl From<FunctionType> for Type {
 
 #[cfg(test)]
 mod tests {
-    use crate::variable::Type;
+    use simplesl_macros::var_type;
 
     use super::FunctionType;
+    use crate as simplesl;
+
     #[test]
     fn check_function_type_matches() {
         let function_type = FunctionType {
-            params: [Type::Any].into(),
-            return_type: Type::Int,
+            params: [var_type!(any)].into(),
+            return_type: var_type!(int),
         };
         let function_type2 = FunctionType {
-            params: [Type::Int].into(),
-            return_type: Type::Any,
+            params: [var_type!(int)].into(),
+            return_type: var_type!(any),
         };
         assert!(function_type.matches(&function_type));
         assert!(function_type2.matches(&function_type2));
@@ -98,20 +100,20 @@ mod tests {
         assert!(!function_type2.matches(&function_type));
         let function_type = FunctionType {
             params: [
-                Type::Any,
-                Type::Int,
-                Type::Float | Type::String | Type::from([Type::Any]),
+                var_type!(any),
+                var_type!(int),
+                var_type!(float | string | [any]),
             ]
             .into(),
-            return_type: Type::Int,
+            return_type: var_type!(int),
         };
         let function_type2 = FunctionType {
-            params: [Type::Int].into(),
-            return_type: Type::Any,
+            params: [var_type!(int)].into(),
+            return_type: var_type!(any),
         };
         let function_type3 = FunctionType {
-            params: [Type::String, Type::Int, Type::Float | Type::String].into(),
-            return_type: Type::Float | Type::String | Type::Int,
+            params: [var_type!(string), var_type!(int), var_type!(float | string)].into(),
+            return_type: var_type!(int | float | string),
         };
         assert!(function_type.matches(&function_type));
         assert!(function_type2.matches(&function_type2));

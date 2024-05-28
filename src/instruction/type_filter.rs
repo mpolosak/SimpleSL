@@ -1,4 +1,5 @@
 use super::InstructionWithStr;
+use crate as simplesl;
 use crate::{
     instruction::{
         local_variable::LocalVariables, traits::ExecResult, Exec, Instruction, Recreate,
@@ -8,6 +9,7 @@ use crate::{
     Error, ExecError,
 };
 use pest::iterators::Pair;
+use simplesl_macros::var_type;
 use simplesl_parser::Rule;
 
 #[derive(Debug)]
@@ -23,7 +25,7 @@ impl TypeFilter {
     ) -> Result<Instruction, Error> {
         let array_type = array.return_type();
         let var_type = Type::from(var_type);
-        if !array_type.matches(&Type::Array(Type::Any.into())) {
+        if !array_type.matches(&var_type!([any])) {
             return Err(Error::CannotDo2(array_type, "?", var_type));
         }
         Ok(Self { array, var_type }.into())

@@ -2,8 +2,10 @@ use super::{
     bin_op::*,
     prefix_op::{BitwiseNot, Not, UnaryMinus},
 };
+use crate as simplesl;
 use crate::variable::{ReturnType, Type};
 use duplicate::duplicate_item;
+use simplesl_macros::var_type;
 
 #[duplicate_item(T; [Not]; [BitwiseNot]; [UnaryMinus])]
 impl ReturnType for T {
@@ -22,24 +24,24 @@ impl ReturnType for T {
 }
 
 pub fn return_type_float(lhs: Type, rhs: Type) -> Type {
-    if (lhs.matches(&[Type::Int].into()) && rhs == Type::Int)
-        || (rhs.matches(&[Type::Int].into()) && lhs == Type::Int)
+    if (lhs.matches(&var_type!([int])) && rhs == var_type!(int))
+        || (rhs.matches(&var_type!([int])) && lhs == var_type!(int))
     {
-        return [Type::Int].into();
+        return var_type!([int]);
     }
-    if lhs.matches(&[Type::Float].into()) || rhs.matches(&[Type::Float].into()) {
-        return [Type::Float].into();
+    if lhs.matches(&var_type!([float])) || rhs.matches(&var_type!([float])) {
+        return var_type!([float]);
     }
-    if Type::from([Type::Int]).matches(&lhs) || Type::from([Type::Int]).matches(&rhs) {
-        return [Type::Int] | Type::Int;
+    if var_type!([int]).matches(&lhs) || var_type!([int]).matches(&rhs) {
+        return var_type!([int] | int);
     }
-    if Type::from([Type::Float]).matches(&lhs) || Type::from([Type::Float]).matches(&rhs) {
-        return [Type::Float] | Type::Float;
+    if var_type!([float]).matches(&lhs) || var_type!([float]).matches(&rhs) {
+        return var_type!([float] | float);
     }
-    if lhs == Type::Int {
-        return Type::Int;
+    if lhs == var_type!(int) {
+        return var_type!(int);
     }
-    Type::Float
+    var_type!(float)
 }
 
 #[duplicate_item(
@@ -57,90 +59,103 @@ impl ReturnType for T {
 }
 
 pub fn return_type_int(lhs: Type, rhs: Type) -> Type {
-    if lhs.matches(&[Type::Any].into()) || rhs.matches(&[Type::Any].into()) {
-        return [Type::Int].into();
+    if lhs.matches(&var_type!([any])) || rhs.matches(&var_type!([any])) {
+        return var_type!([int]);
     }
     if Type::Array(Type::Never.into()).matches(&lhs)
         || Type::Array(Type::Never.into()).matches(&rhs)
     {
-        return [Type::Int] | Type::Int;
+        return var_type!([int] | int);
     }
-    Type::Int
+    var_type!(int)
 }
 
 impl ReturnType for Equal {
     fn return_type(&self) -> Type {
-        Type::Int
+        var_type!(int)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::variable::Type;
+    use crate as simplesl;
+    use simplesl_macros::var_type;
 
     #[test]
     fn return_type_int() {
         use crate::instruction::return_type::return_type_int;
-        assert_eq!(return_type_int(Type::Int, Type::Int), Type::Int);
-        assert_eq!(return_type_int(Type::Float, Type::Float), Type::Int);
         assert_eq!(
-            return_type_int([Type::Int].into(), Type::Int),
-            [Type::Int].into()
+            return_type_int(var_type!(int), var_type!(int)),
+            var_type!(int)
         );
         assert_eq!(
-            return_type_int([Type::Float].into(), Type::Float),
-            [Type::Int].into()
+            return_type_int(var_type!(float), var_type!(float)),
+            var_type!(int)
         );
         assert_eq!(
-            return_type_int(Type::Float, [Type::Float].into()),
-            [Type::Int].into()
+            return_type_int(var_type!([int]), var_type!(int)),
+            var_type!([int])
         );
         assert_eq!(
-            return_type_int(Type::Int, [Type::Int] | Type::Int),
-            [Type::Int] | Type::Int
+            return_type_int(var_type!([float]), var_type!(float)),
+            var_type!([int])
         );
         assert_eq!(
-            return_type_int(Type::Float, [Type::Float] | Type::Float),
-            [Type::Int] | Type::Int
+            return_type_int(var_type!(float), var_type!([float])),
+            var_type!([int])
+        );
+        assert_eq!(
+            return_type_int(var_type!(int), var_type!([int] | int)),
+            var_type!([int] | int)
+        );
+        assert_eq!(
+            return_type_int(var_type!(float), var_type!([float] | float)),
+            var_type!([int] | int)
         );
     }
 
     #[test]
     fn return_type_float() {
         use crate::instruction::return_type::return_type_float;
-        assert_eq!(return_type_float(Type::Int, Type::Int), Type::Int);
-        assert_eq!(return_type_float(Type::Float, Type::Float), Type::Float);
         assert_eq!(
-            return_type_float([Type::Int].into(), Type::Int),
-            [Type::Int].into()
+            return_type_float(var_type!(int), var_type!(int)),
+            var_type!(int)
         );
         assert_eq!(
-            return_type_float(Type::Int, [Type::Int].into()),
-            [Type::Int].into()
+            return_type_float(var_type!(float), var_type!(float)),
+            var_type!(float)
         );
         assert_eq!(
-            return_type_float([Type::Float].into(), Type::Float),
-            [Type::Float].into()
+            return_type_float(var_type!([int]), var_type!(int)),
+            var_type!([int])
         );
         assert_eq!(
-            return_type_float(Type::Float, [Type::Float].into()),
-            [Type::Float].into()
+            return_type_float(var_type!(int), var_type!([int])),
+            var_type!([int])
         );
         assert_eq!(
-            return_type_float(Type::Int, [Type::Int] | Type::Int),
-            [Type::Int] | Type::Int
+            return_type_float(var_type!([float]), var_type!(float)),
+            var_type!([float])
         );
         assert_eq!(
-            return_type_float([Type::Int] | Type::Int, Type::Int),
-            [Type::Int] | Type::Int
+            return_type_float(var_type!(float), var_type!([float])),
+            var_type!([float])
         );
         assert_eq!(
-            return_type_float(Type::Float, [Type::Float] | Type::Float),
-            [Type::Float] | Type::Float
+            return_type_float(var_type!(int), var_type!([int] | int)),
+            var_type!([int] | int)
         );
         assert_eq!(
-            return_type_float([Type::Float] | Type::Float, Type::Float),
-            [Type::Float] | Type::Float
+            return_type_float(var_type!([int] | int), var_type!(int)),
+            var_type!([int] | int)
+        );
+        assert_eq!(
+            return_type_float(var_type!(float), var_type!([float] | float)),
+            var_type!([float] | float)
+        );
+        assert_eq!(
+            return_type_float(var_type!([float] | float), var_type!(float)),
+            var_type!([float] | float)
         );
     }
 }

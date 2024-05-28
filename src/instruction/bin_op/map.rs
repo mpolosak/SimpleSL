@@ -117,95 +117,92 @@ impl ReturnType for Map {
 
 #[cfg(test)]
 mod tests {
-    use crate::variable::parse_type;
-    use crate::{
-        instruction::{bin_op::Map, traits::CanBeUsed},
-        variable::Type,
-    };
+    use crate as simplesl;
+    use crate::instruction::{bin_op::Map, traits::CanBeUsed};
+    use simplesl_macros::var_type;
+
     #[test]
     fn can_be_used() {
-        let int_array = parse_type!("[int]");
-        let float_array = parse_type!("[float]");
         // true
-        assert!(Map::can_be_used(&int_array, &parse_type!("(int)->int")));
+        assert!(Map::can_be_used(&var_type!([int]), &var_type!((int)->int)));
         assert!(Map::can_be_used(
-            &int_array,
-            &parse_type!("(int|float)->any")
+            &var_type!([int]),
+            &var_type!((int|float)->any)
         ));
         assert!(Map::can_be_used(
-            &int_array,
-            &parse_type!("(int, any)->int")
+            &var_type!([int]),
+            &var_type!((int, any)->int)
         ));
         assert!(Map::can_be_used(
-            &int_array,
-            &parse_type!("(any, any)->float")
+            &var_type!([int]),
+            &var_type!((any, any)->float)
         ));
         assert!(Map::can_be_used(
-            &(int_array.clone() | float_array.clone()),
-            &parse_type!("(int | float)->int")
+            &var_type!([int] | [float]),
+            &var_type!((int | float)->int)
         ));
         assert!(Map::can_be_used(
-            &(int_array.clone() | float_array.clone()),
-            &parse_type!("(int, int | float)->int")
+            &var_type!([int] | [float]),
+            &var_type!((int, int | float)->int)
         ));
         assert!(Map::can_be_used(
-            &(int_array.clone() | float_array.clone()),
-            &parse_type!("(any, any)->int")
+            &var_type!([int] | [float]),
+            &var_type!((any, any)->int)
         ));
         assert!(Map::can_be_used(
-            &int_array,
-            &parse_type!("(int)->int | (any)->any")
+            &var_type!([int]),
+            &var_type!((int)->int | (any)->any)
         ));
         assert!(Map::can_be_used(
-            &int_array,
-            &parse_type!("(int, any)->int | (any)->any")
+            &var_type!([int]),
+            &var_type!((int, any)->int | (any)->any)
         ));
         assert!(Map::can_be_used(
-            &int_array,
-            &parse_type!("(any, any)->float | (int | float)->int")
+            &var_type!([int]),
+            &var_type!((any, any)->float | (int | float)->int)
         ));
         assert!(Map::can_be_used(
-            &(int_array.clone() | float_array.clone()),
-            &parse_type!("(int, int | float)->int | (int | float)->float")
+            &var_type!([int] | [float]),
+            &var_type!((int, int | float)->int | (int | float)->float)
         ));
         assert!(Map::can_be_used(
-            &parse_type!("([int], [float], [string])"),
-            &parse_type!("(int, float, string) -> any")
+            &var_type!(([int], [float], [string])),
+            &var_type!((int, float, string) -> any)
         ));
         assert!(Map::can_be_used(
-            &parse_type!("([int], [float]|[string|int], [string])"),
-            &parse_type!(
-                "(int, int|float|string, string) -> float | (int | float, any, any, any) -> any"
+            &var_type!(([int], [float] | [string | int], [string])),
+            &var_type!(
+                (int, int|float|string, string) -> float | (int | float, any, any, any) -> any
             )
         ));
         assert!(Map::can_be_used(
-            &parse_type!("([int], [float])|([string], [any])"),
-            &parse_type!("(int | string, any) -> any | (any, any, any) -> ()")
+            &var_type!(([int], [float]) | ([string], [any])),
+            &var_type!((int | string, any) -> any | (any, any, any) -> ())
         ));
         // false
         assert!(!Map::can_be_used(
-            &(int_array.clone() | float_array.clone()),
-            &parse_type!("(int, int)->int")
+            &var_type!([int] | [float]),
+            &var_type!((int, int)->int)
         ));
         assert!(!Map::can_be_used(
-            &(int_array.clone() | float_array.clone()),
-            &parse_type!("(int, int | float, any)->int")
+            &var_type!([int] | [float]),
+            &var_type!((int, int | float, any)->int)
         ));
         assert!(!Map::can_be_used(
-            &(int_array.clone() | float_array.clone()),
-            &parse_type!("(any, float)->int")
+            &var_type!([int] | [float]),
+            &var_type!((any, float)->int)
         ));
         assert!(!Map::can_be_used(
-            &int_array,
-            &parse_type!("(int)->int | int")
+            &var_type!([int]),
+            &var_type!((int)->int | int)
         ));
         assert!(!Map::can_be_used(
-            &(int_array.clone() | Type::Float),
-            &parse_type!("(int, any)->int | (any)->any")
+            &var_type!([int] | float),
+            &var_type!((int, any)->int | (any)->any)
         ));
         assert!(!Map::can_be_used(
-            &(int_array.clone() | Type::from((int_array.clone(), float_array.clone()))),
-            &parse_type!("(any, any)->float | (int | float)->int")
+            &var_type!([int] | ([int], [float])),
+            &var_type!((any, any)->float | (int | float)->int)
         ));
     }
 }

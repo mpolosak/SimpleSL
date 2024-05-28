@@ -1,11 +1,13 @@
+use crate as simplesl;
 use crate::instruction::local_variable::LocalVariables;
 use crate::instruction::{array_repeat::ArrayRepeat, Instruction, InstructionWithStr, Multiply};
 use crate::instruction::{Exec, ExecResult, Pow, Recreate};
 use crate::{
-    variable::{Array, ReturnType, Type, Typed, Variable},
+    variable::{Array, ReturnType, Type, Variable},
     Error,
 };
 use crate::{ExecError, Interpreter};
+use simplesl_macros::var_type;
 use std::sync::Arc;
 
 #[derive(Debug)]
@@ -16,11 +18,13 @@ pub struct Product {
 impl Product {
     pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
         match &array.instruction {
-            Instruction::Variable(Variable::Array(array)) if array.element_type() == &Type::Int => {
+            Instruction::Variable(Variable::Array(array))
+                if array.element_type() == &var_type!(int) =>
+            {
                 Ok(Self::calc_int(&array).into())
             }
             Instruction::Variable(Variable::Array(array))
-                if array.as_type() == [Type::Float].into() =>
+                if array.element_type() == &var_type!(float) =>
             {
                 Ok(Self::calc_float(&array).into())
             }
@@ -28,17 +32,13 @@ impl Product {
                 if array_repeat
                     .value
                     .return_type()
-                    .matches(&(Type::Int | Type::Float)) =>
+                    .matches(&var_type!(int | float)) =>
             {
                 let ArrayRepeat { value, len } = Arc::unwrap_or_clone(array_repeat.clone());
                 Pow::create_from_instructions(value.instruction, len.instruction)
                     .map_err(Error::from)
             }
-            Instruction::Array(array)
-                if array.element_type == Type::Int
-                    || array.element_type == Type::Float
-                    || array.element_type == Type::String =>
-            {
+            Instruction::Array(array) if array.element_type.matches(&var_type!(int | float)) => {
                 Ok(array
                     .instructions
                     .iter()
@@ -50,14 +50,14 @@ impl Product {
             instruction
                 if instruction
                     .return_type()
-                    .matches(&([Type::Int] | [Type::Float].into())) =>
+                    .matches(&([var_type!(int)] | var_type!([float]))) =>
             {
                 Ok(Self { array }.into())
             }
             ins => Err(Error::IncorectPostfixOperatorOperand {
                 ins: array.str,
                 op: "$*",
-                expected: [Type::Int] | [Type::Float].into(),
+                expected: var_type!([float] | [int]),
                 given: ins.return_type(),
             }),
         }
@@ -65,8 +65,8 @@ impl Product {
 
     fn calc(array: &Array) -> Variable {
         match array.element_type() {
-            Type::Int => Self::calc_int(&array),
-            Type::Float => Self::calc_float(&array),
+            var_type!(int) => Self::calc_int(&array),
+            var_type!(float) => Self::calc_float(&array),
             element_type => unreachable!("Tried to calculate product of [{element_type}]"),
         }
     }

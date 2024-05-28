@@ -1,10 +1,13 @@
+use simplesl_macros::var_type;
+
+use crate as simplesl;
 use crate::instruction::local_variable::LocalVariables;
 use crate::instruction::{
     array_repeat::ArrayRepeat, Add, Instruction, InstructionWithStr, Multiply,
 };
 use crate::instruction::{Exec, ExecResult, Recreate};
 use crate::{
-    variable::{Array, ReturnType, Type, Typed, Variable},
+    variable::{Array, ReturnType, Type, Variable},
     Error,
 };
 use crate::{ExecError, Interpreter};
@@ -18,16 +21,18 @@ pub struct Sum {
 impl Sum {
     pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
         match &array.instruction {
-            Instruction::Variable(Variable::Array(array)) if array.element_type() == &Type::Int => {
+            Instruction::Variable(Variable::Array(array))
+                if array.element_type() == &var_type!(int) =>
+            {
                 Ok(Self::calc_int(array).into())
             }
             Instruction::Variable(Variable::Array(array))
-                if array.as_type() == [Type::Float].into() =>
+                if array.element_type() == &var_type!(float) =>
             {
                 Ok(Self::calc_float(array).into())
             }
             Instruction::Variable(Variable::Array(array))
-                if array.as_type() == [Type::String].into() =>
+                if array.element_type() == &var_type!(string) =>
             {
                 Ok(Self::calc_string(array).into())
             }
@@ -35,7 +40,7 @@ impl Sum {
                 if array_repeat
                     .value
                     .return_type()
-                    .matches(&(Type::Int | Type::Float)) =>
+                    .matches(&var_type!(int | float)) =>
             {
                 let ArrayRepeat { value, len } = Arc::unwrap_or_clone(array_repeat.clone());
                 Ok(Multiply::create_from_instructions(
@@ -44,9 +49,7 @@ impl Sum {
                 ))
             }
             Instruction::Array(array)
-                if array.element_type == Type::Int
-                    || array.element_type == Type::Float
-                    || array.element_type == Type::String =>
+                if array.element_type.matches(&var_type!(int | float | string)) =>
             {
                 Ok(array
                     .instructions
@@ -59,14 +62,14 @@ impl Sum {
             instruction
                 if instruction
                     .return_type()
-                    .matches(&([Type::Int] | [Type::Float].into() | [Type::String])) =>
+                    .matches(&var_type!([int] | [float] | [string])) =>
             {
                 Ok(Self { array }.into())
             }
             ins => Err(Error::IncorectPostfixOperatorOperand {
                 ins: array.str,
                 op: "$+",
-                expected: [Type::Int] | [Type::Float].into() | [Type::String],
+                expected: var_type!([int] | [float] | [string]),
                 given: ins.return_type(),
             }),
         }
@@ -74,9 +77,9 @@ impl Sum {
 
     fn calc(array: &Array) -> Variable {
         match array.element_type() {
-            Type::Int => Self::calc_int(&array),
-            Type::Float => Self::calc_float(&array),
-            Type::String => Self::calc_string(&array),
+            var_type!(int) => Self::calc_int(&array),
+            var_type!(float) => Self::calc_float(&array),
+            var_type!(string) => Self::calc_string(&array),
             element_type => unreachable!("Tried to sum [{element_type}]"),
         }
     }

@@ -1,12 +1,13 @@
 use super::InstructionWithStr;
-use crate::variable::{Array, Type, Variable};
+use crate as simplesl;
+use crate::variable::{Array, ReturnType, Type, Variable};
 use crate::{instruction::Instruction, Error};
 use duplicate::duplicate_item;
 use lazy_static::lazy_static;
 use match_any::match_any;
 use pest::iterators::Pair;
+use simplesl_macros::var_type;
 use simplesl_parser::{unexpected, Rule};
-use std::str::FromStr;
 use std::sync::Arc;
 
 #[duplicate_item(T; [Not]; [BitwiseNot]; [UnaryMinus])]
@@ -32,7 +33,6 @@ impl InstructionWithStr {
 #[duplicate_item(T symbol; [UnaryMinus] [-]; [Not] [!]; [BitwiseNot] [~])]
 impl T {
     pub fn create_instruction(instruction: Instruction) -> Result<Instruction, Error> {
-        use crate::variable::ReturnType;
         let return_type = instruction.return_type();
         if !Self::can_be_used(&return_type) {
             return Err(Error::CannotDo(stringify!(symbol), return_type));
@@ -53,11 +53,11 @@ impl T {
 }
 
 lazy_static! {
-    pub static ref ACCEPTED_INT: Type = Type::from_str("int|[int]").unwrap();
+    pub static ref ACCEPTED_INT: Type = var_type!(int | [int]);
 }
 
 lazy_static! {
-    pub static ref ACCEPTED_NUM: Type = Type::from_str("int|float|[int|float]").unwrap();
+    pub static ref ACCEPTED_NUM: Type = var_type!(int | float | [int | float]);
 }
 
 impl UnaryMinus {
