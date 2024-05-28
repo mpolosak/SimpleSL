@@ -5,7 +5,7 @@ use simplesl_macros::export_function;
 /// Add type convertion part of standard library to Interpreter
 pub fn add_convert(interpreter: &mut Interpreter) {
     #[export_function]
-    fn to_float(#[var_type("int|float")] value: &Variable) -> f64 {
+    fn to_float(#[var_type(int|float)] value: &Variable) -> f64 {
         match value {
             Variable::Int(value) => *value as f64,
             Variable::Float(value) => *value,
@@ -14,7 +14,7 @@ pub fn add_convert(interpreter: &mut Interpreter) {
     }
 
     #[export_function]
-    fn to_int(#[var_type("int|float")] value: &Variable) -> i64 {
+    fn to_int(#[var_type(int|float)] value: &Variable) -> i64 {
         match value {
             Variable::Int(value) => *value,
             Variable::Float(value) => *value as i64,

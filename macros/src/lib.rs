@@ -3,16 +3,14 @@ mod attributes;
 mod utils;
 mod var_type;
 use attributes::Attributes;
-use pest::Parser;
 use proc_macro::TokenStream;
 use quote::quote;
-use simplesl_parser::{Rule, SimpleSLParser};
 use syn::{parse_macro_input, ItemFn};
 use utils::{
     args_from_function_params, args_import_from_function_params, function_params_from_itemfn,
     get_body, get_return_type, params_from_function_params,
 };
-use var_type::type_token_from_pair;
+use var_type::type_quote;
 
 #[proc_macro_attribute]
 pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream {
@@ -48,10 +46,5 @@ pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream 
 
 #[proc_macro]
 pub fn var_type(item: TokenStream) -> TokenStream {
-    let item_str = item.to_string();
-    let pair = SimpleSLParser::parse(Rule::r#type, &item_str)
-        .unwrap_or_else(|error| panic!("{error}"))
-        .next()
-        .unwrap();
-    type_token_from_pair(pair).into()
+    type_quote(item).into()
 }
