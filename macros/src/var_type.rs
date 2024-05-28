@@ -16,7 +16,7 @@ pub fn type_token_from_pair(pair: Pair<Rule>) -> quote::__private::TokenStream {
             .unwrap(),
         Rule::array_type => {
             let element_type = pair.into_inner().next().map(type_token_from_pair).unwrap();
-            quote!(simplesl::variable::Type::Array(#element_type.into()))
+            quote!(simplesl::variable::Type::Array((#element_type).into()))
         }
         Rule::tuple_type => {
             let elements = pair
