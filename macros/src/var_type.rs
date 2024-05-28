@@ -12,7 +12,7 @@ pub fn type_token_from_pair(pair: Pair<Rule>) -> quote::__private::TokenStream {
         Rule::multi => pair
             .into_inner()
             .map(|pair| type_token_from_pair(pair))
-            .reduce(|acc, curr| quote!(#curr | # acc))
+            .reduce(|acc, curr| quote!(#acc | # curr))
             .unwrap(),
         Rule::array_type => {
             let element_type = pair.into_inner().next().map(type_token_from_pair).unwrap();
@@ -22,7 +22,7 @@ pub fn type_token_from_pair(pair: Pair<Rule>) -> quote::__private::TokenStream {
             let elements = pair
                 .into_inner()
                 .map(type_token_from_pair)
-                .reduce(|acc, curr| quote!(#curr, # acc));
+                .reduce(|acc, curr| quote!(#acc, # curr));
             quote!(simplesl::variable::Type::Tuple([#elements].into()))
         }
         Rule::function_type => {
@@ -32,7 +32,7 @@ pub fn type_token_from_pair(pair: Pair<Rule>) -> quote::__private::TokenStream {
                 .unwrap()
                 .into_inner()
                 .map(type_token_from_pair)
-                .reduce(|acc, curr| quote!(#curr, # acc));
+                .reduce(|acc, curr| quote!(#acc, # curr));
             let return_type = pairs.next().map(type_token_from_pair).unwrap();
             quote!(simplesl::variable::Type::Function(
                 simplesl::variable::FunctionType {
