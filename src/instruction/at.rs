@@ -117,39 +117,25 @@ fn at(variable: Variable, index: Variable) -> Result<Variable, ExecError> {
 
 #[cfg(test)]
 mod tests {
+    use crate as simplesl;
     use crate::{instruction::at::at, variable::Variable, ExecError};
-    use std::str::FromStr;
+    use simplesl_macros::var;
 
     #[test]
     fn check_at() {
-        let array = Variable::from_str("[4, 5.5, \"var\"]").unwrap();
-        assert_eq!(at(array.clone(), Variable::Int(0)), Ok(Variable::Int(4)));
-        assert_eq!(
-            at(array.clone(), Variable::Int(1)),
-            Ok(Variable::Float(5.5))
-        );
-        assert_eq!(
-            at(array.clone(), Variable::Int(2)),
-            Ok(Variable::String("var".into()))
-        );
+        let array = var!([4, 5.5, "var"]);
+        assert_eq!(at(array.clone(), var!(0)), Ok(var!(4)));
+        assert_eq!(at(array.clone(), var!(1)), Ok(var!(5.5)));
+        assert_eq!(at(array.clone(), var!(2)), Ok(var!("var")));
         assert_eq!(
             at(array.clone(), Variable::Int(-1)),
             Err(ExecError::NegativeIndex)
         );
-        assert_eq!(at(array, Variable::Int(3)), Err(ExecError::IndexToBig));
-        let string = Variable::String("tex".into());
-        assert_eq!(
-            at(string.clone(), Variable::Int(0)),
-            Ok(Variable::String("t".into()))
-        );
-        assert_eq!(
-            at(string.clone(), Variable::Int(2)),
-            Ok(Variable::String("x".into()))
-        );
-        assert_eq!(
-            at(string.clone(), Variable::Int(3)),
-            Err(ExecError::IndexToBig)
-        );
+        assert_eq!(at(array, var!(3)), Err(ExecError::IndexToBig));
+        let string = var!("tex");
+        assert_eq!(at(string.clone(), var!(0)), Ok(var!("t")));
+        assert_eq!(at(string.clone(), var!(2)), Ok(var!("x")));
+        assert_eq!(at(string.clone(), var!(3)), Err(ExecError::IndexToBig));
         assert_eq!(at(string, Variable::Int(-1)), Err(ExecError::NegativeIndex))
     }
 }

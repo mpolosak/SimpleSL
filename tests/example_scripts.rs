@@ -1,8 +1,5 @@
-use simplesl::{
-    variable::{Typed, Variable},
-    Code, Error, Interpreter,
-};
-use simplesl_macros::var_type;
+use simplesl::{variable::Typed, Code, Error, Interpreter};
+use simplesl_macros::{var, var_type};
 use std::fs;
 
 #[test]
@@ -10,7 +7,7 @@ fn test_example1() -> Result<(), Error> {
     let interpreter = Interpreter::with_stdlib();
     let example1 = fs::read_to_string("example_scripts/example1")?;
     let result = Code::parse(&interpreter, &example1)?.exec()?;
-    assert_eq!(result, Variable::Void);
+    assert_eq!(result, var!(()));
     Ok(())
 }
 
@@ -22,23 +19,20 @@ fn test_fib() -> Result<(), Error> {
     assert_eq!(result.as_type(), var_type!((int)->[int]));
     let array_fib = result.into_function().unwrap();
     assert_eq!(
-        array_fib.create_call([Variable::Int(3)].into())?.exec()?,
-        [Variable::Int(0), Variable::Int(1), Variable::Int(1)].into()
+        array_fib.create_call([var!(3)].into())?.exec()?,
+        var!([0, 1, 1])
     );
 
     let int = interpreter.get_variable("int").unwrap();
     assert_eq!(int.as_type(), var_type!((any, int)->int));
     let int = int.clone().into_function().unwrap();
     assert_eq!(
-        int.clone()
-            .create_call([Variable::Int(3), Variable::Int(0)].into())?
-            .exec()?,
-        Variable::Int(3)
+        int.clone().create_call([var!(3), var!(0)].into())?.exec()?,
+        var!(3)
     );
     assert_eq!(
-        int.create_call([Variable::Float(3.0), Variable::Int(0)].into())?
-            .exec()?,
-        Variable::Int(0)
+        int.create_call([var!(3.0), var!(0)].into())?.exec()?,
+        var!(0)
     );
 
     let custom_fib = interpreter.get_variable("custom_fib").unwrap();
@@ -47,10 +41,7 @@ fn test_fib() -> Result<(), Error> {
     let fib = interpreter.get_variable("fib").unwrap();
     assert_eq!(fib.as_type(), var_type!((int)->int));
     let fib = fib.clone().into_function().unwrap();
-    assert_eq!(
-        fib.create_call([Variable::Int(8)].into())?.exec()?,
-        Variable::Int(21)
-    );
+    assert_eq!(fib.create_call([var!(8)].into())?.exec()?, var!(21));
 
     let custom_array_fib = interpreter.get_variable("custom_array_fib").unwrap();
     assert_eq!(custom_array_fib.as_type(), var_type!(([int], int)->[int]));
@@ -69,20 +60,16 @@ fn test_fizzbuzz() -> Result<(), Error> {
     assert_eq!(fizzbuzz.as_type(), var_type!((int)->(int|string)));
     let fizzbuzz = fizzbuzz.clone().into_function().unwrap();
     assert_eq!(
-        fizzbuzz
-            .clone()
-            .create_call([Variable::Int(3)].into())?
-            .exec()?,
-        Variable::String("Fizz".into())
+        fizzbuzz.clone().create_call([var!(3)].into())?.exec()?,
+        var!("Fizz")
     );
 
     let iota = interpreter.get_variable("iota").unwrap();
     assert_eq!(iota.as_type(), var_type!((int,int)->[int]));
     let iota = iota.clone().into_function().unwrap();
     assert_eq!(
-        iota.create_call([Variable::Int(3), Variable::Int(3)].into())?
-            .exec()?,
-        [Variable::Int(3), Variable::Int(4), Variable::Int(5)].into()
+        iota.create_call([var!(3), var!(3)].into())?.exec()?,
+        var!([3, 4, 5])
     );
     Ok(())
 }
@@ -100,9 +87,8 @@ fn test_quick_sort() -> Result<(), Error> {
         .into_function()
         .unwrap();
     assert_eq!(
-        sort.create_call([[Variable::Int(9), Variable::Int(3), Variable::Int(6)].into()].into())?
-            .exec()?,
-        [Variable::Int(3), Variable::Int(6), Variable::Int(9)].into()
+        sort.create_call([var!([9, 3, 6])].into())?.exec()?,
+        var!([3, 6, 9])
     );
     Ok(())
 }
@@ -121,16 +107,9 @@ fn test_replace() -> Result<(), Error> {
         .unwrap();
     assert_eq!(
         replace
-            .create_call(
-                [
-                    [Variable::Int(9), Variable::Int(3), Variable::Int(6)].into(),
-                    Variable::Int(0),
-                    Variable::Int(2)
-                ]
-                .into()
-            )?
+            .create_call([var!([9, 3, 6]), var!(0), var!(2)].into())?
             .exec()?,
-        Variable::from([Variable::Int(6), Variable::Int(3), Variable::Int(9)])
+        var!([6, 3, 9])
     );
     Ok(())
 }
