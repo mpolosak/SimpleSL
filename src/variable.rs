@@ -143,6 +143,18 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
                 }
                 .into())
             }
+            Rule::array_repeat => {
+                let mut inner = pair.into_inner();
+                let value = Variable::try_from(inner.next().unwrap().into_inner().next().unwrap())?;
+                let len_pair = inner.next().unwrap().into_inner().next().unwrap();
+                let len_str = len_pair.as_str();
+                let len = Variable::try_from(len_pair)?;
+                match len {
+                    Variable::Int(len) if len < 0 => Err(Error::NegativeLength),
+                    Variable::Int(len) => Ok(Array::new_repeat(value, len as usize).into()),
+                    _ => Err(Error::WrongLengthType(len_str.into())),
+                }
+            }
             Rule::void => Ok(Variable::Void),
             _ => Err(Error::CannotBeParsed(pair.as_str().into())),
         }
@@ -280,7 +292,10 @@ pub fn is_correct_variable_name(name: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use crate::variable::Variable;
+    use crate::{
+        variable::{Array, Variable},
+        Error,
+    };
 
     #[test]
     fn test_send() {
@@ -334,5 +349,14 @@ mod tests {
             Ok(Variable::String("print \"".into()))
         );
         assert!(Variable::from_str(r#""print" """#).is_err());
+        assert_eq!(
+            Variable::from_str("[14; 5]"),
+            Ok(Array::new_repeat(Variable::Int(14), 5).into())
+        );
+        // assert_eq!(Variable::from_str("[14; -5]"), Err(Error::NegativeLength));
+        assert_eq!(
+            Variable::from_str("[14; 5.5]"),
+            Err(Error::WrongLengthType("5.5".into()))
+        )
     }
 }
