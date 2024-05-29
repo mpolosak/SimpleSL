@@ -30,6 +30,13 @@ impl Array {
         .into()
     }
 
+    pub fn new_with_type(element_type: Type, elements: Arc<[Variable]>) -> Array {
+        Self {
+            element_type,
+            elements,
+        }
+    }
+
     pub fn new_repeat(value: Variable, len: usize) -> Self {
         let element_type = value.as_type();
         let elements = std::iter::repeat(value).take(len).collect();

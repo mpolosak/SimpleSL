@@ -3,6 +3,7 @@
 pest = "2.0"
 lazy_static = "1.4.0"
 simplesl_parser = { path="parser", version="0.1.0" }
+unescaper = "0.1.0"
 
 [package]
 name = "simplesl"
@@ -18,7 +19,6 @@ description = "Simple Scripting Language"
 
 [dependencies]
 rustyline = "14.0.0"
-unescaper = "0.1.0"
 typle = "0.10.2"
 simplesl_macros = { path="macros", version="0.1.0" }
 match_any = "1.0.1"
@@ -27,6 +27,7 @@ enum-as-inner = "0.6.0"
 pest.workspace = true
 lazy_static.workspace = true
 simplesl_parser.workspace = true
+unescaper.workspace = true
 
 [dev-dependencies]
 itertools="0.13.0"

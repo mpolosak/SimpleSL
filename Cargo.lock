@@ -449,6 +449,7 @@ dependencies = [
  "quote",
  "simplesl_parser",
  "syn 2.0.48",
+ "unescaper",
 ]
 
 [[package]]

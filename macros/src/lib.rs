@@ -1,6 +1,7 @@
 #![warn(clippy::pedantic)]
 mod attributes;
 mod utils;
+mod var;
 mod var_type;
 use attributes::Attributes;
 use proc_macro::TokenStream;
@@ -10,6 +11,7 @@ use utils::{
     args_from_function_params, args_import_from_function_params, function_params_from_itemfn,
     get_body, get_return_type, params_from_function_params,
 };
+use var::var_quote;
 use var_type::type_quote;
 
 #[proc_macro_attribute]
@@ -47,4 +49,9 @@ pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream 
 #[proc_macro]
 pub fn var_type(item: TokenStream) -> TokenStream {
     type_quote(item).into()
+}
+
+#[proc_macro]
+pub fn var(item: TokenStream) -> TokenStream {
+    var_quote(item).into()
 }
