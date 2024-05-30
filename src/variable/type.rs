@@ -279,6 +279,7 @@ impl From<Pair<'_, Rule>> for Type {
                 .reduce(Type::concat)
                 .unwrap(),
             Rule::any => Self::Any,
+            Rule::never => Self::Never,
             rule => panic!("Type cannot be built from rule: {rule:?}"),
         }
     }
@@ -402,6 +403,7 @@ mod tests {
         );
         assert_eq!(Type::from_str("any | float"), Ok(Type::Any));
         assert_eq!(Type::from_str("[any | float]"), Ok([Type::Any].into()));
+        assert_eq!(Type::from_str("!"), Ok(Type::Never))
     }
 
     #[test]

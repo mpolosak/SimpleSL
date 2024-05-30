@@ -23,6 +23,7 @@ fn type_token_from_pair(pair: Pair<Rule>) -> quote::__private::TokenStream {
         Rule::string_type => quote!(simplesl::variable::Type::String),
         Rule::void => quote!(simplesl::variable::Type::Void),
         Rule::any => quote!(simplesl::variable::Type::Any),
+        Rule::never => quote!(simplesl::variable::Type::Never),
         Rule::multi => pair
             .into_inner()
             .map(|pair| type_token_from_pair(pair))

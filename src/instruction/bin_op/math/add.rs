@@ -1,3 +1,6 @@
+use simplesl_macros::var_type;
+
+use crate as simplesl;
 use crate::instruction::{Add, Instruction};
 use crate::variable::Array;
 use crate::variable::{ReturnType, Type, Variable};
@@ -52,13 +55,13 @@ impl Add {
 
     fn return_type(lhs: Type, rhs: Type) -> Type {
         let Some(lhs_element) = lhs.element_type() else {
-            if Type::Array(Type::Never.into()).matches(&lhs) {
+            if var_type!([!]).matches(&lhs) {
                 return lhs;
             }
             return rhs;
         };
         let Some(rhs_element) = rhs.element_type() else {
-            if Type::Array(Type::Never.into()).matches(&rhs) {
+            if var_type!([!]).matches(&rhs) {
                 return rhs;
             }
             return lhs;
@@ -77,10 +80,9 @@ impl ReturnType for Add {
 
 #[cfg(test)]
 mod tests {
-    use simplesl_macros::var_type;
-
     use crate as simplesl;
     use crate::{instruction::bin_op::Add, variable::Variable, Code, Error, Interpreter};
+    use simplesl_macros::var_type;
 
     #[test]
     fn test_add_operator() {
