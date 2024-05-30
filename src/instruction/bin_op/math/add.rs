@@ -55,13 +55,13 @@ impl Add {
 
     fn return_type(lhs: Type, rhs: Type) -> Type {
         let Some(lhs_element) = lhs.element_type() else {
-            if var_type!([!]).matches(&lhs) {
+            if var_type!([]).matches(&lhs) {
                 return lhs;
             }
             return rhs;
         };
         let Some(rhs_element) = rhs.element_type() else {
-            if var_type!([!]).matches(&rhs) {
+            if var_type!([]).matches(&rhs) {
                 return rhs;
             }
             return lhs;

@@ -133,10 +133,11 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
                     .map(|pair| pair.into_inner().next().unwrap())
                     .map(Self::try_from)
                     .collect::<Result<Arc<[Variable]>, Error>>()?;
-                let Some(element_type) = elements.iter().map(Typed::as_type).reduce(Type::concat)
-                else {
-                    panic!("Tried to use [] to create empty array")
-                };
+                let element_type = elements
+                    .iter()
+                    .map(Typed::as_type)
+                    .reduce(Type::concat)
+                    .unwrap_or(Type::Never);
                 Ok(Array {
                     element_type,
                     elements,

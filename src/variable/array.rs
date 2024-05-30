@@ -78,7 +78,7 @@ impl<T: Into<Arc<[Variable]>>> From<T> for Array {
             .iter()
             .map(Variable::as_type)
             .reduce(Type::concat)
-            .unwrap();
+            .unwrap_or(Type::Never);
         Array {
             element_type,
             elements,

@@ -235,6 +235,7 @@ impl Display for Type {
             Self::Float => write!(f, "float"),
             Self::String => write!(f, "string"),
             Self::Function(function_type) => write!(f, "{function_type}"),
+            Self::Array(var_type) if var_type.matches(&Type::Never) => write!(f, "[]"),
             Self::Array(var_type) => write!(f, "[{var_type}]"),
             Self::Tuple(types) => write!(f, "({})", join(types.as_ref(), ", ")),
             Self::Void => write!(f, "()"),
@@ -266,8 +267,12 @@ impl From<Pair<'_, Rule>> for Type {
             Rule::void => Self::Void,
             Rule::function_type => FunctionType::from(pair).into(),
             Rule::array_type => {
-                let pair = pair.into_inner().next().unwrap();
-                Self::Array(Self::from(pair).into())
+                let element_type = pair
+                    .into_inner()
+                    .next()
+                    .map(Type::from)
+                    .unwrap_or(Type::Never);
+                Self::Array(element_type.into())
             }
             Rule::tuple_type => {
                 let types = pair.into_inner().map(Type::from).collect();

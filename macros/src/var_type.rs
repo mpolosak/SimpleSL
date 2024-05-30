@@ -30,7 +30,11 @@ fn type_token_from_pair(pair: Pair<Rule>) -> quote::__private::TokenStream {
             .reduce(|acc, curr| quote!(#acc | # curr))
             .unwrap(),
         Rule::array_type => {
-            let element_type = pair.into_inner().next().map(type_token_from_pair).unwrap();
+            let element_type = pair
+                .into_inner()
+                .next()
+                .map(type_token_from_pair)
+                .unwrap_or_else(|| quote!(simplesl::variable::Type::Never));
             quote!(simplesl::variable::Type::Array((#element_type).into()))
         }
         Rule::tuple_type => {

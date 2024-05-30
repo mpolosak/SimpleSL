@@ -62,7 +62,7 @@ pub fn return_type_int(lhs: Type, rhs: Type) -> Type {
     if lhs.matches(&var_type!([any])) || rhs.matches(&var_type!([any])) {
         return var_type!([int]);
     }
-    if var_type!([!]).matches(&lhs) || var_type!([!]).matches(&rhs) {
+    if var_type!([]).matches(&lhs) || var_type!([]).matches(&rhs) {
         return var_type!([int] | int);
     }
     var_type!(int)
