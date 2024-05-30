@@ -11,7 +11,6 @@ use std::{
     str::FromStr,
     sync::Arc,
 };
-use typle::typle;
 #[derive(Clone, Debug, Hash, Eq, PartialEq)]
 pub enum Type {
     Int,
@@ -328,13 +327,6 @@ impl From<[Type; 1]> for Type {
     }
 }
 
-#[typle(Tuple for 2..=12)]
-impl<T: Tuple<Type>> From<T> for Type {
-    fn from(value: T) -> Self {
-        let types: [Type; Tuple::LEN] = value.into();
-        Type::Tuple(types.into())
-    }
-}
 pub trait Typed {
     /// Returns the Type of the &self
     fn as_type(&self) -> Type;
@@ -392,11 +384,11 @@ mod tests {
         );
         assert_eq!(
             Type::from_str("(int, string)"),
-            Ok((Type::Int, Type::String).into())
+            Ok(Type::Tuple([Type::Int, Type::String].into()))
         );
         assert_eq!(
             Type::from_str("(int, string) | float"),
-            Ok(Type::from((Type::Int, Type::String)) | Type::Float)
+            Ok(Type::Tuple([Type::Int, Type::String].into()) | Type::Float)
         );
         assert_eq!(Type::from_str("(int)"), Err(ParseTypeError));
         assert_eq!(
@@ -581,7 +573,7 @@ mod tests {
         );
         assert_eq!(
             var_type!((int)->int | (int|float)->() | (string) -> any).params(),
-            Some([var_type!(int)].into())
+            Some([var_type!(!)].into())
         );
         assert_eq!(
             var_type!((int, float)->int | (int|float, float | string)->()).params(),
