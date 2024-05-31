@@ -118,7 +118,7 @@ fn at(variable: Variable, index: Variable) -> Result<Variable, ExecError> {
 #[cfg(test)]
 mod tests {
     use crate as simplesl;
-    use crate::{instruction::at::at, variable::Variable, ExecError};
+    use crate::{instruction::at::at, ExecError};
     use simplesl_macros::var;
 
     #[test]
@@ -127,15 +127,12 @@ mod tests {
         assert_eq!(at(array.clone(), var!(0)), Ok(var!(4)));
         assert_eq!(at(array.clone(), var!(1)), Ok(var!(5.5)));
         assert_eq!(at(array.clone(), var!(2)), Ok(var!("var")));
-        assert_eq!(
-            at(array.clone(), Variable::Int(-1)),
-            Err(ExecError::NegativeIndex)
-        );
+        assert_eq!(at(array.clone(), var!(-1)), Err(ExecError::NegativeIndex));
         assert_eq!(at(array, var!(3)), Err(ExecError::IndexToBig));
         let string = var!("tex");
         assert_eq!(at(string.clone(), var!(0)), Ok(var!("t")));
         assert_eq!(at(string.clone(), var!(2)), Ok(var!("x")));
         assert_eq!(at(string.clone(), var!(3)), Err(ExecError::IndexToBig));
-        assert_eq!(at(string, Variable::Int(-1)), Err(ExecError::NegativeIndex))
+        assert_eq!(at(string, var!(-1)), Err(ExecError::NegativeIndex))
     }
 }
