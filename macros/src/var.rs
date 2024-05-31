@@ -99,7 +99,7 @@ fn var_token_from_pair(pair: Pair<Rule>) -> quote::__private::TokenStream {
             quote!(simplesl::variable::Variable::from(#ident))
         }
         Rule::minus_ident => {
-            let ident = format_ident!("{}", pair.as_str());
+            let ident = format_ident!("{}", pair.into_inner().next().unwrap().as_str());
             quote!(simplesl::variable::Variable::from(-#ident))
         }
         rule => unexpected!(rule),

@@ -6,7 +6,7 @@ use duplicate::duplicate_item;
 use lazy_static::lazy_static;
 use match_any::match_any;
 use pest::iterators::Pair;
-use simplesl_macros::var_type;
+use simplesl_macros::{var, var_type};
 use simplesl_parser::{unexpected, Rule};
 use std::sync::Arc;
 
@@ -63,8 +63,8 @@ lazy_static! {
 impl UnaryMinus {
     pub fn calc(variable: Variable) -> Variable {
         match variable {
-            Variable::Int(num) => (-num).into(),
-            Variable::Float(num) => (-num).into(),
+            Variable::Int(num) => var!(-num),
+            Variable::Float(num) => var!(-num),
             Variable::Array(array) => {
                 let elements = array.iter().cloned().map(Self::calc).collect();
                 let element_type = array.element_type().clone();

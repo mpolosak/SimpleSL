@@ -130,7 +130,7 @@ only_var = _{var_from_str ~ &EOI}
 var_macro = _{var_ident ~ &EOI}
   var_ident = _{minus_float | float | minus_int |  int | array_ident | array_ident_repeat
     | string | void | tuple_ident | minus_ident | ident}
-  minus_ident = {"-" ~ float}
+  minus_ident = {"-" ~ ident}
   array_ident = {"[" ~ var_ident_list? ~ "]"}
   array_ident_repeat =  {"[" ~ var_ident ~ ";" ~ (int | ident) ~ "]"}
   tuple_ident =  {"(" ~ var_ident ~ "," ~ var_ident_list ~ ")"}
