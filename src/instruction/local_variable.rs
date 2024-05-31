@@ -1,11 +1,13 @@
 use super::{function::AnonymousFunction, Instruction, InstructionWithStr};
+use crate as simplesl;
 use crate::{
     function::{Param, Params},
-    variable::{FunctionType, ReturnType, Type, Typed, Variable},
+    variable::{ReturnType, Type, Typed, Variable},
     Error, Interpreter,
 };
 use match_any::match_any;
 use pest::{iterators::Pairs, Parser};
+use simplesl_macros::var_type;
 use simplesl_parser::{Rule, SimpleSLParser};
 use std::{collections::HashMap, fs, sync::Arc};
 
@@ -162,14 +164,14 @@ impl From<&AnonymousFunction> for LocalVariable {
 impl Typed for LocalVariable {
     fn as_type(&self) -> Type {
         match self {
-            LocalVariable::Function(params, return_type) => FunctionType {
-                return_type: return_type.clone(),
-                params: params
+            LocalVariable::Function(params, return_type) => {
+                let params: Arc<[Type]> = params
                     .iter()
                     .map(|Param { var_type, name: _ }| var_type.clone())
-                    .collect(),
+                    .collect();
+                let return_type = return_type.clone();
+                var_type!(params -> return_type)
             }
-            .into(),
             LocalVariable::Variable(variable) => variable.as_type(),
             LocalVariable::Other(var_type) => var_type.clone(),
         }

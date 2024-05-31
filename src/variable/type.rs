@@ -1,7 +1,9 @@
 use super::{function_type::FunctionType, multi_type::MultiType};
+use crate as simplesl;
 use crate::{errors::ParseTypeError, join};
 use match_any::match_any;
 use pest::{iterators::Pair, Parser};
+use simplesl_macros::var_type;
 use simplesl_parser::{Rule, SimpleSLParser};
 use std::{
     fmt::Display,
@@ -11,6 +13,7 @@ use std::{
     str::FromStr,
     sync::Arc,
 };
+
 #[derive(Clone, Debug, Hash, Eq, PartialEq)]
 pub enum Type {
     Int,
@@ -93,11 +96,7 @@ impl Type {
                 let params = zip(fn1.params.iter().cloned(), fn2.params.iter().cloned())
                     .map(|(type1, type2)| type1.concat(type2))
                     .collect();
-                FunctionType {
-                    params,
-                    return_type,
-                }
-                .into()
+                var_type!(params -> return_type)
             }
             _ => Type::Never,
         }

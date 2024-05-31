@@ -46,16 +46,11 @@ fn type_token_from_pair(pair: Pair<Rule>) -> quote::__private::TokenStream {
         }
         Rule::function_type_ident => {
             let mut pairs = pair.into_inner();
-            let params = pairs
-                .next()
-                .unwrap()
-                .into_inner()
-                .map(type_token_from_pair)
-                .reduce(|acc, curr| quote!(#acc, # curr));
+            let params = type_token_from_pair(pairs.next().unwrap());
             let return_type = pairs.next().map(type_token_from_pair).unwrap();
             quote!(simplesl::variable::Type::Function(
                 simplesl::variable::FunctionType {
-                    params: [#params].into(),
+                    params: #params,
                     return_type: #return_type
                 }.into()
             ))
@@ -63,6 +58,13 @@ fn type_token_from_pair(pair: Pair<Rule>) -> quote::__private::TokenStream {
         Rule::ident => {
             let ident = format_ident!("{}", pair.as_str());
             quote!(#ident)
+        }
+        Rule::function_type_params_ident => {
+            let elements = pair
+                .into_inner()
+                .map(type_token_from_pair)
+                .reduce(|acc, curr| quote!(#acc, # curr));
+            quote!([#elements].into())
         }
         rule => unexpected(rule),
     }

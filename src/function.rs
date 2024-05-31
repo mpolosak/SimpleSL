@@ -2,13 +2,15 @@ mod body;
 mod param;
 pub(crate) use self::body::Body;
 pub use self::param::{Param, Params};
+use crate as simplesl;
 use crate::{
     instruction::{ExecStop, FunctionCall, InstructionWithStr},
     interpreter::Interpreter,
     join,
-    variable::{FunctionType, ReturnType, Type, Typed, Variable},
+    variable::{ReturnType, Type, Typed, Variable},
     Code, Error, ExecError,
 };
+use simplesl_macros::var_type;
 use std::{fmt, iter::zip, sync::Arc};
 
 #[derive(Debug)]
@@ -64,17 +66,13 @@ impl Function {
 
 impl Typed for Function {
     fn as_type(&self) -> Type {
-        let params: Arc<[Type]> = self
+        let params = self
             .params
             .iter()
             .map(|Param { name: _, var_type }| var_type.clone())
             .collect();
         let return_type = self.return_type.clone();
-        FunctionType {
-            params,
-            return_type,
-        }
-        .into()
+        var_type!(params -> return_type)
     }
 }
 

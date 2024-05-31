@@ -106,7 +106,7 @@ type = _{ multi | standard_types }
   never = {"!"}
 // type + ident for macro var_type!
 type_ident = _{ multi_ident | standard_types_ident }
-  function_type_ident = {function_type_params_ident ~ "->" ~ return_type_ident}
+  function_type_ident = {(function_type_params_ident | ident) ~ "->" ~ return_type_ident}
     function_type_params_ident = {"(" ~ (type_ident ~ ("," ~ type_ident)*)? ~ ")"}
     return_type_ident = _{ standard_types_ident | "(" ~ multi_ident ~ ")" }
   array_type_ident = { "[" ~ type_ident? ~ "]" }

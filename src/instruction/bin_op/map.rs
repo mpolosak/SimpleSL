@@ -7,7 +7,7 @@ use crate::{
         Exec,
     },
     interpreter::Interpreter,
-    variable::{self, Array, FunctionType, ReturnType, Type, Variable},
+    variable::{self, Array, ReturnType, Type, Variable},
 };
 use simplesl_macros::var_type;
 use std::{iter, sync::Arc};
@@ -37,13 +37,8 @@ impl Map {
         };
         let mut extended_params = vec![Type::Int];
         extended_params.extend(params.iter().cloned());
-        let expected_function = FunctionType {
-            params,
-            return_type: Type::Any,
-        } | FunctionType {
-            params: extended_params.into(),
-            return_type: Type::Any,
-        };
+        let extended_params = extended_params.into();
+        let expected_function = var_type!(params -> any | extended_params -> any);
         rhs.matches(&expected_function)
     }
 
