@@ -1,10 +1,8 @@
 use rustyline::{error::ReadlineError, DefaultEditor};
 use simplesl::{Code, Error, Interpreter};
-use simplesl_macros::var;
 use std::{env, fs, process::ExitCode};
 
 fn main() -> ExitCode {
-    var!([-5.5; 5]);
     let mut args = env::args();
     if args.len() > 2 {
         eprintln!("Too many arguments");

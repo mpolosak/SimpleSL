@@ -63,7 +63,7 @@ fn var_token_from_pair(pair: Pair<Rule>) -> quote::__private::TokenStream {
             let mut inner = pair.into_inner();
             let value_pair = inner.next().unwrap();
             let value = var_token_from_pair(value_pair.clone());
-            let element_type = var_token_from_pair(value_pair);
+            let element_type = var_type_from_var_pair(value_pair);
             let len = parse_int(inner.next().unwrap().into_inner().next().unwrap()) as usize;
             quote!(simplesl::variable::Variable::Array(
                 simplesl::variable::Array::new_with_type(
