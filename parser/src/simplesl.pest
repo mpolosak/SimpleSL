@@ -126,5 +126,14 @@ only_var = _{var_from_str ~ &EOI}
   array_repeat_from_str =  {"[" ~ var_from_str ~ ";" ~ int ~ "]"}
   tuple_from_str =  {"(" ~ var_from_str ~ "," ~ var_list ~ ")"}
   var_list = _{ (var_from_str ~ ("," ~ var_from_str)*)}
+// rule for var! macro
+var_macro = _{var_ident ~ &EOI}
+  var_ident = _{minus_float | float | minus_int |  int | array_ident | array_ident_repeat
+    | string | void | tuple_ident | minus_ident | ident}
+  minus_ident = {"-" ~ float}
+  array_ident = {"[" ~ var_ident_list ~ "]"}
+  array_ident_repeat =  {"[" ~ var_ident ~ ";" ~ (int | ident) ~ "]"}
+  tuple_ident =  {"(" ~ var_ident ~ "," ~ var_ident_list ~ ")"}
+  var_ident_list = _{ (var_ident ~ ("," ~ var_ident)*)}
 COMMENT = _{block_comment|line_comment}
 WHITESPACE = _{ " " | "\t"| NEWLINE }

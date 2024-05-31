@@ -9,7 +9,7 @@ use crate::{
     interpreter::Interpreter,
     variable::{self, Array, ReturnType, Type, Variable},
 };
-use simplesl_macros::var_type;
+use simplesl_macros::{var, var_type};
 use std::{iter, sync::Arc};
 
 impl CanBeUsed for Map {
@@ -59,7 +59,7 @@ impl Map {
         } else {
             (0..len)
                 .map(|i| {
-                    let args: Box<[Variable]> = iter::once(Variable::from(i))
+                    let args: Box<[Variable]> = iter::once(var!(i))
                         .chain(arrays.iter().map(|array| array[i].clone()))
                         .collect();
                     function.exec(&args)

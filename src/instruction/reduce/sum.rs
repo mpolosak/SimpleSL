@@ -1,4 +1,4 @@
-use simplesl_macros::var_type;
+use simplesl_macros::{var, var_type};
 
 use crate as simplesl;
 use crate::instruction::local_variable::LocalVariables;
@@ -22,7 +22,7 @@ impl Sum {
     pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
         match &array.instruction {
             Instruction::Variable(Variable::Array(array))
-                if array.element_type() == &var_type!(int) =>
+                if array.element_type().matches(&var_type!(int)) =>
             {
                 Ok(Self::calc_int(array).into())
             }
@@ -99,7 +99,7 @@ impl Sum {
             .iter()
             .map(|var| var.as_string().unwrap())
             .fold(String::new(), |acc, curr| format!("{acc}{curr}"));
-        Variable::from(sum)
+        var!(sum)
     }
 }
 

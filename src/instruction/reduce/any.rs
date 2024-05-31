@@ -1,4 +1,4 @@
-use simplesl_macros::var_type;
+use simplesl_macros::{var, var_type};
 
 use crate as simplesl;
 use crate::instruction::local_variable::LocalVariables;
@@ -47,7 +47,7 @@ pub struct Any {
 impl Any {
     fn calc(array: &Array) -> Variable {
         let sum = array.iter().any(|var| *var.as_int().unwrap() != 0);
-        Variable::from(sum)
+        var!(sum)
     }
 }
 

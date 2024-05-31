@@ -81,35 +81,26 @@ impl ReturnType for Add {
 mod tests {
     use crate as simplesl;
     use crate::{instruction::bin_op::Add, variable::Variable, Code, Error, Interpreter};
-    use simplesl_macros::var_type;
+    use simplesl_macros::{var, var_type};
 
     #[test]
     fn test_add_operator() {
         assert_eq!(parse_and_exec("4+4"), Ok(Variable::Int(8)));
         assert_eq!(parse_and_exec("4.5+0.5"), Ok(Variable::Float(5.0)));
-        assert_eq!(
-            parse_and_exec(r#""aa" + "B""#),
-            Ok(Variable::String("aaB".into()))
-        );
-        assert_eq!(
-            parse_and_exec("[5, 5, 6] + [5]"),
-            parse_and_exec("[5, 5, 6, 5]")
-        );
-        assert_eq!(
-            parse_and_exec(r#"[4, 5, 6] + 5"#),
-            parse_and_exec("[9, 10, 11]")
-        );
+        assert_eq!(parse_and_exec(r#""aa" + "B""#), Ok(var!("aaB")));
+        assert_eq!(parse_and_exec("[5, 5, 6] + [5]"), Ok(var!([5, 5, 6, 5])));
+        assert_eq!(parse_and_exec(r#"[4, 5, 6] + 5"#), Ok(var!([9, 10, 11])));
         assert_eq!(
             parse_and_exec(r#"[4.5, 5.7, 6.0] + 3.3"#),
-            parse_and_exec("[7.8, 9.0, 9.3]")
+            Ok(var!([7.8, 9.0, 9.3]))
         );
         assert_eq!(
             parse_and_exec(r#""7" + ["a", "aaa"]"#),
-            parse_and_exec(r#"["7a", "7aaa"]"#)
+            Ok(var!(["7a", "7aaa"]))
         );
         assert_eq!(
             parse_and_exec(r#"["a", "aaa"]+"3""#),
-            parse_and_exec(r#"["a3", "aaa3"]"#)
+            Ok(var!(["a3", "aaa3"]))
         );
         assert_eq!(
             parse_and_exec("4+4.5"),

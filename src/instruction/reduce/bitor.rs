@@ -1,4 +1,4 @@
-use simplesl_macros::var_type;
+use simplesl_macros::{var, var_type};
 
 use crate as simplesl;
 use crate::instruction::local_variable::LocalVariables;
@@ -52,7 +52,7 @@ impl BitOrReduce {
             .iter()
             .map(|var| var.as_int().unwrap())
             .fold(0, |acc, curr| acc | curr);
-        Variable::Int(sum)
+        var!(sum)
     }
 }
 

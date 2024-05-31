@@ -5,11 +5,11 @@ use super::{
 use crate as simplesl;
 use crate::{
     interpreter::Interpreter,
-    variable::{Array, ReturnType, Type, Variable},
+    variable::{ReturnType, Type, Variable},
     Error, ExecError,
 };
 use pest::iterators::Pair;
-use simplesl_macros::var_type;
+use simplesl_macros::{var, var_type};
 use simplesl_parser::Rule;
 
 #[derive(Debug, Clone)]
@@ -53,9 +53,7 @@ impl ArrayRepeat {
                     instruction: Instruction::Variable(Variable::Int(len)),
                     ..
                 },
-            ) => Ok(Instruction::Variable(
-                Array::new_repeat(value, len as usize).into(),
-            )),
+            ) => Ok(Instruction::Variable(var!([value; len]))),
             (value, len) => Ok(Self { value, len }.into()),
         }
     }
@@ -88,7 +86,7 @@ impl Exec for ArrayRepeat {
         if len < 0 {
             return Err(ExecError::NegativeLength.into());
         }
-        Ok(Array::new_repeat(value, len as usize).into())
+        Ok(var!([value; len]))
     }
 }
 

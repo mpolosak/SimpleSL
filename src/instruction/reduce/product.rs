@@ -7,7 +7,7 @@ use crate::{
     Error,
 };
 use crate::{ExecError, Interpreter};
-use simplesl_macros::var_type;
+use simplesl_macros::{var, var_type};
 use std::sync::Arc;
 
 #[derive(Debug)]
@@ -19,7 +19,7 @@ impl Product {
     pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
         match &array.instruction {
             Instruction::Variable(Variable::Array(array))
-                if array.element_type() == &var_type!(int) =>
+                if array.element_type().matches(&var_type!(int)) =>
             {
                 Ok(Self::calc_int(&array).into())
             }
@@ -72,13 +72,13 @@ impl Product {
     }
 
     fn calc_int(array: &Array) -> Variable {
-        let product = array.iter().map(|var| var.as_int().unwrap()).product();
-        Variable::Int(product)
+        let product: i64 = array.iter().map(|var| var.as_int().unwrap()).product();
+        var!(product)
     }
 
     fn calc_float(array: &Array) -> Variable {
-        let product = array.iter().map(|var| var.as_float().unwrap()).product();
-        Variable::Float(product)
+        let product: f64 = array.iter().map(|var| var.as_float().unwrap()).product();
+        var!(product)
     }
 }
 

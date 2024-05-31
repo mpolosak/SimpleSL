@@ -7,7 +7,7 @@ use crate::{
     Error,
 };
 use crate::{ExecError, Interpreter};
-use simplesl_macros::var_type;
+use simplesl_macros::{var, var_type};
 
 pub fn create_all(array: InstructionWithStr) -> Result<Instruction, Error> {
     match &array.instruction {
@@ -48,7 +48,7 @@ pub struct All {
 impl All {
     fn calc(array: &Array) -> Variable {
         let sum = array.iter().all(|var| *var.as_int().unwrap() != 0);
-        Variable::from(sum)
+        var!(sum)
     }
 }
 
