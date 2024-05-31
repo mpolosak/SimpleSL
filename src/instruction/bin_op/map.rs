@@ -1,4 +1,5 @@
 use super::Map;
+use crate as simplesl;
 use crate::{
     function::Function,
     instruction::{
@@ -8,6 +9,7 @@ use crate::{
     interpreter::Interpreter,
     variable::{self, Array, FunctionType, ReturnType, Type, Variable},
 };
+use simplesl_macros::var_type;
 use std::{iter, sync::Arc};
 
 impl CanBeUsed for Map {
@@ -18,13 +20,8 @@ impl CanBeUsed for Map {
         let Some(element_type) = lhs.index_result() else {
             return false;
         };
-        let expected_function = FunctionType {
-            params: [element_type.clone()].into(),
-            return_type: Type::Any,
-        } | FunctionType {
-            params: [Type::Int, element_type].into(),
-            return_type: Type::Any,
-        };
+        let element_type2 = element_type.clone();
+        let expected_function = var_type!((element_type)->any | (int, element_type2)->any);
         rhs.matches(&expected_function)
     }
 }
@@ -111,7 +108,8 @@ impl Exec for Map {
 
 impl ReturnType for Map {
     fn return_type(&self) -> Type {
-        [self.rhs.return_type().return_type().unwrap()].into()
+        let element_type = self.rhs.return_type().return_type().unwrap();
+        var_type!([element_type])
     }
 }
 

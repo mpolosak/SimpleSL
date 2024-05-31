@@ -99,10 +99,21 @@ type = _{ multi | standard_types }
     return_type = _{ standard_types | "(" ~ multi ~ ")" }
   array_type = { "[" ~ type? ~ "]" }
   tuple_type = {"(" ~ (type ~ ("," ~ type)+) ~ ")"}
-  standard_types = _{ int_type | float_type | string_type | function_type | void | array_type | tuple_type | any | never }
+  standard_types = _{ int_type | float_type | string_type | function_type | void | array_type
+    | tuple_type | any | never }
   multi = { ( standard_types ) ~ ( "|" ~ standard_types )+ }
   any = {"any"}
   never = {"!"}
+// type + ident for macro var_type!
+type_ident = _{ multi_ident | standard_types_ident }
+  function_type_ident = {function_type_params_ident ~ "->" ~ return_type_ident}
+    function_type_params_ident = {"(" ~ (type_ident ~ ("," ~ type_ident)*)? ~ ")"}
+    return_type_ident = _{ standard_types_ident | "(" ~ multi_ident ~ ")" }
+  array_type_ident = { "[" ~ type_ident? ~ "]" }
+  tuple_type_ident = {"(" ~ (type_ident ~ ("," ~ type_ident)+) ~ ")"}
+  standard_types_ident = _{int_type | float_type | string_type | function_type_ident | void
+    | array_type_ident | tuple_type_ident | any | never | ident}
+  multi_ident = { ( standard_types_ident ) ~ ( "|" ~ standard_types_ident )+ }
 input = _{ line* ~ &EOI}
 block_comment = _{"/*" ~ (!"*/" ~ ANY)* ~ "*/"}
 line_comment = _{"//"~(!NEWLINE ~ ANY)*}

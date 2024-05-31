@@ -4,6 +4,7 @@ mod bitand;
 mod bitor;
 mod product;
 mod sum;
+use crate as simplesl;
 use crate::{
     instruction::{
         local_variable::LocalVariables,
@@ -11,7 +12,7 @@ use crate::{
         Exec, Instruction, InstructionWithStr, Recreate,
     },
     interpreter::Interpreter,
-    variable::{FunctionType, ReturnType, Type, Variable},
+    variable::{ReturnType, Type, Variable},
     Error, ExecError,
 };
 pub use all::*;
@@ -20,6 +21,7 @@ pub use bitand::*;
 pub use bitor::*;
 use pest::iterators::Pair;
 pub use product::*;
+use simplesl_macros::var_type;
 use simplesl_parser::Rule;
 pub use sum::*;
 
@@ -47,18 +49,11 @@ impl Reduce {
         let Some(return_type) = function.return_type().return_type() else {
             return Err(Error::WrongType(
                 "function".into(),
-                FunctionType {
-                    params: [Type::Any, element_type].into(),
-                    return_type: Type::Any,
-                }
-                .into(),
+                var_type!((any, element_type)->any),
             ));
         };
         let acc_type = initial_value.return_type() | element_type.clone() | return_type.clone();
-        let expected_function = Type::from(FunctionType {
-            params: [acc_type, element_type].into(),
-            return_type,
-        });
+        let expected_function = var_type!((acc_type, element_type)->return_type);
         if !function.return_type().matches(&expected_function) {
             return Err(Error::WrongType("function".into(), expected_function));
         }

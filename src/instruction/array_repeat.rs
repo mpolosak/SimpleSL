@@ -24,7 +24,7 @@ impl ArrayRepeat {
         let mut inner = pair.into_inner();
         let value = InstructionWithStr::new_expression(inner.next().unwrap(), local_variables)?;
         let len = InstructionWithStr::new_expression(inner.next().unwrap(), local_variables)?;
-        if len.return_type() != Type::Int {
+        if !len.return_type().matches(&Type::Int) {
             return Err(Error::WrongLengthType(len.str));
         }
         Self::create_from_instructions(value, len).map_err(Error::from)

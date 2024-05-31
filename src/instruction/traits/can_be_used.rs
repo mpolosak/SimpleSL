@@ -15,7 +15,9 @@ lazy_static! {
 #[duplicate_item(T; [Modulo]; [And]; [Or]; [BitwiseAnd]; [BitwiseOr]; [Xor]; [LShift]; [RShift])]
 impl CanBeUsed for T {
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
-        Type::Tuple([lhs.clone(), rhs.clone()].into()).matches(&ACCEPTED_INT_TYPE)
+        let lhs = lhs.clone();
+        let rhs = rhs.clone();
+        var_type!((lhs, rhs)).matches(&ACCEPTED_INT_TYPE)
     }
 }
 
@@ -27,7 +29,9 @@ lazy_static! {
 #[duplicate_item(T; [Greater]; [GreaterOrEqual]; [Lower]; [LowerOrEqual]; [Multiply]; [Divide]; [Subtract]; [Pow])]
 impl CanBeUsed for T {
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
-        Type::Tuple([lhs.clone(), rhs.clone()].into()).matches(&ACCEPTED_NUM_TYPE)
+        let lhs = lhs.clone();
+        let rhs = rhs.clone();
+        var_type!((lhs, rhs)).matches(&ACCEPTED_NUM_TYPE)
     }
 }
 
@@ -42,7 +46,9 @@ lazy_static! {
 
 impl CanBeUsed for Add {
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
-        Type::Tuple([lhs.clone(), rhs.clone()].into()).matches(&ACCEPTED_TYPE)
+        let lhs = lhs.clone();
+        let rhs = rhs.clone();
+        var_type!((lhs, rhs)).matches(&ACCEPTED_TYPE)
     }
 }
 

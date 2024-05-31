@@ -1,25 +1,22 @@
 use super::Filter;
+use crate as simplesl;
 use crate::{
     instruction::{
         traits::{CanBeUsed, ExecResult},
         Exec,
     },
     interpreter::Interpreter,
-    variable::{Array, FunctionType, ReturnType, Type, Variable},
+    variable::{Array, ReturnType, Type, Variable},
 };
+use simplesl_macros::var_type;
 
 impl CanBeUsed for Filter {
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
         let Some(element_type) = lhs.index_result() else {
             return false;
         };
-        let expected_function = FunctionType {
-            params: [element_type.clone()].into(),
-            return_type: Type::Int,
-        } | FunctionType {
-            params: [Type::Int, element_type].into(),
-            return_type: Type::Int,
-        };
+        let element_type2 = element_type.clone();
+        let expected_function = var_type!((element_type)->int | (int,element_type2)->int);
         rhs.matches(&expected_function)
     }
 }
