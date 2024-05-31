@@ -79,7 +79,7 @@ impl UnaryMinus {
     }
 
     fn can_be_used(var_type: &Type) -> bool {
-        var_type.matches(&ACCEPTED_INT)
+        var_type.matches(&ACCEPTED_NUM)
     }
 }
 
@@ -102,5 +102,52 @@ impl T {
     }
     fn can_be_used(var_type: &Type) -> bool {
         var_type.matches(&ACCEPTED_INT)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{self as simplesl, variable::Variable, Code, Error, Interpreter};
+    use simplesl_macros::{var, var_type};
+
+    #[test]
+    fn prefix_ops() {
+        assert_eq!(parse_and_exec("-5"), Ok(var!(-5)));
+        assert_eq!(parse_and_exec("-7.5"), Ok(var!(-7.5)));
+        assert_eq!(parse_and_exec("-[7.5, -4, 3]"), Ok(var!([-7.5, 4, -3])));
+        assert_eq!(parse_and_exec("!5"), Ok(var!(0)));
+        assert_eq!(parse_and_exec("!0"), Ok(var!(1)));
+        assert_eq!(
+            parse_and_exec("!7.5"),
+            Err(Error::CannotDo("!", var_type!(float)))
+        );
+        assert_eq!(parse_and_exec("![7, -4, 0]"), Ok(var!([0, 0, 1])));
+        assert_eq!(
+            parse_and_exec("![7, -4.5, 0]"),
+            Err(Error::CannotDo("!", var_type!([int | float])))
+        );
+        assert_eq!(parse_and_exec("~5"), Ok(Variable::Int(!5)));
+        assert_eq!(parse_and_exec("~0"), Ok(Variable::Int(!0)));
+        assert_eq!(
+            parse_and_exec("~7.5"),
+            Err(Error::CannotDo("~", var_type!(float)))
+        );
+        assert_eq!(
+            parse_and_exec("~[7, -4, 0]"),
+            Ok(Variable::from([
+                Variable::Int(!7),
+                Variable::Int(!(-4)),
+                Variable::Int(!0)
+            ]))
+        );
+        assert_eq!(
+            parse_and_exec("~[7, -4.5, 0]"),
+            Err(Error::CannotDo("~", var_type!([int | float])))
+        );
+    }
+
+    fn parse_and_exec(script: &str) -> Result<Variable, crate::Error> {
+        Code::parse(&Interpreter::without_stdlib(), script)
+            .and_then(|code| code.exec().map_err(Error::from))
     }
 }
