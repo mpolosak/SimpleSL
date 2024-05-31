@@ -297,14 +297,6 @@ impl<T: Into<Type>> BitOr<T> for Type {
     }
 }
 
-impl BitOr<Type> for [Type; 1] {
-    type Output = Type;
-
-    fn bitor(self, rhs: Type) -> Self::Output {
-        Type::from(self).concat(rhs)
-    }
-}
-
 impl BitOrAssign for Type {
     fn bitor_assign(&mut self, rhs: Self) {
         match (self, rhs) {
@@ -318,12 +310,6 @@ impl BitOrAssign for Type {
             }
             (first, second) => *first = first.clone() | second,
         }
-    }
-}
-
-impl From<[Type; 1]> for Type {
-    fn from([value]: [Type; 1]) -> Self {
-        Type::Array(value.into())
     }
 }
 
@@ -372,15 +358,21 @@ mod tests {
             }
             .into())
         );
-        assert_eq!(Type::from_str("[int]"), Ok([Type::Int].into()));
-        assert_eq!(Type::from_str("[float]"), Ok([Type::Float].into()));
-        assert_eq!(Type::from_str("[string]"), Ok([Type::String].into()));
-        assert_eq!(Type::from_str("[any]"), Ok([Type::Any].into()));
-        assert_eq!(Type::from_str("[int]"), Ok([Type::Int].into()));
-        assert_eq!(Type::from_str("[()]"), Ok([Type::Void].into()));
+        assert_eq!(Type::from_str("[int]"), Ok(Type::Array((Type::Int).into())));
+        assert_eq!(
+            Type::from_str("[float]"),
+            Ok(Type::Array(Type::Float.into()))
+        );
+        assert_eq!(
+            Type::from_str("[string]"),
+            Ok(Type::Array(Type::String.into()))
+        );
+        assert_eq!(Type::from_str("[any]"), Ok(Type::Array(Type::Any.into())));
+        assert_eq!(Type::from_str("[int]"), Ok(Type::Array(Type::Int.into())));
+        assert_eq!(Type::from_str("[()]"), Ok(Type::Array(Type::Void.into())));
         assert_eq!(
             Type::from_str("[int | float]"),
-            Ok([Type::Int | Type::Float].into())
+            Ok(Type::Array((Type::Int | Type::Float).into()))
         );
         assert_eq!(
             Type::from_str("(int, string)"),
@@ -399,7 +391,10 @@ mod tests {
             } | Type::String)
         );
         assert_eq!(Type::from_str("any | float"), Ok(Type::Any));
-        assert_eq!(Type::from_str("[any | float]"), Ok([Type::Any].into()));
+        assert_eq!(
+            Type::from_str("[any | float]"),
+            Ok(Type::Array(Type::Any.into()))
+        );
         assert_eq!(Type::from_str("!"), Ok(Type::Never))
     }
 

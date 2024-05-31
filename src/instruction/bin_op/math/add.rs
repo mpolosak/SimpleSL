@@ -1,9 +1,8 @@
-use simplesl_macros::var_type;
-
 use crate as simplesl;
 use crate::instruction::{Add, Instruction};
 use crate::variable::Array;
 use crate::variable::{ReturnType, Type, Variable};
+use simplesl_macros::var_type;
 
 impl Add {
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
@@ -66,7 +65,7 @@ impl Add {
             }
             return lhs;
         };
-        [lhs_element | rhs_element].into()
+        var_type!([lhs_element | rhs_element])
     }
 }
 
@@ -183,12 +182,12 @@ mod tests {
             var_type!([float])
         );
         assert_eq!(
-            Add::return_type(var_type!([float]), [var_type!(float)] | var_type!(float)),
-            [var_type!(float)] | var_type!(float)
+            Add::return_type(var_type!([float]), var_type!([float] | float)),
+            var_type!([float] | float)
         );
         assert_eq!(
-            Add::return_type([var_type!(float)] | var_type!(float), var_type!([float])),
-            [var_type!(float)] | var_type!(float)
+            Add::return_type(var_type!([float] | float), var_type!([float])),
+            var_type!([float] | float)
         );
         // string
         assert_eq!(

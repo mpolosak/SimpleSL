@@ -50,7 +50,7 @@ impl Product {
             instruction
                 if instruction
                     .return_type()
-                    .matches(&([var_type!(int)] | var_type!([float]))) =>
+                    .matches(&(var_type!([int] | [float]))) =>
             {
                 Ok(Self { array }.into())
             }

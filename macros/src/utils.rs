@@ -103,9 +103,9 @@ fn type_from_str(attrs: &[Attribute], param_type: &str) -> TokenStream {
         "i64" => quote!(simplesl::variable::Type::Int),
         "f64" => quote!(simplesl::variable::Type::Float),
         "Arc < str >" | "& str" => quote!(simplesl::variable::Type::String),
-        "Arc < [Variable] >" | "& [Variable]" => {
-            get_type_from_attrs(attrs).unwrap_or(quote!([simplesl::variable::Type::Any].into()))
-        }
+        "Arc < [Variable] >" | "& [Variable]" => get_type_from_attrs(attrs).unwrap_or(quote!(
+            simplesl::variable::Type::Array(simplesl::variable::Type::Any.into())
+        )),
         "Arc < Function >" | "& Function" => {
             let Some(var_type) = get_type_from_attrs(attrs) else {
                 panic!("Argument of type function must be precede by var_type attribute")

@@ -62,6 +62,7 @@ impl Recreate for TypeFilter {
 
 impl ReturnType for TypeFilter {
     fn return_type(&self) -> Type {
-        [self.var_type.clone()].into()
+        let element_type = self.var_type.clone();
+        var_type!([element_type])
     }
 }

@@ -1,12 +1,12 @@
+use super::{Type, Typed, Variable};
+use crate as simplesl;
+use crate::join_debug;
+use simplesl_macros::var_type;
 use std::{
     fmt::{self, Display},
     ops::Deref,
     sync::Arc,
 };
-
-use crate::join_debug;
-
-use super::{Type, Typed, Variable};
 
 #[derive(PartialEq)]
 pub struct Array {
@@ -53,7 +53,8 @@ impl Array {
 
 impl Typed for Array {
     fn as_type(&self) -> Type {
-        [self.element_type.clone()].into()
+        let element_type = self.element_type.clone();
+        var_type!([element_type])
     }
 }
 

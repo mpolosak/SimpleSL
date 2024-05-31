@@ -4,12 +4,14 @@ use super::{
     traits::{Exec, ExecResult, Recreate},
     Instruction, InstructionWithStr,
 };
+use crate as simplesl;
 use crate::{
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
     Error, ExecError,
 };
 use pest::iterators::Pair;
+use simplesl_macros::var_type;
 use simplesl_parser::Rule;
 use std::sync::Arc;
 
@@ -93,7 +95,8 @@ impl Recreate for Array {
 
 impl ReturnType for Array {
     fn return_type(&self) -> Type {
-        [self.element_type.clone()].into()
+        let element_type = self.element_type.clone();
+        var_type!([element_type])
     }
 }
 

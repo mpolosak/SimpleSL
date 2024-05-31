@@ -2,12 +2,14 @@ use super::{
     local_variable::LocalVariables, traits::ExecResult, Exec, Instruction, InstructionWithStr,
     Recreate,
 };
+use crate as simplesl;
 use crate::{
     interpreter::Interpreter,
     variable::{Array, ReturnType, Type, Variable},
     Error, ExecError,
 };
 use pest::iterators::Pair;
+use simplesl_macros::var_type;
 use simplesl_parser::Rule;
 
 #[derive(Debug, Clone)]
@@ -101,7 +103,7 @@ impl Recreate for ArrayRepeat {
 impl ReturnType for ArrayRepeat {
     fn return_type(&self) -> Type {
         let element_type = self.value.return_type();
-        [element_type].into()
+        var_type!([element_type])
     }
 }
 
