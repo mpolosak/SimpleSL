@@ -56,7 +56,7 @@ impl MatchArm {
                 let instruction = InstructionWithStr::new(pair, local_variables)?;
                 Ok(Self::Other(instruction))
             }
-            rule => unexpected(rule),
+            rule => unexpected!(rule),
         }
     }
     pub fn is_covering_type(&self, checked_type: &Type) -> bool {

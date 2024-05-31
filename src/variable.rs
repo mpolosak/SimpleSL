@@ -104,7 +104,7 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
                 Rule::octal_int => parse_int_with_radix(pair, 8),
                 Rule::decimal_int => parse_int_with_radix(pair, 10),
                 Rule::hexadecimal_int => parse_int_with_radix(pair, 16),
-                rule => unexpected(rule),
+                rule => unexpected!(rule),
             }
         }
         fn parse_int_with_radix(pair: Pair<Rule>, radix: u32) -> Result<i64, Error> {

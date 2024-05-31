@@ -102,7 +102,7 @@ fn var_token_from_pair(pair: Pair<Rule>) -> quote::__private::TokenStream {
             let ident = format_ident!("{}", pair.as_str());
             quote!(simplesl::variable::Variable::from(-#ident))
         }
-        rule => unexpected(rule),
+        rule => unexpected!(rule),
     }
 }
 
@@ -114,7 +114,7 @@ fn parse_int(pair: Pair<Rule>) -> i64 {
         Rule::octal_int => parse_int_with_radix(pair, 8),
         Rule::decimal_int => parse_int_with_radix(pair, 10),
         Rule::hexadecimal_int => parse_int_with_radix(pair, 16),
-        rule => unexpected(rule),
+        rule => unexpected!(rule),
     }
 }
 
@@ -177,6 +177,6 @@ fn var_type_from_var_pair(pair: Pair<Rule>) -> Option<quote::__private::TokenStr
             Some(quote!(simplesl::variable::Type::Array(#element_type.into())))
         }
         Rule::ident | Rule::minus_ident => None,
-        rule => unexpected(rule),
+        rule => unexpected!(rule),
     }
 }

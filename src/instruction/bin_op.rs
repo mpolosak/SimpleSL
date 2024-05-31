@@ -116,7 +116,7 @@ impl InstructionWithStr {
                 let instruction = Reduce::create_instruction(lhs, op, rhs, local_variables)?;
                 Ok(InstructionWithStr { instruction, str })
             }
-            rule => unexpected(rule),
+            rule => unexpected!(rule),
         }
     }
 }

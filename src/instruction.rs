@@ -105,7 +105,7 @@ impl InstructionWithStr {
             Rule::array => Array::create_instruction(pair, local_variables),
             Rule::array_repeat => ArrayRepeat::create_instruction(pair, local_variables),
             Rule::function => AnonymousFunction::create_instruction(pair, local_variables),
-            rule => unexpected(rule),
+            rule => unexpected!(rule),
         }?;
         Ok(Self { instruction, str })
     }
@@ -128,7 +128,7 @@ impl InstructionWithStr {
             Rule::reduce_any => create_any(lhs),
             Rule::bitand_reduce => create_bitand_reduce(lhs),
             Rule::bitor_reduce => create_bitor_reduce(lhs),
-            rule => unexpected(rule),
+            rule => unexpected!(rule),
         }?;
         Ok(Self { instruction, str })
     }
@@ -211,7 +211,7 @@ impl Instruction {
                 return InstructionWithStr::new_expression(pair, local_variables)
                     .map(|iws| iws.instruction)
             }
-            rule => unexpected(rule),
+            rule => unexpected!(rule),
         }
     }
 }

@@ -66,6 +66,6 @@ fn type_token_from_pair(pair: Pair<Rule>) -> quote::__private::TokenStream {
                 .reduce(|acc, curr| quote!(#acc, # curr));
             quote!([#elements].into())
         }
-        rule => unexpected(rule),
+        rule => unexpected!(rule),
     }
 }
