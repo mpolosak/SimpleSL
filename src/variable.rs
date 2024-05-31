@@ -369,6 +369,7 @@ mod tests {
                 Variable::Int(4),
                 Variable::Float(3.5)
             ]))
-        )
+        );
+        assert_eq!(Variable::from_str("[]"), Ok(Variable::from([])))
     }
 }

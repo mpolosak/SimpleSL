@@ -29,7 +29,9 @@ pub fn create_any(array: InstructionWithStr) -> Result<Instruction, Error> {
             .map(|iws| iws.instruction)
             .reduce(|acc, curr| Or::create_from_instructions(acc, curr))
             .unwrap()),
-        instruction if instruction.return_type() == var_type!([int]) => Ok(Any { array }.into()),
+        instruction if instruction.return_type().matches(&var_type!([int])) => {
+            Ok(Any { array }.into())
+        }
         ins => Err(Error::IncorectPostfixOperatorOperand {
             ins: array.str,
             op: "$||",

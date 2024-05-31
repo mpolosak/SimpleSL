@@ -45,7 +45,7 @@ fn var_token_from_pair(pair: Pair<Rule>) -> quote::__private::TokenStream {
                     let curr = curr?;
                     Some(quote!(#acc | # curr))
                 })
-                .unwrap_or(Some(quote!(quote!(simplesl::variable::Type::Never))));
+                .unwrap_or(Some(quote!(simplesl::variable::Type::Never)));
             let elements = pair
                 .into_inner()
                 .map(var_token_from_pair)

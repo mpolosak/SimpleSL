@@ -17,7 +17,7 @@ var = _{ float | int | array | array_repeat | string | function | void | tuple }
       hexadecimal = @{ "_"* ~ ASCII_HEX_DIGIT ~ ( ASCII_HEX_DIGIT | "_" )* }
   float = @{ ( decimal ~ ("." ~ decimal)? ~ ("e"|"E") ~ ("+"|"-")? ~ "_"* ~ decimal) | (decimal ~ "." ~ decimal) }
   void = {"()"}
-  array = {"[" ~ expression_list ~ "]"}
+  array = {"[" ~ expression_list? ~ "]"}
   array_repeat = {"[" ~ expr ~ ";" ~ expr ~ "]"}
   string = ${ "\"" ~ inner ~ quotation_mark }
     quotation_mark = {"\""}
@@ -122,7 +122,7 @@ only_var = _{var_from_str ~ &EOI}
     | string | void | tuple_from_str }
   minus_float = {"-" ~ float}
   minus_int = {"-" ~ int}
-  array_from_str = {"[" ~ var_list ~ "]"}
+  array_from_str = {"[" ~ var_list? ~ "]"}
   array_repeat_from_str =  {"[" ~ var_from_str ~ ";" ~ int ~ "]"}
   tuple_from_str =  {"(" ~ var_from_str ~ "," ~ var_list ~ ")"}
   var_list = _{ (var_from_str ~ ("," ~ var_from_str)*)}
@@ -131,7 +131,7 @@ var_macro = _{var_ident ~ &EOI}
   var_ident = _{minus_float | float | minus_int |  int | array_ident | array_ident_repeat
     | string | void | tuple_ident | minus_ident | ident}
   minus_ident = {"-" ~ float}
-  array_ident = {"[" ~ var_ident_list ~ "]"}
+  array_ident = {"[" ~ var_ident_list? ~ "]"}
   array_ident_repeat =  {"[" ~ var_ident ~ ";" ~ (int | ident) ~ "]"}
   tuple_ident =  {"(" ~ var_ident ~ "," ~ var_ident_list ~ ")"}
   var_ident_list = _{ (var_ident ~ ("," ~ var_ident)*)}
