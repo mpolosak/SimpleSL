@@ -1,16 +1,16 @@
 #![warn(clippy::pedantic)]
 mod attributes;
-mod utils;
+mod export_function;
 mod var;
 mod var_type;
 use attributes::Attributes;
-use proc_macro::TokenStream;
-use quote::quote;
-use syn::{parse_macro_input, ItemFn};
-use utils::{
+use export_function::{
     args_from_function_params, args_import_from_function_params, function_params_from_itemfn,
     get_body, get_return_type, params_from_function_params,
 };
+use proc_macro::TokenStream;
+use quote::quote;
+use syn::{parse_macro_input, ItemFn};
 use var::var_quote;
 use var_type::type_quote;
 
@@ -29,11 +29,10 @@ pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream 
     quote!(
         #function
         {
-            use std::sync::Arc;
             interpreter.insert(
                 #ident_str.into(),
                 simplesl::function::Function::new(
-                    simplesl::function::Params(Arc::new([#params])),
+                    simplesl::function::Params(std::sync::Arc::new([#params])),
                     |interpreter| {
                         #args_importing
                         #body

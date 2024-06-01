@@ -1,4 +1,4 @@
-use crate::var_type::type_quote;
+use crate::var_type::{type_from_str, type_quote};
 use quote::{__private::TokenStream, quote};
 use syn::{Attribute, Ident, ItemFn, MetaList, PatIdent, PatType, ReturnType, Type};
 
@@ -89,7 +89,7 @@ fn param_from_function_param(
     (ident, attrs, param_type): &(Ident, Vec<Attribute>, String),
 ) -> TokenStream {
     let ident = ident.to_string();
-    let param_type = type_from_str(attrs, param_type);
+    let param_type = type_from_rust_type(attrs, param_type);
     quote!(
         simplesl::function::Param {
             name: #ident.into(),
@@ -98,23 +98,21 @@ fn param_from_function_param(
     )
 }
 
-fn type_from_str(attrs: &[Attribute], param_type: &str) -> TokenStream {
+fn type_from_rust_type(attrs: &[Attribute], param_type: &str) -> TokenStream {
     match param_type {
-        "i64" => quote!(simplesl::variable::Type::Int),
-        "f64" => quote!(simplesl::variable::Type::Float),
-        "Arc < str >" | "& str" => quote!(simplesl::variable::Type::String),
-        "Arc < [Variable] >" | "& [Variable]" => get_type_from_attrs(attrs).unwrap_or(quote!(
-            simplesl::variable::Type::Array(simplesl::variable::Type::Any.into())
-        )),
+        "i64" => type_from_str("int"),
+        "f64" => type_from_str("f64"),
+        "Arc < str >" | "& str" => type_from_str("string"),
+        "Arc < [Variable] >" | "& [Variable]" => {
+            get_type_from_attrs(attrs).unwrap_or(type_from_str("[any]"))
+        }
         "Arc < Function >" | "& Function" => {
             let Some(var_type) = get_type_from_attrs(attrs) else {
                 panic!("Argument of type function must be precede by var_type attribute")
             };
             var_type
         }
-        "Variable" | "& Variable" => {
-            get_type_from_attrs(attrs).unwrap_or(quote!(simplesl::variable::Type::Any))
-        }
+        "Variable" | "& Variable" => get_type_from_attrs(attrs).unwrap_or(type_from_str("any")),
         param_type => panic!("{param_type} type isn't allowed"),
     }
 }
@@ -140,37 +138,23 @@ fn return_type_from_syn_type(return_type: &Type) -> TokenStream {
         | "bool"
         | "Result < bool, ExecError >"
         | "usize"
-        | "Result < usize, ExecError >" => {
-            quote!(simplesl::variable::Type::Int)
-        }
-        "f64" | "Result < f64, ExecError >" => quote!(simplesl::variable::Type::Float),
+        | "Result < usize, ExecError >" => type_from_str("int"),
+        "f64" | "Result < f64, ExecError >" => type_from_str("float"),
         "Arc < str >"
         | "Result < Arc < str >, ExecError >"
         | "String"
         | "Result < String, ExecError >"
         | "& str"
-        | "Result < & str, ExecError >" => quote!(simplesl::variable::Type::String),
-        "Arc < [Variable] >" | "Result < Arc < [Variable], ExecError > >" => {
-            quote!([simplesl::variable::Type::Any].into())
+        | "Result < & str, ExecError >" => type_from_str("string"),
+        "Arc < [Variable] >" | "Result < Arc < [Variable], ExecError > >" => type_from_str("[any]"),
+        "" => type_from_str("()"),
+        "Variable" | "Result < Variable, ExecError >" => type_from_str("any"),
+        "io :: Result < String >" | "std :: io :: Result < String >" => {
+            type_from_str("string|(int,string)")
         }
-        "" => quote!(simplesl::variable::Type::Void),
-        "Variable" | "Result < Variable, ExecError >" => quote!(simplesl::variable::Type::Any),
-        "io :: Result < String >" | "std :: io :: Result < String >" => quote!({
-            use std::str::FromStr;
-            simplesl::variable::Type::from_str("string|(int,string)").unwrap()
-        }),
-        "io :: Result < () >" | "std :: io :: Result < () >" => quote!({
-            use std::str::FromStr;
-            simplesl::variable::Type::from_str("()|(int,string)").unwrap()
-        }),
-        "Option < i64 >" => quote!({
-            use std::str::FromStr;
-            simplesl::variable::Type::from_str("int|()").unwrap()
-        }),
-        "Option < f64 >" => quote!({
-            use std::str::FromStr;
-            simplesl::variable::Type::from_str("float|()").unwrap()
-        }),
+        "io :: Result < () >" | "std :: io :: Result < () >" => type_from_str("()|(int,string)"),
+        "Option < i64 >" => type_from_str("int|()"),
+        "Option < f64 >" => type_from_str("float|()"),
         return_type => panic!("{return_type} type isn't allowed"),
     }
 }
@@ -189,7 +173,7 @@ pub fn get_body(is_result: bool, ident: &Ident, args: &TokenStream) -> TokenStre
 
 pub fn get_return_type(function: &ItemFn, return_type: Option<TokenStream>) -> (TokenStream, bool) {
     let ReturnType::Type(_, syn_type) = &function.sig.output else {
-        return (quote!(simplesl::variable::Type::Void), false);
+        return (type_from_str("()"), false);
     };
     let return_type = return_type.unwrap_or_else(|| return_type_from_syn_type(syn_type));
     (return_type, is_result(syn_type))
