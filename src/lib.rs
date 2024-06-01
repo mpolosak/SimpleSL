@@ -5,7 +5,7 @@ mod instruction;
 mod interpreter;
 pub mod stdlib;
 pub mod variable;
-pub use simplesl_macros::export_function;
+pub use simplesl_macros::{export_function, var, var_type};
 use std::fmt::{Debug, Display};
 pub use {code::Code, errors::Error, errors::ExecError, interpreter::Interpreter};
 
