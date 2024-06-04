@@ -36,23 +36,16 @@ pub fn args_import_from_function_params(params: &[(Ident, Vec<Attribute>, String
 }
 
 fn arg_import_from_function_param(
-    (ident, _attrs, param_type): &(Ident, Vec<Attribute>, String),
+    (ident, _attrs, _param_type): &(Ident, Vec<Attribute>, String),
 ) -> TokenStream {
     let ident_str = ident.to_string();
-    if param_type.as_str() == "& mut Interpreter" {
-        return quote!();
-    }
     quote!(let #ident = interpreter.get_variable(#ident_str).unwrap().try_into().unwrap();)
 }
 
 pub fn params_from_function_params(params: &[(Ident, Vec<Attribute>, String)]) -> TokenStream {
     params.iter().fold(quote!(), |acc, param| {
-        if param.2 == "& mut Interpreter" {
-            quote!()
-        } else {
-            let param = param_from_function_param(param);
-            quote!(#acc #param,)
-        }
+        let param = param_from_function_param(param);
+        quote!(#acc #param,)
     })
 }
 
