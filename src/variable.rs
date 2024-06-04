@@ -1,6 +1,7 @@
 mod array;
 mod function_type;
 mod multi_type;
+mod try_from;
 mod r#type;
 use crate::{function::Function, join_debug, Error};
 use enum_as_inner::EnumAsInner;
