@@ -50,20 +50,14 @@ fn param_from_function_param(
     (ident, attrs, param_type): &(Ident, Vec<Attribute>, Box<Type>),
 ) -> TokenStream {
     let ident = ident.to_string();
-    let param_type = type_from_rust_type(attrs, param_type);
+    let param_type = get_type_from_attrs(attrs)
+        .unwrap_or_else(|| quote!(<#param_type as simplesl::variable::TypeOf>::type_of()));
     quote!(
         simplesl::function::Param {
             name: #ident.into(),
             var_type: #param_type,
         }
     )
-}
-
-fn type_from_rust_type(attrs: &[Attribute], param_type: &Box<Type>) -> TokenStream {
-    if let Some(var_type) = get_type_from_attrs(attrs) {
-        return var_type;
-    }
-    quote!(<#param_type as simplesl::variable::TypeOf>::type_of())
 }
 
 fn get_type_from_attrs(attrs: &[Attribute]) -> Option<TokenStream> {
@@ -80,23 +74,11 @@ fn get_type_from_attrs(attrs: &[Attribute]) -> Option<TokenStream> {
     None
 }
 
-fn is_result(return_type: &Type) -> bool {
-    let return_type = quote!(#return_type).to_string();
-    return_type.starts_with("Result")
-}
-
-pub fn get_body(is_result: bool, ident: &Ident, args: &TokenStream) -> TokenStream {
-    if is_result {
-        return quote!(Ok(#ident(#args)?.into()));
-    }
-    quote!(Ok(#ident(#args).into()))
-}
-
-pub fn get_return_type(function: &ItemFn, return_type: Option<TokenStream>) -> (TokenStream, bool) {
+pub fn get_return_type(function: &ItemFn, return_type: Option<TokenStream>) -> TokenStream {
     let ReturnType::Type(_, syn_type) = &function.sig.output else {
-        return (type_from_str("()"), false);
+        return type_from_str("()");
     };
     let return_type =
         return_type.unwrap_or_else(|| quote!(<#syn_type as simplesl::variable::TypeOf>::type_of()));
-    (return_type, is_result(syn_type))
+    return_type
 }

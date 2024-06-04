@@ -1,5 +1,3 @@
-use duplicate::duplicate_item;
-
 use crate::{
     errors::ExecError,
     instruction::{
@@ -8,9 +6,9 @@ use crate::{
         prefix_op::{BitwiseNot, Not, UnaryMinus},
         Instruction,
     },
+    ToResult,
 };
-
-use super::ToResult;
+use duplicate::duplicate_item;
 
 pub trait Recreate {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError>;

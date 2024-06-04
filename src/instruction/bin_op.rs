@@ -6,12 +6,9 @@ mod math;
 mod shift;
 use super::{local_variable::LocalVariables, reduce::Reduce, InstructionWithStr};
 use crate::{
-    instruction::{
-        traits::{CanBeUsed, ToResult},
-        Instruction,
-    },
+    instruction::{traits::CanBeUsed, Instruction},
     variable::{ReturnType, Variable},
-    Error,
+    Error, ToResult,
 };
 use duplicate::duplicate_item;
 use pest::iterators::Pair;

@@ -4,11 +4,9 @@ use crate::{
         prefix_op::{BitwiseNot, Not, UnaryMinus},
     },
     variable::Variable,
-    ExecError, Interpreter,
+    ExecError, Interpreter, ToResult,
 };
 use duplicate::duplicate_item;
-
-use super::ToResult;
 
 pub trait Exec {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult;

@@ -4,10 +4,13 @@ pub mod function;
 mod instruction;
 mod interpreter;
 pub mod stdlib;
+mod to_result;
 pub mod variable;
 pub use simplesl_macros::{export_function, var, var_type};
 use std::fmt::{Debug, Display};
-pub use {code::Code, errors::Error, errors::ExecError, interpreter::Interpreter};
+pub use {
+    code::Code, errors::Error, errors::ExecError, interpreter::Interpreter, to_result::ToResult,
+};
 
 pub fn join<'a, T, I>(items: I, separator: &str) -> String
 where
