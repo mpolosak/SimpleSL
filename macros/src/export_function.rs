@@ -2,7 +2,9 @@ use crate::var_type::{type_from_str, type_quote};
 use quote::{__private::TokenStream, quote};
 use syn::{Attribute, Ident, ItemFn, MetaList, PatIdent, PatType, ReturnType, Type};
 
-pub fn function_params_from_itemfn(function: &mut ItemFn) -> Vec<(Ident, Vec<Attribute>, String)> {
+pub fn function_params_from_itemfn(
+    function: &mut ItemFn,
+) -> Vec<(Ident, Vec<Attribute>, Box<Type>)> {
     let mut result = Vec::new();
     for param in &mut function.sig.inputs {
         let syn::FnArg::Typed(PatType { pat, ty, attrs, .. }) = param else {
@@ -11,21 +13,23 @@ pub fn function_params_from_itemfn(function: &mut ItemFn) -> Vec<(Ident, Vec<Att
         let syn::Pat::Ident(PatIdent { ident, .. }) = *pat.clone() else {
             panic!()
         };
-        result.push((ident, attrs.clone(), quote!(#ty).to_string()));
+        result.push((ident, attrs.clone(), ty.clone()));
         *attrs = Vec::new();
     }
     result
 }
 
 pub fn args_from_function_params(
-    params: &[(Ident, Vec<Attribute>, String)],
+    params: &[(Ident, Vec<Attribute>, Box<Type>)],
 ) -> quote::__private::TokenStream {
     params
         .iter()
         .fold(quote!(), |acc, (ident, ..)| quote!(#acc #ident,))
 }
 
-pub fn args_import_from_function_params(params: &[(Ident, Vec<Attribute>, String)]) -> TokenStream {
+pub fn args_import_from_function_params(
+    params: &[(Ident, Vec<Attribute>, Box<Type>)],
+) -> TokenStream {
     params.iter().fold(quote!(), |acc, (ident, _, _)| {
         let ident_str = ident.to_string();
         quote!(
@@ -35,7 +39,7 @@ pub fn args_import_from_function_params(params: &[(Ident, Vec<Attribute>, String
     })
 }
 
-pub fn params_from_function_params(params: &[(Ident, Vec<Attribute>, String)]) -> TokenStream {
+pub fn params_from_function_params(params: &[(Ident, Vec<Attribute>, Box<Type>)]) -> TokenStream {
     params.iter().fold(quote!(), |acc, param| {
         let param = param_from_function_param(param);
         quote!(#acc #param,)
@@ -43,7 +47,7 @@ pub fn params_from_function_params(params: &[(Ident, Vec<Attribute>, String)]) -
 }
 
 fn param_from_function_param(
-    (ident, attrs, param_type): &(Ident, Vec<Attribute>, String),
+    (ident, attrs, param_type): &(Ident, Vec<Attribute>, Box<Type>),
 ) -> TokenStream {
     let ident = ident.to_string();
     let param_type = type_from_rust_type(attrs, param_type);
@@ -55,23 +59,11 @@ fn param_from_function_param(
     )
 }
 
-fn type_from_rust_type(attrs: &[Attribute], param_type: &str) -> TokenStream {
-    match param_type {
-        "i64" => type_from_str("int"),
-        "f64" => type_from_str("f64"),
-        "Arc < str >" | "& str" => type_from_str("string"),
-        "Arc < [Variable] >" | "& [Variable]" => {
-            get_type_from_attrs(attrs).unwrap_or(type_from_str("[any]"))
-        }
-        "Arc < Function >" | "& Function" => {
-            let Some(var_type) = get_type_from_attrs(attrs) else {
-                panic!("Argument of type function must be precede by var_type attribute")
-            };
-            var_type
-        }
-        "Variable" | "& Variable" => get_type_from_attrs(attrs).unwrap_or(type_from_str("any")),
-        param_type => panic!("{param_type} type isn't allowed"),
+fn type_from_rust_type(attrs: &[Attribute], param_type: &Box<Type>) -> TokenStream {
+    if let Some(var_type) = get_type_from_attrs(attrs) {
+        return var_type;
     }
+    quote!(<#param_type as simplesl::variable::TypeOf>::type_of())
 }
 
 fn get_type_from_attrs(attrs: &[Attribute]) -> Option<TokenStream> {
@@ -86,34 +78,6 @@ fn get_type_from_attrs(attrs: &[Attribute]) -> Option<TokenStream> {
         };
     }
     None
-}
-
-fn return_type_from_syn_type(return_type: &Type) -> TokenStream {
-    match quote!(#return_type).to_string().as_str() {
-        "i64"
-        | "Result < i64, ExecError >"
-        | "bool"
-        | "Result < bool, ExecError >"
-        | "usize"
-        | "Result < usize, ExecError >" => type_from_str("int"),
-        "f64" | "Result < f64, ExecError >" => type_from_str("float"),
-        "Arc < str >"
-        | "Result < Arc < str >, ExecError >"
-        | "String"
-        | "Result < String, ExecError >"
-        | "& str"
-        | "Result < & str, ExecError >" => type_from_str("string"),
-        "Arc < [Variable] >" | "Result < Arc < [Variable], ExecError > >" => type_from_str("[any]"),
-        "" => type_from_str("()"),
-        "Variable" | "Result < Variable, ExecError >" => type_from_str("any"),
-        "io :: Result < String >" | "std :: io :: Result < String >" => {
-            type_from_str("string|(int,string)")
-        }
-        "io :: Result < () >" | "std :: io :: Result < () >" => type_from_str("()|(int,string)"),
-        "Option < i64 >" => type_from_str("int|()"),
-        "Option < f64 >" => type_from_str("float|()"),
-        return_type => panic!("{return_type} type isn't allowed"),
-    }
 }
 
 fn is_result(return_type: &Type) -> bool {
@@ -132,6 +96,7 @@ pub fn get_return_type(function: &ItemFn, return_type: Option<TokenStream>) -> (
     let ReturnType::Type(_, syn_type) = &function.sig.output else {
         return (type_from_str("()"), false);
     };
-    let return_type = return_type.unwrap_or_else(|| return_type_from_syn_type(syn_type));
+    let return_type =
+        return_type.unwrap_or_else(|| quote!(<#syn_type as simplesl::variable::TypeOf>::type_of()));
     (return_type, is_result(syn_type))
 }

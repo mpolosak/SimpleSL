@@ -3,6 +3,7 @@ mod function_type;
 mod multi_type;
 mod try_from;
 mod r#type;
+mod type_of;
 use crate::{function::Function, join_debug, Error};
 use enum_as_inner::EnumAsInner;
 use match_any::match_any;
@@ -11,7 +12,7 @@ pub use r#type::{ReturnType, Type, Typed};
 use simplesl_parser::{unexpected, Rule, SimpleSLParser};
 use std::{fmt, io, str::FromStr, sync::Arc};
 pub use typle::typle;
-pub use {array::Array, function_type::FunctionType, multi_type::MultiType};
+pub use {array::Array, function_type::FunctionType, multi_type::MultiType, type_of::TypeOf};
 
 #[derive(Clone, EnumAsInner)]
 pub enum Variable {
