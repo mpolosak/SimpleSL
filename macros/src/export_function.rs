@@ -26,20 +26,13 @@ pub fn args_from_function_params(
 }
 
 pub fn args_import_from_function_params(params: &[(Ident, Vec<Attribute>, String)]) -> TokenStream {
-    params.iter().fold(quote!(), |acc, param| {
-        let import = arg_import_from_function_param(param);
+    params.iter().fold(quote!(), |acc, (ident, _, _)| {
+        let ident_str = ident.to_string();
         quote!(
             #acc
-            #import
+            let #ident = interpreter.get_variable(#ident_str).unwrap().try_into().unwrap();
         )
     })
-}
-
-fn arg_import_from_function_param(
-    (ident, _attrs, _param_type): &(Ident, Vec<Attribute>, String),
-) -> TokenStream {
-    let ident_str = ident.to_string();
-    quote!(let #ident = interpreter.get_variable(#ident_str).unwrap().try_into().unwrap();)
 }
 
 pub fn params_from_function_params(params: &[(Ident, Vec<Attribute>, String)]) -> TokenStream {
