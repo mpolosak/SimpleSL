@@ -8,8 +8,8 @@ pub trait TypeOf {
     fn type_of() -> Type;
 }
 
-#[duplicate_item(T; [i64]; [bool]; [usize]; [Result<i64, ExecError>]; [Result<bool, ExecError>];
-    [Result<usize, ExecError>])]
+#[duplicate_item(T; [i64]; [bool]; [usize]; [u32]; [Result<i64, ExecError>]; [Result<bool, ExecError>];
+    [Result<usize, ExecError>]; [Result<u32, ExecError>])]
 impl TypeOf for T {
     fn type_of() -> Type {
         Type::Int

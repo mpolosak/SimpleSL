@@ -178,6 +178,12 @@ impl From<i32> for Variable {
     }
 }
 
+impl From<u32> for Variable {
+    fn from(value: u32) -> Self {
+        Self::Int(value as i64)
+    }
+}
+
 impl From<i64> for Variable {
     fn from(value: i64) -> Self {
         Self::Int(value)
