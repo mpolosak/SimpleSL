@@ -2,13 +2,15 @@ use super::{
     local_variable::LocalVariables, traits::ExecResult, Exec, Instruction, InstructionWithStr,
     Recreate,
 };
+use crate as simplesl;
 use crate::{
     interpreter::Interpreter,
-    parse::Rule,
-    variable::{Array, ReturnType, Type, Variable},
+    variable::{ReturnType, Type, Variable},
     Error, ExecError,
 };
 use pest::iterators::Pair;
+use simplesl_macros::{var, var_type};
+use simplesl_parser::Rule;
 
 #[derive(Debug, Clone)]
 pub struct ArrayRepeat {
@@ -24,7 +26,7 @@ impl ArrayRepeat {
         let mut inner = pair.into_inner();
         let value = InstructionWithStr::new_expression(inner.next().unwrap(), local_variables)?;
         let len = InstructionWithStr::new_expression(inner.next().unwrap(), local_variables)?;
-        if len.return_type() != Type::Int {
+        if !len.return_type().matches(&Type::Int) {
             return Err(Error::WrongLengthType(len.str));
         }
         Self::create_from_instructions(value, len).map_err(Error::from)
@@ -51,9 +53,7 @@ impl ArrayRepeat {
                     instruction: Instruction::Variable(Variable::Int(len)),
                     ..
                 },
-            ) => Ok(Instruction::Variable(
-                Array::new_repeat(value, len as usize).into(),
-            )),
+            ) => Ok(Instruction::Variable(var!([value; len]))),
             (value, len) => Ok(Self { value, len }.into()),
         }
     }
@@ -86,7 +86,7 @@ impl Exec for ArrayRepeat {
         if len < 0 {
             return Err(ExecError::NegativeLength.into());
         }
-        Ok(Array::new_repeat(value, len as usize).into())
+        Ok(var!([value; len]))
     }
 }
 
@@ -101,7 +101,7 @@ impl Recreate for ArrayRepeat {
 impl ReturnType for ArrayRepeat {
     fn return_type(&self) -> Type {
         let element_type = self.value.return_type();
-        [element_type].into()
+        var_type!([element_type])
     }
 }
 

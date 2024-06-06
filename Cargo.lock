@@ -247,9 +247,9 @@ checksum = "3fdb12b2476b595f9358c5161aa467c2438859caa136dec86c26fdd2efe17b92"
 
 [[package]]
 name = "pest"
-version = "2.7.6"
+version = "2.7.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f200d8d83c44a45b21764d1916299752ca035d15ecd46faca3e9a2a2bf6ad06"
+checksum = "560131c633294438da9f7c4b08189194b20946c8274c6b9e38881a7874dc8ee8"
 dependencies = [
  "memchr",
  "thiserror",
@@ -258,9 +258,9 @@ dependencies = [
 
 [[package]]
 name = "pest_derive"
-version = "2.7.6"
+version = "2.7.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bcd6ab1236bbdb3a49027e920e693192ebfe8913f6d60e294de57463a493cfde"
+checksum = "26293c9193fbca7b1a3bf9b79dc1e388e927e6cacaa78b4a3ab705a1d3d41459"
 dependencies = [
  "pest",
  "pest_generator",
@@ -268,9 +268,9 @@ dependencies = [
 
 [[package]]
 name = "pest_generator"
-version = "2.7.6"
+version = "2.7.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2a31940305ffc96863a735bef7c7994a00b325a7138fdbc5bda0f1a0476d3275"
+checksum = "3ec22af7d3fb470a85dd2ca96b7c577a1eb4ef6f1683a9fe9a8c16e136c04687"
 dependencies = [
  "pest",
  "pest_meta",
@@ -281,9 +281,9 @@ dependencies = [
 
 [[package]]
 name = "pest_meta"
-version = "2.7.6"
+version = "2.7.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a7ff62f5259e53b78d1af898941cdcdccfae7385cf7d793a6e55de5d05bb4b7d"
+checksum = "d7a240022f37c361ec1878d646fc5b7d7c4d28d5946e1a80ad5a7a4f4ca0bdcd"
 dependencies = [
  "once_cell",
  "pest",
@@ -434,9 +434,9 @@ dependencies = [
  "markdown",
  "match_any",
  "pest",
- "pest_derive",
  "rustyline",
  "simplesl_macros",
+ "simplesl_parser",
  "typle",
  "unescaper",
 ]
@@ -445,8 +445,21 @@ dependencies = [
 name = "simplesl_macros"
 version = "0.1.0"
 dependencies = [
+ "pest",
+ "proc-macro2",
  "quote",
+ "simplesl_parser",
  "syn 2.0.48",
+ "unescaper",
+]
+
+[[package]]
+name = "simplesl_parser"
+version = "0.1.0"
+dependencies = [
+ "lazy_static",
+ "pest",
+ "pest_derive",
 ]
 
 [[package]]
@@ -504,9 +517,9 @@ checksum = "42ff0bf0c66b8238c6f3b578df37d0b7848e55df8577b3f74f92a69acceeb825"
 
 [[package]]
 name = "typle"
-version = "0.10.2"
+version = "0.10.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "81269a460d5637912ad758078bff0056129e68f6a84c9ec4f837ae5ee6dfb3d6"
+checksum = "fd022139793be6f9656ec46271b7dbad78d335592deb3a9943d2eb704e0293e0"
 dependencies = [
  "proc-macro2",
  "quote",

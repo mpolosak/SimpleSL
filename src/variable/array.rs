@@ -1,12 +1,12 @@
+use super::{Type, Typed, Variable};
+use crate as simplesl;
+use crate::join_debug;
+use simplesl_macros::var_type;
 use std::{
     fmt::{self, Display},
     ops::Deref,
     sync::Arc,
 };
-
-use crate::join_debug;
-
-use super::{Type, Typed, Variable};
 
 #[derive(PartialEq)]
 pub struct Array {
@@ -30,6 +30,13 @@ impl Array {
         .into()
     }
 
+    pub fn new_with_type(element_type: Type, elements: Arc<[Variable]>) -> Array {
+        Self {
+            element_type,
+            elements,
+        }
+    }
+
     pub fn new_repeat(value: Variable, len: usize) -> Self {
         let element_type = value.as_type();
         let elements = std::iter::repeat(value).take(len).collect();
@@ -46,7 +53,8 @@ impl Array {
 
 impl Typed for Array {
     fn as_type(&self) -> Type {
-        [self.element_type.clone()].into()
+        let element_type = self.element_type.clone();
+        var_type!([element_type])
     }
 }
 
@@ -71,7 +79,7 @@ impl<T: Into<Arc<[Variable]>>> From<T> for Array {
             .iter()
             .map(Variable::as_type)
             .reduce(Type::concat)
-            .unwrap();
+            .unwrap_or(Type::Never);
         Array {
             element_type,
             elements,

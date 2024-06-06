@@ -4,11 +4,11 @@ use crate::instruction::{
 };
 use crate::{
     interpreter::Interpreter,
-    parse::Rule,
     variable::{ReturnType, Type, Variable},
     Error, ExecError,
 };
 use pest::iterators::Pair;
+use simplesl_parser::Rule;
 
 #[derive(Debug)]
 pub struct IfElse {

@@ -1,0 +1,13 @@
+[package]
+name = "simplesl_parser"
+version = "0.1.0"
+authors = ["Michał Połosak <mpolosak@op.pl>"]
+edition = "2021"
+license = "MIT"
+description = "SimpleSLParser"
+repository = "https://github.com/mpolosak/SimpleSL"
+
+[dependencies]
+pest.workspace = true
+pest_derive = "2.0"
+lazy_static.workspace = true

@@ -1,25 +1,22 @@
 use super::Filter;
+use crate as simplesl;
 use crate::{
     instruction::{
         traits::{CanBeUsed, ExecResult},
         Exec,
     },
     interpreter::Interpreter,
-    variable::{Array, FunctionType, ReturnType, Type, Variable},
+    variable::{Array, ReturnType, Type, Variable},
 };
+use simplesl_macros::var_type;
 
 impl CanBeUsed for Filter {
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
         let Some(element_type) = lhs.index_result() else {
             return false;
         };
-        let expected_function = FunctionType {
-            params: [element_type.clone()].into(),
-            return_type: Type::Int,
-        } | FunctionType {
-            params: [Type::Int, element_type].into(),
-            return_type: Type::Int,
-        };
+        let element_type2 = element_type.clone();
+        let expected_function = var_type!((element_type)->int | (int,element_type2)->int);
         rhs.matches(&expected_function)
     }
 }
@@ -69,52 +66,51 @@ impl ReturnType for Filter {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        instruction::{bin_op::Filter, traits::CanBeUsed},
-        variable::{parse_type, Type},
-    };
+    use crate as simplesl;
+    use crate::instruction::{bin_op::Filter, traits::CanBeUsed};
+    use simplesl_macros::var_type;
 
     #[test]
     fn can_be_used() {
         assert!(Filter::can_be_used(
-            &[Type::Int].into(),
-            &parse_type!("(int)->int")
+            &var_type!([int]),
+            &var_type!((int)->int)
         ));
         assert!(Filter::can_be_used(
-            &[Type::Int].into(),
-            &parse_type!("(int, any)->int")
+            &var_type!([int]),
+            &var_type!((int, any)->int)
         ));
         assert!(Filter::can_be_used(
-            &parse_type!("[int]|[float]"),
-            &parse_type!("(int|float)->int")
+            &var_type!([int] | [float]),
+            &var_type!((int|float)->int)
         ));
         assert!(Filter::can_be_used(
-            &parse_type!("[int]|[float]"),
-            &parse_type!("(any, any)->int")
+            &var_type!([int] | [float]),
+            &var_type!((any, any)->int)
         ));
         assert!(Filter::can_be_used(
-            &parse_type!("[int]|[float|string]"),
-            &parse_type!("(any, int|float|string)->int")
+            &var_type!([int] | [float | string]),
+            &var_type!((any, int|float|string)->int)
         ));
         assert!(!Filter::can_be_used(
-            &parse_type!("int"),
-            &parse_type!("(any, any)->int")
+            &var_type!(int),
+            &var_type!((any, any)->int)
         ));
         assert!(!Filter::can_be_used(
-            &parse_type!("[int]|float"),
-            &parse_type!("(any, any)->int")
+            &var_type!([int] | float),
+            &var_type!((any, any)->int)
         ));
         assert!(!Filter::can_be_used(
-            &parse_type!("[int]|[float]"),
-            &parse_type!("(any, int)->int")
+            &var_type!([int] | [float]),
+            &var_type!((any, int)->int)
         ));
         assert!(!Filter::can_be_used(
-            &parse_type!("[int]|[float]"),
-            &parse_type!("(float, any)->int")
+            &var_type!([int] | [float]),
+            &var_type!((float, any)->int)
         ));
         assert!(!Filter::can_be_used(
-            &parse_type!("[int]|[float]"),
-            &parse_type!("string")
+            &var_type!([int] | [float]),
+            &var_type!(string)
         ))
     }
 }

@@ -3,13 +3,15 @@ use super::{
     traits::{ExecResult, ExecStop},
     Exec, Instruction, InstructionWithStr, Recreate,
 };
+use crate as simplesl;
 use crate::{
     interpreter::Interpreter,
-    parse::Rule,
     variable::{ReturnType, Type, Typed, Variable},
     Error, ExecError,
 };
 use pest::iterators::Pair;
+use simplesl_macros::var_type;
+use simplesl_parser::Rule;
 
 #[derive(Debug)]
 pub struct At {
@@ -25,9 +27,9 @@ impl At {
     ) -> Result<Instruction, Error> {
         let pair = index.into_inner().next().unwrap();
         let index = InstructionWithStr::new_expression(pair, local_variables)?;
-        let required_instruction_type = Type::String | [Type::Any];
+        let required_instruction_type = var_type!(string | [any]);
         let instruction_return_type = instruction.return_type();
-        if index.return_type() != Type::Int {
+        if index.return_type() != var_type!(int) {
             return Err(Error::CannotIndexWith(index.str));
         }
         if !instruction_return_type.matches(&required_instruction_type) {
@@ -115,39 +117,22 @@ fn at(variable: Variable, index: Variable) -> Result<Variable, ExecError> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{instruction::at::at, variable::Variable, ExecError};
-    use std::str::FromStr;
+    use crate as simplesl;
+    use crate::{instruction::at::at, ExecError};
+    use simplesl_macros::var;
 
     #[test]
     fn check_at() {
-        let array = Variable::from_str("[4, 5.5, \"var\"]").unwrap();
-        assert_eq!(at(array.clone(), Variable::Int(0)), Ok(Variable::Int(4)));
-        assert_eq!(
-            at(array.clone(), Variable::Int(1)),
-            Ok(Variable::Float(5.5))
-        );
-        assert_eq!(
-            at(array.clone(), Variable::Int(2)),
-            Ok(Variable::String("var".into()))
-        );
-        assert_eq!(
-            at(array.clone(), Variable::Int(-1)),
-            Err(ExecError::NegativeIndex)
-        );
-        assert_eq!(at(array, Variable::Int(3)), Err(ExecError::IndexToBig));
-        let string = Variable::String("tex".into());
-        assert_eq!(
-            at(string.clone(), Variable::Int(0)),
-            Ok(Variable::String("t".into()))
-        );
-        assert_eq!(
-            at(string.clone(), Variable::Int(2)),
-            Ok(Variable::String("x".into()))
-        );
-        assert_eq!(
-            at(string.clone(), Variable::Int(3)),
-            Err(ExecError::IndexToBig)
-        );
-        assert_eq!(at(string, Variable::Int(-1)), Err(ExecError::NegativeIndex))
+        let array = var!([4, 5.5, "var"]);
+        assert_eq!(at(array.clone(), var!(0)), Ok(var!(4)));
+        assert_eq!(at(array.clone(), var!(1)), Ok(var!(5.5)));
+        assert_eq!(at(array.clone(), var!(2)), Ok(var!("var")));
+        assert_eq!(at(array.clone(), var!(-1)), Err(ExecError::NegativeIndex));
+        assert_eq!(at(array, var!(3)), Err(ExecError::IndexToBig));
+        let string = var!("tex");
+        assert_eq!(at(string.clone(), var!(0)), Ok(var!("t")));
+        assert_eq!(at(string.clone(), var!(2)), Ok(var!("x")));
+        assert_eq!(at(string.clone(), var!(3)), Err(ExecError::IndexToBig));
+        assert_eq!(at(string, var!(-1)), Err(ExecError::NegativeIndex))
     }
 }

@@ -1,3 +1,4 @@
+use crate as simplesl;
 use crate::instruction::local_variable::LocalVariables;
 use crate::instruction::{And, Exec, ExecResult, Recreate};
 use crate::instruction::{Instruction, InstructionWithStr};
@@ -6,33 +7,34 @@ use crate::{
     Error,
 };
 use crate::{ExecError, Interpreter};
+use simplesl_macros::{var, var_type};
 
 pub fn create_all(array: InstructionWithStr) -> Result<Instruction, Error> {
     match &array.instruction {
         Instruction::Variable(Variable::Array(array))
-            if array.element_type().matches(&Type::Int) =>
+            if array.element_type().matches(&var_type!(int)) =>
         {
             Ok(All::calc(array).into())
         }
         Instruction::ArrayRepeat(array_repeat)
-            if array_repeat.value.return_type().matches(&(Type::Int)) =>
+            if array_repeat.value.return_type().matches(&var_type!(int)) =>
         {
             Ok(array_repeat.value.instruction.clone())
         }
-        Instruction::Array(array) if array.element_type.matches(&Type::Int) => Ok(array
+        Instruction::Array(array) if array.element_type.matches(&var_type!(int)) => Ok(array
             .instructions
             .iter()
             .cloned()
             .map(|iws| iws.instruction)
             .reduce(|acc, curr| And::create_from_instructions(acc, curr))
             .unwrap()),
-        instruction if instruction.return_type().matches(&[Type::Int].into()) => {
+        instruction if instruction.return_type().matches(&var_type!([int])) => {
             Ok(All { array }.into())
         }
         ins => Err(Error::IncorectPostfixOperatorOperand {
             ins: array.str,
             op: "$&&",
-            expected: [Type::Int].into(),
+            expected: var_type!([int]),
             given: ins.return_type(),
         }),
     }
@@ -46,13 +48,13 @@ pub struct All {
 impl All {
     fn calc(array: &Array) -> Variable {
         let sum = array.iter().all(|var| *var.as_int().unwrap() != 0);
-        Variable::from(sum)
+        var!(sum)
     }
 }
 
 impl ReturnType for All {
     fn return_type(&self) -> Type {
-        Type::Int.into()
+        var_type!(int)
     }
 }
 

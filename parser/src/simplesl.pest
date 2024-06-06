@@ -1,5 +1,4 @@
 ident = @{ !("return"~!(ASCII_ALPHANUMERIC|"_")) ~ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC|"_")* }
-only_var = _{var ~ &EOI}
 var = _{ float | int | array | array_repeat | string | function | void | tuple }
   function = {params ~ return_type_decl? ~"{"~line*~"}"}
   param = {ident ~ ":" ~ type}
@@ -18,7 +17,7 @@ var = _{ float | int | array | array_repeat | string | function | void | tuple }
       hexadecimal = @{ "_"* ~ ASCII_HEX_DIGIT ~ ( ASCII_HEX_DIGIT | "_" )* }
   float = @{ ( decimal ~ ("." ~ decimal)? ~ ("e"|"E") ~ ("+"|"-")? ~ "_"* ~ decimal) | (decimal ~ "." ~ decimal) }
   void = {"()"}
-  array = {"[" ~ expression_list ~ "]"}
+  array = {"[" ~ expression_list? ~ "]"}
   array_repeat = {"[" ~ expr ~ ";" ~ expr ~ "]"}
   string = ${ "\"" ~ inner ~ quotation_mark }
     quotation_mark = {"\""}
@@ -97,13 +96,44 @@ type = _{ multi | standard_types }
   function_type = {function_type_params ~ "->" ~ return_type}
     function_type_params = {"(" ~ (type ~ ("," ~ type)*)? ~ ")"}
     return_type = _{ standard_types | "(" ~ multi ~ ")" }
-  array_type = { "[" ~ type ~ "]" }
+  array_type = { "[" ~ type? ~ "]" }
   tuple_type = {"(" ~ (type ~ ("," ~ type)+) ~ ")"}
-  standard_types = _{ int_type | float_type | string_type | function_type | void | array_type | tuple_type | any }
+  standard_types = _{ int_type | float_type | string_type | function_type | void | array_type
+    | tuple_type | any | never }
   multi = { ( standard_types ) ~ ( "|" ~ standard_types )+ }
   any = {"any"}
+  never = {"!"}
+// type + ident for macro var_type!
+type_ident = _{ multi_ident | standard_types_ident }
+  function_type_ident = {(function_type_params_ident | ident) ~ "->" ~ return_type_ident}
+    function_type_params_ident = {"(" ~ (type_ident ~ ("," ~ type_ident)*)? ~ ")"}
+    return_type_ident = _{ standard_types_ident | "(" ~ multi_ident ~ ")" }
+  array_type_ident = { "[" ~ type_ident? ~ "]" }
+  tuple_type_ident = {"(" ~ (type_ident ~ ("," ~ type_ident)+) ~ ")"}
+  standard_types_ident = _{int_type | float_type | string_type | function_type_ident | void
+    | array_type_ident | tuple_type_ident | any | never | ident}
+  multi_ident = { ( standard_types_ident ) ~ ( "|" ~ standard_types_ident )+ }
 input = _{ line* ~ &EOI}
 block_comment = _{"/*" ~ (!"*/" ~ ANY)* ~ "*/"}
 line_comment = _{"//"~(!NEWLINE ~ ANY)*}
+// rule for Variable::from_str
+only_var = _{var_from_str ~ &EOI}
+  var_from_str = _{minus_float | float | minus_int|  int | array_from_str | array_repeat_from_str
+    | string | void | tuple_from_str }
+  minus_float = {"-" ~ float}
+  minus_int = {"-" ~ int}
+  array_from_str = {"[" ~ var_list? ~ "]"}
+  array_repeat_from_str =  {"[" ~ var_from_str ~ ";" ~ int ~ "]"}
+  tuple_from_str =  {"(" ~ var_from_str ~ "," ~ var_list ~ ")"}
+  var_list = _{ (var_from_str ~ ("," ~ var_from_str)*)}
+// rule for var! macro
+var_macro = _{var_ident ~ &EOI}
+  var_ident = _{minus_float | float | minus_int |  int | array_ident | array_ident_repeat
+    | string | void | tuple_ident | minus_ident | ident}
+  minus_ident = {"-" ~ ident}
+  array_ident = {"[" ~ var_ident_list? ~ "]"}
+  array_ident_repeat =  {"[" ~ var_ident ~ ";" ~ (int | ident) ~ "]"}
+  tuple_ident =  {"(" ~ var_ident ~ "," ~ var_ident_list ~ ")"}
+  var_ident_list = _{ (var_ident ~ ("," ~ var_ident)*)}
 COMMENT = _{block_comment|line_comment}
 WHITESPACE = _{ " " | "\t"| NEWLINE }

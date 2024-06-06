@@ -1,6 +1,8 @@
+use crate as simplesl;
 use crate::instruction::{Add, Instruction};
 use crate::variable::Array;
 use crate::variable::{ReturnType, Type, Variable};
+use simplesl_macros::var_type;
 
 impl Add {
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
@@ -52,18 +54,18 @@ impl Add {
 
     fn return_type(lhs: Type, rhs: Type) -> Type {
         let Some(lhs_element) = lhs.element_type() else {
-            if Type::Array(Type::Never.into()).matches(&lhs) {
+            if var_type!([]).matches(&lhs) {
                 return lhs;
             }
             return rhs;
         };
         let Some(rhs_element) = rhs.element_type() else {
-            if Type::Array(Type::Never.into()).matches(&rhs) {
+            if var_type!([]).matches(&rhs) {
                 return rhs;
             }
             return lhs;
         };
-        [lhs_element | rhs_element].into()
+        var_type!([lhs_element | rhs_element])
     }
 }
 
@@ -77,62 +79,51 @@ impl ReturnType for Add {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        instruction::bin_op::Add,
-        variable::{Type, Variable},
-        Code, Error, Interpreter,
-    };
+    use crate as simplesl;
+    use crate::{instruction::bin_op::Add, variable::Variable, Code, Error, Interpreter};
+    use simplesl_macros::{var, var_type};
 
     #[test]
     fn test_add_operator() {
         assert_eq!(parse_and_exec("4+4"), Ok(Variable::Int(8)));
         assert_eq!(parse_and_exec("4.5+0.5"), Ok(Variable::Float(5.0)));
-        assert_eq!(
-            parse_and_exec(r#""aa" + "B""#),
-            Ok(Variable::String("aaB".into()))
-        );
-        assert_eq!(
-            parse_and_exec("[5, 5, 6] + [5]"),
-            parse_and_exec("[5, 5, 6, 5]")
-        );
-        assert_eq!(
-            parse_and_exec(r#"[4, 5, 6] + 5"#),
-            parse_and_exec("[9, 10, 11]")
-        );
+        assert_eq!(parse_and_exec(r#""aa" + "B""#), Ok(var!("aaB")));
+        assert_eq!(parse_and_exec("[5, 5, 6] + [5]"), Ok(var!([5, 5, 6, 5])));
+        assert_eq!(parse_and_exec(r#"[4, 5, 6] + 5"#), Ok(var!([9, 10, 11])));
         assert_eq!(
             parse_and_exec(r#"[4.5, 5.7, 6.0] + 3.3"#),
-            parse_and_exec("[7.8, 9.0, 9.3]")
+            Ok(var!([7.8, 9.0, 9.3]))
         );
         assert_eq!(
             parse_and_exec(r#""7" + ["a", "aaa"]"#),
-            parse_and_exec(r#"["7a", "7aaa"]"#)
+            Ok(var!(["7a", "7aaa"]))
         );
         assert_eq!(
             parse_and_exec(r#"["a", "aaa"]+"3""#),
-            parse_and_exec(r#"["a3", "aaa3"]"#)
+            Ok(var!(["a3", "aaa3"]))
         );
         assert_eq!(
             parse_and_exec("4+4.5"),
-            Err(Error::CannotDo2(Type::Int, "+", Type::Float))
+            Err(Error::CannotDo2(var_type!(int), "+", var_type!(float)))
         );
         assert_eq!(
             parse_and_exec(r#""4"+4.5"#),
-            Err(Error::CannotDo2(Type::String, "+", Type::Float))
+            Err(Error::CannotDo2(var_type!(string), "+", var_type!(float)))
         );
         assert_eq!(
             parse_and_exec(r#""4"+4"#),
-            Err(Error::CannotDo2(Type::String, "+", Type::Int))
+            Err(Error::CannotDo2(var_type!(string), "+", var_type!(int)))
         );
         assert_eq!(
             parse_and_exec(r#"[4]+4.5"#),
-            Err(Error::CannotDo2([Type::Int].into(), "+", Type::Float))
+            Err(Error::CannotDo2(var_type!([int]), "+", var_type!(float)))
         );
         assert_eq!(
             parse_and_exec(r#"[4, 5.5]+4.5"#),
             Err(Error::CannotDo2(
-                [Type::Int | Type::Float].into(),
+                var_type!([int | float]),
                 "+",
-                Type::Float
+                var_type!(float)
             ))
         )
     }
@@ -140,79 +131,88 @@ mod tests {
     #[test]
     fn return_type() {
         // int
-        assert_eq!(Add::return_type(Type::Int, Type::Int), Type::Int);
         assert_eq!(
-            Add::return_type(Type::Int, [Type::Int].into()),
-            [Type::Int].into()
+            Add::return_type(var_type!(int), var_type!(int)),
+            var_type!(int)
         );
         assert_eq!(
-            Add::return_type([Type::Int].into(), Type::Int),
-            [Type::Int].into()
+            Add::return_type(var_type!(int), var_type!([int])),
+            var_type!([int])
         );
         assert_eq!(
-            Add::return_type([Type::Int].into(), [Type::Int].into()),
-            [Type::Int].into()
+            Add::return_type(var_type!([int]), var_type!(int)),
+            var_type!([int])
         );
         assert_eq!(
-            Add::return_type([Type::Int].into(), [Type::Int] | Type::Int),
-            [Type::Int] | Type::Int
+            Add::return_type(var_type!([int]), var_type!([int])),
+            var_type!([int])
         );
         assert_eq!(
-            Add::return_type([Type::Int] | Type::Int, [Type::Int].into()),
-            [Type::Int] | Type::Int
+            Add::return_type(var_type!([int]), var_type!([int] | int)),
+            var_type!([int] | int)
+        );
+        assert_eq!(
+            Add::return_type(var_type!([int] | int), var_type!([int])),
+            var_type!([int] | int)
         );
         // float
-        assert_eq!(Add::return_type(Type::Float, Type::Float), Type::Float);
         assert_eq!(
-            Add::return_type(Type::Float, [Type::Float].into()),
-            [Type::Float].into()
+            Add::return_type(var_type!(float), var_type!(float)),
+            var_type!(float)
         );
         assert_eq!(
-            Add::return_type([Type::Float].into(), Type::Float),
-            [Type::Float].into()
+            Add::return_type(var_type!(float), var_type!([float])),
+            var_type!([float])
         );
         assert_eq!(
-            Add::return_type([Type::Float].into(), [Type::Float].into()),
-            [Type::Float].into()
+            Add::return_type(var_type!([float]), var_type!(float)),
+            var_type!([float])
         );
         assert_eq!(
-            Add::return_type([Type::Float].into(), [Type::Float] | Type::Float),
-            [Type::Float] | Type::Float
+            Add::return_type(var_type!([float]), var_type!([float])),
+            var_type!([float])
         );
         assert_eq!(
-            Add::return_type([Type::Float] | Type::Float, [Type::Float].into()),
-            [Type::Float] | Type::Float
+            Add::return_type(var_type!([float]), var_type!([float] | float)),
+            var_type!([float] | float)
+        );
+        assert_eq!(
+            Add::return_type(var_type!([float] | float), var_type!([float])),
+            var_type!([float] | float)
         );
         // string
-        assert_eq!(Add::return_type(Type::String, Type::String), Type::String);
         assert_eq!(
-            Add::return_type(Type::String, [Type::String].into()),
-            [Type::String].into()
+            Add::return_type(var_type!(string), var_type!(string)),
+            var_type!(string)
         );
         assert_eq!(
-            Add::return_type([Type::String].into(), Type::String),
-            [Type::String].into()
+            Add::return_type(var_type!(string), var_type!([string])),
+            var_type!([string])
         );
         assert_eq!(
-            Add::return_type([Type::String].into(), [Type::String].into()),
-            [Type::String].into()
+            Add::return_type(var_type!([string]), var_type!(string)),
+            var_type!([string])
         );
         assert_eq!(
-            Add::return_type([Type::String].into(), [Type::String] | Type::String),
-            [Type::String] | Type::String
+            Add::return_type(var_type!([string]), var_type!([string])),
+            var_type!([string])
         );
         assert_eq!(
-            Add::return_type([Type::String] | Type::String, [Type::String].into()),
-            [Type::String] | Type::String
+            Add::return_type(var_type!([string]), var_type!([string] | string)),
+            var_type!([string] | string)
+        );
+        assert_eq!(
+            Add::return_type(var_type!([string] | string), var_type!([string])),
+            var_type!([string] | string)
         );
         // array + array
         assert_eq!(
-            Add::return_type([Type::Int].into(), [Type::Float].into()),
-            [Type::Float | Type::Int].into()
+            Add::return_type(var_type!([int]), var_type!([float])),
+            var_type!([float | int])
         );
         assert_eq!(
-            Add::return_type([Type::Int].into(), [Type::Any].into()),
-            [Type::Any].into()
+            Add::return_type(var_type!([int]), var_type!([any])),
+            var_type!([any])
         );
     }
 

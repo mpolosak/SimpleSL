@@ -1,9 +1,9 @@
+use crate as simplesl;
 use crate::{
     function::{Body, Function, Param, Params},
     instruction::InstructionWithStr,
     interpreter::Interpreter,
-    parse::Rule,
-    variable::{FunctionType, ReturnType, Type},
+    variable::{ReturnType, Type},
     ExecError,
 };
 use crate::{
@@ -16,6 +16,8 @@ use crate::{
     Error,
 };
 use pest::iterators::Pair;
+use simplesl_macros::var_type;
+use simplesl_parser::Rule;
 use std::sync::Arc;
 
 #[derive(Clone, Debug)]
@@ -109,10 +111,6 @@ impl ReturnType for AnonymousFunction {
             .map(|param| param.var_type.clone())
             .collect();
         let return_type = self.return_type.clone();
-        FunctionType {
-            params,
-            return_type,
-        }
-        .into()
+        var_type!(params -> return_type)
     }
 }

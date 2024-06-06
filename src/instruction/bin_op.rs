@@ -6,16 +6,13 @@ mod math;
 mod shift;
 use super::{local_variable::LocalVariables, reduce::Reduce, InstructionWithStr};
 use crate::{
-    instruction::{
-        traits::{CanBeUsed, ToResult},
-        Instruction,
-    },
-    parse::{unexpected, Rule},
+    instruction::{traits::CanBeUsed, Instruction},
     variable::{ReturnType, Variable},
-    Error,
+    Error, ToResult,
 };
 use duplicate::duplicate_item;
 use pest::iterators::Pair;
+use simplesl_parser::{unexpected, Rule};
 use std::sync::Arc;
 
 #[duplicate_item(T; [BitwiseAnd]; [BitwiseOr]; [Xor]; [Equal]; [Filter]; [Map]; [And]; [Or];
@@ -116,7 +113,7 @@ impl InstructionWithStr {
                 let instruction = Reduce::create_instruction(lhs, op, rhs, local_variables)?;
                 Ok(InstructionWithStr { instruction, str })
             }
-            rule => unexpected(rule),
+            rule => unexpected!(rule),
         }
     }
 }

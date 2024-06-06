@@ -1,3 +1,4 @@
+use crate as simplesl;
 use crate::{
     function::{Body, Function, Param, Params},
     instruction::{
@@ -7,11 +8,12 @@ use crate::{
         Exec, Instruction, InstructionWithStr, Recreate,
     },
     interpreter::Interpreter,
-    parse::Rule,
-    variable::{FunctionType, ReturnType, Type},
+    variable::{ReturnType, Type},
     Error, ExecError,
 };
 use pest::iterators::Pair;
+use simplesl_macros::var_type;
+use simplesl_parser::Rule;
 use std::sync::Arc;
 
 #[derive(Debug)]
@@ -119,10 +121,6 @@ impl ReturnType for FunctionDeclaration {
             .map(|Param { name: _, var_type }| var_type.clone())
             .collect();
         let return_type = self.return_type.clone();
-        FunctionType {
-            params,
-            return_type,
-        }
-        .into()
+        var_type!(params -> return_type)
     }
 }

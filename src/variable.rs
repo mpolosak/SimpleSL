@@ -1,17 +1,18 @@
 mod array;
 mod function_type;
 mod multi_type;
+mod try_from;
 mod r#type;
-use crate::{function::Function, join_debug, parse::*, Error};
+mod type_of;
+use crate::{function::Function, join_debug, Error};
 use enum_as_inner::EnumAsInner;
 use match_any::match_any;
 use pest::{iterators::Pair, Parser};
-#[cfg(test)]
-pub(crate) use r#type::parse_type;
 pub use r#type::{ReturnType, Type, Typed};
+use simplesl_parser::{unexpected, Rule, SimpleSLParser};
 use std::{fmt, io, str::FromStr, sync::Arc};
 pub use typle::typle;
-pub use {array::Array, function_type::FunctionType, multi_type::MultiType};
+pub use {array::Array, function_type::FunctionType, multi_type::MultiType, type_of::TypeOf};
 
 #[derive(Clone, EnumAsInner)]
 pub enum Variable {
@@ -98,7 +99,17 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
     type Error = Error;
 
     fn try_from(pair: Pair<Rule>) -> Result<Self, Error> {
-        fn parse_int(pair: Pair<Rule>, radix: u32) -> Result<Variable, Error> {
+        fn parse_int(pair: Pair<Rule>) -> Result<i64, Error> {
+            let pair = pair.into_inner().next().unwrap();
+            match pair.as_rule() {
+                Rule::binary_int => parse_int_with_radix(pair, 2),
+                Rule::octal_int => parse_int_with_radix(pair, 8),
+                Rule::decimal_int => parse_int_with_radix(pair, 10),
+                Rule::hexadecimal_int => parse_int_with_radix(pair, 16),
+                rule => unexpected!(rule),
+            }
+        }
+        fn parse_int_with_radix(pair: Pair<Rule>, radix: u32) -> Result<i64, Error> {
             let str = pair.as_str();
             let inner = pair
                 .into_inner()
@@ -106,17 +117,21 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
                 .unwrap()
                 .as_str()
                 .replace([' ', '_'], "");
-            let Ok(value) = i64::from_str_radix(&inner, radix) else {
-                return Err(Error::IntegerOverflow(str.into()));
-            };
-            Ok(Variable::Int(value))
+            i64::from_str_radix(&inner, radix).map_err(|_| {
+                return Error::IntegerOverflow(str.into());
+            })
         }
         match pair.as_rule() {
-            Rule::int => Self::try_from(pair.into_inner().next().unwrap()),
-            Rule::binary_int => parse_int(pair, 2),
-            Rule::octal_int => parse_int(pair, 8),
-            Rule::decimal_int => parse_int(pair, 10),
-            Rule::hexadecimal_int => parse_int(pair, 16),
+            Rule::minus_int => {
+                parse_int(pair.into_inner().next().unwrap()).map(|value| Variable::Int(-value))
+            }
+            Rule::int => parse_int(pair).map(Self::from),
+            Rule::minus_float => {
+                let Ok(value) = pair.as_str().replace([' ', '_'], "").parse::<f64>() else {
+                    return Err(Error::CannotBeParsed(pair.as_str().into()));
+                };
+                Ok(Variable::Float(value))
+            }
             Rule::float => {
                 let Ok(value) = pair.as_str().replace([' ', '_'], "").parse::<f64>() else {
                     return Err(Error::CannotBeParsed(pair.as_str().into()));
@@ -128,21 +143,28 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
                 let value = unescaper::unescape(value)?;
                 Ok(value.into())
             }
-            Rule::array => {
+            Rule::array_from_str => {
                 let elements = pair
                     .into_inner()
-                    .map(|pair| pair.into_inner().next().unwrap())
                     .map(Self::try_from)
                     .collect::<Result<Arc<[Variable]>, Error>>()?;
-                let Some(element_type) = elements.iter().map(Typed::as_type).reduce(Type::concat)
-                else {
-                    panic!("Tried to use [] to create empty array")
-                };
+                let element_type = elements
+                    .iter()
+                    .map(Typed::as_type)
+                    .reduce(Type::concat)
+                    .unwrap_or(Type::Never);
                 Ok(Array {
                     element_type,
                     elements,
                 }
                 .into())
+            }
+            Rule::array_repeat_from_str => {
+                let mut inner = pair.into_inner();
+                let value = Variable::try_from(inner.next().unwrap())?;
+                let len_pair = inner.next().unwrap();
+                let len = parse_int(len_pair)?;
+                Ok(Array::new_repeat(value, len as usize).into())
             }
             Rule::void => Ok(Variable::Void),
             _ => Err(Error::CannotBeParsed(pair.as_str().into())),
@@ -281,7 +303,7 @@ pub fn is_correct_variable_name(name: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use crate::variable::Variable;
+    use crate::variable::{Array, Variable};
 
     #[test]
     fn test_send() {
@@ -314,6 +336,7 @@ mod tests {
         use crate::variable::Variable;
         use std::str::FromStr;
         assert_eq!(Variable::from_str(" 15"), Ok(Variable::Int(15)));
+        assert_eq!(Variable::from_str(" -7"), Ok(Variable::Int(-7)));
         assert_eq!(Variable::from_str(" 1__00_5__"), Ok(Variable::Int(1005)));
         assert_eq!(Variable::from_str(" 0b111 "), Ok(Variable::Int(0b111)));
         assert_eq!(Variable::from_str(" 0b_1_11_ "), Ok(Variable::Int(0b111)));
@@ -325,6 +348,7 @@ mod tests {
             Ok(Variable::Int(0xFA6))
         );
         assert_eq!(Variable::from_str(" 7.5 "), Ok(Variable::Float(7.5)));
+        assert_eq!(Variable::from_str(" -5.0 "), Ok(Variable::Float(-5.0)));
         assert_eq!(Variable::from_str(" 5e25 "), Ok(Variable::Float(5e25)));
         assert_eq!(Variable::from_str(" 6E_25 "), Ok(Variable::Float(6E25)));
         assert_eq!(Variable::from_str(" 6E-25 "), Ok(Variable::Float(6E-25)));
@@ -335,5 +359,19 @@ mod tests {
             Ok(Variable::String("print \"".into()))
         );
         assert!(Variable::from_str(r#""print" """#).is_err());
+        assert_eq!(
+            Variable::from_str("[14; 5]"),
+            Ok(Array::new_repeat(Variable::Int(14), 5).into())
+        );
+        assert!(Variable::from_str("[14; 5.5]").is_err());
+        assert_eq!(
+            Variable::from_str("[45, 4, 3.5]"),
+            Ok(Variable::from([
+                Variable::Int(45),
+                Variable::Int(4),
+                Variable::Float(3.5)
+            ]))
+        );
+        assert_eq!(Variable::from_str("[]"), Ok(Variable::from([])))
     }
 }

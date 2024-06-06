@@ -1,11 +1,10 @@
 use super::{function_type::FunctionType, multi_type::MultiType};
-use crate::{
-    errors::ParseTypeError,
-    join,
-    parse::{Rule, SimpleSLParser},
-};
+use crate as simplesl;
+use crate::{errors::ParseTypeError, join};
 use match_any::match_any;
 use pest::{iterators::Pair, Parser};
+use simplesl_macros::var_type;
+use simplesl_parser::{Rule, SimpleSLParser};
 use std::{
     fmt::Display,
     hash::Hash,
@@ -14,7 +13,7 @@ use std::{
     str::FromStr,
     sync::Arc,
 };
-use typle::typle;
+
 #[derive(Clone, Debug, Hash, Eq, PartialEq)]
 pub enum Type {
     Int,
@@ -97,11 +96,7 @@ impl Type {
                 let params = zip(fn1.params.iter().cloned(), fn2.params.iter().cloned())
                     .map(|(type1, type2)| type1.concat(type2))
                     .collect();
-                FunctionType {
-                    params,
-                    return_type,
-                }
-                .into()
+                var_type!(params -> return_type)
             }
             _ => Type::Never,
         }
@@ -238,6 +233,7 @@ impl Display for Type {
             Self::Float => write!(f, "float"),
             Self::String => write!(f, "string"),
             Self::Function(function_type) => write!(f, "{function_type}"),
+            Self::Array(var_type) if var_type.matches(&Type::Never) => write!(f, "[]"),
             Self::Array(var_type) => write!(f, "[{var_type}]"),
             Self::Tuple(types) => write!(f, "({})", join(types.as_ref(), ", ")),
             Self::Void => write!(f, "()"),
@@ -269,8 +265,12 @@ impl From<Pair<'_, Rule>> for Type {
             Rule::void => Self::Void,
             Rule::function_type => FunctionType::from(pair).into(),
             Rule::array_type => {
-                let pair = pair.into_inner().next().unwrap();
-                Self::Array(Self::from(pair).into())
+                let element_type = pair
+                    .into_inner()
+                    .next()
+                    .map(Type::from)
+                    .unwrap_or(Type::Never);
+                Self::Array(element_type.into())
             }
             Rule::tuple_type => {
                 let types = pair.into_inner().map(Type::from).collect();
@@ -282,6 +282,7 @@ impl From<Pair<'_, Rule>> for Type {
                 .reduce(Type::concat)
                 .unwrap(),
             Rule::any => Self::Any,
+            Rule::never => Self::Never,
             rule => panic!("Type cannot be built from rule: {rule:?}"),
         }
     }
@@ -292,14 +293,6 @@ impl<T: Into<Type>> BitOr<T> for Type {
 
     fn bitor(self, rhs: T) -> Self::Output {
         self.concat(rhs.into())
-    }
-}
-
-impl BitOr<Type> for [Type; 1] {
-    type Output = Type;
-
-    fn bitor(self, rhs: Type) -> Self::Output {
-        Type::from(self).concat(rhs)
     }
 }
 
@@ -319,19 +312,6 @@ impl BitOrAssign for Type {
     }
 }
 
-impl From<[Type; 1]> for Type {
-    fn from([value]: [Type; 1]) -> Self {
-        Type::Array(value.into())
-    }
-}
-
-#[typle(Tuple for 2..=12)]
-impl<T: Tuple<Type>> From<T> for Type {
-    fn from(value: T) -> Self {
-        let types: [Type; Tuple::LEN] = value.into();
-        Type::Tuple(types.into())
-    }
-}
 pub trait Typed {
     /// Returns the Type of the &self
     fn as_type(&self) -> Type;
@@ -343,25 +323,15 @@ pub trait ReturnType {
 }
 
 #[cfg(test)]
-macro_rules! parse_type {
-    ($s: literal) => {
-        $s.parse::<Type>().unwrap()
-    };
-}
-
-#[cfg(test)]
-pub(crate) use parse_type;
-
-#[cfg(test)]
 mod tests {
-    use std::str::FromStr;
-
-    use itertools::iproduct;
-
+    use crate as simplesl;
     use crate::{
         errors::ParseTypeError,
-        variable::{parse_type, FunctionType, Type},
+        variable::{FunctionType, Type},
     };
+    use itertools::iproduct;
+    use simplesl_macros::var_type;
+    use std::str::FromStr;
 
     #[test]
     fn from_str() {
@@ -387,23 +357,29 @@ mod tests {
             }
             .into())
         );
-        assert_eq!(Type::from_str("[int]"), Ok([Type::Int].into()));
-        assert_eq!(Type::from_str("[float]"), Ok([Type::Float].into()));
-        assert_eq!(Type::from_str("[string]"), Ok([Type::String].into()));
-        assert_eq!(Type::from_str("[any]"), Ok([Type::Any].into()));
-        assert_eq!(Type::from_str("[int]"), Ok([Type::Int].into()));
-        assert_eq!(Type::from_str("[()]"), Ok([Type::Void].into()));
+        assert_eq!(Type::from_str("[int]"), Ok(Type::Array((Type::Int).into())));
+        assert_eq!(
+            Type::from_str("[float]"),
+            Ok(Type::Array(Type::Float.into()))
+        );
+        assert_eq!(
+            Type::from_str("[string]"),
+            Ok(Type::Array(Type::String.into()))
+        );
+        assert_eq!(Type::from_str("[any]"), Ok(Type::Array(Type::Any.into())));
+        assert_eq!(Type::from_str("[int]"), Ok(Type::Array(Type::Int.into())));
+        assert_eq!(Type::from_str("[()]"), Ok(Type::Array(Type::Void.into())));
         assert_eq!(
             Type::from_str("[int | float]"),
-            Ok([Type::Int | Type::Float].into())
+            Ok(Type::Array((Type::Int | Type::Float).into()))
         );
         assert_eq!(
             Type::from_str("(int, string)"),
-            Ok((Type::Int, Type::String).into())
+            Ok(Type::Tuple([Type::Int, Type::String].into()))
         );
         assert_eq!(
             Type::from_str("(int, string) | float"),
-            Ok(Type::from((Type::Int, Type::String)) | Type::Float)
+            Ok(Type::Tuple([Type::Int, Type::String].into()) | Type::Float)
         );
         assert_eq!(Type::from_str("(int)"), Err(ParseTypeError));
         assert_eq!(
@@ -414,7 +390,11 @@ mod tests {
             } | Type::String)
         );
         assert_eq!(Type::from_str("any | float"), Ok(Type::Any));
-        assert_eq!(Type::from_str("[any | float]"), Ok([Type::Any].into()));
+        assert_eq!(
+            Type::from_str("[any | float]"),
+            Ok(Type::Array(Type::Any.into()))
+        );
+        assert_eq!(Type::from_str("!"), Ok(Type::Never))
     }
 
     #[test]
@@ -424,9 +404,9 @@ mod tests {
             Type::Float,
             Type::Int,
             Type::String,
-            Type::Int | Type::String,
-            [Type::Any].into(),
-            (Type::Float, Type::Int, Type::Int | Type::Float).into(),
+            var_type!(int | string),
+            var_type!([any]),
+            var_type!((float, int, int | float)),
             Type::Void,
         ];
         for var_type in types {
@@ -435,14 +415,14 @@ mod tests {
             assert!(var_type.matches(&Type::Any));
             assert!(var_type.matches(&(var_type.clone() | Type::Int)));
         }
-        let var_type = Type::Array(Type::Int.into()) | [Type::Float];
-        let var_type2 = [Type::Float | Type::Int].into();
+        let var_type = var_type!([int] | [float]);
+        let var_type2 = var_type!([float | int]);
         assert!(var_type.matches(&var_type));
         assert!(var_type.matches(&var_type2));
         assert!(var_type2.matches(&var_type2));
         assert!(!var_type2.matches(&var_type));
-        let var_type = Type::Int | [Type::Float] | [Type::String];
-        let var_type2 = Type::Int | [Type::Float | Type::String];
+        let var_type = var_type!(int | [float] | [string]);
+        let var_type2 = var_type!(int | [float | string]);
         assert!(var_type.matches(&var_type));
         assert!(var_type.matches(&var_type2));
         assert!(var_type2.matches(&var_type2));
@@ -452,13 +432,13 @@ mod tests {
     #[test]
     fn conjoin() {
         let types = [
-            Type::Int,
-            Type::Float,
-            Type::Int,
-            Type::String,
-            [Type::Any].into(),
-            (Type::Float, Type::String, Type::String | Type::Float).into(),
-            Type::from_str("(int, string)->float").unwrap(),
+            var_type!(int),
+            var_type!(float),
+            var_type!(int),
+            var_type!(string),
+            var_type!([any]),
+            var_type!((float, string, string | float)),
+            var_type!((int, string)->float),
         ];
         for var_type in types.iter() {
             assert_eq!(&var_type.conjoin(var_type), var_type);
@@ -468,44 +448,44 @@ mod tests {
             .for_each(|(t1, t2)| assert_eq!(t1.conjoin(t2), Type::Never));
         let types = [
             (
-                parse_type!("int|float"),
-                parse_type!("float|string"),
-                parse_type!("float"),
+                var_type!(int | float),
+                var_type!(float | string),
+                var_type!(float),
             ),
             (
-                parse_type!("(int|float) -> (int|string)"),
-                parse_type!("(string) -> (int|float)"),
-                parse_type!("(int|float|string) -> int"),
+                var_type!((int|float) -> (int|string)),
+                var_type!((string) -> (int|float)),
+                var_type!((int|float|string) -> int),
             ),
             (
-                parse_type!("(int|float) -> string"),
-                parse_type!("(string) -> (int|float)"),
+                var_type!((int|float) -> string),
+                var_type!((string) -> (int|float)),
+                var_type!(!),
+            ),
+            (
+                var_type!((int|float) -> (int|string)),
+                var_type!((string, any) -> (int|float)),
+                var_type!(!),
+            ),
+            (
+                var_type!((int|float, string) -> ([int]|[float])),
+                var_type!((string, any) -> [int|float]),
+                var_type!((int|float|string, any) -> ([int]|[float])),
+            ),
+            (
+                var_type!([int | float]),
+                var_type!([int | string]),
+                var_type!([int]),
+            ),
+            (
+                var_type!((int, float)),
+                var_type!((int, float, string)),
                 Type::Never,
             ),
             (
-                parse_type!("(int|float) -> (int|string)"),
-                parse_type!("(string, any) -> (int|float)"),
-                Type::Never,
-            ),
-            (
-                parse_type!("(int|float, string) -> ([int]|[float])"),
-                parse_type!("(string, any) -> [int|float]"),
-                parse_type!("(int|float|string, any) -> ([int]|[float])"),
-            ),
-            (
-                parse_type!("[int|float]"),
-                parse_type!("[int|string]"),
-                parse_type!("[int]"),
-            ),
-            (
-                parse_type!("(int, float)"),
-                parse_type!("(int, float, string)"),
-                Type::Never,
-            ),
-            (
-                parse_type!("(int|float, string)"),
-                parse_type!("(int|string, float|string)"),
-                parse_type!("(int, string)"),
+                var_type!((int | float, string)),
+                var_type!((int | string, float | string)),
+                var_type!((int, string)),
             ),
         ];
         for (type1, type2, result) in types {
@@ -516,144 +496,135 @@ mod tests {
     #[test]
     fn check_flatten_tuple() {
         assert_eq!(
-            parse_type!("(int, string)").flatten_tuple(),
-            Some([Type::Int, Type::String].into())
+            var_type!((int, string)).flatten_tuple(),
+            Some([var_type!(int), var_type!(string)].into())
         );
         assert_eq!(
-            parse_type!("(int, string)|(string, int)").flatten_tuple(),
-            Some([Type::Int | Type::String, Type::Int | Type::String].into())
+            var_type!((int, string) | (string, int)).flatten_tuple(),
+            Some([var_type!(int | string), var_type!(int | string)].into())
         );
 
         assert_eq!(
-            parse_type!("(int, string)|(string, int)|(any, (int, string))").flatten_tuple(),
+            var_type!((int, string) | (string, int) | (any, (int, string))).flatten_tuple(),
+            Some([var_type!(any), var_type!(int | string | (int, string)),].into())
+        );
+
+        assert_eq!(
+            var_type!((int, string, float) | (string, int, float)).flatten_tuple(),
             Some(
                 [
-                    Type::Any,
-                    Type::Int | Type::String | (Type::Int, Type::String)
+                    var_type!(int | string),
+                    var_type!(int | string),
+                    var_type!(float)
                 ]
                 .into()
             )
         );
-
+        assert_eq!(var_type!(int | (string, int, float)).flatten_tuple(), None);
         assert_eq!(
-            parse_type!("(int, string, float)|(string, int, float)").flatten_tuple(),
-            Some(
-                [
-                    Type::Int | Type::String,
-                    Type::Int | Type::String,
-                    Type::Float
-                ]
-                .into()
-            )
-        );
-        assert_eq!(
-            parse_type!("int|(string, int, float)").flatten_tuple(),
-            None
-        );
-        assert_eq!(
-            parse_type!("(int, string)|(string, int, float)").flatten_tuple(),
+            var_type!((int, string) | (string, int, float)).flatten_tuple(),
             None
         );
     }
 
     #[test]
     fn index_type() {
-        assert_eq!(parse_type!("[int]").index_result(), Some(Type::Int));
-        assert_eq!(parse_type!("string").index_result(), Some(Type::String));
+        assert_eq!(var_type!([int]).index_result(), Some(var_type!(int)));
+        assert_eq!(var_type!(string).index_result(), Some(var_type!(string)));
         assert_eq!(
-            parse_type!("string|[string]").index_result(),
-            Some(Type::String)
+            var_type!(string | [string]).index_result(),
+            Some(var_type!(string))
         );
         assert_eq!(
-            parse_type!("string | [int]").index_result(),
-            Some(Type::Int | Type::String)
+            var_type!(string | [int]).index_result(),
+            Some(var_type!(int | string))
         );
         assert_eq!(
-            parse_type!("[float] | [int]").index_result(),
-            Some(Type::Int | Type::Float)
+            var_type!([float] | [int]).index_result(),
+            Some(var_type!(int | float))
         );
         assert_eq!(
-            parse_type!("[int] | [string|float]").index_result(),
-            Some(Type::Int | Type::String | Type::Float)
+            var_type!([int] | [string | float]).index_result(),
+            Some(var_type!(int | string | float))
         );
-        assert_eq!(parse_type!("[any]|float").index_result(), None);
-        assert_eq!(parse_type!("int").index_result(), None);
-        assert_eq!(parse_type!("[int]|float").index_result(), None);
-        assert_eq!(parse_type!("any").index_result(), None);
-        assert_eq!(parse_type!("string | (int, float)").index_result(), None);
+        assert_eq!(var_type!([any] | float).index_result(), None);
+        assert_eq!(var_type!(int).index_result(), None);
+        assert_eq!(var_type!([int] | float).index_result(), None);
+        assert_eq!(var_type!(any).index_result(), None);
+        assert_eq!(var_type!(string | (int, float)).index_result(), None);
     }
 
     #[test]
     fn params() {
-        assert_eq!(parse_type!("()->int").params(), Some([].into()));
-        assert_eq!(parse_type!("(int)->int").params(), Some([Type::Int].into()));
+        assert_eq!(var_type!(()->int).params(), Some([].into()));
         assert_eq!(
-            parse_type!("(int)->int | (int|float)->()").params(),
-            Some([Type::Int].into())
+            var_type!((int)->int).params(),
+            Some([var_type!(int)].into())
         );
         assert_eq!(
-            parse_type!("(int)->int | (int|float)->() | (string) -> any").params(),
-            Some([Type::Never].into())
+            var_type!((int)->int | (int|float)->()).params(),
+            Some([var_type!(int)].into())
         );
         assert_eq!(
-            parse_type!("(int, float)->int | (int|float, float | string)->()").params(),
-            Some([Type::Int, Type::Float].into())
+            var_type!((int)->int | (int|float)->() | (string) -> any).params(),
+            Some([var_type!(!)].into())
         );
         assert_eq!(
-            parse_type!("(int)->int | (int|float, float | string)->()").params(),
+            var_type!((int, float)->int | (int|float, float | string)->()).params(),
+            Some([var_type!(int), var_type!(float)].into())
+        );
+        assert_eq!(
+            var_type!((int)->int | (int|float, float | string)->()).params(),
             None
         );
         assert_eq!(
-            parse_type!("(int)->int | (int|float)->() | () -> any").params(),
+            var_type!((int)->int | (int|float)->() | () -> any).params(),
             None
         );
-        assert_eq!(
-            parse_type!("(int)->int | (int|float)->() | any").params(),
-            None
-        );
-        assert_eq!(parse_type!("int").params(), None);
-        assert_eq!(parse_type!("float").params(), None);
+        assert_eq!(var_type!((int)->int | (int|float)->() | any).params(), None);
+        assert_eq!(var_type!(int).params(), None);
+        assert_eq!(var_type!(float).params(), None);
     }
 
     #[test]
     fn function_return_type() {
-        assert_eq!(parse_type!("()->int").return_type(), Some(Type::Int));
+        assert_eq!(var_type!(()->int).return_type(), Some(Type::Int));
         assert_eq!(
-            parse_type!("()->int | (int) -> float").return_type(),
-            Some(Type::Int | Type::Float)
+            var_type!(()->int | (int) -> float).return_type(),
+            Some(var_type!(int | float))
         );
         assert_eq!(
-            parse_type!("()->int | (int) -> (float|string)").return_type(),
-            Some(Type::Float | Type::Int | Type::String)
+            var_type!(()->int | (int) -> (float|string)).return_type(),
+            Some(var_type!(int | float | string))
         );
         assert_eq!(
-            parse_type!("()->int | (int) -> float | (int, int)->any").return_type(),
-            Some(Type::Any)
+            var_type!(()->int | (int) -> float | (int, int)->any).return_type(),
+            Some(var_type!(any))
         );
-        assert_eq!(parse_type!("float").return_type(), None);
-        assert_eq!(parse_type!("int").return_type(), None);
-        assert_eq!(parse_type!("string").return_type(), None);
-        assert_eq!(parse_type!("()->int | float").return_type(), None);
+        assert_eq!(var_type!(float).return_type(), None);
+        assert_eq!(var_type!(int).return_type(), None);
+        assert_eq!(var_type!(string).return_type(), None);
+        assert_eq!(var_type!(()->int | float).return_type(), None);
     }
 
     #[test]
     fn element_type() {
-        assert_eq!(parse_type!("[int]").element_type(), Some(Type::Int));
-        assert_eq!(parse_type!("string").element_type(), None);
-        assert_eq!(parse_type!("string|[string]").element_type(), None);
-        assert_eq!(parse_type!("string | [int]").element_type(), None);
+        assert_eq!(var_type!([int]).element_type(), Some(Type::Int));
+        assert_eq!(var_type!(string).element_type(), None);
+        assert_eq!(var_type!(string | [string]).element_type(), None);
+        assert_eq!(var_type!(string | [int]).element_type(), None);
         assert_eq!(
-            parse_type!("[float] | [int]").element_type(),
-            Some(Type::Int | Type::Float)
+            var_type!([float] | [int]).element_type(),
+            Some(var_type!(int | float))
         );
         assert_eq!(
-            parse_type!("[int] | [string|float]").element_type(),
-            Some(Type::Int | Type::String | Type::Float)
+            var_type!([int] | [string | float]).element_type(),
+            Some(var_type!(int | float | string))
         );
-        assert_eq!(parse_type!("[any]|float").element_type(), None);
-        assert_eq!(parse_type!("int").element_type(), None);
-        assert_eq!(parse_type!("[int]|float").element_type(), None);
-        assert_eq!(parse_type!("any").element_type(), None);
-        assert_eq!(parse_type!("string | (int, float)").element_type(), None);
+        assert_eq!(var_type!([any] | float).element_type(), None);
+        assert_eq!(var_type!(int).element_type(), None);
+        assert_eq!(var_type!([int] | float).element_type(), None);
+        assert_eq!(var_type!(any).element_type(), None);
+        assert_eq!(var_type!(string | (int, float)).element_type(), None);
     }
 }

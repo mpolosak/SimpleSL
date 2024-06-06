@@ -1,4 +1,6 @@
+use crate::var_type::type_from_str;
 use proc_macro::TokenStream;
+use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use std::rc::Rc;
 use syn::{parse::Parser, punctuated::Punctuated, Expr, ExprLit, Lit, MetaNameValue, Token};
@@ -7,7 +9,7 @@ use syn::{parse::Parser, punctuated::Punctuated, Expr, ExprLit, Lit, MetaNameVal
 pub struct Attributes {
     pub name: Option<Rc<str>>,
     pub catch_rest: bool,
-    pub return_type: Option<quote::__private::TokenStream>,
+    pub return_type: Option<TokenStream2>,
 }
 
 impl Attributes {
@@ -33,9 +35,7 @@ impl Attributes {
                         lit: Lit::Str(lit), ..
                     }),
                 ) => {
-                    new.return_type = Some(
-                        quote!({use std::str::FromStr; simplesl::variable::Type::from_str(#lit).unwrap()}),
-                    );
+                    new.return_type = Some(type_from_str(&lit.value()));
                 }
                 ("name" | "return_type", _) => {
                     panic!("{path} must be str literal");

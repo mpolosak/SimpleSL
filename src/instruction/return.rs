@@ -4,11 +4,11 @@ use super::{
     Exec, Instruction, InstructionWithStr, Recreate,
 };
 use crate::{
-    parse::Rule,
     variable::{ReturnType, Type, Variable},
     Error, ExecError, Interpreter,
 };
 use pest::iterators::Pair;
+use simplesl_parser::Rule;
 
 #[derive(Debug)]
 pub struct Return {

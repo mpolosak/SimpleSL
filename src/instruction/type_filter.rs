@@ -1,15 +1,16 @@
+use super::InstructionWithStr;
+use crate as simplesl;
 use crate::{
     instruction::{
         local_variable::LocalVariables, traits::ExecResult, Exec, Instruction, Recreate,
     },
     interpreter::Interpreter,
-    parse::Rule,
     variable::{Array, ReturnType, Type, Typed},
     Error, ExecError,
 };
 use pest::iterators::Pair;
-
-use super::InstructionWithStr;
+use simplesl_macros::var_type;
+use simplesl_parser::Rule;
 
 #[derive(Debug)]
 pub struct TypeFilter {
@@ -24,7 +25,7 @@ impl TypeFilter {
     ) -> Result<Instruction, Error> {
         let array_type = array.return_type();
         let var_type = Type::from(var_type);
-        if !array_type.matches(&Type::Array(Type::Any.into())) {
+        if !array_type.matches(&var_type!([any])) {
             return Err(Error::CannotDo2(array_type, "?", var_type));
         }
         Ok(Self { array, var_type }.into())
@@ -61,6 +62,7 @@ impl Recreate for TypeFilter {
 
 impl ReturnType for TypeFilter {
     fn return_type(&self) -> Type {
-        [self.var_type.clone()].into()
+        let element_type = self.var_type.clone();
+        var_type!([element_type])
     }
 }

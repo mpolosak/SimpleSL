@@ -1,4 +1,5 @@
 use pest::pratt_parser::PrattParser;
+use pest_derive::Parser;
 
 #[derive(Parser)]
 #[grammar = "simplesl.pest"]
@@ -32,6 +33,9 @@ lazy_static::lazy_static! {
     };
 }
 
-pub fn unexpected(rule: Rule) -> ! {
-    unreachable!("Unexpected rule: {rule:?}")
+#[macro_export]
+macro_rules! unexpected {
+    ($rule:expr) => {
+        unreachable!("Unexpected rule: {:?}", $rule)
+    };
 }

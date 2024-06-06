@@ -6,11 +6,11 @@ use crate::{
         Exec, InstructionWithStr,
     },
     interpreter::Interpreter,
-    parse::{unexpected, Rule},
     variable::{ReturnType, Type, Typed, Variable},
     Error, ExecError,
 };
 use pest::iterators::Pair;
+use simplesl_parser::{unexpected, Rule};
 use std::sync::Arc;
 
 #[derive(Debug)]
@@ -56,7 +56,7 @@ impl MatchArm {
                 let instruction = InstructionWithStr::new(pair, local_variables)?;
                 Ok(Self::Other(instruction))
             }
-            rule => unexpected(rule),
+            rule => unexpected!(rule),
         }
     }
     pub fn is_covering_type(&self, checked_type: &Type) -> bool {
