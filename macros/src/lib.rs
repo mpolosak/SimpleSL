@@ -7,7 +7,7 @@ use attributes::Attributes;
 use export_function::export_item_fn;
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, Item, ItemFn, ItemMod};
+use syn::{parse_macro_input, Item, ItemConst, ItemFn, ItemMod};
 use var::var_quote;
 use var_type::type_quote;
 
@@ -18,14 +18,17 @@ pub fn export(_attr: TokenStream, module: TokenStream) -> TokenStream {
     let items = module.content.unwrap().1;
     let items = items
         .into_iter()
-        .map(|item| {
-            if let Item::Fn(mut function) = item {
+        .map(|item| match item {
+            Item::Const(ItemConst { ident, expr, .. }) => {
+                let ident = ident.to_string();
+                quote!(interpreter.insert(#ident.into(), #expr.into());)
+            }
+            Item::Fn(mut function) => {
                 let attributes = Attributes::from_function_attrs(&function.attrs);
                 function.attrs = vec![];
                 export_item_fn(function, attributes)
-            } else {
-                quote!(#item)
             }
+            _ => quote!(#item),
         })
         .fold(quote!(), |acc, curr| {
             quote!(

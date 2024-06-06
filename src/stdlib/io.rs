@@ -5,6 +5,7 @@ use simplesl_macros::export;
 mod add_io {
     use crate::{join, variable::Variable};
     use std::io;
+
     fn print(var: &Variable) {
         println!("{var}");
     }

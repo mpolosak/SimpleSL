@@ -172,6 +172,12 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
     }
 }
 
+impl From<i32> for Variable {
+    fn from(value: i32) -> Self {
+        Self::Int(value as i64)
+    }
+}
+
 impl From<i64> for Variable {
     fn from(value: i64) -> Self {
         Self::Int(value)
