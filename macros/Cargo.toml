@@ -13,6 +13,7 @@ proc_macro = true
 [dependencies]
 quote = "1.0"
 syn = {version = "2.0.17", features = ["full", "extra-traits"]}
+proc-macro2 = "1.0"
 simplesl_parser.workspace = true
 pest.workspace = true
 unescaper.workspace = true

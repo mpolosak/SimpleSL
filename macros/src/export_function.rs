@@ -1,5 +1,6 @@
 use crate::var_type::{type_from_str, type_quote};
-use quote::{__private::TokenStream, quote};
+use proc_macro2::TokenStream;
+use quote::quote;
 use syn::{Attribute, Ident, ItemFn, MetaList, PatIdent, PatType, ReturnType, Type};
 
 pub fn function_params_from_itemfn(
@@ -19,9 +20,7 @@ pub fn function_params_from_itemfn(
     result
 }
 
-pub fn args_from_function_params(
-    params: &[(Ident, Vec<Attribute>, Box<Type>)],
-) -> quote::__private::TokenStream {
+pub fn args_from_function_params(params: &[(Ident, Vec<Attribute>, Box<Type>)]) -> TokenStream {
     params
         .iter()
         .fold(quote!(), |acc, (ident, ..)| quote!(#acc #ident,))

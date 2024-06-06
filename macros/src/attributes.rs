@@ -1,15 +1,15 @@
+use crate::var_type::type_from_str;
 use proc_macro::TokenStream;
+use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use std::rc::Rc;
 use syn::{parse::Parser, punctuated::Punctuated, Expr, ExprLit, Lit, MetaNameValue, Token};
-
-use crate::var_type::type_from_str;
 
 #[derive(Default)]
 pub struct Attributes {
     pub name: Option<Rc<str>>,
     pub catch_rest: bool,
-    pub return_type: Option<quote::__private::TokenStream>,
+    pub return_type: Option<TokenStream2>,
 }
 
 impl Attributes {

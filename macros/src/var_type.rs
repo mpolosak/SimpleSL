@@ -1,14 +1,15 @@
 use pest::{iterators::Pair, Parser};
 use proc_macro::TokenStream;
+use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
 use simplesl_parser::{unexpected, Rule, SimpleSLParser};
 
-pub fn type_quote(item: TokenStream) -> quote::__private::TokenStream {
+pub fn type_quote(item: TokenStream) -> TokenStream2 {
     let item_str = item.to_string();
     type_from_str(&item_str)
 }
 
-pub fn type_from_str(item_str: &str) -> quote::__private::TokenStream {
+pub fn type_from_str(item_str: &str) -> TokenStream2 {
     let pair = SimpleSLParser::parse(Rule::r#type_ident, item_str)
         .unwrap_or_else(|error| panic!("{error}"))
         .next()
@@ -16,7 +17,7 @@ pub fn type_from_str(item_str: &str) -> quote::__private::TokenStream {
     type_token_from_pair(pair)
 }
 
-fn type_token_from_pair(pair: Pair<Rule>) -> quote::__private::TokenStream {
+fn type_token_from_pair(pair: Pair<Rule>) -> TokenStream2 {
     match pair.as_rule() {
         Rule::int_type => quote!(simplesl::variable::Type::Int),
         Rule::float_type => quote!(simplesl::variable::Type::Float),

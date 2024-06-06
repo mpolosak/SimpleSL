@@ -446,6 +446,7 @@ name = "simplesl_macros"
 version = "0.1.0"
 dependencies = [
  "pest",
+ "proc-macro2",
  "quote",
  "simplesl_parser",
  "syn 2.0.48",
