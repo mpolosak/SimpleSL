@@ -14,6 +14,7 @@ use syn::{parse_macro_input, ItemFn};
 use var::var_quote;
 use var_type::type_quote;
 
+/// Macro simplifying exporting Rust function into SimpleSL
 #[proc_macro_attribute]
 pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream {
     let attr = Attributes::parse(attr);
@@ -46,11 +47,13 @@ pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream 
     .into()
 }
 
+/// Macro simplifying creating SimpleSL Type
 #[proc_macro]
 pub fn var_type(item: TokenStream) -> TokenStream {
     type_quote(item).into()
 }
 
+/// Macro simplifying creating SimpleSL Variable
 #[proc_macro]
 pub fn var(item: TokenStream) -> TokenStream {
     var_quote(item).into()
