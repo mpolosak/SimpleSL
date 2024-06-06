@@ -19,8 +19,10 @@ pub fn export(_attr: TokenStream, module: TokenStream) -> TokenStream {
     let items = items
         .into_iter()
         .map(|item| {
-            if let Item::Fn(function) = item {
-                export_item_fn(function, Attributes::default())
+            if let Item::Fn(mut function) = item {
+                let attributes = Attributes::from_function_attrs(&function.attrs);
+                function.attrs = vec![];
+                export_item_fn(function, attributes)
             } else {
                 quote!(#item)
             }
