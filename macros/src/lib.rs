@@ -4,47 +4,48 @@ mod export_function;
 mod var;
 mod var_type;
 use attributes::Attributes;
-use export_function::{
-    args_from_function_params, args_import_from_function_params, function_params_from_itemfn,
-    get_return_type, params_from_function_params,
-};
+use export_function::export_item_fn;
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, ItemFn};
+use syn::{parse_macro_input, Item, ItemFn, ItemMod};
 use var::var_quote;
 use var_type::type_quote;
+
+/// Macro simplifying exporting modules into SimpleSL
+#[proc_macro_attribute]
+pub fn export(_attr: TokenStream, module: TokenStream) -> TokenStream {
+    let module = parse_macro_input!(module as ItemMod);
+    let items = module.content.unwrap().1;
+    let items = items
+        .into_iter()
+        .map(|item| {
+            if let Item::Fn(function) = item {
+                export_item_fn(function, Attributes::default())
+            } else {
+                quote!(#item)
+            }
+        })
+        .fold(quote!(), |acc, curr| {
+            quote!(
+                #acc
+                #curr
+            )
+        });
+    let ident = module.ident;
+    quote!(
+        pub fn #ident(interpreter: &mut simplesl::Interpreter){
+            #items
+        }
+    )
+    .into()
+}
 
 /// Macro simplifying exporting Rust function into SimpleSL
 #[proc_macro_attribute]
 pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream {
     let attr = Attributes::parse(attr);
-    let mut function = parse_macro_input!(function as ItemFn);
-    let ident = function.sig.ident.clone();
-    let ident_str = attr.name.unwrap_or_else(|| ident.to_string().into());
-    let params = function_params_from_itemfn(&mut function);
-    let args = args_from_function_params(&params);
-    let args_importing = args_import_from_function_params(&params);
-    let params = params_from_function_params(&params);
-    let return_type = get_return_type(&function, attr.return_type);
-    quote!(
-        #function
-        {
-            interpreter.insert(
-                #ident_str.into(),
-                simplesl::function::Function::new(
-                    simplesl::function::Params(std::sync::Arc::new([#params])),
-                    |interpreter| {
-                        #args_importing
-                        simplesl::ToResult::<_, simplesl::errors::ExecError>::to_result(
-                            #ident(#args)
-                        ).map(|value| value.into())
-                    },
-                    #return_type,
-                ).into(),
-            );
-        }
-    )
-    .into()
+    let function = parse_macro_input!(function as ItemFn);
+    export_item_fn(function, attr).into()
 }
 
 /// Macro simplifying creating SimpleSL Type

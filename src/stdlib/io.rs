@@ -1,21 +1,18 @@
 use crate as simplesl;
-use crate::{interpreter::Interpreter, join, variable::*};
-use simplesl_macros::export_function;
-use std::io;
+use simplesl_macros::export;
 
-/// Add input/output part of standard library to Interpreter
-pub fn add_io(interpreter: &mut Interpreter) {
-    #[export_function]
+#[export]
+mod add_io {
+    use crate::{join, variable::Variable};
+    use std::io;
     fn print(var: &Variable) {
         println!("{var}");
     }
 
-    #[export_function]
     fn print_array(array: &[Variable], sep: &str) {
         println!("{}", join(array, sep));
     }
 
-    #[export_function]
     fn cgetline() -> io::Result<String> {
         let mut input = String::new();
         io::stdin().read_line(&mut input)?;

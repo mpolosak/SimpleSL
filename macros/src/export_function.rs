@@ -1,7 +1,39 @@
-use crate::var_type::{type_from_str, type_quote};
+use crate::{
+    attributes::Attributes,
+    var_type::{type_from_str, type_quote},
+};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{Attribute, Ident, ItemFn, MetaList, PatIdent, PatType, ReturnType, Type};
+
+pub fn export_item_fn(mut function: ItemFn, attr: Attributes) -> TokenStream {
+    let ident = function.sig.ident.clone();
+    let ident_str = attr.name.unwrap_or_else(|| ident.to_string().into());
+    let params = function_params_from_itemfn(&mut function);
+    let args = args_from_function_params(&params);
+    let args_importing = args_import_from_function_params(&params);
+    let params = params_from_function_params(&params);
+    let return_type = get_return_type(&function, attr.return_type);
+    quote!(
+        #function
+        {
+            interpreter.insert(
+                #ident_str.into(),
+                simplesl::function::Function::new(
+                    simplesl::function::Params(std::sync::Arc::new([#params])),
+                    |interpreter| {
+                        #args_importing
+                        simplesl::ToResult::<_, simplesl::errors::ExecError>::to_result(
+                            #ident(#args)
+                        ).map(|value| value.into())
+                    },
+                    #return_type,
+                ).into(),
+            );
+        }
+    )
+    .into()
+}
 
 pub fn function_params_from_itemfn(
     function: &mut ItemFn,

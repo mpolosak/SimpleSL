@@ -8,7 +8,6 @@ use syn::{parse::Parser, punctuated::Punctuated, Expr, ExprLit, Lit, MetaNameVal
 #[derive(Default)]
 pub struct Attributes {
     pub name: Option<Rc<str>>,
-    pub catch_rest: bool,
     pub return_type: Option<TokenStream2>,
 }
 
