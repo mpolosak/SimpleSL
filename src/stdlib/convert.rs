@@ -1,10 +1,11 @@
 use crate as simplesl;
-use crate::variable::Variable;
 use simplesl_macros::export;
 
 #[export]
 mod add_convert {
-    fn to_float(#[var_type(int|float)] value: &Variable) -> f64 {
+    pub use crate::variable::Variable;
+
+    pub fn to_float(#[var_type(int|float)] value: &Variable) -> f64 {
         match value {
             Variable::Int(value) => *value as f64,
             Variable::Float(value) => *value,
@@ -12,7 +13,7 @@ mod add_convert {
         }
     }
 
-    fn to_int(#[var_type(int|float)] value: &Variable) -> i64 {
+    pub fn to_int(#[var_type(int|float)] value: &Variable) -> i64 {
         match value {
             Variable::Int(value) => *value,
             Variable::Float(value) => *value as i64,
@@ -20,15 +21,15 @@ mod add_convert {
         }
     }
 
-    fn parse_int(string: &str) -> Option<i64> {
+    pub fn parse_int(string: &str) -> Option<i64> {
         string.parse::<i64>().ok()
     }
 
-    fn parse_float(string: &str) -> Option<f64> {
+    pub fn parse_float(string: &str) -> Option<f64> {
         string.parse::<f64>().ok()
     }
 
-    fn to_string(variable: &Variable) -> String {
+    pub fn to_string(variable: &Variable) -> String {
         variable.to_string()
     }
 }

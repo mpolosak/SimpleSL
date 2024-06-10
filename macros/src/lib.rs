@@ -7,28 +7,47 @@ use attributes::Attributes;
 use export_function::export_item_fn;
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, Item, ItemConst, ItemFn, ItemMod};
+use syn::{parse_macro_input, Item, ItemConst, ItemFn, ItemMod, ItemUse, Visibility};
 use var::var_quote;
 use var_type::type_quote;
 
 /// Macro simplifying exporting modules into SimpleSL
 #[proc_macro_attribute]
 pub fn export(_attr: TokenStream, module: TokenStream) -> TokenStream {
-    let module = parse_macro_input!(module as ItemMod);
-    let items = module.content.unwrap().1;
+    let mut module = parse_macro_input!(module as ItemMod);
+    let Some(items) = &mut module.content else {
+        panic!("Cannot export module from another file")
+    };
+    let mod_ident = &module.ident;
     let items = items
-        .into_iter()
+        .1
+        .iter_mut()
         .map(|item| match item {
-            Item::Const(ItemConst { ident, expr, .. }) => {
-                let ident = ident.to_string();
-                quote!(interpreter.insert(#ident.into(), #expr.into());)
+            Item::Const(ItemConst {
+                ident,
+                vis: Visibility::Public(_) | Visibility::Restricted(_),
+                ..
+            }) => {
+                let ident_string = ident.to_string();
+                quote!(interpreter.insert(#ident_string.into(), (#mod_ident::#ident).into());)
             }
-            Item::Fn(mut function) => {
+            Item::Fn(function) => {
+                if matches!(function.vis, Visibility::Inherited) {
+                    return quote!();
+                }
                 let attributes = Attributes::from_function_attrs(&function.attrs);
                 function.attrs = vec![];
-                export_item_fn(function, attributes)
+                export_item_fn(function, attributes, Some(&module.ident))
             }
-            _ => quote!(#item),
+            Item::Use(
+                item @ ItemUse {
+                    vis: Visibility::Public(_) | Visibility::Restricted(_),
+                    ..
+                },
+            ) => {
+                quote!(#item)
+            }
+            _ => quote!(),
         })
         .fold(quote!(), |acc, curr| {
             quote!(
@@ -36,9 +55,9 @@ pub fn export(_attr: TokenStream, module: TokenStream) -> TokenStream {
                 #curr
             )
         });
-    let ident = module.ident;
     quote!(
-        pub fn #ident(interpreter: &mut simplesl::Interpreter){
+        #module
+        pub fn #mod_ident(interpreter: &mut simplesl::Interpreter){
             #items
         }
     )
@@ -49,8 +68,13 @@ pub fn export(_attr: TokenStream, module: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream {
     let attr = Attributes::parse(attr);
-    let function = parse_macro_input!(function as ItemFn);
-    export_item_fn(function, attr).into()
+    let mut function = parse_macro_input!(function as ItemFn);
+    let export = export_item_fn(&mut function, attr, None);
+    quote!(
+        #function
+        #export
+    )
+    .into()
 }
 
 /// Macro simplifying creating SimpleSL Type

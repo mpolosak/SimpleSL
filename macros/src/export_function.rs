@@ -6,16 +6,24 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{Attribute, Ident, ItemFn, MetaList, PatIdent, PatType, ReturnType, Type};
 
-pub fn export_item_fn(mut function: ItemFn, attr: Attributes) -> TokenStream {
+pub fn export_item_fn(
+    function: &mut ItemFn,
+    attr: Attributes,
+    mod_ident: Option<&Ident>,
+) -> TokenStream {
     let ident = function.sig.ident.clone();
     let ident_str = attr.name.unwrap_or_else(|| ident.to_string().into());
-    let params = function_params_from_itemfn(&mut function);
+    let ident = if let Some(mod_ident) = mod_ident {
+        quote!(#mod_ident::#ident)
+    } else {
+        quote!(#ident)
+    };
+    let params = function_params_from_itemfn(function);
     let args = args_from_function_params(&params);
     let args_importing = args_import_from_function_params(&params);
     let params = params_from_function_params(&params);
     let return_type = get_return_type(&function, attr.return_type);
     quote!(
-        #function
         {
             interpreter.insert(
                 #ident_str.into(),
