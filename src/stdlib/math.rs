@@ -29,4 +29,84 @@ mod add_math {
     pub fn reverse_bits(int: i64) -> i64 {
         int.reverse_bits()
     }
+
+    pub fn ilog(num: i64, base: i64) -> Option<u32> {
+        num.checked_ilog(base)
+    }
+
+    pub fn ilog2(num: i64) -> Option<u32> {
+        num.checked_ilog2()
+    }
+
+    pub fn ilog10(num: i64) -> Option<u32> {
+        num.checked_ilog10()
+    }
+
+    pub fn floor(num: f64) -> f64 {
+        num.floor()
+    }
+
+    pub fn ceil(num: f64) -> f64 {
+        num.ceil()
+    }
+
+    pub fn round(num: f64) -> f64 {
+        num.round()
+    }
+
+    pub fn round_ties_even(num: f64) -> f64 {
+        num.round_ties_even()
+    }
+
+    pub fn trunc(num: f64) -> f64 {
+        num.trunc()
+    }
+
+    pub fn fract(num: f64) -> f64 {
+        num.fract()
+    }
+
+    pub fn ln(num: f64) -> f64 {
+        num.ln()
+    }
+
+    pub fn log(num: f64, base: f64) -> f64 {
+        num.log(base)
+    }
+
+    pub fn log2(num: f64) -> f64 {
+        num.log2()
+    }
+
+    pub fn log10(num: f64) -> f64 {
+        num.log10()
+    }
+
+    pub fn sin(angle: f64) -> f64 {
+        angle.sin()
+    }
+
+    pub fn cos(angle: f64) -> f64 {
+        angle.cos()
+    }
+
+    pub fn tan(angle: f64) -> f64 {
+        angle.tan()
+    }
+
+    pub fn asin(num: f64) -> f64 {
+        num.asin()
+    }
+
+    pub fn acos(num: f64) -> f64 {
+        num.acos()
+    }
+
+    pub fn atan(num: f64) -> f64 {
+        num.atan()
+    }
+
+    pub fn atan2(num1: f64, num2: f64) -> f64 {
+        num1.atan2(num2)
+    }
 }

@@ -59,7 +59,8 @@ impl TypeOf for io::Result<()> {
     }
 }
 
-impl TypeOf for Option<i64> {
+#[duplicate_item(T; [Option<i64>]; [Option<u32>]; [Option<i32>]; [Option<bool>])]
+impl TypeOf for T {
     fn type_of() -> Type {
         var_type!(int | ())
     }
