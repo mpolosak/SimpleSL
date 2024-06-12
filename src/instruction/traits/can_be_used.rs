@@ -52,7 +52,8 @@ impl CanBeUsed for Add {
     }
 }
 
-impl CanBeUsed for Equal {
+#[duplicate_item(T; [Equal]; [NotEqual])]
+impl CanBeUsed for T {
     fn can_be_used(_: &Type, _: &Type) -> bool {
         true
     }

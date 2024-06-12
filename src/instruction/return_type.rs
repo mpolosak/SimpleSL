@@ -68,7 +68,8 @@ pub fn return_type_int(lhs: Type, rhs: Type) -> Type {
     var_type!(int)
 }
 
-impl ReturnType for Equal {
+#[duplicate_item(T; [Equal]; [NotEqual])]
+impl ReturnType for T {
     fn return_type(&self) -> Type {
         var_type!(int)
     }

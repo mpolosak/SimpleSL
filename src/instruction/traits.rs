@@ -29,7 +29,7 @@ pub trait BaseInstruction: Exec + Recreate + ReturnType + Debug + Sync + Send {}
 
 #[duplicate_item(T; [Filter]; [Map]; [Reduce]; [TypeFilter]; [At];
     [BitwiseAnd]; [BitwiseOr]; [BitwiseNot]; [Xor]; [And]; [Or]; [Add]; [Subtract]; [Pow];
-    [Multiply]; [Divide]; [Modulo]; [Equal]; [Greater]; [GreaterOrEqual]; [Lower];
+    [Multiply]; [Divide]; [Modulo]; [Equal]; [NotEqual]; [Greater]; [GreaterOrEqual]; [Lower];
     [LowerOrEqual]; [LShift]; [RShift]; [UnaryMinus]; [Not]; [Block]; [IfElse]; [Match];
     [SetIfElse]; [DestructTuple]; [FunctionCall]; [FunctionDeclaration]; [Import];
     [Return]; [Set]; [All]; [Any]; [Product];

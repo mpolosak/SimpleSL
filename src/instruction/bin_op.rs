@@ -15,7 +15,7 @@ use pest::iterators::Pair;
 use simplesl_parser::{unexpected, Rule};
 use std::sync::Arc;
 
-#[duplicate_item(T; [BitwiseAnd]; [BitwiseOr]; [Xor]; [Equal]; [Filter]; [Map]; [And]; [Or];
+#[duplicate_item(T; [BitwiseAnd]; [BitwiseOr]; [Xor]; [Equal]; [NotEqual]; [Filter]; [Map]; [And]; [Or];
     [Add]; [Subtract]; [Multiply]; [Divide]; [Modulo]; [Pow]; [Greater]; [GreaterOrEqual];
     [Lower]; [LowerOrEqual]; [LShift]; [RShift]
 )]
@@ -25,7 +25,7 @@ pub struct T {
     pub rhs: Instruction,
 }
 
-#[duplicate_item(T op; [BitwiseAnd] [&]; [BitwiseOr] [|]; [Xor] [^]; [Equal] [==]; [Filter] [?];
+#[duplicate_item(T op; [BitwiseAnd] [&]; [BitwiseOr] [|]; [Xor] [^]; [Equal] [==]; [NotEqual] [!=]; [Filter] [?];
     [Map] [@]; [And] [&&]; [Or] [||]; [Add] [+]; [Subtract] [-]; [Multiply] [*]; [Divide] [/];
     [Modulo] [%]; [Pow] [**]; [Greater] [>]; [GreaterOrEqual] [>=]; [Lower] [<];
     [LowerOrEqual] [<=]; [LShift] [<<]; [RShift] [>>]
@@ -51,7 +51,7 @@ impl T {
 }
 
 #[duplicate_item(T; [Multiply]; [Subtract]; [Greater]; [GreaterOrEqual]; [Lower];
-    [LowerOrEqual]; [BitwiseAnd]; [BitwiseOr]; [Xor]; [Equal])]
+    [LowerOrEqual]; [BitwiseAnd]; [BitwiseOr]; [Xor];)]
 impl T {
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         match (lhs, rhs) {
@@ -62,6 +62,16 @@ impl T {
             (lhs, Instruction::ArrayRepeat(array_repeat)) => Arc::unwrap_or_clone(array_repeat)
                 .map(|rhs| Self::create_from_instructions(lhs, rhs))
                 .into(),
+            (lhs, rhs) => Self { lhs, rhs }.into(),
+        }
+    }
+}
+
+#[duplicate_item(T; [Equal]; [NotEqual])]
+impl T {
+    pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
+        match (lhs, rhs) {
+            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => Self::exec(lhs, rhs).into(),
             (lhs, rhs) => Self { lhs, rhs }.into(),
         }
     }
@@ -80,6 +90,12 @@ impl Equal {
     }
 }
 
+impl NotEqual {
+    pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
+        (lhs != rhs).into()
+    }
+}
+
 impl InstructionWithStr {
     pub fn create_infix(
         op: Pair<'_, Rule>,
@@ -95,6 +111,7 @@ impl InstructionWithStr {
             Rule::divide => Divide::create_op(lhs, rhs),
             Rule::modulo => Modulo::create_op(lhs, rhs),
             Rule::equal => Equal::create_op(lhs, rhs),
+            Rule::not_equal => NotEqual::create_op(lhs, rhs),
             Rule::lower => Lower::create_op(lhs, rhs),
             Rule::lower_equal => LowerOrEqual::create_op(lhs, rhs),
             Rule::greater => Greater::create_op(lhs, rhs),
