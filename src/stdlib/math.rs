@@ -3,8 +3,12 @@ use simplesl_macros::export;
 
 #[export]
 mod add_math {
+    use std::f64::consts;
+
     pub const MIN_INT: i64 = i64::MIN;
     pub const MAX_INT: i64 = i64::MAX;
+    pub const E: f64 = consts::E;
+    pub const PI: f64 = consts::PI;
     pub fn count_ones(int: i64) -> u32 {
         int.count_ones()
     }
