@@ -109,4 +109,72 @@ mod add_math {
     pub fn atan2(num1: f64, num2: f64) -> f64 {
         num1.atan2(num2)
     }
+
+    pub fn exp_m1(num: f64) -> f64 {
+        num.exp_m1()
+    }
+
+    pub fn ln_1p(num: f64) -> f64 {
+        num.ln_1p()
+    }
+
+    pub fn sinh(num: f64) -> f64 {
+        num.sinh()
+    }
+
+    pub fn cosh(num: f64) -> f64 {
+        num.cosh()
+    }
+
+    pub fn tanh(num: f64) -> f64 {
+        num.tanh()
+    }
+
+    pub fn asinh(num: f64) -> f64 {
+        num.asinh()
+    }
+
+    pub fn acosh(num: f64) -> f64 {
+        num.acosh()
+    }
+
+    pub fn atanh(num: f64) -> f64 {
+        num.atanh()
+    }
+
+    pub fn is_nan(num: f64) -> bool {
+        num.is_nan()
+    }
+
+    pub fn is_infinite(num: f64) -> bool {
+        num.is_infinite()
+    }
+
+    pub fn is_finite(num: f64) -> bool {
+        num.is_finite()
+    }
+
+    pub fn is_normal(num: f64) -> bool {
+        num.is_normal()
+    }
+
+    pub fn is_subnormal(num: f64) -> bool {
+        num.is_subnormal()
+    }
+
+    pub fn is_sign_positive(num: f64) -> bool {
+        num.is_sign_positive()
+    }
+
+    pub fn is_sign_negative(num: f64) -> bool {
+        num.is_sign_negative()
+    }
+
+    pub fn to_bits(num: f64) -> i64 {
+        num.to_bits() as i64
+    }
+
+    pub fn from_bits(num: i64) -> f64 {
+        f64::from_bits(num as u64)
+    }
 }
