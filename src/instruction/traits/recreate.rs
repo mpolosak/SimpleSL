@@ -23,8 +23,7 @@ impl Recreate for T {
 }
 
 #[duplicate_item(
-    T; [And]; [Or];
-    [BitwiseAnd]; [BitwiseOr]; [Xor]; [Greater]; [GreaterOrEqual];
+    T; [And]; [Or]; [Greater]; [GreaterOrEqual];
     [Lower]; [LowerOrEqual]; [Filter]; [Map];
 )]
 impl Recreate for T {

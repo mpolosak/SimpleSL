@@ -15,6 +15,7 @@ use crate::{
     variable::{ReturnType, Type},
     Error, ExecError, ToResult,
 };
+pub use bitwise::{bitwise_and, bitwise_or, xor};
 use duplicate::duplicate_item;
 pub use math::{add, multiply, pow, subtract};
 use math::{divide, modulo};
@@ -40,11 +41,14 @@ pub enum BinOperator {
     Pow,
     Equal,
     NotEqual,
+    BitwiseAnd,
+    BitwiseOr,
+    Xor,
     LShift,
     RShift,
 }
 
-#[duplicate_item(T; [BitwiseAnd]; [BitwiseOr]; [Xor]; [Filter]; [Map]; [And]; [Or];
+#[duplicate_item(T; [Filter]; [Map]; [And]; [Or];
     [Greater]; [GreaterOrEqual]; [Lower]; [LowerOrEqual];
 )]
 #[derive(Debug)]
@@ -66,6 +70,9 @@ impl Exec for BinOperation {
             BinOperator::Pow => Ok(pow::exec(lhs, rhs)?),
             BinOperator::Equal => Ok(equal::exec(lhs, rhs)),
             BinOperator::NotEqual => Ok(not_equal::exec(lhs, rhs)),
+            BinOperator::BitwiseAnd => Ok(bitwise_and::exec(lhs, rhs)),
+            BinOperator::BitwiseOr => Ok(bitwise_or::exec(lhs, rhs)),
+            BinOperator::Xor => Ok(xor::exec(lhs, rhs)),
             BinOperator::LShift => Ok(lshift::exec(lhs, rhs)?),
             BinOperator::RShift => Ok(rshift::exec(lhs, rhs)?),
         }
@@ -85,6 +92,9 @@ impl Recreate for BinOperation {
             BinOperator::Pow => modulo::create_from_instructions(lhs, rhs),
             BinOperator::Equal => Ok(equal::create_from_instructions(lhs, rhs)),
             BinOperator::NotEqual => Ok(not_equal::create_from_instructions(lhs, rhs)),
+            BinOperator::BitwiseAnd => Ok(bitwise_and::create_from_instructions(lhs, rhs)),
+            BinOperator::BitwiseOr => Ok(bitwise_or::create_from_instructions(lhs, rhs)),
+            BinOperator::Xor => Ok(xor::create_from_instructions(lhs, rhs)),
             BinOperator::LShift => lshift::create_from_instructions(lhs, rhs),
             BinOperator::RShift => rshift::create_from_instructions(lhs, rhs),
         }
@@ -102,9 +112,12 @@ impl ReturnType for BinOperation {
             | BinOperator::Divide
             | BinOperator::Pow => return_type_float(lhs, rhs),
             BinOperator::Equal | BinOperator::NotEqual => Type::Int,
-            BinOperator::LShift | BinOperator::RShift | BinOperator::Modulo => {
-                return_type_int(lhs, rhs)
-            }
+            BinOperator::BitwiseAnd
+            | BinOperator::BitwiseOr
+            | BinOperator::Xor
+            | BinOperator::LShift
+            | BinOperator::RShift
+            | BinOperator::Modulo => return_type_int(lhs, rhs),
         }
     }
 }
@@ -115,8 +128,7 @@ impl From<BinOperation> for Instruction {
     }
 }
 
-#[duplicate_item(T op; [BitwiseAnd] [&]; [BitwiseOr] [|];
-    [Xor] [^]; [Filter] [?]; [Map] [@]; [And] [&&]; [Or] [||];
+#[duplicate_item(T op;[Filter] [?]; [Map] [@]; [And] [&&]; [Or] [||];
     [Greater] [>]; [GreaterOrEqual] [>=]; [Lower] [<]; [LowerOrEqual] [<=]
 )]
 impl T {
@@ -139,8 +151,7 @@ impl T {
     }
 }
 
-#[duplicate_item(T; [Greater]; [GreaterOrEqual]; [Lower];
-    [LowerOrEqual]; [BitwiseAnd]; [BitwiseOr]; [Xor];)]
+#[duplicate_item(T; [Greater]; [GreaterOrEqual]; [Lower]; [LowerOrEqual])]
 impl T {
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         match (lhs, rhs) {
@@ -253,9 +264,9 @@ impl InstructionWithStr {
             Rule::greater_equal => GreaterOrEqual::create_op(lhs, rhs),
             Rule::map => Map::create_op(lhs, rhs),
             Rule::filter => Filter::create_op(lhs, rhs),
-            Rule::bitwise_and => BitwiseAnd::create_op(lhs, rhs),
-            Rule::bitwise_or => BitwiseOr::create_op(lhs, rhs),
-            Rule::xor => Xor::create_op(lhs, rhs),
+            Rule::bitwise_and => bitwise_and::create_op(lhs, rhs),
+            Rule::bitwise_or => bitwise_or::create_op(lhs, rhs),
+            Rule::xor => xor::create_op(lhs, rhs),
             Rule::rshift => rshift::create_op(lhs, rhs),
             Rule::lshift => lshift::create_op(lhs, rhs),
             Rule::and => And::create_op(lhs, rhs),

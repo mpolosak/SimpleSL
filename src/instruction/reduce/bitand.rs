@@ -2,7 +2,7 @@ use simplesl_macros::{var, var_type};
 
 use crate as simplesl;
 use crate::instruction::local_variable::LocalVariables;
-use crate::instruction::{BitwiseAnd, Exec, ExecResult, Recreate};
+use crate::instruction::{bitwise_and, Exec, ExecResult, Recreate};
 use crate::instruction::{Instruction, InstructionWithStr};
 use crate::{
     variable::{Array, ReturnType, Type, Variable},
@@ -27,7 +27,7 @@ pub fn create_bitand_reduce(array: InstructionWithStr) -> Result<Instruction, Er
             .iter()
             .cloned()
             .map(|iws| iws.instruction)
-            .reduce(|acc, curr| BitwiseAnd::create_from_instructions(acc, curr))
+            .reduce(|acc, curr| bitwise_and::create_from_instructions(acc, curr))
             .unwrap()),
         instruction if instruction.return_type().matches(&var_type!([int])) => {
             Ok(BitAndReduce { array }.into())

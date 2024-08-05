@@ -16,7 +16,7 @@ pub fn can_be_used_int(lhs: Type, rhs: Type) -> bool {
     var_type!((lhs, rhs)).matches(&ACCEPTED_INT_TYPE)
 }
 
-#[duplicate_item(T; [And]; [Or]; [BitwiseAnd]; [BitwiseOr]; [Xor];)]
+#[duplicate_item(T; [And]; [Or];)]
 impl CanBeUsed for T {
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
         let lhs = lhs.clone();
