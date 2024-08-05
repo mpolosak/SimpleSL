@@ -42,6 +42,7 @@ use crate::{
 pub(crate) use function::FunctionCall;
 use match_any::match_any;
 use pest::iterators::Pair;
+use prefix_op::PrefixOperation;
 use simplesl_parser::{unexpected, Rule, PRATT_PARSER};
 use std::sync::Arc;
 pub(crate) use traits::{Exec, ExecResult, ExecStop, Recreate};
@@ -191,6 +192,7 @@ pub enum Instruction {
     Tuple(Tuple),
     Variable(Variable),
     BinOperation(Arc<BinOperation>),
+    PrefixOperation(Arc<PrefixOperation>),
     Other(Arc<dyn BaseInstruction>),
 }
 
@@ -226,7 +228,7 @@ impl Exec for Instruction {
                 .cloned()
                 .ok_or_else(|| panic!("Tried to get variable {ident} that doest exist")),
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins)
-            | Self::Tuple(ins) | Self::BinOperation(ins) | Self::Other(ins)
+            | Self::Tuple(ins) | Self::BinOperation(ins) | Self::PrefixOperation(ins) | Self::Other(ins)
                 => ins.exec(interpreter)
         }
     }
@@ -250,7 +252,7 @@ impl Recreate for Instruction {
             )),
             Self::Variable(variable) => Ok(Self::Variable(variable.clone())),
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins)
-            | Self::Tuple(ins) | Self::BinOperation(ins) | Self::Other(ins)
+            | Self::Tuple(ins) | Self::BinOperation(ins) | Self::PrefixOperation(ins) | Self::Other(ins)
                 => ins.recreate(local_variables)
         }
     }
@@ -261,7 +263,7 @@ impl ReturnType for Instruction {
         match_any! { self,
             Self::Variable(variable) | Self::LocalVariable(_, variable) => variable.as_type(),
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins) | Self::Tuple(ins)
-            | Self::BinOperation(ins)| Self::Other(ins) => ins.return_type()
+            | Self::BinOperation(ins)| Self::PrefixOperation(ins )| Self::Other(ins) => ins.return_type()
         }
     }
 }

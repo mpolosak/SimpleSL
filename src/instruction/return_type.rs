@@ -1,15 +1,6 @@
-use super::prefix_op::{BitwiseNot, Not, UnaryMinus};
 use crate as simplesl;
-use crate::variable::{ReturnType, Type};
-use duplicate::duplicate_item;
+use crate::variable::Type;
 use simplesl_macros::var_type;
-
-#[duplicate_item(T; [Not]; [BitwiseNot]; [UnaryMinus])]
-impl ReturnType for T {
-    fn return_type(&self) -> Type {
-        self.instruction.return_type()
-    }
-}
 
 pub fn return_type_float(lhs: Type, rhs: Type) -> Type {
     if (lhs.matches(&var_type!([int])) && rhs == var_type!(int))
