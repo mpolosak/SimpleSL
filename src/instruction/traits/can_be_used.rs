@@ -38,10 +38,3 @@ impl CanBeUsed for T {
         can_be_used_num(lhs, rhs)
     }
 }
-
-#[duplicate_item(T; [Equal]; [NotEqual])]
-impl CanBeUsed for T {
-    fn can_be_used(_: &Type, _: &Type) -> bool {
-        true
-    }
-}

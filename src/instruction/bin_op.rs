@@ -10,7 +10,7 @@ use super::{
 };
 use crate::{
     instruction::{traits::CanBeUsed, Instruction},
-    variable::{ReturnType, Type, Variable},
+    variable::{ReturnType, Type},
     Error, ExecError, ToResult,
 };
 use duplicate::duplicate_item;
@@ -31,9 +31,11 @@ pub enum BinOperator {
     Add,
     Subtract,
     Multiply,
+    Equal,
+    NotEqual,
 }
 
-#[duplicate_item(T; [BitwiseAnd]; [BitwiseOr]; [Xor]; [Equal]; [NotEqual]; [Filter]; [Map]; [And]; [Or];
+#[duplicate_item(T; [BitwiseAnd]; [BitwiseOr]; [Xor]; [Filter]; [Map]; [And]; [Or];
     [Divide]; [Modulo]; [Pow]; [Greater]; [GreaterOrEqual];
     [Lower]; [LowerOrEqual]; [LShift]; [RShift]
 )]
@@ -51,6 +53,8 @@ impl Exec for BinOperation {
             BinOperator::Add => Ok(add::exec(lhs, rhs)),
             BinOperator::Subtract => Ok(subtract::exec(lhs, rhs)),
             BinOperator::Multiply => Ok(multiply::exec(lhs, rhs)),
+            BinOperator::Equal => Ok(equal::exec(lhs, rhs)),
+            BinOperator::NotEqual => Ok(not_equal::exec(lhs, rhs)),
         }
     }
 }
@@ -63,6 +67,8 @@ impl Recreate for BinOperation {
             BinOperator::Add => Ok(add::create_from_instructions(lhs, rhs)),
             BinOperator::Subtract => Ok(subtract::create_from_instructions(lhs, rhs)),
             BinOperator::Multiply => Ok(multiply::create_from_instructions(lhs, rhs)),
+            BinOperator::Equal => Ok(equal::create_from_instructions(lhs, rhs)),
+            BinOperator::NotEqual => Ok(not_equal::create_from_instructions(lhs, rhs)),
         }
     }
 }
@@ -75,6 +81,7 @@ impl ReturnType for BinOperation {
             BinOperator::Add => add::return_type(lhs, rhs),
             BinOperator::Subtract => return_type_float(lhs, rhs),
             BinOperator::Multiply => return_type_float(lhs, rhs),
+            BinOperator::Equal | BinOperator::NotEqual => Type::Int,
         }
     }
 }
@@ -85,7 +92,7 @@ impl From<BinOperation> for Instruction {
     }
 }
 
-#[duplicate_item(T op; [BitwiseAnd] [&]; [BitwiseOr] [|]; [Xor] [^]; [Equal] [==]; [NotEqual] [!=]; [Filter] [?];
+#[duplicate_item(T op; [BitwiseAnd] [&]; [BitwiseOr] [|]; [Xor] [^]; [Filter] [?];
     [Map] [@]; [And] [&&]; [Or] [||]; [Divide] [/];
     [Modulo] [%]; [Pow] [**]; [Greater] [>]; [GreaterOrEqual] [>=]; [Lower] [<];
     [LowerOrEqual] [<=]; [LShift] [<<]; [RShift] [>>]
@@ -127,16 +134,6 @@ impl T {
     }
 }
 
-#[duplicate_item(T; [Equal]; [NotEqual])]
-impl T {
-    pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
-        match (lhs, rhs) {
-            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => Self::exec(lhs, rhs).into(),
-            (lhs, rhs) => Self { lhs, rhs }.into(),
-        }
-    }
-}
-
 #[duplicate_item(T; [Filter]; [Map])]
 impl T {
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
@@ -144,15 +141,71 @@ impl T {
     }
 }
 
-impl Equal {
+mod equal {
+    use super::{BinOperation, BinOperator};
+    use crate::{
+        instruction::{Instruction, InstructionWithStr},
+        variable::Variable,
+        Error,
+    };
+
     pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
         (lhs == rhs).into()
     }
+
+    pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
+        match (lhs, rhs) {
+            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => exec(lhs, rhs).into(),
+            (lhs, rhs) => BinOperation {
+                lhs,
+                rhs,
+                op: BinOperator::Equal,
+            }
+            .into(),
+        }
+    }
+
+    pub fn create_op(
+        lhs: InstructionWithStr,
+        rhs: InstructionWithStr,
+    ) -> Result<InstructionWithStr, Error> {
+        let str = format!("{} == {}", lhs.str, rhs.str).into();
+        let instruction = create_from_instructions(lhs.instruction, rhs.instruction);
+        Ok(InstructionWithStr { instruction, str })
+    }
 }
 
-impl NotEqual {
+mod not_equal {
+    use super::{BinOperation, BinOperator};
+    use crate::{
+        instruction::{Instruction, InstructionWithStr},
+        variable::Variable,
+        Error,
+    };
+
     pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
         (lhs != rhs).into()
+    }
+
+    pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
+        match (lhs, rhs) {
+            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => exec(lhs, rhs).into(),
+            (lhs, rhs) => BinOperation {
+                lhs,
+                rhs,
+                op: BinOperator::NotEqual,
+            }
+            .into(),
+        }
+    }
+
+    pub fn create_op(
+        lhs: InstructionWithStr,
+        rhs: InstructionWithStr,
+    ) -> Result<InstructionWithStr, Error> {
+        let str = format!("{} != {}", lhs.str, rhs.str).into();
+        let instruction = create_from_instructions(lhs.instruction, rhs.instruction);
+        Ok(InstructionWithStr { instruction, str })
     }
 }
 
@@ -170,8 +223,8 @@ impl InstructionWithStr {
             Rule::subtract => subtract::create_op(lhs, rhs),
             Rule::divide => Divide::create_op(lhs, rhs),
             Rule::modulo => Modulo::create_op(lhs, rhs),
-            Rule::equal => Equal::create_op(lhs, rhs),
-            Rule::not_equal => NotEqual::create_op(lhs, rhs),
+            Rule::equal => equal::create_op(lhs, rhs),
+            Rule::not_equal => not_equal::create_op(lhs, rhs),
             Rule::lower => Lower::create_op(lhs, rhs),
             Rule::lower_equal => LowerOrEqual::create_op(lhs, rhs),
             Rule::greater => Greater::create_op(lhs, rhs),
