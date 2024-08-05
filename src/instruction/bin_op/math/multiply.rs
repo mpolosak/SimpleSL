@@ -1,21 +1,27 @@
-use crate::instruction::traits::can_be_used_num;
-use crate::instruction::{BinOperation, BinOperator, Instruction};
-use crate::variable::{Array, Variable};
-use crate::{instruction::InstructionWithStr, variable::ReturnType, Error};
+use crate::{
+    instruction::{
+        traits::can_be_used_num, BinOperation, BinOperator, Instruction, InstructionWithStr,
+    },
+    variable::{Array, ReturnType, Variable},
+    Error,
+};
 use match_any::match_any;
 
 pub fn create_op(
     lhs: InstructionWithStr,
     rhs: InstructionWithStr,
 ) -> Result<InstructionWithStr, Error> {
-    let str = format!("{} - {}", lhs.str, rhs.str).into();
+    let str = format!("{} * {}", lhs.str, rhs.str).into();
     let lhs_type = lhs.return_type();
     let rhs_type = rhs.return_type();
     if !can_be_used_num(lhs_type.clone(), rhs_type.clone()) {
-        return Err(Error::CannotDo2(lhs_type, "-", rhs_type));
+        return Err(Error::CannotDo2(lhs_type, "*", rhs_type));
     }
     let instruction = create_from_instructions(lhs.instruction, rhs.instruction);
-    Ok(InstructionWithStr { instruction, str })
+    Ok(InstructionWithStr {
+        instruction: instruction,
+        str,
+    })
 }
 
 pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
@@ -24,7 +30,7 @@ pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instructi
         (lhs, rhs) => BinOperation {
             lhs,
             rhs,
-            op: BinOperator::Subtract,
+            op: BinOperator::Multiply,
         }
         .into(),
     }
@@ -33,7 +39,7 @@ pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instructi
 pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
     match_any! { (lhs, rhs),
         (Variable::Int(lhs), Variable::Int(rhs)) | (Variable::Float(lhs), Variable::Float(rhs))
-            => (lhs - rhs).into(),
+            => (lhs * rhs).into(),
         (lhs, Variable::Array(array)) => {
             let elements = array
                 .iter()
@@ -60,6 +66,6 @@ pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
             }
             .into()
         },
-        (lhs, rhs) => panic!("Tried to do {lhs} - {rhs}")
+        (lhs, rhs) => panic!("Tried to do {lhs} * {rhs}")
     }
 }

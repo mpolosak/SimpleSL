@@ -34,7 +34,7 @@ impl Exec for T {
 
 #[duplicate_item(T;
     [BitwiseAnd]; [Xor]; [BitwiseOr]; [And]; [Or];
-    [Multiply]; [Divide]; [Modulo]; [Pow];
+    [Divide]; [Modulo]; [Pow];
     [Greater]; [GreaterOrEqual]; [Lower]; [LowerOrEqual];
     [LShift]; [RShift]; [Equal]; [NotEqual]
 )]

@@ -1,15 +1,16 @@
 pub mod add;
 mod divide;
+pub mod multiply;
 mod pow;
 pub mod subtract;
-use super::{Greater, GreaterOrEqual, Lower, LowerOrEqual, Multiply};
+use super::{Greater, GreaterOrEqual, Lower, LowerOrEqual};
 use crate::variable::{Array, Variable};
 use duplicate::duplicate_item;
 use match_any::match_any;
 
 #[duplicate_item(
     ord op;
-    [Multiply] [*]; [Greater] [>]; [GreaterOrEqual] [>=]; [Lower] [<]; [LowerOrEqual] [<=];
+    [Greater] [>]; [GreaterOrEqual] [>=]; [Lower] [<]; [LowerOrEqual] [<=];
 )]
 impl ord {
     pub fn exec(lhs: Variable, rhs: Variable) -> Variable {

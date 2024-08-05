@@ -14,7 +14,7 @@ impl ReturnType for T {
     }
 }
 
-#[duplicate_item(T; [Multiply]; [Divide]; [Pow];)]
+#[duplicate_item(T; [Divide]; [Pow];)]
 impl ReturnType for T {
     fn return_type(&self) -> Type {
         let lhs = self.lhs.return_type();

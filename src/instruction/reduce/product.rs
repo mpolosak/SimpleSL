@@ -1,7 +1,7 @@
 use crate as simplesl;
 use crate::instruction::local_variable::LocalVariables;
-use crate::instruction::{array_repeat::ArrayRepeat, Instruction, InstructionWithStr, Multiply};
-use crate::instruction::{Exec, ExecResult, Pow, Recreate};
+use crate::instruction::{array_repeat::ArrayRepeat, Instruction, InstructionWithStr};
+use crate::instruction::{multiply, Exec, ExecResult, Pow, Recreate};
 use crate::{
     variable::{Array, ReturnType, Type, Variable},
     Error,
@@ -44,7 +44,7 @@ impl Product {
                     .iter()
                     .cloned()
                     .map(|iws| iws.instruction)
-                    .reduce(|acc, curr| Multiply::create_from_instructions(acc, curr))
+                    .reduce(|acc, curr| multiply::create_from_instructions(acc, curr))
                     .unwrap())
             }
             instruction

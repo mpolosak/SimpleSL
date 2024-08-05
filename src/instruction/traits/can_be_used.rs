@@ -26,12 +26,16 @@ lazy_static! {
         var_type!((int | [int], int) | (int, [int]) | (float | [float], float) | (float, [float]));
 }
 
-#[duplicate_item(T; [Greater]; [GreaterOrEqual]; [Lower]; [LowerOrEqual]; [Multiply]; [Divide]; [Pow])]
+pub fn can_be_used_num(lhs: Type, rhs: Type) -> bool {
+    var_type!((lhs, rhs)).matches(&ACCEPTED_NUM_TYPE)
+}
+
+#[duplicate_item(T; [Greater]; [GreaterOrEqual]; [Lower]; [LowerOrEqual]; [Divide]; [Pow])]
 impl CanBeUsed for T {
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
         let lhs = lhs.clone();
         let rhs = rhs.clone();
-        var_type!((lhs, rhs)).matches(&ACCEPTED_NUM_TYPE)
+        can_be_used_num(lhs, rhs)
     }
 }
 

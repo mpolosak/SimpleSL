@@ -14,8 +14,7 @@ use crate::{
     Error, ExecError, ToResult,
 };
 use duplicate::duplicate_item;
-pub use math::add;
-use math::subtract;
+pub use math::{add, multiply, subtract};
 use pest::iterators::Pair;
 use simplesl_parser::{unexpected, Rule};
 use std::sync::Arc;
@@ -31,10 +30,11 @@ pub struct BinOperation {
 pub enum BinOperator {
     Add,
     Subtract,
+    Multiply,
 }
 
 #[duplicate_item(T; [BitwiseAnd]; [BitwiseOr]; [Xor]; [Equal]; [NotEqual]; [Filter]; [Map]; [And]; [Or];
-    [Multiply]; [Divide]; [Modulo]; [Pow]; [Greater]; [GreaterOrEqual];
+    [Divide]; [Modulo]; [Pow]; [Greater]; [GreaterOrEqual];
     [Lower]; [LowerOrEqual]; [LShift]; [RShift]
 )]
 #[derive(Debug)]
@@ -50,6 +50,7 @@ impl Exec for BinOperation {
         match self.op {
             BinOperator::Add => Ok(add::exec(lhs, rhs)),
             BinOperator::Subtract => Ok(subtract::exec(lhs, rhs)),
+            BinOperator::Multiply => Ok(multiply::exec(lhs, rhs)),
         }
     }
 }
@@ -61,6 +62,7 @@ impl Recreate for BinOperation {
         match self.op {
             BinOperator::Add => Ok(add::create_from_instructions(lhs, rhs)),
             BinOperator::Subtract => Ok(subtract::create_from_instructions(lhs, rhs)),
+            BinOperator::Multiply => Ok(multiply::create_from_instructions(lhs, rhs)),
         }
     }
 }
@@ -72,6 +74,7 @@ impl ReturnType for BinOperation {
         match self.op {
             BinOperator::Add => add::return_type(lhs, rhs),
             BinOperator::Subtract => return_type_float(lhs, rhs),
+            BinOperator::Multiply => return_type_float(lhs, rhs),
         }
     }
 }
@@ -83,7 +86,7 @@ impl From<BinOperation> for Instruction {
 }
 
 #[duplicate_item(T op; [BitwiseAnd] [&]; [BitwiseOr] [|]; [Xor] [^]; [Equal] [==]; [NotEqual] [!=]; [Filter] [?];
-    [Map] [@]; [And] [&&]; [Or] [||];  [Multiply] [*]; [Divide] [/];
+    [Map] [@]; [And] [&&]; [Or] [||]; [Divide] [/];
     [Modulo] [%]; [Pow] [**]; [Greater] [>]; [GreaterOrEqual] [>=]; [Lower] [<];
     [LowerOrEqual] [<=]; [LShift] [<<]; [RShift] [>>]
 )]
@@ -107,7 +110,7 @@ impl T {
     }
 }
 
-#[duplicate_item(T; [Multiply]; [Greater]; [GreaterOrEqual]; [Lower];
+#[duplicate_item(T; [Greater]; [GreaterOrEqual]; [Lower];
     [LowerOrEqual]; [BitwiseAnd]; [BitwiseOr]; [Xor];)]
 impl T {
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
@@ -162,7 +165,7 @@ impl InstructionWithStr {
     ) -> Result<Self, Error> {
         match op.as_rule() {
             Rule::pow => Pow::create_op(lhs, rhs),
-            Rule::multiply => Multiply::create_op(lhs, rhs),
+            Rule::multiply => multiply::create_op(lhs, rhs),
             Rule::add => add::create_op(lhs, rhs),
             Rule::subtract => subtract::create_op(lhs, rhs),
             Rule::divide => Divide::create_op(lhs, rhs),

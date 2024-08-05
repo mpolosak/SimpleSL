@@ -2,8 +2,8 @@ use simplesl_macros::{var, var_type};
 
 use crate as simplesl;
 use crate::instruction::local_variable::LocalVariables;
-use crate::instruction::{add, Exec, ExecResult, Recreate};
-use crate::instruction::{array_repeat::ArrayRepeat, Instruction, InstructionWithStr, Multiply};
+use crate::instruction::{add, multiply, Exec, ExecResult, Recreate};
+use crate::instruction::{array_repeat::ArrayRepeat, Instruction, InstructionWithStr};
 use crate::{
     variable::{Array, ReturnType, Type, Variable},
     Error,
@@ -41,7 +41,7 @@ impl Sum {
                     .matches(&var_type!(int | float)) =>
             {
                 let ArrayRepeat { value, len } = Arc::unwrap_or_clone(array_repeat.clone());
-                Ok(Multiply::create_from_instructions(
+                Ok(multiply::create_from_instructions(
                     value.instruction,
                     len.instruction,
                 ))
