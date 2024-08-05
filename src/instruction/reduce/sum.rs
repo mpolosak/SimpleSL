@@ -2,10 +2,8 @@ use simplesl_macros::{var, var_type};
 
 use crate as simplesl;
 use crate::instruction::local_variable::LocalVariables;
-use crate::instruction::{
-    array_repeat::ArrayRepeat, Add, Instruction, InstructionWithStr, Multiply,
-};
-use crate::instruction::{Exec, ExecResult, Recreate};
+use crate::instruction::{add, Exec, ExecResult, Recreate};
+use crate::instruction::{array_repeat::ArrayRepeat, Instruction, InstructionWithStr, Multiply};
 use crate::{
     variable::{Array, ReturnType, Type, Variable},
     Error,
@@ -56,7 +54,7 @@ impl Sum {
                     .iter()
                     .cloned()
                     .map(|iws| iws.instruction)
-                    .reduce(|acc, curr| Add::create_from_instructions(acc, curr))
+                    .reduce(|acc, curr| add::create_from_instructions(acc, curr))
                     .unwrap())
             }
             instruction

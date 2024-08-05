@@ -35,23 +35,6 @@ impl CanBeUsed for T {
     }
 }
 
-lazy_static! {
-    static ref ACCEPTED_TYPE: Type = var_type!(
-        (int | [int], int | [int])
-            | (float | [float], float | [float])
-            | (string | [string], string | [string])
-            | ([any], [any])
-    );
-}
-
-impl CanBeUsed for Add {
-    fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
-        let lhs = lhs.clone();
-        let rhs = rhs.clone();
-        var_type!((lhs, rhs)).matches(&ACCEPTED_TYPE)
-    }
-}
-
 #[duplicate_item(T; [Equal]; [NotEqual])]
 impl CanBeUsed for T {
     fn can_be_used(_: &Type, _: &Type) -> bool {

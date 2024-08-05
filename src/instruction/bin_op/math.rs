@@ -1,4 +1,4 @@
-mod add;
+pub mod add;
 mod divide;
 mod pow;
 use super::{Greater, GreaterOrEqual, Lower, LowerOrEqual, Multiply, Subtract};

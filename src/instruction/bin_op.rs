@@ -4,19 +4,34 @@ mod logic;
 mod map;
 mod math;
 mod shift;
-use super::{local_variable::LocalVariables, reduce::Reduce, InstructionWithStr};
+use super::{
+    local_variable::LocalVariables, reduce::Reduce, Exec, ExecResult, InstructionWithStr, Recreate,
+};
 use crate::{
     instruction::{traits::CanBeUsed, Instruction},
-    variable::{ReturnType, Variable},
-    Error, ToResult,
+    variable::{ReturnType, Type, Variable},
+    Error, ExecError, ToResult,
 };
 use duplicate::duplicate_item;
+pub use math::add;
 use pest::iterators::Pair;
 use simplesl_parser::{unexpected, Rule};
 use std::sync::Arc;
 
+#[derive(Debug)]
+pub struct BinOperation {
+    pub lhs: Instruction,
+    pub rhs: Instruction,
+    pub op: BinOperator,
+}
+
+#[derive(Debug)]
+pub enum BinOperator {
+    Add,
+}
+
 #[duplicate_item(T; [BitwiseAnd]; [BitwiseOr]; [Xor]; [Equal]; [NotEqual]; [Filter]; [Map]; [And]; [Or];
-    [Add]; [Subtract]; [Multiply]; [Divide]; [Modulo]; [Pow]; [Greater]; [GreaterOrEqual];
+    [Subtract]; [Multiply]; [Divide]; [Modulo]; [Pow]; [Greater]; [GreaterOrEqual];
     [Lower]; [LowerOrEqual]; [LShift]; [RShift]
 )]
 #[derive(Debug)]
@@ -25,8 +40,44 @@ pub struct T {
     pub rhs: Instruction,
 }
 
+impl Exec for BinOperation {
+    fn exec(&self, interpreter: &mut crate::Interpreter) -> ExecResult {
+        let lhs = self.lhs.exec(interpreter)?;
+        let rhs = self.rhs.exec(interpreter)?;
+        match self.op {
+            BinOperator::Add => Ok(add::exec(lhs, rhs)),
+        }
+    }
+}
+
+impl Recreate for BinOperation {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
+        let lhs = self.lhs.recreate(local_variables)?;
+        let rhs = self.rhs.recreate(local_variables)?;
+        match self.op {
+            BinOperator::Add => Ok(add::create_from_instructions(lhs, rhs)),
+        }
+    }
+}
+
+impl ReturnType for BinOperation {
+    fn return_type(&self) -> Type {
+        let lhs = self.lhs.return_type();
+        let rhs = self.rhs.return_type();
+        match self.op {
+            BinOperator::Add => add::return_type(lhs, rhs),
+        }
+    }
+}
+
+impl From<BinOperation> for Instruction {
+    fn from(value: BinOperation) -> Self {
+        Self::BinOperation(value.into())
+    }
+}
+
 #[duplicate_item(T op; [BitwiseAnd] [&]; [BitwiseOr] [|]; [Xor] [^]; [Equal] [==]; [NotEqual] [!=]; [Filter] [?];
-    [Map] [@]; [And] [&&]; [Or] [||]; [Add] [+]; [Subtract] [-]; [Multiply] [*]; [Divide] [/];
+    [Map] [@]; [And] [&&]; [Or] [||]; [Subtract] [-]; [Multiply] [*]; [Divide] [/];
     [Modulo] [%]; [Pow] [**]; [Greater] [>]; [GreaterOrEqual] [>=]; [Lower] [<];
     [LowerOrEqual] [<=]; [LShift] [<<]; [RShift] [>>]
 )]
@@ -106,7 +157,7 @@ impl InstructionWithStr {
         match op.as_rule() {
             Rule::pow => Pow::create_op(lhs, rhs),
             Rule::multiply => Multiply::create_op(lhs, rhs),
-            Rule::add => Add::create_op(lhs, rhs),
+            Rule::add => add::create_op(lhs, rhs),
             Rule::subtract => Subtract::create_op(lhs, rhs),
             Rule::divide => Divide::create_op(lhs, rhs),
             Rule::modulo => Modulo::create_op(lhs, rhs),

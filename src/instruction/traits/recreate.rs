@@ -24,7 +24,7 @@ impl Recreate for T {
 
 #[duplicate_item(
     T;
-    [Add]; [Subtract]; [Multiply]; [Divide]; [Modulo]; [Pow]; [And]; [Or];
+    [Subtract]; [Multiply]; [Divide]; [Modulo]; [Pow]; [And]; [Or];
     [BitwiseAnd]; [BitwiseOr]; [Xor]; [Equal]; [NotEqual]; [Greater]; [GreaterOrEqual];
     [Lower]; [LowerOrEqual]; [Filter]; [Map]; [LShift]; [RShift]
 )]
