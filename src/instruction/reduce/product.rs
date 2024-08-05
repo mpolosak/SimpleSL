@@ -1,7 +1,7 @@
 use crate as simplesl;
 use crate::instruction::local_variable::LocalVariables;
 use crate::instruction::{array_repeat::ArrayRepeat, Instruction, InstructionWithStr};
-use crate::instruction::{multiply, Exec, ExecResult, Pow, Recreate};
+use crate::instruction::{multiply, pow, Exec, ExecResult, Recreate};
 use crate::{
     variable::{Array, ReturnType, Type, Variable},
     Error,
@@ -35,7 +35,7 @@ impl Product {
                     .matches(&var_type!(int | float)) =>
             {
                 let ArrayRepeat { value, len } = Arc::unwrap_or_clone(array_repeat.clone());
-                Pow::create_from_instructions(value.instruction, len.instruction)
+                pow::create_from_instructions(value.instruction, len.instruction)
                     .map_err(Error::from)
             }
             Instruction::Array(array) if array.element_type.matches(&var_type!(int | float)) => {

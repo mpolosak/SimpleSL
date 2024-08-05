@@ -14,14 +14,6 @@ impl ReturnType for T {
     }
 }
 
-impl ReturnType for Pow {
-    fn return_type(&self) -> Type {
-        let lhs = self.lhs.return_type();
-        let rhs = self.rhs.return_type();
-        return_type_float(lhs, rhs)
-    }
-}
-
 pub fn return_type_float(lhs: Type, rhs: Type) -> Type {
     if (lhs.matches(&var_type!([int])) && rhs == var_type!(int))
         || (rhs.matches(&var_type!([int])) && lhs == var_type!(int))

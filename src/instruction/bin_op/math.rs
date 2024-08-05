@@ -2,7 +2,7 @@ pub mod add;
 pub mod divide;
 pub mod modulo;
 pub mod multiply;
-mod pow;
+pub mod pow;
 pub mod subtract;
 use super::{Greater, GreaterOrEqual, Lower, LowerOrEqual};
 use crate::variable::{Array, Variable};
