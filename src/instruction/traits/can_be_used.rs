@@ -26,7 +26,7 @@ lazy_static! {
         var_type!((int | [int], int) | (int, [int]) | (float | [float], float) | (float, [float]));
 }
 
-#[duplicate_item(T; [Greater]; [GreaterOrEqual]; [Lower]; [LowerOrEqual]; [Multiply]; [Divide]; [Subtract]; [Pow])]
+#[duplicate_item(T; [Greater]; [GreaterOrEqual]; [Lower]; [LowerOrEqual]; [Multiply]; [Divide]; [Pow])]
 impl CanBeUsed for T {
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
         let lhs = lhs.clone();

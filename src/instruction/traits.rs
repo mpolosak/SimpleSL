@@ -21,6 +21,7 @@ use duplicate::duplicate_item;
 use std::{fmt::Debug, sync::Arc};
 pub use {
     can_be_used::CanBeUsed,
+    can_be_used::ACCEPTED_NUM_TYPE,
     exec::{Exec, ExecResult, ExecStop},
     recreate::Recreate,
 };
@@ -28,7 +29,7 @@ pub use {
 pub trait BaseInstruction: Exec + Recreate + ReturnType + Debug + Sync + Send {}
 
 #[duplicate_item(T; [Filter]; [Map]; [Reduce]; [TypeFilter]; [At];
-    [BitwiseAnd]; [BitwiseOr]; [BitwiseNot]; [Xor]; [And]; [Or]; [Subtract]; [Pow];
+    [BitwiseAnd]; [BitwiseOr]; [BitwiseNot]; [Xor]; [And]; [Or];  [Pow];
     [Multiply]; [Divide]; [Modulo]; [Equal]; [NotEqual]; [Greater]; [GreaterOrEqual]; [Lower];
     [LowerOrEqual]; [LShift]; [RShift]; [UnaryMinus]; [Not]; [Block]; [IfElse]; [Match];
     [SetIfElse]; [DestructTuple]; [FunctionCall]; [FunctionDeclaration]; [Import];
