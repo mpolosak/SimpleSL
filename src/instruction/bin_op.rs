@@ -8,12 +8,13 @@ use super::{
     local_variable::LocalVariables,
     reduce::Reduce,
     return_type::{return_type_float, return_type_int},
+    traits::can_be_used_int,
     Exec, ExecResult, InstructionWithStr, Recreate,
 };
 use crate::{
-    instruction::{traits::CanBeUsed, Instruction},
+    instruction::Instruction,
     variable::{ReturnType, Type},
-    Error, ExecError, Interpreter, ToResult,
+    Error, ExecError, Interpreter,
 };
 pub use bitwise::{bitwise_and, bitwise_or, xor};
 use duplicate::duplicate_item;
@@ -50,9 +51,10 @@ pub enum BinOperator {
     LShift,
     RShift,
     Filter,
+    Map,
 }
 
-#[duplicate_item(T; [Map]; [And]; [Or];
+#[duplicate_item(T; [And]; [Or];
 )]
 #[derive(Debug)]
 pub struct T {
@@ -83,6 +85,7 @@ impl Exec for BinOperation {
             BinOperator::LShift => Ok(lshift::exec(lhs, rhs)?),
             BinOperator::RShift => Ok(rshift::exec(lhs, rhs)?),
             BinOperator::Filter => Ok(filter::exec(lhs, rhs)?),
+            BinOperator::Map => Ok(map::exec(lhs, rhs)?),
         }
     }
 }
@@ -109,7 +112,7 @@ impl Recreate for BinOperation {
             BinOperator::Xor => Ok(xor::create_from_instructions(lhs, rhs)),
             BinOperator::LShift => lshift::create_from_instructions(lhs, rhs),
             BinOperator::RShift => rshift::create_from_instructions(lhs, rhs),
-            op @ BinOperator::Filter => Ok(Self { lhs, rhs, op }.into()),
+            op @ (BinOperator::Filter | BinOperator::Map) => Ok(Self { lhs, rhs, op }.into()),
         }
     }
 }
@@ -136,6 +139,7 @@ impl ReturnType for BinOperation {
             | BinOperator::RShift
             | BinOperator::Modulo => return_type_int(lhs, rhs),
             BinOperator::Filter => self.lhs.return_type(),
+            BinOperator::Map => map::return_type(rhs),
         }
     }
 }
@@ -146,7 +150,7 @@ impl From<BinOperation> for Instruction {
     }
 }
 
-#[duplicate_item(T op;[Map] [@]; [And] [&&]; [Or] [||])]
+#[duplicate_item(T op; [And] [&&]; [Or] [||])]
 impl T {
     pub fn create_op(
         lhs: InstructionWithStr,
@@ -155,21 +159,11 @@ impl T {
         let str = format!("{} {} {}", lhs.str, stringify!(op), rhs.str).into();
         let lhs_type = lhs.return_type();
         let rhs_type = rhs.return_type();
-        if !Self::can_be_used(&lhs_type, &rhs_type) {
+        if !can_be_used_int(lhs_type.clone(), rhs_type.clone()) {
             return Err(Error::CannotDo2(lhs_type, stringify!(op), rhs_type));
         }
-        let instruction: Result<Instruction, Error> =
-            Self::create_from_instructions(lhs.instruction, rhs.instruction).to_result();
-        Ok(InstructionWithStr {
-            instruction: instruction?,
-            str,
-        })
-    }
-}
-
-impl Map {
-    pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
-        Self { lhs, rhs }.into()
+        let instruction = Self::create_from_instructions(lhs.instruction, rhs.instruction);
+        Ok(InstructionWithStr { instruction, str })
     }
 }
 
@@ -261,7 +255,7 @@ impl InstructionWithStr {
             Rule::lower_equal => lower_equal::create_op(lhs, rhs),
             Rule::greater => greater::create_op(lhs, rhs),
             Rule::greater_equal => greater_equal::create_op(lhs, rhs),
-            Rule::map => Map::create_op(lhs, rhs),
+            Rule::map => map::create_op(lhs, rhs),
             Rule::filter => filter::create_op(lhs, rhs),
             Rule::bitwise_and => bitwise_and::create_op(lhs, rhs),
             Rule::bitwise_or => bitwise_or::create_op(lhs, rhs),
