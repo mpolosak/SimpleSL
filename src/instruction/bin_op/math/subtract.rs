@@ -1,5 +1,4 @@
-use crate::instruction::traits::can_be_used_num;
-use crate::instruction::{BinOperation, BinOperator, Instruction};
+use crate::instruction::{can_be_used_num, BinOperation, BinOperator, Instruction};
 use crate::variable::{Array, Variable};
 use crate::{instruction::InstructionWithStr, variable::ReturnType, Error};
 use match_any::match_any;

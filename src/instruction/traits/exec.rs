@@ -1,10 +1,7 @@
 use crate::{
-    instruction::{
-        bin_op::*,
-        prefix_op::{BitwiseNot, Not, UnaryMinus},
-    },
+    instruction::prefix_op::{BitwiseNot, Not, UnaryMinus},
     variable::Variable,
-    ExecError, Interpreter, ToResult,
+    ExecError, Interpreter,
 };
 use duplicate::duplicate_item;
 
@@ -29,15 +26,5 @@ impl Exec for T {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let result = self.instruction.exec(interpreter)?;
         Ok(Self::calc(result))
-    }
-}
-
-#[duplicate_item(T; [And]; [Or];
-)]
-impl Exec for T {
-    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let lhs = self.lhs.exec(interpreter)?;
-        let rhs = self.rhs.exec(interpreter)?;
-        Self::exec(lhs, rhs).to_result()
     }
 }

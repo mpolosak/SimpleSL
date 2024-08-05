@@ -1,9 +1,7 @@
-mod can_be_used;
 mod exec;
 mod recreate;
 use super::{
     at::At,
-    bin_op::*,
     block::Block,
     control_flow::{IfElse, Match, SetIfElse},
     destruct_tuple::DestructTuple,
@@ -20,7 +18,6 @@ use crate::variable::ReturnType;
 use duplicate::duplicate_item;
 use std::{fmt::Debug, sync::Arc};
 pub use {
-    can_be_used::{can_be_used_int, can_be_used_num},
     exec::{Exec, ExecResult, ExecStop},
     recreate::Recreate,
 };
@@ -28,7 +25,7 @@ pub use {
 pub trait BaseInstruction: Exec + Recreate + ReturnType + Debug + Sync + Send {}
 
 #[duplicate_item(T; [Reduce]; [TypeFilter]; [At];
-    [BitwiseNot]; [And]; [Or]; [UnaryMinus]; [Not]; [Block]; [IfElse]; [Match];
+    [BitwiseNot]; [UnaryMinus]; [Not]; [Block]; [IfElse]; [Match];
     [SetIfElse]; [DestructTuple]; [FunctionCall]; [FunctionDeclaration]; [Import];
     [Return]; [Set]; [All]; [Any]; [Product];
     [BitAndReduce]; [BitOrReduce]; [Sum];

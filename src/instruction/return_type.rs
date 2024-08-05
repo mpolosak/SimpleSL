@@ -1,7 +1,4 @@
-use super::{
-    bin_op::*,
-    prefix_op::{BitwiseNot, Not, UnaryMinus},
-};
+use super::prefix_op::{BitwiseNot, Not, UnaryMinus};
 use crate as simplesl;
 use crate::variable::{ReturnType, Type};
 use duplicate::duplicate_item;
@@ -33,17 +30,6 @@ pub fn return_type_float(lhs: Type, rhs: Type) -> Type {
         return var_type!(int);
     }
     var_type!(float)
-}
-
-#[duplicate_item(
-    T; [And]; [Or];
-)]
-impl ReturnType for T {
-    fn return_type(&self) -> Type {
-        let lhs = self.lhs.return_type();
-        let rhs = self.rhs.return_type();
-        return_type_int(lhs, rhs)
-    }
 }
 
 pub fn return_type_int(lhs: Type, rhs: Type) -> Type {

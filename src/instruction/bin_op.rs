@@ -8,21 +8,40 @@ use super::{
     local_variable::LocalVariables,
     reduce::Reduce,
     return_type::{return_type_float, return_type_int},
-    traits::can_be_used_int,
     Exec, ExecResult, InstructionWithStr, Recreate,
 };
+use crate as simplesl;
 use crate::{
     instruction::Instruction,
     variable::{ReturnType, Type},
     Error, ExecError, Interpreter,
 };
 pub use bitwise::{bitwise_and, bitwise_or, xor};
-use duplicate::duplicate_item;
+use lazy_static::lazy_static;
+pub use logic::{and, or};
 pub use math::{add, multiply, pow, subtract};
 use math::{divide, greater, greater_equal, lower, lower_equal, modulo};
 use pest::iterators::Pair;
 use shift::{lshift, rshift};
+use simplesl_macros::var_type;
 use simplesl_parser::{unexpected, Rule};
+
+lazy_static! {
+    pub static ref ACCEPTED_INT_TYPE: Type = var_type!((int, int | [int]) | ([int], int));
+}
+
+pub fn can_be_used_int(lhs: Type, rhs: Type) -> bool {
+    var_type!((lhs, rhs)).matches(&ACCEPTED_INT_TYPE)
+}
+
+lazy_static! {
+    pub static ref ACCEPTED_NUM_TYPE: Type =
+        var_type!((int | [int], int) | (int, [int]) | (float | [float], float) | (float, [float]));
+}
+
+pub fn can_be_used_num(lhs: Type, rhs: Type) -> bool {
+    var_type!((lhs, rhs)).matches(&ACCEPTED_NUM_TYPE)
+}
 
 #[derive(Debug)]
 pub struct BinOperation {
@@ -45,6 +64,8 @@ pub enum BinOperator {
     GreaterOrEqual,
     Lower,
     LowerOrEqual,
+    And,
+    Or,
     BitwiseAnd,
     BitwiseOr,
     Xor,
@@ -52,14 +73,6 @@ pub enum BinOperator {
     RShift,
     Filter,
     Map,
-}
-
-#[duplicate_item(T; [And]; [Or];
-)]
-#[derive(Debug)]
-pub struct T {
-    pub lhs: Instruction,
-    pub rhs: Instruction,
 }
 
 impl Exec for BinOperation {
@@ -79,6 +92,8 @@ impl Exec for BinOperation {
             BinOperator::GreaterOrEqual => Ok(greater_equal::exec(lhs, rhs)),
             BinOperator::Lower => Ok(lower::exec(lhs, rhs)),
             BinOperator::LowerOrEqual => Ok(lower_equal::exec(lhs, rhs)),
+            BinOperator::And => Ok(and::exec(lhs, rhs)),
+            BinOperator::Or => Ok(or::exec(lhs, rhs)),
             BinOperator::BitwiseAnd => Ok(bitwise_and::exec(lhs, rhs)),
             BinOperator::BitwiseOr => Ok(bitwise_or::exec(lhs, rhs)),
             BinOperator::Xor => Ok(xor::exec(lhs, rhs)),
@@ -107,6 +122,8 @@ impl Recreate for BinOperation {
             BinOperator::GreaterOrEqual => Ok(greater_equal::create_from_instructions(lhs, rhs)),
             BinOperator::Lower => Ok(lower::create_from_instructions(lhs, rhs)),
             BinOperator::LowerOrEqual => Ok(lower_equal::create_from_instructions(lhs, rhs)),
+            BinOperator::And => Ok(and::create_from_instructions(lhs, rhs)),
+            BinOperator::Or => Ok(or::create_from_instructions(lhs, rhs)),
             BinOperator::BitwiseAnd => Ok(bitwise_and::create_from_instructions(lhs, rhs)),
             BinOperator::BitwiseOr => Ok(bitwise_or::create_from_instructions(lhs, rhs)),
             BinOperator::Xor => Ok(xor::create_from_instructions(lhs, rhs)),
@@ -132,6 +149,8 @@ impl ReturnType for BinOperation {
             | BinOperator::GreaterOrEqual
             | BinOperator::Lower
             | BinOperator::LowerOrEqual
+            | BinOperator::And
+            | BinOperator::Or
             | BinOperator::BitwiseAnd
             | BinOperator::BitwiseOr
             | BinOperator::Xor
@@ -147,23 +166,6 @@ impl ReturnType for BinOperation {
 impl From<BinOperation> for Instruction {
     fn from(value: BinOperation) -> Self {
         Self::BinOperation(value.into())
-    }
-}
-
-#[duplicate_item(T op; [And] [&&]; [Or] [||])]
-impl T {
-    pub fn create_op(
-        lhs: InstructionWithStr,
-        rhs: InstructionWithStr,
-    ) -> Result<InstructionWithStr, Error> {
-        let str = format!("{} {} {}", lhs.str, stringify!(op), rhs.str).into();
-        let lhs_type = lhs.return_type();
-        let rhs_type = rhs.return_type();
-        if !can_be_used_int(lhs_type.clone(), rhs_type.clone()) {
-            return Err(Error::CannotDo2(lhs_type, stringify!(op), rhs_type));
-        }
-        let instruction = Self::create_from_instructions(lhs.instruction, rhs.instruction);
-        Ok(InstructionWithStr { instruction, str })
     }
 }
 
@@ -262,8 +264,8 @@ impl InstructionWithStr {
             Rule::xor => xor::create_op(lhs, rhs),
             Rule::rshift => rshift::create_op(lhs, rhs),
             Rule::lshift => lshift::create_op(lhs, rhs),
-            Rule::and => And::create_op(lhs, rhs),
-            Rule::or => Or::create_op(lhs, rhs),
+            Rule::and => and::create_op(lhs, rhs),
+            Rule::or => or::create_op(lhs, rhs),
             Rule::reduce => {
                 let str = format!("{} {} {}", lhs.str, op.as_str(), rhs.str).into();
                 let instruction = Reduce::create_instruction(lhs, op, rhs, local_variables)?;

@@ -1,5 +1,6 @@
-use crate::instruction::traits::can_be_used_num;
-use crate::instruction::{BinOperation, BinOperator, Instruction, InstructionWithStr};
+use crate::instruction::{
+    can_be_used_num, BinOperation, BinOperator, Instruction, InstructionWithStr,
+};
 use crate::variable::{Array, ReturnType, Variable};
 use crate::{Error, ExecError};
 use std::sync::Arc;

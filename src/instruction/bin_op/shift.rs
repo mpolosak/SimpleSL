@@ -8,7 +8,7 @@ pub mod shift {
 
     use crate::{
         instruction::{
-            traits::can_be_used_int, BinOperation, BinOperator, Instruction, InstructionWithStr,
+            can_be_used_int, BinOperation, BinOperator, Instruction, InstructionWithStr,
         },
         variable::{Array, ReturnType, Variable},
         Error, ExecError,

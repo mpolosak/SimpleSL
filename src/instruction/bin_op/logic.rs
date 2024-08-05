@@ -1,20 +1,41 @@
-use super::{And, Or};
-use crate::instruction::Instruction;
-use crate::variable::{Array, Variable};
 use duplicate::duplicate_item;
 
-#[duplicate_item(logic symbol cond dv; [And] [&&] [value!=0] [0]; [Or] [||] [value==0] [1])]
-impl logic {
+#[duplicate_item(logic Logic symbol cond dv; [and] [And] [&&] [value!=0] [0]; [or] [Or] [||] [value==0] [1])]
+pub mod logic {
+    use crate::instruction::{
+        can_be_used_int, BinOperation, BinOperator, Instruction, InstructionWithStr,
+    };
+    use crate::variable::{Array, ReturnType, Variable};
+    use crate::Error;
+    pub fn create_op(
+        lhs: InstructionWithStr,
+        rhs: InstructionWithStr,
+    ) -> Result<InstructionWithStr, Error> {
+        let str = format!("{} {} {}", lhs.str, stringify!(op), rhs.str).into();
+        let lhs_type = lhs.return_type();
+        let rhs_type = rhs.return_type();
+        if !can_be_used_int(lhs_type.clone(), rhs_type.clone()) {
+            return Err(Error::CannotDo2(lhs_type, stringify!(op), rhs_type));
+        }
+        let instruction = create_from_instructions(lhs.instruction, rhs.instruction);
+        Ok(InstructionWithStr { instruction, str })
+    }
+
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         match (lhs, rhs) {
-            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => Self::exec(lhs, rhs).into(),
+            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => exec(lhs, rhs).into(),
             (Instruction::Variable(Variable::Int(value)), instruction)
             | (instruction, Instruction::Variable(Variable::Int(value)))
                 if cond =>
             {
                 instruction
             }
-            (lhs, rhs) => Self { lhs, rhs }.into(),
+            (lhs, rhs) => BinOperation {
+                lhs,
+                rhs,
+                op: BinOperator::Logic,
+            }
+            .into(),
         }
     }
 

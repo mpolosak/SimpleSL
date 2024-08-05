@@ -1,6 +1,6 @@
 use crate as simplesl;
 use crate::instruction::local_variable::LocalVariables;
-use crate::instruction::{And, Exec, ExecResult, Recreate};
+use crate::instruction::{and, Exec, ExecResult, Recreate};
 use crate::instruction::{Instruction, InstructionWithStr};
 use crate::{
     variable::{Array, ReturnType, Type, Variable},
@@ -26,7 +26,7 @@ pub fn create_all(array: InstructionWithStr) -> Result<Instruction, Error> {
             .iter()
             .cloned()
             .map(|iws| iws.instruction)
-            .reduce(|acc, curr| And::create_from_instructions(acc, curr))
+            .reduce(|acc, curr| and::create_from_instructions(acc, curr))
             .unwrap()),
         instruction if instruction.return_type().matches(&var_type!([int])) => {
             Ok(All { array }.into())

@@ -2,7 +2,7 @@ use simplesl_macros::{var, var_type};
 
 use crate as simplesl;
 use crate::instruction::local_variable::LocalVariables;
-use crate::instruction::{Exec, ExecResult, Or, Recreate};
+use crate::instruction::{or, Exec, ExecResult, Recreate};
 use crate::instruction::{Instruction, InstructionWithStr};
 use crate::{
     variable::{Array, ReturnType, Type, Variable},
@@ -27,7 +27,7 @@ pub fn create_any(array: InstructionWithStr) -> Result<Instruction, Error> {
             .iter()
             .cloned()
             .map(|iws| iws.instruction)
-            .reduce(|acc, curr| Or::create_from_instructions(acc, curr))
+            .reduce(|acc, curr| or::create_from_instructions(acc, curr))
             .unwrap()),
         instruction if instruction.return_type().matches(&var_type!([int])) => {
             Ok(Any { array }.into())

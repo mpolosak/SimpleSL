@@ -1,9 +1,7 @@
 use std::sync::Arc;
 
 use crate::{
-    instruction::{
-        traits::can_be_used_int, BinOperation, BinOperator, Instruction, InstructionWithStr,
-    },
+    instruction::{can_be_used_int, BinOperation, BinOperator, Instruction, InstructionWithStr},
     variable::{Array, ReturnType, Variable},
     Error, ExecError,
 };
