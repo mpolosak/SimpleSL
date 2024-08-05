@@ -33,7 +33,6 @@ impl Exec for T {
 }
 
 #[duplicate_item(T; [And]; [Or];
-    [Greater]; [GreaterOrEqual]; [Lower]; [LowerOrEqual];
 )]
 impl Exec for T {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {

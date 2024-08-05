@@ -33,12 +33,3 @@ lazy_static! {
 pub fn can_be_used_num(lhs: Type, rhs: Type) -> bool {
     var_type!((lhs, rhs)).matches(&ACCEPTED_NUM_TYPE)
 }
-
-#[duplicate_item(T; [Greater]; [GreaterOrEqual]; [Lower]; [LowerOrEqual])]
-impl CanBeUsed for T {
-    fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
-        let lhs = lhs.clone();
-        let rhs = rhs.clone();
-        can_be_used_num(lhs, rhs)
-    }
-}

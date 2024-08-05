@@ -36,9 +36,7 @@ pub fn return_type_float(lhs: Type, rhs: Type) -> Type {
 }
 
 #[duplicate_item(
-    T;
-    [Greater]; [GreaterOrEqual]; [Lower]; [LowerOrEqual];
-    [And]; [Or];
+    T; [And]; [Or];
 )]
 impl ReturnType for T {
     fn return_type(&self) -> Type {
