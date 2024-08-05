@@ -23,9 +23,9 @@ impl Recreate for T {
 }
 
 #[duplicate_item(
-    T; [Divide]; [Modulo]; [Pow]; [And]; [Or];
+    T;  [Pow]; [And]; [Or];
     [BitwiseAnd]; [BitwiseOr]; [Xor]; [Greater]; [GreaterOrEqual];
-    [Lower]; [LowerOrEqual]; [Filter]; [Map]; [LShift]; [RShift]
+    [Lower]; [LowerOrEqual]; [Filter]; [Map];
 )]
 impl Recreate for T {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {

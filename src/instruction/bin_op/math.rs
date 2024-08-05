@@ -1,5 +1,6 @@
 pub mod add;
-mod divide;
+pub mod divide;
+pub mod modulo;
 pub mod multiply;
 mod pow;
 pub mod subtract;

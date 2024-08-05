@@ -1,33 +1,54 @@
-use super::{LShift, RShift};
-use crate::instruction::Instruction;
-use crate::variable::{Array, Variable};
-use crate::ExecError;
 use duplicate::duplicate_item;
-use std::sync::Arc;
-
 #[duplicate_item(
-    shift op1 op2;
-    [LShift] [lhs << rhs] [>>]; [RShift] [lhs >> rhs] [>>];
+    shift Shift op1 op2;
+    [lshift] [LShift] [lhs << rhs] [>>]; [rshift] [RShift] [lhs >> rhs] [>>];
 )]
-impl shift {
+pub mod shift {
+    use std::sync::Arc;
+
+    use crate::{
+        instruction::{
+            traits::can_be_used_int, BinOperation, BinOperator, Instruction, InstructionWithStr,
+        },
+        variable::{Array, ReturnType, Variable},
+        Error, ExecError,
+    };
+
+    pub fn create_op(
+        lhs: InstructionWithStr,
+        rhs: InstructionWithStr,
+    ) -> Result<InstructionWithStr, Error> {
+        let str = format!("{} {} {}", lhs.str, stringify!(op), rhs.str).into();
+        let lhs_type = lhs.return_type();
+        let rhs_type = rhs.return_type();
+        if !can_be_used_int(lhs_type.clone(), rhs_type.clone()) {
+            return Err(Error::CannotDo2(lhs_type, stringify!(op), rhs_type));
+        }
+        let instruction = create_from_instructions(lhs.instruction, rhs.instruction)?;
+        Ok(InstructionWithStr { instruction, str })
+    }
+
     pub fn create_from_instructions(
         lhs: Instruction,
         rhs: Instruction,
     ) -> Result<Instruction, ExecError> {
         match (lhs, rhs) {
-            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => {
-                Ok(Self::exec(lhs, rhs)?.into())
-            }
+            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => Ok(exec(lhs, rhs)?.into()),
             (_, Instruction::Variable(Variable::Int(rhs))) if !(0..=63).contains(&rhs) => {
                 Err(ExecError::OverflowShift)
             }
             (Instruction::ArrayRepeat(array), rhs) => Arc::unwrap_or_clone(array)
-                .try_map(|lhs| Self::create_from_instructions(lhs, rhs.clone()))
+                .try_map(|lhs| create_from_instructions(lhs, rhs.clone()))
                 .map(Instruction::from),
             (lhs, Instruction::ArrayRepeat(array)) => Arc::unwrap_or_clone(array)
-                .try_map(|rhs| Self::create_from_instructions(lhs.clone(), rhs))
+                .try_map(|rhs| create_from_instructions(lhs.clone(), rhs))
                 .map(Instruction::from),
-            (lhs, rhs) => Ok(Self { lhs, rhs }.into()),
+            (lhs, rhs) => Ok(BinOperation {
+                lhs,
+                rhs,
+                op: BinOperator::Shift,
+            }
+            .into()),
         }
     }
 
@@ -39,7 +60,7 @@ impl shift {
                 let elements = array
                     .iter()
                     .cloned()
-                    .map(|rhs| Self::exec(value.clone(), rhs))
+                    .map(|rhs| exec(value.clone(), rhs))
                     .collect::<Result<Arc<_>, _>>()?;
                 let element_type = array.element_type().clone();
                 Ok(Array {
@@ -52,7 +73,7 @@ impl shift {
                 let elements = array
                     .iter()
                     .cloned()
-                    .map(|lhs| Self::exec(lhs, value.clone()))
+                    .map(|lhs| exec(lhs, value.clone()))
                     .collect::<Result<Arc<_>, _>>()?;
                 let element_type = array.element_type().clone();
                 Ok(Array {

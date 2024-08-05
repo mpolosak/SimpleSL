@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::{
     instruction::{
-        traits::can_be_used_num, BinOperation, BinOperator, Instruction, InstructionWithStr,
+        traits::can_be_used_int, BinOperation, BinOperator, Instruction, InstructionWithStr,
     },
     variable::{Array, ReturnType, Variable},
     Error, ExecError,
@@ -12,11 +12,11 @@ pub fn create_op(
     lhs: InstructionWithStr,
     rhs: InstructionWithStr,
 ) -> Result<InstructionWithStr, Error> {
-    let str = format!("{} / {}", lhs.str, rhs.str).into();
+    let str = format!("{} % {}", lhs.str, rhs.str).into();
     let lhs_type = lhs.return_type();
     let rhs_type = rhs.return_type();
-    if !can_be_used_num(lhs_type.clone(), rhs_type.clone()) {
-        return Err(Error::CannotDo2(lhs_type, "/", rhs_type));
+    if !can_be_used_int(lhs_type.clone(), rhs_type.clone()) {
+        return Err(Error::CannotDo2(lhs_type, "%", rhs_type));
     }
     let instruction = create_from_instructions(lhs.instruction, rhs.instruction)?;
     Ok(InstructionWithStr { instruction, str })
@@ -30,7 +30,7 @@ pub fn create_from_instructions(
         (Instruction::Variable(dividend), Instruction::Variable(divisor)) => {
             Ok(exec(dividend, divisor)?.into())
         }
-        (_, Instruction::Variable(Variable::Int(0))) => Err(ExecError::ZeroDivision),
+        (_, Instruction::Variable(Variable::Int(0))) => Err(ExecError::ZeroModulo),
         (Instruction::ArrayRepeat(array), rhs) => Arc::unwrap_or_clone(array)
             .try_map(|lhs| create_from_instructions(lhs, rhs.clone()))
             .map(Instruction::from),
@@ -40,7 +40,7 @@ pub fn create_from_instructions(
         (lhs, rhs) => Ok(BinOperation {
             lhs,
             rhs,
-            op: BinOperator::Divide,
+            op: BinOperator::Modulo,
         }
         .into()),
     }
@@ -48,10 +48,9 @@ pub fn create_from_instructions(
 
 pub fn exec(dividend: Variable, divisor: Variable) -> Result<Variable, ExecError> {
     match (dividend, divisor) {
-        (_, Variable::Int(0)) => Err(ExecError::ZeroDivision),
-        (Variable::Int(dividend), Variable::Int(divisor)) => Ok((dividend / divisor).into()),
-        (Variable::Float(dividend), Variable::Float(divisor)) => Ok((dividend / divisor).into()),
-        (Variable::Array(array), divisor @ (Variable::Int(_) | Variable::Float(_))) => {
+        (_, Variable::Int(0)) => Err(ExecError::ZeroModulo),
+        (Variable::Int(dividend), Variable::Int(divisor)) => Ok((dividend % divisor).into()),
+        (Variable::Array(array), divisor @ Variable::Int(_)) => {
             let elements = array
                 .iter()
                 .cloned()
@@ -64,7 +63,7 @@ pub fn exec(dividend: Variable, divisor: Variable) -> Result<Variable, ExecError
             }
             .into())
         }
-        (dividend @ (Variable::Int(_) | Variable::Float(_)), Variable::Array(array)) => {
+        (dividend @ Variable::Int(_), Variable::Array(array)) => {
             let elements = array
                 .iter()
                 .cloned()
@@ -78,7 +77,7 @@ pub fn exec(dividend: Variable, divisor: Variable) -> Result<Variable, ExecError
             .into())
         }
         (dividend, divisor) => {
-            panic!("Tried to calc {dividend} / {divisor}")
+            panic!("Tried to calc {dividend} % {divisor}")
         }
     }
 }

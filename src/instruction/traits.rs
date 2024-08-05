@@ -20,8 +20,7 @@ use crate::variable::ReturnType;
 use duplicate::duplicate_item;
 use std::{fmt::Debug, sync::Arc};
 pub use {
-    can_be_used::can_be_used_num,
-    can_be_used::CanBeUsed,
+    can_be_used::{can_be_used_int, can_be_used_num, CanBeUsed},
     exec::{Exec, ExecResult, ExecStop},
     recreate::Recreate,
 };
@@ -30,8 +29,8 @@ pub trait BaseInstruction: Exec + Recreate + ReturnType + Debug + Sync + Send {}
 
 #[duplicate_item(T; [Filter]; [Map]; [Reduce]; [TypeFilter]; [At];
     [BitwiseAnd]; [BitwiseOr]; [BitwiseNot]; [Xor]; [And]; [Or];  [Pow];
-    [Divide]; [Modulo]; [Greater]; [GreaterOrEqual]; [Lower];
-    [LowerOrEqual]; [LShift]; [RShift]; [UnaryMinus]; [Not]; [Block]; [IfElse]; [Match];
+    [Greater]; [GreaterOrEqual]; [Lower];
+    [LowerOrEqual]; [UnaryMinus]; [Not]; [Block]; [IfElse]; [Match];
     [SetIfElse]; [DestructTuple]; [FunctionCall]; [FunctionDeclaration]; [Import];
     [Return]; [Set]; [All]; [Any]; [Product];
     [BitAndReduce]; [BitOrReduce]; [Sum];

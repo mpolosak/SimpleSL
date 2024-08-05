@@ -25,10 +25,7 @@ pub fn create_op(
         return Err(Error::CannotDo2(lhs_type, "+", rhs_type));
     }
     let instruction = create_from_instructions(lhs.instruction, rhs.instruction);
-    Ok(InstructionWithStr {
-        instruction: instruction,
-        str,
-    })
+    Ok(InstructionWithStr { instruction, str })
 }
 
 fn can_be_used(lhs: &Type, rhs: &Type) -> bool {

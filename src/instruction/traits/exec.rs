@@ -33,10 +33,8 @@ impl Exec for T {
 }
 
 #[duplicate_item(T;
-    [BitwiseAnd]; [Xor]; [BitwiseOr]; [And]; [Or];
-    [Divide]; [Modulo]; [Pow];
+    [BitwiseAnd]; [Xor]; [BitwiseOr]; [And]; [Or]; [Pow];
     [Greater]; [GreaterOrEqual]; [Lower]; [LowerOrEqual];
-    [LShift]; [RShift]; 
 )]
 impl Exec for T {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {

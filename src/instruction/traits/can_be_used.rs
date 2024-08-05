@@ -12,12 +12,16 @@ lazy_static! {
     pub static ref ACCEPTED_INT_TYPE: Type = var_type!((int, int | [int]) | ([int], int));
 }
 
-#[duplicate_item(T; [Modulo]; [And]; [Or]; [BitwiseAnd]; [BitwiseOr]; [Xor]; [LShift]; [RShift])]
+pub fn can_be_used_int(lhs: Type, rhs: Type) -> bool {
+    var_type!((lhs, rhs)).matches(&ACCEPTED_INT_TYPE)
+}
+
+#[duplicate_item(T; [And]; [Or]; [BitwiseAnd]; [BitwiseOr]; [Xor];)]
 impl CanBeUsed for T {
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
         let lhs = lhs.clone();
         let rhs = rhs.clone();
-        var_type!((lhs, rhs)).matches(&ACCEPTED_INT_TYPE)
+        can_be_used_int(lhs, rhs)
     }
 }
 
@@ -30,7 +34,7 @@ pub fn can_be_used_num(lhs: Type, rhs: Type) -> bool {
     var_type!((lhs, rhs)).matches(&ACCEPTED_NUM_TYPE)
 }
 
-#[duplicate_item(T; [Greater]; [GreaterOrEqual]; [Lower]; [LowerOrEqual]; [Divide]; [Pow])]
+#[duplicate_item(T; [Greater]; [GreaterOrEqual]; [Lower]; [LowerOrEqual];  [Pow])]
 impl CanBeUsed for T {
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
         let lhs = lhs.clone();

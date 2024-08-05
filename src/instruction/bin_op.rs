@@ -5,8 +5,10 @@ mod map;
 mod math;
 mod shift;
 use super::{
-    local_variable::LocalVariables, reduce::Reduce, return_type::return_type_float, Exec,
-    ExecResult, InstructionWithStr, Recreate,
+    local_variable::LocalVariables,
+    reduce::Reduce,
+    return_type::{return_type_float, return_type_int},
+    Exec, ExecResult, InstructionWithStr, Recreate,
 };
 use crate::{
     instruction::{traits::CanBeUsed, Instruction},
@@ -15,7 +17,9 @@ use crate::{
 };
 use duplicate::duplicate_item;
 pub use math::{add, multiply, subtract};
+use math::{divide, modulo};
 use pest::iterators::Pair;
+use shift::{lshift, rshift};
 use simplesl_parser::{unexpected, Rule};
 use std::sync::Arc;
 
@@ -31,13 +35,17 @@ pub enum BinOperator {
     Add,
     Subtract,
     Multiply,
+    Divide,
+    Modulo,
     Equal,
     NotEqual,
+    LShift,
+    RShift,
 }
 
 #[duplicate_item(T; [BitwiseAnd]; [BitwiseOr]; [Xor]; [Filter]; [Map]; [And]; [Or];
-    [Divide]; [Modulo]; [Pow]; [Greater]; [GreaterOrEqual];
-    [Lower]; [LowerOrEqual]; [LShift]; [RShift]
+    [Pow]; [Greater]; [GreaterOrEqual];
+    [Lower]; [LowerOrEqual];
 )]
 #[derive(Debug)]
 pub struct T {
@@ -53,8 +61,12 @@ impl Exec for BinOperation {
             BinOperator::Add => Ok(add::exec(lhs, rhs)),
             BinOperator::Subtract => Ok(subtract::exec(lhs, rhs)),
             BinOperator::Multiply => Ok(multiply::exec(lhs, rhs)),
+            BinOperator::Divide => Ok(divide::exec(lhs, rhs)?),
+            BinOperator::Modulo => Ok(modulo::exec(lhs, rhs)?),
             BinOperator::Equal => Ok(equal::exec(lhs, rhs)),
             BinOperator::NotEqual => Ok(not_equal::exec(lhs, rhs)),
+            BinOperator::LShift => Ok(lshift::exec(lhs, rhs)?),
+            BinOperator::RShift => Ok(rshift::exec(lhs, rhs)?),
         }
     }
 }
@@ -67,8 +79,12 @@ impl Recreate for BinOperation {
             BinOperator::Add => Ok(add::create_from_instructions(lhs, rhs)),
             BinOperator::Subtract => Ok(subtract::create_from_instructions(lhs, rhs)),
             BinOperator::Multiply => Ok(multiply::create_from_instructions(lhs, rhs)),
+            BinOperator::Divide => divide::create_from_instructions(lhs, rhs),
+            BinOperator::Modulo => modulo::create_from_instructions(lhs, rhs),
             BinOperator::Equal => Ok(equal::create_from_instructions(lhs, rhs)),
             BinOperator::NotEqual => Ok(not_equal::create_from_instructions(lhs, rhs)),
+            BinOperator::LShift => lshift::create_from_instructions(lhs, rhs),
+            BinOperator::RShift => rshift::create_from_instructions(lhs, rhs),
         }
     }
 }
@@ -79,9 +95,13 @@ impl ReturnType for BinOperation {
         let rhs = self.rhs.return_type();
         match self.op {
             BinOperator::Add => add::return_type(lhs, rhs),
-            BinOperator::Subtract => return_type_float(lhs, rhs),
-            BinOperator::Multiply => return_type_float(lhs, rhs),
+            BinOperator::Subtract | BinOperator::Multiply | BinOperator::Divide => {
+                return_type_float(lhs, rhs)
+            }
             BinOperator::Equal | BinOperator::NotEqual => Type::Int,
+            BinOperator::LShift | BinOperator::RShift | BinOperator::Modulo => {
+                return_type_int(lhs, rhs)
+            }
         }
     }
 }
@@ -92,10 +112,9 @@ impl From<BinOperation> for Instruction {
     }
 }
 
-#[duplicate_item(T op; [BitwiseAnd] [&]; [BitwiseOr] [|]; [Xor] [^]; [Filter] [?];
-    [Map] [@]; [And] [&&]; [Or] [||]; [Divide] [/];
-    [Modulo] [%]; [Pow] [**]; [Greater] [>]; [GreaterOrEqual] [>=]; [Lower] [<];
-    [LowerOrEqual] [<=]; [LShift] [<<]; [RShift] [>>]
+#[duplicate_item(T op; [BitwiseAnd] [&]; [BitwiseOr] [|];
+    [Xor] [^]; [Filter] [?]; [Map] [@]; [And] [&&]; [Or] [||]; [Pow] [**];
+    [Greater] [>]; [GreaterOrEqual] [>=]; [Lower] [<]; [LowerOrEqual] [<=]
 )]
 impl T {
     pub fn create_op(
@@ -221,8 +240,8 @@ impl InstructionWithStr {
             Rule::multiply => multiply::create_op(lhs, rhs),
             Rule::add => add::create_op(lhs, rhs),
             Rule::subtract => subtract::create_op(lhs, rhs),
-            Rule::divide => Divide::create_op(lhs, rhs),
-            Rule::modulo => Modulo::create_op(lhs, rhs),
+            Rule::divide => divide::create_op(lhs, rhs),
+            Rule::modulo => modulo::create_op(lhs, rhs),
             Rule::equal => equal::create_op(lhs, rhs),
             Rule::not_equal => not_equal::create_op(lhs, rhs),
             Rule::lower => Lower::create_op(lhs, rhs),
@@ -234,8 +253,8 @@ impl InstructionWithStr {
             Rule::bitwise_and => BitwiseAnd::create_op(lhs, rhs),
             Rule::bitwise_or => BitwiseOr::create_op(lhs, rhs),
             Rule::xor => Xor::create_op(lhs, rhs),
-            Rule::rshift => RShift::create_op(lhs, rhs),
-            Rule::lshift => LShift::create_op(lhs, rhs),
+            Rule::rshift => rshift::create_op(lhs, rhs),
+            Rule::lshift => lshift::create_op(lhs, rhs),
             Rule::and => And::create_op(lhs, rhs),
             Rule::or => Or::create_op(lhs, rhs),
             Rule::reduce => {

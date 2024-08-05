@@ -14,8 +14,7 @@ impl ReturnType for T {
     }
 }
 
-#[duplicate_item(T; [Divide]; [Pow];)]
-impl ReturnType for T {
+impl ReturnType for Pow {
     fn return_type(&self) -> Type {
         let lhs = self.lhs.return_type();
         let rhs = self.rhs.return_type();
@@ -48,7 +47,6 @@ pub fn return_type_float(lhs: Type, rhs: Type) -> Type {
     T;
     [Greater]; [GreaterOrEqual]; [Lower]; [LowerOrEqual];
     [BitwiseAnd]; [BitwiseOr]; [And]; [Or]; [Xor];
-    [Modulo]; [LShift]; [RShift]
 )]
 impl ReturnType for T {
     fn return_type(&self) -> Type {
