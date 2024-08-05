@@ -1,4 +1,4 @@
-use crate::instruction::InstructionWithStr;
+use crate::instruction::{Instruction, InstructionWithStr};
 use crate::variable::ReturnType;
 use crate::{self as simplesl, Error};
 use crate::{
@@ -9,23 +9,18 @@ use simplesl_macros::var_type;
 
 use super::{BinOperation, BinOperator};
 
-pub fn create_op(
-    lhs: InstructionWithStr,
-    rhs: InstructionWithStr,
-) -> Result<InstructionWithStr, Error> {
-    let str = format!("{} {} {}", lhs.str, stringify!(op), rhs.str).into();
+pub fn create_op(lhs: InstructionWithStr, rhs: InstructionWithStr) -> Result<Instruction, Error> {
     let lhs_type = lhs.return_type();
     let rhs_type = rhs.return_type();
     if !can_be_used(&lhs_type, &rhs_type) {
         return Err(Error::CannotDo2(lhs_type, stringify!(op), rhs_type));
     }
-    let instruction = BinOperation {
+    Ok(BinOperation {
         lhs: lhs.instruction,
         rhs: rhs.instruction,
         op: BinOperator::Filter,
     }
-    .into();
-    Ok(InstructionWithStr { instruction, str })
+    .into())
 }
 
 pub fn can_be_used(lhs: &Type, rhs: &Type) -> bool {

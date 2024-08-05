@@ -171,11 +171,7 @@ impl From<BinOperation> for Instruction {
 
 mod equal {
     use super::{BinOperation, BinOperator};
-    use crate::{
-        instruction::{Instruction, InstructionWithStr},
-        variable::Variable,
-        Error,
-    };
+    use crate::{instruction::Instruction, variable::Variable};
 
     pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
         (lhs == rhs).into()
@@ -192,24 +188,11 @@ mod equal {
             .into(),
         }
     }
-
-    pub fn create_op(
-        lhs: InstructionWithStr,
-        rhs: InstructionWithStr,
-    ) -> Result<InstructionWithStr, Error> {
-        let str = format!("{} == {}", lhs.str, rhs.str).into();
-        let instruction = create_from_instructions(lhs.instruction, rhs.instruction);
-        Ok(InstructionWithStr { instruction, str })
-    }
 }
 
 mod not_equal {
     use super::{BinOperation, BinOperator};
-    use crate::{
-        instruction::{Instruction, InstructionWithStr},
-        variable::Variable,
-        Error,
-    };
+    use crate::{instruction::Instruction, variable::Variable};
 
     pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
         (lhs != rhs).into()
@@ -226,15 +209,6 @@ mod not_equal {
             .into(),
         }
     }
-
-    pub fn create_op(
-        lhs: InstructionWithStr,
-        rhs: InstructionWithStr,
-    ) -> Result<InstructionWithStr, Error> {
-        let str = format!("{} != {}", lhs.str, rhs.str).into();
-        let instruction = create_from_instructions(lhs.instruction, rhs.instruction);
-        Ok(InstructionWithStr { instruction, str })
-    }
 }
 
 impl InstructionWithStr {
@@ -244,15 +218,22 @@ impl InstructionWithStr {
         rhs: Self,
         local_variables: &LocalVariables<'_>,
     ) -> Result<Self, Error> {
-        match op.as_rule() {
+        let str = format!("{} {} {}", lhs.str, op.as_str(), rhs.str).into();
+        let instruction = match op.as_rule() {
             Rule::pow => pow::create_op(lhs, rhs),
             Rule::multiply => multiply::create_op(lhs, rhs),
             Rule::add => add::create_op(lhs, rhs),
             Rule::subtract => subtract::create_op(lhs, rhs),
             Rule::divide => divide::create_op(lhs, rhs),
             Rule::modulo => modulo::create_op(lhs, rhs),
-            Rule::equal => equal::create_op(lhs, rhs),
-            Rule::not_equal => not_equal::create_op(lhs, rhs),
+            Rule::equal => Ok(equal::create_from_instructions(
+                lhs.instruction,
+                rhs.instruction,
+            )),
+            Rule::not_equal => Ok(not_equal::create_from_instructions(
+                lhs.instruction,
+                rhs.instruction,
+            )),
             Rule::lower => lower::create_op(lhs, rhs),
             Rule::lower_equal => lower_equal::create_op(lhs, rhs),
             Rule::greater => greater::create_op(lhs, rhs),
@@ -266,12 +247,9 @@ impl InstructionWithStr {
             Rule::lshift => lshift::create_op(lhs, rhs),
             Rule::and => and::create_op(lhs, rhs),
             Rule::or => or::create_op(lhs, rhs),
-            Rule::reduce => {
-                let str = format!("{} {} {}", lhs.str, op.as_str(), rhs.str).into();
-                let instruction = Reduce::create_instruction(lhs, op, rhs, local_variables)?;
-                Ok(InstructionWithStr { instruction, str })
-            }
+            Rule::reduce => Reduce::create_instruction(lhs, op, rhs, local_variables),
             rule => unexpected!(rule),
-        }
+        }?;
+        Ok(Self { instruction, str })
     }
 }

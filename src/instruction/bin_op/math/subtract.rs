@@ -3,18 +3,13 @@ use crate::variable::{Array, Variable};
 use crate::{instruction::InstructionWithStr, variable::ReturnType, Error};
 use match_any::match_any;
 
-pub fn create_op(
-    lhs: InstructionWithStr,
-    rhs: InstructionWithStr,
-) -> Result<InstructionWithStr, Error> {
-    let str = format!("{} - {}", lhs.str, rhs.str).into();
+pub fn create_op(lhs: InstructionWithStr, rhs: InstructionWithStr) -> Result<Instruction, Error> {
     let lhs_type = lhs.return_type();
     let rhs_type = rhs.return_type();
     if !can_be_used_num(lhs_type.clone(), rhs_type.clone()) {
         return Err(Error::CannotDo2(lhs_type, "-", rhs_type));
     }
-    let instruction = create_from_instructions(lhs.instruction, rhs.instruction);
-    Ok(InstructionWithStr { instruction, str })
+    Ok(create_from_instructions(lhs.instruction, rhs.instruction))
 }
 
 pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
