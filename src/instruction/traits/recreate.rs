@@ -23,7 +23,7 @@ impl Recreate for T {
 }
 
 #[duplicate_item(
-    T; [And]; [Or]; [Filter]; [Map];
+    T; [And]; [Or]; [Map];
 )]
 impl Recreate for T {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {

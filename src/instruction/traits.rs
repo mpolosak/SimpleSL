@@ -27,7 +27,7 @@ pub use {
 
 pub trait BaseInstruction: Exec + Recreate + ReturnType + Debug + Sync + Send {}
 
-#[duplicate_item(T; [Filter]; [Map]; [Reduce]; [TypeFilter]; [At];
+#[duplicate_item(T; [Map]; [Reduce]; [TypeFilter]; [At];
     [BitwiseNot]; [And]; [Or]; [UnaryMinus]; [Not]; [Block]; [IfElse]; [Match];
     [SetIfElse]; [DestructTuple]; [FunctionCall]; [FunctionDeclaration]; [Import];
     [Return]; [Set]; [All]; [Any]; [Product];
