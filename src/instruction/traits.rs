@@ -7,7 +7,7 @@ use super::{
     import::Import,
     local_variable::LocalVariables,
     r#return::Return,
-    reduce::{All, Any, BitAndReduce, BitOrReduce, Product, Reduce, Sum},
+    reduce::Reduce,
     set::Set,
     type_filter::TypeFilter,
     FunctionCall, Instruction,
@@ -23,8 +23,7 @@ pub trait BaseInstruction: Exec + Recreate + ReturnType + Debug + Sync + Send {}
 
 #[duplicate_item(T; [Reduce]; [TypeFilter]; [At]; [Block]; [IfElse]; [Match];
     [SetIfElse]; [DestructTuple]; [FunctionCall]; [FunctionDeclaration]; [Import];
-    [Return]; [Set]; [All]; [Any]; [Product];
-    [BitAndReduce]; [BitOrReduce]; [Sum];
+    [Return]; [Set];
 )]
 impl BaseInstruction for T {}
 

@@ -1,9 +1,9 @@
-mod all;
-mod any;
-mod bitand;
-mod bitor;
-mod product;
-mod sum;
+pub mod all;
+pub mod any;
+pub mod bitand;
+pub mod bitor;
+pub mod product;
+pub mod sum;
 use crate as simplesl;
 use crate::{
     instruction::{
@@ -15,15 +15,9 @@ use crate::{
     variable::{ReturnType, Type, Variable},
     Error, ExecError,
 };
-pub use all::*;
-pub use any::*;
-pub use bitand::*;
-pub use bitor::*;
 use pest::iterators::Pair;
-pub use product::*;
 use simplesl_macros::var_type;
 use simplesl_parser::Rule;
-pub use sum::*;
 
 #[derive(Debug)]
 pub struct Reduce {

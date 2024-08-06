@@ -8,6 +8,7 @@ mod destruct_tuple;
 mod function;
 mod import;
 pub mod local_variable;
+mod postfix_op;
 mod prefix_op;
 mod reduce;
 mod r#return;
@@ -19,7 +20,6 @@ mod type_filter;
 use self::{
     array::Array,
     array_repeat::ArrayRepeat,
-    at::At,
     bin_op::*,
     block::Block,
     control_flow::{IfElse, Match, SetIfElse},
@@ -28,11 +28,9 @@ use self::{
     import::Import,
     local_variable::{LocalVariable, LocalVariables},
     r#return::Return,
-    reduce::{create_all, create_any, create_bitand_reduce, create_bitor_reduce, Product, Sum},
     set::Set,
     traits::BaseInstruction,
     tuple::Tuple,
-    type_filter::TypeFilter,
 };
 use crate::{
     interpreter::Interpreter,
@@ -42,6 +40,7 @@ use crate::{
 pub(crate) use function::FunctionCall;
 use match_any::match_any;
 use pest::iterators::Pair;
+use postfix_op::PostfixOperation;
 use prefix_op::PrefixOperation;
 use simplesl_parser::{unexpected, Rule, PRATT_PARSER};
 use std::sync::Arc;
@@ -111,29 +110,6 @@ impl InstructionWithStr {
         Ok(Self { instruction, str })
     }
 
-    fn create_postfix(
-        op: Pair<'_, Rule>,
-        lhs: Self,
-        local_variables: &LocalVariables<'_>,
-    ) -> Result<Self, Error> {
-        let str = format!("{} {}", lhs.str, op.as_str()).into();
-        let instruction = match op.as_rule() {
-            Rule::at => At::create_instruction(lhs, op, local_variables),
-            Rule::type_filter => {
-                TypeFilter::create_instruction(lhs, op.into_inner().next().unwrap())
-            }
-            Rule::function_call => FunctionCall::create_instruction(lhs, op, local_variables),
-            Rule::sum => Sum::create(lhs),
-            Rule::product => Product::create(lhs),
-            Rule::all => create_all(lhs),
-            Rule::reduce_any => create_any(lhs),
-            Rule::bitand_reduce => create_bitand_reduce(lhs),
-            Rule::bitor_reduce => create_bitor_reduce(lhs),
-            rule => unexpected!(rule),
-        }?;
-        Ok(Self { instruction, str })
-    }
-
     fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Self, ExecError> {
         let instruction = self.instruction.recreate(local_variables)?;
         let str = self.str.clone();
@@ -193,6 +169,7 @@ pub enum Instruction {
     Variable(Variable),
     BinOperation(Arc<BinOperation>),
     PrefixOperation(Arc<PrefixOperation>),
+    PostfixOperation(Arc<PostfixOperation>),
     Other(Arc<dyn BaseInstruction>),
 }
 
@@ -228,7 +205,8 @@ impl Exec for Instruction {
                 .cloned()
                 .ok_or_else(|| panic!("Tried to get variable {ident} that doest exist")),
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins)
-            | Self::Tuple(ins) | Self::BinOperation(ins) | Self::PrefixOperation(ins) | Self::Other(ins)
+            | Self::Tuple(ins) | Self::BinOperation(ins) | Self::PrefixOperation(ins)
+            | Self::PostfixOperation(ins) | Self::Other(ins)
                 => ins.exec(interpreter)
         }
     }
@@ -252,7 +230,8 @@ impl Recreate for Instruction {
             )),
             Self::Variable(variable) => Ok(Self::Variable(variable.clone())),
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins)
-            | Self::Tuple(ins) | Self::BinOperation(ins) | Self::PrefixOperation(ins) | Self::Other(ins)
+            | Self::Tuple(ins) | Self::BinOperation(ins) | Self::PrefixOperation(ins)
+            | Self::PostfixOperation(ins) | Self::Other(ins)
                 => ins.recreate(local_variables)
         }
     }
@@ -262,8 +241,9 @@ impl ReturnType for Instruction {
     fn return_type(&self) -> Type {
         match_any! { self,
             Self::Variable(variable) | Self::LocalVariable(_, variable) => variable.as_type(),
-            Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins) | Self::Tuple(ins)
-            | Self::BinOperation(ins)| Self::PrefixOperation(ins )| Self::Other(ins) => ins.return_type()
+            Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins)
+            | Self::Tuple(ins) | Self::BinOperation(ins)| Self::PrefixOperation(ins )
+            | Self::PostfixOperation(ins) | Self::Other(ins) => ins.return_type()
         }
     }
 }

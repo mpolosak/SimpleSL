@@ -1,21 +1,20 @@
-use simplesl_macros::{var, var_type};
-
 use crate as simplesl;
-use crate::instruction::local_variable::LocalVariables;
-use crate::instruction::{or, Exec, ExecResult, Recreate};
+use crate::instruction::postfix_op::{PostfixOperation, PostfixOperator};
+use crate::instruction::{or, ExecResult};
 use crate::instruction::{Instruction, InstructionWithStr};
+use crate::ExecError;
 use crate::{
-    variable::{Array, ReturnType, Type, Variable},
+    variable::{Array, ReturnType, Variable},
     Error,
 };
-use crate::{ExecError, Interpreter};
+use simplesl_macros::{var, var_type};
 
-pub fn create_any(array: InstructionWithStr) -> Result<Instruction, Error> {
+pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
     match &array.instruction {
         Instruction::Variable(Variable::Array(array))
             if array.element_type().matches(&var_type!(int)) =>
         {
-            Ok(Any::calc(array).into())
+            Ok(calc(array).into())
         }
         Instruction::ArrayRepeat(array_repeat)
             if array_repeat.value.return_type().matches(&var_type!(int)) =>
@@ -30,7 +29,11 @@ pub fn create_any(array: InstructionWithStr) -> Result<Instruction, Error> {
             .reduce(|acc, curr| or::create_from_instructions(acc, curr))
             .unwrap()),
         instruction if instruction.return_type().matches(&var_type!([int])) => {
-            Ok(Any { array }.into())
+            Ok(PostfixOperation {
+                instruction: array,
+                op: PostfixOperator::Any,
+            }
+            .into())
         }
         ins => Err(Error::IncorectPostfixOperatorOperand {
             ins: array.str,
@@ -41,37 +44,23 @@ pub fn create_any(array: InstructionWithStr) -> Result<Instruction, Error> {
     }
 }
 
-#[derive(Debug)]
-pub struct Any {
-    pub array: InstructionWithStr,
+fn calc(array: &Array) -> Variable {
+    let sum = array.iter().any(|var| *var.as_int().unwrap() != 0);
+    var!(sum)
 }
 
-impl Any {
-    fn calc(array: &Array) -> Variable {
-        let sum = array.iter().any(|var| *var.as_int().unwrap() != 0);
-        var!(sum)
+pub fn recreate(instruction: InstructionWithStr) -> Result<Instruction, ExecError> {
+    if let Instruction::Variable(Variable::Array(array)) = &instruction.instruction {
+        return Ok(calc(array).into());
     }
+    Ok(PostfixOperation {
+        instruction,
+        op: PostfixOperator::Any,
+    }
+    .into())
 }
 
-impl ReturnType for Any {
-    fn return_type(&self) -> Type {
-        var_type!(int)
-    }
-}
-
-impl Recreate for Any {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let array = self.array.recreate(local_variables)?;
-        if let Instruction::Variable(Variable::Array(array)) = &self.array.instruction {
-            return Ok(Self::calc(array).into());
-        }
-        Ok(Self { array }.into())
-    }
-}
-
-impl Exec for Any {
-    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let array = self.array.exec(interpreter)?.into_array().unwrap();
-        Ok(Self::calc(&array).into())
-    }
+pub fn exec(var: Variable) -> ExecResult {
+    let array = var.into_array().unwrap();
+    Ok(calc(&array).into())
 }
