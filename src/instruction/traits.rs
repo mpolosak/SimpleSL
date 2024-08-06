@@ -8,7 +8,7 @@ use super::{
     reduce::Reduce,
     set::Set,
     type_filter::TypeFilter,
-    FunctionCall, Instruction,
+    Instruction,
 };
 use crate::{
     variable::{ReturnType, Variable},
@@ -20,7 +20,7 @@ use std::{fmt::Debug, sync::Arc};
 pub trait BaseInstruction: Exec + Recreate + ReturnType + Debug + Sync + Send {}
 
 #[duplicate_item(T; [Reduce]; [TypeFilter]; [Block]; [IfElse]; [Match]; [SetIfElse];
-    [DestructTuple]; [FunctionCall]; [FunctionDeclaration]; [Import]; [Set];
+    [DestructTuple]; [FunctionDeclaration]; [Import]; [Set];
 )]
 impl BaseInstruction for T {}
 

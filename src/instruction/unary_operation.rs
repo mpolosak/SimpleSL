@@ -1,10 +1,11 @@
 use super::{
     at,
+    function::call,
     local_variable::LocalVariables,
     prefix_op::{bitwise_not, not, unary_minus},
     reduce::{all, any, bitand, bitor, product, sum},
     type_filter::TypeFilter,
-    Exec, ExecResult, ExecStop, FunctionCall, Instruction, InstructionWithStr, Recreate,
+    Exec, ExecResult, ExecStop, Instruction, InstructionWithStr, Recreate,
 };
 use crate::{
     variable::{ReturnType, Type},
@@ -25,7 +26,7 @@ impl InstructionWithStr {
             Rule::type_filter => {
                 TypeFilter::create_instruction(lhs, op.into_inner().next().unwrap())
             }
-            Rule::function_call => FunctionCall::create_instruction(lhs, op, local_variables),
+            Rule::function_call => call::create_instruction(lhs, op, local_variables),
             Rule::sum => sum::create(lhs),
             Rule::product => product::create(lhs),
             Rule::all => all::create(lhs),

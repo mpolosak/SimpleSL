@@ -6,6 +6,7 @@ mod math;
 mod shift;
 use super::{
     at,
+    function::call,
     local_variable::LocalVariables,
     reduce::Reduce,
     return_type::{return_type_float, return_type_int},
@@ -75,36 +76,38 @@ pub enum BinOperator {
     Filter,
     Map,
     At,
+    FunctionCall,
 }
 
 impl Exec for BinOperation {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let lhs = self.lhs.exec(interpreter)?;
         let rhs = self.rhs.exec(interpreter)?;
-        match self.op {
-            BinOperator::Add => Ok(add::exec(lhs, rhs)),
-            BinOperator::Subtract => Ok(subtract::exec(lhs, rhs)),
-            BinOperator::Multiply => Ok(multiply::exec(lhs, rhs)),
-            BinOperator::Divide => Ok(divide::exec(lhs, rhs)?),
-            BinOperator::Modulo => Ok(modulo::exec(lhs, rhs)?),
-            BinOperator::Pow => Ok(pow::exec(lhs, rhs)?),
-            BinOperator::Equal => Ok(equal::exec(lhs, rhs)),
-            BinOperator::NotEqual => Ok(not_equal::exec(lhs, rhs)),
-            BinOperator::Greater => Ok(greater::exec(lhs, rhs)),
-            BinOperator::GreaterOrEqual => Ok(greater_equal::exec(lhs, rhs)),
-            BinOperator::Lower => Ok(lower::exec(lhs, rhs)),
-            BinOperator::LowerOrEqual => Ok(lower_equal::exec(lhs, rhs)),
-            BinOperator::And => Ok(and::exec(lhs, rhs)),
-            BinOperator::Or => Ok(or::exec(lhs, rhs)),
-            BinOperator::BitwiseAnd => Ok(bitwise_and::exec(lhs, rhs)),
-            BinOperator::BitwiseOr => Ok(bitwise_or::exec(lhs, rhs)),
-            BinOperator::Xor => Ok(xor::exec(lhs, rhs)),
-            BinOperator::LShift => Ok(lshift::exec(lhs, rhs)?),
-            BinOperator::RShift => Ok(rshift::exec(lhs, rhs)?),
-            BinOperator::Filter => Ok(filter::exec(lhs, rhs)?),
-            BinOperator::Map => Ok(map::exec(lhs, rhs)?),
-            BinOperator::At => Ok(at::exec(lhs, rhs)?),
-        }
+        Ok(match self.op {
+            BinOperator::Add => add::exec(lhs, rhs),
+            BinOperator::Subtract => subtract::exec(lhs, rhs),
+            BinOperator::Multiply => multiply::exec(lhs, rhs),
+            BinOperator::Divide => divide::exec(lhs, rhs)?,
+            BinOperator::Modulo => modulo::exec(lhs, rhs)?,
+            BinOperator::Pow => pow::exec(lhs, rhs)?,
+            BinOperator::Equal => equal::exec(lhs, rhs),
+            BinOperator::NotEqual => not_equal::exec(lhs, rhs),
+            BinOperator::Greater => greater::exec(lhs, rhs),
+            BinOperator::GreaterOrEqual => greater_equal::exec(lhs, rhs),
+            BinOperator::Lower => lower::exec(lhs, rhs),
+            BinOperator::LowerOrEqual => lower_equal::exec(lhs, rhs),
+            BinOperator::And => and::exec(lhs, rhs),
+            BinOperator::Or => or::exec(lhs, rhs),
+            BinOperator::BitwiseAnd => bitwise_and::exec(lhs, rhs),
+            BinOperator::BitwiseOr => bitwise_or::exec(lhs, rhs),
+            BinOperator::Xor => xor::exec(lhs, rhs),
+            BinOperator::LShift => lshift::exec(lhs, rhs)?,
+            BinOperator::RShift => rshift::exec(lhs, rhs)?,
+            BinOperator::Filter => filter::exec(lhs, rhs)?,
+            BinOperator::Map => map::exec(lhs, rhs)?,
+            BinOperator::At => at::exec(lhs, rhs)?,
+            BinOperator::FunctionCall => call::exec(lhs, rhs)?,
+        })
     }
 }
 
@@ -133,7 +136,9 @@ impl Recreate for BinOperation {
             BinOperator::LShift => lshift::create_from_instructions(lhs, rhs),
             BinOperator::RShift => rshift::create_from_instructions(lhs, rhs),
             BinOperator::At => at::create_from_instructions(lhs, rhs),
-            op @ (BinOperator::Filter | BinOperator::Map) => Ok(Self { lhs, rhs, op }.into()),
+            op @ (BinOperator::Filter | BinOperator::Map | BinOperator::FunctionCall) => {
+                Ok(Self { lhs, rhs, op }.into())
+            }
         }
     }
 }
@@ -164,6 +169,7 @@ impl ReturnType for BinOperation {
             BinOperator::Filter => self.lhs.return_type(),
             BinOperator::Map => map::return_type(rhs),
             BinOperator::At => lhs.index_result().unwrap(),
+            BinOperator::FunctionCall => lhs.return_type().unwrap(),
         }
     }
 }

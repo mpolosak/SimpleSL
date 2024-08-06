@@ -5,7 +5,7 @@ mod bin_op;
 mod block;
 mod control_flow;
 mod destruct_tuple;
-mod function;
+pub mod function;
 mod import;
 pub mod local_variable;
 mod prefix_op;
@@ -36,7 +36,6 @@ use crate::{
     variable::{ReturnType, Type, Typed, Variable},
     Error, ExecError,
 };
-pub(crate) use function::FunctionCall;
 use match_any::match_any;
 use pest::iterators::Pair;
 use simplesl_parser::{unexpected, Rule, PRATT_PARSER};
