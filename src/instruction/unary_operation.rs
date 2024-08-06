@@ -4,7 +4,7 @@ use super::{
     prefix_op::{bitwise_not, not, unary_minus},
     reduce::{all, any, bitand, bitor, product, sum},
     type_filter::TypeFilter,
-    Exec, ExecResult, FunctionCall, Instruction, InstructionWithStr, Recreate,
+    Exec, ExecResult, ExecStop, FunctionCall, Instruction, InstructionWithStr, Recreate,
 };
 use crate::{
     variable::{ReturnType, Type},
@@ -55,6 +55,7 @@ pub enum UnaryOperator {
     BitwiseNot,
     Not,
     UnaryMinus,
+    Return,
 }
 
 impl Exec for UnaryOperation {
@@ -70,6 +71,7 @@ impl Exec for UnaryOperation {
             UnaryOperator::BitwiseNot => bitwise_not::exec(var),
             UnaryOperator::Not => not::exec(var),
             UnaryOperator::UnaryMinus => unary_minus::exec(var),
+            UnaryOperator::Return => return Err(ExecStop::Return(var)),
         })
     }
 }
@@ -90,6 +92,11 @@ impl Recreate for UnaryOperation {
             UnaryOperator::BitwiseNot => bitwise_not::create_from_instruction(instruction),
             UnaryOperator::Not => not::create_from_instruction(instruction),
             UnaryOperator::UnaryMinus => unary_minus::create_from_instruction(instruction),
+            UnaryOperator::Return => UnaryOperation {
+                instruction,
+                op: UnaryOperator::Return,
+            }
+            .into(),
         })
     }
 }
@@ -106,6 +113,7 @@ impl ReturnType for UnaryOperation {
             UnaryOperator::BitwiseNot | UnaryOperator::Not | UnaryOperator::UnaryMinus => {
                 return_type
             }
+            UnaryOperator::Return => Type::Never,
         }
     }
 }

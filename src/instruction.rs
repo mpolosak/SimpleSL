@@ -27,7 +27,6 @@ use self::{
     function::{AnonymousFunction, FunctionDeclaration},
     import::Import,
     local_variable::{LocalVariable, LocalVariables},
-    r#return::Return,
     set::Set,
     traits::BaseInstruction,
     tuple::Tuple,
@@ -184,7 +183,7 @@ impl Instruction {
             Rule::function_declaration => {
                 FunctionDeclaration::create_instruction(pair, local_variables)
             }
-            Rule::r#return => Return::create_instruction(pair, local_variables),
+            Rule::r#return => r#return::create(pair, local_variables),
             Rule::expr => {
                 return InstructionWithStr::new_expression(pair, local_variables)
                     .map(|iws| iws.instruction)

@@ -5,7 +5,6 @@ use super::{
     function::FunctionDeclaration,
     import::Import,
     local_variable::LocalVariables,
-    r#return::Return,
     reduce::Reduce,
     set::Set,
     type_filter::TypeFilter,
@@ -21,7 +20,7 @@ use std::{fmt::Debug, sync::Arc};
 pub trait BaseInstruction: Exec + Recreate + ReturnType + Debug + Sync + Send {}
 
 #[duplicate_item(T; [Reduce]; [TypeFilter]; [Block]; [IfElse]; [Match]; [SetIfElse];
-    [DestructTuple]; [FunctionCall]; [FunctionDeclaration]; [Import];[Return]; [Set];
+    [DestructTuple]; [FunctionCall]; [FunctionDeclaration]; [Import]; [Set];
 )]
 impl BaseInstruction for T {}
 
