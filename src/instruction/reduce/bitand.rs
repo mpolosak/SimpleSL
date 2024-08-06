@@ -1,8 +1,7 @@
 use crate as simplesl;
-use crate::instruction::postfix_op::{PostfixOperation, PostfixOperator};
-use crate::instruction::{bitwise_and, ExecResult};
+use crate::instruction::bitwise_and;
+use crate::instruction::unary_operation::{UnaryOperation, UnaryOperator};
 use crate::instruction::{Instruction, InstructionWithStr};
-use crate::ExecError;
 use crate::{
     variable::{Array, ReturnType, Variable},
     Error,
@@ -10,11 +9,11 @@ use crate::{
 use simplesl_macros::{var, var_type};
 
 pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
-    match &array.instruction {
+    match array.instruction {
         Instruction::Variable(Variable::Array(array))
             if array.element_type().matches(&var_type!(int)) =>
         {
-            Ok(calc(array).into())
+            Ok(calc(&array).into())
         }
         Instruction::ArrayRepeat(array_repeat)
             if array_repeat.value.return_type().matches(&(var_type!(int))) =>
@@ -28,13 +27,11 @@ pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
             .map(|iws| iws.instruction)
             .reduce(|acc, curr| bitwise_and::create_from_instructions(acc, curr))
             .unwrap()),
-        instruction if instruction.return_type().matches(&var_type!([int])) => {
-            Ok(PostfixOperation {
-                instruction: array,
-                op: PostfixOperator::BitAnd,
-            }
-            .into())
+        instruction if instruction.return_type().matches(&var_type!([int])) => Ok(UnaryOperation {
+            instruction,
+            op: UnaryOperator::BitAnd,
         }
+        .into()),
         ins => Err(Error::IncorectPostfixOperatorOperand {
             ins: array.str,
             op: "$&",
@@ -52,17 +49,17 @@ fn calc(array: &Array) -> Variable {
     var!(sum)
 }
 
-pub fn recreate(instruction: InstructionWithStr) -> Result<Instruction, ExecError> {
-    if let Instruction::Variable(Variable::Array(array)) = &instruction.instruction {
-        return Ok(calc(array).into());
+pub fn recreate(instruction: Instruction) -> Instruction {
+    if let Instruction::Variable(Variable::Array(array)) = &instruction {
+        return calc(array).into();
     }
-    Ok(PostfixOperation {
+    UnaryOperation {
         instruction,
-        op: PostfixOperator::BitAnd,
+        op: UnaryOperator::BitAnd,
     }
-    .into())
+    .into()
 }
-pub fn exec(var: Variable) -> ExecResult {
+pub fn exec(var: Variable) -> Variable {
     let array = var.into_array().unwrap();
-    Ok(calc(&array).into())
+    calc(&array).into()
 }

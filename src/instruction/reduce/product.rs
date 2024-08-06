@@ -2,18 +2,18 @@ use crate::{
     self as simplesl,
     instruction::{
         array_repeat::ArrayRepeat,
-        multiply,
-        postfix_op::{PostfixOperation, PostfixOperator},
-        pow, ExecResult, Instruction, InstructionWithStr,
+        multiply, pow,
+        unary_operation::{UnaryOperation, UnaryOperator},
+        Instruction, InstructionWithStr,
     },
     variable::{Array, ReturnType, Variable},
-    Error, ExecError,
+    Error,
 };
 use simplesl_macros::{var, var_type};
 use std::sync::Arc;
 
 pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
-    match &array.instruction {
+    match array.instruction {
         Instruction::Variable(Variable::Array(array))
             if array.element_type().matches(&var_type!(int)) =>
         {
@@ -47,9 +47,9 @@ pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
                 .return_type()
                 .matches(&(var_type!([int] | [float]))) =>
         {
-            Ok(PostfixOperation {
-                instruction: array,
-                op: PostfixOperator::Product,
+            Ok(UnaryOperation {
+                instruction,
+                op: UnaryOperator::Product,
             }
             .into())
         }
@@ -80,20 +80,18 @@ fn calc_float(array: &Array) -> Variable {
     var!(product)
 }
 
-pub fn recreate(instruction: InstructionWithStr) -> Result<Instruction, ExecError> {
-    if let Instruction::Variable(Variable::Array(array)) = &instruction.instruction {
-        return Ok(calc(array).into());
+pub fn recreate(instruction: Instruction) -> Instruction {
+    if let Instruction::Variable(Variable::Array(array)) = &instruction {
+        return calc(array).into();
     }
-    Ok(PostfixOperation {
+    UnaryOperation {
         instruction,
-        op: PostfixOperator::Product,
+        op: UnaryOperator::Product,
     }
-    .into())
+    .into()
 }
 
-pub fn exec(var: Variable) -> ExecResult {
-    let Variable::Array(array) = var else {
-        unreachable!("Tried to sum not array")
-    };
-    Ok(calc(&array))
+pub fn exec(var: Variable) -> Variable {
+    let array = var.into_array().unwrap();
+    calc(&array)
 }

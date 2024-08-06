@@ -1,0 +1,117 @@
+use super::{
+    at,
+    local_variable::LocalVariables,
+    prefix_op::{bitwise_not, not, unary_minus},
+    reduce::{all, any, bitand, bitor, product, sum},
+    type_filter::TypeFilter,
+    Exec, ExecResult, FunctionCall, Instruction, InstructionWithStr, Recreate,
+};
+use crate::{
+    variable::{ReturnType, Type},
+    Error, Interpreter,
+};
+use pest::iterators::Pair;
+use simplesl_parser::{unexpected, Rule};
+
+impl InstructionWithStr {
+    pub fn create_postfix(
+        op: Pair<'_, Rule>,
+        lhs: Self,
+        local_variables: &LocalVariables<'_>,
+    ) -> Result<Self, Error> {
+        let str = format!("{} {}", lhs.str, op.as_str()).into();
+        let instruction = match op.as_rule() {
+            Rule::at => at::create(lhs, op, local_variables),
+            Rule::type_filter => {
+                TypeFilter::create_instruction(lhs, op.into_inner().next().unwrap())
+            }
+            Rule::function_call => FunctionCall::create_instruction(lhs, op, local_variables),
+            Rule::sum => sum::create(lhs),
+            Rule::product => product::create(lhs),
+            Rule::all => all::create(lhs),
+            Rule::reduce_any => any::create(lhs),
+            Rule::bitand_reduce => bitand::create(lhs),
+            Rule::bitor_reduce => bitor::create(lhs),
+            rule => unexpected!(rule),
+        }?;
+        Ok(Self { instruction, str })
+    }
+}
+
+#[derive(Debug)]
+pub struct UnaryOperation {
+    pub instruction: Instruction,
+    pub op: UnaryOperator,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum UnaryOperator {
+    All,
+    Any,
+    BitAnd,
+    BitOr,
+    Sum,
+    Product,
+    BitwiseNot,
+    Not,
+    UnaryMinus,
+}
+
+impl Exec for UnaryOperation {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
+        let var = self.instruction.exec(interpreter)?;
+        Ok(match self.op {
+            UnaryOperator::All => all::exec(var),
+            UnaryOperator::Any => any::exec(var),
+            UnaryOperator::BitAnd => bitand::exec(var),
+            UnaryOperator::BitOr => bitor::exec(var),
+            UnaryOperator::Sum => sum::exec(var),
+            UnaryOperator::Product => product::exec(var),
+            UnaryOperator::BitwiseNot => bitwise_not::exec(var),
+            UnaryOperator::Not => not::exec(var),
+            UnaryOperator::UnaryMinus => unary_minus::exec(var),
+        })
+    }
+}
+
+impl Recreate for UnaryOperation {
+    fn recreate(
+        &self,
+        local_variables: &mut LocalVariables,
+    ) -> Result<super::Instruction, crate::ExecError> {
+        let instruction = self.instruction.recreate(local_variables)?;
+        Ok(match self.op {
+            UnaryOperator::All => all::recreate(instruction),
+            UnaryOperator::Any => any::recreate(instruction),
+            UnaryOperator::BitAnd => bitand::recreate(instruction),
+            UnaryOperator::BitOr => bitor::recreate(instruction),
+            UnaryOperator::Sum => sum::recreate(instruction),
+            UnaryOperator::Product => product::recreate(instruction),
+            UnaryOperator::BitwiseNot => bitwise_not::create_from_instruction(instruction),
+            UnaryOperator::Not => not::create_from_instruction(instruction),
+            UnaryOperator::UnaryMinus => unary_minus::create_from_instruction(instruction),
+        })
+    }
+}
+
+impl ReturnType for UnaryOperation {
+    fn return_type(&self) -> Type {
+        let return_type = self.instruction.return_type();
+        match self.op {
+            UnaryOperator::All
+            | UnaryOperator::Any
+            | UnaryOperator::BitAnd
+            | UnaryOperator::BitOr => Type::Int,
+            UnaryOperator::Sum | UnaryOperator::Product => return_type.element_type().unwrap(),
+            UnaryOperator::BitwiseNot | UnaryOperator::Not | UnaryOperator::UnaryMinus => {
+                return_type
+            }
+        }
+    }
+}
+
+impl From<UnaryOperation> for Instruction {
+    fn from(value: UnaryOperation) -> Self {
+        Self::UnaryOperation(value.into())
+    }
+}

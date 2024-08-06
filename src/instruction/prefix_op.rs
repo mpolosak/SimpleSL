@@ -1,60 +1,12 @@
-use super::local_variable::LocalVariables;
-use super::{Exec, ExecResult, InstructionWithStr, Recreate};
-use crate::variable::{ReturnType, Type};
-use crate::{self as simplesl, ExecError, Interpreter};
-use crate::{instruction::Instruction, Error};
+use super::InstructionWithStr;
+use crate as simplesl;
+use crate::variable::Type;
+use crate::Error;
 use duplicate::duplicate_item;
 use lazy_static::lazy_static;
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
 use simplesl_parser::{unexpected, Rule};
-
-#[derive(Debug)]
-pub struct PrefixOperation {
-    pub instruction: Instruction,
-    pub op: PrefixOperator,
-}
-
-#[derive(Debug)]
-pub enum PrefixOperator {
-    BitwiseNot,
-    Not,
-    UnaryMinus,
-}
-
-impl Exec for PrefixOperation {
-    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let variable = self.instruction.exec(interpreter)?;
-        Ok(match self.op {
-            PrefixOperator::BitwiseNot => bitwise_not::calc(variable),
-            PrefixOperator::Not => not::calc(variable),
-            PrefixOperator::UnaryMinus => unary_minus::calc(variable),
-        })
-    }
-}
-
-impl Recreate for PrefixOperation {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let instruction = self.instruction.recreate(local_variables)?;
-        Ok(match self.op {
-            PrefixOperator::BitwiseNot => bitwise_not::create_from_instruction(instruction),
-            PrefixOperator::Not => not::create_from_instruction(instruction),
-            PrefixOperator::UnaryMinus => unary_minus::create_from_instruction(instruction),
-        })
-    }
-}
-
-impl ReturnType for PrefixOperation {
-    fn return_type(&self) -> Type {
-        self.instruction.return_type()
-    }
-}
-
-impl From<PrefixOperation> for Instruction {
-    fn from(value: PrefixOperation) -> Self {
-        Self::PrefixOperation(value.into())
-    }
-}
 
 impl InstructionWithStr {
     pub fn create_prefix(op: Pair<'_, Rule>, rhs: Self) -> Result<Self, Error> {
@@ -78,17 +30,11 @@ lazy_static! {
     pub static ref ACCEPTED_NUM: Type = var_type!(int | float | [int | float]);
 }
 
-mod unary_minus {
+pub mod unary_minus {
     use crate as simplesl;
+    use crate::instruction::unary_operation::{UnaryOperation, UnaryOperator};
     use crate::variable::{Array, ReturnType, Type};
-    use crate::{
-        instruction::{
-            prefix_op::{PrefixOperation, PrefixOperator},
-            Instruction,
-        },
-        variable::Variable,
-        Error,
-    };
+    use crate::{instruction::Instruction, variable::Variable, Error};
     use match_any::match_any;
     use simplesl_macros::var;
     use std::sync::Arc;
@@ -105,21 +51,21 @@ mod unary_minus {
 
     pub fn create_from_instruction(instruction: Instruction) -> Instruction {
         match_any! { instruction,
-            Instruction::Variable(operand) => calc(operand).into(),
+            Instruction::Variable(operand) => exec(operand).into(),
             Instruction::Array(array)
             | Instruction::ArrayRepeat(array) => Arc::unwrap_or_clone(array)
                 .map(create_from_instruction)
                 .into(),
-            instruction => PrefixOperation {instruction,op:PrefixOperator::UnaryMinus }.into()
+            instruction => UnaryOperation {instruction,op:UnaryOperator::UnaryMinus }.into()
         }
     }
 
-    pub fn calc(variable: Variable) -> Variable {
+    pub fn exec(variable: Variable) -> Variable {
         match variable {
             Variable::Int(num) => var!(-num),
             Variable::Float(num) => var!(-num),
             Variable::Array(array) => {
-                let elements = array.iter().cloned().map(calc).collect();
+                let elements = array.iter().cloned().map(exec).collect();
                 let element_type = array.element_type().clone();
                 Array {
                     element_type,
@@ -137,12 +83,12 @@ mod unary_minus {
 }
 
 #[duplicate_item(t T op1 op2; [not] [Not] [num==0] [!]; [bitwise_not] [BitwiseNot] [!num] [~];)]
-mod t {
+pub mod t {
     use std::sync::Arc;
 
     use crate::{
         instruction::{
-            prefix_op::{PrefixOperation, PrefixOperator},
+            unary_operation::{UnaryOperation, UnaryOperator},
             Instruction,
         },
         variable::{Array, ReturnType, Type, Variable},
@@ -162,19 +108,19 @@ mod t {
 
     pub fn create_from_instruction(instruction: Instruction) -> Instruction {
         match_any! { instruction,
-            Instruction::Variable(operand) => calc(operand).into(),
+            Instruction::Variable(operand) => exec(operand).into(),
             Instruction::Array(array)
             | Instruction::ArrayRepeat(array) => Arc::unwrap_or_clone(array)
                 .map(create_from_instruction)
                 .into(),
-            instruction => PrefixOperation {instruction, op: PrefixOperator::T } .into()
+            instruction => UnaryOperation {instruction, op: UnaryOperator::T } .into()
         }
     }
-    pub fn calc(variable: Variable) -> Variable {
+    pub fn exec(variable: Variable) -> Variable {
         match variable {
             Variable::Int(num) => (op1).into(),
             Variable::Array(array) => {
-                let elements = array.iter().cloned().map(calc).collect();
+                let elements = array.iter().cloned().map(exec).collect();
                 let element_type = array.element_type().clone();
                 Array {
                     element_type,

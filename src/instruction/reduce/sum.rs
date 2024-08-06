@@ -1,31 +1,31 @@
 use crate as simplesl;
-use crate::instruction::postfix_op::{PostfixOperation, PostfixOperator};
+use crate::instruction::unary_operation::{UnaryOperation, UnaryOperator};
 use crate::instruction::{
-    add, array_repeat::ArrayRepeat, multiply, ExecResult, Instruction, InstructionWithStr,
+    add, array_repeat::ArrayRepeat, multiply, Instruction, InstructionWithStr,
 };
 use crate::{
     variable::{Array, ReturnType, Variable},
-    Error, ExecError,
+    Error,
 };
 use simplesl_macros::{var, var_type};
 use std::sync::Arc;
 
 pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
-    match &array.instruction {
+    match array.instruction {
         Instruction::Variable(Variable::Array(array))
             if array.element_type().matches(&var_type!(int)) =>
         {
-            Ok(calc_int(array).into())
+            Ok(calc_int(&array).into())
         }
         Instruction::Variable(Variable::Array(array))
             if array.element_type() == &var_type!(float) =>
         {
-            Ok(calc_float(array).into())
+            Ok(calc_float(&array).into())
         }
         Instruction::Variable(Variable::Array(array))
             if array.element_type() == &var_type!(string) =>
         {
-            Ok(calc_string(array).into())
+            Ok(calc_string(&array).into())
         }
         Instruction::ArrayRepeat(array_repeat)
             if array_repeat
@@ -55,9 +55,9 @@ pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
                 .return_type()
                 .matches(&var_type!([int] | [float] | [string])) =>
         {
-            Ok(PostfixOperation {
-                instruction: array,
-                op: PostfixOperator::Sum,
+            Ok(UnaryOperation {
+                instruction,
+                op: UnaryOperator::Sum,
             }
             .into())
         }
@@ -97,20 +97,20 @@ fn calc_string(array: &Array) -> Variable {
     var!(sum)
 }
 
-pub fn recreate(instruction: InstructionWithStr) -> Result<Instruction, ExecError> {
-    if let Instruction::Variable(Variable::Array(array)) = &instruction.instruction {
-        return Ok(calc(array).into());
+pub fn recreate(instruction: Instruction) -> Instruction {
+    if let Instruction::Variable(Variable::Array(array)) = &instruction {
+        return calc(array).into();
     }
-    Ok(PostfixOperation {
+    UnaryOperation {
         instruction,
-        op: PostfixOperator::Sum,
+        op: UnaryOperator::Sum,
     }
-    .into())
+    .into()
 }
 
-pub fn exec(var: Variable) -> ExecResult {
+pub fn exec(var: Variable) -> Variable {
     let Variable::Array(array) = var else {
         unreachable!("Tried to sum not array")
     };
-    Ok(calc(&array))
+    calc(&array)
 }
