@@ -1,7 +1,5 @@
 use super::{
-    local_variable::LocalVariables,
-    traits::{Exec, ExecResult, Recreate},
-    Instruction, InstructionWithStr,
+    local_variable::LocalVariables, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
 };
 use crate::{
     interpreter::Interpreter,

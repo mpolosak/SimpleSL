@@ -118,9 +118,3 @@ impl ReturnType for UnaryOperation {
         }
     }
 }
-
-impl From<UnaryOperation> for Instruction {
-    fn from(value: UnaryOperation) -> Self {
-        Self::UnaryOperation(value.into())
-    }
-}

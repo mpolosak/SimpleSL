@@ -1,9 +1,7 @@
 use crate::{
     instruction::{
         local_variable::{LocalVariable, LocalVariables},
-        recreate_instructions,
-        traits::{ExecResult, ExecStop},
-        Exec, InstructionWithStr,
+        recreate_instructions, Exec, ExecResult, ExecStop, InstructionWithStr,
     },
     interpreter::Interpreter,
     variable::{ReturnType, Type, Typed, Variable},

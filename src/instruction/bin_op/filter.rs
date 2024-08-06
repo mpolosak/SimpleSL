@@ -2,7 +2,7 @@ use crate::instruction::{Instruction, InstructionWithStr};
 use crate::variable::ReturnType;
 use crate::{self as simplesl, Error};
 use crate::{
-    instruction::traits::ExecResult,
+    instruction::ExecResult,
     variable::{Array, Type, Variable},
 };
 use simplesl_macros::var_type;

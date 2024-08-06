@@ -9,9 +9,7 @@ use crate::{
 use crate::{
     instruction::{
         local_variable::{FunctionInfo, LocalVariableMap, LocalVariables},
-        recreate_instructions,
-        traits::{Exec, ExecResult, Recreate},
-        Instruction,
+        recreate_instructions, Exec, ExecResult, Instruction, Recreate,
     },
     Error,
 };
@@ -94,12 +92,6 @@ impl Recreate for AnonymousFunction {
             return_type: self.return_type.clone(),
         }
         .into())
-    }
-}
-
-impl From<AnonymousFunction> for Instruction {
-    fn from(value: AnonymousFunction) -> Self {
-        Self::AnonymousFunction(value)
     }
 }
 

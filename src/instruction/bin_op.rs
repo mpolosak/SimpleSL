@@ -174,12 +174,6 @@ impl ReturnType for BinOperation {
     }
 }
 
-impl From<BinOperation> for Instruction {
-    fn from(value: BinOperation) -> Self {
-        Self::BinOperation(value.into())
-    }
-}
-
 mod equal {
     use super::{BinOperation, BinOperator};
     use crate::{instruction::Instruction, variable::Variable};

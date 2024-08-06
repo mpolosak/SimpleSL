@@ -1,8 +1,6 @@
 use super::{
-    local_variable::LocalVariables,
-    recreate_instructions,
-    traits::{Exec, ExecResult, Recreate},
-    Instruction, InstructionWithStr,
+    local_variable::LocalVariables, recreate_instructions, Exec, ExecResult, Instruction,
+    InstructionWithStr, Recreate,
 };
 use crate as simplesl;
 use crate::{
@@ -97,11 +95,5 @@ impl ReturnType for Array {
     fn return_type(&self) -> Type {
         let element_type = self.element_type.clone();
         var_type!([element_type])
-    }
-}
-
-impl From<Array> for Instruction {
-    fn from(value: Array) -> Self {
-        Self::Array(value.into())
     }
 }

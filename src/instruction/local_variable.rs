@@ -5,7 +5,6 @@ use crate::{
     variable::{ReturnType, Type, Typed, Variable},
     Error, Interpreter,
 };
-use match_any::match_any;
 use pest::{iterators::Pairs, Parser};
 use simplesl_macros::var_type;
 use simplesl_parser::{Rule, SimpleSLParser};
@@ -139,13 +138,11 @@ impl From<Type> for LocalVariable {
 
 impl From<&Instruction> for LocalVariable {
     fn from(value: &Instruction) -> Self {
-        match_any! { value,
+        match value {
             Instruction::AnonymousFunction(function) => function.into(),
             Instruction::LocalVariable(_, var) => var.clone(),
             Instruction::Variable(var) => var.clone().into(),
-            Instruction::Tuple(ins) | Instruction::Array(ins) | Instruction::ArrayRepeat(ins)
-            | Instruction::BinOperation(ins) | Instruction::UnaryOperation(ins) | Instruction::Other(ins)
-                => ins.return_type().into()
+            ins => ins.return_type().into(),
         }
     }
 }

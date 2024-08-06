@@ -1,8 +1,7 @@
 use crate::{
     instruction::{
         local_variable::{LocalVariable, LocalVariables},
-        traits::ExecResult,
-        Exec, Instruction, InstructionWithStr, Recreate,
+        Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
     },
     Error, ExecError,
 };

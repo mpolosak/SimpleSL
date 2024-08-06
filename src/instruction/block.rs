@@ -1,5 +1,5 @@
 use super::{
-    local_variable::LocalVariables, recreate_instructions, traits::ExecResult, Exec, Instruction,
+    local_variable::LocalVariables, recreate_instructions, Exec, ExecResult, Instruction,
     InstructionWithStr, Recreate,
 };
 use crate::{
@@ -11,7 +11,7 @@ use pest::iterators::Pair;
 use simplesl_parser::Rule;
 use std::sync::Arc;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Block {
     instructions: Arc<[InstructionWithStr]>,
 }

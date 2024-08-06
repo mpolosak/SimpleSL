@@ -13,7 +13,6 @@ mod reduce;
 mod r#return;
 mod return_type;
 mod set;
-mod traits;
 mod tuple;
 mod type_filter;
 mod unary_operation;
@@ -28,7 +27,6 @@ use self::{
     import::Import,
     local_variable::{LocalVariable, LocalVariables},
     set::Set,
-    traits::BaseInstruction,
     tuple::Tuple,
 };
 use crate::{
@@ -36,11 +34,13 @@ use crate::{
     variable::{ReturnType, Type, Typed, Variable},
     Error, ExecError,
 };
+use duplicate::duplicate_item;
 use match_any::match_any;
 use pest::iterators::Pair;
+use reduce::Reduce;
 use simplesl_parser::{unexpected, Rule, PRATT_PARSER};
 use std::sync::Arc;
-pub(crate) use traits::{Exec, ExecResult, ExecStop, Recreate};
+use type_filter::TypeFilter;
 use unary_operation::UnaryOperation;
 
 #[derive(Debug, Clone)]
@@ -161,12 +161,21 @@ pub enum Instruction {
     AnonymousFunction(AnonymousFunction),
     Array(Arc<Array>),
     ArrayRepeat(Arc<ArrayRepeat>),
+    Block(Block),
+    DestructTuple(Arc<DestructTuple>),
+    FunctionDeclaration(Arc<FunctionDeclaration>),
+    IfElse(Arc<IfElse>),
+    Import(Import),
     LocalVariable(Arc<str>, LocalVariable),
+    Match(Arc<Match>),
+    Reduce(Arc<Reduce>),
+    Set(Arc<Set>),
+    SetIfElse(Arc<SetIfElse>),
     Tuple(Tuple),
+    TypeFilter(Arc<TypeFilter>),
     Variable(Variable),
     BinOperation(Arc<BinOperation>),
     UnaryOperation(Arc<UnaryOperation>),
-    Other(Arc<dyn BaseInstruction>),
 }
 
 impl Instruction {
@@ -201,8 +210,11 @@ impl Exec for Instruction {
                 .cloned()
                 .ok_or_else(|| panic!("Tried to get variable {ident} that doest exist")),
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins)
-            | Self::Tuple(ins) | Self::BinOperation(ins) | Self::UnaryOperation(ins)
-            | Self::Other(ins) => ins.exec(interpreter)
+            | Self::Block(ins) | Self::DestructTuple(ins) | Self::Tuple(ins)
+            | Self::BinOperation(ins) | Self::FunctionDeclaration(ins) | Self::IfElse(ins)
+            | Self::Import(ins) | Self::Match(ins) | Self::Reduce(ins) | Self::Set(ins)
+            | Self::SetIfElse(ins) | Self::TypeFilter(ins) | Self::UnaryOperation(ins)
+            => ins.exec(interpreter)
         }
     }
 }
@@ -225,8 +237,11 @@ impl Recreate for Instruction {
             )),
             Self::Variable(variable) => Ok(Self::Variable(variable.clone())),
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins)
-            | Self::Tuple(ins) | Self::BinOperation(ins) | Self::UnaryOperation(ins)
-            | Self::Other(ins) => ins.recreate(local_variables)
+            | Self::Block(ins) | Self::DestructTuple(ins) | Self::Tuple(ins)
+            | Self::BinOperation(ins) | Self::FunctionDeclaration(ins) | Self::IfElse(ins)
+            | Self::Import(ins) | Self::Match(ins) | Self::Reduce(ins) | Self::Set(ins)
+            | Self::SetIfElse(ins) | Self::TypeFilter(ins) | Self::UnaryOperation(ins)
+            => ins.recreate(local_variables)
         }
     }
 }
@@ -236,15 +251,23 @@ impl ReturnType for Instruction {
         match_any! { self,
             Self::Variable(variable) | Self::LocalVariable(_, variable) => variable.as_type(),
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins)
-            | Self::Tuple(ins) | Self::BinOperation(ins) | Self::UnaryOperation(ins)
-            | Self::Other(ins) => ins.return_type()
+            | Self::Block(ins) | Self::DestructTuple(ins) | Self::Tuple(ins)
+            | Self::BinOperation(ins) | Self::FunctionDeclaration(ins) | Self::IfElse(ins)
+            | Self::Import(ins) | Self::Match(ins) | Self::Reduce(ins) | Self::Set(ins)
+            | Self::SetIfElse(ins) | Self::TypeFilter(ins) | Self::UnaryOperation(ins)
+            => ins.return_type()
         }
     }
 }
 
-impl From<Variable> for Instruction {
-    fn from(value: Variable) -> Self {
-        Self::Variable(value)
+#[duplicate_item(
+    T; [Block]; [Variable]; [UnaryOperation]; [BinOperation]; [AnonymousFunction]; [Array];
+    [ArrayRepeat]; [Tuple]; [DestructTuple]; [FunctionDeclaration]; [IfElse]; [Import]; [Reduce];
+    [TypeFilter]; [Match]; [Set]; [SetIfElse];
+)]
+impl From<T> for Instruction {
+    fn from(value: T) -> Self {
+        Self::T(value.into())
     }
 }
 
@@ -256,4 +279,24 @@ pub(crate) fn recreate_instructions(
         .iter()
         .map(|iws| iws.recreate(local_variables))
         .collect()
+}
+
+pub trait Recreate {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError>;
+}
+
+pub trait Exec {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult;
+}
+
+pub type ExecResult = Result<Variable, ExecStop>;
+pub enum ExecStop {
+    Return(Variable),
+    Error(ExecError),
+}
+
+impl From<ExecError> for ExecStop {
+    fn from(value: ExecError) -> Self {
+        Self::Error(value)
+    }
 }
