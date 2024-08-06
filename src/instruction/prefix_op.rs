@@ -98,7 +98,7 @@ mod unary_minus {
     pub fn create_instruction(instruction: Instruction) -> Result<Instruction, Error> {
         let return_type = instruction.return_type();
         if !can_be_used(&return_type) {
-            return Err(Error::CannotDo(stringify!(symbol), return_type));
+            return Err(Error::CannotDo("-", return_type));
         }
         Ok(create_from_instruction(instruction))
     }
@@ -155,7 +155,7 @@ mod t {
     pub fn create_instruction(instruction: Instruction) -> Result<Instruction, Error> {
         let return_type = instruction.return_type();
         if !can_be_used(&return_type) {
-            return Err(Error::CannotDo(stringify!(symbol), return_type));
+            return Err(Error::CannotDo(stringify!(op2), return_type));
         }
         Ok(create_from_instruction(instruction))
     }
