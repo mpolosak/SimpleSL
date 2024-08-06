@@ -1,6 +1,6 @@
 mod array;
 mod array_repeat;
-mod at;
+pub mod at;
 mod bin_op;
 mod block;
 mod control_flow;

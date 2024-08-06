@@ -5,6 +5,7 @@ mod map;
 mod math;
 mod shift;
 use super::{
+    at,
     local_variable::LocalVariables,
     reduce::Reduce,
     return_type::{return_type_float, return_type_int},
@@ -73,6 +74,7 @@ pub enum BinOperator {
     RShift,
     Filter,
     Map,
+    At,
 }
 
 impl Exec for BinOperation {
@@ -101,6 +103,7 @@ impl Exec for BinOperation {
             BinOperator::RShift => Ok(rshift::exec(lhs, rhs)?),
             BinOperator::Filter => Ok(filter::exec(lhs, rhs)?),
             BinOperator::Map => Ok(map::exec(lhs, rhs)?),
+            BinOperator::At => Ok(at::exec(lhs, rhs)?),
         }
     }
 }
@@ -129,6 +132,7 @@ impl Recreate for BinOperation {
             BinOperator::Xor => Ok(xor::create_from_instructions(lhs, rhs)),
             BinOperator::LShift => lshift::create_from_instructions(lhs, rhs),
             BinOperator::RShift => rshift::create_from_instructions(lhs, rhs),
+            BinOperator::At => at::create_from_instructions(lhs, rhs),
             op @ (BinOperator::Filter | BinOperator::Map) => Ok(Self { lhs, rhs, op }.into()),
         }
     }
@@ -159,6 +163,7 @@ impl ReturnType for BinOperation {
             | BinOperator::Modulo => return_type_int(lhs, rhs),
             BinOperator::Filter => self.lhs.return_type(),
             BinOperator::Map => map::return_type(rhs),
+            BinOperator::At => lhs.index_result().unwrap(),
         }
     }
 }

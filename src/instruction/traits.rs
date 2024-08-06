@@ -1,5 +1,4 @@
 use super::{
-    at::At,
     block::Block,
     control_flow::{IfElse, Match, SetIfElse},
     destruct_tuple::DestructTuple,
@@ -21,9 +20,8 @@ use std::{fmt::Debug, sync::Arc};
 
 pub trait BaseInstruction: Exec + Recreate + ReturnType + Debug + Sync + Send {}
 
-#[duplicate_item(T; [Reduce]; [TypeFilter]; [At]; [Block]; [IfElse]; [Match];
-    [SetIfElse]; [DestructTuple]; [FunctionCall]; [FunctionDeclaration]; [Import];
-    [Return]; [Set];
+#[duplicate_item(T; [Reduce]; [TypeFilter]; [Block]; [IfElse]; [Match]; [SetIfElse];
+    [DestructTuple]; [FunctionCall]; [FunctionDeclaration]; [Import];[Return]; [Set];
 )]
 impl BaseInstruction for T {}
 
