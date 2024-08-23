@@ -47,7 +47,7 @@ pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
                 .iter()
                 .cloned()
                 .map(|iws| iws.instruction)
-                .reduce(|acc, curr| add::create_from_instructions(acc, curr))
+                .reduce(add::create_from_instructions)
                 .unwrap())
         }
         instruction
@@ -72,9 +72,9 @@ pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
 
 fn calc(array: &Array) -> Variable {
     match array.element_type() {
-        var_type!(int) => calc_int(&array),
-        var_type!(float) => calc_float(&array),
-        var_type!(string) => calc_string(&array),
+        var_type!(int) => calc_int(array),
+        var_type!(float) => calc_float(array),
+        var_type!(string) => calc_string(array),
         element_type => unreachable!("Tried to sum [{element_type}]"),
     }
 }

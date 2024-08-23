@@ -117,9 +117,7 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
                 .unwrap()
                 .as_str()
                 .replace([' ', '_'], "");
-            i64::from_str_radix(&inner, radix).map_err(|_| {
-                return Error::IntegerOverflow(str.into());
-            })
+            i64::from_str_radix(&inner, radix).map_err(|_| Error::IntegerOverflow(str.into()))
         }
         match pair.as_rule() {
             Rule::minus_int => {

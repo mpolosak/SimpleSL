@@ -5,12 +5,12 @@ use simplesl_parser::{unexpected, Rule, SimpleSLParser};
 
 use crate::var_type::type_from_str;
 
-pub fn var_quote(item: TokenStream) -> quote::__private::TokenStream {
+pub fn quote(item: &TokenStream) -> quote::__private::TokenStream {
     let item_str = item.to_string();
-    var_from_str(&item_str)
+    from_str(&item_str)
 }
 
-pub fn var_from_str(item_str: &str) -> quote::__private::TokenStream {
+pub fn from_str(item_str: &str) -> quote::__private::TokenStream {
     let pair = SimpleSLParser::parse(Rule::var_macro, item_str)
         .unwrap_or_else(|error| panic!("{error}"))
         .next()
@@ -78,7 +78,8 @@ fn var_token_from_pair(pair: Pair<Rule>) -> quote::__private::TokenStream {
                 let ident = format_ident!("{}", len_pair.as_str());
                 quote!(#ident as usize)
             } else {
-                let value = parse_int(inner.next().unwrap()) as usize;
+                let value =
+                    usize::try_from(parse_int(inner.next().unwrap())).expect("Incorrect length");
                 quote!(#value)
             };
             if let Some(element_type) = element_type {

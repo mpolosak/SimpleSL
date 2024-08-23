@@ -193,8 +193,7 @@ impl Instruction {
             }
             Rule::r#return => r#return::create(pair, local_variables),
             Rule::expr => {
-                return InstructionWithStr::new_expression(pair, local_variables)
-                    .map(|iws| iws.instruction)
+                InstructionWithStr::new_expression(pair, local_variables).map(|iws| iws.instruction)
             }
             rule => unexpected!(rule),
         }
@@ -267,6 +266,7 @@ impl ReturnType for Instruction {
 )]
 impl From<T> for Instruction {
     fn from(value: T) -> Self {
+        #[allow(clippy::useless_conversion)]
         Self::T(value.into())
     }
 }

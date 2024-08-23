@@ -39,7 +39,7 @@ pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
                 .iter()
                 .cloned()
                 .map(|iws| iws.instruction)
-                .reduce(|acc, curr| multiply::create_from_instructions(acc, curr))
+                .reduce(multiply::create_from_instructions)
                 .unwrap())
         }
         instruction
@@ -64,8 +64,8 @@ pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
 
 fn calc(array: &Array) -> Variable {
     match array.element_type() {
-        var_type!(int) => calc_int(&array),
-        var_type!(float) => calc_float(&array),
+        var_type!(int) => calc_int(array),
+        var_type!(float) => calc_float(array),
         element_type => unreachable!("Tried to calculate product of [{element_type}]"),
     }
 }

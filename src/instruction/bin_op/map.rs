@@ -74,7 +74,7 @@ fn zip_map(arrays: Arc<[Variable]>, function: Arc<Function>) -> ExecResult {
             })
             .collect::<Result<_, _>>()
     }?;
-    let element_type = function.return_type().into();
+    let element_type = function.return_type();
     Ok(variable::Array {
         element_type,
         elements,

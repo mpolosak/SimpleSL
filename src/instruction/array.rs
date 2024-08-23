@@ -68,7 +68,7 @@ impl Array {
             .instructions
             .iter()
             .cloned()
-            .map(|iws| iws.map(|ins| f(ins)))
+            .map(|iws| iws.map(&mut f))
             .collect();
         Array {
             instructions,

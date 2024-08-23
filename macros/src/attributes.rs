@@ -55,7 +55,7 @@ impl Attributes {
                 syn::Meta::List(MetaList { path, tokens, .. })
                     if quote!(#path).to_string() == "return_type" =>
                 {
-                    new.return_type = Some(type_from_str(&tokens.to_string()))
+                    new.return_type = Some(type_from_str(&tokens.to_string()));
                 }
                 syn::Meta::NameValue(MetaNameValue {
                     path,

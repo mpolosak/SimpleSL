@@ -25,7 +25,7 @@ pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
             .iter()
             .cloned()
             .map(|iws| iws.instruction)
-            .reduce(|acc, curr| bitwise_and::create_from_instructions(acc, curr))
+            .reduce(bitwise_and::create_from_instructions)
             .unwrap()),
         instruction if instruction.return_type().matches(&var_type!([int])) => Ok(UnaryOperation {
             instruction,
@@ -61,5 +61,5 @@ pub fn recreate(instruction: Instruction) -> Instruction {
 }
 pub fn exec(var: Variable) -> Variable {
     let array = var.into_array().unwrap();
-    calc(&array).into()
+    calc(&array)
 }
