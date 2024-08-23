@@ -1,4 +1,4 @@
-use crate::instruction::{BinOperation, BinOperator, Instruction, InstructionWithStr};
+use crate::instruction::{BinOperation, BinOperator, Instruction};
 use crate::variable::{Array, ReturnType};
 use crate::variable::{Type, Variable};
 use crate::{self as simplesl, Error};
@@ -14,13 +14,13 @@ lazy_static! {
     );
 }
 
-pub fn create_op(lhs: InstructionWithStr, rhs: InstructionWithStr) -> Result<Instruction, Error> {
+pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
     let lhs_type = lhs.return_type();
     let rhs_type = rhs.return_type();
     if !can_be_used(&lhs_type, &rhs_type) {
         return Err(Error::CannotDo2(lhs_type, "+", rhs_type));
     }
-    Ok(create_from_instructions(lhs.instruction, rhs.instruction))
+    Ok(create_from_instructions(lhs, rhs))
 }
 
 fn can_be_used(lhs: &Type, rhs: &Type) -> bool {

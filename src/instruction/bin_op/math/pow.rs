@@ -1,17 +1,15 @@
-use crate::instruction::{
-    can_be_used_num, BinOperation, BinOperator, Instruction, InstructionWithStr,
-};
+use crate::instruction::{can_be_used_num, BinOperation, BinOperator, Instruction};
 use crate::variable::{Array, ReturnType, Variable};
 use crate::{Error, ExecError};
 use std::sync::Arc;
 
-pub fn create_op(lhs: InstructionWithStr, rhs: InstructionWithStr) -> Result<Instruction, Error> {
+pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
     let lhs_type = lhs.return_type();
     let rhs_type = rhs.return_type();
     if !can_be_used_num(lhs_type.clone(), rhs_type.clone()) {
         return Err(Error::CannotDo2(lhs_type, "**", rhs_type));
     }
-    Ok(create_from_instructions(lhs.instruction, rhs.instruction)?)
+    Ok(create_from_instructions(lhs, rhs)?)
 }
 
 pub fn create_from_instructions(

@@ -224,21 +224,23 @@ impl InstructionWithStr {
         local_variables: &LocalVariables<'_>,
     ) -> Result<Self, Error> {
         let str = format!("{} {} {}", lhs.str, op.as_str(), rhs.str).into();
-        let instruction = match op.as_rule() {
+        let rule = op.as_rule();
+        if rule == Rule::reduce {
+            return Ok(Self {
+                instruction: Reduce::create_instruction(lhs, op, rhs, local_variables)?,
+                str,
+            });
+        }
+        let (lhs, rhs) = (lhs.instruction, rhs.instruction);
+        let instruction = match rule {
             Rule::pow => pow::create_op(lhs, rhs),
             Rule::multiply => multiply::create_op(lhs, rhs),
             Rule::add => add::create_op(lhs, rhs),
             Rule::subtract => subtract::create_op(lhs, rhs),
             Rule::divide => divide::create_op(lhs, rhs),
             Rule::modulo => modulo::create_op(lhs, rhs),
-            Rule::equal => Ok(equal::create_from_instructions(
-                lhs.instruction,
-                rhs.instruction,
-            )),
-            Rule::not_equal => Ok(not_equal::create_from_instructions(
-                lhs.instruction,
-                rhs.instruction,
-            )),
+            Rule::equal => Ok(equal::create_from_instructions(lhs, rhs)),
+            Rule::not_equal => Ok(not_equal::create_from_instructions(lhs, rhs)),
             Rule::lower => lower::create_op(lhs, rhs),
             Rule::lower_equal => lower_equal::create_op(lhs, rhs),
             Rule::greater => greater::create_op(lhs, rhs),
@@ -252,7 +254,6 @@ impl InstructionWithStr {
             Rule::lshift => lshift::create_op(lhs, rhs),
             Rule::and => and::create_op(lhs, rhs),
             Rule::or => or::create_op(lhs, rhs),
-            Rule::reduce => Reduce::create_instruction(lhs, op, rhs, local_variables),
             rule => unexpected!(rule),
         }?;
         Ok(Self { instruction, str })
