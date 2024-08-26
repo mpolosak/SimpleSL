@@ -1,10 +1,10 @@
 sort = (array: [int]) -> [int] {
     if len(array) < 2 return array;
     first = array[0];
-    count = len(array?(item:int)->int{
+    count = len(array?(item:int)->bool{
         return item == first
     });
-    array1 = array?(item:int)->int{return item<first;};
-    array2 = array?(item:int)->int{return first<item;};
+    array1 = array?(item:int)->bool{return item<first;};
+    array2 = array?(item:int)->bool{return first<item;};
     return sort(array1)+[first; count]+sort(array2);
 };

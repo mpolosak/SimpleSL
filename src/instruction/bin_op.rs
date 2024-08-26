@@ -9,7 +9,7 @@ use super::{
     function::call,
     local_variable::LocalVariables,
     reduce::Reduce,
-    return_type::{return_type_float, return_type_int},
+    return_type::{return_type_bool, return_type_float, return_type_int},
     Exec, ExecResult, InstructionWithStr, Recreate,
 };
 use crate as simplesl;
@@ -153,12 +153,12 @@ impl ReturnType for BinOperation {
             | BinOperator::Multiply
             | BinOperator::Divide
             | BinOperator::Pow => return_type_float(lhs, rhs),
-            BinOperator::Equal | BinOperator::NotEqual => Type::Int,
+            BinOperator::Equal | BinOperator::NotEqual => Type::Bool,
             BinOperator::Greater
             | BinOperator::GreaterOrEqual
             | BinOperator::Lower
-            | BinOperator::LowerOrEqual
-            | BinOperator::And
+            | BinOperator::LowerOrEqual => return_type_bool(lhs, rhs),
+            BinOperator::And
             | BinOperator::Or
             | BinOperator::BitwiseAnd
             | BinOperator::BitwiseOr
