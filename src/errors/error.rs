@@ -218,7 +218,7 @@ impl fmt::Display for Error {
             Self::NotATuple(str) => write!(f, "Cannot destruct {str}. It is not a tuple"),
             Self::WrongLength { ins, len: length, idents_len: expected_length }
                 => write!(f, "{ins} has {length} elements but {expected_length} idents were given"),
-            Self::WrongCondition(ins, var_type) => write!(f, "Condition must be int but {ins} which is {var_type} was given"),
+            Self::WrongCondition(ins, var_type) => write!(f, "Condition must be bool but {ins} which is {var_type} was given"),
             Self::IncorectPostfixOperatorOperand { ins, op, expected, given }
                 => write!(f, "Cannot {ins} {op}. Operand need to be {expected} but {ins} which is {given} was given"),
         }
