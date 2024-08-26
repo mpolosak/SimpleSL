@@ -103,10 +103,8 @@ impl ReturnType for UnaryOperation {
     fn return_type(&self) -> Type {
         let return_type = self.instruction.return_type();
         match self.op {
-            UnaryOperator::All
-            | UnaryOperator::Any
-            | UnaryOperator::BitAnd
-            | UnaryOperator::BitOr => Type::Int,
+            UnaryOperator::All | UnaryOperator::Any => Type::Bool,
+            UnaryOperator::BitAnd | UnaryOperator::BitOr => Type::Int,
             UnaryOperator::Sum | UnaryOperator::Product => return_type.element_type().unwrap(),
             UnaryOperator::Not | UnaryOperator::UnaryMinus => return_type,
             UnaryOperator::Return => Type::Never,
