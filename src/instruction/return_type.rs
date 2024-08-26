@@ -1,27 +1,6 @@
-use super::{
-    bin_op::*,
-    prefix_op::{BitwiseNot, Not, UnaryMinus},
-};
 use crate as simplesl;
-use crate::variable::{ReturnType, Type};
-use duplicate::duplicate_item;
+use crate::variable::Type;
 use simplesl_macros::var_type;
-
-#[duplicate_item(T; [Not]; [BitwiseNot]; [UnaryMinus])]
-impl ReturnType for T {
-    fn return_type(&self) -> Type {
-        self.instruction.return_type()
-    }
-}
-
-#[duplicate_item(T; [Multiply]; [Divide]; [Pow]; [Subtract])]
-impl ReturnType for T {
-    fn return_type(&self) -> Type {
-        let lhs = self.lhs.return_type();
-        let rhs = self.rhs.return_type();
-        return_type_float(lhs, rhs)
-    }
-}
 
 pub fn return_type_float(lhs: Type, rhs: Type) -> Type {
     if (lhs.matches(&var_type!([int])) && rhs == var_type!(int))
@@ -44,20 +23,6 @@ pub fn return_type_float(lhs: Type, rhs: Type) -> Type {
     var_type!(float)
 }
 
-#[duplicate_item(
-    T;
-    [Greater]; [GreaterOrEqual]; [Lower]; [LowerOrEqual];
-    [BitwiseAnd]; [BitwiseOr]; [And]; [Or]; [Xor];
-    [Modulo]; [LShift]; [RShift]
-)]
-impl ReturnType for T {
-    fn return_type(&self) -> Type {
-        let lhs = self.lhs.return_type();
-        let rhs = self.rhs.return_type();
-        return_type_int(lhs, rhs)
-    }
-}
-
 pub fn return_type_int(lhs: Type, rhs: Type) -> Type {
     if lhs.matches(&var_type!([any])) || rhs.matches(&var_type!([any])) {
         return var_type!([int]);
@@ -66,13 +31,6 @@ pub fn return_type_int(lhs: Type, rhs: Type) -> Type {
         return var_type!([int] | int);
     }
     var_type!(int)
-}
-
-#[duplicate_item(T; [Equal]; [NotEqual])]
-impl ReturnType for T {
-    fn return_type(&self) -> Type {
-        var_type!(int)
-    }
 }
 
 #[cfg(test)]

@@ -1,105 +1,62 @@
 use super::{
-    local_variable::LocalVariables,
-    traits::{ExecResult, ExecStop},
-    Exec, Instruction, InstructionWithStr, Recreate,
+    local_variable::LocalVariables, BinOperation, BinOperator, Instruction, InstructionWithStr,
 };
 use crate as simplesl;
 use crate::{
-    interpreter::Interpreter,
-    variable::{ReturnType, Type, Typed, Variable},
+    variable::{ReturnType, Typed, Variable},
     Error, ExecError,
 };
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
 use simplesl_parser::Rule;
 
-#[derive(Debug)]
-pub struct At {
+pub fn create(
     instruction: InstructionWithStr,
-    index: InstructionWithStr,
+    index: Pair<Rule>,
+    local_variables: &LocalVariables,
+) -> Result<Instruction, Error> {
+    let pair = index.into_inner().next().unwrap();
+    let index = InstructionWithStr::new_expression(pair, local_variables)?;
+    let required_instruction_type = var_type!(string | [any]);
+    let instruction_return_type = instruction.return_type();
+    if index.return_type() != var_type!(int) {
+        return Err(Error::CannotIndexWith(index.str));
+    }
+    if !instruction_return_type.matches(&required_instruction_type) {
+        return Err(Error::CannotIndexInto(instruction_return_type));
+    }
+    Ok(create_from_instructions(
+        instruction.instruction,
+        index.instruction,
+    )?)
 }
 
-impl At {
-    pub fn create_instruction(
-        instruction: InstructionWithStr,
-        index: Pair<Rule>,
-        local_variables: &LocalVariables,
-    ) -> Result<Instruction, Error> {
-        let pair = index.into_inner().next().unwrap();
-        let index = InstructionWithStr::new_expression(pair, local_variables)?;
-        let required_instruction_type = var_type!(string | [any]);
-        let instruction_return_type = instruction.return_type();
-        if index.return_type() != var_type!(int) {
-            return Err(Error::CannotIndexWith(index.str));
+pub fn create_from_instructions(
+    instruction: Instruction,
+    index: Instruction,
+) -> Result<Instruction, ExecError> {
+    match (instruction, index) {
+        (Instruction::Variable(variable), Instruction::Variable(index)) => {
+            Ok(exec(variable, index)?.into())
         }
-        if !instruction_return_type.matches(&required_instruction_type) {
-            return Err(Error::CannotIndexInto(instruction_return_type));
+        (_, Instruction::Variable(Variable::Int(value))) if value < 0 => {
+            Err(ExecError::NegativeIndex)
         }
-        Ok(Self::create_from_instructions(instruction, index)?)
-    }
-}
-
-impl At {
-    fn create_from_instructions(
-        instruction: InstructionWithStr,
-        index: InstructionWithStr,
-    ) -> Result<Instruction, ExecError> {
-        match (instruction, index) {
-            (
-                InstructionWithStr {
-                    instruction: Instruction::Variable(variable),
-                    ..
-                },
-                InstructionWithStr {
-                    instruction: Instruction::Variable(index),
-                    ..
-                },
-            ) => Ok(at(variable, index)?.into()),
-            (
-                _,
-                InstructionWithStr {
-                    instruction: Instruction::Variable(Variable::Int(value)),
-                    ..
-                },
-            ) if value < 0 => Err(ExecError::NegativeIndex),
-            (
-                InstructionWithStr {
-                    instruction: Instruction::Array(array),
-                    ..
-                },
-                InstructionWithStr {
-                    instruction: Instruction::Variable(Variable::Int(value)),
-                    ..
-                },
-            ) if array.instructions.len() <= (value as usize) => Err(ExecError::IndexToBig),
-            (instruction, index) => Ok(Self { instruction, index }.into()),
+        (Instruction::Array(array), Instruction::Variable(Variable::Int(value)))
+            if array.instructions.len() <= (value as usize) =>
+        {
+            Err(ExecError::IndexToBig)
         }
+        (instruction, index) => Ok(BinOperation {
+            lhs: instruction,
+            rhs: index,
+            op: BinOperator::At,
+        }
+        .into()),
     }
 }
 
-impl Exec for At {
-    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let result = self.instruction.exec(interpreter)?;
-        let index = self.index.exec(interpreter)?;
-        at(result, index).map_err(ExecStop::from)
-    }
-}
-
-impl Recreate for At {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let instruction = self.instruction.recreate(local_variables)?;
-        let index = self.index.recreate(local_variables)?;
-        Self::create_from_instructions(instruction, index)
-    }
-}
-
-impl ReturnType for At {
-    fn return_type(&self) -> Type {
-        self.instruction.return_type().index_result().unwrap()
-    }
-}
-
-fn at(variable: Variable, index: Variable) -> Result<Variable, ExecError> {
+pub fn exec(variable: Variable, index: Variable) -> Result<Variable, ExecError> {
     let index = index.into_int().unwrap();
     if index < 0 {
         return Err(ExecError::NegativeIndex);
@@ -118,7 +75,7 @@ fn at(variable: Variable, index: Variable) -> Result<Variable, ExecError> {
 #[cfg(test)]
 mod tests {
     use crate as simplesl;
-    use crate::{instruction::at::at, ExecError};
+    use crate::{instruction::at::exec as at, ExecError};
     use simplesl_macros::var;
 
     #[test]

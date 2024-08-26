@@ -1,9 +1,7 @@
 use super::InstructionWithStr;
 use crate as simplesl;
 use crate::{
-    instruction::{
-        local_variable::LocalVariables, traits::ExecResult, Exec, Instruction, Recreate,
-    },
+    instruction::{local_variable::LocalVariables, Exec, ExecResult, Instruction, Recreate},
     interpreter::Interpreter,
     variable::{Array, ReturnType, Type, Typed},
     Error, ExecError,

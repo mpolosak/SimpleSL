@@ -8,10 +8,10 @@ use export_function::export_item_fn;
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, Item, ItemConst, ItemFn, ItemMod, ItemUse, Visibility};
-use var::var_quote;
+use var::quote;
 use var_type::type_quote;
 
-/// Macro simplifying exporting modules into SimpleSL
+/// Macro simplifying exporting modules into `SimpleSL`
 #[proc_macro_attribute]
 pub fn export(_attr: TokenStream, module: TokenStream) -> TokenStream {
     let mut module = parse_macro_input!(module as ItemMod);
@@ -64,7 +64,7 @@ pub fn export(_attr: TokenStream, module: TokenStream) -> TokenStream {
     .into()
 }
 
-/// Macro simplifying exporting Rust function into SimpleSL
+/// Macro simplifying exporting Rust function into `SimpleSL`
 #[proc_macro_attribute]
 pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream {
     let attr = Attributes::parse(attr);
@@ -77,14 +77,14 @@ pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream 
     .into()
 }
 
-/// Macro simplifying creating SimpleSL Type
+/// Macro simplifying creating `SimpleSL` Type
 #[proc_macro]
 pub fn var_type(item: TokenStream) -> TokenStream {
-    type_quote(item).into()
+    type_quote(&item).into()
 }
 
-/// Macro simplifying creating SimpleSL Variable
+/// Macro simplifying creating `SimpleSL` Variable
 #[proc_macro]
 pub fn var(item: TokenStream) -> TokenStream {
-    var_quote(item).into()
+    quote(&item).into()
 }

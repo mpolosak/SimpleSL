@@ -20,7 +20,7 @@ where
     items
         .into_iter()
         .map(ToString::to_string)
-        .collect::<Box<_>>()
+        .collect::<Box<[_]>>()
         .join(separator)
 }
 
@@ -32,6 +32,6 @@ where
     items
         .into_iter()
         .map(|element| format!("{element:?}"))
-        .collect::<Box<_>>()
+        .collect::<Box<[_]>>()
         .join(separator)
 }

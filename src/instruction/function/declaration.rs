@@ -3,9 +3,7 @@ use crate::{
     function::{Body, Function, Param, Params},
     instruction::{
         local_variable::{FunctionInfo, LocalVariable, LocalVariableMap, LocalVariables},
-        recreate_instructions,
-        traits::ExecResult,
-        Exec, Instruction, InstructionWithStr, Recreate,
+        recreate_instructions, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
     },
     interpreter::Interpreter,
     variable::{ReturnType, Type},

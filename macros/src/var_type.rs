@@ -4,7 +4,7 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
 use simplesl_parser::{unexpected, Rule, SimpleSLParser};
 
-pub fn type_quote(item: TokenStream) -> TokenStream2 {
+pub fn type_quote(item: &TokenStream) -> TokenStream2 {
     let item_str = item.to_string();
     type_from_str(&item_str)
 }
@@ -31,11 +31,10 @@ fn type_token_from_pair(pair: Pair<Rule>) -> TokenStream2 {
             .reduce(|acc, curr| quote!(#acc | # curr))
             .unwrap(),
         Rule::array_type_ident => {
-            let element_type = pair
-                .into_inner()
-                .next()
-                .map(type_token_from_pair)
-                .unwrap_or_else(|| quote!(simplesl::variable::Type::Never));
+            let element_type = pair.into_inner().next().map_or_else(
+                || quote!(simplesl::variable::Type::Never),
+                type_token_from_pair,
+            );
             quote!(simplesl::variable::Type::Array((#element_type).into()))
         }
         Rule::tuple_type_ident => {

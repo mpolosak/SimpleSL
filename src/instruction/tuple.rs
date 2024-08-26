@@ -1,5 +1,5 @@
 use super::{
-    local_variable::LocalVariables, recreate_instructions, traits::ExecResult, Exec, Instruction,
+    local_variable::LocalVariables, recreate_instructions, Exec, ExecResult, Instruction,
     InstructionWithStr, Recreate,
 };
 use crate::{
@@ -62,11 +62,5 @@ impl ReturnType for Tuple {
     fn return_type(&self) -> Type {
         let types = self.elements.iter().map(ReturnType::return_type).collect();
         Type::Tuple(types)
-    }
-}
-
-impl From<Tuple> for Instruction {
-    fn from(value: Tuple) -> Self {
-        Instruction::Tuple(value)
     }
 }

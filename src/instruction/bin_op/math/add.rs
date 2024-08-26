@@ -1,86 +1,102 @@
-use crate as simplesl;
-use crate::instruction::{Add, Instruction};
-use crate::variable::Array;
-use crate::variable::{ReturnType, Type, Variable};
+use crate::instruction::{BinOperation, BinOperator, Instruction};
+use crate::variable::{Array, ReturnType};
+use crate::variable::{Type, Variable};
+use crate::{self as simplesl, Error};
+use lazy_static::lazy_static;
 use simplesl_macros::var_type;
 
-impl Add {
-    pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
-        match (lhs, rhs) {
-            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => Self::exec(lhs, rhs).into(),
-            (lhs, rhs) => Self { lhs, rhs }.into(),
-        }
-    }
+lazy_static! {
+    static ref ACCEPTED_TYPE: Type = var_type!(
+        (int | [int], int | [int])
+            | (float | [float], float | [float])
+            | (string | [string], string | [string])
+            | ([any], [any])
+    );
+}
 
-    pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
-        match (lhs, rhs) {
-            (Variable::Int(value1), Variable::Int(value2)) => (value1 + value2).into(),
-            (Variable::Float(value1), Variable::Float(value2)) => (value1 + value2).into(),
-            (Variable::String(value1), Variable::String(value2)) => {
-                format!("{value1}{value2}").into()
-            }
-            (Variable::Array(array1), Variable::Array(array2)) => {
-                Array::concat(array1, array2).into()
-            }
-            (Variable::Array(array), rhs) => {
-                let elements = array
-                    .iter()
-                    .cloned()
-                    .map(|lhs| Self::exec(lhs, rhs.clone()))
-                    .collect();
-                let element_type = array.element_type().clone();
-                Array {
-                    element_type,
-                    elements,
-                }
-                .into()
-            }
-            (lhs, Variable::Array(array)) => {
-                let elements = array
-                    .iter()
-                    .cloned()
-                    .map(|rhs| Self::exec(lhs.clone(), rhs))
-                    .collect();
-                let element_type = array.element_type().clone();
-                Array {
-                    element_type,
-                    elements,
-                }
-                .into()
-            }
-            (lhs, rhs) => panic!("Tried to do {lhs} + {rhs} which is imposible"),
-        }
+pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
+    let lhs_type = lhs.return_type();
+    let rhs_type = rhs.return_type();
+    if !can_be_used(&lhs_type, &rhs_type) {
+        return Err(Error::CannotDo2(lhs_type, "+", rhs_type));
     }
+    Ok(create_from_instructions(lhs, rhs))
+}
 
-    fn return_type(lhs: Type, rhs: Type) -> Type {
-        let Some(lhs_element) = lhs.element_type() else {
-            if var_type!([]).matches(&lhs) {
-                return lhs;
-            }
-            return rhs;
-        };
-        let Some(rhs_element) = rhs.element_type() else {
-            if var_type!([]).matches(&rhs) {
-                return rhs;
-            }
-            return lhs;
-        };
-        var_type!([lhs_element | rhs_element])
+fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
+    let lhs = lhs.clone();
+    let rhs = rhs.clone();
+    var_type!((lhs, rhs)).matches(&ACCEPTED_TYPE)
+}
+
+pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
+    match (lhs, rhs) {
+        (Instruction::Variable(lhs), Instruction::Variable(rhs)) => exec(lhs, rhs).into(),
+        (lhs, rhs) => BinOperation {
+            lhs,
+            rhs,
+            op: BinOperator::Add,
+        }
+        .into(),
     }
 }
 
-impl ReturnType for Add {
-    fn return_type(&self) -> Type {
-        let lhs = self.lhs.return_type();
-        let rhs = self.rhs.return_type();
-        Self::return_type(lhs, rhs)
+pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
+    match (lhs, rhs) {
+        (Variable::Int(value1), Variable::Int(value2)) => (value1 + value2).into(),
+        (Variable::Float(value1), Variable::Float(value2)) => (value1 + value2).into(),
+        (Variable::String(value1), Variable::String(value2)) => format!("{value1}{value2}").into(),
+        (Variable::Array(array1), Variable::Array(array2)) => Array::concat(array1, array2).into(),
+        (Variable::Array(array), rhs) => {
+            let elements = array
+                .iter()
+                .cloned()
+                .map(|lhs| exec(lhs, rhs.clone()))
+                .collect();
+            let element_type = array.element_type().clone();
+            Array {
+                element_type,
+                elements,
+            }
+            .into()
+        }
+        (lhs, Variable::Array(array)) => {
+            let elements = array
+                .iter()
+                .cloned()
+                .map(|rhs| exec(lhs.clone(), rhs))
+                .collect();
+            let element_type = array.element_type().clone();
+            Array {
+                element_type,
+                elements,
+            }
+            .into()
+        }
+        (lhs, rhs) => panic!("Tried to do {lhs} + {rhs} which is imposible"),
     }
+}
+
+pub fn return_type(lhs: Type, rhs: Type) -> Type {
+    let Some(lhs_element) = lhs.element_type() else {
+        if var_type!([]).matches(&lhs) {
+            return lhs;
+        }
+        return rhs;
+    };
+    let Some(rhs_element) = rhs.element_type() else {
+        if var_type!([]).matches(&rhs) {
+            return rhs;
+        }
+        return lhs;
+    };
+    var_type!([lhs_element | rhs_element])
 }
 
 #[cfg(test)]
 mod tests {
     use crate as simplesl;
-    use crate::{instruction::bin_op::Add, variable::Variable, Code, Error, Interpreter};
+    use crate::{instruction::bin_op::add, variable::Variable, Code, Error, Interpreter};
     use simplesl_macros::{var, var_type};
 
     #[test]
@@ -132,86 +148,86 @@ mod tests {
     fn return_type() {
         // int
         assert_eq!(
-            Add::return_type(var_type!(int), var_type!(int)),
+            add::return_type(var_type!(int), var_type!(int)),
             var_type!(int)
         );
         assert_eq!(
-            Add::return_type(var_type!(int), var_type!([int])),
+            add::return_type(var_type!(int), var_type!([int])),
             var_type!([int])
         );
         assert_eq!(
-            Add::return_type(var_type!([int]), var_type!(int)),
+            add::return_type(var_type!([int]), var_type!(int)),
             var_type!([int])
         );
         assert_eq!(
-            Add::return_type(var_type!([int]), var_type!([int])),
+            add::return_type(var_type!([int]), var_type!([int])),
             var_type!([int])
         );
         assert_eq!(
-            Add::return_type(var_type!([int]), var_type!([int] | int)),
+            add::return_type(var_type!([int]), var_type!([int] | int)),
             var_type!([int] | int)
         );
         assert_eq!(
-            Add::return_type(var_type!([int] | int), var_type!([int])),
+            add::return_type(var_type!([int] | int), var_type!([int])),
             var_type!([int] | int)
         );
         // float
         assert_eq!(
-            Add::return_type(var_type!(float), var_type!(float)),
+            add::return_type(var_type!(float), var_type!(float)),
             var_type!(float)
         );
         assert_eq!(
-            Add::return_type(var_type!(float), var_type!([float])),
+            add::return_type(var_type!(float), var_type!([float])),
             var_type!([float])
         );
         assert_eq!(
-            Add::return_type(var_type!([float]), var_type!(float)),
+            add::return_type(var_type!([float]), var_type!(float)),
             var_type!([float])
         );
         assert_eq!(
-            Add::return_type(var_type!([float]), var_type!([float])),
+            add::return_type(var_type!([float]), var_type!([float])),
             var_type!([float])
         );
         assert_eq!(
-            Add::return_type(var_type!([float]), var_type!([float] | float)),
+            add::return_type(var_type!([float]), var_type!([float] | float)),
             var_type!([float] | float)
         );
         assert_eq!(
-            Add::return_type(var_type!([float] | float), var_type!([float])),
+            add::return_type(var_type!([float] | float), var_type!([float])),
             var_type!([float] | float)
         );
         // string
         assert_eq!(
-            Add::return_type(var_type!(string), var_type!(string)),
+            add::return_type(var_type!(string), var_type!(string)),
             var_type!(string)
         );
         assert_eq!(
-            Add::return_type(var_type!(string), var_type!([string])),
+            add::return_type(var_type!(string), var_type!([string])),
             var_type!([string])
         );
         assert_eq!(
-            Add::return_type(var_type!([string]), var_type!(string)),
+            add::return_type(var_type!([string]), var_type!(string)),
             var_type!([string])
         );
         assert_eq!(
-            Add::return_type(var_type!([string]), var_type!([string])),
+            add::return_type(var_type!([string]), var_type!([string])),
             var_type!([string])
         );
         assert_eq!(
-            Add::return_type(var_type!([string]), var_type!([string] | string)),
+            add::return_type(var_type!([string]), var_type!([string] | string)),
             var_type!([string] | string)
         );
         assert_eq!(
-            Add::return_type(var_type!([string] | string), var_type!([string])),
+            add::return_type(var_type!([string] | string), var_type!([string])),
             var_type!([string] | string)
         );
         // array + array
         assert_eq!(
-            Add::return_type(var_type!([int]), var_type!([float])),
+            add::return_type(var_type!([int]), var_type!([float])),
             var_type!([float | int])
         );
         assert_eq!(
-            Add::return_type(var_type!([int]), var_type!([any])),
+            add::return_type(var_type!([int]), var_type!([any])),
             var_type!([any])
         );
     }

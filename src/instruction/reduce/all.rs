@@ -1,20 +1,18 @@
 use crate as simplesl;
-use crate::instruction::local_variable::LocalVariables;
-use crate::instruction::{And, Exec, ExecResult, Recreate};
-use crate::instruction::{Instruction, InstructionWithStr};
+use crate::instruction::unary_operation::{UnaryOperation, UnaryOperator};
+use crate::instruction::{and, Instruction, InstructionWithStr};
 use crate::{
-    variable::{Array, ReturnType, Type, Variable},
+    variable::{Array, ReturnType, Variable},
     Error,
 };
-use crate::{ExecError, Interpreter};
 use simplesl_macros::{var, var_type};
 
-pub fn create_all(array: InstructionWithStr) -> Result<Instruction, Error> {
-    match &array.instruction {
+pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
+    match array.instruction {
         Instruction::Variable(Variable::Array(array))
             if array.element_type().matches(&var_type!(int)) =>
         {
-            Ok(All::calc(array).into())
+            Ok(calc(&array).into())
         }
         Instruction::ArrayRepeat(array_repeat)
             if array_repeat.value.return_type().matches(&var_type!(int)) =>
@@ -26,11 +24,13 @@ pub fn create_all(array: InstructionWithStr) -> Result<Instruction, Error> {
             .iter()
             .cloned()
             .map(|iws| iws.instruction)
-            .reduce(|acc, curr| And::create_from_instructions(acc, curr))
+            .reduce(and::create_from_instructions)
             .unwrap()),
-        instruction if instruction.return_type().matches(&var_type!([int])) => {
-            Ok(All { array }.into())
+        instruction if instruction.return_type().matches(&var_type!([int])) => Ok(UnaryOperation {
+            instruction,
+            op: UnaryOperator::All,
         }
+        .into()),
         ins => Err(Error::IncorectPostfixOperatorOperand {
             ins: array.str,
             op: "$&&",
@@ -40,37 +40,23 @@ pub fn create_all(array: InstructionWithStr) -> Result<Instruction, Error> {
     }
 }
 
-#[derive(Debug)]
-pub struct All {
-    pub array: InstructionWithStr,
+fn calc(array: &Array) -> Variable {
+    let sum = array.iter().all(|var| *var.as_int().unwrap() != 0);
+    var!(sum)
 }
 
-impl All {
-    fn calc(array: &Array) -> Variable {
-        let sum = array.iter().all(|var| *var.as_int().unwrap() != 0);
-        var!(sum)
+pub fn recreate(instruction: Instruction) -> Instruction {
+    if let Instruction::Variable(Variable::Array(array)) = &instruction {
+        return calc(array).into();
     }
+    UnaryOperation {
+        instruction,
+        op: UnaryOperator::All,
+    }
+    .into()
 }
 
-impl ReturnType for All {
-    fn return_type(&self) -> Type {
-        var_type!(int)
-    }
-}
-
-impl Recreate for All {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let array = self.array.recreate(local_variables)?;
-        if let Instruction::Variable(Variable::Array(array)) = &self.array.instruction {
-            return Ok(Self::calc(array).into());
-        }
-        Ok(Self { array }.into())
-    }
-}
-
-impl Exec for All {
-    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let array = self.array.exec(interpreter)?.into_array().unwrap();
-        Ok(Self::calc(&array).into())
-    }
+pub fn exec(var: Variable) -> Variable {
+    let array = var.into_array().unwrap();
+    calc(&array)
 }

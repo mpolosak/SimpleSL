@@ -1,6 +1,5 @@
 use crate::instruction::{
-    local_variable::LocalVariables, traits::ExecResult, Exec, Instruction, InstructionWithStr,
-    Recreate,
+    local_variable::LocalVariables, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
 };
 use crate::{
     interpreter::Interpreter,

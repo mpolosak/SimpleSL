@@ -1,14 +1,47 @@
-use super::{BitwiseAnd, BitwiseOr, Xor};
-use crate::variable::{Array, Variable};
 use duplicate::duplicate_item;
 
 #[duplicate_item(
-    bitwise op1 op2;
-    [BitwiseAnd] [lhs & rhs] [&];
-    [BitwiseOr] [lhs | rhs] [|];
-    [Xor] [lhs ^ rhs] [^];
+    Bitwise bitwise op1 op2;
+    [BitwiseAnd] [bitwise_and] [lhs & rhs] [&];
+    [BitwiseOr] [bitwise_or] [lhs | rhs] [|];
+    [Xor] [xor] [lhs ^ rhs] [^];
 )]
-impl bitwise {
+pub mod bitwise {
+    use std::sync::Arc;
+
+    use crate::{
+        instruction::{can_be_used_int, BinOperation, BinOperator, Instruction},
+        variable::{Array, ReturnType, Variable},
+        Error,
+    };
+
+    pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
+        let lhs_type = lhs.return_type();
+        let rhs_type = rhs.return_type();
+        if !can_be_used_int(lhs_type.clone(), rhs_type.clone()) {
+            return Err(Error::CannotDo2(lhs_type, stringify!(op), rhs_type));
+        }
+        Ok(create_from_instructions(lhs, rhs))
+    }
+
+    pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
+        match (lhs, rhs) {
+            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => exec(lhs, rhs).into(),
+            (Instruction::ArrayRepeat(array_repeat), rhs) => Arc::unwrap_or_clone(array_repeat)
+                .map(|lhs| create_from_instructions(lhs, rhs))
+                .into(),
+            (lhs, Instruction::ArrayRepeat(array_repeat)) => Arc::unwrap_or_clone(array_repeat)
+                .map(|rhs| create_from_instructions(lhs, rhs))
+                .into(),
+            (lhs, rhs) => BinOperation {
+                lhs,
+                rhs,
+                op: BinOperator::Bitwise,
+            }
+            .into(),
+        }
+    }
+
     pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
         match (lhs, rhs) {
             (Variable::Int(lhs), Variable::Int(rhs)) => (op1).into(),
@@ -16,7 +49,7 @@ impl bitwise {
                 let elements = array
                     .iter()
                     .cloned()
-                    .map(|element| Self::exec(element, value.clone()))
+                    .map(|element| exec(element, value.clone()))
                     .collect();
                 let element_type = array.element_type().clone();
                 Array {

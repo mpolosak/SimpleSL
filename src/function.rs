@@ -3,8 +3,9 @@ mod param;
 pub(crate) use self::body::Body;
 pub use self::param::{Param, Params};
 use crate as simplesl;
+use crate::instruction::function::call;
 use crate::{
-    instruction::{ExecStop, FunctionCall, InstructionWithStr},
+    instruction::{ExecStop, InstructionWithStr},
     interpreter::Interpreter,
     join,
     variable::{ReturnType, Type, Typed, Variable},
@@ -38,7 +39,7 @@ impl Function {
     pub fn create_call(self: Arc<Self>, args: Vec<Variable>) -> Result<Code, Error> {
         let ident = self.ident.clone().unwrap_or_else(|| Arc::from("function"));
         let str = format!("{}({})", ident, join(args.iter(), ", ")).into();
-        let instruction = FunctionCall::create_from_variables(ident, self, args)?;
+        let instruction = call::create_from_variables(ident, self, args)?;
         Ok(Code {
             instructions: Arc::new([InstructionWithStr { instruction, str }]),
         })

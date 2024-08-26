@@ -8,7 +8,7 @@ description = "Macros simplyfing adding functions to SimpleSl"
 repository = "https://github.com/mpolosak/SimpleSL"
 
 [lib]
-proc_macro = true
+proc-macro = true
 
 [dependencies]
 quote = "1.0"

@@ -1,21 +1,19 @@
-use simplesl_macros::{var, var_type};
-
 use crate as simplesl;
-use crate::instruction::local_variable::LocalVariables;
-use crate::instruction::{Exec, ExecResult, Recreate, Xor};
+use crate::instruction::bitwise_or;
+use crate::instruction::unary_operation::{UnaryOperation, UnaryOperator};
 use crate::instruction::{Instruction, InstructionWithStr};
 use crate::{
-    variable::{Array, ReturnType, Type, Variable},
+    variable::{Array, ReturnType, Variable},
     Error,
 };
-use crate::{ExecError, Interpreter};
+use simplesl_macros::{var, var_type};
 
-pub fn create_bitor_reduce(array: InstructionWithStr) -> Result<Instruction, Error> {
-    match &array.instruction {
+pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
+    match array.instruction {
         Instruction::Variable(Variable::Array(array))
             if array.element_type().matches(&var_type!(int)) =>
         {
-            Ok(BitOrReduce::calc(array).into())
+            Ok(calc(&array).into())
         }
         Instruction::ArrayRepeat(array_repeat)
             if array_repeat.value.return_type().matches(&(var_type!(int))) =>
@@ -27,11 +25,13 @@ pub fn create_bitor_reduce(array: InstructionWithStr) -> Result<Instruction, Err
             .iter()
             .cloned()
             .map(|iws| iws.instruction)
-            .reduce(|acc, curr| Xor::create_from_instructions(acc, curr))
+            .reduce(bitwise_or::create_from_instructions)
             .unwrap()),
-        instruction if instruction.return_type().matches(&var_type!([int])) => {
-            Ok(BitOrReduce { array }.into())
+        instruction if instruction.return_type().matches(&var_type!([int])) => Ok(UnaryOperation {
+            instruction,
+            op: UnaryOperator::BitOr,
         }
+        .into()),
         ins => Err(Error::IncorectPostfixOperatorOperand {
             ins: array.str,
             op: "$||",
@@ -41,40 +41,26 @@ pub fn create_bitor_reduce(array: InstructionWithStr) -> Result<Instruction, Err
     }
 }
 
-#[derive(Debug)]
-pub struct BitOrReduce {
-    pub array: InstructionWithStr,
+fn calc(array: &Array) -> Variable {
+    let sum = array
+        .iter()
+        .map(|var| var.as_int().unwrap())
+        .fold(0, |acc, curr| acc | curr);
+    var!(sum)
 }
 
-impl BitOrReduce {
-    fn calc(array: &Array) -> Variable {
-        let sum = array
-            .iter()
-            .map(|var| var.as_int().unwrap())
-            .fold(0, |acc, curr| acc | curr);
-        var!(sum)
+pub fn recreate(instruction: Instruction) -> Instruction {
+    if let Instruction::Variable(Variable::Array(array)) = &instruction {
+        return calc(array).into();
     }
+    UnaryOperation {
+        instruction,
+        op: UnaryOperator::BitOr,
+    }
+    .into()
 }
 
-impl ReturnType for BitOrReduce {
-    fn return_type(&self) -> Type {
-        var_type!(int)
-    }
-}
-
-impl Recreate for BitOrReduce {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let array = self.array.recreate(local_variables)?;
-        if let Instruction::Variable(Variable::Array(array)) = &self.array.instruction {
-            return Ok(Self::calc(array).into());
-        }
-        Ok(Self { array }.into())
-    }
-}
-
-impl Exec for BitOrReduce {
-    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let array = self.array.exec(interpreter)?.into_array().unwrap();
-        Ok(Self::calc(&array).into())
-    }
+pub fn exec(var: Variable) -> Variable {
+    let array = var.into_array().unwrap();
+    calc(&array)
 }

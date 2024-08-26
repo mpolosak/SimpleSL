@@ -22,7 +22,7 @@ pub fn export_item_fn(
     let args = args_from_function_params(&params);
     let args_importing = args_import_from_function_params(&params);
     let params = params_from_function_params(&params);
-    let return_type = get_return_type(&function, attr.return_type);
+    let return_type = get_return_type(function, attr.return_type);
     quote!(
         {
             interpreter.insert(
@@ -40,7 +40,6 @@ pub fn export_item_fn(
             );
         }
     )
-    .into()
 }
 
 pub fn function_params_from_itemfn(
@@ -105,7 +104,7 @@ fn get_type_from_attrs(attrs: &[Attribute]) -> Option<TokenStream> {
             syn::Meta::List(MetaList { path, tokens, .. })
                 if quote!(#path).to_string() == "var_type" =>
             {
-                return Some(type_quote(tokens.clone().into()))
+                return Some(type_quote(&tokens.clone().into()))
             }
             _ => (),
         };
@@ -117,7 +116,5 @@ pub fn get_return_type(function: &ItemFn, return_type: Option<TokenStream>) -> T
     let ReturnType::Type(_, syn_type) = &function.sig.output else {
         return type_from_str("()");
     };
-    let return_type =
-        return_type.unwrap_or_else(|| quote!(<#syn_type as simplesl::variable::TypeOf>::type_of()));
-    return_type
+    return_type.unwrap_or_else(|| quote!(<#syn_type as simplesl::variable::TypeOf>::type_of()))
 }

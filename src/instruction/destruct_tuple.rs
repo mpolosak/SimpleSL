@@ -1,5 +1,5 @@
 use super::{
-    local_variable::LocalVariables, traits::ExecResult, tuple::Tuple, Exec, Instruction,
+    local_variable::LocalVariables, tuple::Tuple, Exec, ExecResult, Instruction,
     InstructionWithStr, Recreate,
 };
 use crate::{

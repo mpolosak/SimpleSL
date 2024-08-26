@@ -1,114 +1,115 @@
-use super::Filter;
-use crate as simplesl;
+use crate::instruction::Instruction;
+use crate::variable::ReturnType;
+use crate::{self as simplesl, Error};
 use crate::{
-    instruction::{
-        traits::{CanBeUsed, ExecResult},
-        Exec,
-    },
-    interpreter::Interpreter,
-    variable::{Array, ReturnType, Type, Variable},
+    instruction::ExecResult,
+    variable::{Array, Type, Variable},
 };
 use simplesl_macros::var_type;
 
-impl CanBeUsed for Filter {
-    fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
-        let Some(element_type) = lhs.index_result() else {
-            return false;
-        };
-        let element_type2 = element_type.clone();
-        let expected_function = var_type!((element_type)->int | (int,element_type2)->int);
-        rhs.matches(&expected_function)
+use super::{BinOperation, BinOperator};
+
+pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
+    let lhs_type = lhs.return_type();
+    let rhs_type = rhs.return_type();
+    if !can_be_used(&lhs_type, &rhs_type) {
+        return Err(Error::CannotDo2(lhs_type, "?", rhs_type));
     }
+    Ok(BinOperation {
+        lhs,
+        rhs,
+        op: BinOperator::Filter,
+    }
+    .into())
 }
 
-impl Exec for Filter {
-    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let array = self.lhs.exec(interpreter)?;
-        let function = self.rhs.exec(interpreter)?;
-        let (Variable::Array(array), Variable::Function(function)) = (&array, &function) else {
-            unreachable!("Tried to do {array} ? {function}")
-        };
-        let array_iter = array.iter().cloned();
-        let elements = if function.params.len() == 1 {
-            array_iter
-                .filter_map(|element| match function.exec(&[element.clone()]) {
+pub fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
+    let Some(element_type) = lhs.index_result() else {
+        return false;
+    };
+    let element_type2 = element_type.clone();
+    let expected_function = var_type!((element_type)->int | (int,element_type2)->int);
+    rhs.matches(&expected_function)
+}
+
+pub fn exec(array: Variable, function: Variable) -> ExecResult {
+    let (Variable::Array(array), Variable::Function(function)) = (&array, &function) else {
+        unreachable!("Tried to do {array} ? {function}")
+    };
+    let array_iter = array.iter().cloned();
+    let elements = if function.params.len() == 1 {
+        array_iter
+            .filter_map(|element| match function.exec(&[element.clone()]) {
+                Ok(Variable::Int(0)) => None,
+                Ok(_) => Some(Ok(element)),
+                e @ Err(_) => Some(e),
+            })
+            .collect::<Result<_, _>>()
+    } else {
+        array_iter
+            .enumerate()
+            .filter_map(
+                |(index, element)| match function.exec(&[index.into(), element.clone()]) {
                     Ok(Variable::Int(0)) => None,
                     Ok(_) => Some(Ok(element)),
                     e @ Err(_) => Some(e),
-                })
-                .collect::<Result<_, _>>()
-        } else {
-            array_iter
-                .enumerate()
-                .filter_map(|(index, element)| {
-                    match function.exec(&[index.into(), element.clone()]) {
-                        Ok(Variable::Int(0)) => None,
-                        Ok(_) => Some(Ok(element)),
-                        e @ Err(_) => Some(e),
-                    }
-                })
-                .collect::<Result<_, _>>()
-        }?;
-        let element_type = array.element_type().clone();
-        Ok(Array {
-            element_type,
-            elements,
-        }
-        .into())
+                },
+            )
+            .collect::<Result<_, _>>()
+    }?;
+    let element_type = array.element_type().clone();
+    Ok(Array {
+        element_type,
+        elements,
     }
-}
-
-impl ReturnType for Filter {
-    fn return_type(&self) -> Type {
-        self.lhs.return_type()
-    }
+    .into())
 }
 
 #[cfg(test)]
 mod tests {
     use crate as simplesl;
-    use crate::instruction::{bin_op::Filter, traits::CanBeUsed};
+    use crate::instruction::bin_op::filter;
     use simplesl_macros::var_type;
 
     #[test]
     fn can_be_used() {
-        assert!(Filter::can_be_used(
+        assert!(filter::can_be_used(
             &var_type!([int]),
             &var_type!((int)->int)
         ));
-        assert!(Filter::can_be_used(
+        assert!(filter::can_be_used(
             &var_type!([int]),
             &var_type!((int, any)->int)
         ));
-        assert!(Filter::can_be_used(
+        assert!(filter::can_be_used(
             &var_type!([int] | [float]),
             &var_type!((int|float)->int)
         ));
-        assert!(Filter::can_be_used(
+        assert!(filter::can_be_used(
             &var_type!([int] | [float]),
             &var_type!((any, any)->int)
         ));
-        assert!(Filter::can_be_used(
+        assert!(filter::can_be_used(
             &var_type!([int] | [float | string]),
             &var_type!((any, int|float|string)->int)
         ));
-        assert!(!Filter::can_be_used(
+        assert!(!filter::can_be_used(
             &var_type!(int),
             &var_type!((any, any)->int)
         ));
-        assert!(!Filter::can_be_used(
+        assert!(!filter::can_be_used(
             &var_type!([int] | float),
             &var_type!((any, any)->int)
         ));
-        assert!(!Filter::can_be_used(
+        assert!(!filter::can_be_used(
             &var_type!([int] | [float]),
             &var_type!((any, int)->int)
         ));
-        assert!(!Filter::can_be_used(
+        assert!(!filter::can_be_used(
             &var_type!([int] | [float]),
             &var_type!((float, any)->int)
         ));
-        assert!(!Filter::can_be_used(
+        assert!(!filter::can_be_used(
             &var_type!([int] | [float]),
             &var_type!(string)
         ))
