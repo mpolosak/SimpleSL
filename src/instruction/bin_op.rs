@@ -154,13 +154,13 @@ impl ReturnType for BinOperation {
             | BinOperator::Divide
             | BinOperator::Pow => return_type_float(lhs, rhs),
             BinOperator::Equal | BinOperator::NotEqual => Type::Bool,
-            BinOperator::Greater
+            BinOperator::And
+            | BinOperator::Or
+            | BinOperator::Greater
             | BinOperator::GreaterOrEqual
             | BinOperator::Lower
             | BinOperator::LowerOrEqual => return_type_bool(lhs, rhs),
-            BinOperator::And
-            | BinOperator::Or
-            | BinOperator::BitwiseAnd
+            BinOperator::BitwiseAnd
             | BinOperator::BitwiseOr
             | BinOperator::Xor
             | BinOperator::LShift

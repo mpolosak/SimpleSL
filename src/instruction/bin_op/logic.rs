@@ -1,15 +1,30 @@
-use duplicate::duplicate_item;
+use crate as simplesl;
+use crate::variable::Type;
+use lazy_static::lazy_static;
+use simplesl_macros::var_type;
 
-#[duplicate_item(logic Logic symbol cond dv; [and] [And] [&&] [value!=0] [0]; [or] [Or] [||] [value==0] [1])]
-pub mod logic {
-    use crate::instruction::{can_be_used_int, BinOperation, BinOperator, Instruction};
-    use crate::variable::{Array, ReturnType, Variable};
-    use crate::Error;
+lazy_static! {
+    pub static ref ACCEPTED_TYPE: Type = var_type!((bool, bool | [bool]) | ([bool], bool));
+}
+
+pub fn can_be_used(lhs: Type, rhs: Type) -> bool {
+    var_type!((lhs, rhs)).matches(&ACCEPTED_TYPE)
+}
+
+pub mod and {
+    use crate::{
+        instruction::{BinOperation, BinOperator, Instruction},
+        variable::{Array, ReturnType, Variable},
+        Error,
+    };
+
+    use super::can_be_used;
+
     pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
         let lhs_type = lhs.return_type();
         let rhs_type = rhs.return_type();
-        if !can_be_used_int(lhs_type.clone(), rhs_type.clone()) {
-            return Err(Error::CannotDo2(lhs_type, stringify!(symbol), rhs_type));
+        if !can_be_used(lhs_type.clone(), rhs_type.clone()) {
+            return Err(Error::CannotDo2(lhs_type, "&&", rhs_type));
         }
         Ok(create_from_instructions(lhs, rhs))
     }
@@ -17,16 +32,10 @@ pub mod logic {
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         match (lhs, rhs) {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => exec(lhs, rhs).into(),
-            (Instruction::Variable(Variable::Int(value)), instruction)
-            | (instruction, Instruction::Variable(Variable::Int(value)))
-                if cond =>
-            {
-                instruction
-            }
             (lhs, rhs) => BinOperation {
                 lhs,
                 rhs,
-                op: BinOperator::Logic,
+                op: BinOperator::And,
             }
             .into(),
         }
@@ -34,11 +43,52 @@ pub mod logic {
 
     pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
         match (lhs, rhs) {
-            (result, Variable::Int(value)) | (Variable::Int(value), result) if cond => result,
+            (result, Variable::Bool(value)) | (Variable::Bool(value), result) if value => result,
             (Variable::Array(array), _) | (_, Variable::Array(array)) => {
-                Array::new_repeat(Variable::Int(dv), array.len()).into()
+                Array::new_repeat(Variable::Bool(false), array.len()).into()
             }
-            _ => Variable::Int(dv),
+            _ => Variable::Bool(false),
+        }
+    }
+}
+
+pub mod or {
+    use crate::{
+        instruction::{BinOperation, BinOperator, Instruction},
+        variable::{Array, ReturnType, Variable},
+        Error,
+    };
+
+    use super::can_be_used;
+
+    pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
+        let lhs_type = lhs.return_type();
+        let rhs_type = rhs.return_type();
+        if !can_be_used(lhs_type.clone(), rhs_type.clone()) {
+            return Err(Error::CannotDo2(lhs_type, "||", rhs_type));
+        }
+        Ok(create_from_instructions(lhs, rhs))
+    }
+
+    pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
+        match (lhs, rhs) {
+            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => exec(lhs, rhs).into(),
+            (lhs, rhs) => BinOperation {
+                lhs,
+                rhs,
+                op: BinOperator::Or,
+            }
+            .into(),
+        }
+    }
+
+    pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
+        match (lhs, rhs) {
+            (result, Variable::Bool(value)) | (Variable::Bool(value), result) if !value => result,
+            (Variable::Array(array), _) | (_, Variable::Array(array)) => {
+                Array::new_repeat(Variable::Bool(true), array.len()).into()
+            }
+            _ => Variable::Bool(true),
         }
     }
 }
