@@ -2,7 +2,7 @@ use super::{
     at,
     function::call,
     local_variable::LocalVariables,
-    prefix_op::{bitwise_not, not, unary_minus},
+    prefix_op::{not, unary_minus},
     reduce::{all, any, bitand, bitor, product, sum},
     type_filter::TypeFilter,
     Exec, ExecResult, ExecStop, Instruction, InstructionWithStr, Recreate,
@@ -53,7 +53,6 @@ pub enum UnaryOperator {
     BitOr,
     Sum,
     Product,
-    BitwiseNot,
     Not,
     UnaryMinus,
     Return,
@@ -69,7 +68,6 @@ impl Exec for UnaryOperation {
             UnaryOperator::BitOr => bitor::exec(var),
             UnaryOperator::Sum => sum::exec(var),
             UnaryOperator::Product => product::exec(var),
-            UnaryOperator::BitwiseNot => bitwise_not::exec(var),
             UnaryOperator::Not => not::exec(var),
             UnaryOperator::UnaryMinus => unary_minus::exec(var),
             UnaryOperator::Return => return Err(ExecStop::Return(var)),
@@ -90,7 +88,6 @@ impl Recreate for UnaryOperation {
             UnaryOperator::BitOr => bitor::recreate(instruction),
             UnaryOperator::Sum => sum::recreate(instruction),
             UnaryOperator::Product => product::recreate(instruction),
-            UnaryOperator::BitwiseNot => bitwise_not::create_from_instruction(instruction),
             UnaryOperator::Not => not::create_from_instruction(instruction),
             UnaryOperator::UnaryMinus => unary_minus::create_from_instruction(instruction),
             UnaryOperator::Return => UnaryOperation {
@@ -111,9 +108,7 @@ impl ReturnType for UnaryOperation {
             | UnaryOperator::BitAnd
             | UnaryOperator::BitOr => Type::Int,
             UnaryOperator::Sum | UnaryOperator::Product => return_type.element_type().unwrap(),
-            UnaryOperator::BitwiseNot | UnaryOperator::Not | UnaryOperator::UnaryMinus => {
-                return_type
-            }
+            UnaryOperator::Not | UnaryOperator::UnaryMinus => return_type,
             UnaryOperator::Return => Type::Never,
         }
     }

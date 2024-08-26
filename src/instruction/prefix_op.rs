@@ -2,7 +2,6 @@ use super::InstructionWithStr;
 use crate as simplesl;
 use crate::variable::Type;
 use crate::Error;
-use duplicate::duplicate_item;
 use lazy_static::lazy_static;
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
@@ -13,17 +12,12 @@ impl InstructionWithStr {
         let instruction = rhs.instruction;
         let instruction = match op.as_rule() {
             Rule::not => not::create_instruction(instruction),
-            Rule::bitwise_not => bitwise_not::create_instruction(instruction),
             Rule::unary_minus => unary_minus::create_instruction(instruction),
             rule => unexpected!(rule),
         }?;
         let str = format!("{} {}", op.as_str(), rhs.str).into();
         Ok(Self { instruction, str })
     }
-}
-
-lazy_static! {
-    pub static ref ACCEPTED_INT: Type = var_type!(int | [int]);
 }
 
 lazy_static! {
@@ -82,10 +76,8 @@ pub mod unary_minus {
     }
 }
 
-#[duplicate_item(t T op1 op2; [not] [Not] [num==0] [!]; [bitwise_not] [BitwiseNot] [!num] [~];)]
-pub mod t {
-    use std::sync::Arc;
-
+pub mod not {
+    use crate as simplesl;
     use crate::{
         instruction::{
             unary_operation::{UnaryOperation, UnaryOperator},
@@ -94,14 +86,19 @@ pub mod t {
         variable::{Array, ReturnType, Type, Variable},
         Error,
     };
+    use lazy_static::lazy_static;
     use match_any::match_any;
+    use simplesl_macros::var_type;
+    use std::sync::Arc;
 
-    use super::ACCEPTED_INT;
+    lazy_static! {
+        pub static ref ACCEPTED_INT: Type = var_type!(int | bool | [int | bool]);
+    }
 
     pub fn create_instruction(instruction: Instruction) -> Result<Instruction, Error> {
         let return_type = instruction.return_type();
         if !can_be_used(&return_type) {
-            return Err(Error::CannotDo(stringify!(op2), return_type));
+            return Err(Error::CannotDo("!", return_type));
         }
         Ok(create_from_instruction(instruction))
     }
@@ -113,12 +110,13 @@ pub mod t {
             | Instruction::ArrayRepeat(array) => Arc::unwrap_or_clone(array)
                 .map(create_from_instruction)
                 .into(),
-            instruction => UnaryOperation {instruction, op: UnaryOperator::T } .into()
+            instruction => UnaryOperation {instruction, op: UnaryOperator::Not } .into()
         }
     }
     pub fn exec(variable: Variable) -> Variable {
         match variable {
-            Variable::Int(num) => (op1).into(),
+            Variable::Bool(var) => (!var).into(),
+            Variable::Int(num) => (!num).into(),
             Variable::Array(array) => {
                 let elements = array.iter().cloned().map(exec).collect();
                 let element_type = array.element_type().clone();
@@ -146,34 +144,23 @@ mod tests {
         assert_eq!(parse_and_exec("-5"), Ok(var!(-5)));
         assert_eq!(parse_and_exec("-7.5"), Ok(var!(-7.5)));
         assert_eq!(parse_and_exec("-[7.5, -4, 3]"), Ok(var!([-7.5, 4, -3])));
-        assert_eq!(parse_and_exec("!5"), Ok(var!(0)));
-        assert_eq!(parse_and_exec("!0"), Ok(var!(1)));
+        assert_eq!(parse_and_exec("!5"), Ok(var!(-6)));
+        assert_eq!(parse_and_exec("!0"), Ok(var!(-1)));
         assert_eq!(
             parse_and_exec("!7.5"),
             Err(Error::CannotDo("!", var_type!(float)))
         );
-        assert_eq!(parse_and_exec("![7, -4, 0]"), Ok(var!([0, 0, 1])));
+        assert_eq!(parse_and_exec("![7, -4, 0]"), Ok(var!([-8, 3, -1])));
+        assert_eq!(parse_and_exec("!true"), Ok(var!(false)));
+        assert_eq!(parse_and_exec("!false"), Ok(var!(true)));
+        assert_eq!(parse_and_exec("![7, true, 0]"), Ok(var!([-8, false, -1])));
         assert_eq!(
             parse_and_exec("![7, -4.5, 0]"),
             Err(Error::CannotDo("!", var_type!([int | float])))
         );
-        assert_eq!(parse_and_exec("~5"), Ok(Variable::Int(!5)));
-        assert_eq!(parse_and_exec("~0"), Ok(Variable::Int(!0)));
         assert_eq!(
-            parse_and_exec("~7.5"),
-            Err(Error::CannotDo("~", var_type!(float)))
-        );
-        assert_eq!(
-            parse_and_exec("~[7, -4, 0]"),
-            Ok(Variable::from([
-                Variable::Int(!7),
-                Variable::Int(!(-4)),
-                Variable::Int(!0)
-            ]))
-        );
-        assert_eq!(
-            parse_and_exec("~[7, -4.5, 0]"),
-            Err(Error::CannotDo("~", var_type!([int | float])))
+            parse_and_exec("![7, -4.5, 0]"),
+            Err(Error::CannotDo("!", var_type!([int | float])))
         );
     }
 
