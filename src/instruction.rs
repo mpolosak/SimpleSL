@@ -95,7 +95,7 @@ impl InstructionWithStr {
                     local_variable => Ok(Instruction::LocalVariable(str.clone(), local_variable)),
                 },
             ),
-            Rule::int | Rule::float | Rule::string | Rule::void => {
+            Rule::r#true | Rule::r#false | Rule::int | Rule::float | Rule::string | Rule::void => {
                 Variable::try_from(pair).map(Instruction::from)
             }
             Rule::tuple => Tuple::create_instruction(pair, local_variables),

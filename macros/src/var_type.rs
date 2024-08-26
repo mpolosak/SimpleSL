@@ -19,6 +19,7 @@ pub fn type_from_str(item_str: &str) -> TokenStream2 {
 
 fn type_token_from_pair(pair: Pair<Rule>) -> TokenStream2 {
     match pair.as_rule() {
+        Rule::bool_type => quote!(simplesl::variable::Type::Bool),
         Rule::int_type => quote!(simplesl::variable::Type::Int),
         Rule::float_type => quote!(simplesl::variable::Type::Float),
         Rule::string_type => quote!(simplesl::variable::Type::String),

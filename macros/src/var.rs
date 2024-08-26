@@ -20,6 +20,8 @@ pub fn from_str(item_str: &str) -> quote::__private::TokenStream {
 
 fn var_token_from_pair(pair: Pair<Rule>) -> quote::__private::TokenStream {
     match pair.as_rule() {
+        Rule::r#true => quote!(simplesl::variable::Variable::Bool(true)),
+        Rule::r#false => quote!(simplesl::variable::Variable::Bool(false)),
         Rule::int | Rule::minus_int => quote_int(pair),
         Rule::float | Rule::minus_float => {
             let value = pair

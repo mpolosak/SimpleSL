@@ -1,5 +1,8 @@
-ident = @{ !("return"~!(ASCII_ALPHANUMERIC|"_")) ~ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC|"_")* }
-var = _{ float | int | array | array_repeat | string | function | void | tuple }
+ident = @{ !bool ~ !("return"~!(ASCII_ALPHANUMERIC|"_")) ~ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC|"_")* }
+var = _{ bool | float | int | array | array_repeat | string | function | void | tuple }
+  bool = _{ true | false }
+    true = {"true"}
+    false = {"false"}
   function = {params ~ return_type_decl? ~"{"~line*~"}"}
   param = {ident ~ ":" ~ type}
   params_list = _{ (param ~ ("," ~ param)*)?}
@@ -90,6 +93,7 @@ line = _{ COMMENT* ~ (( return | function_declaration | set | destruct_tuple | s
   destruct_tuple = { destruct_idents ~ "=" ~ stm }
     destruct_idents =  {"(" ~ (ident ~ ("," ~ ident)*)? ~ ")"}
 type = _{ multi | standard_types }
+  bool_type = {"bool"}
   int_type = {"int"}
   float_type = {"float"}
   string_type = {"string"}
@@ -98,7 +102,7 @@ type = _{ multi | standard_types }
     return_type = _{ standard_types | "(" ~ multi ~ ")" }
   array_type = { "[" ~ type? ~ "]" }
   tuple_type = {"(" ~ (type ~ ("," ~ type)+) ~ ")"}
-  standard_types = _{ int_type | float_type | string_type | function_type | void | array_type
+  standard_types = _{ bool_type | int_type | float_type | string_type | function_type | void | array_type
     | tuple_type | any | never }
   multi = { ( standard_types ) ~ ( "|" ~ standard_types )+ }
   any = {"any"}
@@ -118,7 +122,7 @@ block_comment = _{"/*" ~ (!"*/" ~ ANY)* ~ "*/"}
 line_comment = _{"//"~(!NEWLINE ~ ANY)*}
 // rule for Variable::from_str
 only_var = _{var_from_str ~ &EOI}
-  var_from_str = _{minus_float | float | minus_int|  int | array_from_str | array_repeat_from_str
+  var_from_str = _{bool | minus_float | float | minus_int|  int | array_from_str | array_repeat_from_str
     | string | void | tuple_from_str }
   minus_float = {"-" ~ float}
   minus_int = {"-" ~ int}
@@ -128,7 +132,7 @@ only_var = _{var_from_str ~ &EOI}
   var_list = _{ (var_from_str ~ ("," ~ var_from_str)*)}
 // rule for var! macro
 var_macro = _{var_ident ~ &EOI}
-  var_ident = _{minus_float | float | minus_int |  int | array_ident | array_ident_repeat
+  var_ident = _{bool | minus_float | float | minus_int |  int | array_ident | array_ident_repeat
     | string | void | tuple_ident | minus_ident | ident}
   minus_ident = {"-" ~ ident}
   array_ident = {"[" ~ var_ident_list? ~ "]"}

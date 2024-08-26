@@ -16,6 +16,7 @@ pub use {array::Array, function_type::FunctionType, multi_type::MultiType, type_
 
 #[derive(Clone, EnumAsInner)]
 pub enum Variable {
+    Bool(bool),
     Int(i64),
     Float(f64),
     String(Arc<str>),
@@ -28,6 +29,7 @@ pub enum Variable {
 impl Typed for Variable {
     fn as_type(&self) -> Type {
         match_any! {self,
+            Variable::Bool(_) => Type::Bool,
             Variable::Int(_) => Type::Int,
             Variable::Float(_) => Type::Float,
             Variable::String(_) => Type::String,
@@ -44,7 +46,8 @@ impl Typed for Variable {
 impl fmt::Display for Variable {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match_any! {self,
-            Variable::Int(value)
+            Variable::Bool(value)
+            | Variable::Int(value)
             | Variable::Float(value)
             | Variable::String(value)
             | Variable::Function(value)
@@ -81,6 +84,7 @@ impl PartialEq for Variable {
     fn eq(&self, other: &Self) -> bool {
         match_any! {(self, other),
             (Variable::Array(value1), Variable::Array(value2))
+            | (Variable::Bool(value1), Variable::Bool(value2))
             | (Variable::Int(value1), Variable::Int(value2))
             | (Variable::Float(value1), Variable::Float(value2))
             | (Variable::String(value1), Variable::String(value2))
@@ -120,6 +124,8 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
             i64::from_str_radix(&inner, radix).map_err(|_| Error::IntegerOverflow(str.into()))
         }
         match pair.as_rule() {
+            Rule::r#true => Ok(Variable::Bool(true)),
+            Rule::r#false => Ok(Variable::Bool(false)),
             Rule::minus_int => {
                 parse_int(pair.into_inner().next().unwrap()).map(|value| Variable::Int(-value))
             }
@@ -345,6 +351,8 @@ mod tests {
     fn check_variable_from_str() {
         use crate::variable::Variable;
         use std::str::FromStr;
+        assert_eq!(Variable::from_str("true"), Ok(Variable::Bool(true)));
+        assert_eq!(Variable::from_str("false"), Ok(Variable::Bool(false)));
         assert_eq!(Variable::from_str(" 15"), Ok(Variable::Int(15)));
         assert_eq!(Variable::from_str(" -7"), Ok(Variable::Int(-7)));
         assert_eq!(Variable::from_str(" 1__00_5__"), Ok(Variable::Int(1005)));
