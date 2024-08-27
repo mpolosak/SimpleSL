@@ -25,7 +25,7 @@ pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
     .into())
 }
 
-fn calc(array: &Array) -> Variable {
+pub fn calc(array: &Array) -> Variable {
     array.iter().any(|var| *var.as_bool().unwrap()).into()
 }
 

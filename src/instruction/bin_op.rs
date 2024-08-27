@@ -5,12 +5,8 @@ mod map;
 mod math;
 mod shift;
 use super::{
-    at,
-    function::call,
-    local_variable::LocalVariables,
-    reduce::Reduce,
-    return_type::{return_type_bool, return_type_float, return_type_int},
-    Exec, ExecResult, InstructionWithStr, Recreate,
+    at, function::call, local_variable::LocalVariables, reduce::Reduce,
+    return_type::return_type_bool, Exec, ExecResult, InstructionWithStr, Recreate,
 };
 use crate as simplesl;
 use crate::{
@@ -160,10 +156,6 @@ impl ReturnType for BinOperation {
         let rhs = self.rhs.return_type();
         match self.op {
             BinOperator::Add => add::return_type(lhs, rhs),
-            BinOperator::Subtract
-            | BinOperator::Multiply
-            | BinOperator::Divide
-            | BinOperator::Pow => return_type_float(lhs, rhs),
             BinOperator::Equal | BinOperator::NotEqual | BinOperator::And | BinOperator::Or => {
                 Type::Bool
             }
@@ -176,7 +168,17 @@ impl ReturnType for BinOperation {
             | BinOperator::Xor
             | BinOperator::LShift
             | BinOperator::RShift
-            | BinOperator::Modulo => return_type_int(lhs, rhs),
+            | BinOperator::Modulo
+            | BinOperator::Subtract
+            | BinOperator::Multiply
+            | BinOperator::Divide
+            | BinOperator::Pow => {
+                if var_type!([]).matches(&lhs) {
+                    lhs
+                } else {
+                    rhs
+                }
+            }
             BinOperator::Filter => self.lhs.return_type(),
             BinOperator::Map => map::return_type(rhs),
             BinOperator::At => lhs.index_result().unwrap(),

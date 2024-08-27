@@ -103,7 +103,7 @@ array $+
 | [float] | float   |
 | [string]| string  |
 
-Calculates sum of all element of array.
+Calculates sum of all elements of array.
 
 ## $* - Array product
 ```
@@ -114,7 +114,7 @@ array $*
 | [int]   | int     |
 | [float] | float   |
 
-Calculates product of all element of array.
+Calculates product of all elements of array.
 
 ## $&& - Logical and reduce (all)
 ```
@@ -126,14 +126,13 @@ array $&&
 
 Returns true value if all elements of array are true, false otherwise
 
-
 ## $|| - Logical and reduce (any)
 ```
 array $||
 ```
 | lhs    | result |
 | ------ | ------ |
-| [bool] | int    |
+| [bool] | bool   |
 
 Returns true value if any of elements of array is true, false otherwise
 
@@ -144,10 +143,12 @@ array $&
 | lhs     | result  |
 | ------- | ------- |
 | [int]   | int     |
+| [bool]  | bool    |
 
 Equivalent of:
 ```
-array $~0 (acc: int, curr: int) -> int {return acc & curr}
+array $!0 (acc: int, curr: int) -> int {return acc & curr}
+array $true (acc: bool, curr: bool) -> bool {return acc & curr}
 ```
 
 ## $| - Bitwise or reduce
@@ -157,10 +158,12 @@ array $|
 | lhs     | result  |
 | ------- | ------- |
 | [int]   | int     |
+| [bool]  | bool    |
 
 Equivalent of:
 ```
 array $0 (acc: int, curr: int) -> int {return acc | curr}
+array $false (acc: bool, curr: bool) -> bool {return acc | curr}
 ```
 
 ## ** - Exponentiation
@@ -242,23 +245,31 @@ array $0 (acc: int, curr: int) -> int {return acc | curr}
 | lhs     | rhs     | result     | description |
 | ------- | ------- | ---------- | ----------- |
 | int     | int     | int        | Bitwise AND |
+| bool    | bool    | bool       |
 | [int]   | int     | [int]      | Array containg result of & for each element of lhs and rhs
+| [bool]  | bool    | [bool]     |
 | int     | [int]   | [int]      | Array containg result of & for each element of rhs and lhs
+| bool    | [bool]  | [bool]
 
 ## ^ - XOR
 | lhs     | rhs     | result     | description |
 | ------- | ------- | ---------- | ----------- |
 | int     | int     | int        | Bitwise XOR |
+| bool    | bool    | bool
 | [int]   | int     | [int]      | Array containg result of ^ for each element of lhs and rhs
+| [bool]  | bool    | [bool]     |
 | int     | [int]   | [int]      | Array containg result of ^ for each element of rhs and lhs
-
+| bool    | [bool]  | [bool]     |
 
 ## | - Bitwise OR
 | lhs     | rhs     | result     | description |
 | ------- | ------- | ---------- | ----------- |
 | int     | int     | int        | Bitwise OR  |
+| bool    | bool    | bool
 | [int]   | int     | [int]      | Array containg result of \| for each element of lhs and rhs
+| [bool]  | bool    | [bool]     |
 | int     | [int]   | [int]      | Array containg result of \| for each element of rhs and lhs
+| bool    | [bool]  | [bool]     |
 
 ## - == Equal
 Returns true if the element on the right is equal to the element on the left, false - otherwise

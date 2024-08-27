@@ -1,4 +1,17 @@
+use crate as simplesl;
+use crate::variable::Type;
 use duplicate::duplicate_item;
+use lazy_static::lazy_static;
+use simplesl_macros::var_type;
+
+lazy_static! {
+    pub static ref ACCEPTED_TYPE: Type =
+        var_type!((int, int | [int]) | ([int], int) | (bool, bool | [bool]) | ([bool], bool));
+}
+
+pub fn can_be_used(lhs: Type, rhs: Type) -> bool {
+    var_type!((lhs, rhs)).matches(&ACCEPTED_TYPE)
+}
 
 #[duplicate_item(
     Bitwise bitwise op1 op2;
@@ -10,15 +23,17 @@ pub mod bitwise {
     use std::sync::Arc;
 
     use crate::{
-        instruction::{can_be_used_int, BinOperation, BinOperator, Instruction},
+        instruction::{BinOperation, BinOperator, Instruction},
         variable::{Array, ReturnType, Variable},
         Error,
     };
 
+    use super::can_be_used;
+
     pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
         let lhs_type = lhs.return_type();
         let rhs_type = rhs.return_type();
-        if !can_be_used_int(lhs_type.clone(), rhs_type.clone()) {
+        if !can_be_used(lhs_type.clone(), rhs_type.clone()) {
             return Err(Error::CannotDo2(lhs_type, stringify!(op), rhs_type));
         }
         Ok(BinOperation {
@@ -50,6 +65,7 @@ pub mod bitwise {
     pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
         match (lhs, rhs) {
             (Variable::Int(lhs), Variable::Int(rhs)) => (op1).into(),
+            (Variable::Bool(lhs), Variable::Bool(rhs)) => (op1).into(),
             (value, Variable::Array(array)) | (Variable::Array(array), value) => {
                 let elements = array
                     .iter()
