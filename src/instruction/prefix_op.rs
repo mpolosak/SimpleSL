@@ -27,7 +27,7 @@ lazy_static! {
 pub mod unary_minus {
     use crate as simplesl;
     use crate::instruction::unary_operation::{UnaryOperation, UnaryOperator};
-    use crate::variable::{Array, ReturnType, Type};
+    use crate::variable::{Array, ReturnType};
     use crate::{instruction::Instruction, variable::Variable, Error};
     use match_any::match_any;
     use simplesl_macros::var;
@@ -37,10 +37,14 @@ pub mod unary_minus {
 
     pub fn create_instruction(instruction: Instruction) -> Result<Instruction, Error> {
         let return_type = instruction.return_type();
-        if !can_be_used(&return_type) {
+        if !return_type.matches(&ACCEPTED_NUM) {
             return Err(Error::CannotDo("-", return_type));
         }
-        Ok(create_from_instruction(instruction))
+        Ok(UnaryOperation {
+            instruction,
+            op: UnaryOperator::UnaryMinus,
+        }
+        .into())
     }
 
     pub fn create_from_instruction(instruction: Instruction) -> Instruction {
@@ -70,10 +74,6 @@ pub mod unary_minus {
             operand => panic!("Tried to - {operand}"),
         }
     }
-
-    fn can_be_used(var_type: &Type) -> bool {
-        var_type.matches(&ACCEPTED_NUM)
-    }
 }
 
 pub mod not {
@@ -97,10 +97,14 @@ pub mod not {
 
     pub fn create_instruction(instruction: Instruction) -> Result<Instruction, Error> {
         let return_type = instruction.return_type();
-        if !can_be_used(&return_type) {
+        if !return_type.matches(&ACCEPTED_INT) {
             return Err(Error::CannotDo("!", return_type));
         }
-        Ok(create_from_instruction(instruction))
+        Ok(UnaryOperation {
+            instruction,
+            op: UnaryOperator::Not,
+        }
+        .into())
     }
 
     pub fn create_from_instruction(instruction: Instruction) -> Instruction {
@@ -128,9 +132,6 @@ pub mod not {
             }
             operand => panic!("Tried to {} {operand}", stringify!(op2)),
         }
-    }
-    fn can_be_used(var_type: &Type) -> bool {
-        var_type.matches(&ACCEPTED_INT)
     }
 }
 

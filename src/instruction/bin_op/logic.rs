@@ -26,7 +26,12 @@ pub mod and {
         if !can_be_used(lhs_type.clone(), rhs_type.clone()) {
             return Err(Error::CannotDo2(lhs_type, "&&", rhs_type));
         }
-        Ok(create_from_instructions(lhs, rhs))
+        Ok(BinOperation {
+            lhs,
+            rhs,
+            op: BinOperator::And,
+        }
+        .into())
     }
 
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {

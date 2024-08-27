@@ -25,12 +25,6 @@ impl Import {
             .into_string()
             .unwrap();
         let instructions = local_variables.load(&path)?;
-        if instructions.is_empty() {
-            return Ok(Variable::Void.into());
-        }
-        if let [element] = instructions.as_ref() {
-            return Ok(element.instruction.clone());
-        }
         Ok(Self { instructions }.into())
     }
 }

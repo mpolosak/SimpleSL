@@ -239,8 +239,18 @@ impl InstructionWithStr {
             Rule::subtract => subtract::create_op(lhs, rhs),
             Rule::divide => divide::create_op(lhs, rhs),
             Rule::modulo => modulo::create_op(lhs, rhs),
-            Rule::equal => Ok(equal::create_from_instructions(lhs, rhs)),
-            Rule::not_equal => Ok(not_equal::create_from_instructions(lhs, rhs)),
+            Rule::equal => Ok(BinOperation {
+                lhs,
+                rhs,
+                op: BinOperator::Equal,
+            }
+            .into()),
+            Rule::not_equal => Ok(BinOperation {
+                lhs,
+                rhs,
+                op: BinOperator::NotEqual,
+            }
+            .into()),
             Rule::lower => lower::create_op(lhs, rhs),
             Rule::lower_equal => lower_equal::create_op(lhs, rhs),
             Rule::greater => greater::create_op(lhs, rhs),

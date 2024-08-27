@@ -29,26 +29,17 @@ impl IfElse {
             return Err(Error::WrongCondition(condition.str, return_type));
         }
         let true_pair = inner.next().unwrap();
-        let Instruction::Variable(Variable::Bool(condition)) = condition.instruction else {
-            let if_true = InstructionWithStr::new(true_pair, local_variables)?;
-            let if_false = inner.next().map_or_else(
-                || Ok(Variable::Void.into()),
-                |pair| InstructionWithStr::new(pair, local_variables),
-            )?;
-            return Ok(Self {
-                condition,
-                if_true,
-                if_false,
-            }
-            .into());
-        };
-        if condition {
-            return Instruction::new(true_pair, local_variables);
-        }
-        inner.next().map_or_else(
+        let if_true = InstructionWithStr::new(true_pair, local_variables)?;
+        let if_false = inner.next().map_or_else(
             || Ok(Variable::Void.into()),
-            |pair| Instruction::new(pair, local_variables),
-        )
+            |pair| InstructionWithStr::new(pair, local_variables),
+        )?;
+        Ok(Self {
+            condition,
+            if_true,
+            if_false,
+        }
+        .into())
     }
 }
 

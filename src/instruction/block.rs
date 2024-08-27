@@ -23,11 +23,7 @@ impl Block {
     ) -> Result<Instruction, Error> {
         let mut local_variables = local_variables.create_layer();
         let instructions = local_variables.create_instructions(pair.into_inner())?;
-        if instructions.is_empty() {
-            Ok(Variable::Void.into())
-        } else {
-            Ok(Self { instructions }.into())
-        }
+        Ok(Self { instructions }.into())
     }
 }
 

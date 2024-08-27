@@ -18,22 +18,11 @@ pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
             given: return_type,
         });
     }
-    match array.instruction {
-        Instruction::Variable(Variable::Array(array)) => Ok(calc(&array).into()),
-        Instruction::ArrayRepeat(array_repeat) => Ok(array_repeat.value.instruction.clone()),
-        Instruction::Array(array) => Ok(array
-            .instructions
-            .iter()
-            .cloned()
-            .map(|iws| iws.instruction)
-            .reduce(or::create_from_instructions)
-            .unwrap()),
-        instruction => Ok(UnaryOperation {
-            instruction,
-            op: UnaryOperator::Any,
-        }
-        .into()),
+    Ok(UnaryOperation {
+        instruction: array.instruction,
+        op: UnaryOperator::Any,
     }
+    .into())
 }
 
 fn calc(array: &Array) -> Variable {
@@ -41,14 +30,22 @@ fn calc(array: &Array) -> Variable {
 }
 
 pub fn recreate(instruction: Instruction) -> Instruction {
-    if let Instruction::Variable(Variable::Array(array)) = &instruction {
-        return calc(array).into();
+    match instruction {
+        Instruction::Variable(Variable::Array(array)) => calc(&array).into(),
+        Instruction::ArrayRepeat(array_repeat) => array_repeat.value.instruction.clone(),
+        Instruction::Array(array) => array
+            .instructions
+            .iter()
+            .cloned()
+            .map(|iws| iws.instruction)
+            .reduce(or::create_from_instructions)
+            .unwrap(),
+        instruction => UnaryOperation {
+            instruction,
+            op: UnaryOperator::Any,
+        }
+        .into(),
     }
-    UnaryOperation {
-        instruction,
-        op: UnaryOperator::Any,
-    }
-    .into()
 }
 
 pub fn exec(var: Variable) -> Variable {

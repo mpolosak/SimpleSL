@@ -107,7 +107,7 @@ impl InstructionWithStr {
         Ok(Self { instruction, str })
     }
 
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Self, ExecError> {
+    pub fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Self, ExecError> {
         let instruction = self.instruction.recreate(local_variables)?;
         let str = self.str.clone();
         Ok(Self { instruction, str })

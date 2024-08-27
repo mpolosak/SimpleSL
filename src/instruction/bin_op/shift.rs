@@ -18,7 +18,12 @@ pub mod shift {
         if !can_be_used_int(lhs_type.clone(), rhs_type.clone()) {
             return Err(Error::CannotDo2(lhs_type, stringify!(op), rhs_type));
         }
-        Ok(create_from_instructions(lhs, rhs)?)
+        Ok(BinOperation {
+            lhs,
+            rhs,
+            op: BinOperator::Shift,
+        }
+        .into())
     }
 
     pub fn create_from_instructions(

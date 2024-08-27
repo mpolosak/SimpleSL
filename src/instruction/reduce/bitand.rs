@@ -9,36 +9,20 @@ use crate::{
 use simplesl_macros::{var, var_type};
 
 pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
-    match array.instruction {
-        Instruction::Variable(Variable::Array(array))
-            if array.element_type().matches(&var_type!(int)) =>
-        {
-            Ok(calc(&array).into())
-        }
-        Instruction::ArrayRepeat(array_repeat)
-            if array_repeat.value.return_type().matches(&(var_type!(int))) =>
-        {
-            Ok(array_repeat.value.instruction.clone())
-        }
-        Instruction::Array(array) if array.element_type == var_type!(int) => Ok(array
-            .instructions
-            .iter()
-            .cloned()
-            .map(|iws| iws.instruction)
-            .reduce(bitwise_and::create_from_instructions)
-            .unwrap()),
-        instruction if instruction.return_type().matches(&var_type!([int])) => Ok(UnaryOperation {
-            instruction,
-            op: UnaryOperator::BitAnd,
-        }
-        .into()),
-        ins => Err(Error::IncorectPostfixOperatorOperand {
+    let return_type = array.return_type();
+    if !return_type.matches(&var_type!([int])) {
+        return Err(Error::IncorectPostfixOperatorOperand {
             ins: array.str,
             op: "$&",
             expected: var_type!([int]),
-            given: ins.return_type(),
-        }),
+            given: return_type,
+        });
     }
+    Ok(UnaryOperation {
+        instruction: array.instruction,
+        op: UnaryOperator::BitAnd,
+    }
+    .into())
 }
 
 fn calc(array: &Array) -> Variable {
@@ -50,14 +34,22 @@ fn calc(array: &Array) -> Variable {
 }
 
 pub fn recreate(instruction: Instruction) -> Instruction {
-    if let Instruction::Variable(Variable::Array(array)) = &instruction {
-        return calc(array).into();
+    match instruction {
+        Instruction::Variable(Variable::Array(array)) => calc(&array).into(),
+        Instruction::ArrayRepeat(array_repeat) => array_repeat.value.instruction.clone(),
+        Instruction::Array(array) => array
+            .instructions
+            .iter()
+            .cloned()
+            .map(|iws| iws.instruction)
+            .reduce(bitwise_and::create_from_instructions)
+            .unwrap(),
+        instruction => UnaryOperation {
+            instruction,
+            op: UnaryOperator::BitAnd,
+        }
+        .into(),
     }
-    UnaryOperation {
-        instruction,
-        op: UnaryOperator::BitAnd,
-    }
-    .into()
 }
 pub fn exec(var: Variable) -> Variable {
     let array = var.into_array().unwrap();

@@ -25,10 +25,12 @@ pub fn create(
     if !instruction_return_type.matches(&required_instruction_type) {
         return Err(Error::CannotIndexInto(instruction_return_type));
     }
-    Ok(create_from_instructions(
-        instruction.instruction,
-        index.instruction,
-    )?)
+    Ok(BinOperation {
+        lhs: instruction.instruction,
+        rhs: index.instruction,
+        op: BinOperator::At,
+    }
+    .into())
 }
 
 pub fn create_from_instructions(

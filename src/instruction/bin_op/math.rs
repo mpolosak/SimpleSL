@@ -25,7 +25,12 @@ pub mod ord {
         if !can_be_used_num(lhs_type.clone(), rhs_type.clone()) {
             return Err(Error::CannotDo2(lhs_type, stringify!(oper), rhs_type));
         }
-        Ok(create_from_instructions(lhs, rhs))
+        Ok(BinOperation {
+            lhs,
+            rhs,
+            op: BinOperator::Ord,
+        }
+        .into())
     }
 
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {

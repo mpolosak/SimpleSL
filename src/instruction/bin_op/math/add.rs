@@ -20,7 +20,12 @@ pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Erro
     if !can_be_used(&lhs_type, &rhs_type) {
         return Err(Error::CannotDo2(lhs_type, "+", rhs_type));
     }
-    Ok(create_from_instructions(lhs, rhs))
+    Ok(BinOperation {
+        lhs,
+        rhs,
+        op: BinOperator::Add,
+    }
+    .into())
 }
 
 fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
