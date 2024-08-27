@@ -1,40 +1,40 @@
 # Operators
 ## Precedence
-| Precedence | Operator     | Description             | Associativity |
-| ---------- | ------------ | ----------------------- | ------------- |
-| 1          | []           | Array/string indexing   | Left-to-right |
-|            | ? type       | Array filtering by type |               |
-|            | ()           | Function call           |               |
-| 2          | !            | NOT                     | Right-to-left |
-|            | -            | Unary minus             |               |
-| 3          | @            | Array map               | Left-to-right |
-|            | ?            | Array filtering         |               |
-|            | $ expression | Array reducing          |               |
-|            | $+           | Array sum               |               |
-|            | $*           | Array product           |               |
-|            | $&&          | Logical and reduce(all) |               |
-|            | $\|\|        | Logical or reduce (any) |               |
-|            | $&           | Bitwise and reduce      |               |
-|            | $\|          | Bitwise or reduce       |               |
-| 4          | **           | Exponentiation          |               |
-| 5          | *            | Multiplication          |               |
-|            | /            | Division                |               |
-|            | %            | Remainder               |               |
-| 6          | +            | Addition                |               |
-|            | -            | Subtraction             |               |
-| 7          | <<           | Bitwise left shift      |               |
-|            | >>           | Bitwise right shift     |               |
-| 8          | &            | Bitwise AND             |               |
-| 9          | ^            | XOR                     |               |
-| 10         | \|           | Bitwise OR              |               |
-| 11         | ==           | Equal                   |               |
-|            | !=           | Not equal               |               |
-|            | <            | Less                    |               |
-|            | <=           | Less or equal           |               |
-|            | >            | Greater                 |               |
-|            | >=           | Greater or equal        |               |
-| 12         | &&           | Logical AND             |               |
-| 13         | \|\|         | Logical OR              |               |
+| Precedence | Operator     | Description                 | Associativity |
+| ---------- | ------------ | --------------------------- | ------------- |
+| 1          | []           | Array/string indexing       | Left-to-right |
+|            | ? type       | Array filtering by type     |               |
+|            | ()           | Function call               |               |
+| 2          | !            | NOT                         | Right-to-left |
+|            | -            | Unary minus                 |               |
+| 3          | @            | Array map                   | Left-to-right |
+|            | ?            | Array filtering             |               |
+|            | $ expression | Array reducing              |               |
+|            | $+           | Array sum                   |               |
+|            | $*           | Array product               |               |
+|            | $&&          | Logical and reduce(all)     |               |
+|            | $\|\|        | Logical or reduce (any)     |               |
+|            | $&           | Bitwise and reduce          |               |
+|            | $\|          | Bitwise or reduce           |               |
+| 4          | **           | Exponentiation              |               |
+| 5          | *            | Multiplication              |               |
+|            | /            | Division                    |               |
+|            | %            | Remainder                   |               |
+| 6          | +            | Addition                    |               |
+|            | -            | Subtraction                 |               |
+| 7          | <<           | Bitwise left shift          |               |
+|            | >>           | Bitwise right shift         |               |
+| 8          | &            | Bitwise AND                 |               |
+| 9          | ^            | XOR                         |               |
+| 10         | \|           | Bitwise OR                  |               |
+| 11         | ==           | Equal                       |               |
+|            | !=           | Not equal                   |               |
+|            | <            | Less                        |               |
+|            | <=           | Less or equal               |               |
+|            | >            | Greater                     |               |
+|            | >=           | Greater or equal            |               |
+| 12         | &&           | Short-circuting logical AND |               |
+| 13         | \|\|         | Short-circuting logical OR  |               |
 
 ## [] - Array/string indexing
 ```
@@ -310,12 +310,8 @@ Returns true if the element on the right is not equal to the element on the left
 | lhs     | rhs     | result     | description |
 | ------- | ------- | ---------- | ----------- |
 | bool    | bool    | bool       | true if both lhs and rhs are true, false - otherwise
-| [bool]  | bool    | [bool]     | Array containg result of && for each element of lhs and rhs
-| bool    | [bool]  | [bool]     | Array containg result of && for each element of rhs and lhs
 
 ## || - Logical OR
 | lhs     | rhs     | result     | description |
 | ------- | ------- | ---------- | ----------- |
 | bool    | bool    | bool       | false if both lhs and rhs are false, true - otherwise
-| [bool]  | bool    | [bool]     | Array containg result of \|\| for each element of lhs and rhs
-| bool    | [bool]  | [bool]     | Array containg result of \|\| for each element of rhs and lhs

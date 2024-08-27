@@ -82,6 +82,12 @@ pub enum BinOperator {
 impl Exec for BinOperation {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let lhs = self.lhs.exec(interpreter)?;
+        if let BinOperator::And = self.op {
+            return and::exec(lhs, &self.rhs, interpreter);
+        }
+        if let BinOperator::Or = self.op {
+            return or::exec(lhs, &self.rhs, interpreter);
+        }
         let rhs = self.rhs.exec(interpreter)?;
         Ok(match self.op {
             BinOperator::Add => add::exec(lhs, rhs),
@@ -96,8 +102,6 @@ impl Exec for BinOperation {
             BinOperator::GreaterOrEqual => greater_equal::exec(lhs, rhs),
             BinOperator::Lower => lower::exec(lhs, rhs),
             BinOperator::LowerOrEqual => lower_equal::exec(lhs, rhs),
-            BinOperator::And => and::exec(lhs, rhs),
-            BinOperator::Or => or::exec(lhs, rhs),
             BinOperator::BitwiseAnd => bitwise_and::exec(lhs, rhs),
             BinOperator::BitwiseOr => bitwise_or::exec(lhs, rhs),
             BinOperator::Xor => xor::exec(lhs, rhs),
@@ -107,6 +111,7 @@ impl Exec for BinOperation {
             BinOperator::Map => map::exec(lhs, rhs)?,
             BinOperator::At => at::exec(lhs, rhs)?,
             BinOperator::FunctionCall => call::exec(lhs, rhs)?,
+            _ => unreachable!(),
         })
     }
 }
@@ -114,6 +119,12 @@ impl Exec for BinOperation {
 impl Recreate for BinOperation {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
         let lhs = self.lhs.recreate(local_variables)?;
+        if let BinOperator::And = self.op {
+            return and::recreate(lhs, &self.rhs, local_variables);
+        }
+        if let BinOperator::Or = self.op {
+            return or::recreate(lhs, &self.rhs, local_variables);
+        }
         let rhs = self.rhs.recreate(local_variables)?;
         match self.op {
             BinOperator::Add => Ok(add::create_from_instructions(lhs, rhs)),
@@ -153,10 +164,10 @@ impl ReturnType for BinOperation {
             | BinOperator::Multiply
             | BinOperator::Divide
             | BinOperator::Pow => return_type_float(lhs, rhs),
-            BinOperator::Equal | BinOperator::NotEqual => Type::Bool,
-            BinOperator::And
-            | BinOperator::Or
-            | BinOperator::Greater
+            BinOperator::Equal | BinOperator::NotEqual | BinOperator::And | BinOperator::Or => {
+                Type::Bool
+            }
+            BinOperator::Greater
             | BinOperator::GreaterOrEqual
             | BinOperator::Lower
             | BinOperator::LowerOrEqual => return_type_bool(lhs, rhs),
