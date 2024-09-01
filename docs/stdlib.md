@@ -80,7 +80,7 @@ Splits 'string' on 'pat'.
 Return an string that is a result of replacing all occurences of 'from' in 'string' with 'to'.
 
 ## string_contains(string: string, pat: string) -> bool
-Returns 1 if `string` contains `pat`, 0 - otherwise.
+Returns true if `string` contains `pat`, false otherwise.
 
 ## chars(string: string) -> [string]
 Returns an array containing all UTF-8 characters of 'string'.

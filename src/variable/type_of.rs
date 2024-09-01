@@ -8,13 +8,21 @@ pub trait TypeOf {
     fn type_of() -> Type;
 }
 
-#[duplicate_item(T; [i64]; [bool]; [usize]; [u32]; [Result<i64, ExecError>]; [Result<bool, ExecError>];
+#[duplicate_item(T; [bool]; [Result<bool, ExecError>])]
+impl TypeOf for T {
+    fn type_of() -> Type {
+        Type::Bool
+    }
+}
+
+#[duplicate_item(T; [i64]; [usize]; [u32]; [Result<i64, ExecError>];
     [Result<usize, ExecError>]; [Result<u32, ExecError>])]
 impl TypeOf for T {
     fn type_of() -> Type {
         Type::Int
     }
 }
+
 #[duplicate_item(T; [f64]; [Result <f64, ExecError>])]
 impl TypeOf for T {
     fn type_of() -> Type {
@@ -59,7 +67,13 @@ impl TypeOf for io::Result<()> {
     }
 }
 
-#[duplicate_item(T; [Option<i64>]; [Option<u32>]; [Option<i32>]; [Option<bool>])]
+impl TypeOf for Option<bool> {
+    fn type_of() -> Type {
+        var_type!(bool | ())
+    }
+}
+
+#[duplicate_item(T; [Option<i64>]; [Option<u32>]; [Option<i32>])]
 impl TypeOf for T {
     fn type_of() -> Type {
         var_type!(int | ())
