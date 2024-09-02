@@ -9,7 +9,12 @@ pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Erro
     if !can_be_used_num(lhs_type.clone(), rhs_type.clone()) {
         return Err(Error::CannotDo2(lhs_type, "**", rhs_type));
     }
-    Ok(create_from_instructions(lhs, rhs)?)
+    Ok(BinOperation {
+        lhs,
+        rhs,
+        op: BinOperator::Pow,
+    }
+    .into())
 }
 
 pub fn create_from_instructions(

@@ -4,6 +4,21 @@ use crate::function::Function;
 
 use super::{Array, Variable};
 
+impl TryFrom<Variable> for bool {
+    type Error = Variable;
+    fn try_from(value: Variable) -> Result<Self, Self::Error> {
+        value.into_bool()
+    }
+}
+
+impl TryFrom<&Variable> for bool {
+    type Error = ();
+
+    fn try_from(value: &Variable) -> Result<Self, Self::Error> {
+        value.as_bool().copied().ok_or(())
+    }
+}
+
 impl TryFrom<Variable> for i64 {
     type Error = Variable;
     fn try_from(value: Variable) -> Result<Self, Self::Error> {

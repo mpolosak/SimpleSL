@@ -28,7 +28,7 @@ lazy_static::lazy_static! {
             .op(Op::infix(map, Left) | Op::infix(filter, Left) | Op::infix(reduce, Left)
                 | Op::postfix(sum) | Op::postfix(product) | Op::postfix(all)
                 | Op::postfix(reduce_any) | Op::postfix(bitand_reduce) | Op::postfix(bitor_reduce))
-            .op(Op::prefix(not) | Op::prefix(bitwise_not) | Op::prefix(unary_minus))
+            .op(Op::prefix(not) | Op::prefix(unary_minus))
             .op(Op::postfix(at) | Op::postfix(type_filter) | Op::postfix(function_call))
     };
 }

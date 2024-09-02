@@ -28,7 +28,7 @@ impl ArrayRepeat {
         if !len.return_type().matches(&Type::Int) {
             return Err(Error::WrongLengthType(len.str));
         }
-        Self::create_from_instructions(value, len).map_err(Error::from)
+        Ok(Self { value, len }.into())
     }
 
     fn create_from_instructions(

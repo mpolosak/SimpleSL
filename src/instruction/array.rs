@@ -5,7 +5,7 @@ use super::{
 use crate as simplesl;
 use crate::{
     interpreter::Interpreter,
-    variable::{ReturnType, Type, Variable},
+    variable::{ReturnType, Type},
     Error, ExecError,
 };
 use pest::iterators::Pair;
@@ -28,38 +28,18 @@ impl Array {
         let instructions = inner
             .map(|arg| InstructionWithStr::new_expression(arg, local_variables))
             .collect::<Result<Arc<_>, Error>>()?;
-        Ok(Self::create_from_instructions(instructions))
-    }
-
-    fn create_from_instructions(instructions: Arc<[InstructionWithStr]>) -> Instruction {
         let element_type = instructions
             .iter()
             .map(ReturnType::return_type)
             .reduce(Type::concat)
             .unwrap();
-        let mut array = Vec::new();
-        for instruction in &*instructions {
-            let InstructionWithStr {
-                instruction: Instruction::Variable(variable),
-                ..
-            } = instruction
-            else {
-                return Self {
-                    instructions,
-                    element_type,
-                }
-                .into();
-            };
-            array.push(variable.clone());
+        Ok(Self {
+            instructions,
+            element_type,
         }
-        Instruction::Variable(Variable::Array(
-            crate::variable::Array {
-                element_type,
-                elements: array.into(),
-            }
-            .into(),
-        ))
+        .into())
     }
+
     pub fn map<F>(self, mut f: F) -> Self
     where
         F: FnMut(Instruction) -> Instruction,
@@ -87,7 +67,22 @@ impl Exec for Array {
 impl Recreate for Array {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
         let instructions = recreate_instructions(&self.instructions, local_variables)?;
-        Ok(Self::create_from_instructions(instructions))
+        let mut array = Vec::new();
+        for instruction in &*instructions {
+            let InstructionWithStr {
+                instruction: Instruction::Variable(variable),
+                ..
+            } = instruction
+            else {
+                return Ok(Self {
+                    instructions,
+                    element_type: self.element_type.clone(),
+                }
+                .into());
+            };
+            array.push(variable.clone());
+        }
+        Ok(Instruction::Variable(array.into()))
     }
 }
 

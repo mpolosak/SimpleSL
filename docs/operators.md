@@ -1,41 +1,40 @@
 # Operators
 ## Precedence
-| Precedence | Operator     | Description             | Associativity |
-| ---------- | ------------ | ----------------------- | ------------- |
-| 1          | []           | Array/string indexing   | Left-to-right |
-|            | ? type       | Array filtering by type |               |
-|            | ()           | Function call           |               |
-| 2          | !            | Logical NOT             | Right-to-left |
-|            | ~            | Bitwise NOT             |               |
-|            | -            | Unary minus             |               |
-| 3          | @            | Array map               | Left-to-right |
-|            | ?            | Array filtering         |               |
-|            | $ expression | Array reducing          |               |
-|            | $+           | Array sum               |               |
-|            | $*           | Array product           |               |
-|            | $&&          | Logical and reduce(all) |               |
-|            | $\|\|        | Logical or reduce (any) |               |
-|            | $&           | Bitwise and reduce      |               |
-|            | $\|          | Bitwise or reduce       |               |
-| 4          | **           | Exponentiation          |               |
-| 5          | *            | Multiplication          |               |
-|            | /            | Division                |               |
-|            | %            | Remainder               |               |
-| 6          | +            | Addition                |               |
-|            | -            | Subtraction             |               |
-| 7          | <<           | Bitwise left shift      |               |
-|            | >>           | Bitwise right shift     |               |
-| 8          | &            | Bitwise AND             |               |
-| 9          | ^            | XOR                     |               |
-| 10         | \|           | Bitwise OR              |               |
-| 11         | ==           | Equal                   |               |
-|            | !=           | Not equal               |               |
-|            | <            | Less                    |               |
-|            | <=           | Less or equal           |               |
-|            | >            | Greater                 |               |
-|            | >=           | Greater or equal        |               |
-| 12         | &&           | Logical AND             |               |
-| 13         | \|\|         | Logical OR              |               |
+| Precedence | Operator     | Description                 | Associativity |
+| ---------- | ------------ | --------------------------- | ------------- |
+| 1          | []           | Array/string indexing       | Left-to-right |
+|            | ? type       | Array filtering by type     |               |
+|            | ()           | Function call               |               |
+| 2          | !            | NOT                         | Right-to-left |
+|            | -            | Unary minus                 |               |
+| 3          | @            | Array map                   | Left-to-right |
+|            | ?            | Array filtering             |               |
+|            | $ expression | Array reducing              |               |
+|            | $+           | Array sum                   |               |
+|            | $*           | Array product               |               |
+|            | $&&          | Logical and reduce(all)     |               |
+|            | $\|\|        | Logical or reduce (any)     |               |
+|            | $&           | Bitwise and reduce          |               |
+|            | $\|          | Bitwise or reduce           |               |
+| 4          | **           | Exponentiation              |               |
+| 5          | *            | Multiplication              |               |
+|            | /            | Division                    |               |
+|            | %            | Remainder                   |               |
+| 6          | +            | Addition                    |               |
+|            | -            | Subtraction                 |               |
+| 7          | <<           | Bitwise left shift          |               |
+|            | >>           | Bitwise right shift         |               |
+| 8          | &            | Bitwise AND                 |               |
+| 9          | ^            | XOR                         |               |
+| 10         | \|           | Bitwise OR                  |               |
+| 11         | ==           | Equal                       |               |
+|            | !=           | Not equal                   |               |
+|            | <            | Less                        |               |
+|            | <=           | Less or equal               |               |
+|            | >            | Greater                     |               |
+|            | >=           | Greater or equal            |               |
+| 12         | &&           | Short-circuting logical AND |               |
+| 13         | \|\|         | Short-circuting logical OR  |               |
 
 ## [] - Array/string indexing
 ```
@@ -56,17 +55,12 @@ function (arguments)
 ```
 Calls the function with given arguments.
 
-## ! - Logical NOT
-| operand | result | description                              |
-| ------- | ------ | ---------------------------------------- |
-| int     | int    | Returns 1 when operand is 0, 1 otherwise |
-| [int]   | [int]  | Returns an array containing results of calling ! operator on each element of the given array
-
-## ~ - Bitwise NOT
-| operand | result | description                              |
-| ------- | ------ | ---------------------------------------- |
-| int     | int    | Negation of all bits                     |
-| [int]   | [int]  | Returns an array containing results of calling ~ operator on each element of the given array
+## ! - NOT
+| operand       | result          | description                              |
+| ------------- | --------------- | ---------------------------------------- |
+| bool          | bool            | Negation of value                        |
+| int           | int             | Negation of all bits                     |
+| [int\|bool]   | [int\|bool ]    | Returns an array containing results of calling ! operator on each element of the given array
 
 ## - - Unary minus
 | operand      | result       | description                              |
@@ -83,12 +77,12 @@ Calls the function with given arguments.
 | (T, S, ...) | (index: int, value_t: T, value_s: S, ...) -> U | [U]    |
 
 ## ? - Array filtering operator
-| lhs | rhs                           | result |
-| --- | ----------------------------- | -------|
-| [T] | (value: T) -> int             | [T]    |
-| [T] | (index: int, value: T) -> int | [T]    |
+| lhs | rhs                            | result |
+| --- | ------------------------------ | -------|
+| [T] | (value: T) -> bool             | [T]    |
+| [T] | (index: int, value: T) -> bool | [T]    |
 
-Filters array using given function. Leaving only elements for which the function returned value other than zero.
+Filters array using given function. Leaving only elements for which the function returned true.
 
 ## $ - Array reducing operator
 ```
@@ -109,7 +103,7 @@ array $+
 | [float] | float   |
 | [string]| string  |
 
-Calculates sum of all element of array.
+Calculates sum of all elements of array.
 
 ## $* - Array product
 ```
@@ -120,28 +114,27 @@ array $*
 | [int]   | int     |
 | [float] | float   |
 
-Calculates product of all element of array.
+Calculates product of all elements of array.
 
 ## $&& - Logical and reduce (all)
 ```
 array $&&
 ```
-| lhs     | result  |
-| ------- | ------- |
-| [int]   | int     |
+| lhs    | result |
+| ------ | ------ |
+| [bool] | bool   |
 
-Returns non-zero value if all elements of array are non-zero, 0 otherwise
-
+Returns true value if all elements of array are true, false otherwise
 
 ## $|| - Logical and reduce (any)
 ```
 array $||
 ```
-| lhs     | result  |
-| ------- | ------- |
-| [int]   | int     |
+| lhs    | result |
+| ------ | ------ |
+| [bool] | bool   |
 
-Returns non-zero value if any of elements of array is non-zero, 0 otherwise
+Returns true value if any of elements of array is true, false otherwise
 
 ## $& - Bitwise and reduce
 ```
@@ -150,10 +143,12 @@ array $&
 | lhs     | result  |
 | ------- | ------- |
 | [int]   | int     |
+| [bool]  | bool    |
 
 Equivalent of:
 ```
-array $~0 (acc: int, curr: int) -> int {return acc & curr}
+array $!0 (acc: int, curr: int) -> int {return acc & curr}
+array $true (acc: bool, curr: bool) -> bool {return acc & curr}
 ```
 
 ## $| - Bitwise or reduce
@@ -163,10 +158,12 @@ array $|
 | lhs     | result  |
 | ------- | ------- |
 | [int]   | int     |
+| [bool]  | bool    |
 
 Equivalent of:
 ```
 array $0 (acc: int, curr: int) -> int {return acc | curr}
+array $false (acc: bool, curr: bool) -> bool {return acc | curr}
 ```
 
 ## ** - Exponentiation
@@ -248,80 +245,84 @@ array $0 (acc: int, curr: int) -> int {return acc | curr}
 | lhs     | rhs     | result     | description |
 | ------- | ------- | ---------- | ----------- |
 | int     | int     | int        | Bitwise AND |
+| bool    | bool    | bool       |
 | [int]   | int     | [int]      | Array containg result of & for each element of lhs and rhs
+| [bool]  | bool    | [bool]     |
 | int     | [int]   | [int]      | Array containg result of & for each element of rhs and lhs
+| bool    | [bool]  | [bool]
 
 ## ^ - XOR
 | lhs     | rhs     | result     | description |
 | ------- | ------- | ---------- | ----------- |
 | int     | int     | int        | Bitwise XOR |
+| bool    | bool    | bool
 | [int]   | int     | [int]      | Array containg result of ^ for each element of lhs and rhs
+| [bool]  | bool    | [bool]     |
 | int     | [int]   | [int]      | Array containg result of ^ for each element of rhs and lhs
-
+| bool    | [bool]  | [bool]     |
 
 ## | - Bitwise OR
 | lhs     | rhs     | result     | description |
 | ------- | ------- | ---------- | ----------- |
 | int     | int     | int        | Bitwise OR  |
+| bool    | bool    | bool
 | [int]   | int     | [int]      | Array containg result of \| for each element of lhs and rhs
+| [bool]  | bool    | [bool]     |
 | int     | [int]   | [int]      | Array containg result of \| for each element of rhs and lhs
+| bool    | [bool]  | [bool]     |
 
 ## - == Equal
-Returns 1 if the element on the right is equal to the element on the left, 0 - otherwise
+Returns true if the element on the right is equal to the element on the left, false - otherwise
 
 ## - != Not equal
-Returns 1 if the element on the right is not equal to the element on the left, 0 - otherwise
+Returns true if the element on the right is not equal to the element on the left, false - otherwise
 
 ## < - Less
 | lhs     | rhs     | result   | description |
 | ------- | ------- | -------- | ------------|
-| int     | int     | int      | Returns 1 if the element on the left is less than the element on the right, 0 - otherwise
-| float   | float   | int      | Returns 1 if the element on the left is less than the element on the right, 0 - otherwise
-| [int]   | int     | [int]    | Returns an array containg result of comparing each element of lhs with rhs
-| [float] | float   | [int]    | Returns an array containg result of comparing each element of lhs with rhs
-| int     | [int]   | [int]    | Returns an array containg result of comparing each element of lhs with rhs
-| float   | [float] | [int]    | Returns an array containg result of comparing each element of lhs with rhs
+| int     | int     | bool     | Returns true if the element on the left is less than the element on the right, false - otherwise
+| float   | float   | bool     | Returns true if the element on the left is less than the element on the right, false - otherwise
+| [int]   | int     | [bool]   | Returns an array containg result of comparing each element of lhs with rhs
+| [float] | float   | [bool]   | Returns an array containg result of comparing each element of lhs with rhs
+| int     | [int]   | [bool]   | Returns an array containg result of comparing each element of lhs with rhs
+| float   | [float] | [bool]   | Returns an array containg result of comparing each element of lhs with rhs
 
 ## <= - Less or equal
 | lhs     | rhs     | result   | description |
 | ------- | ------- | -------- | ------------|
-| int     | int     | int      | Returns 1 if the element on the left is less than or equal to the element on the right, 0 - otherwise
-| float   | float   | int      | Returns 1 if the element on the left is less than or equal to the element on the right, 0 - otherwise
-| [int]   | int     | [int]    | Returns an array containg result of comparing each element of lhs with rhs
-| [float] | float   | [int]    | Returns an array containg result of comparing each element of lhs with rhs
-| int     | [int]   | [int]    | Returns an array containg result of comparing each element of lhs with rhs
-| float   | [float] | [int]    | Returns an array containg result of comparing each element of lhs with rhs
+| int     | int     | bool     | Returns true if the element on the left is less than or equal to the element on the right, 0 - otherwise
+| float   | float   | bool     | Returns true if the element on the left is less than or equal to the element on the right, false - otherwise
+| [int]   | int     | [bool]   | Returns an array containg result of comparing each element of lhs with rhs
+| [float] | float   | [bool]   | Returns an array containg result of comparing each element of lhs with rhs
+| int     | [int]   | [bool]   | Returns an array containg result of comparing each element of lhs with rhs
+| float   | [float] | [bool]   | Returns an array containg result of comparing each element of lhs with rhs
 
 ## > - Greater
 | lhs     | rhs     | result   | description |
 | ------- | ------- | -------- | ------------|
-| int     | int     | int      | Returns 1 if the element on the left is greater than the element on the right, 0 - otherwise
-| float   | float   | int      | Returns 1 if the element on the left is greater than the element on the right, 0 - otherwise
-| [int]   | int     | [int]    | Returns an array containg result of comparing each element of lhs with rhs
-| [float] | float   | [int]    | Returns an array containg result of comparing each element of lhs with rhs
-| int     | [int]   | [int]    | Returns an array containg result of comparing each element of lhs with rhs
-| float   | [float] | [int]    | Returns an array containg result of comparing each element of lhs with rhs
+| int     | int     | bool     | Returns true if the element on the left is greater than the element on the right, false - otherwise
+| float   | float   | bool     | Returns true if the element on the left is greater than the element on the right, false - otherwise
+| [int]   | int     | [bool]   | Returns an array containg result of comparing each element of lhs with rhs
+| [float] | float   | [bool]   | Returns an array containg result of comparing each element of lhs with rhs
+| int     | [int]   | [bool]   | Returns an array containg result of comparing each element of lhs with rhs
+| float   | [float] | [bool]   | Returns an array containg result of comparing each element of lhs with rhs
 
 ## >= - Greater or equal
 | lhs     | rhs     | result   | description |
 | ------- | ------- | -------- | ------------|
-| int     | int     | int      | Returns 1 if the element on the left is greater than or equal to the element on the right, 0 - otherwise
-| float   | float   | int      | Returns 1 if the element on the left is greater than or equal to the element on the right, 0 - otherwise
-| [int]   | int     | [int]    | Returns an array containg result of comparing each element of lhs with rhs
-| [float] | float   | [int]    | Returns an array containg result of comparing each element of lhs with rhs
-| int     | [int]   | [int]    | Returns an array containg result of comparing each element of rhs with lhs
-| float   | [float] | [int]    | Returns an array containg result of comparing each element of rhs with lhs
+| int     | int     | bool     | Returns true if the element on the left is greater than or equal to the element on the right, false - otherwise
+| float   | float   | bool     | Returns true if the element on the left is greater than or equal to the element on the right, false - otherwise
+| [int]   | int     | [bool]   | Returns an array containg result of comparing each element of lhs with rhs
+| [float] | float   | [bool]   | Returns an array containg result of comparing each element of lhs with rhs
+| int     | [int]   | [bool]   | Returns an array containg result of comparing each element of rhs with lhs
+| float   | [float] | [bool]   | Returns an array containg result of comparing each element of rhs with lhs
 
 ## && - Logical AND 
 | lhs     | rhs     | result     | description |
 | ------- | ------- | ---------- | ----------- |
-| int     | int     | int        | Non-zero if both lhs and rhs are non-zero, 0 - otherwise
-| [int]   | int     | [int]      | Array containg result of && for each element of lhs and rhs
-| int     | [int]   | [int]      | Array containg result of && for each element of rhs and lhs
+| bool    | bool    | bool       | true if both lhs and rhs are true, false - otherwise
 
 ## || - Logical OR
 | lhs     | rhs     | result     | description |
 | ------- | ------- | ---------- | ----------- |
-| int     | int     | int        | 0 if both lhs and rhs are zero, non-zero otherwise
-| [int]   | int     | [int]      | Array containg result of \|\| for each element of lhs and rhs
-| int     | [int]   | [int]      | Array containg result of \|\| for each element of rhs and lhs
+| bool    | bool    | bool       | false if both lhs and rhs are false, true - otherwise

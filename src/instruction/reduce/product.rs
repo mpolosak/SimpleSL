@@ -13,53 +13,20 @@ use simplesl_macros::{var, var_type};
 use std::sync::Arc;
 
 pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
-    match array.instruction {
-        Instruction::Variable(Variable::Array(array))
-            if array.element_type().matches(&var_type!(int)) =>
-        {
-            Ok(calc_int(&array).into())
-        }
-        Instruction::Variable(Variable::Array(array))
-            if array.element_type() == &var_type!(float) =>
-        {
-            Ok(calc_float(&array).into())
-        }
-        Instruction::ArrayRepeat(array_repeat)
-            if array_repeat
-                .value
-                .return_type()
-                .matches(&var_type!(int | float)) =>
-        {
-            let ArrayRepeat { value, len } = Arc::unwrap_or_clone(array_repeat.clone());
-            pow::create_from_instructions(value.instruction, len.instruction).map_err(Error::from)
-        }
-        Instruction::Array(array) if array.element_type.matches(&var_type!(int | float)) => {
-            Ok(array
-                .instructions
-                .iter()
-                .cloned()
-                .map(|iws| iws.instruction)
-                .reduce(multiply::create_from_instructions)
-                .unwrap())
-        }
-        instruction
-            if instruction
-                .return_type()
-                .matches(&(var_type!([int] | [float]))) =>
-        {
-            Ok(UnaryOperation {
-                instruction,
-                op: UnaryOperator::Product,
-            }
-            .into())
-        }
-        ins => Err(Error::IncorectPostfixOperatorOperand {
+    let return_type = array.return_type();
+    if !return_type.matches(&var_type!([float] | [int])) {
+        return Err(Error::IncorectPostfixOperatorOperand {
             ins: array.str,
             op: "$*",
             expected: var_type!([float] | [int]),
-            given: ins.return_type(),
-        }),
+            given: return_type,
+        });
     }
+    Ok(UnaryOperation {
+        instruction: array.instruction,
+        op: UnaryOperator::Product,
+    }
+    .into())
 }
 
 fn calc(array: &Array) -> Variable {
@@ -81,14 +48,25 @@ fn calc_float(array: &Array) -> Variable {
 }
 
 pub fn recreate(instruction: Instruction) -> Instruction {
-    if let Instruction::Variable(Variable::Array(array)) = &instruction {
-        return calc(array).into();
+    match instruction {
+        Instruction::Variable(Variable::Array(array)) => calc(&array).into(),
+        Instruction::ArrayRepeat(array_repeat) => {
+            let ArrayRepeat { value, len } = Arc::unwrap_or_clone(array_repeat.clone());
+            pow::create_from_instructions(value.instruction, len.instruction).unwrap()
+        }
+        Instruction::Array(array) => array
+            .instructions
+            .iter()
+            .cloned()
+            .map(|iws| iws.instruction)
+            .reduce(multiply::create_from_instructions)
+            .unwrap(),
+        instruction => UnaryOperation {
+            instruction,
+            op: UnaryOperator::Product,
+        }
+        .into(),
     }
-    UnaryOperation {
-        instruction,
-        op: UnaryOperator::Product,
-    }
-    .into()
 }
 
 pub fn exec(var: Variable) -> Variable {

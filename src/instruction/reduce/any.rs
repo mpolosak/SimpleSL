@@ -6,55 +6,46 @@ use crate::{
     variable::{Array, ReturnType, Variable},
     Error,
 };
-use simplesl_macros::{var, var_type};
+use simplesl_macros::var_type;
 
 pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
-    match array.instruction {
-        Instruction::Variable(Variable::Array(array))
-            if array.element_type().matches(&var_type!(int)) =>
-        {
-            Ok(calc(&array).into())
-        }
-        Instruction::ArrayRepeat(array_repeat)
-            if array_repeat.value.return_type().matches(&var_type!(int)) =>
-        {
-            Ok(array_repeat.value.instruction.clone())
-        }
-        Instruction::Array(array) if array.element_type.matches(&var_type!(int)) => Ok(array
+    let return_type = array.return_type();
+    if !return_type.matches(&var_type!([bool])) {
+        return Err(Error::IncorectPostfixOperatorOperand {
+            ins: array.str,
+            op: "$||",
+            expected: var_type!([bool]),
+            given: return_type,
+        });
+    }
+    Ok(UnaryOperation {
+        instruction: array.instruction,
+        op: UnaryOperator::Any,
+    }
+    .into())
+}
+
+pub fn calc(array: &Array) -> Variable {
+    array.iter().any(|var| *var.as_bool().unwrap()).into()
+}
+
+pub fn recreate(instruction: Instruction) -> Instruction {
+    match instruction {
+        Instruction::Variable(Variable::Array(array)) => calc(&array).into(),
+        Instruction::ArrayRepeat(array_repeat) => array_repeat.value.instruction.clone(),
+        Instruction::Array(array) => array
             .instructions
             .iter()
             .cloned()
             .map(|iws| iws.instruction)
             .reduce(or::create_from_instructions)
-            .unwrap()),
-        instruction if instruction.return_type().matches(&var_type!([int])) => Ok(UnaryOperation {
+            .unwrap(),
+        instruction => UnaryOperation {
             instruction,
             op: UnaryOperator::Any,
         }
-        .into()),
-        ins => Err(Error::IncorectPostfixOperatorOperand {
-            ins: array.str,
-            op: "$||",
-            expected: var_type!([int]),
-            given: ins.return_type(),
-        }),
+        .into(),
     }
-}
-
-fn calc(array: &Array) -> Variable {
-    let sum = array.iter().any(|var| *var.as_int().unwrap() != 0);
-    var!(sum)
-}
-
-pub fn recreate(instruction: Instruction) -> Instruction {
-    if let Instruction::Variable(Variable::Array(array)) = &instruction {
-        return calc(array).into();
-    }
-    UnaryOperation {
-        instruction,
-        op: UnaryOperator::Any,
-    }
-    .into()
 }
 
 pub fn exec(var: Variable) -> Variable {

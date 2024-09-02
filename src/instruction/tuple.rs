@@ -25,7 +25,7 @@ impl Tuple {
             .into_inner()
             .map(|pair| InstructionWithStr::new_expression(pair, local_variables))
             .collect::<Result<Arc<[InstructionWithStr]>, Error>>()?;
-        Ok(Self::create_from_elements(elements))
+        Ok(Self { elements }.into())
     }
 
     fn create_from_elements(elements: Arc<[InstructionWithStr]>) -> Instruction {

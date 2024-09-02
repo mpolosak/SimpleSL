@@ -11,63 +11,20 @@ use simplesl_macros::{var, var_type};
 use std::sync::Arc;
 
 pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
-    match array.instruction {
-        Instruction::Variable(Variable::Array(array))
-            if array.element_type().matches(&var_type!(int)) =>
-        {
-            Ok(calc_int(&array).into())
-        }
-        Instruction::Variable(Variable::Array(array))
-            if array.element_type() == &var_type!(float) =>
-        {
-            Ok(calc_float(&array).into())
-        }
-        Instruction::Variable(Variable::Array(array))
-            if array.element_type() == &var_type!(string) =>
-        {
-            Ok(calc_string(&array).into())
-        }
-        Instruction::ArrayRepeat(array_repeat)
-            if array_repeat
-                .value
-                .return_type()
-                .matches(&var_type!(int | float)) =>
-        {
-            let ArrayRepeat { value, len } = Arc::unwrap_or_clone(array_repeat.clone());
-            Ok(multiply::create_from_instructions(
-                value.instruction,
-                len.instruction,
-            ))
-        }
-        Instruction::Array(array)
-            if array.element_type.matches(&var_type!(int | float | string)) =>
-        {
-            Ok(array
-                .instructions
-                .iter()
-                .cloned()
-                .map(|iws| iws.instruction)
-                .reduce(add::create_from_instructions)
-                .unwrap())
-        }
-        instruction
-            if instruction
-                .return_type()
-                .matches(&var_type!([int] | [float] | [string])) =>
-        {
-            Ok(UnaryOperation {
-                instruction,
-                op: UnaryOperator::Sum,
-            }
-            .into())
-        }
-        ins => Err(Error::IncorectPostfixOperatorOperand {
+    let return_type = array.return_type();
+    if !return_type.matches(&var_type!([float] | [int] | [string])) {
+        return Err(Error::IncorectPostfixOperatorOperand {
             ins: array.str,
             op: "$+",
-            expected: var_type!([int] | [float] | [string]),
-            given: ins.return_type(),
-        }),
+            expected: var_type!([float] | [int] | [string]),
+            given: return_type,
+        });
     }
+    Ok(UnaryOperation {
+        instruction: array.instruction,
+        op: UnaryOperator::Sum,
+    }
+    .into())
 }
 
 fn calc(array: &Array) -> Variable {
@@ -98,14 +55,30 @@ fn calc_string(array: &Array) -> Variable {
 }
 
 pub fn recreate(instruction: Instruction) -> Instruction {
-    if let Instruction::Variable(Variable::Array(array)) = &instruction {
-        return calc(array).into();
+    match instruction {
+        Instruction::Variable(Variable::Array(array)) => calc(&array).into(),
+        Instruction::ArrayRepeat(array_repeat)
+            if array_repeat
+                .value
+                .return_type()
+                .matches(&var_type!(int | float)) =>
+        {
+            let ArrayRepeat { value, len } = Arc::unwrap_or_clone(array_repeat.clone());
+            multiply::create_from_instructions(value.instruction, len.instruction)
+        }
+        Instruction::Array(array) => array
+            .instructions
+            .iter()
+            .cloned()
+            .map(|iws| iws.instruction)
+            .reduce(add::create_from_instructions)
+            .unwrap(),
+        instruction => UnaryOperation {
+            instruction,
+            op: UnaryOperator::Sum,
+        }
+        .into(),
     }
-    UnaryOperation {
-        instruction,
-        op: UnaryOperator::Sum,
-    }
-    .into()
 }
 
 pub fn exec(var: Variable) -> Variable {

@@ -28,7 +28,7 @@ pub fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
         return false;
     };
     let element_type2 = element_type.clone();
-    let expected_function = var_type!((element_type)->int | (int,element_type2)->int);
+    let expected_function = var_type!((element_type)->bool | (int,element_type2)->bool);
     rhs.matches(&expected_function)
 }
 
@@ -40,8 +40,8 @@ pub fn exec(array: Variable, function: Variable) -> ExecResult {
     let elements = if function.params.len() == 1 {
         array_iter
             .filter_map(|element| match function.exec(&[element.clone()]) {
-                Ok(Variable::Int(0)) => None,
-                Ok(_) => Some(Ok(element)),
+                Ok(Variable::Bool(true)) => Some(Ok(element)),
+                Ok(_) => None,
                 e @ Err(_) => Some(e),
             })
             .collect::<Result<_, _>>()
@@ -50,8 +50,8 @@ pub fn exec(array: Variable, function: Variable) -> ExecResult {
             .enumerate()
             .filter_map(
                 |(index, element)| match function.exec(&[index.into(), element.clone()]) {
-                    Ok(Variable::Int(0)) => None,
-                    Ok(_) => Some(Ok(element)),
+                    Ok(Variable::Bool(true)) => Some(Ok(element)),
+                    Ok(_) => None,
                     e @ Err(_) => Some(e),
                 },
             )
@@ -75,39 +75,39 @@ mod tests {
     fn can_be_used() {
         assert!(filter::can_be_used(
             &var_type!([int]),
-            &var_type!((int)->int)
+            &var_type!((int)->bool)
         ));
         assert!(filter::can_be_used(
             &var_type!([int]),
-            &var_type!((int, any)->int)
+            &var_type!((int, any)->bool)
         ));
         assert!(filter::can_be_used(
             &var_type!([int] | [float]),
-            &var_type!((int|float)->int)
+            &var_type!((int|float)->bool)
         ));
         assert!(filter::can_be_used(
             &var_type!([int] | [float]),
-            &var_type!((any, any)->int)
+            &var_type!((any, any)->bool)
         ));
         assert!(filter::can_be_used(
             &var_type!([int] | [float | string]),
-            &var_type!((any, int|float|string)->int)
+            &var_type!((any, int|float|string)->bool)
         ));
         assert!(!filter::can_be_used(
             &var_type!(int),
-            &var_type!((any, any)->int)
+            &var_type!((any, any)->bool)
         ));
         assert!(!filter::can_be_used(
             &var_type!([int] | float),
-            &var_type!((any, any)->int)
+            &var_type!((any, any)->bool)
         ));
         assert!(!filter::can_be_used(
             &var_type!([int] | [float]),
-            &var_type!((any, int)->int)
+            &var_type!((any, int)->bool)
         ));
         assert!(!filter::can_be_used(
             &var_type!([int] | [float]),
-            &var_type!((float, any)->int)
+            &var_type!((float, any)->bool)
         ));
         assert!(!filter::can_be_used(
             &var_type!([int] | [float]),

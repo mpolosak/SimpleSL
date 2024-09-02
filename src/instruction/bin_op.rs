@@ -5,12 +5,8 @@ mod map;
 mod math;
 mod shift;
 use super::{
-    at,
-    function::call,
-    local_variable::LocalVariables,
-    reduce::Reduce,
-    return_type::{return_type_float, return_type_int},
-    Exec, ExecResult, InstructionWithStr, Recreate,
+    at, function::call, local_variable::LocalVariables, reduce::Reduce,
+    return_type::return_type_bool, Exec, ExecResult, InstructionWithStr, Recreate,
 };
 use crate as simplesl;
 use crate::{
@@ -82,6 +78,12 @@ pub enum BinOperator {
 impl Exec for BinOperation {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let lhs = self.lhs.exec(interpreter)?;
+        if let BinOperator::And = self.op {
+            return and::exec(lhs, &self.rhs, interpreter);
+        }
+        if let BinOperator::Or = self.op {
+            return or::exec(lhs, &self.rhs, interpreter);
+        }
         let rhs = self.rhs.exec(interpreter)?;
         Ok(match self.op {
             BinOperator::Add => add::exec(lhs, rhs),
@@ -96,8 +98,6 @@ impl Exec for BinOperation {
             BinOperator::GreaterOrEqual => greater_equal::exec(lhs, rhs),
             BinOperator::Lower => lower::exec(lhs, rhs),
             BinOperator::LowerOrEqual => lower_equal::exec(lhs, rhs),
-            BinOperator::And => and::exec(lhs, rhs),
-            BinOperator::Or => or::exec(lhs, rhs),
             BinOperator::BitwiseAnd => bitwise_and::exec(lhs, rhs),
             BinOperator::BitwiseOr => bitwise_or::exec(lhs, rhs),
             BinOperator::Xor => xor::exec(lhs, rhs),
@@ -107,6 +107,7 @@ impl Exec for BinOperation {
             BinOperator::Map => map::exec(lhs, rhs)?,
             BinOperator::At => at::exec(lhs, rhs)?,
             BinOperator::FunctionCall => call::exec(lhs, rhs)?,
+            _ => unreachable!(),
         })
     }
 }
@@ -114,6 +115,12 @@ impl Exec for BinOperation {
 impl Recreate for BinOperation {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
         let lhs = self.lhs.recreate(local_variables)?;
+        if let BinOperator::And = self.op {
+            return and::recreate(lhs, &self.rhs, local_variables);
+        }
+        if let BinOperator::Or = self.op {
+            return or::recreate(lhs, &self.rhs, local_variables);
+        }
         let rhs = self.rhs.recreate(local_variables)?;
         match self.op {
             BinOperator::Add => Ok(add::create_from_instructions(lhs, rhs)),
@@ -149,23 +156,29 @@ impl ReturnType for BinOperation {
         let rhs = self.rhs.return_type();
         match self.op {
             BinOperator::Add => add::return_type(lhs, rhs),
-            BinOperator::Subtract
-            | BinOperator::Multiply
-            | BinOperator::Divide
-            | BinOperator::Pow => return_type_float(lhs, rhs),
-            BinOperator::Equal | BinOperator::NotEqual => Type::Int,
+            BinOperator::Equal | BinOperator::NotEqual | BinOperator::And | BinOperator::Or => {
+                Type::Bool
+            }
             BinOperator::Greater
             | BinOperator::GreaterOrEqual
             | BinOperator::Lower
-            | BinOperator::LowerOrEqual
-            | BinOperator::And
-            | BinOperator::Or
-            | BinOperator::BitwiseAnd
+            | BinOperator::LowerOrEqual => return_type_bool(lhs, rhs),
+            BinOperator::BitwiseAnd
             | BinOperator::BitwiseOr
             | BinOperator::Xor
             | BinOperator::LShift
             | BinOperator::RShift
-            | BinOperator::Modulo => return_type_int(lhs, rhs),
+            | BinOperator::Modulo
+            | BinOperator::Subtract
+            | BinOperator::Multiply
+            | BinOperator::Divide
+            | BinOperator::Pow => {
+                if var_type!([]).matches(&lhs) {
+                    lhs
+                } else {
+                    rhs
+                }
+            }
             BinOperator::Filter => self.lhs.return_type(),
             BinOperator::Map => map::return_type(rhs),
             BinOperator::At => lhs.index_result().unwrap(),
@@ -239,8 +252,18 @@ impl InstructionWithStr {
             Rule::subtract => subtract::create_op(lhs, rhs),
             Rule::divide => divide::create_op(lhs, rhs),
             Rule::modulo => modulo::create_op(lhs, rhs),
-            Rule::equal => Ok(equal::create_from_instructions(lhs, rhs)),
-            Rule::not_equal => Ok(not_equal::create_from_instructions(lhs, rhs)),
+            Rule::equal => Ok(BinOperation {
+                lhs,
+                rhs,
+                op: BinOperator::Equal,
+            }
+            .into()),
+            Rule::not_equal => Ok(BinOperation {
+                lhs,
+                rhs,
+                op: BinOperator::NotEqual,
+            }
+            .into()),
             Rule::lower => lower::create_op(lhs, rhs),
             Rule::lower_equal => lower_equal::create_op(lhs, rhs),
             Rule::greater => greater::create_op(lhs, rhs),

@@ -17,7 +17,10 @@ impl Code {
         let parse = SimpleSLParser::parse(Rule::input, script)?;
         let mut local_variables = LocalVariables::new(interpreter);
         let instructions = parse
-            .map(|pair| InstructionWithStr::new(pair, &mut local_variables))
+            .map(|pair| {
+                InstructionWithStr::new(pair, &mut local_variables)
+                    .and_then(|iws| Ok(iws.recreate(&mut local_variables)?))
+            })
             .collect::<Result<_, Error>>()?;
         Ok(Self { instructions })
     }

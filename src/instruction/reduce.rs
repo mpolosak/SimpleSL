@@ -36,9 +36,6 @@ impl Reduce {
         let Some(element_type) = array.return_type().index_result() else {
             return Err(Error::CannotReduce(array.str));
         };
-        if let Type::Never = element_type {
-            return Ok(initial_value.instruction);
-        }
         let Some(return_type) = function.return_type().return_type() else {
             return Err(Error::WrongType(
                 "function".into(),
@@ -66,6 +63,9 @@ impl Recreate for Reduce {
     ) -> Result<Instruction, ExecError> {
         let array = self.array.recreate(local_variables)?;
         let initial_value = self.initial_value.recreate(local_variables)?;
+        if let Some(Type::Never) = array.return_type().index_result() {
+            return Ok(initial_value.instruction);
+        }
         let function = self.function.recreate(local_variables)?;
         Ok(Self {
             array,

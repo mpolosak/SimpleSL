@@ -16,6 +16,7 @@ use std::{
 
 #[derive(Clone, Debug, Hash, Eq, PartialEq)]
 pub enum Type {
+    Bool,
     Int,
     Float,
     String,
@@ -229,6 +230,7 @@ impl Type {
 impl Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::Bool => write!(f, "bool"),
             Self::Int => write!(f, "int"),
             Self::Float => write!(f, "float"),
             Self::String => write!(f, "string"),
@@ -259,6 +261,7 @@ impl FromStr for Type {
 impl From<Pair<'_, Rule>> for Type {
     fn from(pair: Pair<'_, Rule>) -> Self {
         match pair.as_rule() {
+            Rule::bool_type => Self::Bool,
             Rule::int_type => Self::Int,
             Rule::float_type => Self::Float,
             Rule::string_type => Self::String,

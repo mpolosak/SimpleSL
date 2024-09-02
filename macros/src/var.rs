@@ -20,6 +20,8 @@ pub fn from_str(item_str: &str) -> quote::__private::TokenStream {
 
 fn var_token_from_pair(pair: Pair<Rule>) -> quote::__private::TokenStream {
     match pair.as_rule() {
+        Rule::r#true => quote!(simplesl::variable::Variable::Bool(true)),
+        Rule::r#false => quote!(simplesl::variable::Variable::Bool(false)),
         Rule::int | Rule::minus_int => quote_int(pair),
         Rule::float | Rule::minus_float => {
             let value = pair
@@ -136,6 +138,7 @@ fn quote_int(pair: Pair<Rule>) -> quote::__private::TokenStream {
 
 fn var_type_from_var_pair(pair: Pair<Rule>) -> Option<quote::__private::TokenStream> {
     match pair.as_rule() {
+        Rule::r#true | Rule::r#false => Some(type_from_str("bool")),
         Rule::int | Rule::minus_int => Some(type_from_str("int")),
         Rule::float | Rule::minus_float => Some(type_from_str("float")),
         Rule::string => Some(type_from_str("string")),
