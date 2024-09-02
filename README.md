@@ -39,6 +39,8 @@ print("Hello world"/* Comment */)
 ```
 ### Variables
 ```SimpleSL
+x = true //bool
+x = false //bool
 x = 5 // int
 y = 5.0 // float
 text = "Hello\n world" // string
