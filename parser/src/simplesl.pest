@@ -87,9 +87,9 @@ stm = _{ block | if_else | set_if_else | match | import | return | expr }
 expression_list = _{ (expr ~ ("," ~ expr)*)}
 line = _{ COMMENT* ~ (( return | function_declaration | set | destruct_tuple | stm ) ~  line_end?) }
 	line_end = _{ ";" }
-  function_declaration = { ident ~ "=" ~ function }
-  set = { ident ~ "=" ~ stm}
-  destruct_tuple = { destruct_idents ~ "=" ~ stm }
+  function_declaration = { ident ~ ":=" ~ function }
+  set = { ident ~ ":=" ~ stm}
+  destruct_tuple = { destruct_idents ~ ":=" ~ stm }
     destruct_idents =  {"(" ~ (ident ~ ("," ~ ident)*)? ~ ")"}
 type = _{ multi | standard_types }
   bool_type = {"bool"}

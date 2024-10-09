@@ -1,4 +1,4 @@
-fizzbuzz = (number: int) -> string|int {
+fizzbuzz := (number: int) -> string|int {
     if number%15==0 return "FizzBuzz";
     if number%3==0 return "Fizz";
     if number%5==0 return "Buzz";
@@ -9,7 +9,7 @@ fizzbuzz = (number: int) -> string|int {
 Returns array filled whith increasing values, starting with value
 Length of returned array equals size
 */
-iota = (value: int, size: int) -> [int] {
+iota := (value: int, size: int) -> [int] {
     return [value; size] @ (index: int, value:int) -> int { return index+value};
 };
 
