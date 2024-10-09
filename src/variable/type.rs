@@ -25,6 +25,7 @@ pub enum Type {
     Tuple(Arc<[Type]>),
     Void,
     Multi(MultiType),
+    Mut(Arc<Type>),
     Any,
     Never,
 }
@@ -240,6 +241,7 @@ impl Display for Type {
             Self::Tuple(types) => write!(f, "({})", join(types.as_ref(), ", ")),
             Self::Void => write!(f, "()"),
             Self::Multi(types) => write!(f, "{types}"),
+            Self::Mut(var_type) => write!(f, "mut {var_type}"),
             Self::Any => write!(f, "any"),
             Self::Never => write!(f, "!"),
         }

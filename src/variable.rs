@@ -1,6 +1,7 @@
 mod array;
 mod function_type;
 mod multi_type;
+mod r#mut;
 mod try_from;
 mod r#type;
 mod type_of;
@@ -12,7 +13,9 @@ pub use r#type::{ReturnType, Type, Typed};
 use simplesl_parser::{unexpected, Rule, SimpleSLParser};
 use std::{fmt, io, str::FromStr, sync::Arc};
 pub use typle::typle;
-pub use {array::Array, function_type::FunctionType, multi_type::MultiType, type_of::TypeOf};
+pub use {
+    array::Array, function_type::FunctionType, multi_type::MultiType, r#mut::Mut, type_of::TypeOf,
+};
 
 #[derive(Clone, EnumAsInner)]
 pub enum Variable {
@@ -23,6 +26,7 @@ pub enum Variable {
     Function(Arc<Function>),
     Array(Arc<Array>),
     Tuple(Arc<[Variable]>),
+    Mut(Arc<Mut>),
     Void,
 }
 
@@ -33,7 +37,7 @@ impl Typed for Variable {
             Variable::Int(_) => Type::Int,
             Variable::Float(_) => Type::Float,
             Variable::String(_) => Type::String,
-            Variable::Function(var) | Variable::Array(var) => var.as_type(),
+            Variable::Function(var) | Variable::Array(var) | Variable::Mut(var) => var.as_type(),
             Variable::Tuple(elements) => {
                 let types = elements.iter().map(Variable::as_type).collect();
                 Type::Tuple(types)
@@ -51,7 +55,8 @@ impl fmt::Display for Variable {
             | Variable::Float(value)
             | Variable::String(value)
             | Variable::Function(value)
-            | Variable::Array(value) => write!(f, "{value}"),
+            | Variable::Array(value)
+            | Variable::Mut(value) => write!(f, "{value}"),
             Variable::Tuple(elements) => write!(f, "({})", join_debug(elements.as_ref(), ", ")),
             Variable::Void => write!(f, "()")
         }
@@ -307,6 +312,18 @@ impl<T: Tuple<Variable>> From<T> for Variable {
     fn from(value: T) -> Self {
         let vars: [Variable; Tuple::LEN] = value.into();
         Variable::Tuple(vars.into())
+    }
+}
+
+impl From<Mut> for Variable {
+    fn from(value: Mut) -> Self {
+        Variable::Mut(value.into())
+    }
+}
+
+impl From<Arc<Mut>> for Variable {
+    fn from(value: Arc<Mut>) -> Self {
+        Variable::Mut(value)
     }
 }
 

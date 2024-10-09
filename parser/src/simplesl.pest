@@ -1,5 +1,5 @@
-ident = @{ !(bool~!(ASCII_ALPHANUMERIC|"_")) ~ !("return"~!(ASCII_ALPHANUMERIC|"_")) ~ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC|"_")* }
-var = _{ bool | float | int | array | array_repeat | string | function | void | tuple }
+ident = @{ !((bool | "mut" | "return")~!(ASCII_ALPHANUMERIC|"_")) ~ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC|"_")* }
+var = _{ bool | float | int | array | array_repeat | string | function | void | tuple | mut }
   bool = _{ true | false }
     true = {"true"}
     false = {"false"}
@@ -29,6 +29,7 @@ var = _{ bool | float | int | array | array_repeat | string | function | void | 
         !("\"" | "\\") ~ ANY
         | "\\" ~ ANY
     }
+  mut = {"mut" ~ type? ~ expr}
 primary = _{ ident | var | expr_in_brackets }
   expr_in_brackets = _{ "(" ~ expr ~ ")" }
 atom = _{ prefix_op? ~ primary ~ postfix_op? }
