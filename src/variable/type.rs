@@ -241,7 +241,12 @@ impl Display for Type {
             Self::Tuple(types) => write!(f, "({})", join(types.as_ref(), ", ")),
             Self::Void => write!(f, "()"),
             Self::Multi(types) => write!(f, "{types}"),
-            Self::Mut(var_type) => write!(f, "mut {var_type}"),
+            Self::Mut(var_type) if matches!(var_type.as_ref(), Type::Multi(_)) => {
+                write!(f, "mut ({var_type})")
+            }
+            Self::Mut(var_type) => {
+                write!(f, "mut {var_type}")
+            }
             Self::Any => write!(f, "any"),
             Self::Never => write!(f, "!"),
         }
@@ -288,6 +293,10 @@ impl From<Pair<'_, Rule>> for Type {
                 .unwrap(),
             Rule::any => Self::Any,
             Rule::never => Self::Never,
+            Rule::mut_type => {
+                let element_type = pair.into_inner().next().map(Type::from).unwrap();
+                Self::Mut(element_type.into())
+            }
             rule => panic!("Type cannot be built from rule: {rule:?}"),
         }
     }
