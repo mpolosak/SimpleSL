@@ -35,6 +35,7 @@
 |            | >=           | Greater or equal            |               |
 | 12         | &&           | Short-circuting logical AND |               |
 | 13         | \|\|         | Short-circuting logical OR  |               |
+| 14         | =            | Assign                      | Right-to-left |
 
 ## [] - Array/string indexing
 ```
@@ -326,3 +327,8 @@ Returns true if the element on the right is not equal to the element on the left
 | lhs     | rhs     | result     | description |
 | ------- | ------- | ---------- | ----------- |
 | bool    | bool    | bool       | false if both lhs and rhs are false, true - otherwise
+
+## = - Assign
+| lhs        | rhs | result | description |
+| ---------- | --- | ------ | ----------- |
+| mut (T\|S) | T   | T      | assign value on right to mut on left returns value on right

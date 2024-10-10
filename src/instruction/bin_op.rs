@@ -1,3 +1,4 @@
+mod assign;
 mod bitwise;
 mod filter;
 mod logic;
@@ -73,6 +74,7 @@ pub enum BinOperator {
     Map,
     At,
     FunctionCall,
+    Assign,
 }
 
 impl Exec for BinOperation {
@@ -107,6 +109,7 @@ impl Exec for BinOperation {
             BinOperator::Map => map::exec(lhs, rhs)?,
             BinOperator::At => at::exec(lhs, rhs)?,
             BinOperator::FunctionCall => call::exec(lhs, rhs)?,
+            BinOperator::Assign => assign::exec(lhs, rhs),
             _ => unreachable!(),
         })
     }
@@ -143,9 +146,10 @@ impl Recreate for BinOperation {
             BinOperator::LShift => lshift::create_from_instructions(lhs, rhs),
             BinOperator::RShift => rshift::create_from_instructions(lhs, rhs),
             BinOperator::At => at::create_from_instructions(lhs, rhs),
-            op @ (BinOperator::Filter | BinOperator::Map | BinOperator::FunctionCall) => {
-                Ok(Self { lhs, rhs, op }.into())
-            }
+            op @ (BinOperator::Filter
+            | BinOperator::Map
+            | BinOperator::FunctionCall
+            | BinOperator::Assign) => Ok(Self { lhs, rhs, op }.into()),
         }
     }
 }
@@ -179,10 +183,11 @@ impl ReturnType for BinOperation {
                     rhs
                 }
             }
-            BinOperator::Filter => self.lhs.return_type(),
+            BinOperator::Filter => lhs,
             BinOperator::Map => map::return_type(rhs),
             BinOperator::At => lhs.index_result().unwrap(),
             BinOperator::FunctionCall => lhs.return_type().unwrap(),
+            BinOperator::Assign => rhs,
         }
     }
 }
@@ -277,6 +282,7 @@ impl InstructionWithStr {
             Rule::lshift => lshift::create_op(lhs, rhs),
             Rule::and => and::create_op(lhs, rhs),
             Rule::or => or::create_op(lhs, rhs),
+            Rule::assign => assign::create_op(lhs, rhs),
             rule => unexpected!(rule),
         }?;
         Ok(Self { instruction, str })

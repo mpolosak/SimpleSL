@@ -7,12 +7,12 @@ pub struct SimpleSLParser;
 
 lazy_static::lazy_static! {
     pub static ref PRATT_PARSER: PrattParser<Rule> = {
-        use pest::pratt_parser::{Assoc::Left, Op};
+        use pest::pratt_parser::{Assoc::{Left, Right}, Op};
         use Rule::*;
 
         // Precedence is defined lowest to highest
         PrattParser::new()
-            // Addition and subtract have equal precedence
+            .op(Op::infix(assign, Right))
             .op(Op::infix(or, Left))
             .op(Op::infix(and, Left))
             .op(Op::infix(equal, Left) | Op::infix(not_equal, Left) | Op::infix(lower, Left)

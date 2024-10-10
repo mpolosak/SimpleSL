@@ -34,8 +34,8 @@ primary = _{ ident | var | expr_in_brackets }
   expr_in_brackets = _{ "(" ~ expr ~ ")" }
 atom = _{ prefix_op? ~ primary ~ postfix_op? }
 expr = { (atom ~ (bin_op ~ atom)*) }
-bin_op = _{ lshift | rshift | comp | and | or | bitwise_and | bitwise_or | xor | pow | multiply | divide | add | subtract | modulo
-            | map | filter | reduce }
+bin_op = _{ comp | and | or | bitwise_and | bitwise_or | xor | pow | multiply | divide | add | subtract | modulo
+            | map | filter | reduce | assign }
   comp = _{ equal | not_equal | greater_equal | greater | lower_equal | lower }
     equal = { "==" }
     not_equal = { "!=" }
@@ -59,6 +59,7 @@ bin_op = _{ lshift | rshift | comp | and | or | bitwise_and | bitwise_or | xor |
   map = { "@" }
   filter = { "?" }
   reduce = { "$" ~ expr }
+  assign = { "=" }
 prefix_op = _{not | unary_minus }
   not = { "!" }
   unary_minus = { "-" }
