@@ -62,6 +62,11 @@ pub enum Error {
         expected: Type,
         given: Type,
     },
+    WrongInitialization {
+        declared: Type,
+        given: Arc<str>,
+        given_type: Type,
+    },
 }
 
 impl PartialEq for Error {
@@ -221,6 +226,8 @@ impl fmt::Display for Error {
             Self::WrongCondition(ins, var_type) => write!(f, "Condition must be bool but {ins} which is {var_type} was given"),
             Self::IncorectPostfixOperatorOperand { ins, op, expected, given }
                 => write!(f, "Cannot {ins} {op}. Operand need to be {expected} but {ins} which is {given} was given"),
+            Self::WrongInitialization { declared, given_type, given }
+                => write!(f, "mut declared to contain {declared} but initialized with {given} that is {given_type}")
         }
     }
 }
