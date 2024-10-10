@@ -7,6 +7,7 @@
 |            | ()           | Function call               |               |
 | 2          | !            | NOT                         | Right-to-left |
 |            | -            | Unary minus                 |               |
+|            | *            | Indirection                 |               |
 | 3          | @            | Array map                   | Left-to-right |
 |            | ?            | Array filtering             |               |
 |            | $ expression | Array reducing              |               |
@@ -68,6 +69,11 @@ Calls the function with given arguments.
 | ------------ | ------------ | ---------------------------------------- |
 | int \| float | int\|float   | Additive inverse                         |
 | [int\|float] | [int\|float] | Returns an array containing results of calling - operator on each element of the given array
+
+## * - Indirection
+| operand | result | description |
+| ------- | ------ | ------------|
+| mut T   | T      | Returns value contained in mut
 
 ## @ - Array maping operator
 | lhs         | rhs                                            | result |

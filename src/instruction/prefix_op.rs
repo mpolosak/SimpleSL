@@ -13,6 +13,7 @@ impl InstructionWithStr {
         let instruction = match op.as_rule() {
             Rule::not => not::create_instruction(instruction),
             Rule::unary_minus => unary_minus::create_instruction(instruction),
+            Rule::indirection => indirection::create_instruction(instruction),
             rule => unexpected!(rule),
         }?;
         let str = format!("{} {}", op.as_str(), rhs.str).into();
@@ -132,6 +133,39 @@ pub mod not {
             }
             operand => panic!("Tried to {} {operand}", stringify!(op2)),
         }
+    }
+}
+
+pub mod indirection {
+    use crate::{
+        instruction::{
+            unary_operation::{UnaryOperation, UnaryOperator},
+            Instruction,
+        },
+        variable::{ReturnType, Type, Variable},
+        Error,
+    };
+
+    pub fn create_instruction(instruction: Instruction) -> Result<Instruction, Error> {
+        let return_type = instruction.return_type();
+        if !return_type.is_mut() {
+            return Err(Error::CannotDo("*", return_type));
+        }
+        Ok(UnaryOperation {
+            instruction,
+            op: UnaryOperator::Indirection,
+        }
+        .into())
+    }
+
+    pub fn exec(var: Variable) -> Variable {
+        let var = var.into_mut().unwrap();
+        let var = var.variable.read().unwrap().clone();
+        var
+    }
+
+    pub fn return_type(var_type: Type) -> Type {
+        var_type.mut_element_type().unwrap()
     }
 }
 

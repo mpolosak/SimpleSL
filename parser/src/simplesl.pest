@@ -60,9 +60,10 @@ bin_op = _{ comp | and | or | bitwise_and | bitwise_or | xor | pow | multiply | 
   filter = { "?" }
   reduce = { "$" ~ expr }
   assign = { "=" }
-prefix_op = _{not | unary_minus }
+prefix_op = _{not | unary_minus | indirection }
   not = { "!" }
   unary_minus = { "-" }
+  indirection = { "*" }
 postfix_op = _{ type_filter | at | function_call | sum | product | all | reduce_any | bitand_reduce | bitor_reduce  }
   type_filter = { "?" ~ type }
   at = { "[" ~ expr ~ "]"  }

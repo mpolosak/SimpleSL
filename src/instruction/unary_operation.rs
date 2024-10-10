@@ -2,7 +2,7 @@ use super::{
     at,
     function::call,
     local_variable::LocalVariables,
-    prefix_op::{not, unary_minus},
+    prefix_op::{indirection, not, unary_minus},
     reduce::{all, any, bitand, bitor, product, sum},
     type_filter::TypeFilter,
     Exec, ExecResult, ExecStop, Instruction, InstructionWithStr, Recreate,
@@ -56,6 +56,7 @@ pub enum UnaryOperator {
     Not,
     UnaryMinus,
     Return,
+    Indirection,
 }
 
 impl Exec for UnaryOperation {
@@ -71,6 +72,7 @@ impl Exec for UnaryOperation {
             UnaryOperator::Not => not::exec(var),
             UnaryOperator::UnaryMinus => unary_minus::exec(var),
             UnaryOperator::Return => return Err(ExecStop::Return(var)),
+            UnaryOperator::Indirection => indirection::exec(var),
         })
     }
 }
@@ -90,11 +92,9 @@ impl Recreate for UnaryOperation {
             UnaryOperator::Product => product::recreate(instruction),
             UnaryOperator::Not => not::create_from_instruction(instruction),
             UnaryOperator::UnaryMinus => unary_minus::create_from_instruction(instruction),
-            UnaryOperator::Return => UnaryOperation {
-                instruction,
-                op: UnaryOperator::Return,
+            op @ (UnaryOperator::Return | UnaryOperator::Indirection) => {
+                UnaryOperation { instruction, op }.into()
             }
-            .into(),
         })
     }
 }
@@ -108,6 +108,7 @@ impl ReturnType for UnaryOperation {
             UnaryOperator::Sum | UnaryOperator::Product => return_type.element_type().unwrap(),
             UnaryOperator::Not | UnaryOperator::UnaryMinus => return_type,
             UnaryOperator::Return => Type::Never,
+            UnaryOperator::Indirection => indirection::return_type(return_type),
         }
     }
 }

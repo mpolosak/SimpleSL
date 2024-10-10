@@ -191,6 +191,20 @@ impl Type {
         }
     }
 
+    /// Returns type of element of mut
+    pub fn mut_element_type(&self) -> Option<Type> {
+        match self {
+            Type::Mut(element) => Some(element.as_ref().clone()),
+            Type::Multi(multi) => {
+                let mut iter = multi.iter();
+                let first = iter.next().unwrap().element_type()?;
+                iter.map(Self::mut_element_type)
+                    .try_fold(first, |acc, curr| Some(acc | curr?))
+            }
+            _ => None,
+        }
+    }
+
     /// Returns true if self is a function, false otherwise
     pub fn is_function(&self) -> bool {
         match self {
@@ -205,6 +219,15 @@ impl Type {
         match self {
             Self::Tuple(_) => true,
             Self::Multi(multi) => multi.iter().all(Self::is_tuple),
+            _ => false,
+        }
+    }
+
+    /// Returns true if self is a mut, false otherwise
+    pub fn is_mut(&self) -> bool {
+        match self {
+            Self::Mut(_) => true,
+            Self::Multi(multi) => multi.iter().all(Self::is_mut),
             _ => false,
         }
     }
