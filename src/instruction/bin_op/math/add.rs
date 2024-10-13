@@ -28,7 +28,7 @@ pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Erro
     .into())
 }
 
-fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
+pub(crate) fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
     let lhs = lhs.clone();
     let rhs = rhs.clone();
     var_type!((lhs, rhs)).matches(&ACCEPTED_TYPE)

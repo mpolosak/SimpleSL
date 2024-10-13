@@ -15,6 +15,7 @@ use crate::{
     variable::{ReturnType, Type},
     Error, ExecError, Interpreter,
 };
+use assign::{assign_add, assign_subtract};
 pub use bitwise::{bitwise_and, bitwise_or, xor};
 use lazy_static::lazy_static;
 pub use logic::{and, or};
@@ -75,6 +76,8 @@ pub enum BinOperator {
     At,
     FunctionCall,
     Assign,
+    AssignAdd,
+    AssignSubtract,
 }
 
 impl Exec for BinOperation {
@@ -110,6 +113,8 @@ impl Exec for BinOperation {
             BinOperator::At => at::exec(lhs, rhs)?,
             BinOperator::FunctionCall => call::exec(lhs, rhs)?,
             BinOperator::Assign => assign::exec(lhs, rhs),
+            BinOperator::AssignAdd => assign_add::exec(lhs, rhs),
+            BinOperator::AssignSubtract => assign_subtract::exec(lhs, rhs),
             _ => unreachable!(),
         })
     }
@@ -149,7 +154,9 @@ impl Recreate for BinOperation {
             op @ (BinOperator::Filter
             | BinOperator::Map
             | BinOperator::FunctionCall
-            | BinOperator::Assign) => Ok(Self { lhs, rhs, op }.into()),
+            | BinOperator::Assign
+            | BinOperator::AssignAdd
+            | BinOperator::AssignSubtract) => Ok(Self { lhs, rhs, op }.into()),
         }
     }
 }
@@ -188,6 +195,8 @@ impl ReturnType for BinOperation {
             BinOperator::At => lhs.index_result().unwrap(),
             BinOperator::FunctionCall => lhs.return_type().unwrap(),
             BinOperator::Assign => rhs,
+            BinOperator::AssignAdd => add::return_type(lhs.mut_element_type().unwrap(), rhs),
+            BinOperator::AssignSubtract => add::return_type(lhs.mut_element_type().unwrap(), rhs),
         }
     }
 }
@@ -283,6 +292,8 @@ impl InstructionWithStr {
             Rule::and => and::create_op(lhs, rhs),
             Rule::or => or::create_op(lhs, rhs),
             Rule::assign => assign::create_op(lhs, rhs),
+            Rule::assign_add => assign_add::create_op(lhs, rhs),
+            Rule::assign_subtract => assign_subtract::create_op(lhs, rhs),
             rule => unexpected!(rule),
         }?;
         Ok(Self { instruction, str })
