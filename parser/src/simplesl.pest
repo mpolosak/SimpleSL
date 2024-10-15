@@ -34,10 +34,10 @@ primary = _{ ident | var | expr_in_brackets }
   expr_in_brackets = _{ "(" ~ expr ~ ")" }
 atom = _{ prefix_op? ~ primary ~ postfix_op? }
 expr = { (atom ~ (bin_op ~ atom)*) }
-bin_op = _{ comp| assigns | and | or | bitwise_and | bitwise_or | xor | pow | multiply | divide
+bin_op = _{ equal | assigns | comp | and | or | bitwise_and | bitwise_or | xor | pow | multiply | divide
           | add | subtract | modulo | map | filter | reduce }
-  comp = _{ equal | not_equal | greater_equal | greater | lower_equal | lower }
-    equal = { "==" }
+  equal = { "==" }
+  comp = _{ not_equal | greater_equal | greater | lower_equal | lower }
     not_equal = { "!=" }
     lshift = { "<<" }
     rshift = { ">>" }
@@ -59,18 +59,25 @@ bin_op = _{ comp| assigns | and | or | bitwise_and | bitwise_or | xor | pow | mu
   map = { "@" }
   filter = { "?" }
   reduce = { "$" ~ expr }
-  assigns = _{ assign | assign_add | assign_subtract | assing_multiply | assign_divide | assign_modulo }
+  assigns = _{ assign | assign_add | assign_subtract | assing_multiply | assign_divide
+              | assign_modulo | assign_lshift | assign_rshift | assign_bitwise_and
+              | assign_bitwise_or }
     assign = { "=" }
     assign_add = { "+=" }
     assign_subtract = { "-=" }
     assing_multiply = { "*=" }
     assign_divide = { "/=" }
     assign_modulo = { "%=" }
+    assign_lshift = { "<<=" }
+    assign_rshift = { ">>=" }
+    assign_bitwise_and = { "&=" }
+    assign_bitwise_or = { "|=" }
 prefix_op = _{not | unary_minus | indirection }
   not = { "!" }
   unary_minus = { "-" }
   indirection = { "*" }
-postfix_op = _{ type_filter | at | function_call | sum | product | all | reduce_any | bitand_reduce | bitor_reduce  }
+postfix_op = _{ type_filter | at | function_call | sum | product | all | reduce_any | bitand_reduce
+               | bitor_reduce }
   type_filter = { "?" ~ type }
   at = { "[" ~ expr ~ "]"  }
   function_call = {"("~expression_list?~")"}
