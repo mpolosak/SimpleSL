@@ -15,7 +15,6 @@ use crate::{
     variable::{ReturnType, Type},
     Error, ExecError, Interpreter,
 };
-use assign::{assign_add, assign_subtract};
 pub use bitwise::{bitwise_and, bitwise_or, xor};
 use lazy_static::lazy_static;
 pub use logic::{and, or};
@@ -78,6 +77,9 @@ pub enum BinOperator {
     Assign,
     AssignAdd,
     AssignSubtract,
+    AssignMultiply,
+    AssignDivide,
+    AssignModulo,
 }
 
 impl Exec for BinOperation {
@@ -112,9 +114,12 @@ impl Exec for BinOperation {
             BinOperator::Map => map::exec(lhs, rhs)?,
             BinOperator::At => at::exec(lhs, rhs)?,
             BinOperator::FunctionCall => call::exec(lhs, rhs)?,
-            BinOperator::Assign => assign::exec(lhs, rhs),
-            BinOperator::AssignAdd => assign_add::exec(lhs, rhs),
-            BinOperator::AssignSubtract => assign_subtract::exec(lhs, rhs),
+            BinOperator::Assign => assign::exec(lhs, rhs, |_, b| b),
+            BinOperator::AssignAdd => assign::exec(lhs, rhs, add::exec),
+            BinOperator::AssignSubtract => assign::exec(lhs, rhs, subtract::exec),
+            BinOperator::AssignMultiply => assign::exec(lhs, rhs, multiply::exec),
+            BinOperator::AssignDivide => assign::try_exec(lhs, rhs, divide::exec)?,
+            BinOperator::AssignModulo => assign::try_exec(lhs, rhs, modulo::exec)?,
             _ => unreachable!(),
         })
     }
@@ -151,12 +156,7 @@ impl Recreate for BinOperation {
             BinOperator::LShift => lshift::create_from_instructions(lhs, rhs),
             BinOperator::RShift => rshift::create_from_instructions(lhs, rhs),
             BinOperator::At => at::create_from_instructions(lhs, rhs),
-            op @ (BinOperator::Filter
-            | BinOperator::Map
-            | BinOperator::FunctionCall
-            | BinOperator::Assign
-            | BinOperator::AssignAdd
-            | BinOperator::AssignSubtract) => Ok(Self { lhs, rhs, op }.into()),
+            op => Ok(Self { lhs, rhs, op }.into()),
         }
     }
 }
@@ -195,8 +195,7 @@ impl ReturnType for BinOperation {
             BinOperator::At => lhs.index_result().unwrap(),
             BinOperator::FunctionCall => lhs.return_type().unwrap(),
             BinOperator::Assign => rhs,
-            BinOperator::AssignAdd => add::return_type(lhs.mut_element_type().unwrap(), rhs),
-            BinOperator::AssignSubtract => add::return_type(lhs.mut_element_type().unwrap(), rhs),
+            _ => lhs.mut_element_type().unwrap(),
         }
     }
 }
@@ -291,9 +290,78 @@ impl InstructionWithStr {
             Rule::lshift => lshift::create_op(lhs, rhs),
             Rule::and => and::create_op(lhs, rhs),
             Rule::or => or::create_op(lhs, rhs),
-            Rule::assign => assign::create_op(lhs, rhs),
-            Rule::assign_add => assign_add::create_op(lhs, rhs),
-            Rule::assign_subtract => assign_subtract::create_op(lhs, rhs),
+            Rule::assign => assign::create_op(
+                lhs,
+                rhs,
+                "=",
+                BinOperator::Assign,
+                |_, _| true,
+                |_, x| x.clone(),
+            ),
+            Rule::assign_add => assign::create_op(
+                lhs,
+                rhs,
+                "+=",
+                BinOperator::AssignAdd,
+                add::can_be_used,
+                |lhs, rhs| add::return_type(lhs.clone(), rhs.clone()),
+            ),
+            Rule::assign_subtract => assign::create_op(
+                lhs,
+                rhs,
+                "-=",
+                BinOperator::AssignSubtract,
+                |a, b| can_be_used_num(a.clone(), b.clone()),
+                |lhs, rhs| {
+                    if var_type!([]).matches(lhs) {
+                        lhs.clone()
+                    } else {
+                        rhs.clone()
+                    }
+                },
+            ),
+            Rule::assing_multiply => assign::create_op(
+                lhs,
+                rhs,
+                "*=",
+                BinOperator::AssignMultiply,
+                |a, b| can_be_used_num(a.clone(), b.clone()),
+                |lhs, rhs| {
+                    if var_type!([]).matches(lhs) {
+                        lhs.clone()
+                    } else {
+                        rhs.clone()
+                    }
+                },
+            ),
+            Rule::assign_divide => assign::create_op(
+                lhs,
+                rhs,
+                "/=",
+                BinOperator::AssignDivide,
+                |a, b| can_be_used_num(a.clone(), b.clone()),
+                |lhs, rhs| {
+                    if var_type!([]).matches(lhs) {
+                        lhs.clone()
+                    } else {
+                        rhs.clone()
+                    }
+                },
+            ),
+            Rule::assign_modulo => assign::create_op(
+                lhs,
+                rhs,
+                "%=",
+                BinOperator::AssignModulo,
+                |a, b| can_be_used_int(a.clone(), b.clone()),
+                |lhs, rhs| {
+                    if var_type!([]).matches(lhs) {
+                        lhs.clone()
+                    } else {
+                        rhs.clone()
+                    }
+                },
+            ),
             rule => unexpected!(rule),
         }?;
         Ok(Self { instruction, str })

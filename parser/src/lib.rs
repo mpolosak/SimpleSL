@@ -12,7 +12,9 @@ lazy_static::lazy_static! {
 
         // Precedence is defined lowest to highest
         PrattParser::new()
-            .op(Op::infix(assign, Right) | Op::infix(assign_add, Right) | Op::infix(assign_subtract, Right) )
+            .op(Op::infix(assign, Right) | Op::infix(assign_add, Right)
+                | Op::infix(assign_subtract, Right) | Op::infix(assing_multiply, Right)
+                | Op::infix(assign_divide, Right) | Op::infix(assign_modulo, Right))
             .op(Op::infix(or, Left))
             .op(Op::infix(and, Left))
             .op(Op::infix(equal, Left) | Op::infix(not_equal, Left) | Op::infix(lower, Left)

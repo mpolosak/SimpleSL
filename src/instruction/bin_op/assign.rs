@@ -1,31 +1,53 @@
+use super::{BinOperation, BinOperator};
 use crate::{
     instruction::Instruction,
-    variable::{ReturnType, Variable},
-    Error,
+    variable::{ReturnType, Type, Variable},
+    Error, ExecError,
 };
-pub mod assign_add;
-pub mod assign_subtract;
-use super::{BinOperation, BinOperator};
 
-pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
+pub fn create_op<T, S>(
+    lhs: Instruction,
+    rhs: Instruction,
+    symbol: &'static str,
+    op: BinOperator,
+    can_be_used: T,
+    return_type: S,
+) -> Result<Instruction, Error>
+where
+    T: FnOnce(&Type, &Type) -> bool,
+    S: FnOnce(&Type, &Type) -> Type,
+{
     let lhs_type = lhs.return_type();
     let rhs_type = rhs.return_type();
     let Some(var_type) = lhs_type.mut_element_type() else {
-        return Err(Error::CannotDo2(lhs_type, "=", rhs_type));
+        return Err(Error::CannotDo2(lhs_type, symbol, rhs_type));
     };
-    if !rhs_type.matches(&var_type) {
-        return Err(Error::CannotDo2(lhs_type, "=", rhs_type));
+    let can_be_used = can_be_used(&var_type, &rhs_type);
+    let return_type = return_type(&var_type, &rhs_type);
+    if !can_be_used || !return_type.matches(&var_type) {
+        return Err(Error::CannotDo2(lhs_type, symbol, rhs_type));
     }
-    Ok(BinOperation {
-        lhs,
-        rhs,
-        op: BinOperator::Assign,
-    }
-    .into())
+    Ok(BinOperation { lhs, rhs, op }.into())
 }
 
-pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
+pub fn exec<T: FnOnce(Variable, Variable) -> Variable>(
+    lhs: Variable,
+    rhs: Variable,
+    function: T,
+) -> Variable {
     let lhs = lhs.into_mut().unwrap();
-    *lhs.variable.write().unwrap() = rhs.clone();
-    rhs
+    let mut lhs = lhs.variable.write().unwrap();
+    *lhs = function(lhs.clone(), rhs);
+    lhs.clone()
+}
+
+pub fn try_exec<T: FnOnce(Variable, Variable) -> Result<Variable, ExecError>>(
+    lhs: Variable,
+    rhs: Variable,
+    function: T,
+) -> Result<Variable, ExecError> {
+    let lhs = lhs.into_mut().unwrap();
+    let mut lhs = lhs.variable.write().unwrap();
+    *lhs = function(lhs.clone(), rhs)?;
+    Ok(lhs.clone())
 }

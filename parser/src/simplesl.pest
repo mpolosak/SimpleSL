@@ -59,12 +59,13 @@ bin_op = _{ comp| assigns | and | or | bitwise_and | bitwise_or | xor | pow | mu
   map = { "@" }
   filter = { "?" }
   reduce = { "$" ~ expr }
-  assigns = _{ assign | assign_add | assign_subtract | assing_multiply | assing_divide }
+  assigns = _{ assign | assign_add | assign_subtract | assing_multiply | assign_divide | assign_modulo }
     assign = { "=" }
     assign_add = { "+=" }
     assign_subtract = { "-=" }
     assing_multiply = { "*=" }
-    assing_divide = { "/=" }
+    assign_divide = { "/=" }
+    assign_modulo = { "%=" }
 prefix_op = _{not | unary_minus | indirection }
   not = { "!" }
   unary_minus = { "-" }
