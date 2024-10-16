@@ -5,7 +5,7 @@ mod r#mut;
 mod try_from;
 mod r#type;
 mod type_of;
-use crate::{function::Function, join_debug, Error};
+use crate::{function::Function, Error};
 use enum_as_inner::EnumAsInner;
 use match_any::match_any;
 use pest::{iterators::Pair, Parser};
@@ -30,6 +30,34 @@ pub enum Variable {
     Void,
 }
 
+impl Variable {
+    fn string(&self, depth: u8) -> String {
+        if depth > 5 {
+            return "..".into();
+        }
+        match_any! {self,
+            Variable::Bool(value)
+            | Variable::Int(value)
+            | Variable::Float(value)
+            | Variable::String(value)
+            | Variable::Function(value) => format!("{value}"),
+            Variable::Array(value) => value.string(depth),
+            Variable::Mut(value) => value.string(depth+1),
+            Variable::Tuple(elements) => format!("({})", elements.iter().map(|v| v.debug(depth+1)).collect::<Box<[_]>>().join(", ")),
+            Variable::Void => format!("()")
+        }
+    }
+
+    fn debug(&self, depth: u8) -> String {
+        match_any! { self,
+            Self::Int(value)
+            | Self::Float(value)
+            | Self::String(value) => format!("{value:?}"),
+            _ => self.string(depth)
+        }
+    }
+}
+
 impl Typed for Variable {
     fn as_type(&self) -> Type {
         match_any! {self,
@@ -49,28 +77,13 @@ impl Typed for Variable {
 
 impl fmt::Display for Variable {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match_any! {self,
-            Variable::Bool(value)
-            | Variable::Int(value)
-            | Variable::Float(value)
-            | Variable::String(value)
-            | Variable::Function(value)
-            | Variable::Array(value)
-            | Variable::Mut(value) => write!(f, "{value}"),
-            Variable::Tuple(elements) => write!(f, "({})", join_debug(elements.as_ref(), ", ")),
-            Variable::Void => write!(f, "()")
-        }
+        write!(f, "{}", self.string(0))
     }
 }
 
 impl fmt::Debug for Variable {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match_any! { self,
-            Self::Int(value)
-            | Self::Float(value)
-            | Self::String(value) => write!(f, "{value:?}"),
-            other => write!(f, "{other}")
-        }
+        write!(f, "{}", self.debug(0))
     }
 }
 

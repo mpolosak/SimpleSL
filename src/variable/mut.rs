@@ -6,9 +6,19 @@ pub struct Mut {
     pub variable: RwLock<Variable>,
 }
 
+impl Mut {
+    pub(crate) fn string(&self, depth: u8) -> String {
+        format!(
+            "mut {} {}",
+            self.var_type,
+            self.variable.read().unwrap().string(depth)
+        )
+    }
+}
+
 impl Display for Mut {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "mut {} {}", self.var_type, self.variable.read().unwrap())
+        write!(f, "{}", self.string(0))
     }
 }
 
