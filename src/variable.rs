@@ -94,7 +94,8 @@ impl PartialEq for Variable {
             | (Variable::Float(value1), Variable::Float(value2))
             | (Variable::String(value1), Variable::String(value2))
             | (Variable::Tuple(value1), Variable::Tuple(value2)) => value1 == value2,
-            (Variable::Function(value1), Variable::Function(value2)) => Arc::ptr_eq(value1, value2),
+            (Variable::Function(value1), Variable::Function(value2))
+            | (Variable::Mut(value1), Variable::Mut(value2)) => Arc::ptr_eq(value1, value2),
             (Variable::Void, Variable::Void) => true,
             _ => false
         }
