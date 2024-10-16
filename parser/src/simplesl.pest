@@ -61,7 +61,7 @@ bin_op = _{ equal | assigns | comp | and | or | bitwise_and | bitwise_or | xor |
   reduce = { "$" ~ expr }
   assigns = _{ assign | assign_add | assign_subtract | assing_multiply | assign_divide
               | assign_modulo | assign_lshift | assign_rshift | assign_bitwise_and
-              | assign_bitwise_or }
+              | assign_bitwise_or | assign_xor | assign_pow }
     assign = { "=" }
     assign_add = { "+=" }
     assign_subtract = { "-=" }
@@ -72,6 +72,8 @@ bin_op = _{ equal | assigns | comp | and | or | bitwise_and | bitwise_or | xor |
     assign_rshift = { ">>=" }
     assign_bitwise_and = { "&=" }
     assign_bitwise_or = { "|=" }
+    assign_xor = { "^=" }
+    assign_pow = { "**=" }
 prefix_op = _{not | unary_minus | indirection }
   not = { "!" }
   unary_minus = { "-" }

@@ -84,6 +84,8 @@ pub enum BinOperator {
     AssignRShift,
     AssignBitwiseAnd,
     AssignBitwiseOr,
+    AssignXor,
+    AssignPow,
 }
 
 impl Exec for BinOperation {
@@ -128,6 +130,8 @@ impl Exec for BinOperation {
             BinOperator::AssignRShift => assign::try_exec(lhs, rhs, rshift::exec)?,
             BinOperator::AssignBitwiseAnd => assign::exec(lhs, rhs, bitwise_and::exec),
             BinOperator::AssignBitwiseOr => assign::exec(lhs, rhs, bitwise_or::exec),
+            BinOperator::AssignXor => assign::exec(lhs, rhs, xor::exec),
+            BinOperator::AssignPow => assign::try_exec(lhs, rhs, pow::exec)?,
             _ => unreachable!(),
         })
     }
@@ -392,6 +396,22 @@ impl InstructionWithStr {
                 "|=",
                 BinOperator::AssignBitwiseOr,
                 bitwise_can_be_used,
+                return_type,
+            ),
+            Rule::assign_xor => assign::create_op(
+                lhs,
+                rhs,
+                "^=",
+                BinOperator::AssignXor,
+                assign_can_be_used_int,
+                return_type,
+            ),
+            Rule::assign_pow => assign::create_op(
+                lhs,
+                rhs,
+                "**=",
+                BinOperator::AssignPow,
+                assign_can_be_used_num,
                 return_type,
             ),
             rule => unexpected!(rule),
