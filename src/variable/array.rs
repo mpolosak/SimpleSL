@@ -1,6 +1,5 @@
 use super::{Type, Typed, Variable};
 use crate as simplesl;
-use crate::join_debug;
 use simplesl_macros::var_type;
 use std::{
     fmt::{self, Display},
@@ -49,6 +48,17 @@ impl Array {
     pub fn element_type(&self) -> &Type {
         &self.element_type
     }
+
+    pub(crate) fn string(&self, depth: u8) -> String {
+        format!(
+            "[{}]",
+            self.elements
+                .iter()
+                .map(|v| v.debug(depth + 1))
+                .collect::<Box<[_]>>()
+                .join(", ")
+        )
+    }
 }
 
 impl Typed for Array {
@@ -68,7 +78,7 @@ impl Deref for Array {
 
 impl Display for Array {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "[{}]", join_debug(self.as_ref(), ", "))
+        write!(f, "{}", self.string(0))
     }
 }
 
@@ -84,5 +94,26 @@ impl<T: Into<Arc<[Variable]>>> From<T> for Array {
             element_type,
             elements,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::variable::{Array, Variable};
+
+    #[test]
+    fn array_display() {
+        assert_eq!(format!("{}", Array::from([])), "[]");
+        assert_eq!(
+            format!(
+                "{}",
+                Array::from([
+                    Variable::Int(5),
+                    Variable::Float(15.5),
+                    Variable::String("Abc".into())
+                ])
+            ),
+            r#"[5, 15.5, "Abc"]"#
+        );
     }
 }

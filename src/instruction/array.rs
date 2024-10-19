@@ -32,7 +32,7 @@ impl Array {
             .iter()
             .map(ReturnType::return_type)
             .reduce(Type::concat)
-            .unwrap();
+            .unwrap_or(Type::Never);
         Ok(Self {
             instructions,
             element_type,

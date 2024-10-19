@@ -7,6 +7,7 @@
 |            | ()           | Function call               |               |
 | 2          | !            | NOT                         | Right-to-left |
 |            | -            | Unary minus                 |               |
+|            | *            | Indirection                 |               |
 | 3          | @            | Array map                   | Left-to-right |
 |            | ?            | Array filtering             |               |
 |            | $ expression | Array reducing              |               |
@@ -35,6 +36,18 @@
 |            | >=           | Greater or equal            |               |
 | 12         | &&           | Short-circuting logical AND |               |
 | 13         | \|\|         | Short-circuting logical OR  |               |
+| 14         | =            | Assignment                  | Right-to-left |
+|            | +=           | Addition and assignment     |               |
+|            | -=           | Subtraction and assign      |               |
+|            | *=           | Multiplication and assignment
+|            | /=           | Division and assignment     |               |
+|            | %=           | Remainder and assignment    |               |
+|            | **=          | Exponentiation and assignment
+|            | &=           | Bitwise AND and assignment  |               |
+|            | |=           | Bitwise OR and assignment   |               |
+|            | ^=           | Bitwise XOR and assignment  |               |
+|            | <<=          | Left shift and assignment   |               |
+|            | >>=          | Right shift and assignment  |               |
 
 ## [] - Array/string indexing
 ```
@@ -67,6 +80,11 @@ Calls the function with given arguments.
 | ------------ | ------------ | ---------------------------------------- |
 | int \| float | int\|float   | Additive inverse                         |
 | [int\|float] | [int\|float] | Returns an array containing results of calling - operator on each element of the given array
+
+## * - Indirection
+| operand | result | description |
+| ------- | ------ | ------------|
+| mut T   | T      | Returns value contained in mut
 
 ## @ - Array maping operator
 | lhs         | rhs                                            | result |
@@ -326,3 +344,8 @@ Returns true if the element on the right is not equal to the element on the left
 | lhs     | rhs     | result     | description |
 | ------- | ------- | ---------- | ----------- |
 | bool    | bool    | bool       | false if both lhs and rhs are false, true - otherwise
+
+## = - Assign
+| lhs        | rhs | result | description |
+| ---------- | --- | ------ | ----------- |
+| mut (T\|S) | T   | T      | assign value on right to mut on left returns value on right

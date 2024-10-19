@@ -25,6 +25,7 @@ pub enum Type {
     Tuple(Arc<[Type]>),
     Void,
     Multi(MultiType),
+    Mut(Arc<Type>),
     Any,
     Never,
 }
@@ -190,6 +191,20 @@ impl Type {
         }
     }
 
+    /// Returns type of element of mut
+    pub fn mut_element_type(&self) -> Option<Type> {
+        match self {
+            Type::Mut(element) => Some(element.as_ref().clone()),
+            Type::Multi(multi) => {
+                let mut iter = multi.iter();
+                let first = iter.next().unwrap().element_type()?;
+                iter.map(Self::mut_element_type)
+                    .try_fold(first, |acc, curr| Some(acc | curr?))
+            }
+            _ => None,
+        }
+    }
+
     /// Returns true if self is a function, false otherwise
     pub fn is_function(&self) -> bool {
         match self {
@@ -204,6 +219,15 @@ impl Type {
         match self {
             Self::Tuple(_) => true,
             Self::Multi(multi) => multi.iter().all(Self::is_tuple),
+            _ => false,
+        }
+    }
+
+    /// Returns true if self is a mut, false otherwise
+    pub fn is_mut(&self) -> bool {
+        match self {
+            Self::Mut(_) => true,
+            Self::Multi(multi) => multi.iter().all(Self::is_mut),
             _ => false,
         }
     }
@@ -240,6 +264,12 @@ impl Display for Type {
             Self::Tuple(types) => write!(f, "({})", join(types.as_ref(), ", ")),
             Self::Void => write!(f, "()"),
             Self::Multi(types) => write!(f, "{types}"),
+            Self::Mut(var_type) if matches!(var_type.as_ref(), Type::Multi(_)) => {
+                write!(f, "mut ({var_type})")
+            }
+            Self::Mut(var_type) => {
+                write!(f, "mut {var_type}")
+            }
             Self::Any => write!(f, "any"),
             Self::Never => write!(f, "!"),
         }
@@ -286,6 +316,10 @@ impl From<Pair<'_, Rule>> for Type {
                 .unwrap(),
             Rule::any => Self::Any,
             Rule::never => Self::Never,
+            Rule::mut_type => {
+                let element_type = pair.into_inner().next().map(Type::from).unwrap();
+                Self::Mut(element_type.into())
+            }
             rule => panic!("Type cannot be built from rule: {rule:?}"),
         }
     }

@@ -4,7 +4,7 @@
 import path
 ```
 path is string literal
-Imports code from given path. Importing happens during parsing. Import statement is replaced with code written from file.
+Imports code from given path. Importing happens during parsing. Import statement is replaced with code read from file.
 
 ## return
 ```
@@ -30,3 +30,9 @@ match expression {
     => instruction // matches all expressions
 }
 ```
+
+## variable declaration
+```
+ident := statment
+```
+Declares new variable with given value

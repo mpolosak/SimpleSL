@@ -1,3 +1,4 @@
+mod assign;
 mod bitwise;
 mod filter;
 mod logic;
@@ -73,6 +74,18 @@ pub enum BinOperator {
     Map,
     At,
     FunctionCall,
+    Assign,
+    AssignAdd,
+    AssignSubtract,
+    AssignMultiply,
+    AssignDivide,
+    AssignModulo,
+    AssignLShift,
+    AssignRShift,
+    AssignBitwiseAnd,
+    AssignBitwiseOr,
+    AssignXor,
+    AssignPow,
 }
 
 impl Exec for BinOperation {
@@ -107,6 +120,18 @@ impl Exec for BinOperation {
             BinOperator::Map => map::exec(lhs, rhs)?,
             BinOperator::At => at::exec(lhs, rhs)?,
             BinOperator::FunctionCall => call::exec(lhs, rhs)?,
+            BinOperator::Assign => assign::exec(lhs, rhs, |_, b| b),
+            BinOperator::AssignAdd => assign::exec(lhs, rhs, add::exec),
+            BinOperator::AssignSubtract => assign::exec(lhs, rhs, subtract::exec),
+            BinOperator::AssignMultiply => assign::exec(lhs, rhs, multiply::exec),
+            BinOperator::AssignDivide => assign::try_exec(lhs, rhs, divide::exec)?,
+            BinOperator::AssignModulo => assign::try_exec(lhs, rhs, modulo::exec)?,
+            BinOperator::AssignLShift => assign::try_exec(lhs, rhs, lshift::exec)?,
+            BinOperator::AssignRShift => assign::try_exec(lhs, rhs, rshift::exec)?,
+            BinOperator::AssignBitwiseAnd => assign::exec(lhs, rhs, bitwise_and::exec),
+            BinOperator::AssignBitwiseOr => assign::exec(lhs, rhs, bitwise_or::exec),
+            BinOperator::AssignXor => assign::exec(lhs, rhs, xor::exec),
+            BinOperator::AssignPow => assign::try_exec(lhs, rhs, pow::exec)?,
             _ => unreachable!(),
         })
     }
@@ -143,9 +168,7 @@ impl Recreate for BinOperation {
             BinOperator::LShift => lshift::create_from_instructions(lhs, rhs),
             BinOperator::RShift => rshift::create_from_instructions(lhs, rhs),
             BinOperator::At => at::create_from_instructions(lhs, rhs),
-            op @ (BinOperator::Filter | BinOperator::Map | BinOperator::FunctionCall) => {
-                Ok(Self { lhs, rhs, op }.into())
-            }
+            op => Ok(Self { lhs, rhs, op }.into()),
         }
     }
 }
@@ -179,10 +202,12 @@ impl ReturnType for BinOperation {
                     rhs
                 }
             }
-            BinOperator::Filter => self.lhs.return_type(),
+            BinOperator::Filter => lhs,
             BinOperator::Map => map::return_type(rhs),
             BinOperator::At => lhs.index_result().unwrap(),
             BinOperator::FunctionCall => lhs.return_type().unwrap(),
+            BinOperator::Assign => rhs,
+            _ => lhs.mut_element_type().unwrap(),
         }
     }
 }
@@ -245,6 +270,22 @@ impl InstructionWithStr {
             });
         }
         let (lhs, rhs) = (lhs.instruction, rhs.instruction);
+        fn return_type(lhs: &Type, rhs: &Type) -> Type {
+            if var_type!([]).matches(lhs) {
+                lhs.clone()
+            } else {
+                rhs.clone()
+            }
+        }
+        fn assign_can_be_used_num(a: &Type, b: &Type) -> bool {
+            can_be_used_num(a.clone(), b.clone())
+        }
+        fn assign_can_be_used_int(a: &Type, b: &Type) -> bool {
+            can_be_used_int(a.clone(), b.clone())
+        }
+        fn bitwise_can_be_used(a: &Type, b: &Type) -> bool {
+            bitwise::can_be_used(a.clone(), b.clone())
+        }
         let instruction = match rule {
             Rule::pow => pow::create_op(lhs, rhs),
             Rule::multiply => multiply::create_op(lhs, rhs),
@@ -277,6 +318,102 @@ impl InstructionWithStr {
             Rule::lshift => lshift::create_op(lhs, rhs),
             Rule::and => and::create_op(lhs, rhs),
             Rule::or => or::create_op(lhs, rhs),
+            Rule::assign => assign::create_op(
+                lhs,
+                rhs,
+                "=",
+                BinOperator::Assign,
+                |_, _| true,
+                |_, x| x.clone(),
+            ),
+            Rule::assign_add => assign::create_op(
+                lhs,
+                rhs,
+                "+=",
+                BinOperator::AssignAdd,
+                add::can_be_used,
+                |lhs, rhs| add::return_type(lhs.clone(), rhs.clone()),
+            ),
+            Rule::assign_subtract => assign::create_op(
+                lhs,
+                rhs,
+                "-=",
+                BinOperator::AssignSubtract,
+                assign_can_be_used_num,
+                return_type,
+            ),
+            Rule::assing_multiply => assign::create_op(
+                lhs,
+                rhs,
+                "*=",
+                BinOperator::AssignMultiply,
+                assign_can_be_used_num,
+                return_type,
+            ),
+            Rule::assign_divide => assign::create_op(
+                lhs,
+                rhs,
+                "/=",
+                BinOperator::AssignDivide,
+                assign_can_be_used_num,
+                return_type,
+            ),
+            Rule::assign_modulo => assign::create_op(
+                lhs,
+                rhs,
+                "%=",
+                BinOperator::AssignModulo,
+                assign_can_be_used_int,
+                return_type,
+            ),
+            Rule::assign_lshift => assign::create_op(
+                lhs,
+                rhs,
+                "<<=",
+                BinOperator::AssignLShift,
+                assign_can_be_used_int,
+                return_type,
+            ),
+            Rule::assign_rshift => assign::create_op(
+                lhs,
+                rhs,
+                ">>=",
+                BinOperator::AssignRShift,
+                assign_can_be_used_int,
+                return_type,
+            ),
+            Rule::assign_bitwise_and => assign::create_op(
+                lhs,
+                rhs,
+                "&=",
+                BinOperator::AssignBitwiseAnd,
+                bitwise_can_be_used,
+                return_type,
+            ),
+            Rule::assign_bitwise_or => assign::create_op(
+                lhs,
+                rhs,
+                "|=",
+                BinOperator::AssignBitwiseOr,
+                bitwise_can_be_used,
+                return_type,
+            ),
+            Rule::assign_xor => assign::create_op(
+                lhs,
+                rhs,
+                "^=",
+                BinOperator::AssignXor,
+                assign_can_be_used_int,
+                return_type,
+            ),
+            Rule::assign_pow => assign::create_op(
+                lhs,
+                rhs,
+                "**=",
+                BinOperator::AssignPow,
+                assign_can_be_used_num,
+                return_type,
+            ),
             rule => unexpected!(rule),
         }?;
         Ok(Self { instruction, str })

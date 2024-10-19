@@ -1,10 +1,11 @@
 mod array;
 mod function_type;
 mod multi_type;
+mod r#mut;
 mod try_from;
 mod r#type;
 mod type_of;
-use crate::{function::Function, join_debug, Error};
+use crate::{function::Function, Error};
 use enum_as_inner::EnumAsInner;
 use match_any::match_any;
 use pest::{iterators::Pair, Parser};
@@ -12,7 +13,9 @@ pub use r#type::{ReturnType, Type, Typed};
 use simplesl_parser::{unexpected, Rule, SimpleSLParser};
 use std::{fmt, io, str::FromStr, sync::Arc};
 pub use typle::typle;
-pub use {array::Array, function_type::FunctionType, multi_type::MultiType, type_of::TypeOf};
+pub use {
+    array::Array, function_type::FunctionType, multi_type::MultiType, r#mut::Mut, type_of::TypeOf,
+};
 
 #[derive(Clone, EnumAsInner)]
 pub enum Variable {
@@ -23,7 +26,36 @@ pub enum Variable {
     Function(Arc<Function>),
     Array(Arc<Array>),
     Tuple(Arc<[Variable]>),
+    Mut(Arc<Mut>),
     Void,
+}
+
+impl Variable {
+    fn string(&self, depth: u8) -> String {
+        if depth > 5 {
+            return "..".into();
+        }
+        match_any! {self,
+            Variable::Bool(value)
+            | Variable::Int(value)
+            | Variable::Float(value)
+            | Variable::String(value)
+            | Variable::Function(value) => format!("{value}"),
+            Variable::Array(value) => value.string(depth),
+            Variable::Mut(value) => value.string(depth+1),
+            Variable::Tuple(elements) => format!("({})", elements.iter().map(|v| v.debug(depth+1)).collect::<Box<[_]>>().join(", ")),
+            Variable::Void => format!("()")
+        }
+    }
+
+    fn debug(&self, depth: u8) -> String {
+        match_any! { self,
+            Self::Int(value)
+            | Self::Float(value)
+            | Self::String(value) => format!("{value:?}"),
+            _ => self.string(depth)
+        }
+    }
 }
 
 impl Typed for Variable {
@@ -33,7 +65,7 @@ impl Typed for Variable {
             Variable::Int(_) => Type::Int,
             Variable::Float(_) => Type::Float,
             Variable::String(_) => Type::String,
-            Variable::Function(var) | Variable::Array(var) => var.as_type(),
+            Variable::Function(var) | Variable::Array(var) | Variable::Mut(var) => var.as_type(),
             Variable::Tuple(elements) => {
                 let types = elements.iter().map(Variable::as_type).collect();
                 Type::Tuple(types)
@@ -45,27 +77,13 @@ impl Typed for Variable {
 
 impl fmt::Display for Variable {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match_any! {self,
-            Variable::Bool(value)
-            | Variable::Int(value)
-            | Variable::Float(value)
-            | Variable::String(value)
-            | Variable::Function(value)
-            | Variable::Array(value) => write!(f, "{value}"),
-            Variable::Tuple(elements) => write!(f, "({})", join_debug(elements.as_ref(), ", ")),
-            Variable::Void => write!(f, "()")
-        }
+        write!(f, "{}", self.string(0))
     }
 }
 
 impl fmt::Debug for Variable {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match_any! { self,
-            Self::Int(value)
-            | Self::Float(value)
-            | Self::String(value) => write!(f, "{value:?}"),
-            other => write!(f, "{other}")
-        }
+        write!(f, "{}", self.debug(0))
     }
 }
 
@@ -89,7 +107,8 @@ impl PartialEq for Variable {
             | (Variable::Float(value1), Variable::Float(value2))
             | (Variable::String(value1), Variable::String(value2))
             | (Variable::Tuple(value1), Variable::Tuple(value2)) => value1 == value2,
-            (Variable::Function(value1), Variable::Function(value2)) => Arc::ptr_eq(value1, value2),
+            (Variable::Function(value1), Variable::Function(value2))
+            | (Variable::Mut(value1), Variable::Mut(value2)) => Arc::ptr_eq(value1, value2),
             (Variable::Void, Variable::Void) => true,
             _ => false
         }
@@ -307,6 +326,18 @@ impl<T: Tuple<Variable>> From<T> for Variable {
     fn from(value: T) -> Self {
         let vars: [Variable; Tuple::LEN] = value.into();
         Variable::Tuple(vars.into())
+    }
+}
+
+impl From<Mut> for Variable {
+    fn from(value: Mut) -> Self {
+        Variable::Mut(value.into())
+    }
+}
+
+impl From<Arc<Mut>> for Variable {
+    fn from(value: Arc<Mut>) -> Self {
+        Variable::Mut(value)
     }
 }
 

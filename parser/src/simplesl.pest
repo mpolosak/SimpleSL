@@ -1,5 +1,5 @@
-ident = @{ !(bool~!(ASCII_ALPHANUMERIC|"_")) ~ !("return"~!(ASCII_ALPHANUMERIC|"_")) ~ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC|"_")* }
-var = _{ bool | float | int | array | array_repeat | string | function | void | tuple }
+ident = @{ !((bool | "mut" | "return")~!(ASCII_ALPHANUMERIC|"_")) ~ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC|"_")* }
+var = _{ bool | float | int | array | array_repeat | string | function | void | tuple | mut }
   bool = _{ true | false }
     true = {"true"}
     false = {"false"}
@@ -29,14 +29,15 @@ var = _{ bool | float | int | array | array_repeat | string | function | void | 
         !("\"" | "\\") ~ ANY
         | "\\" ~ ANY
     }
+  mut = {"mut" ~ type? ~ expr}
 primary = _{ ident | var | expr_in_brackets }
   expr_in_brackets = _{ "(" ~ expr ~ ")" }
 atom = _{ prefix_op? ~ primary ~ postfix_op? }
 expr = { (atom ~ (bin_op ~ atom)*) }
-bin_op = _{ lshift | rshift | comp | and | or | bitwise_and | bitwise_or | xor | pow | multiply | divide | add | subtract | modulo
-            | map | filter | reduce }
-  comp = _{ equal | not_equal | greater_equal | greater | lower_equal | lower }
-    equal = { "==" }
+bin_op = _{ equal | assigns | comp | and | or | bitwise_and | bitwise_or | xor | pow | multiply | divide
+          | add | subtract | modulo | map | filter | reduce }
+  equal = { "==" }
+  comp = _{ not_equal | greater_equal | greater | lower_equal | lower }
     not_equal = { "!=" }
     lshift = { "<<" }
     rshift = { ">>" }
@@ -58,10 +59,27 @@ bin_op = _{ lshift | rshift | comp | and | or | bitwise_and | bitwise_or | xor |
   map = { "@" }
   filter = { "?" }
   reduce = { "$" ~ expr }
-prefix_op = _{not | unary_minus }
+  assigns = _{ assign | assign_add | assign_subtract | assing_multiply | assign_divide
+              | assign_modulo | assign_lshift | assign_rshift | assign_bitwise_and
+              | assign_bitwise_or | assign_xor | assign_pow }
+    assign = { "=" }
+    assign_add = { "+=" }
+    assign_subtract = { "-=" }
+    assing_multiply = { "*=" }
+    assign_divide = { "/=" }
+    assign_modulo = { "%=" }
+    assign_lshift = { "<<=" }
+    assign_rshift = { ">>=" }
+    assign_bitwise_and = { "&=" }
+    assign_bitwise_or = { "|=" }
+    assign_xor = { "^=" }
+    assign_pow = { "**=" }
+prefix_op = _{not | unary_minus | indirection }
   not = { "!" }
   unary_minus = { "-" }
-postfix_op = _{ type_filter | at | function_call | sum | product | all | reduce_any | bitand_reduce | bitor_reduce  }
+  indirection = { "*" }
+postfix_op = _{ type_filter | at | function_call | sum | product | all | reduce_any | bitand_reduce
+               | bitor_reduce }
   type_filter = { "?" ~ type }
   at = { "[" ~ expr ~ "]"  }
   function_call = {"("~expression_list?~")"}
@@ -87,9 +105,9 @@ stm = _{ block | if_else | set_if_else | match | import | return | expr }
 expression_list = _{ (expr ~ ("," ~ expr)*)}
 line = _{ COMMENT* ~ (( return | function_declaration | set | destruct_tuple | stm ) ~  line_end?) }
 	line_end = _{ ";" }
-  function_declaration = { ident ~ "=" ~ function }
-  set = { ident ~ "=" ~ stm}
-  destruct_tuple = { destruct_idents ~ "=" ~ stm }
+  function_declaration = { ident ~ ":=" ~ function }
+  set = { ident ~ ":=" ~ stm}
+  destruct_tuple = { destruct_idents ~ ":=" ~ stm }
     destruct_idents =  {"(" ~ (ident ~ ("," ~ ident)*)? ~ ")"}
 type = _{ multi | standard_types }
   bool_type = {"bool"}
@@ -102,10 +120,11 @@ type = _{ multi | standard_types }
   array_type = { "[" ~ type? ~ "]" }
   tuple_type = {"(" ~ (type ~ ("," ~ type)+) ~ ")"}
   standard_types = _{ bool_type | int_type | float_type | string_type | function_type | void | array_type
-    | tuple_type | any | never }
+    | tuple_type | any | never | mut_type }
   multi = { ( standard_types ) ~ ( "|" ~ standard_types )+ }
   any = {"any"}
   never = {"!"}
+  mut_type = {"mut" ~ return_type}
 // type + ident for macro var_type!
 type_ident = _{ multi_ident | standard_types_ident }
   function_type_ident = {(function_type_params_ident | ident) ~ "->" ~ return_type_ident}
@@ -114,8 +133,9 @@ type_ident = _{ multi_ident | standard_types_ident }
   array_type_ident = { "[" ~ type_ident? ~ "]" }
   tuple_type_ident = {"(" ~ (type_ident ~ ("," ~ type_ident)+) ~ ")"}
   standard_types_ident = _{bool_type | int_type | float_type | string_type | function_type_ident | void
-    | array_type_ident | tuple_type_ident | any | never | ident}
+    | array_type_ident | tuple_type_ident | any | never | mut_type_ident | ident}
   multi_ident = { ( standard_types_ident ) ~ ( "|" ~ standard_types_ident )+ }
+  mut_type_ident = {"mut" ~ return_type_ident}
 input = _{ line* ~ &EOI}
 block_comment = _{"/*" ~ (!"*/" ~ ANY)* ~ "*/"}
 line_comment = _{"//"~(!NEWLINE ~ ANY)*}

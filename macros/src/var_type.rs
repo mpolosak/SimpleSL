@@ -67,6 +67,10 @@ fn type_token_from_pair(pair: Pair<Rule>) -> TokenStream2 {
                 .reduce(|acc, curr| quote!(#acc, # curr));
             quote!([#elements].into())
         }
+        Rule::mut_type_ident => {
+            let return_type = pair.into_inner().next().map(type_token_from_pair).unwrap();
+            quote!(simplesl::variable::Type::Mut(#return_type.into()))
+        }
         rule => unexpected!(rule),
     }
 }

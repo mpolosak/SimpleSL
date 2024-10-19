@@ -7,12 +7,17 @@ pub struct SimpleSLParser;
 
 lazy_static::lazy_static! {
     pub static ref PRATT_PARSER: PrattParser<Rule> = {
-        use pest::pratt_parser::{Assoc::Left, Op};
+        use pest::pratt_parser::{Assoc::{Left, Right}, Op};
         use Rule::*;
 
         // Precedence is defined lowest to highest
         PrattParser::new()
-            // Addition and subtract have equal precedence
+            .op(Op::infix(assign, Right) | Op::infix(assign_add, Right)
+                | Op::infix(assign_subtract, Right) | Op::infix(assing_multiply, Right)
+                | Op::infix(assign_divide, Right) | Op::infix(assign_modulo, Right)
+                | Op::infix(assign_lshift, Right) | Op::infix(assign_rshift, Right)
+                | Op::infix(assign_bitwise_and, Right) | Op::infix(assign_bitwise_or, Right)
+                | Op::infix(assign_xor, Right) | Op::infix(assign_pow, Right))
             .op(Op::infix(or, Left))
             .op(Op::infix(and, Left))
             .op(Op::infix(equal, Left) | Op::infix(not_equal, Left) | Op::infix(lower, Left)
@@ -28,7 +33,7 @@ lazy_static::lazy_static! {
             .op(Op::infix(map, Left) | Op::infix(filter, Left) | Op::infix(reduce, Left)
                 | Op::postfix(sum) | Op::postfix(product) | Op::postfix(all)
                 | Op::postfix(reduce_any) | Op::postfix(bitand_reduce) | Op::postfix(bitor_reduce))
-            .op(Op::prefix(not) | Op::prefix(unary_minus))
+            .op(Op::prefix(not) | Op::prefix(unary_minus) | Op::prefix(indirection))
             .op(Op::postfix(at) | Op::postfix(type_filter) | Op::postfix(function_call))
     };
 }
