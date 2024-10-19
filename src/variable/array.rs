@@ -51,7 +51,7 @@ impl Array {
 
     pub(crate) fn string(&self, depth: u8) -> String {
         format!(
-            "({})",
+            "[{}]",
             self.elements
                 .iter()
                 .map(|v| v.debug(depth + 1))
