@@ -11,7 +11,7 @@ impl Mut {
         format!(
             "mut {} {}",
             self.var_type,
-            self.variable.read().unwrap().string(depth)
+            self.variable.read().unwrap().debug(depth)
         )
     }
 }
