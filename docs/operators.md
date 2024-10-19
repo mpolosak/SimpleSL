@@ -36,7 +36,18 @@
 |            | >=           | Greater or equal            |               |
 | 12         | &&           | Short-circuting logical AND |               |
 | 13         | \|\|         | Short-circuting logical OR  |               |
-| 14         | =            | Assign                      | Right-to-left |
+| 14         | =            | Assignment                  | Right-to-left |
+|            | +=           | Addition and assignment     |               |
+|            | -=           | Subtraction and assign      |               |
+|            | *=           | Multiplication and assignment
+|            | /=           | Division and assignment     |               |
+|            | %=           | Remainder and assignment    |               |
+|            | **=          | Exponentiation and assignment
+|            | &=           | Bitwise AND and assignment  |               |
+|            | |=           | Bitwise OR and assignment   |               |
+|            | ^=           | Bitwise XOR and assignment  |               |
+|            | <<=          | Left shift and assignment   |               |
+|            | >>=          | Right shift and assignment  |               |
 
 ## [] - Array/string indexing
 ```
