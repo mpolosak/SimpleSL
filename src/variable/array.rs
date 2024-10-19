@@ -96,3 +96,24 @@ impl<T: Into<Arc<[Variable]>>> From<T> for Array {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::variable::{Array, Variable};
+
+    #[test]
+    fn array_display() {
+        assert_eq!(format!("{}", Array::from([])), "[]");
+        assert_eq!(
+            format!(
+                "{}",
+                Array::from([
+                    Variable::Int(5),
+                    Variable::Float(15.5),
+                    Variable::String("Abc".into())
+                ])
+            ),
+            r#"[5, 15.5, "Abc"]"#
+        );
+    }
+}
