@@ -36,3 +36,8 @@ match expression {
 ident := statment
 ```
 Declares new variable with given value
+
+## while loop
+```
+while condition statment
+```

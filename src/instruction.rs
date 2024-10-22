@@ -17,6 +17,7 @@ mod set;
 mod tuple;
 mod type_filter;
 mod unary_operation;
+mod r#while;
 use self::{
     array::Array,
     array_repeat::ArrayRepeat,
@@ -39,6 +40,7 @@ use duplicate::duplicate_item;
 use match_any::match_any;
 use pest::iterators::Pair;
 use r#mut::Mut;
+use r#while::While;
 use reduce::Reduce;
 use simplesl_parser::{unexpected, Rule, PRATT_PARSER};
 use std::sync::Arc;
@@ -180,6 +182,7 @@ pub enum Instruction {
     Variable(Variable),
     BinOperation(Arc<BinOperation>),
     UnaryOperation(Arc<UnaryOperation>),
+    While(Arc<While>),
 }
 
 impl Instruction {
@@ -199,6 +202,7 @@ impl Instruction {
             Rule::expr => {
                 InstructionWithStr::new_expression(pair, local_variables).map(|iws| iws.instruction)
             }
+            Rule::r#while => While::create_instruction(pair, local_variables),
             rule => unexpected!(rule),
         }
     }
@@ -217,7 +221,7 @@ impl Exec for Instruction {
             | Self::BinOperation(ins) | Self::FunctionDeclaration(ins) | Self::IfElse(ins)
             | Self::Import(ins) | Self::Match(ins) | Self::Mut(ins) | Self::Reduce(ins)
             | Self::Set(ins) | Self::SetIfElse(ins) | Self::TypeFilter(ins)
-            | Self::UnaryOperation(ins)
+            | Self::UnaryOperation(ins) | Self::While(ins)
             => ins.exec(interpreter)
         }
     }
@@ -245,7 +249,7 @@ impl Recreate for Instruction {
             | Self::BinOperation(ins) | Self::FunctionDeclaration(ins) | Self::IfElse(ins)
             | Self::Import(ins) | Self::Match(ins) | Self::Mut(ins) | Self::Reduce(ins)
             | Self::Set(ins) | Self::SetIfElse(ins) | Self::TypeFilter(ins)
-            | Self::UnaryOperation(ins)
+            | Self::UnaryOperation(ins) | Self::While(ins)
             => ins.recreate(local_variables)
         }
     }
@@ -261,7 +265,8 @@ impl ReturnType for Instruction {
             | Self::Import(ins) | Self::Match(ins) | Self::Mut(ins) | Self::Reduce(ins)
             | Self::Set(ins) | Self::SetIfElse(ins) | Self::TypeFilter(ins)
             | Self::UnaryOperation(ins)
-            => ins.return_type()
+            => ins.return_type(),
+            _ => Type::Void
         }
     }
 }
