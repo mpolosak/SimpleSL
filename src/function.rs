@@ -3,6 +3,7 @@ mod param;
 pub(crate) use self::body::Body;
 pub use self::param::{Param, Params};
 use crate as simplesl;
+use crate::instruction::block::Block;
 use crate::instruction::function::call;
 use crate::{
     instruction::{ExecStop, InstructionWithStr},
@@ -39,23 +40,19 @@ impl Function {
     pub fn create_call(self: Arc<Self>, args: Vec<Variable>) -> Result<Code, Error> {
         let ident = self.ident.clone().unwrap_or_else(|| Arc::from("function"));
         let str = format!("{}({})", ident, join(args.iter(), ", ")).into();
-        let instruction = call::create_from_variables(ident, self, args)?;
+        let instructions = call::create_from_variables(ident, self, args)?;
         Ok(Code {
-            instructions: Arc::new([InstructionWithStr { instruction, str }]),
+            instructions: Arc::new([InstructionWithStr {
+                instruction: Block { instructions }.into(),
+                str,
+            }]),
         })
     }
 
-    pub(crate) fn exec(self: &Arc<Self>, args: &[Variable]) -> Result<Variable, ExecError> {
-        let mut interpreter = Interpreter::without_stdlib();
-        if let Some(ident) = &self.ident {
-            interpreter.insert(ident.clone(), self.clone().into())
-        }
-        for (arg, Param { var_type: _, name }) in zip(args, self.params.iter()) {
-            interpreter.insert(name.clone(), arg.clone());
-        }
+    pub(crate) fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, ExecError> {
         let body = match &self.body {
             Body::Lang(body) => body,
-            Body::Native(body) => return (body)(&mut interpreter),
+            Body::Native(body) => return (body)(interpreter),
         };
         match interpreter.exec(body) {
             Ok(_) => Ok(Variable::Void),
@@ -64,6 +61,20 @@ impl Function {
             Err(ExecStop::Break) => unreachable!("Break outside of loop"),
             Err(ExecStop::Continue) => unreachable!("Continue outside of loop"),
         }
+    }
+
+    pub(crate) fn exec_with_args(
+        self: &Arc<Self>,
+        args: &[Variable],
+    ) -> Result<Variable, ExecError> {
+        let mut interpreter = Interpreter::without_stdlib();
+        if let Some(ident) = &self.ident {
+            interpreter.insert(ident.clone(), self.clone().into())
+        }
+        for (arg, Param { var_type: _, name }) in zip(args, self.params.iter()) {
+            interpreter.insert(name.clone(), arg.clone());
+        }
+        self.exec(&mut interpreter)
     }
 }
 

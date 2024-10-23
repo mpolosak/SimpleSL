@@ -2,7 +2,7 @@ mod array;
 mod array_repeat;
 pub mod at;
 mod bin_op;
-mod block;
+pub mod block;
 mod control_flow;
 mod destruct_tuple;
 pub mod function;

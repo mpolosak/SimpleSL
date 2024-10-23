@@ -61,7 +61,7 @@ fn zip_map(arrays: Arc<[Variable]>, function: Arc<Function>) -> ExecResult {
         (0..len)
             .map(|i| {
                 let args: Box<[Variable]> = arrays.iter().map(|array| array[i].clone()).collect();
-                function.exec(&args)
+                function.exec_with_args(&args)
             })
             .collect::<Result<_, _>>()
     } else {
@@ -70,7 +70,7 @@ fn zip_map(arrays: Arc<[Variable]>, function: Arc<Function>) -> ExecResult {
                 let args: Box<[Variable]> = iter::once(var!(i))
                     .chain(arrays.iter().map(|array| array[i].clone()))
                     .collect();
-                function.exec(&args)
+                function.exec_with_args(&args)
             })
             .collect::<Result<_, _>>()
     }?;
@@ -90,11 +90,11 @@ pub fn exec(array: Variable, function: Variable) -> ExecResult {
     let array = array.into_array().unwrap();
     let iter = array.iter().cloned();
     let elements = if function.params.len() == 1 {
-        iter.map(|var| function.exec(&[var]))
+        iter.map(|var| function.exec_with_args(&[var]))
             .collect::<Result<_, _>>()
     } else {
         iter.enumerate()
-            .map(|(index, var)| function.exec(&[index.into(), var]))
+            .map(|(index, var)| function.exec_with_args(&[index.into(), var]))
             .collect::<Result<_, _>>()
     }?;
     let element_type = function.return_type();

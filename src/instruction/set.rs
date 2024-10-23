@@ -12,8 +12,8 @@ use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Set {
-    ident: Arc<str>,
-    instruction: InstructionWithStr,
+    pub ident: Arc<str>,
+    pub instruction: InstructionWithStr,
 }
 
 impl Set {
