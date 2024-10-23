@@ -61,6 +61,8 @@ impl Function {
             Ok(_) => Ok(Variable::Void),
             Err(ExecStop::Return(var)) => Ok(var),
             Err(ExecStop::Error(error)) => Err(error),
+            Err(ExecStop::Break) => unreachable!("Break outside of loop"),
+            Err(ExecStop::Continue) => unreachable!("Continue outside of loop"),
         }
     }
 }

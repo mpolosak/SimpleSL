@@ -167,6 +167,8 @@ pub enum Instruction {
     Array(Arc<Array>),
     ArrayRepeat(Arc<ArrayRepeat>),
     Block(Block),
+    Break,
+    Continue,
     DestructTuple(Arc<DestructTuple>),
     FunctionDeclaration(Arc<FunctionDeclaration>),
     IfElse(Arc<IfElse>),
@@ -203,6 +205,20 @@ impl Instruction {
                 InstructionWithStr::new_expression(pair, local_variables).map(|iws| iws.instruction)
             }
             Rule::r#while => While::create_instruction(pair, local_variables),
+            Rule::r#break => {
+                if local_variables.in_loop {
+                    Ok(Self::Break)
+                } else {
+                    Err(Error::BreakOutsideLoop)
+                }
+            }
+            Rule::r#continue => {
+                if local_variables.in_loop {
+                    Ok(Self::Continue)
+                } else {
+                    Err(Error::ContinueOutsideLoop)
+                }
+            }
             rule => unexpected!(rule),
         }
     }
@@ -222,7 +238,9 @@ impl Exec for Instruction {
             | Self::Import(ins) | Self::Match(ins) | Self::Mut(ins) | Self::Reduce(ins)
             | Self::Set(ins) | Self::SetIfElse(ins) | Self::TypeFilter(ins)
             | Self::UnaryOperation(ins) | Self::While(ins)
-            => ins.exec(interpreter)
+            => ins.exec(interpreter),
+            Self::Break => Err(ExecStop::Break),
+            Self::Continue => Err(ExecStop::Continue)
         }
     }
 }
@@ -250,7 +268,8 @@ impl Recreate for Instruction {
             | Self::Import(ins) | Self::Match(ins) | Self::Mut(ins) | Self::Reduce(ins)
             | Self::Set(ins) | Self::SetIfElse(ins) | Self::TypeFilter(ins)
             | Self::UnaryOperation(ins) | Self::While(ins)
-            => ins.recreate(local_variables)
+            => ins.recreate(local_variables),
+            _ => Ok(self.clone())
         }
     }
 }
@@ -303,6 +322,8 @@ pub trait Exec {
 
 pub type ExecResult = Result<Variable, ExecStop>;
 pub enum ExecStop {
+    Break,
+    Continue,
     Return(Variable),
     Error(ExecError),
 }

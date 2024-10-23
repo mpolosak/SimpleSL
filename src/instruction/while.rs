@@ -1,5 +1,6 @@
 use super::{
-    local_variable::LocalVariables, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
+    local_variable::LocalVariables, Exec, ExecResult, ExecStop, Instruction, InstructionWithStr,
+    Recreate,
 };
 use crate::{
     variable::{ReturnType, Type, Variable},
@@ -25,7 +26,9 @@ impl While {
         if return_type != Type::Bool {
             return Err(Error::WrongCondition(condition.str, return_type));
         }
+        local_variables.in_loop = true;
         let instruction = InstructionWithStr::new(inner.next().unwrap(), local_variables)?;
+        local_variables.in_loop = false;
         Ok(Self {
             condition,
             instruction,
@@ -37,7 +40,11 @@ impl While {
 impl Exec for While {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         while self.condition.exec(interpreter)?.into_bool().unwrap() {
-            self.instruction.exec(interpreter)?;
+            match self.instruction.exec(interpreter) {
+                Ok(_) | Err(ExecStop::Continue) => (),
+                Err(ExecStop::Break) => break,
+                e => return e,
+            }
         }
         Ok(Variable::Void)
     }

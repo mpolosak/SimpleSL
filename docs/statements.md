@@ -41,3 +41,15 @@ Declares new variable with given value
 ```
 while condition statment
 ```
+
+## break
+```
+break
+```
+Exit loop
+
+## continue
+```
+continue
+```
+Skip to the next iteration of a loop

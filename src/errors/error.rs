@@ -8,6 +8,8 @@ use std::{
 
 #[derive(Debug)]
 pub enum Error {
+    BreakOutsideLoop,
+    ContinueOutsideLoop,
     VariableDoesntExist(Arc<str>),
     WrongType(Arc<str>, Type),
     WrongNumberOfArguments(Arc<str>, usize),
@@ -132,6 +134,8 @@ impl std::error::Error for Error {}
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::BreakOutsideLoop => write!(f, "Break outside loop"),
+            Self::ContinueOutsideLoop => write!(f, "Continue outside loop"),
             Self::VariableDoesntExist(var_name) => {
                 write!(f, "{var_name} doesn't exist")
             }
