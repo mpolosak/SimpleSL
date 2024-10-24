@@ -19,14 +19,11 @@ pub struct SetIfElse {
     var_type: Type,
     expression: InstructionWithStr,
     if_match: InstructionWithStr,
-    else_instruction: InstructionWithStr,
+    pub else_instruction: InstructionWithStr,
 }
 
 impl SetIfElse {
-    pub fn create_instruction(
-        pair: Pair<Rule>,
-        local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, Error> {
+    pub fn create(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<Self, Error> {
         let mut inner = pair.into_inner();
         let ident: Arc<str> = inner.next().unwrap().as_str().into();
         let pair = inner.next().unwrap();
@@ -49,8 +46,14 @@ impl SetIfElse {
             expression,
             if_match,
             else_instruction,
-        }
-        .into())
+        })
+    }
+
+    pub fn create_instruction(
+        pair: Pair<Rule>,
+        local_variables: &mut LocalVariables,
+    ) -> Result<Instruction, Error> {
+        Ok(Self::create(pair, local_variables)?.into())
     }
 }
 

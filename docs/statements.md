@@ -47,6 +47,11 @@ loop statment
 while condition statment
 ```
 
+## while set
+```
+while ident:type = expression statment
+```
+
 ## break
 ```
 break
