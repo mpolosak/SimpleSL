@@ -275,7 +275,8 @@ impl ReturnType for Instruction {
             | Self::Set(ins) | Self::SetIfElse(ins) | Self::TypeFilter(ins)
             | Self::UnaryOperation(ins)
             => ins.return_type(),
-            _ => Type::Void
+            Self::Loop(_) => Type::Void,
+            Self::Break | Self::Continue => Type::Never
         }
     }
 }
