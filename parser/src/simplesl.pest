@@ -1,4 +1,4 @@
-restricted_keywords = _{ bool | "mut" | "return" | "while" | break | continue }
+restricted_keywords = _{ bool | "mut" | "return" | "loop" | "while" | break | continue }
 ident = @{ !(restricted_keywords~!(ASCII_ALPHANUMERIC|"_")) ~ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC|"_")* }
 var = _{ bool | float | int | array | array_repeat | string | function | void | tuple | mut }
   bool = _{ true | false }
@@ -90,7 +90,7 @@ postfix_op = _{ type_filter | at | function_call | sum | product | all | reduce_
   reduce_any = { "$||" }
   bitand_reduce = { "$&" }
   bitor_reduce = { "$|" }
-stm = _{ block | if_else | set_if_else | match | import | return | while | break | continue | expr }
+stm = _{ block | if_else | set_if_else | match | import | return | loop | while | break | continue | expr }
   block = { "{" ~ line* ~ "}" }
   body = _{ block | return | expr }
   if_else = { "if" ~ expr ~ body ~ ("else" ~ stm)? }
@@ -106,13 +106,14 @@ stm = _{ block | if_else | set_if_else | match | import | return | while | break
   break = { "break" }
   continue = { "continue" }
 expression_list = _{ (expr ~ ("," ~ expr)*)}
-line = _{ COMMENT* ~ (( while | return | function_declaration | set | destruct_tuple | stm ) ~  line_end?) }
+line = _{ COMMENT* ~ (( loop | while | return | function_declaration | set | destruct_tuple | stm ) ~  line_end?) }
 	line_end = _{ ";" }
   function_declaration = { ident ~ ":=" ~ function }
   set = { ident ~ ":=" ~ stm}
   destruct_tuple = { destruct_idents ~ ":=" ~ stm }
     destruct_idents =  {"(" ~ (ident ~ ("," ~ ident)*)? ~ ")"}
   while = { "while" ~ expr ~ stm }
+  loop = { "loop" ~ stm }
 type = _{ multi | standard_types }
   bool_type = {"bool"}
   int_type = {"int"}

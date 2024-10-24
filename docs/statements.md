@@ -37,6 +37,11 @@ ident := statment
 ```
 Declares new variable with given value
 
+## loop
+```
+loop statment
+```
+
 ## while loop
 ```
 while condition statment

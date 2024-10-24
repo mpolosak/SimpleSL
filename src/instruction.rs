@@ -8,6 +8,7 @@ mod destruct_tuple;
 pub mod function;
 mod import;
 pub mod local_variable;
+mod r#loop;
 mod r#mut;
 mod prefix_op;
 mod reduce;
@@ -39,6 +40,7 @@ use crate::{
 use duplicate::duplicate_item;
 use match_any::match_any;
 use pest::iterators::Pair;
+use r#loop::Loop;
 use r#mut::Mut;
 use r#while::While;
 use reduce::Reduce;
@@ -174,6 +176,7 @@ pub enum Instruction {
     IfElse(Arc<IfElse>),
     Import(Import),
     LocalVariable(Arc<str>, LocalVariable),
+    Loop(Arc<Loop>),
     Match(Arc<Match>),
     Mut(Arc<Mut>),
     Reduce(Arc<Reduce>),
@@ -204,21 +207,12 @@ impl Instruction {
             Rule::expr => {
                 InstructionWithStr::new_expression(pair, local_variables).map(|iws| iws.instruction)
             }
+            Rule::r#loop => Loop::create_instruction(pair, local_variables),
             Rule::r#while => While::create_instruction(pair, local_variables),
-            Rule::r#break => {
-                if local_variables.in_loop {
-                    Ok(Self::Break)
-                } else {
-                    Err(Error::BreakOutsideLoop)
-                }
-            }
-            Rule::r#continue => {
-                if local_variables.in_loop {
-                    Ok(Self::Continue)
-                } else {
-                    Err(Error::ContinueOutsideLoop)
-                }
-            }
+            Rule::r#break if local_variables.in_loop => Ok(Self::Break),
+            Rule::r#break => Err(Error::BreakOutsideLoop),
+            Rule::r#continue if local_variables.in_loop => Ok(Self::Continue),
+            Rule::r#continue => Err(Error::ContinueOutsideLoop),
             rule => unexpected!(rule),
         }
     }
@@ -235,8 +229,8 @@ impl Exec for Instruction {
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins)
             | Self::Block(ins) | Self::DestructTuple(ins) | Self::Tuple(ins)
             | Self::BinOperation(ins) | Self::FunctionDeclaration(ins) | Self::IfElse(ins)
-            | Self::Import(ins) | Self::Match(ins) | Self::Mut(ins) | Self::Reduce(ins)
-            | Self::Set(ins) | Self::SetIfElse(ins) | Self::TypeFilter(ins)
+            | Self::Import(ins) | Self::Loop(ins) | Self::Match(ins) | Self::Mut(ins)
+            | Self::Reduce(ins) | Self::Set(ins) | Self::SetIfElse(ins) | Self::TypeFilter(ins)
             | Self::UnaryOperation(ins) | Self::While(ins)
             => ins.exec(interpreter),
             Self::Break => Err(ExecStop::Break),
@@ -265,8 +259,8 @@ impl Recreate for Instruction {
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins)
             | Self::Block(ins) | Self::DestructTuple(ins) | Self::Tuple(ins)
             | Self::BinOperation(ins) | Self::FunctionDeclaration(ins) | Self::IfElse(ins)
-            | Self::Import(ins) | Self::Match(ins) | Self::Mut(ins) | Self::Reduce(ins)
-            | Self::Set(ins) | Self::SetIfElse(ins) | Self::TypeFilter(ins)
+            | Self::Import(ins) | Self::Loop(ins) | Self::Match(ins) | Self::Mut(ins)
+            | Self::Reduce(ins) | Self::Set(ins) | Self::SetIfElse(ins) | Self::TypeFilter(ins)
             | Self::UnaryOperation(ins) | Self::While(ins)
             => ins.recreate(local_variables),
             _ => Ok(self.clone())
