@@ -7,7 +7,7 @@ use pest::iterators::Pair;
 use simplesl_parser::Rule;
 
 #[derive(Debug)]
-pub struct Loop(InstructionWithStr);
+pub struct Loop(pub InstructionWithStr);
 
 impl Loop {
     pub fn create_instruction(

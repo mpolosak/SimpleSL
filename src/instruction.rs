@@ -42,7 +42,6 @@ use match_any::match_any;
 use pest::iterators::Pair;
 use r#loop::Loop;
 use r#mut::Mut;
-use r#while::While;
 use reduce::Reduce;
 use simplesl_parser::{unexpected, Rule, PRATT_PARSER};
 use std::sync::Arc;
@@ -187,7 +186,6 @@ pub enum Instruction {
     Variable(Variable),
     BinOperation(Arc<BinOperation>),
     UnaryOperation(Arc<UnaryOperation>),
-    While(Arc<While>),
 }
 
 impl Instruction {
@@ -208,7 +206,7 @@ impl Instruction {
                 InstructionWithStr::new_expression(pair, local_variables).map(|iws| iws.instruction)
             }
             Rule::r#loop => Loop::create_instruction(pair, local_variables),
-            Rule::r#while => While::create_instruction(pair, local_variables),
+            Rule::r#while => r#while::create_instruction(pair, local_variables),
             Rule::r#break if local_variables.in_loop => Ok(Self::Break),
             Rule::r#break => Err(Error::BreakOutsideLoop),
             Rule::r#continue if local_variables.in_loop => Ok(Self::Continue),
@@ -231,8 +229,7 @@ impl Exec for Instruction {
             | Self::BinOperation(ins) | Self::FunctionDeclaration(ins) | Self::IfElse(ins)
             | Self::Import(ins) | Self::Loop(ins) | Self::Match(ins) | Self::Mut(ins)
             | Self::Reduce(ins) | Self::Set(ins) | Self::SetIfElse(ins) | Self::TypeFilter(ins)
-            | Self::UnaryOperation(ins) | Self::While(ins)
-            => ins.exec(interpreter),
+            | Self::UnaryOperation(ins) => ins.exec(interpreter),
             Self::Break => Err(ExecStop::Break),
             Self::Continue => Err(ExecStop::Continue)
         }
@@ -261,8 +258,7 @@ impl Recreate for Instruction {
             | Self::BinOperation(ins) | Self::FunctionDeclaration(ins) | Self::IfElse(ins)
             | Self::Import(ins) | Self::Loop(ins) | Self::Match(ins) | Self::Mut(ins)
             | Self::Reduce(ins) | Self::Set(ins) | Self::SetIfElse(ins) | Self::TypeFilter(ins)
-            | Self::UnaryOperation(ins) | Self::While(ins)
-            => ins.recreate(local_variables),
+            | Self::UnaryOperation(ins) => ins.recreate(local_variables),
             _ => Ok(self.clone())
         }
     }
