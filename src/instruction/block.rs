@@ -13,7 +13,7 @@ use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct Block {
-    instructions: Arc<[InstructionWithStr]>,
+    pub instructions: Arc<[InstructionWithStr]>,
 }
 
 impl Block {

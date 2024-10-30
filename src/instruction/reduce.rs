@@ -87,7 +87,7 @@ impl Exec for Reduce {
         array
             .iter()
             .try_fold(initial_value, |acc, current| {
-                function.exec(&[acc, current.clone()])
+                function.exec_with_args(&[acc, current.clone()])
             })
             .map_err(ExecStop::from)
     }

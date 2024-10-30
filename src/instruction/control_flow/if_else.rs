@@ -11,9 +11,9 @@ use simplesl_parser::Rule;
 
 #[derive(Debug)]
 pub struct IfElse {
-    condition: InstructionWithStr,
-    if_true: InstructionWithStr,
-    if_false: InstructionWithStr,
+    pub condition: InstructionWithStr,
+    pub if_true: InstructionWithStr,
+    pub if_false: InstructionWithStr,
 }
 
 impl IfElse {

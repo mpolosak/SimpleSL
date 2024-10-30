@@ -36,3 +36,37 @@ match expression {
 ident := statment
 ```
 Declares new variable with given value
+
+## loop
+```
+loop statment
+```
+
+## while loop
+```
+while condition statment
+```
+
+## while set
+```
+while ident:type = expression statment
+```
+
+## for
+```
+for element_ident in expression statment
+for index_ident, element_ident in expression statment
+```
+The expression must be an array
+
+## break
+```
+break
+```
+Exit loop
+
+## continue
+```
+continue
+```
+Skip to the next iteration of a loop

@@ -1,7 +1,11 @@
 use crate::{
     function::{Function, Param, Params},
-    instruction::InstructionWithStr,
-    variable::{ReturnType, Variable},
+    instruction::{
+        set::Set,
+        unary_operation::{UnaryOperation, UnaryOperator},
+        InstructionWithStr,
+    },
+    variable::{ReturnType, Typed, Variable},
     Error,
 };
 use crate::{
@@ -68,16 +72,62 @@ pub fn create_from_variables(
     ident: Arc<str>,
     function: Arc<Function>,
     args: Vec<Variable>,
-) -> Result<Instruction, Error> {
-    let args: Arc<[InstructionWithStr]> = args.into_iter().map(InstructionWithStr::from).collect();
-    check_args_with_params(&ident, &function.params, &args)?;
-    let args = Tuple { elements: args }.into();
-    Ok(BinOperation {
-        lhs: Variable::Function(function).into(),
-        rhs: args,
-        op: BinOperator::FunctionCall,
+) -> Result<Arc<[InstructionWithStr]>, Error> {
+    if function.params.len() != args.len() {
+        return Err(Error::WrongNumberOfArguments(
+            ident.clone(),
+            function.params.len(),
+        ));
     }
-    .into())
+    for (arg, param) in zip(args.iter(), function.params.iter()) {
+        let arg_type = arg.as_type();
+        if !arg_type.matches(&param.var_type) {
+            return Err(Error::WrongArgument {
+                function: ident.clone(),
+                param: param.clone(),
+                given: arg.to_string().into(),
+                given_type: arg_type,
+            });
+        }
+    }
+    let instruction: Instruction = Variable::Function(function.clone()).into();
+    let ident = function.ident.clone().unwrap_or_else(|| "$".into());
+    let str = format!("{ident} = {function}").into();
+    let rec = InstructionWithStr {
+        instruction: Set {
+            ident: ident.clone(),
+            instruction: InstructionWithStr {
+                instruction: instruction.clone(),
+                str: format!("{function}").into(),
+            },
+        }
+        .into(),
+        str,
+    };
+    let call = InstructionWithStr {
+        instruction: UnaryOperation {
+            instruction,
+            op: UnaryOperator::FunctionCall,
+        }
+        .into(),
+        str: format!("{ident}()").into(),
+    };
+    let args = args.into_iter().map(InstructionWithStr::from);
+    Ok(zip(function.params.iter(), args)
+        .map(|(param, arg)| {
+            let str = format!("{} := {}", param.name, arg.str).into();
+            InstructionWithStr {
+                instruction: Set {
+                    ident: param.name.clone(),
+                    instruction: arg,
+                }
+                .into(),
+                str,
+            }
+        })
+        .chain(std::iter::once(rec))
+        .chain(std::iter::once(call))
+        .collect())
 }
 
 fn check_args_with_params(
@@ -105,5 +155,5 @@ fn check_args_with_params(
 pub fn exec(function: Variable, args: Variable) -> Result<Variable, ExecError> {
     let function = function.into_function().unwrap();
     let args = args.into_tuple().unwrap();
-    function.exec(&args)
+    function.exec_with_args(&args)
 }

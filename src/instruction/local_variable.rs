@@ -15,6 +15,7 @@ pub struct LocalVariables<'a> {
     variables: LocalVariableMap,
     lower_layer: Option<&'a Self>,
     function: Option<FunctionInfo>,
+    pub in_loop: bool,
     pub interpreter: &'a Interpreter<'a>,
 }
 
@@ -26,6 +27,7 @@ impl<'a> LocalVariables<'a> {
             lower_layer: None,
             function: None,
             interpreter,
+            in_loop: false,
         }
     }
 
@@ -35,6 +37,7 @@ impl<'a> LocalVariables<'a> {
             lower_layer: None,
             function: None,
             interpreter,
+            in_loop: false,
         }
     }
     pub fn insert(&mut self, name: Arc<str>, variable: LocalVariable) {
@@ -60,6 +63,7 @@ impl<'a> LocalVariables<'a> {
             lower_layer: Some(self),
             function: None,
             interpreter: self.interpreter,
+            in_loop: self.in_loop,
         }
     }
 
@@ -70,6 +74,7 @@ impl<'a> LocalVariables<'a> {
             lower_layer: Some(self),
             function: Some(function),
             interpreter: self.interpreter,
+            in_loop: false,
         }
     }
 
