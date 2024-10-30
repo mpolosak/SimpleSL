@@ -3,7 +3,7 @@
 pest = "2.0"
 lazy_static = "1.4.0"
 simplesl_parser = { path="parser", version="0.1.0" }
-unescaper = "0.1.0"
+unescaper = "0.1.5"
 
 [package]
 name = "simplesl"
