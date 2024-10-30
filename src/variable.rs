@@ -350,7 +350,10 @@ pub fn is_correct_variable_name(name: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+
     use crate::variable::{Array, Variable};
+    use proptest::prelude::*;
 
     #[test]
     fn test_send() {
@@ -422,5 +425,27 @@ mod tests {
             ]))
         );
         assert_eq!(Variable::from_str("[]"), Ok(Variable::from([])))
+    }
+
+    proptest! {
+        #[test]
+        fn variable_from_str_doesnt_crash(s in "\\PC*"){
+            let _ = Variable::from_str(&s);
+        }
+
+        #[test]
+        fn variable_from_str_int(a: i64){
+            assert_eq!(Variable::from_str(&a.to_string()), Ok(Variable::Int(a)))
+        }
+
+        #[test]
+        fn variable_from_str_float(a: f64){
+            assert_eq!(Variable::from_str(&format!("{a:?}")), Ok(Variable::Float(a)))
+        }
+
+        #[test]
+        fn variable_from_str_string(s in "\\PC*"){
+            assert_eq!(Variable::from_str(&format!("{}:?", Variable::String(s.clone().into()))), Ok(Variable::String(s.into())))
+        }
     }
 }

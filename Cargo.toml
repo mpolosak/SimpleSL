@@ -32,3 +32,4 @@ unescaper.workspace = true
 [dev-dependencies]
 itertools="0.13.0"
 markdown = "0.3"
+proptest = "1.0.0"
