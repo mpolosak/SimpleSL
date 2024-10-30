@@ -1,8 +1,8 @@
-use super::{
-    control_flow::SetIfElse, local_variable::LocalVariables, r#loop::Loop, Instruction,
-    InstructionWithStr,
+use super::{Instruction, InstructionWithStr, Loop};
+use crate::{
+    instruction::{control_flow::SetIfElse, local_variable::LocalVariables},
+    Error,
 };
-use crate::Error;
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
 

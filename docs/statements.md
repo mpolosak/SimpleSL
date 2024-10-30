@@ -52,6 +52,12 @@ while condition statment
 while ident:type = expression statment
 ```
 
+## for
+```
+for ident in expression statment
+```
+The expression must be an array
+
 ## break
 ```
 break

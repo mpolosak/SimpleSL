@@ -1,9 +1,13 @@
+mod r#for;
+pub mod r#while;
+pub mod while_set;
 use super::{
     local_variable::LocalVariables, Exec, ExecResult, ExecStop, Instruction, InstructionWithStr,
     Recreate,
 };
 use crate::{variable::Variable, Error, ExecError, Interpreter};
 use pest::iterators::Pair;
+pub use r#for::For;
 use simplesl_parser::Rule;
 
 #[derive(Debug)]
@@ -15,9 +19,10 @@ impl Loop {
         local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
+        let in_loop = local_variables.in_loop;
         local_variables.in_loop = true;
         let instruction = InstructionWithStr::new(inner.next().unwrap(), local_variables)?;
-        local_variables.in_loop = false;
+        local_variables.in_loop = in_loop;
         Ok(Self(instruction).into())
     }
 }

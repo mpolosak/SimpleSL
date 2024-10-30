@@ -1,8 +1,6 @@
-use super::{
-    control_flow::IfElse, local_variable::LocalVariables, r#loop::Loop, Instruction,
-    InstructionWithStr,
-};
+use super::{Instruction, InstructionWithStr, Loop};
 use crate::{
+    instruction::{control_flow::IfElse, local_variable::LocalVariables},
     variable::{ReturnType, Type, Variable},
     Error,
 };
