@@ -445,7 +445,7 @@ mod tests {
 
         #[test]
         fn variable_from_str_string(s in "\\PC*"){
-            assert_eq!(Variable::from_str(&format!("{}:?", Variable::String(s.clone().into()))), Ok(Variable::String(s.into())))
+            assert_eq!(Variable::from_str(&format!("{:?}", Variable::String(s.clone().into()))), Ok(Variable::String(s.into())))
         }
     }
 }
