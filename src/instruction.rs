@@ -208,7 +208,7 @@ impl Instruction {
             Rule::r#loop => Loop::create_instruction(pair, local_variables),
             Rule::r#while => r#while::create_instruction(pair, local_variables),
             Rule::while_set => while_set::create_instruction(pair, local_variables),
-            Rule::r#for => For::create_instruction(pair, local_variables),
+            Rule::r#for | Rule::for_with_index => For::create_instruction(pair, local_variables),
             Rule::r#break if local_variables.in_loop => Ok(Self::Break),
             Rule::r#break => Err(Error::BreakOutsideLoop),
             Rule::r#continue if local_variables.in_loop => Ok(Self::Continue),
