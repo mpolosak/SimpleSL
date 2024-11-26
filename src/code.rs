@@ -53,7 +53,8 @@ impl ReturnType for Code {
 
 #[cfg(test)]
 mod tests {
-    use crate::Code;
+    use crate::{Code, Interpreter};
+    use proptest::prelude::*;
 
     #[test]
     fn test_send() {
@@ -65,5 +66,12 @@ mod tests {
     fn test_sync() {
         fn assert_sync<T: Sync>() {}
         assert_sync::<Code>();
+    }
+
+    proptest! {
+        #[test]
+        fn code_doesnt_crash(s in "\\PC*"){
+            let _ = Code::parse(&Interpreter::without_stdlib(), &s).and_then(|code| Ok(code.exec()?));
+        }
     }
 }

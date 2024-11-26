@@ -367,6 +367,7 @@ mod tests {
         variable::{FunctionType, Type},
     };
     use itertools::iproduct;
+    use proptest::proptest;
     use simplesl_macros::var_type;
     use std::str::FromStr;
 
@@ -663,5 +664,12 @@ mod tests {
         assert_eq!(var_type!([int] | float).element_type(), None);
         assert_eq!(var_type!(any).element_type(), None);
         assert_eq!(var_type!(string | (int, float)).element_type(), None);
+    }
+
+    proptest! {
+        #[test]
+        fn var_from_str_doesnt_crash(s in "\\PC*"){
+            let _ = Type::from_str(&s);
+        }
     }
 }

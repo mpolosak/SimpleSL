@@ -42,8 +42,7 @@ impl For {
         local_variables.in_loop = true;
         local_variables.insert(ident.clone(), LocalVariable::Other(element_type));
         local_variables.insert(index.clone(), LocalVariable::Other(Type::Int));
-        let instruction =
-            InstructionWithStr::new_expression(inner.next().unwrap(), &local_variables)?;
+        let instruction = InstructionWithStr::new(inner.next().unwrap(), &mut local_variables)?;
         Ok(Self {
             index,
             ident,

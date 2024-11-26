@@ -23,8 +23,8 @@ var = _{ bool | float | int | array | array_repeat | string | function | void | 
   void = {"()"}
   array = {"[" ~ expression_list? ~ "]"}
   array_repeat = {"[" ~ expr ~ ";" ~ expr ~ "]"}
-  string = ${ "\"" ~ inner ~ quotation_mark }
-    quotation_mark = {"\""}
+  string = ${ quotation_mark ~ inner ~ quotation_mark }
+    quotation_mark = _{"\""}
     inner = @{ char* }
     char = {
         !("\"" | "\\") ~ ANY
