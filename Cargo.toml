@@ -1,7 +1,7 @@
 [workspace]
 [workspace.dependencies]
-pest = "2.0"
-lazy_static = "1.4.0"
+pest = "2.7.14"
+lazy_static = "1.5.0"
 simplesl_parser = { path="parser", version="0.1.0" }
 unescaper = "0.1.5"
 
@@ -18,12 +18,12 @@ description = "Simple Scripting Language"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rustyline = "14.0.0"
-typle = "0.10.2"
+rustyline = "15.0.0"
+typle = "0.10.6"
 simplesl_macros = { path="macros", version="0.1.0" }
 match_any = "1.0.1"
-duplicate = "1"
-enum-as-inner = "0.6.0"
+duplicate = "2.0.0"
+enum-as-inner = "0.6.1"
 pest.workspace = true
 lazy_static.workspace = true
 simplesl_parser.workspace = true
