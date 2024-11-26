@@ -20,8 +20,9 @@ impl Code {
         for pair in parse {
             InstructionWithStr::create(pair, &mut local_variables, &mut instructions)?;
         }
-        let instructions = instructions.iter()
-            .map(|iws|iws.recreate(&mut local_variables))
+        let instructions = instructions
+            .iter()
+            .map(|iws| iws.recreate(&mut local_variables))
             .collect::<Result<_, ExecError>>()?;
         Ok(Self { instructions })
     }

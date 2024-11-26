@@ -53,13 +53,20 @@ pub struct InstructionWithStr {
 }
 
 impl InstructionWithStr {
-    pub fn create(pair: Pair<Rule>, local_variables: &mut LocalVariables, instructions: &mut Vec<Self>) -> Result<(), Error>{
-        if pair.as_rule() == Rule::import {
-            return import::create(pair, local_variables, instructions);
+    pub fn create(
+        pair: Pair<Rule>,
+        local_variables: &mut LocalVariables,
+        instructions: &mut Vec<Self>,
+    ) -> Result<(), Error> {
+        match pair.as_rule() {
+            Rule::block => Block::create(pair, local_variables, instructions),
+            Rule::import => import::create(pair, local_variables, instructions),
+            _ => {
+                let instruction = Self::new(pair, local_variables)?;
+                instructions.push(instruction);
+                Ok(())
+            }
         }
-        let instruction = Self::new(pair, local_variables)?;
-        instructions.push(instruction);
-        Ok(())
     }
     fn new(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<Self, Error> {
         if pair.as_rule() == Rule::expr {
@@ -199,7 +206,6 @@ impl Instruction {
         match pair.as_rule() {
             Rule::set => Set::create_instruction(pair, local_variables),
             Rule::destruct_tuple => DestructTuple::create_instruction(pair, local_variables),
-            Rule::block => Block::create_instruction(pair, local_variables),
             Rule::if_else => IfElse::create_instruction(pair, local_variables),
             Rule::set_if_else => SetIfElse::create_instruction(pair, local_variables),
             Rule::r#match => Match::create_instruction(pair, local_variables),

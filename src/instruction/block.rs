@@ -17,13 +17,37 @@ pub struct Block {
 }
 
 impl Block {
-    pub fn create_instruction(
+    pub fn create(
         pair: Pair<Rule>,
         local_variables: &LocalVariables,
-    ) -> Result<Instruction, Error> {
+        instructions: &mut Vec<InstructionWithStr>,
+    ) -> Result<(), Error> {
         let mut local_variables = local_variables.create_layer();
-        let instructions = local_variables.create_instructions(pair.into_inner())?;
-        Ok(Self { instructions }.into())
+        let str = pair.as_str().into();
+        let mut pairs = pair.into_inner();
+        if pairs.len() == 0 {
+            return Ok(());
+        }
+        if pairs.len() == 1 {
+            return InstructionWithStr::create(
+                pairs.next().unwrap(),
+                &mut local_variables,
+                instructions,
+            );
+        }
+        let mut inner = Vec::<InstructionWithStr>::new();
+        for pair in pairs {
+            InstructionWithStr::create(pair, &mut local_variables, &mut inner)?;
+        }
+        let block = Block {
+            instructions: inner.into(),
+        };
+        let iws = InstructionWithStr {
+            instruction: block.into(),
+            str,
+        };
+        instructions.push(iws);
+        Ok(())
     }
 }
 
