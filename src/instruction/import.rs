@@ -1,55 +1,22 @@
 use super::{
-    local_variable::LocalVariables, recreate_instructions, Exec, ExecResult, Instruction,
-    InstructionWithStr, Recreate,
+    local_variable::LocalVariables, InstructionWithStr,
 };
 use crate::{
-    interpreter::Interpreter,
-    variable::{ReturnType, Type, Variable},
-    Error, ExecError,
+    variable::Variable,
+    Error,
 };
-use pest::iterators::Pair;
-use simplesl_parser::Rule;
-use std::sync::Arc;
+use pest::{iterators::Pair, Parser};
+use simplesl_parser::{Rule, SimpleSLParser};
+use std::fs;
 
-#[derive(Debug, Clone)]
-pub struct Import {
-    instructions: Arc<[InstructionWithStr]>,
-}
-
-impl Import {
-    pub fn create_instruction(
-        pair: Pair<Rule>,
-        local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, Error> {
-        let path = Variable::try_from(pair.into_inner().next().unwrap())?
+pub fn create(pair: Pair<Rule>, local_variables: &mut LocalVariables, instructions: &mut Vec<InstructionWithStr>) -> Result<(), Error>{ 
+    let path = Variable::try_from(pair.into_inner().next().unwrap())?
             .into_string()
             .unwrap();
-        let instructions = local_variables.load(&path)?;
-        Ok(Self { instructions }.into())
+    let input = fs::read_to_string(path.as_ref())?;
+    let pairs = SimpleSLParser::parse(Rule::input, &input)?;
+    for pair in pairs {
+        InstructionWithStr::create(pair, local_variables, instructions)?;
     }
-}
-
-impl Exec for Import {
-    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        Ok(interpreter
-            .exec(&self.instructions)?
-            .last()
-            .cloned()
-            .unwrap_or(Variable::Void))
-    }
-}
-
-impl Recreate for Import {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let instructions = recreate_instructions(&self.instructions, local_variables)?;
-        Ok(Self { instructions }.into())
-    }
-}
-
-impl ReturnType for Import {
-    fn return_type(&self) -> Type {
-        self.instructions
-            .last()
-            .map_or(Type::Void, ReturnType::return_type)
-    }
+    Ok(())
 }

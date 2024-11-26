@@ -5,10 +5,10 @@ use crate::{
     variable::{ReturnType, Type, Typed, Variable},
     Error, Interpreter,
 };
-use pest::{iterators::Pairs, Parser};
+use pest::iterators::Pairs;
 use simplesl_macros::var_type;
-use simplesl_parser::{Rule, SimpleSLParser};
-use std::{collections::HashMap, fs, sync::Arc};
+use simplesl_parser::Rule;
+use std::{collections::HashMap, sync::Arc};
 
 pub type LocalVariableMap = HashMap<Arc<str>, LocalVariable>;
 pub struct LocalVariables<'a> {
@@ -82,16 +82,6 @@ impl<'a> LocalVariables<'a> {
         self.function
             .as_ref()
             .or_else(|| self.lower_layer.and_then(LocalVariables::function))
-    }
-
-    pub(crate) fn load(&mut self, path: &str) -> Result<Arc<[InstructionWithStr]>, Error> {
-        let contents = fs::read_to_string(path)?;
-        self.parse_input(&contents)
-    }
-
-    pub(crate) fn parse_input(&mut self, input: &str) -> Result<Arc<[InstructionWithStr]>, Error> {
-        let pairs = SimpleSLParser::parse(Rule::input, input)?;
-        self.create_instructions(pairs)
     }
 
     pub(crate) fn create_instructions(
