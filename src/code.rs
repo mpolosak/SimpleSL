@@ -16,12 +16,13 @@ impl Code {
     pub fn parse(interpreter: &Interpreter, script: &str) -> Result<Self, Error> {
         let parse = SimpleSLParser::parse(Rule::input, script)?;
         let mut local_variables = LocalVariables::new(interpreter);
-        let instructions = parse
-            .map(|pair| {
-                InstructionWithStr::new(pair, &mut local_variables)
-                    .and_then(|iws| Ok(iws.recreate(&mut local_variables)?))
-            })
-            .collect::<Result<_, Error>>()?;
+        let mut instructions = Vec::<InstructionWithStr>::new();
+        for pair in parse {
+            InstructionWithStr::create(pair, &mut local_variables, &mut instructions)?;
+        }
+        let instructions = instructions.iter()
+            .map(|iws|iws.recreate(&mut local_variables))
+            .collect::<Result<_, ExecError>>()?;
         Ok(Self { instructions })
     }
     pub fn exec(&self) -> Result<Variable, ExecError> {

@@ -54,7 +54,12 @@ pub struct InstructionWithStr {
 }
 
 impl InstructionWithStr {
-    pub fn new(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<Self, Error> {
+    pub fn create(pair: Pair<Rule>, local_variables: &mut LocalVariables, instructions: &mut Vec<Self>) -> Result<(), Error>{
+        let instruction = Self::new(pair, local_variables)?;
+        instructions.push(instruction);
+        Ok(())
+    }
+    fn new(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<Self, Error> {
         if pair.as_rule() == Rule::expr {
             return Self::new_expression(pair, local_variables);
         }
