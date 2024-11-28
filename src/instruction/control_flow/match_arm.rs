@@ -88,9 +88,11 @@ impl MatchArm {
             MatchArm::Type {
                 ident, instruction, ..
             } => {
-                let mut interpreter = interpreter.create_layer();
+                interpreter.push_layer();
                 interpreter.insert(ident.clone(), variable);
-                instruction.exec(&mut interpreter)
+                let result = instruction.exec(interpreter);
+                interpreter.pop_layer();
+                result
             }
             MatchArm::Other(instruction) | MatchArm::Value(_, instruction) => {
                 instruction.exec(interpreter)

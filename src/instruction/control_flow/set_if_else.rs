@@ -64,9 +64,11 @@ impl Exec for SetIfElse {
         if !result_type.matches(&self.var_type) {
             return self.else_instruction.exec(interpreter);
         }
-        let mut interpreter = interpreter.create_layer();
+        interpreter.push_layer();
         interpreter.insert(self.ident.clone(), expression_result);
-        self.if_match.exec(&mut interpreter)
+        let result = self.if_match.exec(interpreter);
+        interpreter.pop_layer();
+        return result;
     }
 }
 

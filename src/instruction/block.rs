@@ -24,16 +24,9 @@ impl Block {
     ) -> Result<(), Error> {
         let mut local_variables = local_variables.create_layer();
         let str = pair.as_str().into();
-        let mut pairs = pair.into_inner();
+        let pairs = pair.into_inner();
         if pairs.len() == 0 {
             return Ok(());
-        }
-        if pairs.len() == 1 {
-            return InstructionWithStr::create(
-                pairs.next().unwrap(),
-                &mut local_variables,
-                instructions,
-            );
         }
         let mut inner = Vec::<InstructionWithStr>::new();
         for pair in pairs {
@@ -53,12 +46,14 @@ impl Block {
 
 impl Exec for Block {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let mut interpreter = interpreter.create_layer();
-        Ok(interpreter
+        interpreter.push_layer();
+        let result = interpreter
             .exec(&self.instructions)?
             .last()
             .cloned()
-            .unwrap_or(Variable::Void))
+            .unwrap_or(Variable::Void);
+        interpreter.pop_layer();
+        Ok(result)
     }
 }
 

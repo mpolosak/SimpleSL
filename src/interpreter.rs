@@ -6,14 +6,13 @@ use std::sync::Arc;
 
 #[derive(Debug)]
 #[must_use]
-pub struct Interpreter<'a> {
-    variables: VariableMap,
-    lower_layer: Option<&'a Self>,
+pub struct Interpreter {
+    variables: Vec<VariableMap>,
 }
 
 type VariableMap = HashMap<Arc<str>, Variable>;
 
-impl<'a> Interpreter<'a> {
+impl Interpreter {
     /// Constructs a new Interpreter with simplesl stdlib
     pub fn with_stdlib() -> Self {
         let mut interpreter = Self::without_stdlib();
@@ -24,8 +23,7 @@ impl<'a> Interpreter<'a> {
     /// Constructs a new Interpreter without stdlib
     pub fn without_stdlib() -> Self {
         Self {
-            variables: VariableMap::new(),
-            lower_layer: None,
+            variables: vec![VariableMap::new()],
         }
     }
 
@@ -40,18 +38,25 @@ impl<'a> Interpreter<'a> {
     }
 
     pub fn get_variable(&self, name: &str) -> Option<&Variable> {
-        self.variables
-            .get(name)
-            .or_else(|| self.lower_layer?.variables.get(name))
+        for map in self.variables.iter().rev() {
+            let var = map.get(name);
+            if var.is_some() {
+                return var;
+            }
+        }
+        None
     }
     pub fn insert(&mut self, name: Arc<str>, variable: Variable) {
-        self.variables.insert(name, variable);
+        self.variables.last_mut().unwrap().insert(name, variable);
     }
 
-    pub fn create_layer(&'a self) -> Self {
-        Self {
-            variables: VariableMap::new(),
-            lower_layer: Some(self),
+    pub(crate) fn push_layer(&mut self) {
+        self.variables.push(VariableMap::new());
+    }
+    pub(crate) fn pop_layer(&mut self) {
+        if self.variables.len() < 2 {
+            panic!("Interpreter.pop_layer() called on Interpreter containing less than two layers");
         }
+        self.variables.pop();
     }
 }

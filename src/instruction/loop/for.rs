@@ -56,16 +56,17 @@ impl For {
 impl Exec for For {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let array = self.array.exec(interpreter)?.into_array().unwrap();
-        let mut interpreter = interpreter.create_layer();
+        interpreter.push_layer();
         for (index, element) in array.iter().cloned().enumerate() {
             interpreter.insert(self.index.clone(), index.into());
             interpreter.insert(self.ident.clone(), element);
-            match self.instruction.exec(&mut interpreter) {
+            match self.instruction.exec(interpreter) {
                 Ok(_) | Err(ExecStop::Continue) => (),
                 Err(ExecStop::Break) => break,
                 e => return e,
             }
         }
+        interpreter.pop_layer();
         Ok(Variable::Void)
     }
 }

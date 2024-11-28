@@ -16,7 +16,7 @@ pub struct LocalVariables<'a> {
     lower_layer: Option<&'a Self>,
     function: Option<FunctionInfo>,
     pub in_loop: bool,
-    pub interpreter: &'a Interpreter<'a>,
+    pub interpreter: &'a Interpreter,
 }
 
 impl<'a> LocalVariables<'a> {
