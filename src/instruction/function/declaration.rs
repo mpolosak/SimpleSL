@@ -44,11 +44,11 @@ impl FunctionDeclaration {
             LocalVariable::Function(params.clone(), return_type.clone()),
         );
 
-        let mut local_variables = local_variables.function_layer(
-            LocalVariableMap::from(params.clone()),
-            FunctionInfo::new(Some(ident.clone()), return_type.clone()),
-        );
+        local_variables.push_layer(LocalVariableMap::from(params.clone()));
+        local_variables.enter_function(FunctionInfo::new(Some(ident.clone()), return_type.clone()));
         let body = local_variables.create_instructions(inner)?;
+        local_variables.exit_function();
+        local_variables.drop_layer();
         if !Type::Void.matches(&return_type)
             && !body
                 .iter()
@@ -96,11 +96,15 @@ impl Recreate for FunctionDeclaration {
             self.ident.clone(),
             LocalVariable::Function(self.params.clone(), self.return_type.clone()),
         );
-        let mut local_variables = local_variables.function_layer(
-            self.params.clone().into(),
-            FunctionInfo::new(Some(self.ident.clone()), self.return_type.clone()),
-        );
-        let body = recreate_instructions(&self.body, &mut local_variables)?;
+
+        local_variables.push_layer(LocalVariableMap::from(self.params.clone()));
+        local_variables.enter_function(FunctionInfo::new(
+            Some(self.ident.clone()),
+            self.return_type.clone(),
+        ));
+        let body = recreate_instructions(&self.body, local_variables)?;
+        local_variables.exit_function();
+        local_variables.drop_layer();
         Ok(Self {
             ident: self.ident.clone(),
             params: self.params.clone(),

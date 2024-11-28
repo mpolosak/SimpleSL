@@ -19,18 +19,18 @@ pub struct Block {
 impl Block {
     pub fn create(
         pair: Pair<Rule>,
-        local_variables: &LocalVariables,
+        local_variables: &mut LocalVariables,
         instructions: &mut Vec<InstructionWithStr>,
     ) -> Result<(), Error> {
-        let mut local_variables = local_variables.create_layer();
         let str = pair.as_str().into();
         let pairs = pair.into_inner();
         if pairs.len() == 0 {
             return Ok(());
         }
+        local_variables.new_layer();
         let mut inner = Vec::<InstructionWithStr>::new();
         for pair in pairs {
-            InstructionWithStr::create(pair, &mut local_variables, &mut inner)?;
+            InstructionWithStr::create(pair, local_variables, &mut inner)?;
         }
         let block = Block {
             instructions: inner.into(),
@@ -40,6 +40,7 @@ impl Block {
             str,
         };
         instructions.push(iws);
+        local_variables.drop_layer();
         Ok(())
     }
 }
@@ -59,8 +60,9 @@ impl Exec for Block {
 
 impl Recreate for Block {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let mut local_variables = local_variables.create_layer();
-        let instructions = recreate_instructions(&self.instructions, &mut local_variables)?;
+        local_variables.new_layer();
+        let instructions = recreate_instructions(&self.instructions, local_variables)?;
+        local_variables.drop_layer();
         Ok(Self { instructions }.into())
     }
 }

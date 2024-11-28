@@ -32,9 +32,10 @@ impl MatchArm {
                 let ident: Arc<str> = pair.as_str().into();
                 let var_type = Type::from(inner.next().unwrap());
                 let pair = inner.next().unwrap();
-                let mut local_variables = local_variables.create_layer();
+                local_variables.new_layer();
                 local_variables.insert(ident.clone(), LocalVariable::Other(var_type.clone()));
-                let instruction = InstructionWithStr::new(pair, &mut local_variables)?;
+                let instruction = InstructionWithStr::new(pair, local_variables)?;
+                local_variables.drop_layer();
                 Ok(Self::Type {
                     ident,
                     var_type,
@@ -106,9 +107,10 @@ impl MatchArm {
                 var_type,
                 instruction,
             } => {
-                let mut local_variables = local_variables.create_layer();
+                local_variables.new_layer();
                 local_variables.insert(ident.clone(), LocalVariable::Other(var_type.clone()));
-                let instruction = instruction.recreate(&mut local_variables)?;
+                let instruction = instruction.recreate(local_variables)?;
+                local_variables.drop_layer();
                 Self::Type {
                     ident: ident.clone(),
                     var_type: var_type.clone(),

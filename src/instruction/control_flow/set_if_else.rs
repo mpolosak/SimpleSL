@@ -32,9 +32,11 @@ impl SetIfElse {
         let expression = InstructionWithStr::new(pair, local_variables)?;
         let pair = inner.next().unwrap();
         let if_match = {
-            let mut local_variables = local_variables.create_layer();
+            local_variables.new_layer();
             local_variables.insert(ident.clone(), LocalVariable::Other(var_type.clone()));
-            InstructionWithStr::new(pair, &mut local_variables)?
+            let iws = InstructionWithStr::new(pair, local_variables)?;
+            local_variables.drop_layer();
+            iws
         };
         let else_instruction = inner
             .next()
@@ -76,12 +78,14 @@ impl Recreate for SetIfElse {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
         let expression = self.expression.recreate(local_variables)?;
         let if_match = {
-            let mut local_variables = local_variables.create_layer();
+            local_variables.new_layer();
             local_variables.insert(
                 self.ident.clone(),
                 LocalVariable::Other(self.var_type.clone()),
             );
-            self.if_match.recreate(&mut local_variables)?
+            let ins = self.if_match.recreate(local_variables)?;
+            local_variables.drop_layer();
+            ins
         };
         let else_instruction = self.else_instruction.recreate(local_variables)?;
         Ok(Self {

@@ -38,11 +38,12 @@ impl For {
         let Some(element_type) = array.return_type().element_type() else {
             return Err(Error::WrongType("array".into(), var_type!([any])));
         };
-        let mut local_variables = local_variables.create_layer();
+        local_variables.new_layer();
         local_variables.in_loop = true;
         local_variables.insert(ident.clone(), LocalVariable::Other(element_type));
         local_variables.insert(index.clone(), LocalVariable::Other(Type::Int));
-        let instruction = InstructionWithStr::new(inner.next().unwrap(), &mut local_variables)?;
+        let instruction = InstructionWithStr::new(inner.next().unwrap(), local_variables)?;
+        local_variables.drop_layer();
         Ok(Self {
             index,
             ident,
@@ -74,13 +75,14 @@ impl Exec for For {
 impl Recreate for For {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
         let array = self.array.recreate(local_variables)?;
-        let mut local_variables = local_variables.create_layer();
+        local_variables.new_layer();
         local_variables.insert(
             self.ident.clone(),
             LocalVariable::Other(array.return_type().element_type().unwrap()),
         );
         local_variables.insert(self.index.clone(), LocalVariable::Other(Type::Int));
-        let instruction = self.instruction.recreate(&mut local_variables)?;
+        let instruction = self.instruction.recreate(local_variables)?;
+        local_variables.drop_layer();
         Ok(Self {
             index: self.index.clone(),
             ident: self.ident.clone(),

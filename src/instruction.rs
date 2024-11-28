@@ -120,7 +120,9 @@ impl InstructionWithStr {
             Rule::tuple => Tuple::create_instruction(pair, local_variables),
             Rule::array => Array::create_instruction(pair, local_variables),
             Rule::array_repeat => ArrayRepeat::create_instruction(pair, local_variables),
-            Rule::function => AnonymousFunction::create_instruction(pair, local_variables),
+            Rule::function => {
+                AnonymousFunction::create_instruction(pair, &mut local_variables.clone())
+            }
             rule => unexpected!(rule),
         }?;
         Ok(Self { instruction, str })

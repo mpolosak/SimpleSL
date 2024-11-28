@@ -11,10 +11,11 @@ use simplesl_parser::Rule;
 use std::{collections::HashMap, sync::Arc};
 
 pub type LocalVariableMap = HashMap<Arc<str>, LocalVariable>;
+
+#[derive(Clone)]
 pub struct LocalVariables<'a> {
-    variables: LocalVariableMap,
-    lower_layer: Option<&'a Self>,
-    function: Option<FunctionInfo>,
+    variables: Vec<LocalVariableMap>,
+    pub function: Vec<FunctionInfo>,
     pub in_loop: bool,
     pub interpreter: &'a Interpreter,
 }
@@ -23,65 +24,73 @@ impl<'a> LocalVariables<'a> {
     #[must_use]
     pub fn new(interpreter: &'a Interpreter) -> Self {
         Self {
-            variables: LocalVariableMap::new(),
-            lower_layer: None,
-            function: None,
+            variables: vec![LocalVariableMap::new()],
+            function: vec![],
             interpreter,
             in_loop: false,
         }
     }
 
+    #[must_use]
     pub fn from_params(params: Params, interpreter: &'a Interpreter) -> Self {
         Self {
-            variables: LocalVariableMap::from(params),
-            lower_layer: None,
-            function: None,
+            variables: vec![params.into()],
+            function: vec![],
             interpreter,
             in_loop: false,
         }
     }
+
     pub fn insert(&mut self, name: Arc<str>, variable: LocalVariable) {
-        self.variables.insert(name, variable);
-    }
-    #[must_use]
-    pub fn get(&self, name: &str) -> Option<&LocalVariable> {
-        self.variables
-            .get(name)
-            .or_else(|| self.lower_layer?.get(name))
-    }
-    #[must_use]
-    pub fn contains_key(&self, name: &Arc<str>) -> bool {
-        self.variables.contains_key(name)
-            || self
-                .lower_layer
-                .is_some_and(|layer| layer.contains_key(name))
-    }
-    #[must_use]
-    pub fn create_layer(&'a self) -> Self {
-        Self {
-            variables: LocalVariableMap::new(),
-            lower_layer: Some(self),
-            function: None,
-            interpreter: self.interpreter,
-            in_loop: self.in_loop,
-        }
+        self.variables.last_mut().unwrap().insert(name, variable);
     }
 
     #[must_use]
-    pub fn function_layer(&'a self, layer: LocalVariableMap, function: FunctionInfo) -> Self {
-        Self {
-            variables: layer,
-            lower_layer: Some(self),
-            function: Some(function),
-            interpreter: self.interpreter,
-            in_loop: false,
+    pub fn get(&self, name: &str) -> Option<&LocalVariable> {
+        for map in self.variables.iter().rev() {
+            let var = map.get(name);
+            if var.is_some() {
+                return var;
+            }
         }
+        None
+    }
+
+    #[must_use]
+    pub fn contains_key(&self, name: &Arc<str>) -> bool {
+        for map in self.variables.iter().rev() {
+            if map.contains_key(name) {
+                return true;
+            }
+        }
+        false
+    }
+
+    pub fn new_layer(&mut self) {
+        self.push_layer(LocalVariableMap::new());
+    }
+
+    pub fn push_layer(&mut self, layer: LocalVariableMap) {
+        self.variables.push(layer);
+    }
+
+    pub fn drop_layer(&mut self) {
+        self.variables.pop();
     }
 
     pub fn function(&'a self) -> Option<&FunctionInfo> {
-        self.function
-            .as_ref()
-            .or_else(|| self.lower_layer.and_then(LocalVariables::function))
+        self.function.last()
+    }
+
+    pub fn enter_function(&mut self, function: FunctionInfo) {
+        self.function.push(function);
+    }
+
+    pub fn exit_function(&mut self) {
+        if self.function.len() == 0 {
+            panic!("Tried to exit function but not in function")
+        }
+        self.function.pop();
     }
 
     pub(crate) fn create_instructions(
@@ -114,6 +123,8 @@ where
 {
     fn extend<T: IntoIterator<Item = (Arc<str>, V)>>(&mut self, iter: T) {
         self.variables
+            .last_mut()
+            .unwrap()
             .extend(iter.into_iter().map(|(ident, var)| (ident, var.into())));
     }
 }

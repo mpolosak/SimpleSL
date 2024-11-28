@@ -28,7 +28,7 @@ pub struct AnonymousFunction {
 impl AnonymousFunction {
     pub fn create_instruction(
         pair: Pair<Rule>,
-        local_variables: &LocalVariables,
+        local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let params_pair = inner.next().unwrap();
@@ -40,11 +40,11 @@ impl AnonymousFunction {
         } else {
             Type::Void
         };
-        let mut local_variables = local_variables.function_layer(
-            LocalVariableMap::from(params.clone()),
-            FunctionInfo::new(None, return_type.clone()),
-        );
+        local_variables.push_layer(LocalVariableMap::from(params.clone()));
+        local_variables.enter_function(FunctionInfo::new(None, return_type.clone()));
         let body = local_variables.create_instructions(inner)?;
+        local_variables.drop_layer();
+        local_variables.exit_function();
         if !Type::Void.matches(&return_type)
             && !body
                 .iter()
@@ -81,11 +81,11 @@ impl Exec for AnonymousFunction {
 
 impl Recreate for AnonymousFunction {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let mut local_variables = local_variables.function_layer(
-            self.params.clone().into(),
-            FunctionInfo::new(None, self.return_type.clone()),
-        );
-        let body = recreate_instructions(&self.body, &mut local_variables)?;
+        local_variables.push_layer(LocalVariableMap::from(self.params.clone()));
+        local_variables.enter_function(FunctionInfo::new(None, self.return_type.clone()));
+        let body = recreate_instructions(&self.body, local_variables)?;
+        local_variables.drop_layer();
+        local_variables.exit_function();
         Ok(Self {
             params: self.params.clone(),
             body,
