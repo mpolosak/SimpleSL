@@ -22,7 +22,6 @@ use self::{
     array::Array,
     array_repeat::ArrayRepeat,
     bin_op::*,
-    block::Block,
     control_flow::{IfElse, Match, SetIfElse},
     destruct_tuple::DestructTuple,
     function::{AnonymousFunction, FunctionDeclaration},
@@ -59,7 +58,7 @@ impl InstructionWithStr {
         instructions: &mut Vec<Self>,
     ) -> Result<(), Error> {
         match pair.as_rule() {
-            Rule::block => Block::create(pair, local_variables, instructions),
+            Rule::block => block::create(pair, local_variables, instructions),
             Rule::import => import::create(pair, local_variables, instructions),
             _ => {
                 let instruction = Self::new(pair, local_variables)?;
@@ -182,10 +181,11 @@ pub enum Instruction {
     AnonymousFunction(AnonymousFunction),
     Array(Arc<Array>),
     ArrayRepeat(Arc<ArrayRepeat>),
-    Block(Block),
     Break,
     Continue,
     DestructTuple(Arc<DestructTuple>),
+    EnterScope,
+    ExitScope,
     For(Arc<For>),
     FunctionDeclaration(Arc<FunctionDeclaration>),
     IfElse(Arc<IfElse>),
@@ -240,13 +240,21 @@ impl Exec for Instruction {
                 .cloned()
                 .ok_or_else(|| panic!("Tried to get variable {ident} that doest exist")),
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins)
-            | Self::Block(ins) | Self::DestructTuple(ins) | Self::Tuple(ins)
+            | Self::DestructTuple(ins) | Self::Tuple(ins)
             | Self::BinOperation(ins) | Self::For(ins) | Self::FunctionDeclaration(ins)
             | Self::IfElse(ins) | Self::Loop(ins) | Self::Match(ins)
             | Self::Mut(ins) | Self::Reduce(ins) | Self::Set(ins) | Self::SetIfElse(ins)
             | Self::TypeFilter(ins) | Self::UnaryOperation(ins) => ins.exec(interpreter),
             Self::Break => Err(ExecStop::Break),
-            Self::Continue => Err(ExecStop::Continue)
+            Self::Continue => Err(ExecStop::Continue),
+            Self::EnterScope => {
+                interpreter.push_layer();
+                Ok(Variable::Void)
+            },
+            Self::ExitScope => {
+                interpreter.pop_layer();
+                Ok(Variable::Void)
+            }
         }
     }
 }
@@ -269,7 +277,7 @@ impl Recreate for Instruction {
             )),
             Self::Variable(variable) => Ok(Self::Variable(variable.clone())),
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins)
-            | Self::Block(ins) | Self::DestructTuple(ins) | Self::Tuple(ins)
+            | Self::DestructTuple(ins) | Self::Tuple(ins)
             | Self::BinOperation(ins) | Self::For(ins) | Self::FunctionDeclaration(ins)
             | Self::IfElse(ins) | Self::Loop(ins) | Self::Match(ins)
             | Self::Mut(ins) | Self::Reduce(ins) | Self::Set(ins) | Self::SetIfElse(ins)
@@ -284,20 +292,20 @@ impl ReturnType for Instruction {
         match_any! { self,
             Self::Variable(variable) | Self::LocalVariable(_, variable) => variable.as_type(),
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins)
-            | Self::Block(ins) | Self::DestructTuple(ins) | Self::Tuple(ins)
+            | Self::DestructTuple(ins) | Self::Tuple(ins)
             | Self::BinOperation(ins) | Self::FunctionDeclaration(ins) | Self::IfElse(ins)
             | Self::Match(ins) | Self::Mut(ins) | Self::Reduce(ins)
             | Self::Set(ins) | Self::SetIfElse(ins) | Self::TypeFilter(ins)
             | Self::UnaryOperation(ins)
             => ins.return_type(),
-            Self::Loop(_) | Self::For(_) => Type::Void,
+            Self::Loop(_) | Self::For(_) | Self::EnterScope | Self::ExitScope => Type::Void,
             Self::Break | Self::Continue => Type::Never
         }
     }
 }
 
 #[duplicate_item(
-    T; [Block]; [Variable]; [UnaryOperation]; [BinOperation]; [AnonymousFunction]; [Array];
+    T; [Variable]; [UnaryOperation]; [BinOperation]; [AnonymousFunction]; [Array];
     [ArrayRepeat]; [Tuple]; [DestructTuple]; [FunctionDeclaration]; [IfElse]; [Reduce];
     [TypeFilter]; [Match]; [Mut]; [Set]; [SetIfElse];
 )]
