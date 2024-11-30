@@ -57,9 +57,9 @@ impl Function {
             Body::Lang(body) => body,
             Body::Native(body) => return (body)(interpreter),
         };
-        match interpreter.exec(body) {
+        match interpreter.exec_all(body) {
             Ok(_) => Ok(Variable::Void),
-            Err(ExecStop::Return(var)) => Ok(var),
+            Err(ExecStop::Return) => Ok(interpreter.result().unwrap().clone()),
             Err(ExecStop::Error(error)) => Err(error),
             Err(ExecStop::Break) => unreachable!("Break outside of loop"),
             Err(ExecStop::Continue) => unreachable!("Continue outside of loop"),

@@ -5,7 +5,7 @@ use super::{
     prefix_op::{indirection, not, unary_minus},
     reduce::{all, any, bitand, bitor, product, sum},
     type_filter::TypeFilter,
-    Exec, ExecResult, ExecStop, Instruction, InstructionWithStr, Recreate,
+    Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
 };
 use crate::{
     variable::{ReturnType, Type},
@@ -55,14 +55,13 @@ pub enum UnaryOperator {
     Product,
     Not,
     UnaryMinus,
-    Return,
     Indirection,
     FunctionCall,
 }
 
 impl Exec for UnaryOperation {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let var = self.instruction.exec(interpreter)?;
+        let var = interpreter.exec(&self.instruction)?;
         Ok(match self.op {
             UnaryOperator::All => all::exec(var),
             UnaryOperator::Any => any::exec(var),
@@ -72,7 +71,6 @@ impl Exec for UnaryOperation {
             UnaryOperator::Product => product::exec(var),
             UnaryOperator::Not => not::exec(var),
             UnaryOperator::UnaryMinus => unary_minus::exec(var),
-            UnaryOperator::Return => return Err(ExecStop::Return(var)),
             UnaryOperator::Indirection => indirection::exec(var),
             UnaryOperator::FunctionCall => var.into_function().unwrap().exec(interpreter)?,
         })
@@ -94,9 +92,8 @@ impl Recreate for UnaryOperation {
             UnaryOperator::Product => product::recreate(instruction),
             UnaryOperator::Not => not::create_from_instruction(instruction),
             UnaryOperator::UnaryMinus => unary_minus::create_from_instruction(instruction),
-            op @ (UnaryOperator::Return
-            | UnaryOperator::Indirection
-            | UnaryOperator::FunctionCall) => UnaryOperation { instruction, op }.into(),
+            op @ (UnaryOperator::Indirection | UnaryOperator::FunctionCall)
+                => UnaryOperation { instruction, op }.into(),
         })
     }
 }
@@ -109,7 +106,6 @@ impl ReturnType for UnaryOperation {
             UnaryOperator::BitAnd | UnaryOperator::BitOr => Type::Int,
             UnaryOperator::Sum | UnaryOperator::Product => return_type.element_type().unwrap(),
             UnaryOperator::Not | UnaryOperator::UnaryMinus => return_type,
-            UnaryOperator::Return => Type::Never,
             UnaryOperator::Indirection => indirection::return_type(return_type),
             UnaryOperator::FunctionCall => return_type.return_type().unwrap(),
         }

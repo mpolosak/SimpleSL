@@ -1,13 +1,15 @@
-use crate::instruction::Exec;
+use crate::instruction::{Exec, ExecResult, Instruction};
 use crate::instruction::{ExecStop, InstructionWithStr};
 use crate::{stdlib, variable::*};
 use std::collections::HashMap;
 use std::sync::Arc;
+use match_any::match_any;
 
 #[derive(Debug)]
 #[must_use]
 pub struct Interpreter {
     variables: Vec<VariableMap>,
+    result: Option<Variable>,
 }
 
 type VariableMap = HashMap<Arc<str>, Variable>;
@@ -24,10 +26,53 @@ impl Interpreter {
     pub fn without_stdlib() -> Self {
         Self {
             variables: vec![VariableMap::new()],
+            result: None,
         }
     }
 
-    pub(crate) fn exec(
+    pub(crate) fn exec(&mut self, instruction: &Instruction) -> ExecResult {
+        match_any! { instruction,
+            Instruction::Variable(var) => {
+                self.result = Some(var.clone());
+                Ok(var.clone())
+            },
+            Instruction::LocalVariable(ident, _) => {
+                let result = self
+                .get_variable(&ident)
+                .cloned()
+                .unwrap_or_else(|| panic!("Tried to get variable {ident} that doest exist"));
+                self.result = Some(result.clone());
+                Ok(result)
+            },
+            Instruction::AnonymousFunction(ins) | Instruction::Array(ins) | Instruction::ArrayRepeat(ins)
+            | Instruction::DestructTuple(ins) | Instruction::Tuple(ins)
+            | Instruction::BinOperation(ins) | Instruction::For(ins) | Instruction::FunctionDeclaration(ins)
+            | Instruction::IfElse(ins) | Instruction::Loop(ins) | Instruction::Match(ins)
+            | Instruction::Mut(ins) | Instruction::Reduce(ins) | Instruction::Set(ins) | Instruction::SetIfElse(ins)
+            | Instruction::TypeFilter(ins) | Instruction::UnaryOperation(ins) => {
+                let result = ins.exec(self);
+                if let Ok(var) = &result {
+                    self.result = Some(var.clone())
+                }
+                result
+            },
+            Instruction::Break => Err(ExecStop::Break),
+            Instruction::Continue => Err(ExecStop::Continue),
+            Instruction::EnterScope => {
+                self.push_layer();
+                Ok(Variable::Void)
+            },
+            Instruction::ExitScope => {
+                self.pop_layer();
+                Ok(Variable::Void)
+            },
+            Instruction::Return => {
+                Err(ExecStop::Return)
+            }
+        }
+    }
+
+    pub(crate) fn exec_all(
         &mut self,
         instructions: &[InstructionWithStr],
     ) -> Result<Arc<[Variable]>, ExecStop> {
@@ -53,10 +98,15 @@ impl Interpreter {
     pub(crate) fn push_layer(&mut self) {
         self.variables.push(VariableMap::new());
     }
+    
     pub(crate) fn pop_layer(&mut self) {
         if self.variables.len() < 2 {
             panic!("Interpreter.pop_layer() called on Interpreter containing less than two layers");
         }
         self.variables.pop();
+    }
+
+    pub(crate) fn result(&self) -> Option<&Variable> {
+        self.result.as_ref()
     }
 }

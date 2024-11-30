@@ -90,14 +90,14 @@ pub enum BinOperator {
 
 impl Exec for BinOperation {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let lhs = self.lhs.exec(interpreter)?;
+        let lhs = interpreter.exec(&self.lhs)?;
         if let BinOperator::And = self.op {
             return and::exec(lhs, &self.rhs, interpreter);
         }
         if let BinOperator::Or = self.op {
             return or::exec(lhs, &self.rhs, interpreter);
         }
-        let rhs = self.rhs.exec(interpreter)?;
+        let rhs = interpreter.exec(&self.rhs)?;
         Ok(match self.op {
             BinOperator::Add => add::exec(lhs, rhs),
             BinOperator::Subtract => subtract::exec(lhs, rhs),

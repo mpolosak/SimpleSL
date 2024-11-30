@@ -60,6 +60,7 @@ impl InstructionWithStr {
         match pair.as_rule() {
             Rule::block => block::create(pair, local_variables, instructions),
             Rule::import => import::create(pair, local_variables, instructions),
+            Rule::r#return => r#return::create(pair, local_variables, instructions),
             _ => {
                 let instruction = Self::new(pair, local_variables)?;
                 instructions.push(instruction);
@@ -156,7 +157,7 @@ impl InstructionWithStr {
 
 impl Exec for InstructionWithStr {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        self.instruction.exec(interpreter)
+        interpreter.exec(&self.instruction)
     }
 }
 
@@ -194,6 +195,7 @@ pub enum Instruction {
     Match(Arc<Match>),
     Mut(Arc<Mut>),
     Reduce(Arc<Reduce>),
+    Return,
     Set(Arc<Set>),
     SetIfElse(Arc<SetIfElse>),
     Tuple(Tuple),
@@ -214,7 +216,6 @@ impl Instruction {
             Rule::function_declaration => {
                 FunctionDeclaration::create_instruction(pair, local_variables)
             }
-            Rule::r#return => r#return::create(pair, local_variables),
             Rule::expr => {
                 InstructionWithStr::new_expression(pair, local_variables).map(|iws| iws.instruction)
             }
@@ -227,34 +228,6 @@ impl Instruction {
             Rule::r#continue if local_variables.in_loop => Ok(Self::Continue),
             Rule::r#continue => Err(Error::ContinueOutsideLoop),
             rule => unexpected!(rule),
-        }
-    }
-}
-
-impl Exec for Instruction {
-    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        match_any! { self,
-            Self::Variable(var) => Ok(var.clone()),
-            Self::LocalVariable(ident, _) => interpreter
-                .get_variable(ident)
-                .cloned()
-                .ok_or_else(|| panic!("Tried to get variable {ident} that doest exist")),
-            Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins)
-            | Self::DestructTuple(ins) | Self::Tuple(ins)
-            | Self::BinOperation(ins) | Self::For(ins) | Self::FunctionDeclaration(ins)
-            | Self::IfElse(ins) | Self::Loop(ins) | Self::Match(ins)
-            | Self::Mut(ins) | Self::Reduce(ins) | Self::Set(ins) | Self::SetIfElse(ins)
-            | Self::TypeFilter(ins) | Self::UnaryOperation(ins) => ins.exec(interpreter),
-            Self::Break => Err(ExecStop::Break),
-            Self::Continue => Err(ExecStop::Continue),
-            Self::EnterScope => {
-                interpreter.push_layer();
-                Ok(Variable::Void)
-            },
-            Self::ExitScope => {
-                interpreter.pop_layer();
-                Ok(Variable::Void)
-            }
         }
     }
 }
@@ -299,7 +272,7 @@ impl ReturnType for Instruction {
             | Self::UnaryOperation(ins)
             => ins.return_type(),
             Self::Loop(_) | Self::For(_) | Self::EnterScope | Self::ExitScope => Type::Void,
-            Self::Break | Self::Continue => Type::Never
+            Self::Break | Self::Continue | Self::Return => Type::Never
         }
     }
 }
@@ -338,7 +311,7 @@ pub type ExecResult = Result<Variable, ExecStop>;
 pub enum ExecStop {
     Break,
     Continue,
-    Return(Variable),
+    Return,
     Error(ExecError),
 }
 

@@ -1,7 +1,7 @@
 pub mod and {
     use crate::{
         instruction::{
-            local_variable::LocalVariables, BinOperation, BinOperator, Exec, ExecResult,
+            local_variable::LocalVariables, BinOperation, BinOperator, ExecResult,
             Instruction, Recreate,
         },
         variable::{ReturnType, Type, Variable},
@@ -57,14 +57,14 @@ pub mod and {
         if !lhs {
             return Ok(Variable::Bool(false));
         }
-        rhs.exec(interpreter)
+        interpreter.exec(rhs)
     }
 }
 
 pub mod or {
     use crate::{
         instruction::{
-            local_variable::LocalVariables, BinOperation, BinOperator, Exec, ExecResult,
+            local_variable::LocalVariables, BinOperation, BinOperator, ExecResult,
             Instruction, Recreate,
         },
         variable::{ReturnType, Type, Variable},
@@ -122,6 +122,6 @@ pub mod or {
         if lhs {
             return Ok(Variable::Bool(true));
         }
-        rhs.exec(interpreter)
+        interpreter.exec(rhs)
     }
 }
