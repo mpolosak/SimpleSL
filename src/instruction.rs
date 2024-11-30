@@ -183,6 +183,7 @@ pub enum Instruction {
     Array(Arc<Array>),
     ArrayRepeat(Arc<ArrayRepeat>),
     Break,
+    Call,
     Continue,
     DestructTuple(Arc<DestructTuple>),
     EnterScope,
@@ -270,7 +271,8 @@ impl ReturnType for Instruction {
             | Self::SetIfElse(ins) | Self::TypeFilter(ins)
             | Self::UnaryOperation(ins)
             => ins.return_type(),
-            Self::Loop(_) | Self::For(_) | Self::EnterScope | Self::ExitScope | Self::Set(_) => Type::Void,
+            Self::Call | Self::Loop(_) | Self::For(_) | Self::EnterScope | Self::ExitScope
+            | Self::Set(_) => Type::Void,
             Self::Break | Self::Continue | Self::Return => Type::Never
         }
     }

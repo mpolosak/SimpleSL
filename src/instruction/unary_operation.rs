@@ -56,7 +56,6 @@ pub enum UnaryOperator {
     Not,
     UnaryMinus,
     Indirection,
-    FunctionCall,
 }
 
 impl Exec for UnaryOperation {
@@ -72,7 +71,6 @@ impl Exec for UnaryOperation {
             UnaryOperator::Not => not::exec(var),
             UnaryOperator::UnaryMinus => unary_minus::exec(var),
             UnaryOperator::Indirection => indirection::exec(var),
-            UnaryOperator::FunctionCall => var.into_function().unwrap().exec(interpreter)?,
         })
     }
 }
@@ -92,8 +90,7 @@ impl Recreate for UnaryOperation {
             UnaryOperator::Product => product::recreate(instruction),
             UnaryOperator::Not => not::create_from_instruction(instruction),
             UnaryOperator::UnaryMinus => unary_minus::create_from_instruction(instruction),
-            op @ (UnaryOperator::Indirection | UnaryOperator::FunctionCall)
-                => UnaryOperation { instruction, op }.into(),
+            op @ UnaryOperator::Indirection => UnaryOperation { instruction, op }.into(),
         })
     }
 }
@@ -107,7 +104,6 @@ impl ReturnType for UnaryOperation {
             UnaryOperator::Sum | UnaryOperator::Product => return_type.element_type().unwrap(),
             UnaryOperator::Not | UnaryOperator::UnaryMinus => return_type,
             UnaryOperator::Indirection => indirection::return_type(return_type),
-            UnaryOperator::FunctionCall => return_type.return_type().unwrap(),
         }
     }
 }

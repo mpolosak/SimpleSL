@@ -72,6 +72,10 @@ impl Interpreter {
             Instruction::Set(ident) => {
                 self.insert(ident.clone(), self.result().unwrap().clone());
                 Ok(Variable::Void)
+            },
+            Instruction::Call => {
+                let result = self.result().unwrap().clone().as_function().unwrap().exec(self)?;
+                Ok(result)
             }
         }
     }

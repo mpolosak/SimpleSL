@@ -1,8 +1,6 @@
 use crate::{
     function::{Function, Param, Params},
-    instruction::{
-        unary_operation::{UnaryOperation, UnaryOperator}, InstructionWithStr
-    },
+    instruction::InstructionWithStr,
     variable::{ReturnType, Typed, Variable},
     Error,
 };
@@ -109,15 +107,11 @@ pub fn create_from_variables(
     }
 
     let instruction = Variable::Function(function).into();
-    let call = InstructionWithStr {
-        instruction: UnaryOperation {
-            instruction,
-            op: UnaryOperator::FunctionCall,
-        }
-        .into(),
-        str: format!("{ident}()").into(),
-    };
-    instructions.push(call);
+    instructions.push(instruction);
+
+    let instruction = InstructionWithStr{ instruction: Instruction::Call, str: "()".into() };
+    instructions.push(instruction);
+    
     Ok(())
 }
 
