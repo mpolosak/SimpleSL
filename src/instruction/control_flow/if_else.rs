@@ -1,4 +1,6 @@
+use std::sync::Arc;
 use crate::instruction::{
+    recreate_instructions,
     local_variable::LocalVariables, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
 };
 use crate::{
@@ -11,72 +13,76 @@ use simplesl_parser::Rule;
 
 #[derive(Debug)]
 pub struct IfElse {
-    pub condition: InstructionWithStr,
-    pub if_true: InstructionWithStr,
-    pub if_false: InstructionWithStr,
+    pub if_true: Arc<[InstructionWithStr]>,
+    pub if_false: Arc<[InstructionWithStr]>,
 }
 
 impl IfElse {
-    pub fn create_instruction(
+    pub fn create(
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, Error> {
+        instructions: &mut Vec<InstructionWithStr>,
+    ) -> Result<(), Error> {
         let mut inner = pair.into_inner();
         let condition_pair = inner.next().unwrap();
-        let condition = InstructionWithStr::new(condition_pair, local_variables)?;
-        let return_type = condition.return_type();
+        let str = condition_pair.as_str().into();
+        InstructionWithStr::create(condition_pair, local_variables, instructions)?;
+        let return_type = return_type(instructions);
         if return_type != Type::Bool {
-            return Err(Error::WrongCondition(condition.str, return_type));
+            return Err(Error::WrongCondition(str, return_type));
         }
+
         let true_pair = inner.next().unwrap();
-        let if_true = InstructionWithStr::new(true_pair, local_variables)?;
-        let if_false = inner.next().map_or_else(
-            || Ok(Variable::Void.into()),
-            |pair| InstructionWithStr::new(pair, local_variables),
-        )?;
-        Ok(Self {
-            condition,
-            if_true,
-            if_false,
+        let mut if_true = Vec::<InstructionWithStr>::new();
+        InstructionWithStr::create(true_pair, local_variables, &mut if_true)?;
+        let if_true = if_true.into();
+
+        let mut if_false = Vec::<InstructionWithStr>::new();
+        if let Some(pair) = inner.next() {
+            InstructionWithStr::create(pair, local_variables, &mut if_false)?;
         }
-        .into())
+        let if_false = if_false.into();
+
+        let instruction = Self{if_true, if_false}.into();
+        let instruction = InstructionWithStr{ instruction, str: "if else".into() };
+        instructions.push(instruction);
+        Ok(())
     }
 }
 
 impl Exec for IfElse {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let condition = self.condition.exec(interpreter)?.into_bool().unwrap();
-        if condition {
-            return self.if_true.exec(interpreter);
-        }
-        self.if_false.exec(interpreter)
+        let condition = *interpreter.result().unwrap().as_bool().unwrap();
+        let to_exec = if condition {&self.if_true} else {&self.if_false};
+        interpreter.exec_all(to_exec)?;
+        Ok(interpreter.result().cloned().unwrap_or(Variable::Void))
     }
 }
 
 impl Recreate for IfElse {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let condition = self.condition.recreate(local_variables)?;
-        let Instruction::Variable(Variable::Bool(condition)) = condition.instruction else {
-            let if_true = self.if_true.recreate(local_variables)?;
-            let if_false = self.if_false.recreate(local_variables)?;
-            return Ok(Self {
-                condition,
-                if_true,
-                if_false,
-            }
-            .into());
-        };
-        if condition {
-            return self.if_true.instruction.recreate(local_variables);
+        let if_true = recreate_instructions(&self.if_true, local_variables)?;
+        let if_false = recreate_instructions(&self.if_false, local_variables)?;
+        return Ok(Self {
+            if_true,
+            if_false,
         }
-        self.if_false.instruction.recreate(local_variables)
+        .into());
     }
 }
 
 impl ReturnType for IfElse {
     fn return_type(&self) -> Type {
-        let true_return_type = self.if_true.return_type();
-        let false_return_type = self.if_false.return_type();
+        let true_return_type = return_type(&self.if_true);
+        let false_return_type = return_type(&self.if_false);
         true_return_type | false_return_type
+    }
+}
+
+pub fn return_type(instructions: &[InstructionWithStr]) -> Type{
+    match instructions.last(){
+        Some(InstructionWithStr{instruction: Instruction::ExitScope, ..}) => return_type(&instructions[..instructions.len()-2]),
+        Some(ins) => ins.return_type(),
+        None => Type::Void,
     }
 }

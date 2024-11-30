@@ -6,10 +6,11 @@ use crate::{
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
 
-pub fn create_instruction(
+pub fn create(
     pair: Pair<Rule>,
     local_variables: &mut LocalVariables,
-) -> Result<Instruction, Error> {
+    instructions: &mut Vec<InstructionWithStr>,
+) -> Result<(), Error> {
     let str = pair.as_str();
     local_variables.in_loop = true;
     let mut set_if_else = SetIfElse::create(pair, local_variables)?;
@@ -18,10 +19,12 @@ pub fn create_instruction(
         instruction: Instruction::Break,
         str: "break".into(),
     };
-    let str = format!("if {} else break", str.strip_prefix("while").unwrap()).into();
+    let if_else_str = format!("if {} else break", str.strip_prefix("while").unwrap()).into();
     let instruction = InstructionWithStr {
         instruction: set_if_else.into(),
-        str,
+        str: if_else_str,
     };
-    Ok(Loop(instruction).into())
+    let instruction = Loop([instruction].into()).into();
+    instructions.push(InstructionWithStr{ instruction, str: str.into() });
+    Ok(())
 }

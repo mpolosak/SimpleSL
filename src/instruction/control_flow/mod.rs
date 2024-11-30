@@ -1,4 +1,4 @@
-mod if_else;
+pub mod if_else;
 mod r#match;
 mod match_arm;
 mod set_if_else;

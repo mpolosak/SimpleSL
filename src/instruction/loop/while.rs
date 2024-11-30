@@ -1,44 +1,38 @@
 use super::{Instruction, InstructionWithStr, Loop};
 use crate::{
-    instruction::{control_flow::IfElse, local_variable::LocalVariables},
-    variable::{ReturnType, Type, Variable},
+    instruction::{control_flow::{if_else::return_type, IfElse}, local_variable::LocalVariables},
+    variable::Type,
     Error,
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
 
-pub fn create_instruction(
+pub fn create(
     pair: Pair<Rule>,
     local_variables: &mut LocalVariables,
-) -> Result<Instruction, Error> {
+    instructions: &mut Vec<InstructionWithStr>,
+) -> Result<(), Error> {
+    let str = pair.as_str().into();
     let mut inner = pair.into_inner();
-    let condition = InstructionWithStr::new_expression(inner.next().unwrap(), local_variables)?;
-    let return_type = condition.return_type();
+    let mut loop_instructions = Vec::<InstructionWithStr>::new();
+    let pair = inner.next().unwrap();
+    let condition_str = pair.as_str().into();
+    InstructionWithStr::create(pair, local_variables, &mut loop_instructions)?;
+    let return_type = return_type(instructions);
     if return_type != Type::Bool {
-        return Err(Error::WrongCondition(condition.str, return_type));
+        return Err(Error::WrongCondition(condition_str, return_type));
     }
+    let mut while_instructions =  Vec::<InstructionWithStr>::new();
+    let in_loop = local_variables.in_loop;
     local_variables.in_loop = true;
-    let instruction = InstructionWithStr::new(inner.next().unwrap(), local_variables)?;
-    local_variables.in_loop = false;
-    if let Instruction::Variable(value) = condition.instruction {
-        return if value == Variable::Bool(true) {
-            Ok(Loop(instruction).into())
-        } else {
-            Ok(Variable::Void.into())
-        };
-    }
-    let str = format!("if {} {} else break", condition.str, instruction.str).into();
-    let instruction = InstructionWithStr {
-        instruction: IfElse {
-            condition,
-            if_true: instruction,
-            if_false: InstructionWithStr {
-                instruction: Instruction::Break,
-                str: "Break".into(),
-            },
-        }
-        .into(),
-        str,
-    };
-    Ok(Loop(instruction).into())
+    let pair = inner.next().unwrap();
+    InstructionWithStr::create(pair, local_variables, &mut while_instructions)?;
+    local_variables.in_loop = in_loop;
+    let if_else = InstructionWithStr{ instruction: IfElse{ if_true: while_instructions.into(), if_false: [InstructionWithStr {
+        instruction: Instruction::Break,
+        str: "Break".into(),
+    }].into()}.into(), str: "if_else".into() };
+    loop_instructions.push(if_else);
+    instructions.push(InstructionWithStr{ instruction: Loop(loop_instructions.into()).into(), str });
+    Ok(())
 }

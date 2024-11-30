@@ -3,7 +3,7 @@ mod array_repeat;
 pub mod at;
 mod bin_op;
 pub mod block;
-mod control_flow;
+pub mod control_flow;
 mod destruct_tuple;
 pub mod function;
 mod import;
@@ -61,6 +61,10 @@ impl InstructionWithStr {
             Rule::import => import::create(pair, local_variables, instructions),
             Rule::r#return => r#return::create(pair, local_variables, instructions),
             Rule::r#set => r#set::create(pair, local_variables, instructions),
+            Rule::if_else => IfElse::create(pair, local_variables, instructions),
+            Rule::r#loop => Loop::create(pair, local_variables, instructions),
+            Rule::r#while => r#while::create(pair, local_variables, instructions),
+            Rule::while_set => while_set::create(pair, local_variables, instructions),
             _ => {
                 let instruction = Self::new(pair, local_variables)?;
                 instructions.push(instruction);
@@ -210,7 +214,6 @@ impl Instruction {
     pub fn new(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<Self, Error> {
         match pair.as_rule() {
             Rule::destruct_tuple => DestructTuple::create_instruction(pair, local_variables),
-            Rule::if_else => IfElse::create_instruction(pair, local_variables),
             Rule::set_if_else => SetIfElse::create_instruction(pair, local_variables),
             Rule::r#match => Match::create_instruction(pair, local_variables),
             Rule::function_declaration => {
@@ -219,9 +222,6 @@ impl Instruction {
             Rule::expr => {
                 InstructionWithStr::new_expression(pair, local_variables).map(|iws| iws.instruction)
             }
-            Rule::r#loop => Loop::create_instruction(pair, local_variables),
-            Rule::r#while => r#while::create_instruction(pair, local_variables),
-            Rule::while_set => while_set::create_instruction(pair, local_variables),
             Rule::r#for | Rule::for_with_index => For::create_instruction(pair, local_variables),
             Rule::r#break if local_variables.in_loop => Ok(Self::Break),
             Rule::r#break => Err(Error::BreakOutsideLoop),
