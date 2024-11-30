@@ -48,7 +48,7 @@ impl Interpreter {
             | Instruction::DestructTuple(ins) | Instruction::Tuple(ins)
             | Instruction::BinOperation(ins) | Instruction::For(ins) | Instruction::FunctionDeclaration(ins)
             | Instruction::IfElse(ins) | Instruction::Loop(ins) | Instruction::Match(ins)
-            | Instruction::Mut(ins) | Instruction::Reduce(ins) | Instruction::Set(ins) | Instruction::SetIfElse(ins)
+            | Instruction::Mut(ins) | Instruction::Reduce(ins) | Instruction::SetIfElse(ins)
             | Instruction::TypeFilter(ins) | Instruction::UnaryOperation(ins) => {
                 let result = ins.exec(self);
                 if let Ok(var) = &result {
@@ -68,6 +68,10 @@ impl Interpreter {
             },
             Instruction::Return => {
                 Err(ExecStop::Return)
+            },
+            Instruction::Set(ident) => {
+                self.insert(ident.clone(), self.result().unwrap().clone());
+                Ok(Variable::Void)
             }
         }
     }

@@ -1,65 +1,27 @@
 use super::{
-    local_variable::LocalVariables, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
+    local_variable::LocalVariables, Instruction, InstructionWithStr,
 };
-use crate::{
-    interpreter::Interpreter,
-    variable::{ReturnType, Type},
-    Error, ExecError,
-};
+use crate::Error;
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
 use std::sync::Arc;
 
-#[derive(Debug)]
-pub struct Set {
-    pub ident: Arc<str>,
-    pub instruction: InstructionWithStr,
-}
-
-impl Set {
-    pub fn new(
-        ident: Arc<str>,
-        instruction: InstructionWithStr,
-        local_variables: &mut LocalVariables,
-    ) -> Self {
-        local_variables.insert(ident.clone(), (&instruction.instruction).into());
-        Self { ident, instruction }
-    }
-
-    pub fn create_instruction(
-        pair: Pair<Rule>,
-        local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, Error> {
-        let mut inner = pair.into_inner();
-        let ident: Arc<str> = inner.next().unwrap().as_str().into();
-        let pair = inner.next().unwrap();
-        let instruction = InstructionWithStr::new(pair, local_variables)?;
-        Ok(Self::new(ident, instruction, local_variables).into())
-    }
-}
-
-impl Exec for Set {
-    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let result = self.instruction.exec(interpreter)?;
-        interpreter.insert(self.ident.clone(), result.clone());
-        Ok(result)
-    }
-}
-
-impl Recreate for Set {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let instruction = self.instruction.recreate(local_variables)?;
-        local_variables.insert(self.ident.clone(), (&instruction.instruction).into());
-        Ok(Self {
-            ident: self.ident.clone(),
-            instruction,
-        }
-        .into())
-    }
-}
-
-impl ReturnType for Set {
-    fn return_type(&self) -> Type {
-        self.instruction.return_type()
-    }
+pub fn create(
+    pair: Pair<Rule>,
+    local_variables: &mut LocalVariables,
+    instructions: &mut Vec<InstructionWithStr>,
+) -> Result<(), Error> {
+    let mut inner = pair.into_inner();
+    let ident: Arc<str> = inner.next().unwrap().as_str().into();
+    let pair = inner.next().unwrap();
+    InstructionWithStr::create(pair, local_variables, instructions)?;
+    let value = &if let InstructionWithStr{instruction: Instruction::ExitScope, ..} = instructions.last().unwrap() {
+        &instructions[instructions.len()-2]
+    } else {
+        instructions.last().unwrap()
+    }.instruction;
+    local_variables.insert(ident.clone(), value.into());
+    let str = ("set ".to_owned() + &ident).into();
+    instructions.push(InstructionWithStr{ instruction: Instruction::Set(ident), str });
+    Ok(())
 }

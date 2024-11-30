@@ -42,7 +42,7 @@ impl Function {
             instruction: Instruction::EnterScope,
             str: "{".into(),
         }];
-        instructions.extend_from_slice(&call::create_from_variables(ident, self, args)?);
+        call::create_from_variables(ident, self, args, &mut instructions)?;
         instructions.push(InstructionWithStr {
             instruction: Instruction::ExitScope,
             str: "}".into(),
