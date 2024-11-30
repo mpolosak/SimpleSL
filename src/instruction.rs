@@ -77,12 +77,25 @@ impl InstructionWithStr {
                 instructions.push(instruction);
                 Ok(())
             }
-            _ => {
+            Rule::r#break if local_variables.in_loop => {
                 let str = pair.as_str().into();
-                let instruction = Instruction::new(pair, local_variables)?;
-                instructions.push(Self { instruction, str });
+                instructions.push(Self {
+                    instruction: Instruction::Break,
+                    str,
+                });
                 Ok(())
             }
+            Rule::r#break => Err(Error::BreakOutsideLoop),
+            Rule::r#continue if local_variables.in_loop => {
+                let str = pair.as_str().into();
+                instructions.push(Self {
+                    instruction: Instruction::Continue,
+                    str,
+                });
+                Ok(())
+            }
+            Rule::r#continue => Err(Error::ContinueOutsideLoop),
+            rule => unexpected!(rule),
         }
     }
 
@@ -212,21 +225,6 @@ pub enum Instruction {
     Variable(Variable),
     BinOperation(Arc<BinOperation>),
     UnaryOperation(Arc<UnaryOperation>),
-}
-
-impl Instruction {
-    pub fn new(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<Self, Error> {
-        match pair.as_rule() {
-            Rule::expr => {
-                InstructionWithStr::new_expression(pair, local_variables).map(|iws| iws.instruction)
-            }
-            Rule::r#break if local_variables.in_loop => Ok(Self::Break),
-            Rule::r#break => Err(Error::BreakOutsideLoop),
-            Rule::r#continue if local_variables.in_loop => Ok(Self::Continue),
-            Rule::r#continue => Err(Error::ContinueOutsideLoop),
-            rule => unexpected!(rule),
-        }
-    }
 }
 
 impl Recreate for Instruction {
