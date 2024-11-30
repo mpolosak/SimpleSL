@@ -65,6 +65,7 @@ impl InstructionWithStr {
             Rule::r#loop => Loop::create(pair, local_variables, instructions),
             Rule::r#while => r#while::create(pair, local_variables, instructions),
             Rule::while_set => while_set::create(pair, local_variables, instructions),
+            Rule::r#for => For::create(pair, local_variables, instructions),
             _ => {
                 let instruction = Self::new(pair, local_variables)?;
                 instructions.push(instruction);
@@ -222,7 +223,6 @@ impl Instruction {
             Rule::expr => {
                 InstructionWithStr::new_expression(pair, local_variables).map(|iws| iws.instruction)
             }
-            Rule::r#for | Rule::for_with_index => For::create_instruction(pair, local_variables),
             Rule::r#break if local_variables.in_loop => Ok(Self::Break),
             Rule::r#break => Err(Error::BreakOutsideLoop),
             Rule::r#continue if local_variables.in_loop => Ok(Self::Continue),
