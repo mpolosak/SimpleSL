@@ -67,6 +67,7 @@ impl InstructionWithStr {
             Rule::while_set => while_set::create(pair, local_variables, instructions),
             Rule::r#for => For::create(pair, local_variables, instructions),
             Rule::set_if_else => SetIfElse::create(pair, local_variables, instructions),
+            Rule::r#match => Match::create(pair, local_variables, instructions),
             _ => {
                 let instruction = Self::new(pair, local_variables)?;
                 instructions.push(instruction);
@@ -216,7 +217,6 @@ impl Instruction {
     pub fn new(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<Self, Error> {
         match pair.as_rule() {
             Rule::destruct_tuple => DestructTuple::create_instruction(pair, local_variables),
-            Rule::r#match => Match::create_instruction(pair, local_variables),
             Rule::function_declaration => {
                 FunctionDeclaration::create_instruction(pair, local_variables)
             }
