@@ -72,20 +72,18 @@ impl InstructionWithStr {
             Rule::function_declaration => {
                 function::declaration::create(pair, local_variables, instructions)
             }
-            _ => {
-                let instruction = Self::new(pair, local_variables)?;
+            Rule::expr => {
+                let instruction = Self::new_expression(pair, local_variables)?;
                 instructions.push(instruction);
                 Ok(())
             }
+            _ => {
+                let str = pair.as_str().into();
+                let instruction = Instruction::new(pair, local_variables)?;
+                instructions.push(Self { instruction, str });
+                Ok(())
+            }
         }
-    }
-    fn new(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<Self, Error> {
-        if pair.as_rule() == Rule::expr {
-            return Self::new_expression(pair, local_variables);
-        }
-        let str = pair.as_str().into();
-        let instruction = Instruction::new(pair, local_variables)?;
-        Ok(Self { instruction, str })
     }
 
     pub(crate) fn new_expression(
