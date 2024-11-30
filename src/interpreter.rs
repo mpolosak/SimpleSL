@@ -44,12 +44,12 @@ impl Interpreter {
                 self.result = Some(result.clone());
                 Ok(result)
             },
-            Instruction::AnonymousFunction(ins) | Instruction::Array(ins) | Instruction::ArrayRepeat(ins)
+            Instruction::Function(ins) | Instruction::Array(ins) | Instruction::ArrayRepeat(ins)
             | Instruction::DestructTuple(ins) | Instruction::Tuple(ins)
-            | Instruction::BinOperation(ins) | Instruction::For(ins) | Instruction::FunctionDeclaration(ins)
-            | Instruction::IfElse(ins) | Instruction::Loop(ins) | Instruction::Match(ins)
-            | Instruction::Mut(ins) | Instruction::Reduce(ins) | Instruction::SetIfElse(ins)
-            | Instruction::TypeFilter(ins) | Instruction::UnaryOperation(ins) => {
+            | Instruction::BinOperation(ins) | Instruction::For(ins) | Instruction::IfElse(ins)
+            | Instruction::Loop(ins) | Instruction::Match(ins) | Instruction::Mut(ins)
+            | Instruction::Reduce(ins) | Instruction::SetIfElse(ins) | Instruction::TypeFilter(ins)
+            | Instruction::UnaryOperation(ins) => {
                 let result = ins.exec(self);
                 if let Ok(var) = &result {
                     self.result = Some(var.clone())

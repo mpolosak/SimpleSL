@@ -1,12 +1,12 @@
 use crate::{
-    function::{Function, Param, Params},
+    function::{self,Param, Params},
     instruction::InstructionWithStr,
     variable::{ReturnType, Typed, Variable},
     Error,
 };
 use crate::{
     instruction::{
-        function::AnonymousFunction,
+        function::Function,
         local_variable::{LocalVariable, LocalVariables},
         tuple::Tuple,
         BinOperation, BinOperator, Instruction,
@@ -33,7 +33,7 @@ pub fn create_instruction(
         Instruction::LocalVariable(ident, LocalVariable::Function(params, _)) => {
             check_args_with_params(ident, params, &args)?;
         }
-        Instruction::AnonymousFunction(AnonymousFunction { params, .. }) => {
+        Instruction::Function(Function { params, .. }) => {
             check_args_with_params(&function.str, params, &args)?;
         }
         _ => {
@@ -66,7 +66,7 @@ pub fn create_instruction(
 
 pub fn create_from_variables(
     ident: Arc<str>,
-    function: Arc<Function>,
+    function: Arc<function::Function>,
     args: Vec<Variable>,
     instructions: &mut Vec<InstructionWithStr>
 ) -> Result<(), Error> {

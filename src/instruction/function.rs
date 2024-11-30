@@ -1,15 +1,16 @@
+pub mod call;
+pub mod declaration;
 use crate as simplesl;
 use crate::{
-    function::{Body, Function, Param, Params},
-    instruction::InstructionWithStr,
+    function::{Body, self, Param, Params},
     interpreter::Interpreter,
     variable::{ReturnType, Type},
     ExecError,
 };
 use crate::{
     instruction::{
-        local_variable::{FunctionInfo, LocalVariableMap, LocalVariables},
-        recreate_instructions, Exec, ExecResult, Instruction, Recreate,
+        local_variable::{LocalVariable, FunctionInfo, LocalVariableMap, LocalVariables},
+        recreate_instructions, Exec, ExecResult, Instruction, Recreate, InstructionWithStr
     },
     Error,
 };
@@ -19,16 +20,18 @@ use simplesl_parser::Rule;
 use std::sync::Arc;
 
 #[derive(Clone, Debug)]
-pub struct AnonymousFunction {
+pub struct Function {
+    ident: Option<Arc<str>>,
     pub params: Params,
     body: Arc<[InstructionWithStr]>,
     return_type: Type,
 }
 
-impl AnonymousFunction {
+impl Function {
     pub fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
+        ident: Option<Arc<str>>,
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let params_pair = inner.next().unwrap();
@@ -42,6 +45,12 @@ impl AnonymousFunction {
         };
         local_variables.push_layer(LocalVariableMap::from(params.clone()));
         local_variables.enter_function(FunctionInfo::new(None, return_type.clone()));
+        if let Some(ident) = &ident {
+            local_variables.insert(
+                ident.clone(),
+                LocalVariable::Function(params.clone(), return_type.clone()),
+            );
+        }
         let mut body = Vec::<InstructionWithStr>::new();
         for pair in inner {
             InstructionWithStr::create(pair, local_variables, &mut body)?;
@@ -60,6 +69,7 @@ impl AnonymousFunction {
             });
         }
         Ok(Self {
+            ident,
             params,
             body: body.into(),
             return_type,
@@ -68,12 +78,18 @@ impl AnonymousFunction {
     }
 }
 
-impl Exec for AnonymousFunction {
+impl Exec for Function {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let mut fn_local_variables = LocalVariables::from_params(self.params.clone(), interpreter);
+        if let Some(ident) = &self.ident {
+            fn_local_variables.insert(
+                ident.clone(),
+                LocalVariable::Function(self.params.clone(), self.return_type.clone()),
+            );
+        }
         let body = recreate_instructions(&self.body, &mut fn_local_variables)?;
-        Ok(Function {
-            ident: None,
+        Ok(function::Function {
+            ident: self.ident.clone(),
             params: self.params.clone(),
             body: Body::Lang(body),
             return_type: self.return_type.clone(),
@@ -82,14 +98,21 @@ impl Exec for AnonymousFunction {
     }
 }
 
-impl Recreate for AnonymousFunction {
+impl Recreate for Function {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
         local_variables.push_layer(LocalVariableMap::from(self.params.clone()));
         local_variables.enter_function(FunctionInfo::new(None, self.return_type.clone()));
+        if let Some(ident) = &self.ident {
+            local_variables.insert(
+                ident.clone(),
+                LocalVariable::Function(self.params.clone(), self.return_type.clone()),
+            );
+        }
         let body = recreate_instructions(&self.body, local_variables)?;
         local_variables.drop_layer();
         local_variables.exit_function();
         Ok(Self {
+            ident: self.ident.clone(),
             params: self.params.clone(),
             body,
             return_type: self.return_type.clone(),
@@ -98,7 +121,7 @@ impl Recreate for AnonymousFunction {
     }
 }
 
-impl ReturnType for AnonymousFunction {
+impl ReturnType for Function {
     fn return_type(&self) -> Type {
         let params: Arc<[Type]> = self
             .params

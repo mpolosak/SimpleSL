@@ -1,4 +1,4 @@
-use super::{function::AnonymousFunction, Instruction};
+use super::{function::Function, Instruction};
 use crate::{
     self as simplesl,
     function::{Param, Params},
@@ -120,7 +120,7 @@ impl From<Type> for LocalVariable {
 impl From<&Instruction> for LocalVariable {
     fn from(value: &Instruction) -> Self {
         match value {
-            Instruction::AnonymousFunction(function) => function.into(),
+            Instruction::Function(function) => function.into(),
             Instruction::LocalVariable(_, var) => var.clone(),
             Instruction::Variable(var) => var.clone().into(),
             ins => ins.return_type().into(),
@@ -134,8 +134,8 @@ impl From<Variable> for LocalVariable {
     }
 }
 
-impl From<&AnonymousFunction> for LocalVariable {
-    fn from(value: &AnonymousFunction) -> Self {
+impl From<&Function> for LocalVariable {
+    fn from(value: &Function) -> Self {
         Self::Function(value.params.clone(), value.return_type())
     }
 }
