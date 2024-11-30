@@ -1,7 +1,8 @@
+use std::sync::Arc;
+
 use super::{Instruction, InstructionWithStr, Loop};
 use crate::{
-    instruction::{control_flow::SetIfElse, local_variable::LocalVariables},
-    Error,
+    instruction::{control_flow::SetIfElse, local_variable::{LocalVariable, LocalVariables}}, variable::Type, Error
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
@@ -11,20 +12,34 @@ pub fn create(
     local_variables: &mut LocalVariables,
     instructions: &mut Vec<InstructionWithStr>,
 ) -> Result<(), Error> {
-    let str = pair.as_str();
+    let str = pair.as_str().into();
+    let mut loop_instructions = Vec::<InstructionWithStr>::new();
+    
+    let mut inner = pair.into_inner();
+    let ident: Arc<str> = inner.next().unwrap().as_str().into();
+    let pair = inner.next().unwrap();
+    let var_type = Type::from(pair);
+    let pair = inner.next().unwrap();
+    InstructionWithStr::create(pair, local_variables, instructions)?;
+
+
     local_variables.in_loop = true;
-    let mut set_if_else = SetIfElse::create(pair, local_variables)?;
+    let if_match_pair = inner.next().unwrap();
+    let mut if_match = Vec::<InstructionWithStr>::new();
+    local_variables.new_layer();
+    local_variables.insert(ident.clone(), LocalVariable::Other(var_type.clone()));
+    InstructionWithStr::create(if_match_pair, local_variables, &mut if_match)?;
+    local_variables.drop_layer();
+    let if_match = if_match.into();
     local_variables.in_loop = false;
-    set_if_else.else_instruction = InstructionWithStr {
-        instruction: Instruction::Break,
-        str: "break".into(),
-    };
-    let if_else_str = format!("if {} else break", str.strip_prefix("while").unwrap()).into();
-    let instruction = InstructionWithStr {
-        instruction: set_if_else.into(),
-        str: if_else_str,
-    };
-    let instruction = Loop([instruction].into()).into();
-    instructions.push(InstructionWithStr{ instruction, str: str.into() });
+
+    let else_instructions = [InstructionWithStr{ instruction: Instruction::Break, str: "break".into() }].into();
+
+    let instruction = SetIfElse{ ident, var_type, if_match, else_instructions }.into();
+    let instruction = InstructionWithStr{ instruction, str: "if else".into() };
+    loop_instructions.push(instruction);
+
+    let instruction = Loop(loop_instructions.into()).into();
+    instructions.push(InstructionWithStr{ instruction, str });
     Ok(())
 }
