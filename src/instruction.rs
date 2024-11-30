@@ -68,6 +68,7 @@ impl InstructionWithStr {
             Rule::r#for => For::create(pair, local_variables, instructions),
             Rule::set_if_else => SetIfElse::create(pair, local_variables, instructions),
             Rule::r#match => Match::create(pair, local_variables, instructions),
+            Rule::destruct_tuple => DestructTuple::create(pair, local_variables, instructions),
             _ => {
                 let instruction = Self::new(pair, local_variables)?;
                 instructions.push(instruction);
@@ -216,7 +217,6 @@ pub enum Instruction {
 impl Instruction {
     pub fn new(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<Self, Error> {
         match pair.as_rule() {
-            Rule::destruct_tuple => DestructTuple::create_instruction(pair, local_variables),
             Rule::function_declaration => {
                 FunctionDeclaration::create_instruction(pair, local_variables)
             }
@@ -265,14 +265,12 @@ impl ReturnType for Instruction {
         match_any! { self,
             Self::Variable(variable) | Self::LocalVariable(_, variable) => variable.as_type(),
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins)
-            | Self::DestructTuple(ins) | Self::Tuple(ins)
-            | Self::BinOperation(ins) | Self::FunctionDeclaration(ins) | Self::IfElse(ins)
-            | Self::Match(ins) | Self::Mut(ins) | Self::Reduce(ins)
-            | Self::SetIfElse(ins) | Self::TypeFilter(ins)
-            | Self::UnaryOperation(ins)
+            | Self::Tuple(ins) | Self::BinOperation(ins) | Self::FunctionDeclaration(ins)
+            | Self::IfElse(ins) | Self::Match(ins) | Self::Mut(ins) | Self::Reduce(ins)
+            | Self::SetIfElse(ins) | Self::TypeFilter(ins) | Self::UnaryOperation(ins)
             => ins.return_type(),
             Self::Call | Self::Loop(_) | Self::For(_) | Self::EnterScope | Self::ExitScope
-            | Self::Set(_) => Type::Void,
+            | Self::Set(_) | Self::DestructTuple(_) => Type::Void,
             Self::Break | Self::Continue | Self::Return => Type::Never
         }
     }
