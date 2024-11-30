@@ -54,8 +54,13 @@ impl For {
         InstructionWithStr::create(pair, local_variables, &mut loop_instructions)?;
         local_variables.drop_layer();
         local_variables.in_loop = in_loop;
-        let instruction = Self{ index, ident, instructions: loop_instructions.into() }.into();
-        instructions.push(InstructionWithStr{ instruction, str });
+        let instruction = Self {
+            index,
+            ident,
+            instructions: loop_instructions.into(),
+        }
+        .into();
+        instructions.push(InstructionWithStr { instruction, str });
         Ok(())
     }
 }
@@ -63,7 +68,7 @@ impl For {
 impl Exec for For {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let array = interpreter.result().unwrap().clone().into_array().unwrap();
-        
+
         for (index, element) in array.iter().cloned().enumerate() {
             interpreter.push_layer();
             interpreter.insert(self.index.clone(), index.into());
@@ -83,10 +88,7 @@ impl Exec for For {
 impl Recreate for For {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
         local_variables.new_layer();
-        local_variables.insert(
-            self.ident.clone(),
-            LocalVariable::Other(Type::Any),
-        );
+        local_variables.insert(self.ident.clone(), LocalVariable::Other(Type::Any));
         local_variables.insert(self.index.clone(), LocalVariable::Other(Type::Int));
         let instructions = recreate_instructions(&self.instructions, local_variables)?;
         local_variables.drop_layer();

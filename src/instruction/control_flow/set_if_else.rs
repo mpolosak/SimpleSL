@@ -1,6 +1,7 @@
 use crate::{
     instruction::{
-        local_variable::{LocalVariable, LocalVariables}, recreate_instructions, Exec, ExecResult, Instruction, InstructionWithStr, Recreate
+        local_variable::{LocalVariable, LocalVariables},
+        recreate_instructions, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
     },
     Error, ExecError,
 };
@@ -34,7 +35,7 @@ impl SetIfElse {
         let var_type = Type::from(pair);
         let pair = inner.next().unwrap();
         InstructionWithStr::create(pair, local_variables, instructions)?;
-        
+
         let if_match_pair = inner.next().unwrap();
         let mut if_match = Vec::<InstructionWithStr>::new();
         local_variables.new_layer();
@@ -51,8 +52,17 @@ impl SetIfElse {
         }
         let else_instructions = else_instructions.into();
 
-        let instruction = Self{ ident, var_type, if_match, else_instructions }.into();
-        let instruction = InstructionWithStr{ instruction, str: "if else".into() };
+        let instruction = Self {
+            ident,
+            var_type,
+            if_match,
+            else_instructions,
+        }
+        .into();
+        let instruction = InstructionWithStr {
+            instruction,
+            str: "if else".into(),
+        };
         instructions.push(instruction);
         Ok(())
     }
@@ -66,11 +76,11 @@ impl Exec for SetIfElse {
             interpreter.push_layer();
             interpreter.insert(self.ident.clone(), expression_result);
             interpreter.exec_all(&self.if_match)?;
-            interpreter.pop_layer(); 
+            interpreter.pop_layer();
         } else {
             interpreter.exec_all(&self.else_instructions)?;
         }
-        
+
         Ok(interpreter.result().unwrap().clone())
     }
 }
@@ -82,7 +92,7 @@ impl Recreate for SetIfElse {
             self.ident.clone(),
             LocalVariable::Other(self.var_type.clone()),
         );
-        let if_match =  recreate_instructions(&self.if_match, local_variables)?;
+        let if_match = recreate_instructions(&self.if_match, local_variables)?;
         local_variables.drop_layer();
 
         let else_instructions = recreate_instructions(&self.else_instructions, local_variables)?;

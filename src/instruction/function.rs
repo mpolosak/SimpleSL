@@ -2,15 +2,15 @@ pub mod call;
 pub mod declaration;
 use crate as simplesl;
 use crate::{
-    function::{Body, self, Param, Params},
+    function::{self, Body, Param, Params},
     interpreter::Interpreter,
     variable::{ReturnType, Type},
     ExecError,
 };
 use crate::{
     instruction::{
-        local_variable::{LocalVariable, FunctionInfo, LocalVariableMap, LocalVariables},
-        recreate_instructions, Exec, ExecResult, Instruction, Recreate, InstructionWithStr
+        local_variable::{FunctionInfo, LocalVariable, LocalVariableMap, LocalVariables},
+        recreate_instructions, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
     },
     Error,
 };

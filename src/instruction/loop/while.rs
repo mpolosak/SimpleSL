@@ -1,6 +1,9 @@
 use super::{Instruction, InstructionWithStr, Loop};
 use crate::{
-    instruction::{control_flow::{if_else::return_type, IfElse}, local_variable::LocalVariables},
+    instruction::{
+        control_flow::{if_else::return_type, IfElse},
+        local_variable::LocalVariables,
+    },
     variable::Type,
     Error,
 };
@@ -22,17 +25,28 @@ pub fn create(
     if return_type != Type::Bool {
         return Err(Error::WrongCondition(condition_str, return_type));
     }
-    let mut while_instructions =  Vec::<InstructionWithStr>::new();
+    let mut while_instructions = Vec::<InstructionWithStr>::new();
     let in_loop = local_variables.in_loop;
     local_variables.in_loop = true;
     let pair = inner.next().unwrap();
     InstructionWithStr::create(pair, local_variables, &mut while_instructions)?;
     local_variables.in_loop = in_loop;
-    let if_else = InstructionWithStr{ instruction: IfElse{ if_true: while_instructions.into(), if_false: [InstructionWithStr {
-        instruction: Instruction::Break,
-        str: "Break".into(),
-    }].into()}.into(), str: "if_else".into() };
+    let if_else = InstructionWithStr {
+        instruction: IfElse {
+            if_true: while_instructions.into(),
+            if_false: [InstructionWithStr {
+                instruction: Instruction::Break,
+                str: "Break".into(),
+            }]
+            .into(),
+        }
+        .into(),
+        str: "if_else".into(),
+    };
     loop_instructions.push(if_else);
-    instructions.push(InstructionWithStr{ instruction: Loop(loop_instructions.into()).into(), str });
+    instructions.push(InstructionWithStr {
+        instruction: Loop(loop_instructions.into()).into(),
+        str,
+    });
     Ok(())
 }

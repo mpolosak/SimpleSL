@@ -1,9 +1,9 @@
 use crate::instruction::{Exec, ExecResult, Instruction};
 use crate::instruction::{ExecStop, InstructionWithStr};
 use crate::{stdlib, variable::*};
+use match_any::match_any;
 use std::collections::HashMap;
 use std::sync::Arc;
-use match_any::match_any;
 
 #[derive(Debug)]
 #[must_use]
@@ -106,7 +106,7 @@ impl Interpreter {
     pub(crate) fn push_layer(&mut self) {
         self.variables.push(VariableMap::new());
     }
-    
+
     pub(crate) fn pop_layer(&mut self) {
         if self.variables.len() < 2 {
             panic!("Interpreter.pop_layer() called on Interpreter containing less than two layers");

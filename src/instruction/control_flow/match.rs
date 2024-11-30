@@ -1,7 +1,7 @@
 use super::{if_else::return_type, match_arm::MatchArm};
 use crate::{
     instruction::{
-        local_variable::LocalVariables, Exec, ExecResult, Instruction, InstructionWithStr, Recreate
+        local_variable::LocalVariables, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
     },
     interpreter::Interpreter,
     variable::{ReturnType, Type},
@@ -34,7 +34,7 @@ impl Match {
             return Err(Error::MatchNotCovered);
         }
         let instruction = result.into();
-        instructions.push(InstructionWithStr{instruction, str});
+        instructions.push(InstructionWithStr { instruction, str });
         Ok(())
     }
 

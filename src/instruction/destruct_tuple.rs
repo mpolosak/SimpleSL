@@ -1,11 +1,8 @@
 use super::{
-    control_flow::if_else::return_type, local_variable::LocalVariables, Exec, ExecResult, Instruction, InstructionWithStr, Recreate
+    control_flow::if_else::return_type, local_variable::LocalVariables, Exec, ExecResult,
+    Instruction, InstructionWithStr, Recreate,
 };
-use crate::{
-    interpreter::Interpreter,
-    variable::Variable,
-    Error, ExecError,
-};
+use crate::{interpreter::Interpreter, variable::Variable, Error, ExecError};
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
 use std::{iter::zip, sync::Arc};
@@ -47,9 +44,7 @@ impl DestructTuple {
         let types = return_type.flatten_tuple().unwrap();
         local_variables.extend(zip(idents.iter().cloned(), types.iter().cloned()));
 
-        let instruction = Self {
-            idents,
-        }.into();
+        let instruction = Self { idents }.into();
         instructions.push(InstructionWithStr { instruction, str });
         Ok(())
     }
@@ -69,6 +64,7 @@ impl Recreate for DestructTuple {
     fn recreate(&self, _local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
         Ok(Self {
             idents: self.idents.clone(),
-        }.into())
+        }
+        .into())
     }
 }

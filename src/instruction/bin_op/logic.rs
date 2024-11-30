@@ -1,8 +1,8 @@
 pub mod and {
     use crate::{
         instruction::{
-            local_variable::LocalVariables, BinOperation, BinOperator, ExecResult,
-            Instruction, Recreate,
+            local_variable::LocalVariables, BinOperation, BinOperator, ExecResult, Instruction,
+            Recreate,
         },
         variable::{ReturnType, Type, Variable},
         Error, ExecError, Interpreter,
@@ -64,8 +64,8 @@ pub mod and {
 pub mod or {
     use crate::{
         instruction::{
-            local_variable::LocalVariables, BinOperation, BinOperator, ExecResult,
-            Instruction, Recreate,
+            local_variable::LocalVariables, BinOperation, BinOperator, ExecResult, Instruction,
+            Recreate,
         },
         variable::{ReturnType, Type, Variable},
         Error, ExecError, Interpreter,

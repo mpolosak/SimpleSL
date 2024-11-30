@@ -1,14 +1,10 @@
-use super::{
-    local_variable::LocalVariables,
-    Instruction, InstructionWithStr,
-};
+use super::{local_variable::LocalVariables, Instruction, InstructionWithStr};
 use crate::{
     variable::{ReturnType, Variable},
     Error,
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
-
 
 pub fn create(
     pair: Pair<Rule>,
@@ -23,8 +19,12 @@ pub fn create(
     } else {
         instructions.push(Variable::Void.into());
     };
-    let returned = if let InstructionWithStr{instruction: Instruction::ExitScope, ..} = instructions.last().unwrap() {
-        instructions[instructions.len()-2].return_type()
+    let returned = if let InstructionWithStr {
+        instruction: Instruction::ExitScope,
+        ..
+    } = instructions.last().unwrap()
+    {
+        instructions[instructions.len() - 2].return_type()
     } else {
         instructions.last().unwrap().return_type()
     };
@@ -35,6 +35,9 @@ pub fn create(
             returned,
         });
     }
-    instructions.push(InstructionWithStr{instruction: Instruction::Return, str: "return".into()});
+    instructions.push(InstructionWithStr {
+        instruction: Instruction::Return,
+        str: "return".into(),
+    });
     Ok(())
 }

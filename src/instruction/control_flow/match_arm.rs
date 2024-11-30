@@ -1,7 +1,7 @@
 use crate::{
     instruction::{
         local_variable::{LocalVariable, LocalVariables},
-        recreate_instructions, Exec, ExecResult, ExecStop, InstructionWithStr,
+        recreate_instructions, ExecResult, ExecStop, InstructionWithStr,
     },
     interpreter::Interpreter,
     variable::{ReturnType, Type, Typed, Variable},
@@ -11,128 +11,155 @@ use pest::iterators::Pair;
 use simplesl_parser::{unexpected, Rule};
 use std::sync::Arc;
 
+use super::if_else::return_type;
+
 #[derive(Debug)]
-pub enum MatchArm {
-    Type {
-        ident: Arc<str>,
-        var_type: Type,
-        instruction: InstructionWithStr,
-    },
-    Value(Arc<[InstructionWithStr]>, InstructionWithStr),
-    Other(InstructionWithStr),
+pub struct MatchArm {
+    pattern: Pattern,
+    instructions: Arc<[InstructionWithStr]>,
 }
 
 impl MatchArm {
     pub fn new(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<Self, Error> {
         let match_rule = pair.as_rule();
         let mut inner = pair.into_inner();
-        let pair = inner.next().unwrap();
-        match match_rule {
+        let mut pair = inner.next().unwrap();
+        let pattern = match match_rule {
             Rule::match_type => {
                 let ident: Arc<str> = pair.as_str().into();
                 let var_type = Type::from(inner.next().unwrap());
                 let pair = inner.next().unwrap();
                 local_variables.new_layer();
                 local_variables.insert(ident.clone(), LocalVariable::Other(var_type.clone()));
-                let instruction = InstructionWithStr::new(pair, local_variables)?;
+                let mut instructions = Vec::<InstructionWithStr>::new();
+                InstructionWithStr::create(pair, local_variables, &mut instructions)?;
+                let instructions = instructions.into();
                 local_variables.drop_layer();
-                Ok(Self::Type {
-                    ident,
-                    var_type,
-                    instruction,
-                })
+                let pattern = Pattern::Type { ident, var_type };
+                return Ok(Self {
+                    pattern,
+                    instructions,
+                });
             }
             Rule::match_value => {
                 let inner_values = pair.into_inner();
                 let values = inner_values
-                    .map(|pair| InstructionWithStr::new(pair, local_variables))
-                    .collect::<Result<Arc<[InstructionWithStr]>, Error>>()?;
-                let pair = inner.next().unwrap();
-                let instruction = InstructionWithStr::new(pair, local_variables)?;
-                Ok(Self::Value(values, instruction))
+                    .map(|pair| {
+                        let mut instructions = Vec::<InstructionWithStr>::new();
+                        InstructionWithStr::create(pair, local_variables, &mut instructions)?;
+                        Ok(Arc::<[InstructionWithStr]>::from(instructions))
+                    })
+                    .collect::<Result<Arc<[Arc<[InstructionWithStr]>]>, Error>>()?;
+                pair = inner.next().unwrap();
+                Pattern::Value(values)
             }
-            Rule::match_other => {
-                let instruction = InstructionWithStr::new(pair, local_variables)?;
-                Ok(Self::Other(instruction))
-            }
+            Rule::match_other => Pattern::Other,
             rule => unexpected!(rule),
-        }
+        };
+        let mut instructions = Vec::<InstructionWithStr>::new();
+        InstructionWithStr::create(pair, local_variables, &mut instructions)?;
+        let instructions = instructions.into();
+        Ok(Self {
+            pattern,
+            instructions,
+        })
     }
+
     pub fn is_covering_type(&self, checked_type: &Type) -> bool {
-        match self {
-            Self::Value(..) => false,
-            Self::Other(_) => true,
-            Self::Type { var_type, .. } => checked_type.matches(var_type),
-        }
+        self.pattern.is_covering_type(checked_type)
     }
+
     pub fn covers(
         &self,
         variable: &Variable,
         interpreter: &mut Interpreter,
     ) -> Result<bool, ExecStop> {
-        Ok(match self {
-            MatchArm::Other(_) => true,
-            MatchArm::Type { var_type, .. } => variable.as_type().matches(var_type),
-            MatchArm::Value(instructions, _) => {
-                for instruction in instructions.iter() {
-                    let match_variable = instruction.exec(interpreter)?;
-                    if match_variable == *variable {
-                        return Ok(true);
-                    }
-                }
-                false
-            }
-        })
+        self.pattern.covers(variable, interpreter)
     }
     pub fn exec(&self, variable: Variable, interpreter: &mut Interpreter) -> ExecResult {
-        match self {
-            MatchArm::Type {
-                ident, instruction, ..
-            } => {
-                interpreter.push_layer();
-                interpreter.insert(ident.clone(), variable);
-                let result = instruction.exec(interpreter);
-                interpreter.pop_layer();
-                result
-            }
-            MatchArm::Other(instruction) | MatchArm::Value(_, instruction) => {
-                instruction.exec(interpreter)
-            }
+        if let Pattern::Type { ident, .. } = &self.pattern {
+            interpreter.push_layer();
+            interpreter.insert(ident.clone(), variable);
+            interpreter.exec_all(&self.instructions)?;
+            interpreter.pop_layer();
+        } else {
+            interpreter.exec_all(&self.instructions)?;
         }
+        Ok(interpreter.result().unwrap().clone())
     }
     pub fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Self, ExecError> {
-        Ok(match self {
-            Self::Type {
-                ident,
-                var_type,
-                instruction,
-            } => {
+        let pattern = match &self.pattern {
+            Pattern::Type { ident, var_type } => {
                 local_variables.new_layer();
                 local_variables.insert(ident.clone(), LocalVariable::Other(var_type.clone()));
-                let instruction = instruction.recreate(local_variables)?;
+                let instructions = recreate_instructions(&self.instructions, local_variables)?;
                 local_variables.drop_layer();
-                Self::Type {
+                let pattern = Pattern::Type {
                     ident: ident.clone(),
                     var_type: var_type.clone(),
-                    instruction,
-                }
+                };
+                return Ok(Self {
+                    pattern,
+                    instructions,
+                });
             }
-            Self::Value(values, instruction) => {
-                let values = recreate_instructions(values, local_variables)?;
-                let instruction = instruction.recreate(local_variables)?;
-                Self::Value(values, instruction)
+            Pattern::Value(values) => {
+                let values = values
+                    .iter()
+                    .map(|value| recreate_instructions(&value, local_variables))
+                    .collect::<Result<Arc<[Arc<[InstructionWithStr]>]>, ExecError>>()?;
+                Pattern::Value(values)
             }
-            MatchArm::Other(instruction) => Self::Other(instruction.recreate(local_variables)?),
+            Pattern::Other => Pattern::Other,
+        };
+        let instructions = recreate_instructions(&self.instructions, local_variables)?;
+        Ok(Self {
+            pattern,
+            instructions,
         })
     }
 }
 
 impl ReturnType for MatchArm {
     fn return_type(&self) -> Type {
+        return_type(&self.instructions)
+    }
+}
+
+#[derive(Debug)]
+pub enum Pattern {
+    Type { ident: Arc<str>, var_type: Type },
+    Value(Arc<[Arc<[InstructionWithStr]>]>),
+    Other,
+}
+
+impl Pattern {
+    pub fn is_covering_type(&self, checked_type: &Type) -> bool {
         match self {
-            MatchArm::Type { instruction, .. }
-            | MatchArm::Value(_, instruction)
-            | MatchArm::Other(instruction) => instruction.return_type(),
+            Pattern::Type { var_type, .. } => checked_type.matches(var_type),
+            Pattern::Value(_) => false,
+            Pattern::Other => true,
         }
+    }
+
+    pub fn covers(
+        &self,
+        variable: &Variable,
+        interpreter: &mut Interpreter,
+    ) -> Result<bool, ExecStop> {
+        Ok(match &self {
+            Pattern::Other => true,
+            Pattern::Type { var_type, .. } => variable.as_type().matches(var_type),
+            Pattern::Value(values) => {
+                for instructions in values.iter() {
+                    interpreter.exec_all(instructions)?;
+                    let match_variable = interpreter.result().unwrap();
+                    if match_variable == variable {
+                        return Ok(true);
+                    }
+                }
+                false
+            }
+        })
     }
 }

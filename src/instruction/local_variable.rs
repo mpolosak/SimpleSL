@@ -5,8 +5,8 @@ use crate::{
     variable::{ReturnType, Type, Typed, Variable},
     Interpreter,
 };
-use std::{collections::HashMap, sync::Arc};
 use simplesl_macros::var_type;
+use std::{collections::HashMap, sync::Arc};
 
 pub type LocalVariableMap = HashMap<Arc<str>, LocalVariable>;
 

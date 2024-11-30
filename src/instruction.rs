@@ -69,7 +69,9 @@ impl InstructionWithStr {
             Rule::set_if_else => SetIfElse::create(pair, local_variables, instructions),
             Rule::r#match => Match::create(pair, local_variables, instructions),
             Rule::destruct_tuple => DestructTuple::create(pair, local_variables, instructions),
-            Rule::function_declaration => function::declaration::create(pair, local_variables, instructions),
+            Rule::function_declaration => {
+                function::declaration::create(pair, local_variables, instructions)
+            }
             _ => {
                 let instruction = Self::new(pair, local_variables)?;
                 instructions.push(instruction);

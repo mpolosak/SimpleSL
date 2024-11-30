@@ -4,7 +4,8 @@ pub mod while_set;
 use std::sync::Arc;
 
 use super::{
-    local_variable::LocalVariables, recreate_instructions, Exec, ExecResult, ExecStop, Instruction, InstructionWithStr, Recreate
+    local_variable::LocalVariables, recreate_instructions, Exec, ExecResult, ExecStop, Instruction,
+    InstructionWithStr, Recreate,
 };
 use crate::{variable::Variable, Error, ExecError, Interpreter};
 use pest::iterators::Pair;
@@ -24,11 +25,11 @@ impl Loop {
         let pair = pair.into_inner().next().unwrap();
         let in_loop = local_variables.in_loop;
         local_variables.in_loop = true;
-        let mut inner  = Vec::<InstructionWithStr>::new();
+        let mut inner = Vec::<InstructionWithStr>::new();
         InstructionWithStr::create(pair, local_variables, &mut inner)?;
         local_variables.in_loop = in_loop;
         let instruction = Self(inner.into()).into();
-        instructions.push(InstructionWithStr{ instruction, str });
+        instructions.push(InstructionWithStr { instruction, str });
         Ok(())
     }
 }

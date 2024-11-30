@@ -1,5 +1,5 @@
 use crate::{
-    function::{self,Param, Params},
+    function::{self, Param, Params},
     instruction::InstructionWithStr,
     variable::{ReturnType, Typed, Variable},
     Error,
@@ -68,7 +68,7 @@ pub fn create_from_variables(
     ident: Arc<str>,
     function: Arc<function::Function>,
     args: Vec<Variable>,
-    instructions: &mut Vec<InstructionWithStr>
+    instructions: &mut Vec<InstructionWithStr>,
 ) -> Result<(), Error> {
     if function.params.len() != args.len() {
         return Err(Error::WrongNumberOfArguments(
@@ -93,25 +93,33 @@ pub fn create_from_variables(
 
     let ident = function.ident.clone().unwrap_or_else(|| "$".into());
     let str = format!("set {ident}").into();
-    let instruction = InstructionWithStr{ instruction: Instruction::Set(ident.clone()), str};
+    let instruction = InstructionWithStr {
+        instruction: Instruction::Set(ident.clone()),
+        str,
+    };
     instructions.push(instruction);
-
 
     let args = args.into_iter().map(InstructionWithStr::from);
     for (param, arg) in zip(function.params.iter(), args) {
         instructions.push(arg);
         let ident = param.name.clone();
         let str = format!("set {ident}").into();
-        let instruction = InstructionWithStr{ instruction: Instruction::Set(ident), str};
+        let instruction = InstructionWithStr {
+            instruction: Instruction::Set(ident),
+            str,
+        };
         instructions.push(instruction);
     }
 
     let instruction = Variable::Function(function).into();
     instructions.push(instruction);
 
-    let instruction = InstructionWithStr{ instruction: Instruction::Call, str: "()".into() };
+    let instruction = InstructionWithStr {
+        instruction: Instruction::Call,
+        str: "()".into(),
+    };
     instructions.push(instruction);
-    
+
     Ok(())
 }
 

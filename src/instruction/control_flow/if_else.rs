@@ -1,7 +1,6 @@
-use std::sync::Arc;
 use crate::instruction::{
-    recreate_instructions,
-    local_variable::LocalVariables, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
+    local_variable::LocalVariables, recreate_instructions, Exec, ExecResult, Instruction,
+    InstructionWithStr, Recreate,
 };
 use crate::{
     interpreter::Interpreter,
@@ -10,6 +9,7 @@ use crate::{
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct IfElse {
@@ -43,8 +43,11 @@ impl IfElse {
         }
         let if_false = if_false.into();
 
-        let instruction = Self{if_true, if_false}.into();
-        let instruction = InstructionWithStr{ instruction, str: "if else".into() };
+        let instruction = Self { if_true, if_false }.into();
+        let instruction = InstructionWithStr {
+            instruction,
+            str: "if else".into(),
+        };
         instructions.push(instruction);
         Ok(())
     }
@@ -53,7 +56,11 @@ impl IfElse {
 impl Exec for IfElse {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let condition = *interpreter.result().unwrap().as_bool().unwrap();
-        let to_exec = if condition {&self.if_true} else {&self.if_false};
+        let to_exec = if condition {
+            &self.if_true
+        } else {
+            &self.if_false
+        };
         interpreter.exec_all(to_exec)?;
         Ok(interpreter.result().cloned().unwrap_or(Variable::Void))
     }
@@ -63,11 +70,7 @@ impl Recreate for IfElse {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
         let if_true = recreate_instructions(&self.if_true, local_variables)?;
         let if_false = recreate_instructions(&self.if_false, local_variables)?;
-        return Ok(Self {
-            if_true,
-            if_false,
-        }
-        .into());
+        return Ok(Self { if_true, if_false }.into());
     }
 }
 
@@ -79,9 +82,12 @@ impl ReturnType for IfElse {
     }
 }
 
-pub fn return_type(instructions: &[InstructionWithStr]) -> Type{
-    match instructions.last(){
-        Some(InstructionWithStr{instruction: Instruction::ExitScope, ..}) => return_type(&instructions[..instructions.len()-2]),
+pub fn return_type(instructions: &[InstructionWithStr]) -> Type {
+    match instructions.last() {
+        Some(InstructionWithStr {
+            instruction: Instruction::ExitScope,
+            ..
+        }) => return_type(&instructions[..instructions.len() - 2]),
         Some(ins) => ins.return_type(),
         None => Type::Void,
     }
