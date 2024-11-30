@@ -46,7 +46,10 @@ impl FunctionDeclaration {
 
         local_variables.push_layer(LocalVariableMap::from(params.clone()));
         local_variables.enter_function(FunctionInfo::new(Some(ident.clone()), return_type.clone()));
-        let body = local_variables.create_instructions(inner)?;
+        let mut body = Vec::<InstructionWithStr>::new();
+        for pair in inner {
+            InstructionWithStr::create(pair, local_variables, &mut body)?;
+        }
         local_variables.exit_function();
         local_variables.drop_layer();
         if !Type::Void.matches(&return_type)
@@ -63,7 +66,7 @@ impl FunctionDeclaration {
         Ok(Self {
             ident,
             params,
-            body,
+            body: body.into(),
             return_type,
         }
         .into())

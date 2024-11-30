@@ -42,7 +42,10 @@ impl AnonymousFunction {
         };
         local_variables.push_layer(LocalVariableMap::from(params.clone()));
         local_variables.enter_function(FunctionInfo::new(None, return_type.clone()));
-        let body = local_variables.create_instructions(inner)?;
+        let mut body = Vec::<InstructionWithStr>::new();
+        for pair in inner {
+            InstructionWithStr::create(pair, local_variables, &mut body)?;
+        }
         local_variables.drop_layer();
         local_variables.exit_function();
         if !Type::Void.matches(&return_type)
@@ -58,7 +61,7 @@ impl AnonymousFunction {
         }
         Ok(Self {
             params,
-            body,
+            body: body.into(),
             return_type,
         }
         .into())

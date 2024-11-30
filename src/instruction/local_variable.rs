@@ -1,14 +1,12 @@
-use super::{function::AnonymousFunction, Instruction, InstructionWithStr};
-use crate as simplesl;
+use super::{function::AnonymousFunction, Instruction};
 use crate::{
+    self as simplesl,
     function::{Param, Params},
     variable::{ReturnType, Type, Typed, Variable},
-    Error, Interpreter,
+    Interpreter,
 };
-use pest::iterators::Pairs;
-use simplesl_macros::var_type;
-use simplesl_parser::Rule;
 use std::{collections::HashMap, sync::Arc};
+use simplesl_macros::var_type;
 
 pub type LocalVariableMap = HashMap<Arc<str>, LocalVariable>;
 
@@ -78,7 +76,7 @@ impl<'a> LocalVariables<'a> {
         self.variables.pop();
     }
 
-    pub fn function(&'a self) -> Option<&FunctionInfo> {
+    pub fn function(&'a self) -> Option<&'a FunctionInfo> {
         self.function.last()
     }
 
@@ -91,29 +89,6 @@ impl<'a> LocalVariables<'a> {
             panic!("Tried to exit function but not in function")
         }
         self.function.pop();
-    }
-
-    pub(crate) fn create_instructions(
-        &mut self,
-        pairs: Pairs<'_, Rule>,
-    ) -> Result<Arc<[InstructionWithStr]>, Error> {
-        let mut instructions = pairs
-            .map(|pair| InstructionWithStr::new(pair, self))
-            .collect::<Result<Vec<InstructionWithStr>, Error>>()?;
-        let Some(last) = instructions.pop() else {
-            return Ok(Arc::from([]));
-        };
-        instructions.retain(|instruction| {
-            !matches!(
-                instruction,
-                InstructionWithStr {
-                    instruction: Instruction::Variable(..),
-                    ..
-                }
-            )
-        });
-        instructions.push(last);
-        Ok(instructions.into())
     }
 }
 
