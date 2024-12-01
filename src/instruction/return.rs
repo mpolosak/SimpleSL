@@ -1,6 +1,9 @@
-use super::{local_variable::LocalVariables, Instruction, InstructionWithStr};
+use super::{
+    local_variable::{LocalVariable, LocalVariables},
+    Instruction, InstructionWithStr,
+};
 use crate::{
-    variable::{ReturnType, Variable},
+    variable::{Typed, Variable},
     Error,
 };
 use pest::iterators::Pair;
@@ -15,19 +18,12 @@ pub fn create(
         return Err(Error::ReturnOutsideFunction);
     };
     if let Some(pair) = pair.into_inner().next() {
-        InstructionWithStr::create(pair, local_variables, instructions)?
+        InstructionWithStr::create(pair, local_variables, instructions)?;
     } else {
         instructions.push(Variable::Void.into());
+        local_variables.result = Some(LocalVariable::Variable(Variable::Void));
     };
-    let returned = if let InstructionWithStr {
-        instruction: Instruction::ExitScope,
-        ..
-    } = instructions.last().unwrap()
-    {
-        instructions[instructions.len() - 2].return_type()
-    } else {
-        instructions.last().unwrap().return_type()
-    };
+    let returned = local_variables.result.as_ref().unwrap().as_type();
     if !returned.matches(function.return_type()) {
         return Err(Error::WrongReturn {
             function_name: function.name(),

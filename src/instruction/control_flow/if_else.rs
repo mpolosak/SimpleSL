@@ -2,6 +2,7 @@ use crate::instruction::{
     local_variable::LocalVariables, recreate_instructions, Exec, ExecResult, Instruction,
     InstructionWithStr, Recreate,
 };
+use crate::variable::Typed;
 use crate::{
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
@@ -27,7 +28,7 @@ impl IfElse {
         let condition_pair = inner.next().unwrap();
         let str = condition_pair.as_str().into();
         InstructionWithStr::create(condition_pair, local_variables, instructions)?;
-        let return_type = return_type(instructions);
+        let return_type = local_variables.result.as_ref().unwrap().as_type();
         if return_type != Type::Bool {
             return Err(Error::WrongCondition(str, return_type));
         }
@@ -43,7 +44,8 @@ impl IfElse {
         }
         let if_false = if_false.into();
 
-        let instruction = Self { if_true, if_false }.into();
+        let instruction: Instruction = Self { if_true, if_false }.into();
+        local_variables.result = Some((&instruction).into());
         let instruction = InstructionWithStr {
             instruction,
             str: "if else".into(),

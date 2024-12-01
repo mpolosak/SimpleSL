@@ -1,10 +1,7 @@
 use super::{Instruction, InstructionWithStr, Loop};
 use crate::{
-    instruction::{
-        control_flow::{if_else::return_type, IfElse},
-        local_variable::LocalVariables,
-    },
-    variable::Type,
+    instruction::{control_flow::IfElse, local_variable::LocalVariables},
+    variable::{Type, Typed},
     Error,
 };
 use pest::iterators::Pair;
@@ -21,7 +18,7 @@ pub fn create(
     let pair = inner.next().unwrap();
     let condition_str = pair.as_str().into();
     InstructionWithStr::create(pair, local_variables, &mut loop_instructions)?;
-    let return_type = return_type(instructions);
+    let return_type = local_variables.result.as_ref().unwrap().as_type();
     if return_type != Type::Bool {
         return Err(Error::WrongCondition(condition_str, return_type));
     }

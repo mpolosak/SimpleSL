@@ -1,3 +1,4 @@
+use super::if_else::return_type;
 use crate::{
     instruction::{
         local_variable::{LocalVariable, LocalVariables},
@@ -12,8 +13,6 @@ use crate::{
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
 use std::sync::Arc;
-
-use super::if_else::return_type;
 
 #[derive(Debug)]
 pub struct SetIfElse {
@@ -52,13 +51,16 @@ impl SetIfElse {
         }
         let else_instructions = else_instructions.into();
 
-        let instruction = Self {
+        let instruction: Instruction = Self {
             ident,
             var_type,
             if_match,
             else_instructions,
         }
         .into();
+
+        local_variables.result = Some((&instruction).into());
+
         let instruction = InstructionWithStr {
             instruction,
             str: "if else".into(),

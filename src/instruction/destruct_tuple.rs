@@ -1,8 +1,11 @@
 use super::{
-    control_flow::if_else::return_type, local_variable::LocalVariables, Exec, ExecResult,
-    Instruction, InstructionWithStr, Recreate,
+    local_variable::LocalVariables, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
 };
-use crate::{interpreter::Interpreter, variable::Variable, Error, ExecError};
+use crate::{
+    interpreter::Interpreter,
+    variable::{Typed, Variable},
+    Error, ExecError,
+};
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
 use std::{iter::zip, sync::Arc};
@@ -25,7 +28,7 @@ impl DestructTuple {
         let pair = inner.next().unwrap();
         let tuple_str = pair.as_str().into();
         InstructionWithStr::create(pair, local_variables, instructions)?;
-        let return_type = return_type(instructions);
+        let return_type = local_variables.result.as_ref().unwrap().as_type();
         if !return_type.is_tuple() {
             return Err(Error::NotATuple(tuple_str));
         }

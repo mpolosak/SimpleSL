@@ -1,3 +1,4 @@
+use super::if_else::return_type;
 use crate::{
     instruction::{
         local_variable::{LocalVariable, LocalVariables},
@@ -10,8 +11,6 @@ use crate::{
 use pest::iterators::Pair;
 use simplesl_parser::{unexpected, Rule};
 use std::sync::Arc;
-
-use super::if_else::return_type;
 
 #[derive(Debug)]
 pub struct MatchArm {

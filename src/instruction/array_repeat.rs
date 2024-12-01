@@ -1,11 +1,10 @@
-use std::sync::Arc;
-
-use super::control_flow::if_else::return_type;
 use super::recreate_instructions;
 use super::{
     local_variable::LocalVariables, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
 };
 use crate as simplesl;
+use crate::instruction::control_flow::if_else::return_type;
+use crate::variable::Typed;
 use crate::{
     interpreter::Interpreter,
     variable::{ReturnType, Type},
@@ -14,6 +13,7 @@ use crate::{
 use pest::iterators::Pair;
 use simplesl_macros::{var, var_type};
 use simplesl_parser::Rule;
+use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct ArrayRepeat {
@@ -38,8 +38,8 @@ impl ArrayRepeat {
         let mut len = Vec::<InstructionWithStr>::new();
         InstructionWithStr::create(pair, local_variables, &mut len)?;
         let len: Arc<[InstructionWithStr]> = len.into();
-
-        if !return_type(&len).matches(&Type::Int) {
+        let len_type = local_variables.result.as_ref().unwrap().as_type();
+        if !len_type.matches(&Type::Int) {
             return Err(Error::WrongLengthType(len_str));
         }
         Ok(Self { value, len }.into())

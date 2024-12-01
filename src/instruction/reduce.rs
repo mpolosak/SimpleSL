@@ -7,6 +7,7 @@ pub mod sum;
 use super::control_flow::if_else::return_type;
 use super::recreate_instructions;
 use crate as simplesl;
+use crate::variable::Typed;
 use crate::{
     instruction::{
         local_variable::LocalVariables, Exec, ExecResult, ExecStop, Instruction,
@@ -47,7 +48,8 @@ impl Reduce {
                 var_type!((any, element_type)->any),
             ));
         };
-        let acc_type = return_type(&initial_value) | element_type.clone() | fn_return_type.clone();
+        let initial_value_type = local_variables.result.as_ref().unwrap().as_type();
+        let acc_type = initial_value_type | element_type.clone() | fn_return_type.clone();
         let expected_function = var_type!((acc_type, element_type)->fn_return_type);
         if !function.return_type().matches(&expected_function) {
             return Err(Error::WrongType("function".into(), expected_function));

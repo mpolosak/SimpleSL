@@ -75,6 +75,7 @@ impl InstructionWithStr {
             }
             Rule::expr => {
                 let instruction = Self::new_expression(pair, local_variables)?;
+                local_variables.result = Some((&instruction.instruction).into());
                 instructions.push(instruction);
                 Ok(())
             }
@@ -234,7 +235,8 @@ pub enum Instruction {
 impl Recreate for Instruction {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
         match_any! {self,
-            Self::LocalVariable(ident, _) => Ok(local_variables.get(ident).map_or_else(
+            Self::LocalVariable(ident, _) =>{
+                let instruction = local_variables.get(ident).map_or_else(
                 || {
                     local_variables.interpreter
                         .get_variable(ident)
@@ -246,14 +248,43 @@ impl Recreate for Instruction {
                     LocalVariable::Variable(variable) => Self::Variable(variable),
                     local_variable => Self::LocalVariable(ident.clone(), local_variable),
                 },
-            )),
-            Self::Variable(variable) => Ok(Self::Variable(variable.clone())),
-            Self::Function(ins) | Self::Array(ins) | Self::ArrayRepeat(ins)
-            | Self::DestructTuple(ins) | Self::Tuple(ins) | Self::BinOperation(ins)
-            | Self::For(ins) | Self::IfElse(ins) | Self::Loop(ins) | Self::Match(ins)
-            | Self::Mut(ins) | Self::Reduce(ins) | Self::SetIfElse(ins) | Self::TypeFilter(ins)
-            | Self::UnaryOperation(ins) | Self::FunctionCall(ins) => ins.recreate(local_variables),
-            _ => Ok(self.clone())
+                );
+                local_variables.result = Some((&instruction).into());
+                Ok(instruction)
+            },
+            Self::Variable(variable) => {
+                local_variables.result = Some(variable.clone().into());
+                Ok(Self::Variable(variable.clone()))
+            },
+            Self::DestructTuple(ins) | Self::For(ins) | Self::Loop(ins)
+                => ins.recreate(local_variables),
+            Self::Function(ins) | Self::Array(ins) | Self::ArrayRepeat(ins) | Self::Tuple(ins)
+            | Self::Mut(ins) | Self::IfElse(ins) |  Self::Reduce(ins) | Self::SetIfElse(ins)
+            | Self::TypeFilter(ins) | Self::UnaryOperation(ins) | Self::FunctionCall(ins)
+            | Self::Match(ins)  | Self::BinOperation(ins) => {
+                let instruction = ins.recreate(local_variables)?;
+                local_variables.result = Some((&instruction).into());
+                Ok(instruction)
+            },
+            Self::Call => {
+                let return_type = local_variables.result.as_ref().unwrap().as_type().return_type().unwrap();
+                local_variables.result = Some(LocalVariable::Other(return_type));
+                Ok(Self::Call)
+            },
+            Self::EnterScope => {
+                local_variables.new_layer();
+                Ok(Self::EnterScope)
+            },
+            Self::ExitScope => {
+                local_variables.drop_layer();
+                Ok(Self::ExitScope)
+            },
+            ins @ Self::Set(ident) => {
+                let local_variable = local_variables.result.as_ref().unwrap().clone();
+                local_variables.insert(ident.clone(), local_variable);
+                Ok(ins.clone())
+            },
+            Self::Break | Self::Continue | Self::Return => Ok(self.clone())
         }
     }
 }

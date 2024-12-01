@@ -1,10 +1,10 @@
-use super::{if_else::return_type, match_arm::MatchArm};
+use super::match_arm::MatchArm;
 use crate::{
     instruction::{
         local_variable::LocalVariables, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
     },
     interpreter::Interpreter,
-    variable::{ReturnType, Type},
+    variable::{ReturnType, Type, Typed},
     Error, ExecError,
 };
 use pest::iterators::Pair;
@@ -25,7 +25,7 @@ impl Match {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
         InstructionWithStr::create(pair, local_variables, instructions)?;
-        let var_type = return_type(instructions);
+        let var_type = local_variables.result.as_ref().unwrap().as_type();
         let arms = inner
             .map(|pair| MatchArm::new(pair, local_variables))
             .collect::<Result<Box<[MatchArm]>, Error>>()?;
@@ -33,7 +33,8 @@ impl Match {
         if !result.is_covering_type(&var_type) {
             return Err(Error::MatchNotCovered);
         }
-        let instruction = result.into();
+        let instruction: Instruction = result.into();
+        local_variables.result = Some((&instruction).into());
         instructions.push(InstructionWithStr { instruction, str });
         Ok(())
     }

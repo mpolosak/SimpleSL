@@ -1,15 +1,14 @@
-use std::sync::Arc;
-
 use super::{
-    control_flow::if_else::return_type, local_variable::LocalVariables, recreate_instructions,
-    Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
+    local_variable::LocalVariables, recreate_instructions, Exec, ExecResult, Instruction,
+    InstructionWithStr, Recreate,
 };
 use crate::{
-    variable::{self, ReturnType, Type},
+    variable::{self, ReturnType, Type, Typed},
     Error, ExecError, Interpreter,
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Mut {
@@ -28,7 +27,7 @@ impl Mut {
             let mut value = Vec::new();
             InstructionWithStr::create(pair, local_variables, &mut value)?;
             let value: Arc<[InstructionWithStr]> = value.into();
-            let var_type = return_type(&value);
+            let var_type = local_variables.result.as_ref().unwrap().as_type();
             return Ok(Mut { var_type, value }.into());
         }
         let var_type = Type::from(pair);
@@ -38,7 +37,7 @@ impl Mut {
         let mut value = Vec::new();
         InstructionWithStr::create(pair, local_variables, &mut value)?;
         let value: Arc<[InstructionWithStr]> = value.into();
-        let instruction_return_type = return_type(&value);
+        let instruction_return_type = local_variables.result.as_ref().unwrap().as_type();
         if !instruction_return_type.matches(&var_type) {
             return Err(Error::WrongInitialization {
                 declared: var_type,

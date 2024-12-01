@@ -16,6 +16,7 @@ pub struct LocalVariables<'a> {
     pub function: Vec<FunctionInfo>,
     pub in_loop: bool,
     pub interpreter: &'a Interpreter,
+    pub result: Option<LocalVariable>,
 }
 
 impl<'a> LocalVariables<'a> {
@@ -26,6 +27,7 @@ impl<'a> LocalVariables<'a> {
             function: vec![],
             interpreter,
             in_loop: false,
+            result: None,
         }
     }
 
@@ -36,6 +38,7 @@ impl<'a> LocalVariables<'a> {
             function: vec![],
             interpreter,
             in_loop: false,
+            result: None,
         }
     }
 

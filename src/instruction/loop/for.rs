@@ -1,7 +1,6 @@
-use crate::instruction::control_flow::if_else::return_type;
 use crate::instruction::local_variable::LocalVariable;
 use crate::instruction::{Exec, ExecResult, ExecStop, Recreate};
-use crate::variable::{Type, Variable};
+use crate::variable::{Type, Typed, Variable};
 use crate::{self as simplesl, ExecError, Interpreter};
 use crate::{
     instruction::{local_variable::LocalVariables, Instruction, InstructionWithStr},
@@ -39,7 +38,7 @@ impl For {
         let ident: Arc<str> = inner.next().unwrap().as_str().into();
         let pair = inner.next().unwrap();
         InstructionWithStr::create(pair, local_variables, instructions)?;
-        let return_type = return_type(instructions);
+        let return_type = local_variables.result.as_ref().unwrap().as_type();
         let Some(element_type) = return_type.element_type() else {
             return Err(Error::WrongType("array".into(), var_type!([any])));
         };

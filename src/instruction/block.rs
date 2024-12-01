@@ -1,5 +1,8 @@
-use super::{local_variable::LocalVariables, Instruction, InstructionWithStr};
-use crate::Error;
+use super::{
+    local_variable::{LocalVariable, LocalVariables},
+    Instruction, InstructionWithStr,
+};
+use crate::{variable::Variable, Error};
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
 
@@ -10,6 +13,8 @@ pub fn create(
 ) -> Result<(), Error> {
     let pairs = pair.into_inner();
     if pairs.len() == 0 {
+        instructions.push(Variable::Void.into());
+        local_variables.result = Some(LocalVariable::Variable(Variable::Void));
         return Ok(());
     }
     local_variables.new_layer();
