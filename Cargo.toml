@@ -24,6 +24,7 @@ simplesl_macros = { path="macros", version="0.1.0" }
 match_any = "1.0.1"
 duplicate = "2.0.0"
 enum-as-inner = "0.6.1"
+parse-display = "0.10.0"
 pest.workspace = true
 lazy_static.workspace = true
 simplesl_parser.workspace = true

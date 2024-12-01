@@ -7,7 +7,8 @@ pub mod shift {
     use std::sync::Arc;
 
     use crate::{
-        instruction::{can_be_used_int, BinOperation, BinOperator, Instruction},
+        instruction::{can_be_used_int, BinOperation, Instruction},
+        op::BinOperator,
         variable::{Array, ReturnType, Variable},
         Error, ExecError,
     };
@@ -16,7 +17,7 @@ pub mod shift {
         let lhs_type = lhs.return_type();
         let rhs_type = rhs.return_type();
         if !can_be_used_int(lhs_type.clone(), rhs_type.clone()) {
-            return Err(Error::CannotDo2(lhs_type, stringify!(op), rhs_type));
+            return Err(Error::CannotDo2(lhs_type, BinOperator::Shift, rhs_type));
         }
         Ok(BinOperation {
             lhs,

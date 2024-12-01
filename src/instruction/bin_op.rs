@@ -10,6 +10,7 @@ use super::{
     return_type::return_type_bool, Exec, ExecResult, InstructionWithStr, Recreate,
 };
 use crate as simplesl;
+use crate::op::BinOperator;
 use crate::{
     instruction::Instruction,
     variable::{ReturnType, Type},
@@ -47,45 +48,6 @@ pub struct BinOperation {
     pub lhs: Instruction,
     pub rhs: Instruction,
     pub op: BinOperator,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum BinOperator {
-    Add,
-    Subtract,
-    Multiply,
-    Divide,
-    Modulo,
-    Pow,
-    Equal,
-    NotEqual,
-    Greater,
-    GreaterOrEqual,
-    Lower,
-    LowerOrEqual,
-    And,
-    Or,
-    BitwiseAnd,
-    BitwiseOr,
-    Xor,
-    LShift,
-    RShift,
-    Filter,
-    Map,
-    At,
-    FunctionCall,
-    Assign,
-    AssignAdd,
-    AssignSubtract,
-    AssignMultiply,
-    AssignDivide,
-    AssignModulo,
-    AssignLShift,
-    AssignRShift,
-    AssignBitwiseAnd,
-    AssignBitwiseOr,
-    AssignXor,
-    AssignPow,
 }
 
 impl Exec for BinOperation {
@@ -318,18 +280,12 @@ impl InstructionWithStr {
             Rule::lshift => lshift::create_op(lhs, rhs),
             Rule::and => and::create_op(lhs, rhs),
             Rule::or => or::create_op(lhs, rhs),
-            Rule::assign => assign::create_op(
-                lhs,
-                rhs,
-                "=",
-                BinOperator::Assign,
-                |_, _| true,
-                |_, x| x.clone(),
-            ),
+            Rule::assign => {
+                assign::create_op(lhs, rhs, BinOperator::Assign, |_, _| true, |_, x| x.clone())
+            }
             Rule::assign_add => assign::create_op(
                 lhs,
                 rhs,
-                "+=",
                 BinOperator::AssignAdd,
                 add::can_be_used,
                 |lhs, rhs| add::return_type(lhs.clone(), rhs.clone()),
@@ -337,7 +293,6 @@ impl InstructionWithStr {
             Rule::assign_subtract => assign::create_op(
                 lhs,
                 rhs,
-                "-=",
                 BinOperator::AssignSubtract,
                 assign_can_be_used_num,
                 return_type,
@@ -345,7 +300,6 @@ impl InstructionWithStr {
             Rule::assing_multiply => assign::create_op(
                 lhs,
                 rhs,
-                "*=",
                 BinOperator::AssignMultiply,
                 assign_can_be_used_num,
                 return_type,
@@ -353,7 +307,6 @@ impl InstructionWithStr {
             Rule::assign_divide => assign::create_op(
                 lhs,
                 rhs,
-                "/=",
                 BinOperator::AssignDivide,
                 assign_can_be_used_num,
                 return_type,
@@ -361,7 +314,6 @@ impl InstructionWithStr {
             Rule::assign_modulo => assign::create_op(
                 lhs,
                 rhs,
-                "%=",
                 BinOperator::AssignModulo,
                 assign_can_be_used_int,
                 return_type,
@@ -369,7 +321,6 @@ impl InstructionWithStr {
             Rule::assign_lshift => assign::create_op(
                 lhs,
                 rhs,
-                "<<=",
                 BinOperator::AssignLShift,
                 assign_can_be_used_int,
                 return_type,
@@ -377,7 +328,6 @@ impl InstructionWithStr {
             Rule::assign_rshift => assign::create_op(
                 lhs,
                 rhs,
-                ">>=",
                 BinOperator::AssignRShift,
                 assign_can_be_used_int,
                 return_type,
@@ -385,7 +335,6 @@ impl InstructionWithStr {
             Rule::assign_bitwise_and => assign::create_op(
                 lhs,
                 rhs,
-                "&=",
                 BinOperator::AssignBitwiseAnd,
                 bitwise_can_be_used,
                 return_type,
@@ -393,7 +342,6 @@ impl InstructionWithStr {
             Rule::assign_bitwise_or => assign::create_op(
                 lhs,
                 rhs,
-                "|=",
                 BinOperator::AssignBitwiseOr,
                 bitwise_can_be_used,
                 return_type,
@@ -401,7 +349,6 @@ impl InstructionWithStr {
             Rule::assign_xor => assign::create_op(
                 lhs,
                 rhs,
-                "^=",
                 BinOperator::AssignXor,
                 assign_can_be_used_int,
                 return_type,
@@ -409,7 +356,6 @@ impl InstructionWithStr {
             Rule::assign_pow => assign::create_op(
                 lhs,
                 rhs,
-                "**=",
                 BinOperator::AssignPow,
                 assign_can_be_used_num,
                 return_type,

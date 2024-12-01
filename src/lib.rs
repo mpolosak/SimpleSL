@@ -3,6 +3,7 @@ mod errors;
 pub mod function;
 mod instruction;
 mod interpreter;
+mod op;
 pub mod stdlib;
 mod to_result;
 pub mod variable;

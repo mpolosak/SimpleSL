@@ -8,7 +8,6 @@ use crate::{
 pub fn create_op<T, S>(
     lhs: Instruction,
     rhs: Instruction,
-    symbol: &'static str,
     op: BinOperator,
     can_be_used: T,
     return_type: S,
@@ -20,12 +19,12 @@ where
     let lhs_type = lhs.return_type();
     let rhs_type = rhs.return_type();
     let Some(var_type) = lhs_type.mut_element_type() else {
-        return Err(Error::CannotDo2(lhs_type, symbol, rhs_type));
+        return Err(Error::CannotDo2(lhs_type, op, rhs_type));
     };
     let can_be_used = can_be_used(&var_type, &rhs_type);
     let return_type = return_type(&var_type, &rhs_type);
     if !can_be_used || !return_type.matches(&var_type) {
-        return Err(Error::CannotDo2(lhs_type, symbol, rhs_type));
+        return Err(Error::CannotDo2(lhs_type, op, rhs_type));
     }
     Ok(BinOperation { lhs, rhs, op }.into())
 }

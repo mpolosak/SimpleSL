@@ -1,6 +1,7 @@
 use crate::{
     function::{self, Param, Params},
     instruction::InstructionWithStr,
+    op::BinOperator,
     variable::{ReturnType, Typed, Variable},
     Error,
 };
@@ -9,7 +10,7 @@ use crate::{
         function::Function,
         local_variable::{LocalVariable, LocalVariables},
         tuple::Tuple,
-        BinOperation, BinOperator, Instruction,
+        BinOperation, Instruction,
     },
     ExecError,
 };
