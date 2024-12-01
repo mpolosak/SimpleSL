@@ -1,22 +1,25 @@
-use crate::{
-    function::{self, Param, Params},
-    instruction::InstructionWithStr,
-    op::BinOperator,
-    variable::{ReturnType, Typed, Variable},
-    Error,
+use crate::instruction::{
+    function::Function,
+    local_variable::{LocalVariable, LocalVariables},
+    Instruction, Recreate,
 };
 use crate::{
-    instruction::{
-        function::Function,
-        local_variable::{LocalVariable, LocalVariables},
-        tuple::Tuple,
-        BinOperation, Instruction,
-    },
-    ExecError,
+    function::{self, Param, Params},
+    instruction::{Exec, ExecResult, ExecStop, InstructionWithStr},
+    variable::{ReturnType, Type, Typed, Variable},
+    Error, Interpreter,
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
 use std::{iter::zip, sync::Arc};
+
+use super::recreate_instructions;
+
+#[derive(Debug)]
+pub struct FunctionCall {
+    function: InstructionWithStr,
+    args: Arc<[InstructionWithStr]>,
+}
 
 pub fn create_instruction(
     function: InstructionWithStr,
@@ -56,13 +59,7 @@ pub fn create_instruction(
             check_args_with_params(&function.str, &Params(params), &args)?;
         }
     };
-    let args = Tuple { elements: args }.into();
-    Ok(BinOperation {
-        lhs: function.instruction,
-        rhs: args,
-        op: BinOperator::FunctionCall,
-    }
-    .into())
+    Ok(FunctionCall { function, args }.into())
 }
 
 pub fn create_from_variables(
@@ -146,8 +143,31 @@ fn check_args_with_params(
     Ok(())
 }
 
-pub fn exec(function: Variable, args: Variable) -> Result<Variable, ExecError> {
-    let function = function.into_function().unwrap();
-    let args = args.into_tuple().unwrap();
-    function.exec_with_args(&args)
+impl Exec for FunctionCall {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
+        let function = self.function.exec(interpreter)?.into_function().unwrap();
+        let args = self
+            .args
+            .iter()
+            .map(|instruction| instruction.exec(interpreter))
+            .collect::<Result<Arc<[Variable]>, ExecStop>>()?;
+        function.exec_with_args(&args).map_err(ExecStop::from)
+    }
+}
+
+impl Recreate for FunctionCall {
+    fn recreate(
+        &self,
+        local_variables: &mut LocalVariables,
+    ) -> Result<Instruction, crate::ExecError> {
+        let function = self.function.recreate(local_variables)?;
+        let args = recreate_instructions(&self.args, local_variables)?;
+        Ok(Self { function, args }.into())
+    }
+}
+
+impl ReturnType for FunctionCall {
+    fn return_type(&self) -> Type {
+        self.function.return_type().return_type().unwrap()
+    }
 }

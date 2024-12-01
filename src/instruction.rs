@@ -34,6 +34,7 @@ use crate::{
     Error, ExecError,
 };
 use duplicate::duplicate_item;
+use function::call::FunctionCall;
 use match_any::match_any;
 use pest::iterators::Pair;
 use r#loop::{r#while, while_set, For, Loop};
@@ -207,6 +208,7 @@ pub enum Instruction {
     ArrayRepeat(Arc<ArrayRepeat>),
     Break,
     Call,
+    FunctionCall(Arc<FunctionCall>),
     Continue,
     DestructTuple(Arc<DestructTuple>),
     EnterScope,
@@ -250,7 +252,7 @@ impl Recreate for Instruction {
             | Self::DestructTuple(ins) | Self::Tuple(ins) | Self::BinOperation(ins)
             | Self::For(ins) | Self::IfElse(ins) | Self::Loop(ins) | Self::Match(ins)
             | Self::Mut(ins) | Self::Reduce(ins) | Self::SetIfElse(ins) | Self::TypeFilter(ins)
-            | Self::UnaryOperation(ins) => ins.recreate(local_variables),
+            | Self::UnaryOperation(ins) | Self::FunctionCall(ins) => ins.recreate(local_variables),
             _ => Ok(self.clone())
         }
     }
@@ -263,7 +265,7 @@ impl ReturnType for Instruction {
             Self::Function(ins) | Self::Array(ins) | Self::ArrayRepeat(ins) | Self::Tuple(ins)
             | Self::BinOperation(ins) | Self::IfElse(ins) | Self::Match(ins) | Self::Mut(ins)
             | Self::Reduce(ins) | Self::SetIfElse(ins) | Self::TypeFilter(ins)
-            | Self::UnaryOperation(ins) => ins.return_type(),
+            | Self::UnaryOperation(ins) | Self::FunctionCall(ins) => ins.return_type(),
             Self::Call | Self::Loop(_) | Self::For(_) | Self::EnterScope | Self::ExitScope
             | Self::Set(_) | Self::DestructTuple(_) => Type::Void,
             Self::Break | Self::Continue | Self::Return => Type::Never
@@ -274,7 +276,7 @@ impl ReturnType for Instruction {
 #[duplicate_item(
     T; [Variable]; [UnaryOperation]; [BinOperation]; [Function]; [Array];
     [ArrayRepeat]; [Tuple]; [DestructTuple]; [IfElse]; [Reduce];
-    [TypeFilter]; [Match]; [Mut]; [SetIfElse];
+    [TypeFilter]; [Match]; [Mut]; [SetIfElse]; [FunctionCall]
 )]
 impl From<T> for Instruction {
     fn from(value: T) -> Self {

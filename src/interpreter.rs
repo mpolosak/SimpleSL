@@ -49,7 +49,7 @@ impl Interpreter {
             | Instruction::BinOperation(ins) | Instruction::For(ins) | Instruction::IfElse(ins)
             | Instruction::Loop(ins) | Instruction::Match(ins) | Instruction::Mut(ins)
             | Instruction::Reduce(ins) | Instruction::SetIfElse(ins) | Instruction::TypeFilter(ins)
-            | Instruction::UnaryOperation(ins) => {
+            | Instruction::UnaryOperation(ins) | Instruction::FunctionCall(ins) => {
                 let result = ins.exec(self);
                 if let Ok(var) = &result {
                     self.result = Some(var.clone())

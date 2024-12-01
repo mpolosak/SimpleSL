@@ -41,7 +41,6 @@ pub enum BinOperator {
     Equal,
     #[display("?")]
     Filter,
-    FunctionCall,
     #[display(">")]
     Greater,
     #[display(">=")]

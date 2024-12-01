@@ -6,8 +6,8 @@ mod map;
 mod math;
 mod shift;
 use super::{
-    at, function::call, local_variable::LocalVariables, reduce::Reduce,
-    return_type::return_type_bool, Exec, ExecResult, InstructionWithStr, Recreate,
+    at, local_variable::LocalVariables, reduce::Reduce, return_type::return_type_bool, Exec,
+    ExecResult, InstructionWithStr, Recreate,
 };
 use crate as simplesl;
 use crate::op::BinOperator;
@@ -81,7 +81,6 @@ impl Exec for BinOperation {
             BinOperator::Filter => filter::exec(lhs, rhs)?,
             BinOperator::Map => map::exec(lhs, rhs)?,
             BinOperator::At => at::exec(lhs, rhs)?,
-            BinOperator::FunctionCall => call::exec(lhs, rhs)?,
             BinOperator::Assign => assign::exec(lhs, rhs, |_, b| b),
             BinOperator::AssignAdd => assign::exec(lhs, rhs, add::exec),
             BinOperator::AssignSubtract => assign::exec(lhs, rhs, subtract::exec),
@@ -167,7 +166,6 @@ impl ReturnType for BinOperation {
             BinOperator::Filter => lhs,
             BinOperator::Map => map::return_type(rhs),
             BinOperator::At => lhs.index_result().unwrap(),
-            BinOperator::FunctionCall => lhs.return_type().unwrap(),
             BinOperator::Assign => rhs,
             _ => lhs.mut_element_type().unwrap(),
         }
