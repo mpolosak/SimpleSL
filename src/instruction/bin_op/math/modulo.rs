@@ -30,12 +30,6 @@ pub fn create_from_instructions(
             Ok(exec(dividend, divisor)?.into())
         }
         (_, Instruction::Variable(Variable::Int(0))) => Err(ExecError::ZeroModulo),
-        (Instruction::ArrayRepeat(array), rhs) => Arc::unwrap_or_clone(array)
-            .try_map(|lhs| create_from_instructions(lhs, rhs.clone()))
-            .map(Instruction::from),
-        (lhs, Instruction::ArrayRepeat(array)) => Arc::unwrap_or_clone(array)
-            .try_map(|rhs| create_from_instructions(lhs.clone(), rhs))
-            .map(Instruction::from),
         (lhs, rhs) => Ok(BinOperation {
             lhs,
             rhs,

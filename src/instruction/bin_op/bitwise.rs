@@ -20,7 +20,6 @@ pub fn can_be_used(lhs: Type, rhs: Type) -> bool {
     [Xor] [xor] [lhs ^ rhs] [^];
 )]
 pub mod bitwise {
-    use std::sync::Arc;
 
     use crate::{
         instruction::{BinOperation, Instruction},
@@ -48,12 +47,6 @@ pub mod bitwise {
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         match (lhs, rhs) {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => exec(lhs, rhs).into(),
-            (Instruction::ArrayRepeat(array_repeat), rhs) => Arc::unwrap_or_clone(array_repeat)
-                .map(|lhs| create_from_instructions(lhs, rhs))
-                .into(),
-            (lhs, Instruction::ArrayRepeat(array_repeat)) => Arc::unwrap_or_clone(array_repeat)
-                .map(|rhs| create_from_instructions(lhs, rhs))
-                .into(),
             (lhs, rhs) => BinOperation {
                 lhs,
                 rhs,

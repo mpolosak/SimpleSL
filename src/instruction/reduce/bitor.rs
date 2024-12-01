@@ -42,7 +42,6 @@ fn calc(array: &Array) -> Variable {
 pub fn recreate(instruction: Instruction) -> Instruction {
     match instruction {
         Instruction::Variable(Variable::Array(array)) => calc(&array).into(),
-        Instruction::ArrayRepeat(array_repeat) => array_repeat.value.instruction.clone(),
         Instruction::Array(array) => array
             .instructions
             .iter()

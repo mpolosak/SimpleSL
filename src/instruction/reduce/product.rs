@@ -1,8 +1,7 @@
 use crate::{
     self as simplesl,
     instruction::{
-        array_repeat::ArrayRepeat,
-        multiply, pow,
+        multiply,
         unary_operation::{UnaryOperation, UnaryOperator},
         Instruction, InstructionWithStr,
     },
@@ -10,7 +9,6 @@ use crate::{
     Error,
 };
 use simplesl_macros::{var, var_type};
-use std::sync::Arc;
 
 pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
     let return_type = array.return_type();
@@ -50,10 +48,6 @@ fn calc_float(array: &Array) -> Variable {
 pub fn recreate(instruction: Instruction) -> Instruction {
     match instruction {
         Instruction::Variable(Variable::Array(array)) => calc(&array).into(),
-        Instruction::ArrayRepeat(array_repeat) => {
-            let ArrayRepeat { value, len } = Arc::unwrap_or_clone(array_repeat.clone());
-            pow::create_from_instructions(value.instruction, len.instruction).unwrap()
-        }
         Instruction::Array(array) => array
             .instructions
             .iter()

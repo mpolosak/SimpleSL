@@ -30,7 +30,6 @@ pub mod unary_minus {
     use crate::instruction::unary_operation::{UnaryOperation, UnaryOperator};
     use crate::variable::{Array, ReturnType};
     use crate::{instruction::Instruction, variable::Variable, Error};
-    use match_any::match_any;
     use simplesl_macros::var;
     use std::sync::Arc;
 
@@ -49,13 +48,16 @@ pub mod unary_minus {
     }
 
     pub fn create_from_instruction(instruction: Instruction) -> Instruction {
-        match_any! { instruction,
+        match instruction {
             Instruction::Variable(operand) => exec(operand).into(),
-            Instruction::Array(array)
-            | Instruction::ArrayRepeat(array) => Arc::unwrap_or_clone(array)
+            Instruction::Array(array) => Arc::unwrap_or_clone(array)
                 .map(create_from_instruction)
                 .into(),
-            instruction => UnaryOperation {instruction,op:UnaryOperator::UnaryMinus }.into()
+            instruction => UnaryOperation {
+                instruction,
+                op: UnaryOperator::UnaryMinus,
+            }
+            .into(),
         }
     }
 
@@ -88,7 +90,6 @@ pub mod not {
         Error,
     };
     use lazy_static::lazy_static;
-    use match_any::match_any;
     use simplesl_macros::var_type;
     use std::sync::Arc;
 
@@ -109,13 +110,16 @@ pub mod not {
     }
 
     pub fn create_from_instruction(instruction: Instruction) -> Instruction {
-        match_any! { instruction,
+        match instruction {
             Instruction::Variable(operand) => exec(operand).into(),
-            Instruction::Array(array)
-            | Instruction::ArrayRepeat(array) => Arc::unwrap_or_clone(array)
+            Instruction::Array(array) => Arc::unwrap_or_clone(array)
                 .map(create_from_instruction)
                 .into(),
-            instruction => UnaryOperation {instruction, op: UnaryOperator::Not } .into()
+            instruction => UnaryOperation {
+                instruction,
+                op: UnaryOperator::Not,
+            }
+            .into(),
         }
     }
     pub fn exec(variable: Variable) -> Variable {

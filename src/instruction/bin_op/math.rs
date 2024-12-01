@@ -18,7 +18,6 @@ pub mod ord {
         Error,
     };
     use match_any::match_any;
-    use std::sync::Arc;
 
     pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
         let lhs_type = lhs.return_type();
@@ -37,12 +36,6 @@ pub mod ord {
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         match (lhs, rhs) {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => exec(lhs, rhs).into(),
-            (Instruction::ArrayRepeat(array_repeat), rhs) => Arc::unwrap_or_clone(array_repeat)
-                .map(|lhs| create_from_instructions(lhs, rhs))
-                .into(),
-            (lhs, Instruction::ArrayRepeat(array_repeat)) => Arc::unwrap_or_clone(array_repeat)
-                .map(|rhs| create_from_instructions(lhs, rhs))
-                .into(),
             (lhs, rhs) => BinOperation {
                 lhs,
                 rhs,

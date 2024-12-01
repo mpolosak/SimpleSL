@@ -1,14 +1,11 @@
 use crate as simplesl;
 use crate::instruction::unary_operation::{UnaryOperation, UnaryOperator};
-use crate::instruction::{
-    add, array_repeat::ArrayRepeat, multiply, Instruction, InstructionWithStr,
-};
+use crate::instruction::{add, Instruction, InstructionWithStr};
 use crate::{
     variable::{Array, ReturnType, Variable},
     Error,
 };
 use simplesl_macros::{var, var_type};
-use std::sync::Arc;
 
 pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
     let return_type = array.return_type();
@@ -57,15 +54,6 @@ fn calc_string(array: &Array) -> Variable {
 pub fn recreate(instruction: Instruction) -> Instruction {
     match instruction {
         Instruction::Variable(Variable::Array(array)) => calc(&array).into(),
-        Instruction::ArrayRepeat(array_repeat)
-            if array_repeat
-                .value
-                .return_type()
-                .matches(&var_type!(int | float)) =>
-        {
-            let ArrayRepeat { value, len } = Arc::unwrap_or_clone(array_repeat.clone());
-            multiply::create_from_instructions(value.instruction, len.instruction)
-        }
         Instruction::Array(array) => array
             .instructions
             .iter()
