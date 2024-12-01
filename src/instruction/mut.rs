@@ -1,5 +1,8 @@
+use std::sync::Arc;
+
 use super::{
-    local_variable::LocalVariables, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
+    control_flow::if_else::return_type, local_variable::LocalVariables, recreate_instructions,
+    Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
 };
 use crate::{
     variable::{self, ReturnType, Type},
@@ -11,47 +14,46 @@ use simplesl_parser::Rule;
 #[derive(Debug)]
 pub struct Mut {
     var_type: Type,
-    instruction: InstructionWithStr,
+    value: Arc<[InstructionWithStr]>,
 }
 
 impl Mut {
     pub fn create_instruction(
         pair: Pair<Rule>,
-        local_variables: &LocalVariables,
+        local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
         if pair.as_rule() == Rule::expr {
-            let instruction = InstructionWithStr::new_expression(pair, local_variables)?;
-            let var_type = instruction.return_type();
-            return Ok(Mut {
-                var_type,
-                instruction,
-            }
-            .into());
+            let mut value = Vec::new();
+            InstructionWithStr::create(pair, local_variables, &mut value)?;
+            let value: Arc<[InstructionWithStr]> = value.into();
+            let var_type = return_type(&value);
+            return Ok(Mut { var_type, value }.into());
         }
         let var_type = Type::from(pair);
+
         let pair = inner.next().unwrap();
-        let instruction = InstructionWithStr::new_expression(pair, local_variables)?;
-        let instruction_return_type = instruction.return_type();
+        let given = pair.as_str().into();
+        let mut value = Vec::new();
+        InstructionWithStr::create(pair, local_variables, &mut value)?;
+        let value: Arc<[InstructionWithStr]> = value.into();
+        let instruction_return_type = return_type(&value);
         if !instruction_return_type.matches(&var_type) {
             return Err(Error::WrongInitialization {
                 declared: var_type,
-                given: instruction.str,
+                given,
                 given_type: instruction_return_type,
             });
         }
-        Ok(Mut {
-            var_type,
-            instruction,
-        }
-        .into())
+        Ok(Mut { var_type, value }.into())
     }
 }
 
 impl Exec for Mut {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let variable = self.instruction.exec(interpreter)?.into();
+        interpreter.exec_all(&self.value)?;
+        let variable = interpreter.result().unwrap().clone().into();
         Ok(variable::Mut {
             var_type: self.var_type.clone(),
             variable,
@@ -62,10 +64,10 @@ impl Exec for Mut {
 
 impl Recreate for Mut {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let instruction = self.instruction.recreate(local_variables)?;
+        let value = recreate_instructions(&self.value, local_variables)?;
         Ok(Mut {
             var_type: self.var_type.clone(),
-            instruction,
+            value,
         }
         .into())
     }
