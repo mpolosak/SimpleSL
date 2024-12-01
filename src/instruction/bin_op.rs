@@ -227,7 +227,12 @@ impl InstructionWithStr {
         let rule = op.as_rule();
         if rule == Rule::reduce {
             return Ok(Self {
-                instruction: Reduce::create_instruction(lhs, op, rhs, local_variables)?,
+                instruction: Reduce::create_instruction(
+                    lhs,
+                    op,
+                    rhs,
+                    &mut local_variables.clone(),
+                )?,
                 str,
             });
         }

@@ -4,6 +4,8 @@ pub mod bitand;
 pub mod bitor;
 pub mod product;
 pub mod sum;
+use super::control_flow::if_else::return_type;
+use super::recreate_instructions;
 use crate as simplesl;
 use crate::{
     instruction::{
@@ -17,11 +19,12 @@ use crate::{
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
 use simplesl_parser::Rule;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Reduce {
     array: InstructionWithStr,
-    initial_value: InstructionWithStr,
+    initial_value: Arc<[InstructionWithStr]>,
     function: InstructionWithStr,
 }
 
@@ -30,20 +33,22 @@ impl Reduce {
         array: InstructionWithStr,
         initial_value: Pair<Rule>,
         function: InstructionWithStr,
-        local_variables: &LocalVariables,
+        local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error> {
-        let initial_value = InstructionWithStr::new_expression(initial_value, local_variables)?;
+        let mut initial_value_vec = Vec::new();
+        InstructionWithStr::create(initial_value, local_variables, &mut initial_value_vec)?;
+        let initial_value: Arc<[InstructionWithStr]> = initial_value_vec.into();
         let Some(element_type) = array.return_type().index_result() else {
             return Err(Error::CannotReduce(array.str));
         };
-        let Some(return_type) = function.return_type().return_type() else {
+        let Some(fn_return_type) = function.return_type().return_type() else {
             return Err(Error::WrongType(
                 "function".into(),
                 var_type!((any, element_type)->any),
             ));
         };
-        let acc_type = initial_value.return_type() | element_type.clone() | return_type.clone();
-        let expected_function = var_type!((acc_type, element_type)->return_type);
+        let acc_type = return_type(&initial_value) | element_type.clone() | fn_return_type.clone();
+        let expected_function = var_type!((acc_type, element_type)->fn_return_type);
         if !function.return_type().matches(&expected_function) {
             return Err(Error::WrongType("function".into(), expected_function));
         }
@@ -62,10 +67,7 @@ impl Recreate for Reduce {
         local_variables: &mut crate::instruction::local_variable::LocalVariables,
     ) -> Result<Instruction, ExecError> {
         let array = self.array.recreate(local_variables)?;
-        let initial_value = self.initial_value.recreate(local_variables)?;
-        if let Some(Type::Never) = array.return_type().index_result() {
-            return Ok(initial_value.instruction);
-        }
+        let initial_value = recreate_instructions(&self.initial_value, local_variables)?;
         let function = self.function.recreate(local_variables)?;
         Ok(Self {
             array,
@@ -79,7 +81,8 @@ impl Recreate for Reduce {
 impl Exec for Reduce {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let array = self.array.exec(interpreter)?;
-        let initial_value = self.initial_value.exec(interpreter)?;
+        interpreter.exec_all(&self.initial_value)?;
+        let initial_value = interpreter.result().unwrap().clone();
         let function = self.function.exec(interpreter)?;
         let (Variable::Array(array), Variable::Function(function)) = (&array, &function) else {
             unreachable!("Tried to do {array} ${initial_value} {function}")
@@ -95,6 +98,6 @@ impl Exec for Reduce {
 
 impl ReturnType for Reduce {
     fn return_type(&self) -> Type {
-        self.function.return_type().return_type().unwrap() | self.initial_value.return_type()
+        self.function.return_type().return_type().unwrap() | return_type(&self.initial_value)
     }
 }
