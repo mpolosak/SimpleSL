@@ -140,7 +140,7 @@ impl InstructionWithStr {
                 Variable::try_from(pair).map(Instruction::from)
             }
             Rule::r#mut => Mut::create_instruction(pair, &mut local_variables.clone()),
-            Rule::tuple => Tuple::create_instruction(pair, local_variables),
+            Rule::tuple => Tuple::create_instruction(pair, &mut local_variables.clone()),
             Rule::array => Array::create_instruction(pair, &mut local_variables.clone()),
             Rule::array_repeat => {
                 ArrayRepeat::create_instruction(pair, &mut local_variables.clone())
