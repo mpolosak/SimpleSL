@@ -44,7 +44,7 @@ pub fn create_from_instructions(
             Err(ExecError::NegativeIndex)
         }
         (Instruction::Array(array), Instruction::Variable(Variable::Int(value)))
-            if array.instructions.len() <= (value as usize) =>
+            if array.elements.len() <= (value as usize) =>
         {
             Err(ExecError::IndexToBig)
         }

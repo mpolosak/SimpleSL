@@ -31,7 +31,6 @@ pub mod unary_minus {
     use crate::variable::{Array, ReturnType};
     use crate::{instruction::Instruction, variable::Variable, Error};
     use simplesl_macros::var;
-    use std::sync::Arc;
 
     use super::ACCEPTED_NUM;
 
@@ -50,9 +49,6 @@ pub mod unary_minus {
     pub fn create_from_instruction(instruction: Instruction) -> Instruction {
         match instruction {
             Instruction::Variable(operand) => exec(operand).into(),
-            Instruction::Array(array) => Arc::unwrap_or_clone(array)
-                .map(create_from_instruction)
-                .into(),
             instruction => UnaryOperation {
                 instruction,
                 op: UnaryOperator::UnaryMinus,
@@ -91,7 +87,6 @@ pub mod not {
     };
     use lazy_static::lazy_static;
     use simplesl_macros::var_type;
-    use std::sync::Arc;
 
     lazy_static! {
         pub static ref ACCEPTED_INT: Type = var_type!(int | bool | [int | bool]);
@@ -112,9 +107,6 @@ pub mod not {
     pub fn create_from_instruction(instruction: Instruction) -> Instruction {
         match instruction {
             Instruction::Variable(operand) => exec(operand).into(),
-            Instruction::Array(array) => Arc::unwrap_or_clone(array)
-                .map(create_from_instruction)
-                .into(),
             instruction => UnaryOperation {
                 instruction,
                 op: UnaryOperator::Not,

@@ -1,5 +1,4 @@
 use crate as simplesl;
-use crate::instruction::or;
 use crate::instruction::unary_operation::{UnaryOperation, UnaryOperator};
 use crate::instruction::{Instruction, InstructionWithStr};
 use crate::{
@@ -32,13 +31,6 @@ pub fn calc(array: &Array) -> Variable {
 pub fn recreate(instruction: Instruction) -> Instruction {
     match instruction {
         Instruction::Variable(Variable::Array(array)) => calc(&array).into(),
-        Instruction::Array(array) => array
-            .instructions
-            .iter()
-            .cloned()
-            .map(|iws| iws.instruction)
-            .reduce(or::create_from_instructions)
-            .unwrap(),
         instruction => UnaryOperation {
             instruction,
             op: UnaryOperator::Any,

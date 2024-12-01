@@ -1,7 +1,6 @@
 use crate::{
     self as simplesl,
     instruction::{
-        multiply,
         unary_operation::{UnaryOperation, UnaryOperator},
         Instruction, InstructionWithStr,
     },
@@ -48,13 +47,6 @@ fn calc_float(array: &Array) -> Variable {
 pub fn recreate(instruction: Instruction) -> Instruction {
     match instruction {
         Instruction::Variable(Variable::Array(array)) => calc(&array).into(),
-        Instruction::Array(array) => array
-            .instructions
-            .iter()
-            .cloned()
-            .map(|iws| iws.instruction)
-            .reduce(multiply::create_from_instructions)
-            .unwrap(),
         instruction => UnaryOperation {
             instruction,
             op: UnaryOperator::Product,
