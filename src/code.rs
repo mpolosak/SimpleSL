@@ -36,9 +36,9 @@ impl Code {
             .iter()
             .map(|instruction| instruction.exec(interpreter))
             .last()
-            .unwrap_or(Ok(Variable::Void))
+            .transpose()
         {
-            Ok(var) => Ok(var),
+            Ok(_) => Ok(interpreter.result().unwrap_or(&Variable::Void).clone()),
             Err(ExecStop::Error(err)) => Err(err),
             Err(_) => unreachable!("Return statement outside of function body"),
         }

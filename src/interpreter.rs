@@ -70,8 +70,9 @@ impl Interpreter {
                 Err(ExecStop::Return)
             },
             Instruction::Set(ident) => {
-                self.insert(ident.clone(), self.result().unwrap().clone());
-                Ok(Variable::Void)
+                let value = self.result().unwrap().clone();
+                self.insert(ident.clone(), value.clone());
+                Ok(value)
             },
             Instruction::Call => {
                 let result = self.result().unwrap().clone().as_function().unwrap().exec(self)?;
