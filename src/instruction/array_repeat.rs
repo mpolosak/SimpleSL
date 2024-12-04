@@ -50,7 +50,7 @@ impl Exec for ArrayRepeat {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         interpreter.exec_all(&self.value)?;
         let value = interpreter.result().unwrap().clone();
-        interpreter.exec_all(&self.value)?;
+        interpreter.exec_all(&self.len)?;
         let len = interpreter.result().unwrap().clone().into_int().unwrap();
         if len < 0 {
             return Err(ExecError::NegativeLength.into());
