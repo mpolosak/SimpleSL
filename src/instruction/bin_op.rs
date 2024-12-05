@@ -277,8 +277,8 @@ impl InstructionWithStr {
             Rule::xor => xor::create_op(lhs, rhs),
             Rule::rshift => rshift::create_op(lhs, rhs),
             Rule::lshift => lshift::create_op(lhs, rhs),
-            Rule::and => and::create_op(lhs, rhs),
-            Rule::or => or::create_op(lhs, rhs),
+            Rule::and => logic::create_op(lhs, rhs, BinOperator::And),
+            Rule::or => logic::create_op(lhs, rhs, BinOperator::Or),
             Rule::assign => {
                 assign::create_op(lhs, rhs, BinOperator::Assign, |_, _| true, |_, x| x.clone())
             }

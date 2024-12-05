@@ -1,25 +1,32 @@
+use crate::{
+    instruction::Instruction,
+    variable::{ReturnType, Type},
+    BinOperator, Error,
+};
+
+use super::BinOperation;
+
+pub fn create_op(
+    lhs: Instruction,
+    rhs: Instruction,
+    op: BinOperator,
+) -> Result<Instruction, Error> {
+    let lhs_type = lhs.return_type();
+    let rhs_type = rhs.return_type();
+    if lhs_type != Type::Bool || rhs_type != Type::Bool {
+        return Err(Error::CannotDo2(lhs_type, op, rhs_type));
+    }
+    Ok(BinOperation { lhs, rhs, op }.into())
+}
+
 pub mod and {
     use crate::{
         instruction::{
             local_variable::LocalVariables, BinOperation, Exec, ExecResult, Instruction, Recreate,
         },
-        variable::{ReturnType, Type, Variable},
-        BinOperator, Error, ExecError, Interpreter,
+        variable::Variable,
+        BinOperator, ExecError, Interpreter,
     };
-
-    pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
-        let lhs_type = lhs.return_type();
-        let rhs_type = rhs.return_type();
-        if lhs_type != Type::Bool || rhs_type != Type::Bool {
-            return Err(Error::CannotDo2(lhs_type, BinOperator::And, rhs_type));
-        }
-        Ok(BinOperation {
-            lhs,
-            rhs,
-            op: BinOperator::And,
-        }
-        .into())
-    }
 
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         match (lhs, rhs) {
@@ -65,23 +72,9 @@ pub mod or {
         instruction::{
             local_variable::LocalVariables, BinOperation, Exec, ExecResult, Instruction, Recreate,
         },
-        variable::{ReturnType, Type, Variable},
-        BinOperator, Error, ExecError, Interpreter,
+        variable::Variable,
+        BinOperator, ExecError, Interpreter,
     };
-
-    pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
-        let lhs_type = lhs.return_type();
-        let rhs_type = rhs.return_type();
-        if lhs_type != Type::Bool || rhs_type != Type::Bool {
-            return Err(Error::CannotDo2(lhs_type, BinOperator::Or, rhs_type));
-        }
-        Ok(BinOperation {
-            lhs,
-            rhs,
-            op: BinOperator::Or,
-        }
-        .into())
-    }
 
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         match (lhs, rhs) {
