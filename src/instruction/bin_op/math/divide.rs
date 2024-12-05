@@ -1,16 +1,15 @@
-use std::sync::Arc;
-
 use crate::{
-    instruction::{can_be_used_num, BinOperation, BinOperator, Instruction},
+    instruction::{can_be_used_num, BinOperation, Instruction},
     variable::{Array, ReturnType, Variable},
-    Error, ExecError,
+    BinOperator, Error, ExecError,
 };
+use std::sync::Arc;
 
 pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
     let lhs_type = lhs.return_type();
     let rhs_type = rhs.return_type();
     if !can_be_used_num(lhs_type.clone(), rhs_type.clone()) {
-        return Err(Error::CannotDo2(lhs_type, "/", rhs_type));
+        return Err(Error::CannotDo2(lhs_type, BinOperator::Divide, rhs_type));
     }
     Ok(BinOperation {
         lhs,

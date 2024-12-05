@@ -1,5 +1,5 @@
 use super::InstructionWithStr;
-use crate as simplesl;
+use crate::{self as simplesl, BinOperator};
 use crate::{
     instruction::{local_variable::LocalVariables, Exec, ExecResult, Instruction, Recreate},
     interpreter::Interpreter,
@@ -24,7 +24,7 @@ impl TypeFilter {
         let array_type = array.return_type();
         let var_type = Type::from(var_type);
         if !array_type.matches(&var_type!([any])) {
-            return Err(Error::CannotDo2(array_type, "?", var_type));
+            return Err(Error::CannotDo2(array_type, BinOperator::Filter, var_type));
         }
         Ok(Self { array, var_type }.into())
     }

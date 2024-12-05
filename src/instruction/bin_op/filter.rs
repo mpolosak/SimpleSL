@@ -13,7 +13,7 @@ pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Erro
     let lhs_type = lhs.return_type();
     let rhs_type = rhs.return_type();
     if !can_be_used(&lhs_type, &rhs_type) {
-        return Err(Error::CannotDo2(lhs_type, "?", rhs_type));
+        return Err(Error::CannotDo2(lhs_type, BinOperator::Filter, rhs_type));
     }
     Ok(BinOperation {
         lhs,
@@ -39,22 +39,24 @@ pub fn exec(array: Variable, function: Variable) -> ExecResult {
     let array_iter = array.iter().cloned();
     let elements = if function.params.len() == 1 {
         array_iter
-            .filter_map(|element| match function.exec_with_args(&[element.clone()]) {
-                Ok(Variable::Bool(true)) => Some(Ok(element)),
-                Ok(_) => None,
-                e @ Err(_) => Some(e),
-            })
-            .collect::<Result<_, _>>()
-    } else {
-        array_iter
-            .enumerate()
             .filter_map(
-                |(index, element)| match function.exec_with_args(&[index.into(), element.clone()]) {
+                |element| match function.exec_with_args(&[element.clone()]) {
                     Ok(Variable::Bool(true)) => Some(Ok(element)),
                     Ok(_) => None,
                     e @ Err(_) => Some(e),
                 },
             )
+            .collect::<Result<_, _>>()
+    } else {
+        array_iter
+            .enumerate()
+            .filter_map(|(index, element)| {
+                match function.exec_with_args(&[index.into(), element.clone()]) {
+                    Ok(Variable::Bool(true)) => Some(Ok(element)),
+                    Ok(_) => None,
+                    e @ Err(_) => Some(e),
+                }
+            })
             .collect::<Result<_, _>>()
     }?;
     let element_type = array.element_type().clone();

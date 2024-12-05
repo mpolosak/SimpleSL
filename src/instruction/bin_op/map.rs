@@ -14,7 +14,7 @@ pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Erro
     let lhs_type = lhs.return_type();
     let rhs_type = rhs.return_type();
     if !can_be_used(&lhs_type, &rhs_type) {
-        return Err(Error::CannotDo2(lhs_type, stringify!(op), rhs_type));
+        return Err(Error::CannotDo2(lhs_type, BinOperator::Map, rhs_type));
     }
     Ok(BinOperation {
         lhs,

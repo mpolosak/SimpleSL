@@ -6,14 +6,14 @@ use crate::{
         InstructionWithStr,
     },
     variable::{ReturnType, Typed, Variable},
-    Error,
+    BinOperator, Error,
 };
 use crate::{
     instruction::{
         function::AnonymousFunction,
         local_variable::{LocalVariable, LocalVariables},
         tuple::Tuple,
-        BinOperation, BinOperator, Instruction,
+        BinOperation, Instruction,
     },
     ExecError,
 };

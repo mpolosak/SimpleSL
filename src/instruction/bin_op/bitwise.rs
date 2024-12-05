@@ -23,9 +23,9 @@ pub mod bitwise {
     use std::sync::Arc;
 
     use crate::{
-        instruction::{BinOperation, BinOperator, Instruction},
+        instruction::{BinOperation, Instruction},
         variable::{Array, ReturnType, Variable},
-        Error,
+        BinOperator, Error,
     };
 
     use super::can_be_used;
@@ -34,7 +34,7 @@ pub mod bitwise {
         let lhs_type = lhs.return_type();
         let rhs_type = rhs.return_type();
         if !can_be_used(lhs_type.clone(), rhs_type.clone()) {
-            return Err(Error::CannotDo2(lhs_type, stringify!(op), rhs_type));
+            return Err(Error::CannotDo2(lhs_type, BinOperator::Bitwise, rhs_type));
         }
         Ok(BinOperation {
             lhs,

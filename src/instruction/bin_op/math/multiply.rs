@@ -1,7 +1,7 @@
 use crate::{
-    instruction::{can_be_used_num, BinOperation, BinOperator, Instruction},
+    instruction::{can_be_used_num, BinOperation, Instruction},
     variable::{Array, ReturnType, Variable},
-    Error,
+    BinOperator, Error,
 };
 use match_any::match_any;
 
@@ -9,7 +9,7 @@ pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Erro
     let lhs_type = lhs.return_type();
     let rhs_type = rhs.return_type();
     if !can_be_used_num(lhs_type.clone(), rhs_type.clone()) {
-        return Err(Error::CannotDo2(lhs_type, "*", rhs_type));
+        return Err(Error::CannotDo2(lhs_type, BinOperator::Multiply, rhs_type));
     }
     Ok(BinOperation {
         lhs,

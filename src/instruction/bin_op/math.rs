@@ -12,9 +12,9 @@ use duplicate::duplicate_item;
 )]
 pub mod ord {
     use crate::{
-        instruction::{can_be_used_num, BinOperation, BinOperator, Instruction},
+        instruction::{can_be_used_num, BinOperation, Instruction},
         variable::{Array, ReturnType, Variable},
-        Error,
+        BinOperator, Error,
     };
     use match_any::match_any;
     use std::sync::Arc;
@@ -23,7 +23,7 @@ pub mod ord {
         let lhs_type = lhs.return_type();
         let rhs_type = rhs.return_type();
         if !can_be_used_num(lhs_type.clone(), rhs_type.clone()) {
-            return Err(Error::CannotDo2(lhs_type, stringify!(oper), rhs_type));
+            return Err(Error::CannotDo2(lhs_type, BinOperator::Ord, rhs_type));
         }
         Ok(BinOperation {
             lhs,

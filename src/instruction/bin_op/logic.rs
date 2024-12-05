@@ -1,18 +1,17 @@
 pub mod and {
     use crate::{
         instruction::{
-            local_variable::LocalVariables, BinOperation, BinOperator, Exec, ExecResult,
-            Instruction, Recreate,
+            local_variable::LocalVariables, BinOperation, Exec, ExecResult, Instruction, Recreate,
         },
         variable::{ReturnType, Type, Variable},
-        Error, ExecError, Interpreter,
+        BinOperator, Error, ExecError, Interpreter,
     };
 
     pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
         let lhs_type = lhs.return_type();
         let rhs_type = rhs.return_type();
         if lhs_type != Type::Bool || rhs_type != Type::Bool {
-            return Err(Error::CannotDo2(lhs_type, "&&", rhs_type));
+            return Err(Error::CannotDo2(lhs_type, BinOperator::And, rhs_type));
         }
         Ok(BinOperation {
             lhs,
@@ -64,18 +63,17 @@ pub mod and {
 pub mod or {
     use crate::{
         instruction::{
-            local_variable::LocalVariables, BinOperation, BinOperator, Exec, ExecResult,
-            Instruction, Recreate,
+            local_variable::LocalVariables, BinOperation, Exec, ExecResult, Instruction, Recreate,
         },
         variable::{ReturnType, Type, Variable},
-        Error, ExecError, Interpreter,
+        BinOperator, Error, ExecError, Interpreter,
     };
 
     pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
         let lhs_type = lhs.return_type();
         let rhs_type = rhs.return_type();
         if lhs_type != Type::Bool || rhs_type != Type::Bool {
-            return Err(Error::CannotDo2(lhs_type, "||", rhs_type));
+            return Err(Error::CannotDo2(lhs_type, BinOperator::Or, rhs_type));
         }
         Ok(BinOperation {
             lhs,

@@ -1,7 +1,7 @@
-use crate::instruction::{BinOperation, BinOperator, Instruction};
+use crate::instruction::{BinOperation, Instruction};
 use crate::variable::{Array, ReturnType};
 use crate::variable::{Type, Variable};
-use crate::{self as simplesl, Error};
+use crate::{self as simplesl, BinOperator, Error};
 use lazy_static::lazy_static;
 use simplesl_macros::var_type;
 
@@ -18,7 +18,7 @@ pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Erro
     let lhs_type = lhs.return_type();
     let rhs_type = rhs.return_type();
     if !can_be_used(&lhs_type, &rhs_type) {
-        return Err(Error::CannotDo2(lhs_type, "+", rhs_type));
+        return Err(Error::CannotDo2(lhs_type, BinOperator::Add, rhs_type));
     }
     Ok(BinOperation {
         lhs,
@@ -100,7 +100,7 @@ pub fn return_type(lhs: Type, rhs: Type) -> Type {
 
 #[cfg(test)]
 mod tests {
-    use crate as simplesl;
+    use crate::{self as simplesl, BinOperator};
     use crate::{instruction::bin_op::add, variable::Variable, Code, Error, Interpreter};
     use simplesl_macros::{var, var_type};
 
@@ -125,25 +125,41 @@ mod tests {
         );
         assert_eq!(
             parse_and_exec("4+4.5"),
-            Err(Error::CannotDo2(var_type!(int), "+", var_type!(float)))
+            Err(Error::CannotDo2(
+                var_type!(int),
+                BinOperator::Add,
+                var_type!(float)
+            ))
         );
         assert_eq!(
             parse_and_exec(r#""4"+4.5"#),
-            Err(Error::CannotDo2(var_type!(string), "+", var_type!(float)))
+            Err(Error::CannotDo2(
+                var_type!(string),
+                BinOperator::Add,
+                var_type!(float)
+            ))
         );
         assert_eq!(
             parse_and_exec(r#""4"+4"#),
-            Err(Error::CannotDo2(var_type!(string), "+", var_type!(int)))
+            Err(Error::CannotDo2(
+                var_type!(string),
+                BinOperator::Add,
+                var_type!(int)
+            ))
         );
         assert_eq!(
             parse_and_exec(r#"[4]+4.5"#),
-            Err(Error::CannotDo2(var_type!([int]), "+", var_type!(float)))
+            Err(Error::CannotDo2(
+                var_type!([int]),
+                BinOperator::Add,
+                var_type!(float)
+            ))
         );
         assert_eq!(
             parse_and_exec(r#"[4, 5.5]+4.5"#),
             Err(Error::CannotDo2(
                 var_type!([int | float]),
-                "+",
+                BinOperator::Add,
                 var_type!(float)
             ))
         )

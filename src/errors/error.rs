@@ -1,4 +1,4 @@
-use crate::{function::Param, variable::Type, ExecError};
+use crate::{function::Param, variable::Type, BinOperator, ExecError};
 use match_any::match_any;
 use simplesl_parser::Rule;
 use std::{
@@ -29,7 +29,7 @@ pub enum Error {
     IntegerOverflow(Box<str>),
     CannotUnescapeString(unescaper::Error),
     CannotDo(&'static str, Type),
-    CannotDo2(Type, &'static str, Type),
+    CannotDo2(Type, BinOperator, Type),
     WrongReturn {
         function_name: Option<Arc<str>>,
         function_return_type: Type,
