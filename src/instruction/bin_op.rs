@@ -248,11 +248,11 @@ impl InstructionWithStr {
             bitwise::can_be_used(a.clone(), b.clone())
         }
         let instruction = match rule {
-            Rule::pow => pow::create_op(lhs, rhs),
-            Rule::multiply => multiply::create_op(lhs, rhs),
+            Rule::pow => math::create_num_op(lhs, rhs, BinOperator::Pow),
+            Rule::multiply => math::create_num_op(lhs, rhs, BinOperator::Multiply),
             Rule::add => add::create_op(lhs, rhs),
-            Rule::subtract => subtract::create_op(lhs, rhs),
-            Rule::divide => divide::create_op(lhs, rhs),
+            Rule::subtract => math::create_num_op(lhs, rhs, BinOperator::Subtract),
+            Rule::divide => math::create_num_op(lhs, rhs, BinOperator::Divide),
             Rule::modulo => modulo::create_op(lhs, rhs),
             Rule::equal => Ok(BinOperation {
                 lhs,
@@ -266,10 +266,10 @@ impl InstructionWithStr {
                 op: BinOperator::NotEqual,
             }
             .into()),
-            Rule::lower => lower::create_op(lhs, rhs),
-            Rule::lower_equal => lower_equal::create_op(lhs, rhs),
-            Rule::greater => greater::create_op(lhs, rhs),
-            Rule::greater_equal => greater_equal::create_op(lhs, rhs),
+            Rule::lower => math::create_num_op(lhs, rhs, BinOperator::Lower),
+            Rule::lower_equal => math::create_num_op(lhs, rhs, BinOperator::LowerOrEqual),
+            Rule::greater => math::create_num_op(lhs, rhs, BinOperator::Greater),
+            Rule::greater_equal => math::create_num_op(lhs, rhs, BinOperator::GreaterOrEqual),
             Rule::map => map::create_op(lhs, rhs),
             Rule::filter => filter::create_op(lhs, rhs),
             Rule::bitwise_and => bitwise_and::create_op(lhs, rhs),

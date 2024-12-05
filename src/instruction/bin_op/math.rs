@@ -6,32 +6,22 @@ pub mod pow;
 pub mod subtract;
 use duplicate::duplicate_item;
 
+use crate::{instruction::Instruction, variable::ReturnType, BinOperator, Error};
+
+use super::{can_be_used_num, BinOperation};
+
 #[duplicate_item(
     ord Ord oper;
     [greater] [Greater] [>]; [greater_equal] [GreaterOrEqual] [>=]; [lower] [Lower] [<]; [lower_equal] [LowerOrEqual] [<=];
 )]
 pub mod ord {
     use crate::{
-        instruction::{can_be_used_num, BinOperation, Instruction},
-        variable::{Array, ReturnType, Variable},
-        BinOperator, Error,
+        instruction::{BinOperation, Instruction},
+        variable::{Array, Variable},
+        BinOperator,
     };
     use match_any::match_any;
     use std::sync::Arc;
-
-    pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
-        let lhs_type = lhs.return_type();
-        let rhs_type = rhs.return_type();
-        if !can_be_used_num(lhs_type.clone(), rhs_type.clone()) {
-            return Err(Error::CannotDo2(lhs_type, BinOperator::Ord, rhs_type));
-        }
-        Ok(BinOperation {
-            lhs,
-            rhs,
-            op: BinOperator::Ord,
-        }
-        .into())
-    }
 
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         match (lhs, rhs) {
@@ -83,4 +73,17 @@ pub mod ord {
             (lhs, rhs) => panic!("Tried to do {lhs} {} {rhs}", stringify!(op))
         }
     }
+}
+
+pub fn create_num_op(
+    lhs: Instruction,
+    rhs: Instruction,
+    op: BinOperator,
+) -> Result<Instruction, Error> {
+    let lhs_type = lhs.return_type();
+    let rhs_type = rhs.return_type();
+    if !can_be_used_num(lhs_type.clone(), rhs_type.clone()) {
+        return Err(Error::CannotDo2(lhs_type, op, rhs_type));
+    }
+    Ok(BinOperation { lhs, rhs, op }.into())
 }

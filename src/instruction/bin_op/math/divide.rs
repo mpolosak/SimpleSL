@@ -1,23 +1,9 @@
 use crate::{
-    instruction::{can_be_used_num, BinOperation, Instruction},
-    variable::{Array, ReturnType, Variable},
-    BinOperator, Error, ExecError,
+    instruction::{BinOperation, Instruction},
+    variable::{Array, Variable},
+    BinOperator, ExecError,
 };
 use std::sync::Arc;
-
-pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
-    let lhs_type = lhs.return_type();
-    let rhs_type = rhs.return_type();
-    if !can_be_used_num(lhs_type.clone(), rhs_type.clone()) {
-        return Err(Error::CannotDo2(lhs_type, BinOperator::Divide, rhs_type));
-    }
-    Ok(BinOperation {
-        lhs,
-        rhs,
-        op: BinOperator::Divide,
-    }
-    .into())
-}
 
 pub fn create_from_instructions(
     dividend: Instruction,
