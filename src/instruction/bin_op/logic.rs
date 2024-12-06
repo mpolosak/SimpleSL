@@ -1,24 +1,3 @@
-use crate::{
-    instruction::Instruction,
-    variable::{ReturnType, Type},
-    BinOperator, Error,
-};
-
-use super::BinOperation;
-
-pub fn create_op(
-    lhs: Instruction,
-    rhs: Instruction,
-    op: BinOperator,
-) -> Result<Instruction, Error> {
-    let lhs_type = lhs.return_type();
-    let rhs_type = rhs.return_type();
-    if lhs_type != Type::Bool || rhs_type != Type::Bool {
-        return Err(Error::CannotDo2(lhs_type, op, rhs_type));
-    }
-    Ok(BinOperation { lhs, rhs, op }.into())
-}
-
 pub mod and {
     use crate::{
         instruction::{

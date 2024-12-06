@@ -1,5 +1,4 @@
-use crate::instruction::Instruction;
-use crate::{self as simplesl, Error};
+use crate as simplesl;
 use crate::{
     function::Function,
     instruction::ExecResult,
@@ -8,23 +7,7 @@ use crate::{
 use simplesl_macros::{var, var_type};
 use std::{iter, sync::Arc};
 
-use super::{BinOperation, BinOperator};
-
-pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
-    let lhs_type = lhs.return_type();
-    let rhs_type = rhs.return_type();
-    if !can_be_used(&lhs_type, &rhs_type) {
-        return Err(Error::CannotDo2(lhs_type, BinOperator::Map, rhs_type));
-    }
-    Ok(BinOperation {
-        lhs,
-        rhs,
-        op: BinOperator::Map,
-    }
-    .into())
-}
-
-fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
+pub fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
     if let Some(types) = lhs.clone().flatten_tuple() {
         return can_be_used_zip(&types, rhs);
     }

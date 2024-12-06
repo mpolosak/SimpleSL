@@ -1,32 +1,19 @@
-use super::{BinOperation, BinOperator};
 use crate::{
-    instruction::Instruction,
-    variable::{ReturnType, Type, Variable},
-    Error, ExecError,
+    variable::{Type, Variable},
+    ExecError,
 };
 
-pub fn create_op<T, S>(
-    lhs: Instruction,
-    rhs: Instruction,
-    op: BinOperator,
-    can_be_used: T,
-    return_type: S,
-) -> Result<Instruction, Error>
+pub fn can_be_used<T, S>(lhs: Type, rhs: Type, can_be_used: T, return_type: S) -> bool
 where
     T: FnOnce(&Type, &Type) -> bool,
     S: FnOnce(&Type, &Type) -> Type,
 {
-    let lhs_type = lhs.return_type();
-    let rhs_type = rhs.return_type();
-    let Some(var_type) = lhs_type.mut_element_type() else {
-        return Err(Error::CannotDo2(lhs_type, op, rhs_type));
+    let Some(var_type) = lhs.mut_element_type() else {
+        return false;
     };
-    let can_be_used = can_be_used(&var_type, &rhs_type);
-    let return_type = return_type(&var_type, &rhs_type);
-    if !can_be_used || !return_type.matches(&var_type) {
-        return Err(Error::CannotDo2(lhs_type, op, rhs_type));
-    }
-    Ok(BinOperation { lhs, rhs, op }.into())
+    let can_be_used = can_be_used(&var_type, &rhs);
+    let return_type = return_type(&var_type, &rhs);
+    can_be_used && return_type.matches(&var_type)
 }
 
 pub fn exec<T: FnOnce(Variable, Variable) -> Variable>(

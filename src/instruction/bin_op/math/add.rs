@@ -1,7 +1,6 @@
 use crate::instruction::{BinOperation, Instruction};
-use crate::variable::{Array, ReturnType};
-use crate::variable::{Type, Variable};
-use crate::{self as simplesl, BinOperator, Error};
+use crate::variable::{Array, Type, Variable};
+use crate::{self as simplesl, BinOperator};
 use lazy_static::lazy_static;
 use simplesl_macros::var_type;
 
@@ -12,20 +11,6 @@ lazy_static! {
             | (string | [string], string | [string])
             | ([any], [any])
     );
-}
-
-pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
-    let lhs_type = lhs.return_type();
-    let rhs_type = rhs.return_type();
-    if !can_be_used(&lhs_type, &rhs_type) {
-        return Err(Error::CannotDo2(lhs_type, BinOperator::Add, rhs_type));
-    }
-    Ok(BinOperation {
-        lhs,
-        rhs,
-        op: BinOperator::Add,
-    }
-    .into())
 }
 
 pub(crate) fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
