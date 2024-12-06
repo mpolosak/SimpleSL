@@ -74,3 +74,78 @@ pub mod shift {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{variable::Variable, Code, Error, Interpreter};
+    use proptest::proptest;
+
+    #[test]
+    pub fn lshift() {
+        assert_eq!(parse_and_exec("4 << 5"), Ok(Variable::Int(4 << 5)));
+        assert_eq!(parse_and_exec("0 << 4"), Ok(Variable::Int(0 << 4)));
+        assert_eq!(
+            parse_and_exec("[45, 15, 56, 67] << 4"),
+            Ok([
+                Variable::Int(45 << 4),
+                Variable::Int(15 << 4),
+                Variable::Int(56 << 4),
+                Variable::Int(67 << 4)
+            ]
+            .into())
+        );
+        assert_eq!(
+            parse_and_exec("15 << [1, 2, 3, 4]"),
+            Ok([
+                Variable::Int(15 << 1),
+                Variable::Int(15 << 2),
+                Variable::Int(15 << 3),
+                Variable::Int(15 << 4)
+            ]
+            .into())
+        );
+        assert_eq!(parse_and_exec("45 << 64"), Err(Error::OverflowShift));
+        assert_eq!(parse_and_exec("45 >> 90"), Err(Error::OverflowShift))
+    }
+
+    #[test]
+    pub fn rshift() {
+        assert_eq!(parse_and_exec("4 >> 5"), Ok(Variable::Int(4 >> 5)));
+        assert_eq!(parse_and_exec("0 >> 4"), Ok(Variable::Int(0 >> 4)));
+        assert_eq!(
+            parse_and_exec("[45, 15, 56, 67] >> 4"),
+            Ok([
+                Variable::Int(45 >> 4),
+                Variable::Int(15 >> 4),
+                Variable::Int(56 >> 4),
+                Variable::Int(67 >> 4)
+            ]
+            .into())
+        );
+        assert_eq!(
+            parse_and_exec("15 >> [1, 2, 3, 4]"),
+            Ok([
+                Variable::Int(15 >> 1),
+                Variable::Int(15 >> 2),
+                Variable::Int(15 >> 3),
+                Variable::Int(15 >> 4)
+            ]
+            .into())
+        );
+        assert_eq!(parse_and_exec("45 >> 64"), Err(Error::OverflowShift));
+        assert_eq!(parse_and_exec("45 >> 90"), Err(Error::OverflowShift))
+    }
+
+    proptest! {
+        #[test]
+        fn shift_doesnt_crash(a: i64, b: i64){
+            let _ = parse_and_exec(&format!("{a} << {b}"));
+            let _ = parse_and_exec(&format!("{a} >> {b}"));
+        }
+    }
+
+    fn parse_and_exec(script: &str) -> Result<Variable, crate::Error> {
+        Code::parse(&Interpreter::without_stdlib(), script)
+            .and_then(|code| code.exec().map_err(Error::from))
+    }
+}
