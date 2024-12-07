@@ -42,7 +42,7 @@ impl<'a> Interpreter<'a> {
     pub fn get_variable(&self, name: &str) -> Option<&Variable> {
         self.variables
             .get(name)
-            .or_else(|| self.lower_layer?.variables.get(name))
+            .or_else(|| self.lower_layer?.get_variable(name))
     }
     pub fn insert(&mut self, name: Arc<str>, variable: Variable) {
         self.variables.insert(name, variable);
