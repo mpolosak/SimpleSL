@@ -71,6 +71,8 @@ pub enum BinOperator {
     AssignXor,
     #[display("**=")]
     AssignPow,
+    #[display("\\")]
+    Partition,
 }
 
 #[doc(hidden)]
@@ -110,6 +112,7 @@ impl From<Rule> for BinOperator {
             Rule::assign_bitwise_or => Self::AssignBitwiseOr,
             Rule::assign_xor => Self::AssignXor,
             Rule::assign_pow => Self::AssignPow,
+            Rule::partition => Self::Partition,
             _ => unreachable!(),
         }
     }

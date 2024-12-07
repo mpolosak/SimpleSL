@@ -4,6 +4,7 @@ mod filter;
 mod logic;
 mod map;
 mod math;
+mod partition;
 mod shift;
 use super::{
     at, function::call, local_variable::LocalVariables, reduce::Reduce,
@@ -93,6 +94,7 @@ impl Exec for BinOperation {
             BinOperator::AssignBitwiseOr => assign::exec(lhs, rhs, bitwise_or::exec),
             BinOperator::AssignXor => assign::exec(lhs, rhs, xor::exec),
             BinOperator::AssignPow => assign::try_exec(lhs, rhs, pow::exec)?,
+            BinOperator::Partition => partition::exec(lhs, rhs)?,
             _ => unreachable!(),
         })
     }
@@ -164,6 +166,10 @@ impl ReturnType for BinOperation {
                 }
             }
             BinOperator::Filter => lhs,
+            BinOperator::Partition => {
+                let lhs2 = lhs.clone();
+                var_type!((lhs, lhs2))
+            }
             BinOperator::Map => map::return_type(rhs),
             BinOperator::At => lhs.index_result().unwrap(),
             BinOperator::FunctionCall => lhs.return_type().unwrap(),
@@ -267,7 +273,7 @@ fn can_be_used(lhs: &Type, rhs: &Type, op: BinOperator) -> bool {
         BinOperator::BitwiseAnd | BinOperator::BitwiseOr | BinOperator::Xor => {
             bitwise::can_be_used(lhs.clone(), rhs.clone())
         }
-        BinOperator::Filter => filter::can_be_used(lhs, rhs),
+        BinOperator::Filter | BinOperator::Partition => filter::can_be_used(lhs, rhs),
         BinOperator::Map => map::can_be_used(lhs, rhs),
         BinOperator::Assign => {
             assign::can_be_used(lhs.clone(), rhs.clone(), |_, _| true, |_, x| x.clone())

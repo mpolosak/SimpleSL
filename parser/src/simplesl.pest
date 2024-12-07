@@ -54,6 +54,7 @@ bin_op               = _{
   | modulo
   | map
   | filter
+  | partition
   | reduce
 }
 equal                =  { "==" }
@@ -78,6 +79,7 @@ subtract             =  { "-" }
 modulo               =  { "%" }
 map                  =  { "@" }
 filter               =  { "?" }
+partition            =  { "\\" }
 reduce               =  { "$" ~ expr }
 assigns              = _{
     assign

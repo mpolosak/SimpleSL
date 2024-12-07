@@ -10,6 +10,7 @@
 |            | *            | Indirection                 |               |
 | 3          | @            | Array map                   | Left-to-right |
 |            | ?            | Array filtering             |               |
+|            | \\           | Array partition             |               |
 |            | $ expression | Array reducing              |               |
 |            | $+           | Array sum                   |               |
 |            | $*           | Array product               |               |
@@ -101,6 +102,15 @@ Calls the function with given arguments.
 | [T] | (index: int, value: T) -> bool | [T]    |
 
 Filters array using given function. Leaving only elements for which the function returned true.
+
+## ? - Array partition operator
+| lhs | rhs                            | result     |
+| --- | ------------------------------ | ---------- |
+| [T] | (value: T) -> bool             | ([T], [T]) |
+| [T] | (index: int, value: T) -> bool | ([T], [T]) |
+
+Returns tuple containing two arrays. First array contains all elements for which function returned
+true, second array contains all other elements.
 
 ## $ - Array reducing operator
 ```
