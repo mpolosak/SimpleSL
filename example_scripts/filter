@@ -6,7 +6,7 @@ x := () -> (bool, int) {
 
 filter := (func: () -> (bool, int), predicate: (int) -> bool) -> () -> (bool, int) {
     return () -> (bool, int) {
-        while true {
+        loop {
             res := func();
             (con, value) := res;
             if !con || predicate(value) return res;
@@ -28,3 +28,15 @@ iter := (array: [int]) -> () -> (bool, int) {
         return (false, 0)
     }
 } 
+
+collect := (iter: ()->(bool,int)) -> [int]{
+    res := mut [int] [];
+    loop {
+        (con, value) := iter();
+        if (!con) {
+            break;
+        }
+        res += [value];
+    }
+    return *res;
+}
