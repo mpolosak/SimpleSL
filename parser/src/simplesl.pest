@@ -121,6 +121,7 @@ postfix_op           = _{
   | reduce_any
   | bitand_reduce
   | bitor_reduce
+  | collect
 }
 type_filter          =  { "?" ~ type }
 at                   =  { "[" ~ expr ~ "]" }
@@ -131,6 +132,7 @@ all                  =  { "$&&" }
 reduce_any           =  { "$||" }
 bitand_reduce        =  { "$&" }
 bitor_reduce         =  { "$|" }
+collect              =  { "$]" }
 stm                  = _{
     block
   | if_else

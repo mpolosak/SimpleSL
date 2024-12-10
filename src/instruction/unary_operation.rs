@@ -3,7 +3,7 @@ use super::{
     function::call,
     local_variable::LocalVariables,
     prefix_op::{indirection, not, unary_minus},
-    reduce::{all, any, bitand, bitor, product, sum},
+    reduce::{all, any, bitand, bitor, collect, product, sum},
     type_filter::TypeFilter,
     Exec, ExecResult, ExecStop, Instruction, InstructionWithStr, Recreate,
 };
@@ -33,6 +33,7 @@ impl InstructionWithStr {
             Rule::reduce_any => any::create(lhs),
             Rule::bitand_reduce => bitand::create(lhs),
             Rule::bitor_reduce => bitor::create(lhs),
+            Rule::collect => collect::create(lhs),
             rule => unexpected!(rule),
         }?;
         Ok(Self { instruction, str })
@@ -58,6 +59,7 @@ pub enum UnaryOperator {
     Return,
     Indirection,
     FunctionCall,
+    Collect,
 }
 
 impl Exec for UnaryOperation {
@@ -75,6 +77,7 @@ impl Exec for UnaryOperation {
             UnaryOperator::Return => return Err(ExecStop::Return(var)),
             UnaryOperator::Indirection => indirection::exec(var),
             UnaryOperator::FunctionCall => var.into_function().unwrap().exec(interpreter)?,
+            UnaryOperator::Collect => collect::exec(var, interpreter)?,
         })
     }
 }
@@ -96,7 +99,8 @@ impl Recreate for UnaryOperation {
             UnaryOperator::UnaryMinus => unary_minus::create_from_instruction(instruction),
             op @ (UnaryOperator::Return
             | UnaryOperator::Indirection
-            | UnaryOperator::FunctionCall) => UnaryOperation { instruction, op }.into(),
+            | UnaryOperator::FunctionCall
+            | UnaryOperator::Collect) => UnaryOperation { instruction, op }.into(),
         })
     }
 }
@@ -112,6 +116,7 @@ impl ReturnType for UnaryOperation {
             UnaryOperator::Return => Type::Never,
             UnaryOperator::Indirection => indirection::return_type(return_type),
             UnaryOperator::FunctionCall => return_type.return_type().unwrap(),
+            UnaryOperator::Collect => collect::return_type(return_type),
         }
     }
 }
