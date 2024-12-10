@@ -16,3 +16,15 @@ filter := (func: () -> (bool, int), predicate: (int) -> bool) -> () -> (bool, in
 }
 
 a := filter(x, (a:int) -> bool {return a%2 == 0})
+
+iter := (array: [int]) -> () -> (bool, int) {
+    i := mut -1;
+    len := len(array)
+    return () -> (bool, int) {
+        i+=1;
+        if *i < len {
+            return (true, array[*i])
+        }
+        return (false, 0)
+    }
+} 
