@@ -1,0 +1,18 @@
+i := mut 0;
+x := () -> (bool, int) {
+    i += 1;
+    return (*i <= 5, *i);
+}
+
+filter := (func: () -> (bool, int), predicate: (int) -> bool) -> () -> (bool, int) {
+    return () -> (bool, int) {
+        while true {
+            res := func();
+            (con, value) := res;
+            if !con || predicate(value) return res;
+        }
+        return (false, 0);
+    }
+}
+
+a := filter(x, (a:int) -> bool {return a%2 == 0})
