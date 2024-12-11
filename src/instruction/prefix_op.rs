@@ -104,7 +104,7 @@ pub mod not {
     }
 
     pub fn create_instruction(instruction: InstructionWithStr) -> Result<Instruction, Error> {
-        let op = UnaryOperator::UnaryMinus;
+        let op = UnaryOperator::Not;
         let return_type = instruction.return_type();
         if !return_type.matches(&ACCEPTED) {
             return Err(Error::IncorectUnaryOperatorOperand {
@@ -205,7 +205,7 @@ mod tests {
             parse_and_exec("!7.5"),
             Err(Error::IncorectUnaryOperatorOperand {
                 ins: "7.5".into(),
-                op: UnaryOperator::All,
+                op: UnaryOperator::Not,
                 expected: var_type!(int | bool | [int | bool]),
                 given: var_type!(float)
             })
