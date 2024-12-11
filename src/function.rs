@@ -15,7 +15,7 @@ use crate::{
 use simplesl_macros::var_type;
 use std::{fmt, iter::zip, sync::Arc};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Function {
     pub(crate) ident: Option<Arc<str>>,
     pub(crate) params: Params,

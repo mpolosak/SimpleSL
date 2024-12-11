@@ -1,41 +1,37 @@
 use crate as simplesl;
+use crate::variable::Typed;
 use crate::{
     instruction::ExecResult,
     variable::{Array, Variable},
 };
 use simplesl_macros::var;
 
-pub fn exec(array: Variable, function: Variable) -> ExecResult {
-    let (Variable::Array(array), Variable::Function(function)) = (&array, &function) else {
-        unreachable!("Tried to do {array} ? {function}")
+pub fn exec(iter: Variable, function: Variable) -> ExecResult {
+    let (Variable::Function(iter), Variable::Function(function)) = (&iter, &function) else {
+        unreachable!("Tried to do {iter} ? {function}")
     };
-    let array_iter = array.iter().cloned();
     let mut left = Vec::new();
     let mut right = Vec::new();
-    if function.params.len() == 1 {
-        for element in array_iter {
-            match function.exec_with_args(&[element.clone()])? {
-                Variable::Bool(true) => left.push(element),
-                _ => right.push(element),
-            };
+    while let Variable::Tuple(tuple) = iter.exec_with_args(&[])? {
+        if tuple[0] == Variable::Bool(false) {
+            break;
         }
-    } else {
-        for (index, element) in array_iter.enumerate() {
-            match function.exec_with_args(&[index.into(), element.clone()])? {
-                Variable::Bool(true) => left.push(element),
-                _ => right.push(element),
-            };
-        }
-    };
-    let element_type = array.element_type().clone();
+        let element = tuple[1].clone();
+        match function.exec_with_args(&[element.clone()])? {
+            Variable::Bool(true) => left.push(element),
+            _ => right.push(element),
+        };
+    }
+
+    let element_type = iter.as_type().iter_element().unwrap();
+    let element_type2 = iter.as_type().iter_element().unwrap();
     let left = Array {
         element_type,
         elements: left.into(),
     };
 
-    let element_type = array.element_type().clone();
     let right = Array {
-        element_type,
+        element_type: element_type2,
         elements: right.into(),
     };
 
