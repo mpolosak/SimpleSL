@@ -125,13 +125,13 @@ array $ initial_value function
 ```
 array $+
 ```
-| lhs     | result  |
-| ------- | ------- |
-| [int]   | int     |
-| [float] | float   |
-| [string]| string  |
+| lhs                  | result  |
+| -------------------- | ------- |
+| () -> (bool, int)    | int     |
+| () -> (bool, float)  | float   |
+| () -> (bool, string) | float   |
 
-Calculates sum of all elements of array.
+Calculates sum of all elements of iterator.
 
 ## $* - Array product
 ```

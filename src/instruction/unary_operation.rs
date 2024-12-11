@@ -55,7 +55,7 @@ impl Exec for UnaryOperation {
             UnaryOperator::Any => bool_reduce::any(var, interpreter)?,
             UnaryOperator::BitAnd => reduce::bit::and(var, interpreter)?,
             UnaryOperator::BitOr => reduce::bit::or(var, interpreter)?,
-            UnaryOperator::Sum => sum::exec(var),
+            UnaryOperator::Sum => sum::exec(var, interpreter)?,
             UnaryOperator::Product => product::exec(var, interpreter)?,
             UnaryOperator::Not => not::exec(var),
             UnaryOperator::UnaryMinus => unary_minus::exec(var),
@@ -74,18 +74,9 @@ impl Recreate for UnaryOperation {
     ) -> Result<super::Instruction, crate::ExecError> {
         let instruction = self.instruction.recreate(local_variables)?;
         Ok(match self.op {
-            UnaryOperator::Sum => sum::recreate(instruction),
             UnaryOperator::Not => not::create_from_instruction(instruction),
             UnaryOperator::UnaryMinus => unary_minus::create_from_instruction(instruction),
-            op @ (UnaryOperator::Return
-            | UnaryOperator::All
-            | UnaryOperator::Any
-            | UnaryOperator::BitAnd
-            | UnaryOperator::BitOr
-            | UnaryOperator::Indirection
-            | UnaryOperator::FunctionCall
-            | UnaryOperator::Collect
-            | UnaryOperator::Product) => UnaryOperation { instruction, op }.into(),
+            op => UnaryOperation { instruction, op }.into(),
         })
     }
 }
