@@ -87,7 +87,7 @@ impl ReturnType for UnaryOperation {
         match self.op {
             UnaryOperator::All | UnaryOperator::Any => Type::Bool,
             UnaryOperator::BitAnd | UnaryOperator::BitOr => Type::Int,
-            UnaryOperator::Sum | UnaryOperator::Product => return_type.element_type().unwrap(),
+            UnaryOperator::Sum | UnaryOperator::Product => return_type.iter_element().unwrap(),
             UnaryOperator::Not | UnaryOperator::UnaryMinus => return_type,
             UnaryOperator::Return => Type::Never,
             UnaryOperator::Indirection => indirection::return_type(return_type),

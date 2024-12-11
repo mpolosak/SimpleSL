@@ -249,6 +249,33 @@ impl Type {
             _ => None,
         }
     }
+
+    pub fn iter_element(&self) -> Option<Type> {
+        match self {
+            Self::Function(function) => {
+                if function.params.len() != 0 {
+                    return None;
+                }
+                let return_tuple = function.return_type.clone().flatten_tuple()?;
+                if return_tuple.len() != 2 || return_tuple[0] != Type::Bool {
+                    return None;
+                }
+                Some(return_tuple[1].clone())
+            }
+            Self::Multi(multi) => {
+                let mut iter = multi.iter();
+                let first = iter.next().unwrap().iter_element()?;
+                iter.map(Self::iter_element).try_fold(first, |acc, curr| {
+                    if acc == curr? {
+                        Some(acc)
+                    } else {
+                        None
+                    }
+                })
+            }
+            _ => None,
+        }
+    }
 }
 
 impl Display for Type {

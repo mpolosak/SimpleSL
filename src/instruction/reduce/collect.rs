@@ -50,5 +50,6 @@ pub(crate) fn exec(var: Variable, interpreter: &mut Interpreter) -> ExecResult {
 }
 
 pub(crate) fn return_type(lhs: Type) -> Type {
-    lhs.return_type().unwrap().flatten_tuple().unwrap()[1].clone()
+    let element = lhs.iter_element().unwrap();
+    var_type!([element])
 }
