@@ -1,11 +1,10 @@
 use crate::{
     self as simplesl,
     instruction::{
-        array_repeat::ArrayRepeat,
-        multiply, pow,
-        unary_operation::{UnaryOperation, UnaryOperator},
-        Instruction, InstructionWithStr,
+        array_repeat::ArrayRepeat, multiply, pow, unary_operation::UnaryOperation, Instruction,
+        InstructionWithStr,
     },
+    unary_operator::UnaryOperator,
     variable::{Array, ReturnType, Variable},
     Error,
 };
@@ -15,9 +14,9 @@ use std::sync::Arc;
 pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
     let return_type = array.return_type();
     if !return_type.matches(&var_type!([float] | [int])) {
-        return Err(Error::IncorectPostfixOperatorOperand {
+        return Err(Error::IncorectUnaryOperatorOperand {
             ins: array.str,
-            op: "$*",
+            op: UnaryOperator::Product,
             expected: var_type!([float] | [int]),
             given: return_type,
         });

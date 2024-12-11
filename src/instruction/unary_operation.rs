@@ -8,6 +8,7 @@ use super::{
     Exec, ExecResult, ExecStop, Instruction, InstructionWithStr, Recreate,
 };
 use crate::{
+    unary_operator::UnaryOperator,
     variable::{ReturnType, Type},
     Error, Interpreter,
 };
@@ -44,22 +45,6 @@ impl InstructionWithStr {
 pub struct UnaryOperation {
     pub instruction: Instruction,
     pub op: UnaryOperator,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum UnaryOperator {
-    All,
-    Any,
-    BitAnd,
-    BitOr,
-    Sum,
-    Product,
-    Not,
-    UnaryMinus,
-    Return,
-    Indirection,
-    FunctionCall,
-    Collect,
 }
 
 impl Exec for UnaryOperation {

@@ -1,6 +1,7 @@
 use crate as simplesl;
-use crate::instruction::unary_operation::{UnaryOperation, UnaryOperator};
+use crate::instruction::unary_operation::UnaryOperation;
 use crate::instruction::{and, Instruction, InstructionWithStr};
+use crate::unary_operator::UnaryOperator;
 use crate::{
     variable::{Array, ReturnType, Variable},
     Error,
@@ -10,9 +11,9 @@ use simplesl_macros::var_type;
 pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
     let return_type = array.return_type();
     if !return_type.matches(&var_type!([bool])) {
-        return Err(Error::IncorectPostfixOperatorOperand {
+        return Err(Error::IncorectUnaryOperatorOperand {
             ins: array.str,
-            op: "$&&",
+            op: UnaryOperator::All,
             expected: var_type!([bool]),
             given: return_type,
         });

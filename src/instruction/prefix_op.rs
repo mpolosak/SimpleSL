@@ -9,14 +9,14 @@ use simplesl_parser::{unexpected, Rule};
 
 impl InstructionWithStr {
     pub fn create_prefix(op: Pair<'_, Rule>, rhs: Self) -> Result<Self, Error> {
-        let instruction = rhs.instruction;
+        let str = rhs.str.clone();
         let instruction = match op.as_rule() {
-            Rule::not => not::create_instruction(instruction),
-            Rule::unary_minus => unary_minus::create_instruction(instruction),
-            Rule::indirection => indirection::create_instruction(instruction),
+            Rule::not => not::create_instruction(rhs),
+            Rule::unary_minus => unary_minus::create_instruction(rhs),
+            Rule::indirection => indirection::create_instruction(rhs),
             rule => unexpected!(rule),
         }?;
-        let str = format!("{} {}", op.as_str(), rhs.str).into();
+        let str = format!("{} {}", op.as_str(), str).into();
         Ok(Self { instruction, str })
     }
 }
@@ -27,7 +27,9 @@ lazy_static! {
 
 pub mod unary_minus {
     use crate as simplesl;
-    use crate::instruction::unary_operation::{UnaryOperation, UnaryOperator};
+    use crate::instruction::unary_operation::UnaryOperation;
+    use crate::instruction::InstructionWithStr;
+    use crate::unary_operator::UnaryOperator;
     use crate::variable::{Array, ReturnType};
     use crate::{instruction::Instruction, variable::Variable, Error};
     use match_any::match_any;
@@ -36,11 +38,17 @@ pub mod unary_minus {
 
     use super::ACCEPTED_NUM;
 
-    pub fn create_instruction(instruction: Instruction) -> Result<Instruction, Error> {
+    pub fn create_instruction(instruction: InstructionWithStr) -> Result<Instruction, Error> {
         let return_type = instruction.return_type();
         if !return_type.matches(&ACCEPTED_NUM) {
-            return Err(Error::CannotDo("-", return_type));
+            return Err(Error::IncorectUnaryOperatorOperand {
+                ins: instruction.str,
+                op: UnaryOperator::UnaryMinus,
+                expected: ACCEPTED_NUM.clone(),
+                given: return_type,
+            });
         }
+        let instruction = instruction.instruction;
         Ok(UnaryOperation {
             instruction,
             op: UnaryOperator::UnaryMinus,
@@ -79,11 +87,10 @@ pub mod unary_minus {
 
 pub mod not {
     use crate as simplesl;
+    use crate::instruction::InstructionWithStr;
+    use crate::unary_operator::UnaryOperator;
     use crate::{
-        instruction::{
-            unary_operation::{UnaryOperation, UnaryOperator},
-            Instruction,
-        },
+        instruction::{unary_operation::UnaryOperation, Instruction},
         variable::{Array, ReturnType, Type, Variable},
         Error,
     };
@@ -96,14 +103,20 @@ pub mod not {
         pub static ref ACCEPTED_INT: Type = var_type!(int | bool | [int | bool]);
     }
 
-    pub fn create_instruction(instruction: Instruction) -> Result<Instruction, Error> {
+    pub fn create_instruction(instruction: InstructionWithStr) -> Result<Instruction, Error> {
         let return_type = instruction.return_type();
         if !return_type.matches(&ACCEPTED_INT) {
-            return Err(Error::CannotDo("!", return_type));
+            return Err(Error::IncorectUnaryOperatorOperand {
+                ins: instruction.str,
+                op: UnaryOperator::UnaryMinus,
+                expected: ACCEPTED_INT.clone(),
+                given: return_type,
+            });
         }
+        let instruction = instruction.instruction;
         Ok(UnaryOperation {
             instruction,
-            op: UnaryOperator::Not,
+            op: UnaryOperator::UnaryMinus,
         }
         .into())
     }
@@ -138,19 +151,23 @@ pub mod not {
 
 pub mod indirection {
     use crate::{
-        instruction::{
-            unary_operation::{UnaryOperation, UnaryOperator},
-            Instruction,
-        },
+        instruction::{unary_operation::UnaryOperation, Instruction, InstructionWithStr},
+        unary_operator::UnaryOperator,
         variable::{ReturnType, Type, Variable},
         Error,
     };
 
-    pub fn create_instruction(instruction: Instruction) -> Result<Instruction, Error> {
+    pub fn create_instruction(instruction: InstructionWithStr) -> Result<Instruction, Error> {
         let return_type = instruction.return_type();
         if !return_type.is_mut() {
-            return Err(Error::CannotDo("*", return_type));
+            return Err(Error::IncorectUnaryOperatorOperand {
+                ins: instruction.str,
+                op: UnaryOperator::Indirection,
+                expected: Type::Mut(Type::Any.into()),
+                given: return_type,
+            });
         }
+        let instruction = instruction.instruction;
         Ok(UnaryOperation {
             instruction,
             op: UnaryOperator::Indirection,

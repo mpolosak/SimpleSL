@@ -1,10 +1,7 @@
 use crate::{
     function::{Function, Param, Params},
-    instruction::{
-        set::Set,
-        unary_operation::{UnaryOperation, UnaryOperator},
-        InstructionWithStr,
-    },
+    instruction::{set::Set, unary_operation::UnaryOperation, InstructionWithStr},
+    unary_operator::UnaryOperator,
     variable::{ReturnType, Typed, Variable},
     BinOperator, Error,
 };

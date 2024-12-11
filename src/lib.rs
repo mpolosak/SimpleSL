@@ -6,6 +6,7 @@ mod instruction;
 mod interpreter;
 pub mod stdlib;
 mod to_result;
+mod unary_operator;
 pub mod variable;
 pub use simplesl_macros::{export_function, var, var_type};
 use std::fmt::{Debug, Display};

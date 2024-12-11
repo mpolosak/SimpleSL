@@ -1,5 +1,6 @@
-use crate::instruction::unary_operation::{UnaryOperation, UnaryOperator};
+use crate::instruction::unary_operation::UnaryOperation;
 use crate::instruction::ExecResult;
+use crate::unary_operator::UnaryOperator;
 use crate::variable::{ReturnType, Variable};
 use crate::{self as simplesl, Interpreter};
 use crate::{
@@ -17,9 +18,9 @@ lazy_static! {
 pub(crate) fn create(lhs: InstructionWithStr) -> Result<Instruction, Error> {
     let return_type = lhs.return_type();
     if !can_be_used(&return_type) {
-        return Err(Error::IncorectPostfixOperatorOperand {
+        return Err(Error::IncorectUnaryOperatorOperand {
             ins: lhs.str,
-            op: "$]",
+            op: UnaryOperator::Collect,
             expected: ACCEPTED_TYPE.clone(),
             given: return_type,
         });
