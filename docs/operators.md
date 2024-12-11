@@ -168,30 +168,26 @@ Test if any element of iterator function is true
 ```
 array $&
 ```
-| lhs     | result  |
-| ------- | ------- |
-| [int]   | int     |
-| [bool]  | bool    |
+| lhs               | result  |
+| ----------------- | ------- |
+| () -> (bool, int) | int     |
 
 Equivalent of:
 ```
 array $!0 (acc: int, curr: int) -> int {return acc & curr}
-array $true (acc: bool, curr: bool) -> bool {return acc & curr}
 ```
 
 ## $| - Bitwise or reduce
 ```
 array $|
 ```
-| lhs     | result  |
-| ------- | ------- |
-| [int]   | int     |
-| [bool]  | bool    |
+| lhs               | result  |
+| ----------------- | ------- |
+| () -> (bool, int) | int     |
 
 Equivalent of:
 ```
 array $0 (acc: int, curr: int) -> int {return acc | curr}
-array $false (acc: bool, curr: bool) -> bool {return acc | curr}
 ```
 
 ## ** - Exponentiation

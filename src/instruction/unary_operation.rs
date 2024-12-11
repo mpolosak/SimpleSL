@@ -3,18 +3,16 @@ use super::{
     function::call,
     local_variable::LocalVariables,
     prefix_op::{indirection, not, unary_minus},
-    reduce::{bitand, bitor, bool_reduce, collect, product, sum},
+    reduce::{self, bool_reduce, collect, product, sum},
     type_filter::TypeFilter,
     Exec, ExecResult, ExecStop, Instruction, InstructionWithStr, Recreate,
 };
-use crate as simplesl;
 use crate::{
     unary_operator::UnaryOperator,
     variable::{ReturnType, Type},
     Error, Interpreter,
 };
 use pest::iterators::Pair;
-use simplesl_macros::var_type;
 use simplesl_parser::{unexpected, Rule};
 
 impl InstructionWithStr {
@@ -34,8 +32,8 @@ impl InstructionWithStr {
             Rule::product => product::create(lhs),
             Rule::all => bool_reduce::create(lhs, UnaryOperator::All),
             Rule::reduce_any => bool_reduce::create(lhs, UnaryOperator::Any),
-            Rule::bitand_reduce => create_bit_reduce(lhs, UnaryOperator::BitAnd),
-            Rule::bitor_reduce => create_bit_reduce(lhs, UnaryOperator::BitOr),
+            Rule::bitand_reduce => reduce::bit::create(lhs, UnaryOperator::BitAnd),
+            Rule::bitor_reduce => reduce::bit::create(lhs, UnaryOperator::BitOr),
             Rule::collect => collect::create(lhs),
             rule => unexpected!(rule),
         }?;
@@ -55,8 +53,8 @@ impl Exec for UnaryOperation {
         Ok(match self.op {
             UnaryOperator::All => bool_reduce::all(var, interpreter)?,
             UnaryOperator::Any => bool_reduce::any(var, interpreter)?,
-            UnaryOperator::BitAnd => bitand::exec(var),
-            UnaryOperator::BitOr => bitor::exec(var),
+            UnaryOperator::BitAnd => reduce::bit::and(var, interpreter)?,
+            UnaryOperator::BitOr => reduce::bit::or(var, interpreter)?,
             UnaryOperator::Sum => sum::exec(var),
             UnaryOperator::Product => product::exec(var),
             UnaryOperator::Not => not::exec(var),
@@ -76,8 +74,6 @@ impl Recreate for UnaryOperation {
     ) -> Result<super::Instruction, crate::ExecError> {
         let instruction = self.instruction.recreate(local_variables)?;
         Ok(match self.op {
-            UnaryOperator::BitAnd => bitand::recreate(instruction),
-            UnaryOperator::BitOr => bitor::recreate(instruction),
             UnaryOperator::Sum => sum::recreate(instruction),
             UnaryOperator::Product => product::recreate(instruction),
             UnaryOperator::Not => not::create_from_instruction(instruction),
@@ -85,6 +81,8 @@ impl Recreate for UnaryOperation {
             op @ (UnaryOperator::Return
             | UnaryOperator::All
             | UnaryOperator::Any
+            | UnaryOperator::BitAnd
+            | UnaryOperator::BitOr
             | UnaryOperator::Indirection
             | UnaryOperator::FunctionCall
             | UnaryOperator::Collect) => UnaryOperation { instruction, op }.into(),
@@ -106,24 +104,4 @@ impl ReturnType for UnaryOperation {
             UnaryOperator::Collect => collect::return_type(return_type),
         }
     }
-}
-
-pub fn create_bit_reduce(
-    array: InstructionWithStr,
-    op: UnaryOperator,
-) -> Result<Instruction, Error> {
-    let return_type = array.return_type();
-    if !return_type.matches(&var_type!([int] | [bool])) {
-        return Err(Error::IncorectUnaryOperatorOperand {
-            ins: array.str,
-            op,
-            expected: var_type!([int] | [bool]),
-            given: return_type,
-        });
-    }
-    Ok(UnaryOperation {
-        instruction: array.instruction,
-        op,
-    }
-    .into())
 }
