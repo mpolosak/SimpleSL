@@ -1,24 +1,27 @@
 use crate::{
     self as simplesl,
     instruction::{
-        array_repeat::ArrayRepeat, multiply, pow, unary_operation::UnaryOperation, Instruction,
-        InstructionWithStr,
+        multiply, unary_operation::UnaryOperation, ExecResult, Instruction, InstructionWithStr,
     },
     unary_operator::UnaryOperator,
-    variable::{Array, ReturnType, Variable},
-    Error,
+    variable::{ReturnType, Type, Variable},
+    Error, Interpreter,
 };
-use simplesl_macros::{var, var_type};
-use std::sync::Arc;
+use lazy_static::lazy_static;
+use simplesl_macros::var_type;
+
+lazy_static! {
+    pub static ref ACCEPTED_TYPE: Type = var_type!(() -> (bool, int) | () -> (bool, float));
+}
 
 pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
     let op = UnaryOperator::Product;
     let return_type = array.return_type();
-    if !return_type.matches(&var_type!([float] | [int])) {
+    if !return_type.matches(&ACCEPTED_TYPE) {
         return Err(Error::IncorectUnaryOperatorOperand {
             ins: array.str,
             op,
-            expected: var_type!([float] | [int]),
+            expected: ACCEPTED_TYPE.clone(),
             given: return_type,
         });
     }
@@ -29,47 +32,18 @@ pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
     .into())
 }
 
-fn calc(array: &Array) -> Variable {
-    match array.element_type() {
-        var_type!(int) => calc_int(array),
-        var_type!(float) => calc_float(array),
-        element_type => unreachable!("Tried to calculate product of [{element_type}]"),
+pub fn exec(var: Variable, interpreter: &mut Interpreter) -> ExecResult {
+    let iter = var.into_function().unwrap();
+    let mut result = if iter.return_type().matches(&var_type!((bool, int))) {
+        Variable::Int(1)
+    } else {
+        Variable::Float(1.0)
+    };
+    while let Variable::Tuple(tuple) = iter.exec(interpreter)? {
+        if tuple[0] == Variable::Bool(false) {
+            break;
+        };
+        result = multiply::exec(result, tuple[1].clone());
     }
-}
-
-fn calc_int(array: &Array) -> Variable {
-    let product: i64 = array.iter().map(|var| var.as_int().unwrap()).product();
-    var!(product)
-}
-
-fn calc_float(array: &Array) -> Variable {
-    let product: f64 = array.iter().map(|var| var.as_float().unwrap()).product();
-    var!(product)
-}
-
-pub fn recreate(instruction: Instruction) -> Instruction {
-    match instruction {
-        Instruction::Variable(Variable::Array(array)) => calc(&array).into(),
-        Instruction::ArrayRepeat(array_repeat) => {
-            let ArrayRepeat { value, len } = Arc::unwrap_or_clone(array_repeat.clone());
-            pow::create_from_instructions(value.instruction, len.instruction).unwrap()
-        }
-        Instruction::Array(array) => array
-            .instructions
-            .iter()
-            .cloned()
-            .map(|iws| iws.instruction)
-            .reduce(multiply::create_from_instructions)
-            .unwrap(),
-        instruction => UnaryOperation {
-            instruction,
-            op: UnaryOperator::Product,
-        }
-        .into(),
-    }
-}
-
-pub fn exec(var: Variable) -> Variable {
-    let array = var.into_array().unwrap();
-    calc(&array)
+    Ok(result)
 }

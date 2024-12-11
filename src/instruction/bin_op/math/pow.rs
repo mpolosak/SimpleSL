@@ -1,31 +1,6 @@
-use crate::instruction::{BinOperation, Instruction};
 use crate::variable::{Array, Variable};
-use crate::{BinOperator, ExecError};
+use crate::ExecError;
 use std::sync::Arc;
-
-pub fn create_from_instructions(
-    base: Instruction,
-    exp: Instruction,
-) -> Result<Instruction, ExecError> {
-    match (base, exp) {
-        (Instruction::Variable(base), Instruction::Variable(exp)) => Ok(exec(base, exp)?.into()),
-        (_, Instruction::Variable(Variable::Int(exp))) if exp < 0 => {
-            Err(ExecError::NegativeExponent)
-        }
-        (Instruction::ArrayRepeat(array), rhs) => Arc::unwrap_or_clone(array)
-            .try_map(|lhs| create_from_instructions(lhs, rhs.clone()))
-            .map(Instruction::from),
-        (lhs, Instruction::ArrayRepeat(array)) => Arc::unwrap_or_clone(array)
-            .try_map(|rhs| create_from_instructions(lhs.clone(), rhs))
-            .map(Instruction::from),
-        (lhs, rhs) => Ok(BinOperation {
-            lhs,
-            rhs,
-            op: BinOperator::Pow,
-        }
-        .into()),
-    }
-}
 
 pub fn exec(base: Variable, exp: Variable) -> Result<Variable, ExecError> {
     match (base, exp) {

@@ -137,12 +137,12 @@ Calculates sum of all elements of array.
 ```
 array $*
 ```
-| lhs     | result  |
-| ------- | ------- |
-| [int]   | int     |
-| [float] | float   |
+| lhs                 | result  |
+| ------------------- | ------- |
+| () -> (bool, int)   | int     |
+| () -> (bool, float) | float   |
 
-Calculates product of all elements of array.
+Calculates product of all elements of iterator.
 
 ## $&& - Logical and reduce (all)
 ```
