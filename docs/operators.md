@@ -117,9 +117,9 @@ true, second array contains all other elements.
 array $ initial_value function
 ```
 
-| lhs | initial value | rhs                            | result  |
-| --- | --------------| ------------------------------ | ------- |
-| [T] | S             | (acc: T \| U, current: S) -> U | T \| U  |
+| lhs             | initial value | rhs                            | result  |
+| --------------- | --------------| ------------------------------ | ------- |
+| () -> (bool, T) | S             | (acc: T \| U, current: S) -> U | T \| U  |
 
 ## $+ - Array sum
 ```

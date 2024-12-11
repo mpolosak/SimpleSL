@@ -6,8 +6,7 @@ pub mod sum;
 use crate as simplesl;
 use crate::{
     instruction::{
-        local_variable::LocalVariables, Exec, ExecResult, ExecStop, Instruction,
-        InstructionWithStr, Recreate,
+        local_variable::LocalVariables, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
     },
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
@@ -19,7 +18,7 @@ use simplesl_parser::Rule;
 
 #[derive(Debug)]
 pub struct Reduce {
-    array: InstructionWithStr,
+    iter: InstructionWithStr,
     initial_value: InstructionWithStr,
     function: InstructionWithStr,
 }
@@ -32,7 +31,7 @@ impl Reduce {
         local_variables: &LocalVariables,
     ) -> Result<Instruction, Error> {
         let initial_value = InstructionWithStr::new_expression(initial_value, local_variables)?;
-        let Some(element_type) = array.return_type().index_result() else {
+        let Some(element_type) = array.return_type().iter_element() else {
             return Err(Error::CannotReduce(array.str));
         };
         let Some(return_type) = function.return_type().return_type() else {
@@ -47,7 +46,7 @@ impl Reduce {
             return Err(Error::WrongType("function".into(), expected_function));
         }
         Ok(Self {
-            array,
+            iter: array,
             initial_value,
             function,
         }
@@ -60,14 +59,11 @@ impl Recreate for Reduce {
         &self,
         local_variables: &mut crate::instruction::local_variable::LocalVariables,
     ) -> Result<Instruction, ExecError> {
-        let array = self.array.recreate(local_variables)?;
+        let array = self.iter.recreate(local_variables)?;
         let initial_value = self.initial_value.recreate(local_variables)?;
-        if let Some(Type::Never) = array.return_type().index_result() {
-            return Ok(initial_value.instruction);
-        }
         let function = self.function.recreate(local_variables)?;
         Ok(Self {
-            array,
+            iter: array,
             initial_value,
             function,
         }
@@ -77,18 +73,20 @@ impl Recreate for Reduce {
 
 impl Exec for Reduce {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let array = self.array.exec(interpreter)?;
+        let iter = self.iter.exec(interpreter)?;
         let initial_value = self.initial_value.exec(interpreter)?;
         let function = self.function.exec(interpreter)?;
-        let (Variable::Array(array), Variable::Function(function)) = (&array, &function) else {
-            unreachable!("Tried to do {array} ${initial_value} {function}")
+        let (Variable::Function(iter), Variable::Function(function)) = (&iter, &function) else {
+            unreachable!("Tried to do {iter} ${initial_value} {function}")
         };
-        array
-            .iter()
-            .try_fold(initial_value, |acc, current| {
-                function.exec_with_args(&[acc, current.clone()])
-            })
-            .map_err(ExecStop::from)
+        let mut result = initial_value;
+        while let Variable::Tuple(tuple) = iter.exec(interpreter)? {
+            if tuple[0] == Variable::Bool(false) {
+                break;
+            };
+            result = function.exec_with_args(&[result, tuple[1].clone()])?;
+        }
+        Ok(result)
     }
 }
 
