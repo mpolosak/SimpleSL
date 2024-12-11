@@ -12,18 +12,19 @@ use simplesl_macros::{var, var_type};
 use std::sync::Arc;
 
 pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
+    let op = UnaryOperator::Sum;
     let return_type = array.return_type();
     if !return_type.matches(&var_type!([float] | [int] | [string])) {
         return Err(Error::IncorectUnaryOperatorOperand {
             ins: array.str,
-            op: UnaryOperator::Sum,
+            op,
             expected: var_type!([float] | [int] | [string]),
             given: return_type,
         });
     }
     Ok(UnaryOperation {
         instruction: array.instruction,
-        op: UnaryOperator::Sum,
+        op,
     }
     .into())
 }

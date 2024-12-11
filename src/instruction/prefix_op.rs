@@ -39,19 +39,19 @@ pub mod unary_minus {
     use super::ACCEPTED_NUM;
 
     pub fn create_instruction(instruction: InstructionWithStr) -> Result<Instruction, Error> {
+        let op = UnaryOperator::UnaryMinus;
         let return_type = instruction.return_type();
         if !return_type.matches(&ACCEPTED_NUM) {
             return Err(Error::IncorectUnaryOperatorOperand {
                 ins: instruction.str,
-                op: UnaryOperator::UnaryMinus,
+                op,
                 expected: ACCEPTED_NUM.clone(),
                 given: return_type,
             });
         }
-        let instruction = instruction.instruction;
         Ok(UnaryOperation {
-            instruction,
-            op: UnaryOperator::UnaryMinus,
+            instruction: instruction.instruction,
+            op,
         }
         .into())
     }
@@ -104,19 +104,19 @@ pub mod not {
     }
 
     pub fn create_instruction(instruction: InstructionWithStr) -> Result<Instruction, Error> {
+        let op = UnaryOperator::UnaryMinus;
         let return_type = instruction.return_type();
         if !return_type.matches(&ACCEPTED_INT) {
             return Err(Error::IncorectUnaryOperatorOperand {
                 ins: instruction.str,
-                op: UnaryOperator::UnaryMinus,
+                op,
                 expected: ACCEPTED_INT.clone(),
                 given: return_type,
             });
         }
-        let instruction = instruction.instruction;
         Ok(UnaryOperation {
-            instruction,
-            op: UnaryOperator::UnaryMinus,
+            instruction: instruction.instruction,
+            op,
         }
         .into())
     }
@@ -158,19 +158,19 @@ pub mod indirection {
     };
 
     pub fn create_instruction(instruction: InstructionWithStr) -> Result<Instruction, Error> {
+        let op = UnaryOperator::Indirection;
         let return_type = instruction.return_type();
         if !return_type.is_mut() {
             return Err(Error::IncorectUnaryOperatorOperand {
                 ins: instruction.str,
-                op: UnaryOperator::Indirection,
+                op,
                 expected: Type::Mut(Type::Any.into()),
                 given: return_type,
             });
         }
-        let instruction = instruction.instruction;
         Ok(UnaryOperation {
-            instruction,
-            op: UnaryOperator::Indirection,
+            instruction: instruction.instruction,
+            op,
         }
         .into())
     }

@@ -12,18 +12,19 @@ use simplesl_macros::{var, var_type};
 use std::sync::Arc;
 
 pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
+    let op = UnaryOperator::Product;
     let return_type = array.return_type();
     if !return_type.matches(&var_type!([float] | [int])) {
         return Err(Error::IncorectUnaryOperatorOperand {
             ins: array.str,
-            op: UnaryOperator::Product,
+            op,
             expected: var_type!([float] | [int]),
             given: return_type,
         });
     }
     Ok(UnaryOperation {
         instruction: array.instruction,
-        op: UnaryOperator::Product,
+        op,
     }
     .into())
 }

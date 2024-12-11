@@ -16,18 +16,19 @@ lazy_static! {
 }
 
 pub(crate) fn create(lhs: InstructionWithStr) -> Result<Instruction, Error> {
+    let op = UnaryOperator::Collect;
     let return_type = lhs.return_type();
     if !can_be_used(&return_type) {
         return Err(Error::IncorectUnaryOperatorOperand {
             ins: lhs.str,
-            op: UnaryOperator::Collect,
+            op,
             expected: ACCEPTED_TYPE.clone(),
             given: return_type,
         });
     }
     Ok(UnaryOperation {
         instruction: lhs.instruction,
-        op: UnaryOperator::Collect,
+        op,
     }
     .into())
 }

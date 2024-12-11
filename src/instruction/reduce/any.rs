@@ -1,30 +1,8 @@
-use crate as simplesl;
 use crate::instruction::or;
 use crate::instruction::unary_operation::UnaryOperation;
-use crate::instruction::{Instruction, InstructionWithStr};
+use crate::instruction::Instruction;
 use crate::unary_operator::UnaryOperator;
-use crate::{
-    variable::{Array, ReturnType, Variable},
-    Error,
-};
-use simplesl_macros::var_type;
-
-pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
-    let return_type = array.return_type();
-    if !return_type.matches(&var_type!([bool])) {
-        return Err(Error::IncorectUnaryOperatorOperand {
-            ins: array.str,
-            op: UnaryOperator::Any,
-            expected: var_type!([bool]),
-            given: return_type,
-        });
-    }
-    Ok(UnaryOperation {
-        instruction: array.instruction,
-        op: UnaryOperator::Any,
-    }
-    .into())
-}
+use crate::variable::{Array, Variable};
 
 pub fn calc(array: &Array) -> Variable {
     array.iter().any(|var| *var.as_bool().unwrap()).into()

@@ -7,12 +7,14 @@ use super::{
     type_filter::TypeFilter,
     Exec, ExecResult, ExecStop, Instruction, InstructionWithStr, Recreate,
 };
+use crate as simplesl;
 use crate::{
     unary_operator::UnaryOperator,
     variable::{ReturnType, Type},
     Error, Interpreter,
 };
 use pest::iterators::Pair;
+use simplesl_macros::var_type;
 use simplesl_parser::{unexpected, Rule};
 
 impl InstructionWithStr {
@@ -30,10 +32,10 @@ impl InstructionWithStr {
             Rule::function_call => call::create_instruction(lhs, op, local_variables),
             Rule::sum => sum::create(lhs),
             Rule::product => product::create(lhs),
-            Rule::all => all::create(lhs),
-            Rule::reduce_any => any::create(lhs),
-            Rule::bitand_reduce => bitand::create(lhs),
-            Rule::bitor_reduce => bitor::create(lhs),
+            Rule::all => create_bool_reduce(lhs, UnaryOperator::All),
+            Rule::reduce_any => create_bool_reduce(lhs, UnaryOperator::Any),
+            Rule::bitand_reduce => create_bit_reduce(lhs, UnaryOperator::BitAnd),
+            Rule::bitor_reduce => create_bit_reduce(lhs, UnaryOperator::BitOr),
             Rule::collect => collect::create(lhs),
             rule => unexpected!(rule),
         }?;
@@ -104,4 +106,44 @@ impl ReturnType for UnaryOperation {
             UnaryOperator::Collect => collect::return_type(return_type),
         }
     }
+}
+
+pub fn create_bit_reduce(
+    array: InstructionWithStr,
+    op: UnaryOperator,
+) -> Result<Instruction, Error> {
+    let return_type = array.return_type();
+    if !return_type.matches(&var_type!([int] | [bool])) {
+        return Err(Error::IncorectUnaryOperatorOperand {
+            ins: array.str,
+            op,
+            expected: var_type!([int] | [bool]),
+            given: return_type,
+        });
+    }
+    Ok(UnaryOperation {
+        instruction: array.instruction,
+        op,
+    }
+    .into())
+}
+
+pub fn create_bool_reduce(
+    array: InstructionWithStr,
+    op: UnaryOperator,
+) -> Result<Instruction, Error> {
+    let return_type = array.return_type();
+    if !return_type.matches(&var_type!([bool])) {
+        return Err(Error::IncorectUnaryOperatorOperand {
+            ins: array.str,
+            op,
+            expected: var_type!([bool]),
+            given: return_type,
+        });
+    }
+    Ok(UnaryOperation {
+        instruction: array.instruction,
+        op,
+    }
+    .into())
 }
