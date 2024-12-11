@@ -8,7 +8,7 @@
 | 2          | !            | NOT                         | Right-to-left |
 |            | -            | Unary minus                 |               |
 |            | *            | Indirection                 |               |
-| 3          | @            | Array map                   | Left-to-right |
+| 3          | @            | Map                         | Left-to-right |
 |            | ?            | Array filtering             |               |
 |            | \\           | Array partition             |               |
 |            | $ expression | Array reducing              |               |
@@ -87,13 +87,10 @@ Calls the function with given arguments.
 | ------- | ------ | ------------|
 | mut T   | T      | Returns value contained in mut
 
-## @ - Array maping operator
-| lhs         | rhs                                            | result |
-| ----------- | ---------------------------------------------- | ------ |
-| [T]         | (value: T) -> S                                | [S]    |
-| [T]         | (index: int, value: T) -> S                    | [S]    |
-| (T, S, ...) | (value_t: T, value_s: S, ...) -> U             | [U]    |
-| (T, S, ...) | (index: int, value_t: T, value_s: S, ...) -> U | [U]    |
+## @ - Maping operator
+| lhs             | rhs             | result          |
+| --------------- | ----------------| --------------- |
+| () -> (bool, T) | (value: T) -> S | () -> (bool, S) |
 
 ## ? - Array filtering operator
 | lhs | rhs                            | result |
