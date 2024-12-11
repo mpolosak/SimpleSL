@@ -1,7 +1,6 @@
-pub mod all;
-pub mod any;
 pub mod bitand;
 pub mod bitor;
+pub mod bool_reduce;
 pub mod collect;
 pub mod product;
 pub mod sum;

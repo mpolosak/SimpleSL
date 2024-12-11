@@ -5,11 +5,13 @@ use crate::unary_operator::UnaryOperator;
 use crate::variable::Type;
 use crate::variable::{Array, Variable};
 
-use super::any;
+pub fn any(array: &Array) -> Variable {
+    array.iter().any(|var| *var.as_bool().unwrap()).into()
+}
 
 fn calc(array: &Array) -> Variable {
     if array.element_type() == &Type::Bool {
-        return any::calc(array);
+        return any(array);
     }
     array
         .iter()

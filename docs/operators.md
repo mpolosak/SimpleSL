@@ -148,21 +148,21 @@ Calculates product of all elements of array.
 ```
 array $&&
 ```
-| lhs    | result |
-| ------ | ------ |
-| [bool] | bool   |
+| lhs                | result |
+| ------------------ | ------ |
+| () -> (bool, bool) | bool   |
 
-Returns true value if all elements of array are true, false otherwise
+Test if every element of iterator function is true
 
 ## $|| - Logical and reduce (any)
 ```
 array $||
 ```
-| lhs    | result |
-| ------ | ------ |
-| [bool] | bool   |
+| lhs                | result |
+| ------------------ | ------ |
+| () -> (bool, bool) | bool   |
 
-Returns true value if any of elements of array is true, false otherwise
+Test if any element of iterator function is true
 
 ## $& - Bitwise and reduce
 ```

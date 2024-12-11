@@ -1,4 +1,3 @@
-use super::all;
 use crate::instruction::bitwise_and;
 use crate::instruction::unary_operation::UnaryOperation;
 use crate::instruction::Instruction;
@@ -6,9 +5,13 @@ use crate::unary_operator::UnaryOperator;
 use crate::variable::Type;
 use crate::variable::{Array, Variable};
 
+pub fn all(array: &Array) -> Variable {
+    array.iter().all(|var| *var.as_bool().unwrap()).into()
+}
+
 fn calc(array: &Array) -> Variable {
     if array.element_type == Type::Bool {
-        return all::calc(array);
+        return all(array);
     }
     array
         .iter()
