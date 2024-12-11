@@ -100,17 +100,17 @@ pub mod not {
     use std::sync::Arc;
 
     lazy_static! {
-        pub static ref ACCEPTED_INT: Type = var_type!(int | bool | [int | bool]);
+        pub static ref ACCEPTED: Type = var_type!(int | bool | [int | bool]);
     }
 
     pub fn create_instruction(instruction: InstructionWithStr) -> Result<Instruction, Error> {
         let op = UnaryOperator::UnaryMinus;
         let return_type = instruction.return_type();
-        if !return_type.matches(&ACCEPTED_INT) {
+        if !return_type.matches(&ACCEPTED) {
             return Err(Error::IncorectUnaryOperatorOperand {
                 ins: instruction.str,
                 op,
-                expected: ACCEPTED_INT.clone(),
+                expected: ACCEPTED.clone(),
                 given: return_type,
             });
         }
@@ -188,7 +188,10 @@ pub mod indirection {
 
 #[cfg(test)]
 mod tests {
-    use crate::{self as simplesl, variable::Variable, Code, Error, Interpreter};
+    use crate::{
+        self as simplesl, unary_operator::UnaryOperator, variable::Variable, Code, Error,
+        Interpreter,
+    };
     use simplesl_macros::{var, var_type};
 
     #[test]
@@ -200,7 +203,12 @@ mod tests {
         assert_eq!(parse_and_exec("!0"), Ok(var!(-1)));
         assert_eq!(
             parse_and_exec("!7.5"),
-            Err(Error::CannotDo("!", var_type!(float)))
+            Err(Error::IncorectUnaryOperatorOperand {
+                ins: "7.5".into(),
+                op: UnaryOperator::All,
+                expected: var_type!(int | bool | [int | bool]),
+                given: var_type!(float)
+            })
         );
         assert_eq!(parse_and_exec("![7, -4, 0]"), Ok(var!([-8, 3, -1])));
         assert_eq!(parse_and_exec("!true"), Ok(var!(false)));
@@ -208,11 +216,21 @@ mod tests {
         assert_eq!(parse_and_exec("![7, true, 0]"), Ok(var!([-8, false, -1])));
         assert_eq!(
             parse_and_exec("![7, -4.5, 0]"),
-            Err(Error::CannotDo("!", var_type!([int | float])))
+            Err(Error::IncorectUnaryOperatorOperand {
+                ins: "[7, -4.5, 0]".into(),
+                op: UnaryOperator::Not,
+                expected: var_type!(int | bool | [int | bool]),
+                given: var_type!([int | float])
+            })
         );
         assert_eq!(
-            parse_and_exec("![7, -4.5, 0]"),
-            Err(Error::CannotDo("!", var_type!([int | float])))
+            parse_and_exec("-[7, true, 0]"),
+            Err(Error::IncorectUnaryOperatorOperand {
+                ins: "[7, true, 0]".into(),
+                op: UnaryOperator::UnaryMinus,
+                expected: var_type!(int | float | [int | float]),
+                given: var_type!([int | bool])
+            })
         );
     }
 
