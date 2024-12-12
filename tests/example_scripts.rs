@@ -65,11 +65,13 @@ fn test_fizzbuzz() -> Result<(), Error> {
     );
 
     let iota = interpreter.get_variable("iota").unwrap();
-    assert_eq!(iota.as_type(), var_type!((int,int)->[int]));
+    assert_eq!(iota.as_type(), var_type!((int,int) -> () -> (bool, int)));
     let iota = iota.clone().into_function().unwrap();
     assert_eq!(
-        iota.create_call([var!(3), var!(3)].into())?.exec()?,
-        var!([3, 4, 5])
+        iota.create_call([var!(3), var!(3)].into())?
+            .exec()?
+            .as_type(),
+        var_type!(() -> (bool, int))
     );
     Ok(())
 }

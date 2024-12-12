@@ -6,11 +6,16 @@ fizzbuzz := (number: int) -> string|int {
 };
 
 /*
-Returns array filled whith increasing values, starting with value
-Length of returned array equals size
+Returns iterator of values from start to end
 */
-iota := (value: int, size: int) -> [int] {
-    return [value; size] @ (index: int, value:int) -> int { return index+value};
+iota := (start: int, end: int) -> () -> (bool, int) {
+    i:=mut start;
+    return () -> (bool, int) {
+        result := *i;
+        if(result > end) return (false, 0);
+        i+=1;
+        return (true, result);
+    }
 };
 
-iota(1, 15) @ fizzbuzz @ print;
+iota(1, 15) @ fizzbuzz @ print $];
