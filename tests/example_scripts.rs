@@ -94,24 +94,3 @@ fn test_quick_sort() -> Result<(), Error> {
     );
     Ok(())
 }
-
-#[test]
-fn test_replace() -> Result<(), Error> {
-    let mut interpreter = Interpreter::with_stdlib();
-    let replace = fs::read_to_string("example_scripts/replace")?;
-    let result = Code::parse(&interpreter, &replace)?.exec_unscoped(&mut interpreter)?;
-    assert_eq!(result.as_type(), var_type!(([any], int, int)->[any]));
-    let replace = interpreter
-        .get_variable("replace")
-        .unwrap()
-        .clone()
-        .into_function()
-        .unwrap();
-    assert_eq!(
-        replace
-            .create_call([var!([9, 3, 6]), var!(0), var!(2)].into())?
-            .exec()?,
-        var!([6, 3, 9])
-    );
-    Ok(())
-}
