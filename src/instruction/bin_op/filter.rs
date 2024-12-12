@@ -58,43 +58,39 @@ mod tests {
     #[test]
     fn can_be_used() {
         assert!(filter::can_be_used(
-            &var_type!([int]),
+            &var_type!(() -> (bool, int)),
             &var_type!((int)->bool)
         ));
         assert!(filter::can_be_used(
-            &var_type!([int]),
-            &var_type!((int, any)->bool)
-        ));
-        assert!(filter::can_be_used(
-            &var_type!([int] | [float]),
+            &var_type!(() -> (bool, int) | () -> (bool, float)),
             &var_type!((int|float)->bool)
         ));
         assert!(filter::can_be_used(
-            &var_type!([int] | [float]),
-            &var_type!((any, any)->bool)
+            &var_type!(() -> (bool, int) | () -> (bool, float)),
+            &var_type!((any)->bool)
         ));
         assert!(filter::can_be_used(
-            &var_type!([int] | [float | string]),
-            &var_type!((any, int|float|string)->bool)
+            &var_type!(() -> (bool, int) | () -> (bool, float|string)),
+            &var_type!((int|float|string)->bool)
         ));
         assert!(!filter::can_be_used(
-            &var_type!(int),
-            &var_type!((any, any)->bool)
-        ));
-        assert!(!filter::can_be_used(
-            &var_type!([int] | float),
-            &var_type!((any, any)->bool)
-        ));
-        assert!(!filter::can_be_used(
-            &var_type!([int] | [float]),
+            &var_type!(() -> (bool, int)),
             &var_type!((any, int)->bool)
         ));
         assert!(!filter::can_be_used(
-            &var_type!([int] | [float]),
+            &var_type!([int] | () -> (bool, float)),
+            &var_type!((any)->bool)
+        ));
+        assert!(!filter::can_be_used(
+            &var_type!(() -> (bool, int) | () -> (bool, float)),
+            &var_type!((int)->bool)
+        ));
+        assert!(!filter::can_be_used(
+            &var_type!(() -> (bool, int)| () -> (bool, float)),
             &var_type!((float, any)->bool)
         ));
         assert!(!filter::can_be_used(
-            &var_type!([int] | [float]),
+            &var_type!(() -> (bool, int) | () -> (bool, float)),
             &var_type!(string)
         ))
     }

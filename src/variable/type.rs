@@ -265,13 +265,8 @@ impl Type {
             Self::Multi(multi) => {
                 let mut iter = multi.iter();
                 let first = iter.next().unwrap().iter_element()?;
-                iter.map(Self::iter_element).try_fold(first, |acc, curr| {
-                    if acc == curr? {
-                        Some(acc)
-                    } else {
-                        None
-                    }
-                })
+                iter.map(Self::iter_element)
+                    .try_fold(first, |acc, curr| Some(acc | curr?))
             }
             _ => None,
         }
