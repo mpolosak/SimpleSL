@@ -166,10 +166,7 @@ impl ReturnType for BinOperation {
                 }
             }
             BinOperator::Filter => lhs,
-            BinOperator::Partition => {
-                let lhs2 = lhs.clone();
-                var_type!((lhs, lhs2))
-            }
+            BinOperator::Partition => partition::return_type(lhs),
             BinOperator::Map => map::return_type(rhs),
             BinOperator::At => lhs.index_result().unwrap(),
             BinOperator::FunctionCall => lhs.return_type().unwrap(),
