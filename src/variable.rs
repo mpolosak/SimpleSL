@@ -56,6 +56,41 @@ impl Variable {
             _ => self.string(depth)
         }
     }
+
+    pub fn of_type(var_type: &Type) -> Option<Self> {
+        match var_type {
+            Type::Bool => Some(false.into()),
+            Type::Int => Some(0.into()),
+            Type::Float => Some(0.0.into()),
+            Type::String => Some("".into()),
+            Type::Function(arc) => Some(Function::of_type(&arc).into()),
+            Type::Array(arc) => Some(
+                Array {
+                    element_type: arc.as_ref().clone(),
+                    elements: [].into(),
+                }
+                .into(),
+            ),
+            Type::Tuple(arc) => {
+                let elements = arc
+                    .iter()
+                    .map(Self::of_type)
+                    .collect::<Option<Arc<[Variable]>>>()?;
+                Some(Self::Tuple(elements))
+            }
+            Type::Void => Some(Variable::Void),
+            Type::Multi(multi_type) => multi_type.iter().next().and_then(Self::of_type),
+            Type::Mut(arc) => Some(
+                Mut {
+                    var_type: arc.as_ref().clone(),
+                    variable: Variable::of_type(&arc)?.into(),
+                }
+                .into(),
+            ),
+            Type::Any => Some(Variable::Void),
+            Type::Never => None,
+        }
+    }
 }
 
 impl Typed for Variable {

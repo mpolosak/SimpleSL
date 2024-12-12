@@ -17,7 +17,7 @@ mod return_type;
 mod set;
 mod tuple;
 mod type_filter;
-mod unary_operation;
+pub mod unary_operation;
 use self::{
     array::Array,
     array_repeat::ArrayRepeat,

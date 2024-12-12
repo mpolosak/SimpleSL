@@ -26,6 +26,8 @@ pub enum UnaryOperator {
     FunctionCall,
     #[display("$]")]
     Collect,
+    #[display("~")]
+    Iter,
 }
 
 impl UnaryOperator {

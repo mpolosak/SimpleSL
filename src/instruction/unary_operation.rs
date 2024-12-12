@@ -1,3 +1,4 @@
+mod iter;
 use super::{
     at,
     function::call,
@@ -35,6 +36,7 @@ impl InstructionWithStr {
             Rule::bitand_reduce => reduce::bit::create(lhs, UnaryOperator::BitAnd),
             Rule::bitor_reduce => reduce::bit::create(lhs, UnaryOperator::BitOr),
             Rule::collect => collect::create(lhs),
+            Rule::iter => iter::create(lhs),
             rule => unexpected!(rule),
         }?;
         Ok(Self { instruction, str })
@@ -63,6 +65,7 @@ impl Exec for UnaryOperation {
             UnaryOperator::Indirection => indirection::exec(var),
             UnaryOperator::FunctionCall => var.into_function().unwrap().exec(interpreter)?,
             UnaryOperator::Collect => collect::exec(var, interpreter)?,
+            UnaryOperator::Iter => iter::exec(var),
         })
     }
 }
@@ -93,6 +96,7 @@ impl ReturnType for UnaryOperation {
             UnaryOperator::Indirection => indirection::return_type(return_type),
             UnaryOperator::FunctionCall => return_type.return_type().unwrap(),
             UnaryOperator::Collect => collect::return_type(return_type),
+            UnaryOperator::Iter => iter::return_type(return_type),
         }
     }
 }

@@ -18,6 +18,7 @@
 |            | $\|\|        | Logical or reduce (any)     |               |
 |            | $&           | Bitwise and reduce          |               |
 |            | $\|          | Bitwise or reduce           |               |
+|            | ~            | Iter                        |               |
 | 4          | **           | Exponentiation              |               |
 | 5          | *            | Multiplication              |               |
 |            | /            | Division                    |               |
@@ -186,6 +187,15 @@ Equivalent of:
 ```
 array $0 (acc: int, curr: int) -> int {return acc | curr}
 ```
+
+## ~ - Bitwise or reduce
+```
+array $|
+```
+| lhs | result          |
+| --- | --------------- |
+| [T] | () -> (bool, T) |
+Create iterator over elements of array
 
 ## ** - Exponentiation
 | lhs     | rhs     | result     | description |
