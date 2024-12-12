@@ -61,85 +61,62 @@ mod tests {
     #[test]
     fn can_be_used() {
         // true
-        assert!(map::can_be_used(&var_type!([int]), &var_type!((int)->int)));
         assert!(map::can_be_used(
-            &var_type!([int]),
+            &var_type!(() -> (bool, int)),
+            &var_type!((int)->int)
+        ));
+        assert!(map::can_be_used(
+            &var_type!(() -> (bool, int)),
             &var_type!((int|float)->any)
         ));
         assert!(map::can_be_used(
-            &var_type!([int]),
-            &var_type!((int, any)->int)
+            &var_type!(() -> (bool, int)),
+            &var_type!((any)->int)
         ));
         assert!(map::can_be_used(
-            &var_type!([int]),
-            &var_type!((any, any)->float)
+            &var_type!(() -> (bool, int)),
+            &var_type!((any)->float)
         ));
         assert!(map::can_be_used(
-            &var_type!([int] | [float]),
+            &var_type!(() -> (bool, int) | () -> (bool, float)),
             &var_type!((int | float)->int)
         ));
         assert!(map::can_be_used(
-            &var_type!([int] | [float]),
-            &var_type!((int, int | float)->int)
-        ));
-        assert!(map::can_be_used(
-            &var_type!([int] | [float]),
-            &var_type!((any, any)->int)
-        ));
-        assert!(map::can_be_used(
-            &var_type!([int]),
+            &var_type!(() -> (bool, int)),
             &var_type!((int)->int | (any)->any)
         ));
         assert!(map::can_be_used(
-            &var_type!([int]),
-            &var_type!((int, any)->int | (any)->any)
+            &var_type!(() -> (bool, int)),
+            &var_type!((int)->int | (any)->any)
         ));
         assert!(map::can_be_used(
-            &var_type!([int]),
-            &var_type!((any, any)->float | (int | float)->int)
+            &var_type!(() -> (bool, int)),
+            &var_type!((any)->float | (int | float)->int)
         ));
         assert!(map::can_be_used(
-            &var_type!([int] | [float]),
-            &var_type!((int, int | float)->int | (int | float)->float)
-        ));
-        assert!(map::can_be_used(
-            &var_type!(([int], [float], [string])),
-            &var_type!((int, float, string) -> any)
-        ));
-        assert!(map::can_be_used(
-            &var_type!(([int], [float] | [string | int], [string])),
-            &var_type!(
-                (int, int|float|string, string) -> float | (int | float, any, any, any) -> any
-            )
-        ));
-        assert!(map::can_be_used(
-            &var_type!(([int], [float]) | ([string], [any])),
-            &var_type!((int | string, any) -> any | (any, any, any) -> ())
+            &var_type!(() -> (bool, int) | () -> (bool, float)),
+            &var_type!((int | float)->int | (int | float)->float)
         ));
         // false
         assert!(!map::can_be_used(
-            &var_type!([int] | [float]),
-            &var_type!((int, int)->int)
+            &var_type!(() -> (bool, int) | [float]),
+            &var_type!((int)->int)
+        ));
+        assert!(!map::can_be_used(
+            &var_type!(() -> (bool, int) | () -> (bool, float)),
+            &var_type!((float)->int)
         ));
         assert!(!map::can_be_used(
             &var_type!([int] | [float]),
-            &var_type!((int, int | float, any)->int)
+            &var_type!((float)->int)
         ));
         assert!(!map::can_be_used(
-            &var_type!([int] | [float]),
-            &var_type!((any, float)->int)
-        ));
-        assert!(!map::can_be_used(
-            &var_type!([int]),
+            &var_type!(() -> (bool, int)),
             &var_type!((int)->int | int)
         ));
         assert!(!map::can_be_used(
-            &var_type!([int] | float),
-            &var_type!((int, any)->int | (any)->any)
-        ));
-        assert!(!map::can_be_used(
-            &var_type!([int] | ([int], [float])),
-            &var_type!((any, any)->float | (int | float)->int)
+            &var_type!(() -> (bool, int) | float),
+            &var_type!(( any)->int | (any)->any)
         ));
     }
 }
