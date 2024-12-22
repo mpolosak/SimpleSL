@@ -24,7 +24,7 @@ impl TypeFilter {
     ) -> Result<Instruction, Error> {
         let array_type = iterator.return_type();
         let var_type = Type::from(var_type);
-        if array_type.iter_element().is_none() {
+        if !array_type.is_iterator() {
             return Err(Error::CannotDo2(array_type, BinOperator::Filter, var_type));
         }
         Ok(Self { iterator, var_type }.into())

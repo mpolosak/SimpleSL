@@ -1,6 +1,7 @@
 use super::{function_type::FunctionType, multi_type::MultiType};
 use crate as simplesl;
 use crate::{errors::ParseTypeError, join};
+use lazy_static::lazy_static;
 use match_any::match_any;
 use pest::{iterators::Pair, Parser};
 use simplesl_macros::var_type;
@@ -28,6 +29,10 @@ pub enum Type {
     Mut(Arc<Type>),
     Any,
     Never,
+}
+
+lazy_static! {
+    static ref ITERATOR_TYPE: Type = var_type!(() -> (bool, any));
 }
 
 impl Type {
@@ -230,6 +235,10 @@ impl Type {
             Self::Multi(multi) => multi.iter().all(Self::is_mut),
             _ => false,
         }
+    }
+
+    pub fn is_iterator(&self) -> bool {
+        self.matches(&ITERATOR_TYPE)
     }
 
     pub fn tuple_len(&self) -> Option<usize> {
