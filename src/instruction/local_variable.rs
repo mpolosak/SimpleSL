@@ -78,7 +78,7 @@ impl<'a> LocalVariables<'a> {
         }
     }
 
-    pub fn function(&'a self) -> Option<&FunctionInfo> {
+    pub fn function(&'a self) -> Option<&'a FunctionInfo> {
         self.function
             .as_ref()
             .or_else(|| self.lower_layer.and_then(LocalVariables::function))

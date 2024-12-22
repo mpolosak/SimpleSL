@@ -60,9 +60,9 @@ Indexing of a string returns a string containing an UTF-8 character on the given
 
 ## ? type - Array filtering by type
 ```
-array ? type
+iterator ? type
 ```
-Filters array leaving only elements matching given type
+Creates iterator returning only elements matching given type
 
 ## () - Function call
 ```
