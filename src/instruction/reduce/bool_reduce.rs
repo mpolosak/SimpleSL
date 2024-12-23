@@ -17,11 +17,11 @@ lazy_static! {
 lazy_static! {
     static ref ALL: Variable = Code::parse(
         &Interpreter::without_stdlib(),
-        "(iter: () -> (bool, bool)) -> () -> bool {
+        "(iter: () -> (bool, bool)) -> bool {
             loop {
                 (con, value) := iter();
-                if !con break;
-                if !value return false;
+                if !con { break; }
+                if !value { return false; }
             }
             return true;
         }"
@@ -34,11 +34,11 @@ lazy_static! {
 lazy_static! {
     static ref ANY: Variable = Code::parse(
         &Interpreter::without_stdlib(),
-        "(iter: () -> (bool, bool)) -> () -> bool {
+        "(iter: () -> (bool, bool)) -> bool {
             loop {
                 (con, value) := iter();
-                if !con break;
-                if value return true;
+                if !con { break; }
+                if value { return true; }
             }
             return false;
         }"
@@ -48,27 +48,27 @@ lazy_static! {
     .unwrap();
 }
 
-pub fn create(array: InstructionWithStr, op: UnaryOperator) -> Result<Instruction, Error> {
-    let return_type = array.return_type();
+pub fn create(iterator: InstructionWithStr, op: UnaryOperator) -> Result<Instruction, Error> {
+    let return_type = iterator.return_type();
     if !return_type.matches(&ACCEPTED_TYPE) {
         return Err(Error::IncorectUnaryOperatorOperand {
-            ins: array.str,
+            ins: iterator.str,
             op,
             expected: ACCEPTED_TYPE.clone(),
             given: return_type,
         });
     }
-    let function = if op == UnaryOperator::All {
+    let lhs = if op == UnaryOperator::All {
         ALL.clone().into()
     } else {
         ANY.clone().into()
     };
     let rhs = Tuple {
-        elements: [function].into(),
+        elements: [iterator].into(),
     }
     .into();
     Ok(BinOperation {
-        lhs: array.instruction,
+        lhs,
         rhs,
         op: BinOperator::FunctionCall,
     }
