@@ -1,18 +1,57 @@
+use crate::function::Function;
 use crate::instruction::unary_operation::UnaryOperation;
 use crate::instruction::{Instruction, InstructionWithStr};
 use crate::unary_operator::UnaryOperator;
 use crate::variable::ReturnType;
-use crate::{self as simplesl, Error};
+use crate::{self as simplesl, Code, Error, ExecError};
 use crate::{
-    instruction::ExecResult,
     variable::{Type, Variable},
     Interpreter,
 };
 use lazy_static::lazy_static;
 use simplesl_macros::var_type;
+use std::sync::Arc;
 
 lazy_static! {
     pub static ref ACCEPTED_TYPE: Type = var_type!(() -> (bool, bool));
+}
+
+lazy_static! {
+    static ref ALL: Arc<Function> = Code::parse(
+        &Interpreter::without_stdlib(),
+        "(iter: () -> (bool, bool)) -> () -> bool {
+            loop {
+                (con, value) := iter();
+                if !con break;
+                if !value return false;
+            }
+            return true;
+        }"
+    )
+    .unwrap()
+    .exec()
+    .unwrap()
+    .into_function()
+    .unwrap();
+}
+
+lazy_static! {
+    static ref ANY: Arc<Function> = Code::parse(
+        &Interpreter::without_stdlib(),
+        "(iter: () -> (bool, bool)) -> () -> bool {
+            loop {
+                (con, value) := iter();
+                if !con break;
+                if value return true;
+            }
+            return false;
+        }"
+    )
+    .unwrap()
+    .exec()
+    .unwrap()
+    .into_function()
+    .unwrap();
 }
 
 pub fn create(array: InstructionWithStr, op: UnaryOperator) -> Result<Instruction, Error> {
@@ -32,28 +71,10 @@ pub fn create(array: InstructionWithStr, op: UnaryOperator) -> Result<Instructio
     .into())
 }
 
-pub fn all(var: Variable, interpreter: &mut Interpreter) -> ExecResult {
-    let iter = var.into_function().unwrap();
-    while let Variable::Tuple(tuple) = iter.exec(interpreter)? {
-        if tuple[0] == Variable::Bool(false) {
-            break;
-        };
-        if tuple[1] == Variable::Bool(false) {
-            return Ok(Variable::Bool(false));
-        }
-    }
-    Ok(Variable::Bool(true))
+pub fn all(var: Variable) -> Result<Variable, ExecError> {
+    ALL.exec_with_args(&[var])
 }
 
-pub fn any(var: Variable, interpreter: &mut Interpreter) -> ExecResult {
-    let iter = var.into_function().unwrap();
-    while let Variable::Tuple(tuple) = iter.exec(interpreter)? {
-        if tuple[0] == Variable::Bool(false) {
-            break;
-        };
-        if tuple[1] == Variable::Bool(true) {
-            return Ok(Variable::Bool(true));
-        }
-    }
-    Ok(Variable::Bool(false))
+pub fn any(var: Variable) -> Result<Variable, ExecError> {
+    ANY.exec_with_args(&[var])
 }
