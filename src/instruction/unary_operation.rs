@@ -55,8 +55,8 @@ impl Exec for UnaryOperation {
         Ok(match self.op {
             UnaryOperator::All => bool_reduce::all(var, interpreter)?,
             UnaryOperator::Any => bool_reduce::any(var, interpreter)?,
-            UnaryOperator::BitAnd => reduce::bit::and(var, interpreter)?,
-            UnaryOperator::BitOr => reduce::bit::or(var, interpreter)?,
+            UnaryOperator::BitAnd => reduce::bit::and(var)?,
+            UnaryOperator::BitOr => reduce::bit::or(var)?,
             UnaryOperator::Sum => sum::exec(var)?,
             UnaryOperator::Product => product::exec(var)?,
             UnaryOperator::Not => not::exec(var),

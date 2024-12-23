@@ -1,7 +1,7 @@
+use crate::function::Function;
 use crate::instruction::unary_operation::UnaryOperation;
-use crate::instruction::ExecResult;
 use crate::variable::{Type, Variable};
-use crate::{self as simplesl, Interpreter};
+use crate::{self as simplesl, Code, ExecError, Interpreter};
 use crate::{
     instruction::{Instruction, InstructionWithStr},
     unary_operator::UnaryOperator,
@@ -10,9 +10,42 @@ use crate::{
 };
 use lazy_static::lazy_static;
 use simplesl_macros::var_type;
+use std::sync::Arc;
 
 lazy_static! {
     pub static ref ACCEPTED_TYPE: Type = var_type!(() -> (bool, int));
+}
+
+lazy_static! {
+    pub static ref AND: Arc<Function> = Code::parse(
+        &Interpreter::without_stdlib(),
+        "(iter: () -> (bool, int)) -> int {
+            return iter $!0 (acc: int, curr: int) -> int {
+                return acc & curr;
+            }
+        }"
+    )
+    .unwrap()
+    .exec()
+    .unwrap()
+    .into_function()
+    .unwrap();
+}
+
+lazy_static! {
+    pub static ref OR: Arc<Function> = Code::parse(
+        &Interpreter::without_stdlib(),
+        "(iter: () -> (bool, int)) -> int {
+            return iter $0 (acc: int, curr: int) -> int {
+                return acc | curr;
+            }
+        }"
+    )
+    .unwrap()
+    .exec()
+    .unwrap()
+    .into_function()
+    .unwrap();
 }
 
 pub fn create(array: InstructionWithStr, op: UnaryOperator) -> Result<Instruction, Error> {
@@ -32,30 +65,10 @@ pub fn create(array: InstructionWithStr, op: UnaryOperator) -> Result<Instructio
     .into())
 }
 
-pub fn and(var: Variable, interpreter: &mut Interpreter) -> ExecResult {
-    let iter = var.into_function().unwrap();
-    let mut result = !0;
-    while let Variable::Tuple(tuple) = iter.exec(interpreter)? {
-        if tuple[0] == Variable::Bool(false) {
-            break;
-        };
-        if let Variable::Int(value) = tuple[1] {
-            result &= value;
-        }
-    }
-    Ok(Variable::Int(result))
+pub fn and(var: Variable) -> Result<Variable, ExecError> {
+    AND.exec_with_args(&[var])
 }
 
-pub fn or(var: Variable, interpreter: &mut Interpreter) -> ExecResult {
-    let iter = var.into_function().unwrap();
-    let mut result = 0;
-    while let Variable::Tuple(tuple) = iter.exec(interpreter)? {
-        if tuple[0] == Variable::Bool(false) {
-            break;
-        };
-        if let Variable::Int(value) = tuple[1] {
-            result |= value;
-        }
-    }
-    Ok(Variable::Int(result))
+pub fn or(var: Variable) -> Result<Variable, ExecError> {
+    OR.exec_with_args(&[var])
 }
