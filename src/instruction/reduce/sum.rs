@@ -1,9 +1,12 @@
+use std::sync::Arc;
+
+use crate::function::Function;
 use crate::instruction::unary_operation::UnaryOperation;
 use crate::instruction::ExecResult;
-use crate::instruction::{add, Instruction, InstructionWithStr};
+use crate::instruction::{Instruction, InstructionWithStr};
 use crate::unary_operator::UnaryOperator;
-use crate::variable::Type;
-use crate::{self as simplesl, Interpreter};
+use crate::variable::{Type, Typed};
+use crate::{self as simplesl, Code, Interpreter};
 use crate::{
     variable::{ReturnType, Variable},
     Error,
@@ -14,6 +17,54 @@ use simplesl_macros::var_type;
 lazy_static! {
     pub static ref ACCEPTED_TYPE: Type =
         var_type!(() -> (bool, int) | () -> (bool, float) | () -> (bool, string));
+}
+
+lazy_static! {
+    pub static ref INT_SUM: Arc<Function> = Code::parse(
+        &Interpreter::without_stdlib(),
+        "(iter: () -> (bool, int)) -> int {
+            return iter $0 (acc: int, curr: int) -> int {
+                return acc + curr;
+            }
+        }"
+    )
+    .unwrap()
+    .exec()
+    .unwrap()
+    .into_function()
+    .unwrap();
+}
+
+lazy_static! {
+    pub static ref FLOAT_SUM: Arc<Function> = Code::parse(
+        &Interpreter::without_stdlib(),
+        "(iter: () -> (bool, float)) -> float {
+            return iter $0.0 (acc: float, curr: float) -> float {
+                return acc + curr;
+            }
+        }"
+    )
+    .unwrap()
+    .exec()
+    .unwrap()
+    .into_function()
+    .unwrap();
+}
+
+lazy_static! {
+    pub static ref STRING_SUM: Arc<Function> = Code::parse(
+        &Interpreter::without_stdlib(),
+        r#"(iter: () -> (bool, string)) -> string {
+            return iter $"" (acc: string, curr: string) -> string {
+                return acc + curr;
+            }
+        }"#
+    )
+    .unwrap()
+    .exec()
+    .unwrap()
+    .into_function()
+    .unwrap();
 }
 
 pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
@@ -34,21 +85,13 @@ pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
     .into())
 }
 
-pub fn exec(var: Variable, interpreter: &mut Interpreter) -> ExecResult {
-    let iter = var.into_function().unwrap();
-    let return_type = iter.return_type();
-    let mut result = if return_type.matches(&var_type!((bool, int))) {
-        Variable::Int(1)
-    } else if return_type.matches(&var_type!((bool, float))) {
-        Variable::Float(1.0)
+pub fn exec(var: Variable) -> ExecResult {
+    let return_type = var.as_type();
+    if return_type.matches(&var_type!(() -> (bool, int))) {
+        Ok(INT_SUM.exec_with_args(&[var])?)
+    } else if return_type.matches(&var_type!(() -> (bool, float))) {
+        Ok(FLOAT_SUM.exec_with_args(&[var])?)
     } else {
-        Variable::String("".into())
-    };
-    while let Variable::Tuple(tuple) = iter.exec(interpreter)? {
-        if tuple[0] == Variable::Bool(false) {
-            break;
-        };
-        result = add::exec(result, tuple[1].clone());
+        Ok(STRING_SUM.exec_with_args(&[var])?)
     }
-    Ok(result)
 }
