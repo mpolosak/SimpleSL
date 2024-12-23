@@ -17,7 +17,7 @@ lazy_static! {
 }
 
 pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
-    let op = UnaryOperator::Product;
+    let op = UnaryOperator::Sum;
     let return_type = array.return_type();
     if !return_type.matches(&ACCEPTED_TYPE) {
         return Err(Error::IncorectUnaryOperatorOperand {
