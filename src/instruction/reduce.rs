@@ -25,14 +25,14 @@ pub struct Reduce {
 
 impl Reduce {
     pub fn create_instruction(
-        array: InstructionWithStr,
+        iter: InstructionWithStr,
         initial_value: Pair<Rule>,
         function: InstructionWithStr,
         local_variables: &LocalVariables,
     ) -> Result<Instruction, Error> {
         let initial_value = InstructionWithStr::new_expression(initial_value, local_variables)?;
-        let Some(element_type) = array.return_type().iter_element() else {
-            return Err(Error::CannotReduce(array.str));
+        let Some(element_type) = iter.return_type().iter_element() else {
+            return Err(Error::CannotReduce(iter.str));
         };
         let Some(return_type) = function.return_type().return_type() else {
             return Err(Error::WrongType(
@@ -46,7 +46,7 @@ impl Reduce {
             return Err(Error::WrongType("function".into(), expected_function));
         }
         Ok(Self {
-            iter: array,
+            iter,
             initial_value,
             function,
         }
@@ -93,5 +93,79 @@ impl Exec for Reduce {
 impl ReturnType for Reduce {
     fn return_type(&self) -> Type {
         self.function.return_type().return_type().unwrap() | self.initial_value.return_type()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate as simplesl;
+    use crate::variable::Variable;
+    use crate::{Code, Error, Interpreter};
+    use simplesl_macros::var_type;
+
+    #[test]
+    fn reduce() {
+        let interpreter = Interpreter::without_stdlib();
+        assert_eq!(
+            Code::parse(&interpreter, "[45, 67, 13] $0 5").unwrap_err(),
+            Error::CannotReduce("[45, 67, 13]".into())
+        );
+        assert_eq!(
+            Code::parse(&interpreter, r#""abc" $0 5"#).unwrap_err(),
+            Error::CannotReduce(r#""abc""#.into())
+        );
+        assert_eq!(
+            Code::parse(&interpreter, "() {} $0 5").unwrap_err(),
+            Error::CannotReduce("() {}".into())
+        );
+        assert_eq!(
+            Code::parse(&interpreter, "() -> int {return 0} $0 5").unwrap_err(),
+            Error::CannotReduce("() -> int {return 0}".into())
+        );
+        assert_eq!(
+            Code::parse(&interpreter, "() -> (any, any) {return (true, 0)} $0 5").unwrap_err(),
+            Error::CannotReduce("() -> (any, any) {return (true, 0)}".into())
+        );
+        assert_eq!(
+            Code::parse(&interpreter, "() -> (bool, any) {return (true, 0)} $0 5").unwrap_err(),
+            Error::WrongType("function".into(), var_type!((any, any)->any))
+        );
+        assert_eq!(
+            Code::parse(&interpreter, "() -> (bool, int) {return (true, 0)} $0 5").unwrap_err(),
+            Error::WrongType("function".into(), var_type!((any, int)->any))
+        );
+        assert_eq!(
+            Code::parse(
+                &interpreter,
+                "() -> (bool, int) {return (true, 0)} $0 (a: any, b:float) -> any {}"
+            )
+            .unwrap_err(),
+            Error::WrongType("function".into(), var_type!((any, int)->any))
+        );
+        assert_eq!(
+            Code::parse(
+                &interpreter,
+                "() -> (bool, int) {return (true, 0)} $0 (a: int, b: int) -> any {}"
+            )
+            .unwrap_err(),
+            Error::WrongType("function".into(), var_type!((any, int)->any))
+        );
+        assert_eq!(
+            Code::parse(
+                &interpreter,
+                "() -> (bool, int) {return (true, 0)} $0 (a: int, b:int) -> float { return 0.5 }"
+            )
+            .unwrap_err(),
+            Error::WrongType("function".into(), var_type!((int | float, int)->float))
+        );
+        assert_eq!(
+            Code::parse(
+                &interpreter,
+                "() -> (bool, int) {return (false, 0)} $0 (a: int, b:int) -> int { return 0 }"
+            )
+            .unwrap()
+            .exec(),
+            Ok(Variable::Int(0))
+        );
     }
 }
