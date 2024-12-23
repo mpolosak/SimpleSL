@@ -146,7 +146,6 @@ stm                  = _{
   | while
   | while_set
   | for
-  | for_with_index
   | break
   | continue
   | expr
@@ -168,7 +167,6 @@ continue             =  { "continue" }
 while                =  { "while" ~ expr ~ stm }
 while_set            =  { "while" ~ ident ~ ":" ~ type ~ "=" ~ expr ~ stm }
 for                  =  { "for" ~ ident ~ "in" ~ expr ~ stm }
-for_with_index       =  { "for" ~ ident ~ "," ~ ident ~ "in" ~ expr ~ stm }
 loop                 =  { "loop" ~ stm }
 expression_list      = _{ (expr ~ ("," ~ expr)*) }
 line                 = _{ COMMENT* ~ ((return | function_declaration | set | destruct_tuple | stm) ~ line_end?) }
