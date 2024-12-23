@@ -53,8 +53,6 @@ impl Exec for UnaryOperation {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let var = self.instruction.exec(interpreter)?;
         Ok(match self.op {
-            UnaryOperator::All => bool_reduce::all(var)?,
-            UnaryOperator::Any => bool_reduce::any(var)?,
             UnaryOperator::BitAnd => reduce::bit::and(var)?,
             UnaryOperator::BitOr => reduce::bit::or(var)?,
             UnaryOperator::Sum => sum::exec(var)?,
@@ -66,6 +64,7 @@ impl Exec for UnaryOperation {
             UnaryOperator::FunctionCall => var.into_function().unwrap().exec(interpreter)?,
             UnaryOperator::Collect => collect::exec(var, interpreter)?,
             UnaryOperator::Iter => iter::exec(var),
+            UnaryOperator::All | UnaryOperator::Any => unreachable!(),
         })
     }
 }
