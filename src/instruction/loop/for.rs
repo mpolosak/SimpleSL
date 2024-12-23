@@ -1,84 +1,112 @@
+use super::Loop;
+use crate::instruction::block::Block;
+use crate::instruction::control_flow::IfElse;
+use crate::instruction::destruct_tuple::DestructTuple;
 use crate::instruction::local_variable::LocalVariable;
-use crate::instruction::{Exec, ExecResult, ExecStop, Recreate};
-use crate::variable::Variable;
-use crate::{self as simplesl, ExecError, Interpreter};
+use crate::instruction::set::Set;
+use crate::instruction::BinOperation;
+use crate::variable::{Type, Variable};
+use crate::{self as simplesl, BinOperator};
 use crate::{
     instruction::{local_variable::LocalVariables, Instruction, InstructionWithStr},
     variable::ReturnType,
     Error,
 };
+use lazy_static::lazy_static;
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
 use simplesl_parser::Rule;
 use std::sync::Arc;
 
-#[derive(Debug)]
-pub struct For {
-    ident: Arc<str>,
-    array: InstructionWithStr,
-    instruction: InstructionWithStr,
+lazy_static! {
+    static ref ITER: Arc<str> = "$iter".into();
 }
 
-impl For {
-    pub fn create_instruction(
-        pair: Pair<Rule>,
-        local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, Error> {
-        let mut inner = pair.into_inner();
-        let ident: Arc<str> = inner.next().unwrap().as_str().into();
-        let array = InstructionWithStr::new_expression(inner.next().unwrap(), local_variables)?;
-        let Some(element_type) = array.return_type().element_type() else {
-            return Err(Error::WrongType("array".into(), var_type!([any])));
-        };
-        let mut local_variables = local_variables.create_layer();
-        local_variables.in_loop = true;
-        local_variables.insert(ident.clone(), LocalVariable::Other(element_type));
-        let instruction = InstructionWithStr::new(inner.next().unwrap(), &mut local_variables)?;
-        Ok(Self {
-            ident,
-            array,
-            instruction,
+lazy_static! {
+    static ref CON: Arc<str> = "$con".into();
+}
+
+pub fn create_instruction(
+    pair: Pair<Rule>,
+    local_variables: &mut LocalVariables,
+) -> Result<Instruction, Error> {
+    let mut inner = pair.into_inner();
+    let ident: Arc<str> = inner.next().unwrap().as_str().into();
+    let iter = InstructionWithStr::new(inner.next().unwrap(), local_variables)?;
+    let Some(iter_element) = iter.return_type().iter_element() else {
+        return Err(Error::WrongType(
+            "iterator".into(),
+            var_type!(() -> (bool, any)),
+        ));
+    };
+    let mut local_variables = local_variables.create_layer();
+    local_variables.in_loop = true;
+    local_variables.insert(ident.clone(), LocalVariable::Other(iter_element));
+    let str = format!("$iter = {}", iter.str).into();
+    let iter = InstructionWithStr {
+        instruction: Set {
+            ident: ITER.clone(),
+            instruction: iter,
         }
-        .into())
-    }
-}
-
-impl Exec for For {
-    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let array = self.array.exec(interpreter)?.into_array().unwrap();
-        let mut interpreter = interpreter.create_layer();
-        for element in array.iter().cloned() {
-            interpreter.insert(self.ident.clone(), element);
-            match self.instruction.exec(&mut interpreter) {
-                Ok(_) | Err(ExecStop::Continue) => (),
-                Err(ExecStop::Break) => break,
-                e => return e,
-            }
+        .into(),
+        str,
+    };
+    let iter_call = InstructionWithStr {
+        instruction: BinOperation {
+            lhs: Instruction::LocalVariable(
+                ITER.clone(),
+                LocalVariable::Other(var_type!(()->(bool, any))),
+            ),
+            rhs: Variable::Tuple([].into()).into(),
+            op: BinOperator::FunctionCall,
         }
-        Ok(Variable::Void)
-    }
-}
-
-impl Recreate for For {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let array = self.array.recreate(local_variables)?;
-        let mut local_variables = local_variables.create_layer();
-        local_variables.insert(
-            self.ident.clone(),
-            LocalVariable::Other(array.return_type().element_type().unwrap()),
-        );
-        let instruction = self.instruction.recreate(&mut local_variables)?;
-        Ok(Self {
-            ident: self.ident.clone(),
-            array,
-            instruction,
+        .into(),
+        str: format!("$iter()").into(),
+    };
+    let str = format!("($con, {ident}) = {}", iter_call.str).into();
+    let destruct = InstructionWithStr {
+        instruction: DestructTuple {
+            idents: [CON.clone(), ident].into(),
+            instruction: iter_call,
         }
-        .into())
+        .into(),
+        str,
+    };
+    let instruction = InstructionWithStr::new(inner.next().unwrap(), &mut local_variables)?;
+    let condition = InstructionWithStr {
+        instruction: Instruction::LocalVariable(CON.clone(), LocalVariable::Other(Type::Bool)),
+        str: CON.clone(),
+    };
+    let if_false = InstructionWithStr {
+        instruction: Instruction::Break,
+        str: "break".into(),
+    };
+    let str = format!("if $con {} else break", instruction.str).into();
+    let if_else = InstructionWithStr {
+        instruction: IfElse {
+            condition,
+            if_true: instruction,
+            if_false,
+        }
+        .into(),
+        str,
+    };
+    let str = format!("{{{}\n{}}}", destruct.str, if_else.str).into();
+    let body = Block {
+        instructions: [destruct, if_else].into(),
     }
-}
-
-impl From<For> for Instruction {
-    fn from(value: For) -> Self {
-        Self::For(value.into())
+    .into();
+    let body = InstructionWithStr {
+        instruction: body,
+        str,
+    };
+    let str = format!("loop {}", body.str).into();
+    let l = InstructionWithStr {
+        instruction: Loop(body).into(),
+        str,
+    };
+    Ok(Block {
+        instructions: [iter, l].into(),
     }
+    .into())
 }

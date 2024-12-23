@@ -13,8 +13,8 @@ use std::{iter::zip, sync::Arc};
 
 #[derive(Debug)]
 pub struct DestructTuple {
-    idents: Arc<[Arc<str>]>,
-    instruction: InstructionWithStr,
+    pub idents: Arc<[Arc<str>]>,
+    pub instruction: InstructionWithStr,
 }
 
 impl DestructTuple {
