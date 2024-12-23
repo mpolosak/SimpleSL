@@ -53,8 +53,6 @@ impl Exec for UnaryOperation {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let var = self.instruction.exec(interpreter)?;
         Ok(match self.op {
-            UnaryOperator::BitAnd => reduce::bit::and(var)?,
-            UnaryOperator::BitOr => reduce::bit::or(var)?,
             UnaryOperator::Sum => sum::exec(var)?,
             UnaryOperator::Product => product::exec(var)?,
             UnaryOperator::Not => not::exec(var),
@@ -64,7 +62,10 @@ impl Exec for UnaryOperation {
             UnaryOperator::FunctionCall => var.into_function().unwrap().exec(interpreter)?,
             UnaryOperator::Collect => collect::exec(var, interpreter)?,
             UnaryOperator::Iter => iter::exec(var),
-            UnaryOperator::All | UnaryOperator::Any => unreachable!(),
+            UnaryOperator::All
+            | UnaryOperator::Any
+            | UnaryOperator::BitAnd
+            | UnaryOperator::BitOr => unreachable!(),
         })
     }
 }
@@ -87,15 +88,17 @@ impl ReturnType for UnaryOperation {
     fn return_type(&self) -> Type {
         let return_type = self.instruction.return_type();
         match self.op {
-            UnaryOperator::All | UnaryOperator::Any => Type::Bool,
-            UnaryOperator::BitAnd | UnaryOperator::BitOr => Type::Int,
             UnaryOperator::Sum | UnaryOperator::Product => return_type.iter_element().unwrap(),
             UnaryOperator::Not | UnaryOperator::UnaryMinus => return_type,
-            UnaryOperator::Return => Type::Never,
             UnaryOperator::Indirection => indirection::return_type(return_type),
             UnaryOperator::FunctionCall => return_type.return_type().unwrap(),
             UnaryOperator::Collect => collect::return_type(return_type),
             UnaryOperator::Iter => iter::return_type(return_type),
+            UnaryOperator::All
+            | UnaryOperator::Any
+            | UnaryOperator::BitAnd
+            | UnaryOperator::BitOr
+            | UnaryOperator::Return => Type::Never,
         }
     }
 }
