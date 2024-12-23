@@ -58,7 +58,7 @@ impl Exec for UnaryOperation {
             UnaryOperator::BitAnd => reduce::bit::and(var, interpreter)?,
             UnaryOperator::BitOr => reduce::bit::or(var, interpreter)?,
             UnaryOperator::Sum => sum::exec(var)?,
-            UnaryOperator::Product => product::exec(var, interpreter)?,
+            UnaryOperator::Product => product::exec(var)?,
             UnaryOperator::Not => not::exec(var),
             UnaryOperator::UnaryMinus => unary_minus::exec(var),
             UnaryOperator::Return => return Err(ExecStop::Return(var)),

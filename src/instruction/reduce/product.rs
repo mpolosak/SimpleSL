@@ -1,17 +1,49 @@
 use crate::{
     self as simplesl,
-    instruction::{
-        multiply, unary_operation::UnaryOperation, ExecResult, Instruction, InstructionWithStr,
-    },
+    function::Function,
+    instruction::{unary_operation::UnaryOperation, ExecResult, Instruction, InstructionWithStr},
     unary_operator::UnaryOperator,
-    variable::{ReturnType, Type, Variable},
-    Error, Interpreter,
+    variable::{ReturnType, Type, Typed, Variable},
+    Code, Error, Interpreter,
 };
 use lazy_static::lazy_static;
 use simplesl_macros::var_type;
+use std::sync::Arc;
 
 lazy_static! {
     pub static ref ACCEPTED_TYPE: Type = var_type!(() -> (bool, int) | () -> (bool, float));
+}
+
+lazy_static! {
+    pub static ref INT_PRODUCT: Arc<Function> = Code::parse(
+        &Interpreter::without_stdlib(),
+        "(iter: () -> (bool, int)) -> int {
+            return iter $1 (acc: int, curr: int) -> int {
+                return acc * curr;
+            }
+        }"
+    )
+    .unwrap()
+    .exec()
+    .unwrap()
+    .into_function()
+    .unwrap();
+}
+
+lazy_static! {
+    pub static ref FLOAT_PRODUCT: Arc<Function> = Code::parse(
+        &Interpreter::without_stdlib(),
+        "(iter: () -> (bool, float)) -> float {
+            return iter $1.0 (acc: float, curr: float) -> float {
+                return acc * curr;
+            }
+        }"
+    )
+    .unwrap()
+    .exec()
+    .unwrap()
+    .into_function()
+    .unwrap();
 }
 
 pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
@@ -32,18 +64,10 @@ pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
     .into())
 }
 
-pub fn exec(var: Variable, interpreter: &mut Interpreter) -> ExecResult {
-    let iter = var.into_function().unwrap();
-    let mut result = if iter.return_type().matches(&var_type!((bool, int))) {
-        Variable::Int(1)
-    } else {
-        Variable::Float(1.0)
-    };
-    while let Variable::Tuple(tuple) = iter.exec(interpreter)? {
-        if tuple[0] == Variable::Bool(false) {
-            break;
-        };
-        result = multiply::exec(result, tuple[1].clone());
+pub fn exec(var: Variable) -> ExecResult {
+    let return_type = var.as_type();
+    if return_type.matches(&var_type!(() -> (bool, int))) {
+        return Ok(INT_PRODUCT.exec_with_args(&[var])?);
     }
-    Ok(result)
+    Ok(FLOAT_PRODUCT.exec_with_args(&[var])?)
 }
