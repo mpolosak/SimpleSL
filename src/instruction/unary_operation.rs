@@ -53,7 +53,6 @@ impl Exec for UnaryOperation {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let var = self.instruction.exec(interpreter)?;
         Ok(match self.op {
-            UnaryOperator::Sum => sum::exec(var)?,
             UnaryOperator::Not => not::exec(var),
             UnaryOperator::UnaryMinus => unary_minus::exec(var),
             UnaryOperator::Return => return Err(ExecStop::Return(var)),
@@ -65,7 +64,8 @@ impl Exec for UnaryOperation {
             | UnaryOperator::Any
             | UnaryOperator::BitAnd
             | UnaryOperator::BitOr
-            | UnaryOperator::Product => unreachable!(),
+            | UnaryOperator::Product
+            | UnaryOperator::Sum => unreachable!(),
         })
     }
 }
@@ -88,7 +88,6 @@ impl ReturnType for UnaryOperation {
     fn return_type(&self) -> Type {
         let return_type = self.instruction.return_type();
         match self.op {
-            UnaryOperator::Sum | UnaryOperator::Product => return_type.iter_element().unwrap(),
             UnaryOperator::Not | UnaryOperator::UnaryMinus => return_type,
             UnaryOperator::Indirection => indirection::return_type(return_type),
             UnaryOperator::FunctionCall => return_type.return_type().unwrap(),
@@ -98,7 +97,9 @@ impl ReturnType for UnaryOperation {
             | UnaryOperator::Any
             | UnaryOperator::BitAnd
             | UnaryOperator::BitOr
-            | UnaryOperator::Return => Type::Never,
+            | UnaryOperator::Return
+            | UnaryOperator::Sum
+            | UnaryOperator::Product => Type::Never,
         }
     }
 }

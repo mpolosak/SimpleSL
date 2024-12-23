@@ -1,12 +1,9 @@
-use std::sync::Arc;
-
-use crate::function::Function;
-use crate::instruction::unary_operation::UnaryOperation;
-use crate::instruction::ExecResult;
+use crate::instruction::tuple::Tuple;
+use crate::instruction::BinOperation;
 use crate::instruction::{Instruction, InstructionWithStr};
 use crate::unary_operator::UnaryOperator;
-use crate::variable::{Type, Typed};
-use crate::{self as simplesl, Code, Interpreter};
+use crate::variable::Type;
+use crate::{self as simplesl, BinOperator, Code, Interpreter};
 use crate::{
     variable::{ReturnType, Variable},
     Error,
@@ -20,7 +17,7 @@ lazy_static! {
 }
 
 lazy_static! {
-    pub static ref INT_SUM: Arc<Function> = Code::parse(
+    pub static ref INT_SUM: Variable = Code::parse(
         &Interpreter::without_stdlib(),
         "(iter: () -> (bool, int)) -> int {
             return iter $0 (acc: int, curr: int) -> int {
@@ -30,13 +27,11 @@ lazy_static! {
     )
     .unwrap()
     .exec()
-    .unwrap()
-    .into_function()
     .unwrap();
 }
 
 lazy_static! {
-    pub static ref FLOAT_SUM: Arc<Function> = Code::parse(
+    pub static ref FLOAT_SUM: Variable = Code::parse(
         &Interpreter::without_stdlib(),
         "(iter: () -> (bool, float)) -> float {
             return iter $0.0 (acc: float, curr: float) -> float {
@@ -46,13 +41,11 @@ lazy_static! {
     )
     .unwrap()
     .exec()
-    .unwrap()
-    .into_function()
     .unwrap();
 }
 
 lazy_static! {
-    pub static ref STRING_SUM: Arc<Function> = Code::parse(
+    pub static ref STRING_SUM: Variable = Code::parse(
         &Interpreter::without_stdlib(),
         r#"(iter: () -> (bool, string)) -> string {
             return iter $"" (acc: string, curr: string) -> string {
@@ -62,36 +55,35 @@ lazy_static! {
     )
     .unwrap()
     .exec()
-    .unwrap()
-    .into_function()
     .unwrap();
 }
 
-pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
+pub fn create(iterator: InstructionWithStr) -> Result<Instruction, Error> {
     let op = UnaryOperator::Sum;
-    let return_type = array.return_type();
+    let return_type = iterator.return_type();
     if !return_type.matches(&ACCEPTED_TYPE) {
         return Err(Error::IncorectUnaryOperatorOperand {
-            ins: array.str,
+            ins: iterator.str,
             op,
             expected: ACCEPTED_TYPE.clone(),
             given: return_type,
         });
     }
-    Ok(UnaryOperation {
-        instruction: array.instruction,
-        op,
+    let lhs = if return_type.matches(&var_type!(() -> (bool, int))) {
+        INT_SUM.clone().into()
+    } else if return_type.matches(&var_type!(() -> (bool, float))) {
+        FLOAT_SUM.clone().into()
+    } else {
+        STRING_SUM.clone().into()
+    };
+    let rhs = Tuple {
+        elements: [iterator].into(),
+    }
+    .into();
+    Ok(BinOperation {
+        lhs,
+        rhs,
+        op: BinOperator::FunctionCall,
     }
     .into())
-}
-
-pub fn exec(var: Variable) -> ExecResult {
-    let return_type = var.as_type();
-    if return_type.matches(&var_type!(() -> (bool, int))) {
-        Ok(INT_SUM.exec_with_args(&[var])?)
-    } else if return_type.matches(&var_type!(() -> (bool, float))) {
-        Ok(FLOAT_SUM.exec_with_args(&[var])?)
-    } else {
-        Ok(STRING_SUM.exec_with_args(&[var])?)
-    }
 }
