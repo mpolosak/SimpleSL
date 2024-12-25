@@ -1,49 +1,16 @@
 use crate::{
     self as simplesl,
-    function::Function,
     instruction::{unary_operation::UnaryOperation, ExecResult, Instruction, InstructionWithStr},
+    stdlib::operators::{FLOAT_PRODUCT, INT_PRODUCT},
     unary_operator::UnaryOperator,
     variable::{ReturnType, Type, Typed, Variable},
-    Code, Error, Interpreter,
+    Error,
 };
 use lazy_static::lazy_static;
 use simplesl_macros::var_type;
-use std::sync::Arc;
 
 lazy_static! {
     pub static ref ACCEPTED_TYPE: Type = var_type!(() -> (bool, int) | () -> (bool, float));
-}
-
-lazy_static! {
-    pub static ref INT_PRODUCT: Arc<Function> = Code::parse(
-        &Interpreter::without_stdlib(),
-        "(iter: () -> (bool, int)) -> int {
-            return iter $1 (acc: int, curr: int) -> int {
-                return acc * curr;
-            }
-        }"
-    )
-    .unwrap()
-    .exec()
-    .unwrap()
-    .into_function()
-    .unwrap();
-}
-
-lazy_static! {
-    pub static ref FLOAT_PRODUCT: Arc<Function> = Code::parse(
-        &Interpreter::without_stdlib(),
-        "(iter: () -> (bool, float)) -> float {
-            return iter $1.0 (acc: float, curr: float) -> float {
-                return acc * curr;
-            }
-        }"
-    )
-    .unwrap()
-    .exec()
-    .unwrap()
-    .into_function()
-    .unwrap();
 }
 
 pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
@@ -67,7 +34,10 @@ pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
 pub fn exec(var: Variable) -> ExecResult {
     let return_type = var.as_type();
     if return_type.matches(&var_type!(() -> (bool, int))) {
-        return Ok(INT_PRODUCT.exec_with_args(&[var])?);
+        return Ok(INT_PRODUCT.as_function().unwrap().exec_with_args(&[var])?);
     }
-    Ok(FLOAT_PRODUCT.exec_with_args(&[var])?)
+    Ok(FLOAT_PRODUCT
+        .as_function()
+        .unwrap()
+        .exec_with_args(&[var])?)
 }

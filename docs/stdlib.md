@@ -93,3 +93,33 @@ Returns the uppercase equivalent of `string`.
 
 ## len(variable: [any]|string) -> int 
 Returns length of `variable`.
+
+# Operators
+This part of the standard library contains some functions doing the same as built-in operators
+
+## bitand_reduce(iter: () -> (bool, int)) -> int
+The same as `iter$&`
+
+## bitor_reduce(iter: () -> (bool, int)) -> int
+The same as `iter$|`
+
+## all(iter: () -> (bool, bool)) -> bool
+The same as `iter$&&`
+
+## any(iter: () -> (bool, bool)) -> bool
+The same as `iter$||`
+
+## int_product(iter: () -> (bool, int)) -> int
+The same as `iter$*`
+
+## float_product(iter: () -> (bool, float)) -> float
+The same as `iter$*`
+
+## int_sum(iter: () -> (bool, int)) -> int
+The same as `iter$+`
+
+## float_sum(iter: () -> (bool, float)) -> float
+The same as `iter$+`
+
+## string_sum(iter: () -> (bool, string)) -> string
+The same as `iter$+`

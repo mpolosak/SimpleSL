@@ -1,51 +1,15 @@
 use crate::instruction::tuple::Tuple;
 use crate::instruction::{BinOperation, Instruction, InstructionWithStr};
+use crate::stdlib::operators::{ALL, ANY};
 use crate::unary_operator::UnaryOperator;
 use crate::variable::ReturnType;
-use crate::{self as simplesl, BinOperator, Code, Error};
-use crate::{
-    variable::{Type, Variable},
-    Interpreter,
-};
+use crate::variable::Type;
+use crate::{self as simplesl, BinOperator, Error};
 use lazy_static::lazy_static;
 use simplesl_macros::var_type;
 
 lazy_static! {
     pub static ref ACCEPTED_TYPE: Type = var_type!(() -> (bool, bool));
-}
-
-lazy_static! {
-    static ref ALL: Variable = Code::parse(
-        &Interpreter::without_stdlib(),
-        "(iter: () -> (bool, bool)) -> bool {
-            loop {
-                (con, value) := iter();
-                if !con { break; }
-                if !value { return false; }
-            }
-            return true;
-        }"
-    )
-    .unwrap()
-    .exec()
-    .unwrap();
-}
-
-lazy_static! {
-    static ref ANY: Variable = Code::parse(
-        &Interpreter::without_stdlib(),
-        "(iter: () -> (bool, bool)) -> bool {
-            loop {
-                (con, value) := iter();
-                if !con { break; }
-                if value { return true; }
-            }
-            return false;
-        }"
-    )
-    .unwrap()
-    .exec()
-    .unwrap();
 }
 
 pub fn create(iterator: InstructionWithStr, op: UnaryOperator) -> Result<Instruction, Error> {
