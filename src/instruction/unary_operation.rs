@@ -54,6 +54,7 @@ impl Exec for UnaryOperation {
         let var = self.instruction.exec(interpreter)?;
         Ok(match self.op {
             UnaryOperator::Sum => sum::exec(var)?,
+            UnaryOperator::Product => product::exec(var)?,
             UnaryOperator::Not => not::exec(var),
             UnaryOperator::UnaryMinus => unary_minus::exec(var),
             UnaryOperator::Return => return Err(ExecStop::Return(var)),
@@ -64,8 +65,7 @@ impl Exec for UnaryOperation {
             UnaryOperator::All
             | UnaryOperator::Any
             | UnaryOperator::BitAnd
-            | UnaryOperator::BitOr
-            | UnaryOperator::Product => unreachable!(),
+            | UnaryOperator::BitOr => unreachable!(),
         })
     }
 }
