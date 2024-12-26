@@ -33,7 +33,7 @@ char                 =  {
 mut                  =  { "mut" ~ type? ~ expr }
 primary              = _{ ident | var | expr_in_brackets }
 expr_in_brackets     = _{ "(" ~ expr ~ ")" }
-atom                 = _{ prefix_op? ~ primary ~ postfix_op? }
+atom                 = _{ prefix_op? ~ primary ~ postfix_op* }
 expr                 =  { (atom ~ (bin_op ~ atom)*) }
 bin_op               = _{
     equal
