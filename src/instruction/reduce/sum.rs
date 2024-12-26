@@ -100,7 +100,7 @@ mod tests {
         assert_eq!(
             parse_and_exec("[45, 16.5, 3]~$+"),
             Err(Error::IncorectUnaryOperatorOperand {
-                ins: "[45, 16.5, 3]".into(),
+                ins: "[45, 16.5, 3] ~".into(),
                 op: OP,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(() -> (bool, int|float))
@@ -108,19 +108,19 @@ mod tests {
         );
         assert_eq!(
             parse_and_exec(
-                "x:=() -> (()->(bool, int)|() -> (bool, float)){
+                "x:=() -> ()->(bool, int)|() -> (bool, float){
                     return [45, 16, 45]~;
                 }
-                x$+"
+                x()$+"
             ),
             Ok(var!(106))
         );
         assert_eq!(
             parse_and_exec(
-                "x:=() -> (()->(bool, int)|() -> (bool, float)){
+                "x:=() -> ()->(bool, int)|() -> (bool, float){
                     return [4.5, 1.6, 4.5]~;
                 }
-                x$+"
+                x()$+"
             ),
             Ok(var!(10.6))
         );
