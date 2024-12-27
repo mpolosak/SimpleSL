@@ -53,7 +53,7 @@ mod tests {
     const OP: UnaryOperator = UnaryOperator::Product;
 
     #[test]
-    fn sum() {
+    fn product() {
         assert_eq!(
             parse_and_exec("[45, 76, 15]$*"),
             Err(Error::IncorectUnaryOperatorOperand {
