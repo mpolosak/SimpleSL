@@ -53,3 +53,87 @@ pub(crate) fn return_type(lhs: Type) -> Type {
     let element = lhs.iter_element().unwrap();
     var_type!([element])
 }
+
+#[cfg(test)]
+mod tests {
+    use crate as simplesl;
+    use crate::{
+        instruction::reduce::collect::ACCEPTED_TYPE, unary_operator::UnaryOperator,
+        variable::Variable, Code, Error, Interpreter,
+    };
+    use simplesl_macros::{var, var_type};
+    const OP: UnaryOperator = UnaryOperator::Collect;
+
+    #[test]
+    fn collect() {
+        assert_eq!(
+            parse_and_exec("[45, 15]$]"),
+            Err(Error::IncorectUnaryOperatorOperand {
+                ins: "[45, 15]".into(),
+                op: OP,
+                expected: ACCEPTED_TYPE.clone(),
+                given: var_type!([int])
+            })
+        );
+        assert_eq!(
+            parse_and_exec(r#""abc"$]"#),
+            Err(Error::IncorectUnaryOperatorOperand {
+                ins: r#""abc""#.into(),
+                op: OP,
+                expected: ACCEPTED_TYPE.clone(),
+                given: var_type!(string)
+            })
+        );
+        assert_eq!(
+            parse_and_exec(
+                "x := (a:int) -> (bool, int) {
+                    return (true, 13);
+                }
+                x$]"
+            ),
+            Err(Error::IncorectUnaryOperatorOperand {
+                ins: "x".into(),
+                op: OP,
+                expected: ACCEPTED_TYPE.clone(),
+                given: var_type!((int)->(bool, int))
+            })
+        );
+        assert_eq!(
+            parse_and_exec(
+                "x := () -> int {
+                    return 5;
+                }
+                x$]"
+            ),
+            Err(Error::IncorectUnaryOperatorOperand {
+                ins: "x".into(),
+                op: OP,
+                expected: ACCEPTED_TYPE.clone(),
+                given: var_type!(()->int)
+            })
+        );
+        assert_eq!(parse_and_exec("[45, 15, 17]~$]"), Ok(var!([45, 15, 17])));
+        assert_eq!(
+            parse_and_exec(r#"["a", 15, 1.7]~$]"#),
+            Ok(var!(["a", 15, 1.7]))
+        );
+        assert_eq!(
+            parse_and_exec(
+                "i:=mut 45.5;
+                x:=() -> (bool, float) {
+                    val:=*i;
+                    if val>70.0 return (false, val)
+                    i+=15.5;
+                    return (true, val); 
+                }
+                x$]"
+            ),
+            Ok(var!([45.5, 61.0]))
+        );
+    }
+
+    fn parse_and_exec(script: &str) -> Result<Variable, Error> {
+        Code::parse(&Interpreter::without_stdlib(), script)
+            .and_then(|code| code.exec().map_err(Error::from))
+    }
+}
