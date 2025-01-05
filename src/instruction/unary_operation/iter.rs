@@ -65,3 +65,69 @@ pub(crate) fn create(lhs: InstructionWithStr) -> Result<Instruction, Error> {
     }
     .into())
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::variable::{Typed, Variable};
+    use crate::{self as simplesl, Code, Interpreter};
+    use crate::{unary_operator::UnaryOperator, Error};
+    use simplesl_macros::{var, var_type};
+    const OP: UnaryOperator = UnaryOperator::Iter;
+
+    #[test]
+    fn iter() {
+        assert_eq!(
+            parse_and_exec("45~"),
+            Err(Error::IncorectUnaryOperatorOperand {
+                ins: "45".into(),
+                op: OP,
+                expected: var_type!([any]),
+                given: var_type!(int)
+            })
+        );
+        assert_eq!(
+            parse_and_exec(r#""abc"~"#),
+            Err(Error::IncorectUnaryOperatorOperand {
+                ins: r#""abc""#.into(),
+                op: OP,
+                expected: var_type!([any]),
+                given: var_type!(string)
+            })
+        );
+        assert_eq!(
+            parse_and_exec(
+                "x := ()->[int]|string {
+                    return [45, 15]
+                }
+                x()~"
+            ),
+            Err(Error::IncorectUnaryOperatorOperand {
+                ins: "x ()".into(),
+                op: OP,
+                expected: var_type!([any]),
+                given: var_type!([int] | string)
+            })
+        );
+        assert_eq!(
+            parse_and_exec(
+                "x:=[45, 5]~;
+                (x(), x(), x())"
+            ),
+            Ok(var!(((true, 45), (true, 5), (false, 0))))
+        );
+        assert_eq!(
+            parse_and_exec(
+                "x:=[45, [5.5], true]~;
+                (x(), x(), x())"
+            ),
+            Ok(var!(((true, 45), (true, [5.5]), (true, true))))
+        );
+        let result = parse_and_exec(r#"[45, 5.5, "abc"]~"#).unwrap();
+        assert_eq!(result.as_type(), var_type!(()->(bool, int|float|string)))
+    }
+
+    fn parse_and_exec(script: &str) -> Result<Variable, Error> {
+        Code::parse(&Interpreter::without_stdlib(), script)
+            .and_then(|code| code.exec().map_err(Error::from))
+    }
+}
