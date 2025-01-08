@@ -224,14 +224,8 @@ lhs % rhs
 | -------- | -------- | ---------- | ------------|
 | int      | int      | int        | lhs + rhs   |
 | float    | float    | float      | lhs + rhs   |
-| [int]    | int      | [int]      | Returns an array containg all elements of lhs + rhs
-| [float]  | float    | [float]    | Returns an array containg all elements of lhs + rhs
-| int      | [int]    | [int]      | Returns an array containg all elements of rhs + lhs
-| float    | [float]  | [float]    | Returns an array containg all elements of rhs + lhs
 | [T]      | [S]      | [T\|S]     | Array concatenation
 | string   | string   | string     | String concatenation
-| [string] | string   | [string]   | Returns an array containg result of concatinating rhs to the end of each string in array lhs
-| string   | [string] | [string]   | Returns an array containg result of concatinating lhs to the beging of each string in array rhs
 
 ## - - Subtration
 | lhs     | rhs     | result     |

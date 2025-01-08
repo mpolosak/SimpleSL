@@ -39,22 +39,6 @@ impl Array {
         }
         .into())
     }
-
-    pub fn map<F>(self, mut f: F) -> Self
-    where
-        F: FnMut(Instruction) -> Instruction,
-    {
-        let instructions = self
-            .instructions
-            .iter()
-            .cloned()
-            .map(|iws| iws.map(&mut f))
-            .collect();
-        Array {
-            instructions,
-            element_type: self.element_type,
-        }
-    }
 }
 
 impl Exec for Array {
