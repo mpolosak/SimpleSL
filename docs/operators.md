@@ -75,13 +75,12 @@ Calls the function with given arguments.
 | ------------- | --------------- | ---------------------------------------- |
 | bool          | bool            | Negation of value                        |
 | int           | int             | Negation of all bits                     |
-| [int\|bool]   | [int\|bool ]    | Returns an array containing results of calling ! operator on each element of the given array
 
 ## - - Unary minus
-| operand      | result       | description                              |
-| ------------ | ------------ | ---------------------------------------- |
-| int \| float | int\|float   | Additive inverse                         |
-| [int\|float] | [int\|float] | Returns an array containing results of calling - operator on each element of the given array
+| operand      | result       |
+| ------------ | ------------ |
+| int \| float | int\|float   |
+Additive inverse
 
 ## * - Indirection
 | operand | result | description |
