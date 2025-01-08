@@ -27,7 +27,7 @@ use simplesl_macros::var_type;
 use simplesl_parser::Rule;
 
 lazy_static! {
-    pub static ref ACCEPTED_INT_TYPE: Type = var_type!((int, int | [int]) | ([int], int));
+    pub static ref ACCEPTED_INT_TYPE: Type = var_type!((int, int));
 }
 
 pub fn can_be_used_int(lhs: Type, rhs: Type) -> bool {
@@ -161,9 +161,6 @@ impl ReturnType for BinOperation {
             BinOperator::BitwiseAnd
             | BinOperator::BitwiseOr
             | BinOperator::Xor
-            | BinOperator::LShift
-            | BinOperator::RShift
-            | BinOperator::Modulo
             | BinOperator::Subtract
             | BinOperator::Multiply
             | BinOperator::Divide
@@ -180,6 +177,7 @@ impl ReturnType for BinOperation {
             BinOperator::At => lhs.index_result().unwrap(),
             BinOperator::FunctionCall => lhs.return_type().unwrap(),
             BinOperator::Assign => rhs,
+            BinOperator::LShift | BinOperator::RShift | BinOperator::Modulo => Type::Int,
             _ => lhs.mut_element_type().unwrap(),
         }
     }
@@ -297,16 +295,15 @@ fn can_be_used(lhs: &Type, rhs: &Type, op: BinOperator) -> bool {
             assign_can_be_used_num,
             return_type,
         ),
-        BinOperator::AssignModulo
-        | BinOperator::AssignLShift
-        | BinOperator::AssignRShift
-        | BinOperator::AssignXor => assign::can_be_used(
-            lhs.clone(),
-            rhs.clone(),
-            assign_can_be_used_int,
-            return_type,
-        ),
-        BinOperator::AssignBitwiseAnd | BinOperator::AssignBitwiseOr => {
+        BinOperator::AssignModulo | BinOperator::AssignLShift | BinOperator::AssignRShift => {
+            assign::can_be_used(
+                lhs.clone(),
+                rhs.clone(),
+                assign_can_be_used_int,
+                return_type,
+            )
+        }
+        BinOperator::AssignBitwiseAnd | BinOperator::AssignBitwiseOr | BinOperator::AssignXor => {
             assign::can_be_used(lhs.clone(), rhs.clone(), bitwise_can_be_used, return_type)
         }
     }

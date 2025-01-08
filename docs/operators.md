@@ -227,11 +227,10 @@ Create iterator over elements of array
 | float   | [float] | [float]    | Returns an array containg results of dividing lhs by each element of rhs
 
 ## % - Remainder
-| lhs     | rhs     | result     | description |
-| ------- | ------- | ---------- | ------------|
-| int     | int     | int        | lhs % rhs   |
-| [int]   | int     | [int]      | Returns an array containg remainders of dividing each element of lhs by rhs
-| int     | [int]   | [int]      | Returns an array containg remainders of dividing lhs by each element of rhs
+| lhs     | rhs     | result     |
+| ------- | ------- | ---------- |
+| int     | int     | int        |
+lhs % rhs
 
 ## + - Addition/Concatenation
 | lhs      | rhs      | result     | description |
@@ -258,18 +257,16 @@ Create iterator over elements of array
 | float   | [float] | [float]    | Returns an array containg result of subtracting each element of rhs from lhs
 
 ## << - Bitwise left shift
-| lhs     | rhs     | result     | description |
-| ------- | ------- | ---------- | ----------- |
-| int     | int     | int        | Shift lhs rhs bits to left
-| [int]   | int     | [int]      | Returns an array containg result of shifting each element of lhs rhs bits to left 
-| int     | [int]   | [int]      | Returns an array containg result of >> for lhs and each element of rhs
+| lhs     | rhs     | result     |
+| ------- | ------- | ---------- |
+| int     | int     | int        |
+Shift lhs rhs bits to left
 
 ## >> - Bitwise right shift
-| lhs     | rhs     | result     | description |
-| ------- | ------- | ---------- | ----------- |
-| int     | int     | int        | Shift lhs rhs bits to right
-| [int]   | int     | [int]      | Returns an array containg result of shifting each element of lhs rhs bits to right 
-| int     | [int]   | [int]      | Returns an array containg result of >> for lhs and each element of rhs
+| lhs     | rhs     | result     |
+| ------- | ------- | ---------- |
+| int     | int     | int        |
+Shift lhs rhs bits to right
 
 ## & - Bitwise AND
 | lhs     | rhs     | result     | description |
