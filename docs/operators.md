@@ -197,34 +197,22 @@ iterator $|
 Create iterator over elements of array
 
 ## ** - Exponentiation
-| lhs     | rhs     | result     | description |
+| lhs     | rhs     | result     | comment     |
 | ------- | ------- | ---------- | ------------|
-| int     | int     | int        | lhs to the power of rhs. rhs cannot be negative
-| float   | float   | float      | lhs to the power of rhs
-| [int]   | int     | [int]      | Returns an array containg all elements of lhs raised to the power of rhs
-| [float] | float   | [float]    | Returns an array containg all elements of lhs raised to the power of rhs
-| int     | [int]   | [int]      | Returns an array containg lhs raised to the power of each element of rhs
-| float   | [float] | [float]    | Returns an array containg lhs raised to the power of each element of rhs
-
+| int     | int     | int        | rhs cannot be negative
+| float   | float   | float      |
+lhs to the power of rhs
 ## * - Multiplication
-| lhs     | rhs     | result     | description |
-| ------- | ------- | ---------- | ------------|
-| int     | int     | int        | lhs * rhs   |
-| float   | float   | float      | lhs * rhs   |
-| [int]   | int     | [int]      | Returns an array containg all elements of lhs multiplied by rhs
-| [float] | float   | [float]    | Returns an array containg all elements of lhs multiplied by rhs
-| int     | [int]   | [int]      | Returns an array containg all elements of rhs multiplied by lhs
-| float   | [float] | [float]    | Returns an array containg all elements of rhs multiplied by lhs
+| lhs     | rhs     | result     |
+| ------- | ------- | ---------- |
+| int     | int     | int        |
+| float   | float   | float      |
 
 ## / - Division
-| lhs     | rhs     | result     | description |
-| ------- | ------- | ---------- | ------------|
-| int     | int     | int        | lhs / rhs   |
-| float   | float   | float      | lhs / rhs   |
-| [int]   | int     | [int]      | Returns an array containg all elements of lhs divided by rhs
-| [float] | float   | [float]    | Returns an array containg all elements of lhs divided by rhs
-| int     | [int]   | [int]      | Returns an array containg results of dividing lhs by each element of rhs
-| float   | [float] | [float]    | Returns an array containg results of dividing lhs by each element of rhs
+| lhs     | rhs     | result     |
+| ------- | ------- | ---------- |
+| int     | int     | int        |
+| float   | float   | float      |
 
 ## % - Remainder
 | lhs     | rhs     | result     |
@@ -247,14 +235,10 @@ lhs % rhs
 | string   | [string] | [string]   | Returns an array containg result of concatinating lhs to the beging of each string in array rhs
 
 ## - - Subtration
-| lhs     | rhs     | result     | description |
-| ------- | ------- | ---------- | ------------|
-| int     | int     | int        | lhs - rhs   |
-| float   | float   | float      | lhs - rhs   |
-| [int]   | int     | [int]      | Returns an array containg result of subtracting rhs from each element of lhs
-| [float] | float   | [float]    | Returns an array containg result of subtracting rhs from each element of lhs
-| int     | [int]   | [int]      | Returns an array containg result of subtracting each element of rhs from lhs
-| float   | [float] | [float]    | Returns an array containg result of subtracting each element of rhs from lhs
+| lhs     | rhs     | result     |
+| ------- | ------- | ---------- |
+| int     | int     | int        |
+| float   | float   | float      |
 
 ## << - Bitwise left shift
 | lhs     | rhs     | result     |
@@ -282,7 +266,7 @@ Shift lhs rhs bits to right
 
 ## | - Bitwise OR
 | lhs     | rhs     | result     |
-| ------- | ------- | ---------- |
+| ------- | ------- | ---------- | description |
 | int     | int     | int        |
 | bool    | bool    | bool       |
 

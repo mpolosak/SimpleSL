@@ -1,9 +1,8 @@
 use crate::{
     instruction::{BinOperation, Instruction},
-    variable::{Array, Variable},
+    variable::Variable,
     BinOperator, ExecError,
 };
-use std::sync::Arc;
 
 pub fn create_from_instructions(
     dividend: Instruction,
@@ -14,12 +13,6 @@ pub fn create_from_instructions(
             Ok(exec(dividend, divisor)?.into())
         }
         (_, Instruction::Variable(Variable::Int(0))) => Err(ExecError::ZeroDivision),
-        (Instruction::ArrayRepeat(array), rhs) => Arc::unwrap_or_clone(array)
-            .try_map(|lhs| create_from_instructions(lhs, rhs.clone()))
-            .map(Instruction::from),
-        (lhs, Instruction::ArrayRepeat(array)) => Arc::unwrap_or_clone(array)
-            .try_map(|rhs| create_from_instructions(lhs.clone(), rhs))
-            .map(Instruction::from),
         (lhs, rhs) => Ok(BinOperation {
             lhs,
             rhs,
@@ -34,32 +27,6 @@ pub fn exec(dividend: Variable, divisor: Variable) -> Result<Variable, ExecError
         (_, Variable::Int(0)) => Err(ExecError::ZeroDivision),
         (Variable::Int(dividend), Variable::Int(divisor)) => Ok((dividend / divisor).into()),
         (Variable::Float(dividend), Variable::Float(divisor)) => Ok((dividend / divisor).into()),
-        (Variable::Array(array), divisor @ (Variable::Int(_) | Variable::Float(_))) => {
-            let elements = array
-                .iter()
-                .cloned()
-                .map(|dividend| exec(dividend, divisor.clone()))
-                .collect::<Result<_, _>>()?;
-            let element_type = array.element_type().clone();
-            Ok(Array {
-                element_type,
-                elements,
-            }
-            .into())
-        }
-        (dividend @ (Variable::Int(_) | Variable::Float(_)), Variable::Array(array)) => {
-            let elements = array
-                .iter()
-                .cloned()
-                .map(|divisor| exec(dividend.clone(), divisor))
-                .collect::<Result<Arc<_>, _>>()?;
-            let element_type = array.element_type().clone();
-            Ok(Array {
-                element_type,
-                elements,
-            }
-            .into())
-        }
         (dividend, divisor) => {
             panic!("Tried to calc {dividend} / {divisor}")
         }

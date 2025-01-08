@@ -35,19 +35,10 @@ pub fn can_be_used_int(lhs: Type, rhs: Type) -> bool {
 }
 
 lazy_static! {
-    pub static ref ACCEPTED_NUM_TYPE: Type =
-        var_type!((int | [int], int) | (int, [int]) | (float | [float], float) | (float, [float]));
+    pub static ref ACCEPTED_NUM_TYPE: Type = var_type!((int, int) | (float, float));
 }
 
 pub fn can_be_used_num(lhs: Type, rhs: Type) -> bool {
-    var_type!((lhs, rhs)).matches(&ACCEPTED_NUM_TYPE)
-}
-
-lazy_static! {
-    pub static ref ACCEPTED_COMP_TYPE: Type = var_type!((int, int) | (float | float));
-}
-
-pub fn can_be_used_comp(lhs: Type, rhs: Type) -> bool {
     var_type!((lhs, rhs)).matches(&ACCEPTED_NUM_TYPE)
 }
 
@@ -161,14 +152,8 @@ impl ReturnType for BinOperation {
             BinOperator::Subtract
             | BinOperator::Multiply
             | BinOperator::Divide
-            | BinOperator::Pow => {
-                if var_type!([]).matches(&lhs) {
-                    lhs
-                } else {
-                    rhs
-                }
-            }
-            BinOperator::Filter
+            | BinOperator::Pow
+            | BinOperator::Filter
             | BinOperator::BitwiseAnd
             | BinOperator::BitwiseOr
             | BinOperator::Xor => lhs,
@@ -258,13 +243,14 @@ impl InstructionWithStr {
 fn can_be_used(lhs: &Type, rhs: &Type, op: BinOperator) -> bool {
     match op {
         BinOperator::Add => add::can_be_used(lhs, rhs),
-        BinOperator::Subtract | BinOperator::Multiply | BinOperator::Divide | BinOperator::Pow => {
-            can_be_used_num(lhs.clone(), rhs.clone())
-        }
-        BinOperator::Lower
+        BinOperator::Subtract
+        | BinOperator::Multiply
+        | BinOperator::Divide
+        | BinOperator::Pow
+        | BinOperator::Lower
         | BinOperator::LowerOrEqual
         | BinOperator::Greater
-        | BinOperator::GreaterOrEqual => can_be_used_comp(lhs.clone(), rhs.clone()),
+        | BinOperator::GreaterOrEqual => can_be_used_num(lhs.clone(), rhs.clone()),
         BinOperator::LShift | BinOperator::RShift | BinOperator::Modulo => {
             can_be_used_int(lhs.clone(), rhs.clone())
         }
