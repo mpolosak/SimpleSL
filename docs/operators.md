@@ -308,44 +308,32 @@ Returns true if the element on the right is equal to the element on the left, fa
 Returns true if the element on the right is not equal to the element on the left, false - otherwise
 
 ## < - Less
-| lhs     | rhs     | result   | description |
-| ------- | ------- | -------- | ------------|
-| int     | int     | bool     | Returns true if the element on the left is less than the element on the right, false - otherwise
-| float   | float   | bool     | Returns true if the element on the left is less than the element on the right, false - otherwise
-| [int]   | int     | [bool]   | Returns an array containg result of comparing each element of lhs with rhs
-| [float] | float   | [bool]   | Returns an array containg result of comparing each element of lhs with rhs
-| int     | [int]   | [bool]   | Returns an array containg result of comparing each element of lhs with rhs
-| float   | [float] | [bool]   | Returns an array containg result of comparing each element of lhs with rhs
+| lhs     | rhs     | result   |
+| ------- | ------- | -------- |
+| int     | int     | bool     | 
+| float   | float   | bool     |
+Returns true if the element on the left is less than the element on the right, false - otherwise
 
 ## <= - Less or equal
-| lhs     | rhs     | result   | description |
-| ------- | ------- | -------- | ------------|
-| int     | int     | bool     | Returns true if the element on the left is less than or equal to the element on the right, 0 - otherwise
-| float   | float   | bool     | Returns true if the element on the left is less than or equal to the element on the right, false - otherwise
-| [int]   | int     | [bool]   | Returns an array containg result of comparing each element of lhs with rhs
-| [float] | float   | [bool]   | Returns an array containg result of comparing each element of lhs with rhs
-| int     | [int]   | [bool]   | Returns an array containg result of comparing each element of lhs with rhs
-| float   | [float] | [bool]   | Returns an array containg result of comparing each element of lhs with rhs
+| lhs     | rhs     | result   |
+| ------- | ------- | -------- |
+| int     | int     | bool     | 
+| float   | float   | bool     |
+Returns true if the element on the left is less than or equal to the element on the right, false - otherwise
 
 ## > - Greater
-| lhs     | rhs     | result   | description |
-| ------- | ------- | -------- | ------------|
-| int     | int     | bool     | Returns true if the element on the left is greater than the element on the right, false - otherwise
-| float   | float   | bool     | Returns true if the element on the left is greater than the element on the right, false - otherwise
-| [int]   | int     | [bool]   | Returns an array containg result of comparing each element of lhs with rhs
-| [float] | float   | [bool]   | Returns an array containg result of comparing each element of lhs with rhs
-| int     | [int]   | [bool]   | Returns an array containg result of comparing each element of lhs with rhs
-| float   | [float] | [bool]   | Returns an array containg result of comparing each element of lhs with rhs
+| lhs     | rhs     | result   |
+| ------- | ------- | -------- |
+| int     | int     | bool     |
+| float   | float   | bool     |
+Returns true if the element on the left is greater than the element on the right, false - otherwise
 
 ## >= - Greater or equal
-| lhs     | rhs     | result   | description |
-| ------- | ------- | -------- | ------------|
-| int     | int     | bool     | Returns true if the element on the left is greater than or equal to the element on the right, false - otherwise
-| float   | float   | bool     | Returns true if the element on the left is greater than or equal to the element on the right, false - otherwise
-| [int]   | int     | [bool]   | Returns an array containg result of comparing each element of lhs with rhs
-| [float] | float   | [bool]   | Returns an array containg result of comparing each element of lhs with rhs
-| int     | [int]   | [bool]   | Returns an array containg result of comparing each element of rhs with lhs
-| float   | [float] | [bool]   | Returns an array containg result of comparing each element of rhs with lhs
+| lhs     | rhs     | result   |
+| ------- | ------- | -------- |
+| int     | int     | bool     |
+| float   | float   | bool     |
+Returns true if the element on the left is greater than or equal to the element on the right, false - otherwise
 
 ## && - Logical AND 
 | lhs     | rhs     | result     | description |

@@ -13,7 +13,6 @@ mod r#mut;
 mod prefix_op;
 mod reduce;
 mod r#return;
-mod return_type;
 mod set;
 mod tuple;
 mod type_filter;

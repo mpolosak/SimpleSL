@@ -7,8 +7,8 @@ mod math;
 mod partition;
 mod shift;
 use super::{
-    at, function::call, local_variable::LocalVariables, reduce::Reduce,
-    return_type::return_type_bool, Exec, ExecResult, InstructionWithStr, Recreate,
+    at, function::call, local_variable::LocalVariables, reduce::Reduce, Exec, ExecResult,
+    InstructionWithStr, Recreate,
 };
 use crate::{self as simplesl, BinOperator};
 use crate::{
@@ -40,6 +40,14 @@ lazy_static! {
 }
 
 pub fn can_be_used_num(lhs: Type, rhs: Type) -> bool {
+    var_type!((lhs, rhs)).matches(&ACCEPTED_NUM_TYPE)
+}
+
+lazy_static! {
+    pub static ref ACCEPTED_COMP_TYPE: Type = var_type!((int, int) | (float | float));
+}
+
+pub fn can_be_used_comp(lhs: Type, rhs: Type) -> bool {
     var_type!((lhs, rhs)).matches(&ACCEPTED_NUM_TYPE)
 }
 
@@ -142,13 +150,14 @@ impl ReturnType for BinOperation {
         let rhs = self.rhs.return_type();
         match self.op {
             BinOperator::Add => add::return_type(lhs, rhs),
-            BinOperator::Equal | BinOperator::NotEqual | BinOperator::And | BinOperator::Or => {
-                Type::Bool
-            }
-            BinOperator::Greater
+            BinOperator::Equal
+            | BinOperator::NotEqual
+            | BinOperator::And
+            | BinOperator::Or
+            | BinOperator::Greater
             | BinOperator::GreaterOrEqual
             | BinOperator::Lower
-            | BinOperator::LowerOrEqual => return_type_bool(lhs, rhs),
+            | BinOperator::LowerOrEqual => Type::Bool,
             BinOperator::BitwiseAnd
             | BinOperator::BitwiseOr
             | BinOperator::Xor
@@ -251,14 +260,13 @@ impl InstructionWithStr {
 fn can_be_used(lhs: &Type, rhs: &Type, op: BinOperator) -> bool {
     match op {
         BinOperator::Add => add::can_be_used(lhs, rhs),
-        BinOperator::Subtract
-        | BinOperator::Multiply
-        | BinOperator::Divide
-        | BinOperator::Pow
-        | BinOperator::Lower
+        BinOperator::Subtract | BinOperator::Multiply | BinOperator::Divide | BinOperator::Pow => {
+            can_be_used_num(lhs.clone(), rhs.clone())
+        }
+        BinOperator::Lower
         | BinOperator::LowerOrEqual
         | BinOperator::Greater
-        | BinOperator::GreaterOrEqual => can_be_used_num(lhs.clone(), rhs.clone()),
+        | BinOperator::GreaterOrEqual => can_be_used_comp(lhs.clone(), rhs.clone()),
         BinOperator::LShift | BinOperator::RShift | BinOperator::Modulo => {
             can_be_used_int(lhs.clone(), rhs.clone())
         }
