@@ -158,10 +158,7 @@ impl ReturnType for BinOperation {
             | BinOperator::GreaterOrEqual
             | BinOperator::Lower
             | BinOperator::LowerOrEqual => Type::Bool,
-            BinOperator::BitwiseAnd
-            | BinOperator::BitwiseOr
-            | BinOperator::Xor
-            | BinOperator::Subtract
+            BinOperator::Subtract
             | BinOperator::Multiply
             | BinOperator::Divide
             | BinOperator::Pow => {
@@ -171,7 +168,10 @@ impl ReturnType for BinOperation {
                     rhs
                 }
             }
-            BinOperator::Filter => lhs,
+            BinOperator::Filter
+            | BinOperator::BitwiseAnd
+            | BinOperator::BitwiseOr
+            | BinOperator::Xor => lhs,
             BinOperator::Partition => partition::return_type(lhs),
             BinOperator::Map => map::return_type(rhs),
             BinOperator::At => lhs.index_result().unwrap(),

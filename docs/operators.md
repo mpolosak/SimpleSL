@@ -269,34 +269,23 @@ Shift lhs rhs bits to left
 Shift lhs rhs bits to right
 
 ## & - Bitwise AND
-| lhs     | rhs     | result     | description |
-| ------- | ------- | ---------- | ----------- |
-| int     | int     | int        | Bitwise AND |
-| bool    | bool    | bool       |
-| [int]   | int     | [int]      | Array containg result of & for each element of lhs and rhs
-| [bool]  | bool    | [bool]     |
-| int     | [int]   | [int]      | Array containg result of & for each element of rhs and lhs
-| bool    | [bool]  | [bool]
+| lhs     | rhs     | result     |
+| ------- | ------- | ---------- |
+| int     | int     | int        |
+| bool    | bool    | bool       | 
 
 ## ^ - XOR
-| lhs     | rhs     | result     | description |
-| ------- | ------- | ---------- | ----------- |
-| int     | int     | int        | Bitwise XOR |
-| bool    | bool    | bool
-| [int]   | int     | [int]      | Array containg result of ^ for each element of lhs and rhs
-| [bool]  | bool    | [bool]     |
-| int     | [int]   | [int]      | Array containg result of ^ for each element of rhs and lhs
-| bool    | [bool]  | [bool]     |
+| lhs     | rhs     | result     |
+| ------- | ------- | ---------- |
+| int     | int     | int        |
+| bool    | bool    | bool       |
 
 ## | - Bitwise OR
-| lhs     | rhs     | result     | description |
-| ------- | ------- | ---------- | ----------- |
-| int     | int     | int        | Bitwise OR  |
-| bool    | bool    | bool
-| [int]   | int     | [int]      | Array containg result of \| for each element of lhs and rhs
-| [bool]  | bool    | [bool]     |
-| int     | [int]   | [int]      | Array containg result of \| for each element of rhs and lhs
-| bool    | [bool]  | [bool]     |
+| lhs     | rhs     | result     |
+| ------- | ------- | ---------- |
+| int     | int     | int        |
+| bool    | bool    | bool       |
+
 
 ## - == Equal
 Returns true if the element on the right is equal to the element on the left, false - otherwise

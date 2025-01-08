@@ -5,8 +5,7 @@ use lazy_static::lazy_static;
 use simplesl_macros::var_type;
 
 lazy_static! {
-    pub static ref ACCEPTED_TYPE: Type =
-        var_type!((int, int | [int]) | ([int], int) | (bool, bool | [bool]) | ([bool], bool));
+    pub static ref ACCEPTED_TYPE: Type = var_type!((int, int) | (bool, bool));
 }
 
 pub fn can_be_used(lhs: Type, rhs: Type) -> bool {
@@ -20,23 +19,15 @@ pub fn can_be_used(lhs: Type, rhs: Type) -> bool {
     [Xor] [xor] [lhs ^ rhs] [^];
 )]
 pub mod bitwise {
-    use std::sync::Arc;
-
     use crate::{
         instruction::{BinOperation, Instruction},
-        variable::{Array, Variable},
+        variable::Variable,
         BinOperator,
     };
 
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         match (lhs, rhs) {
             (Instruction::Variable(lhs), Instruction::Variable(rhs)) => exec(lhs, rhs).into(),
-            (Instruction::ArrayRepeat(array_repeat), rhs) => Arc::unwrap_or_clone(array_repeat)
-                .map(|lhs| create_from_instructions(lhs, rhs))
-                .into(),
-            (lhs, Instruction::ArrayRepeat(array_repeat)) => Arc::unwrap_or_clone(array_repeat)
-                .map(|rhs| create_from_instructions(lhs, rhs))
-                .into(),
             (lhs, rhs) => BinOperation {
                 lhs,
                 rhs,
@@ -50,19 +41,6 @@ pub mod bitwise {
         match (lhs, rhs) {
             (Variable::Int(lhs), Variable::Int(rhs)) => (op1).into(),
             (Variable::Bool(lhs), Variable::Bool(rhs)) => (op1).into(),
-            (value, Variable::Array(array)) | (Variable::Array(array), value) => {
-                let elements = array
-                    .iter()
-                    .cloned()
-                    .map(|element| exec(element, value.clone()))
-                    .collect();
-                let element_type = array.element_type().clone();
-                Array {
-                    element_type,
-                    elements,
-                }
-                .into()
-            }
             (lhs, rhs) => panic!(
                 "Tried to do {lhs} {} {rhs} which is imposible",
                 stringify!(op2)
