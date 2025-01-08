@@ -8,8 +8,9 @@
 | 2          | !            | NOT                         | Right-to-left |
 |            | -            | Unary minus                 |               |
 |            | *            | Indirection                 |               |
-| 3          | @            | Array map                   | Left-to-right |
+| 3          | @            | Map                         | Left-to-right |
 |            | ?            | Array filtering             |               |
+|            | \\           | Array partition             |               |
 |            | $ expression | Array reducing              |               |
 |            | $+           | Array sum                   |               |
 |            | $*           | Array product               |               |
@@ -17,6 +18,7 @@
 |            | $\|\|        | Logical or reduce (any)     |               |
 |            | $&           | Bitwise and reduce          |               |
 |            | $\|          | Bitwise or reduce           |               |
+|            | ~            | Iterate                     |               |
 | 4          | **           | Exponentiation              |               |
 | 5          | *            | Multiplication              |               |
 |            | /            | Division                    |               |
@@ -56,11 +58,11 @@ array/string [index]
 Index must be of type int. Indexing is 0-based. Indexing with values less than zero or greater than the length of the array/string results in an error.
 Indexing of a string returns a string containing an UTF-8 character on the given position. 
 
-## ? type - Array filtering by type
+## ? type - Filter by type
 ```
-array ? type
+iterator ? type
 ```
-Filters array leaving only elements matching given type
+Creates iterator returning only elements matching given type
 
 ## () - Function call
 ```
@@ -86,103 +88,113 @@ Calls the function with given arguments.
 | ------- | ------ | ------------|
 | mut T   | T      | Returns value contained in mut
 
-## @ - Array maping operator
-| lhs         | rhs                                            | result |
-| ----------- | ---------------------------------------------- | ------ |
-| [T]         | (value: T) -> S                                | [S]    |
-| [T]         | (index: int, value: T) -> S                    | [S]    |
-| (T, S, ...) | (value_t: T, value_s: S, ...) -> U             | [U]    |
-| (T, S, ...) | (index: int, value_t: T, value_s: S, ...) -> U | [U]    |
+## @ - Map
+| lhs             | rhs             | result          |
+| --------------- | ----------------| --------------- |
+| () -> (bool, T) | (value: T) -> S | () -> (bool, S) |
 
-## ? - Array filtering operator
-| lhs | rhs                            | result |
-| --- | ------------------------------ | -------|
-| [T] | (value: T) -> bool             | [T]    |
-| [T] | (index: int, value: T) -> bool | [T]    |
+## ? - Filter
+| lhs             | rhs                            | result          |
+| --------------- | ------------------------------ | --------------- |
+| () -> (bool, T) | (value: T) -> bool             | () -> (bool, T) |
 
-Filters array using given function. Leaving only elements for which the function returned true.
+Creates iterator returning only this elements of iterator on left for which function returned true
 
-## $ - Array reducing operator
+## \ - Partition
+| lhs             | rhs                            | result     |
+| --------------- | ------------------------------ | ---------- |
+| () -> (bool, T) | (value: T) -> bool             | ([T], [T]) |
+| () -> (bool, T) | (index: int, value: T) -> bool | ([T], [T]) |
+
+Returns tuple containing two arrays. First array contains all elements for which function returned
+true, second array contains all other elements.
+
+## $ - Reduce
 ```
-array $ initial_value function
+iterator $ initial_value function
 ```
 
-| lhs | initial value | rhs                            | result  |
-| --- | --------------| ------------------------------ | ------- |
-| [T] | S             | (acc: T \| U, current: S) -> U | T \| U  |
+| lhs             | initial value | rhs                            | result  |
+| --------------- | --------------| ------------------------------ | ------- |
+| () -> (bool, T) | S             | (acc: T \| U, current: S) -> U | T \| U  |
 
-## $+ - Array sum
+## $+ - Sum
 ```
-array $+
+iterator $+
 ```
-| lhs     | result  |
-| ------- | ------- |
-| [int]   | int     |
-| [float] | float   |
-| [string]| string  |
+| lhs                  | result  |
+| -------------------- | ------- |
+| () -> (bool, int)    | int     |
+| () -> (bool, float)  | float   |
+| () -> (bool, string) | string  |
 
-Calculates sum of all elements of array.
+Calculates sum of all elements of iterator.
 
-## $* - Array product
+## $* - Product
 ```
-array $*
+iterator $*
 ```
-| lhs     | result  |
-| ------- | ------- |
-| [int]   | int     |
-| [float] | float   |
+| lhs                 | result  |
+| ------------------- | ------- |
+| () -> (bool, int)   | int     |
+| () -> (bool, float) | float   |
 
-Calculates product of all elements of array.
+Calculates product of all elements of iterator.
 
 ## $&& - Logical and reduce (all)
 ```
-array $&&
+iterator $&&
 ```
-| lhs    | result |
-| ------ | ------ |
-| [bool] | bool   |
+| lhs                | result |
+| ------------------ | ------ |
+| () -> (bool, bool) | bool   |
 
-Returns true value if all elements of array are true, false otherwise
+Test if every element of iterator function is true
 
 ## $|| - Logical and reduce (any)
 ```
-array $||
+iterator $||
 ```
-| lhs    | result |
-| ------ | ------ |
-| [bool] | bool   |
+| lhs                | result |
+| ------------------ | ------ |
+| () -> (bool, bool) | bool   |
 
-Returns true value if any of elements of array is true, false otherwise
+Test if any element of iterator function is true
 
 ## $& - Bitwise and reduce
 ```
-array $&
+iterator $&
 ```
-| lhs     | result  |
-| ------- | ------- |
-| [int]   | int     |
-| [bool]  | bool    |
+| lhs               | result  |
+| ----------------- | ------- |
+| () -> (bool, int) | int     |
 
 Equivalent of:
 ```
-array $!0 (acc: int, curr: int) -> int {return acc & curr}
-array $true (acc: bool, curr: bool) -> bool {return acc & curr}
+iterator $!0 (acc: int, curr: int) -> int {return acc & curr}
 ```
 
 ## $| - Bitwise or reduce
 ```
-array $|
+iterator $|
 ```
-| lhs     | result  |
-| ------- | ------- |
-| [int]   | int     |
-| [bool]  | bool    |
+| lhs               | result  |
+| ----------------- | ------- |
+| () -> (bool, int) | int     |
 
 Equivalent of:
 ```
-array $0 (acc: int, curr: int) -> int {return acc | curr}
-array $false (acc: bool, curr: bool) -> bool {return acc | curr}
+iterator $0 (acc: int, curr: int) -> int {return acc | curr}
 ```
+
+## ~ - Iterate
+```
+iterator $|
+```
+| lhs | result          |
+| --- | --------------- |
+| [T] | () -> (bool, T) |
+Create iterator over elements of array
 
 ## ** - Exponentiation
 | lhs     | rhs     | result     | description |

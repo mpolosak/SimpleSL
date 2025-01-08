@@ -1,113 +1,55 @@
-use crate::instruction::Instruction;
-use crate::{self as simplesl, Error};
+use crate::variable::Typed;
+use crate::{self as simplesl, Code, Interpreter};
 use crate::{
     function::Function,
     instruction::ExecResult,
-    variable::{self, Array, ReturnType, Type, Variable},
+    variable::{Type, Variable},
 };
-use simplesl_macros::{var, var_type};
-use std::{iter, sync::Arc};
+use lazy_static::lazy_static;
+use simplesl_macros::var_type;
+use std::sync::Arc;
 
-use super::{BinOperation, BinOperator};
-
-pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
-    let lhs_type = lhs.return_type();
-    let rhs_type = rhs.return_type();
-    if !can_be_used(&lhs_type, &rhs_type) {
-        return Err(Error::CannotDo2(lhs_type, stringify!(op), rhs_type));
-    }
-    Ok(BinOperation {
-        lhs,
-        rhs,
-        op: BinOperator::Map,
-    }
-    .into())
+lazy_static! {
+    static ref MAP: Arc<Function> = Code::parse(
+        &Interpreter::without_stdlib(),
+        "(func: () -> (bool, int), mapper: (int) -> int) -> () -> (bool, int) {
+            return () -> (bool, int) {
+                res := func();
+                (con, value) := res;
+                if !con return res;
+                return (true, mapper(value));
+            }
+        }"
+    )
+    .unwrap()
+    .exec()
+    .unwrap()
+    .into_function()
+    .unwrap();
 }
 
-fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
-    if let Some(types) = lhs.clone().flatten_tuple() {
-        return can_be_used_zip(&types, rhs);
-    }
-    let Some(element_type) = lhs.index_result() else {
+pub fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
+    let Some(element_type) = lhs.iter_element() else {
         return false;
     };
-    let element_type2 = element_type.clone();
-    let expected_function = var_type!((element_type)->any | (int, element_type2)->any);
+    let expected_function = var_type!((element_type)->any);
     rhs.matches(&expected_function)
 }
 
-fn can_be_used_zip(types: &[Type], rhs: &Type) -> bool {
-    let Some(params) = types
-        .iter()
-        .map(Type::index_result)
-        .collect::<Option<Arc<[Type]>>>()
-    else {
-        return false;
-    };
-    let mut extended_params = vec![Type::Int];
-    extended_params.extend(params.iter().cloned());
-    let extended_params = extended_params.into();
-    let expected_function = var_type!(params -> any | extended_params -> any);
-    rhs.matches(&expected_function)
-}
-
-fn zip_map(arrays: Arc<[Variable]>, function: Arc<Function>) -> ExecResult {
-    let arrays: Box<[&Arc<Array>]> = arrays
-        .iter()
-        .map(|array| array.as_array().unwrap())
-        .collect();
-    let len = arrays.iter().map(|array| array.len()).min().unwrap();
-    let elements = if function.params.len() == arrays.len() {
-        (0..len)
-            .map(|i| {
-                let args: Box<[Variable]> = arrays.iter().map(|array| array[i].clone()).collect();
-                function.exec_with_args(&args)
-            })
-            .collect::<Result<_, _>>()
-    } else {
-        (0..len)
-            .map(|i| {
-                let args: Box<[Variable]> = iter::once(var!(i))
-                    .chain(arrays.iter().map(|array| array[i].clone()))
-                    .collect();
-                function.exec_with_args(&args)
-            })
-            .collect::<Result<_, _>>()
-    }?;
-    let element_type = function.return_type();
-    Ok(variable::Array {
-        element_type,
-        elements,
-    }
-    .into())
-}
-
-pub fn exec(array: Variable, function: Variable) -> ExecResult {
-    let function = function.into_function().unwrap();
-    if let Variable::Tuple(arrays) = array {
-        return zip_map(arrays, function);
-    }
-    let array = array.into_array().unwrap();
-    let iter = array.iter().cloned();
-    let elements = if function.params.len() == 1 {
-        iter.map(|var| function.exec_with_args(&[var]))
-            .collect::<Result<_, _>>()
-    } else {
-        iter.enumerate()
-            .map(|(index, var)| function.exec_with_args(&[index.into(), var]))
-            .collect::<Result<_, _>>()
-    }?;
-    let element_type = function.return_type();
-    Ok(Array {
-        element_type,
-        elements,
-    }
-    .into())
+pub fn exec(iter: Variable, function: Variable) -> ExecResult {
+    let result_type = function.as_type().return_type().unwrap();
+    let result = MAP
+        .exec_with_args(&[iter, function])?
+        .into_function()
+        .unwrap();
+    let mut result = Arc::unwrap_or_clone(result);
+    result.return_type = var_type!((bool, result_type));
+    Ok(result.into())
 }
 
 pub fn return_type(rhs: Type) -> Type {
     let element_type = rhs.return_type().unwrap();
-    var_type!([element_type])
+    var_type!(()->(bool, element_type))
 }
 
 #[cfg(test)]
@@ -119,85 +61,62 @@ mod tests {
     #[test]
     fn can_be_used() {
         // true
-        assert!(map::can_be_used(&var_type!([int]), &var_type!((int)->int)));
         assert!(map::can_be_used(
-            &var_type!([int]),
+            &var_type!(() -> (bool, int)),
+            &var_type!((int)->int)
+        ));
+        assert!(map::can_be_used(
+            &var_type!(() -> (bool, int)),
             &var_type!((int|float)->any)
         ));
         assert!(map::can_be_used(
-            &var_type!([int]),
-            &var_type!((int, any)->int)
+            &var_type!(() -> (bool, int)),
+            &var_type!((any)->int)
         ));
         assert!(map::can_be_used(
-            &var_type!([int]),
-            &var_type!((any, any)->float)
+            &var_type!(() -> (bool, int)),
+            &var_type!((any)->float)
         ));
         assert!(map::can_be_used(
-            &var_type!([int] | [float]),
+            &var_type!(() -> (bool, int) | () -> (bool, float)),
             &var_type!((int | float)->int)
         ));
         assert!(map::can_be_used(
-            &var_type!([int] | [float]),
-            &var_type!((int, int | float)->int)
-        ));
-        assert!(map::can_be_used(
-            &var_type!([int] | [float]),
-            &var_type!((any, any)->int)
-        ));
-        assert!(map::can_be_used(
-            &var_type!([int]),
+            &var_type!(() -> (bool, int)),
             &var_type!((int)->int | (any)->any)
         ));
         assert!(map::can_be_used(
-            &var_type!([int]),
-            &var_type!((int, any)->int | (any)->any)
+            &var_type!(() -> (bool, int)),
+            &var_type!((int)->int | (any)->any)
         ));
         assert!(map::can_be_used(
-            &var_type!([int]),
-            &var_type!((any, any)->float | (int | float)->int)
+            &var_type!(() -> (bool, int)),
+            &var_type!((any)->float | (int | float)->int)
         ));
         assert!(map::can_be_used(
-            &var_type!([int] | [float]),
-            &var_type!((int, int | float)->int | (int | float)->float)
-        ));
-        assert!(map::can_be_used(
-            &var_type!(([int], [float], [string])),
-            &var_type!((int, float, string) -> any)
-        ));
-        assert!(map::can_be_used(
-            &var_type!(([int], [float] | [string | int], [string])),
-            &var_type!(
-                (int, int|float|string, string) -> float | (int | float, any, any, any) -> any
-            )
-        ));
-        assert!(map::can_be_used(
-            &var_type!(([int], [float]) | ([string], [any])),
-            &var_type!((int | string, any) -> any | (any, any, any) -> ())
+            &var_type!(() -> (bool, int) | () -> (bool, float)),
+            &var_type!((int | float)->int | (int | float)->float)
         ));
         // false
         assert!(!map::can_be_used(
-            &var_type!([int] | [float]),
-            &var_type!((int, int)->int)
+            &var_type!(() -> (bool, int) | [float]),
+            &var_type!((int)->int)
+        ));
+        assert!(!map::can_be_used(
+            &var_type!(() -> (bool, int) | () -> (bool, float)),
+            &var_type!((float)->int)
         ));
         assert!(!map::can_be_used(
             &var_type!([int] | [float]),
-            &var_type!((int, int | float, any)->int)
+            &var_type!((float)->int)
         ));
         assert!(!map::can_be_used(
-            &var_type!([int] | [float]),
-            &var_type!((any, float)->int)
-        ));
-        assert!(!map::can_be_used(
-            &var_type!([int]),
+            &var_type!(() -> (bool, int)),
             &var_type!((int)->int | int)
         ));
         assert!(!map::can_be_used(
-            &var_type!([int] | float),
-            &var_type!((int, any)->int | (any)->any)
-        ));
-        assert!(!map::can_be_used(
-            &var_type!([int] | ([int], [float])),
-            &var_type!((any, any)->float | (int | float)->int)
+            &var_type!(() -> (bool, int) | float),
+            &var_type!(( any)->int | (any)->any)
         ));
     }
 }

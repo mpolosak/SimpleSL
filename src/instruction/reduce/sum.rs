@@ -1,89 +1,133 @@
-use crate as simplesl;
-use crate::instruction::unary_operation::{UnaryOperation, UnaryOperator};
-use crate::instruction::{
-    add, array_repeat::ArrayRepeat, multiply, Instruction, InstructionWithStr,
-};
+use crate::instruction::unary_operation::UnaryOperation;
+use crate::instruction::ExecResult;
+use crate::instruction::{Instruction, InstructionWithStr};
+use crate::stdlib::operators::{FLOAT_SUM, INT_SUM, STRING_SUM};
+use crate::unary_operator::UnaryOperator;
+use crate::variable::{Type, Typed};
+use crate::{self as simplesl};
 use crate::{
-    variable::{Array, ReturnType, Variable},
+    variable::{ReturnType, Variable},
     Error,
 };
-use simplesl_macros::{var, var_type};
-use std::sync::Arc;
+use lazy_static::lazy_static;
+use simplesl_macros::var_type;
+
+lazy_static! {
+    pub static ref ACCEPTED_TYPE: Type =
+        var_type!(() -> (bool, int) | () -> (bool, float) | () -> (bool, string));
+}
 
 pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
+    let op = UnaryOperator::Sum;
     let return_type = array.return_type();
-    if !return_type.matches(&var_type!([float] | [int] | [string])) {
-        return Err(Error::IncorectPostfixOperatorOperand {
+    if !return_type.matches(&ACCEPTED_TYPE) {
+        return Err(Error::IncorectUnaryOperatorOperand {
             ins: array.str,
-            op: "$+",
-            expected: var_type!([float] | [int] | [string]),
+            op,
+            expected: ACCEPTED_TYPE.clone(),
             given: return_type,
         });
     }
     Ok(UnaryOperation {
         instruction: array.instruction,
-        op: UnaryOperator::Sum,
+        op,
     }
     .into())
 }
 
-fn calc(array: &Array) -> Variable {
-    match array.element_type() {
-        var_type!(int) => calc_int(array),
-        var_type!(float) => calc_float(array),
-        var_type!(string) => calc_string(array),
-        element_type => unreachable!("Tried to sum [{element_type}]"),
+pub fn exec(var: Variable) -> ExecResult {
+    let return_type = var.as_type();
+    if return_type.matches(&var_type!(() -> (bool, int))) {
+        Ok(INT_SUM.as_function().unwrap().exec_with_args(&[var])?)
+    } else if return_type.matches(&var_type!(() -> (bool, float))) {
+        Ok(FLOAT_SUM.as_function().unwrap().exec_with_args(&[var])?)
+    } else {
+        Ok(STRING_SUM.as_function().unwrap().exec_with_args(&[var])?)
     }
 }
 
-fn calc_int(array: &Array) -> Variable {
-    let sum = array.iter().map(|var| var.as_int().unwrap()).sum();
-    Variable::Int(sum)
-}
-
-fn calc_float(array: &Array) -> Variable {
-    let sum = array.iter().map(|var| var.as_float().unwrap()).sum();
-    Variable::Float(sum)
-}
-
-fn calc_string(array: &Array) -> Variable {
-    let sum: String = array
-        .iter()
-        .map(|var| var.as_string().unwrap())
-        .fold(String::new(), |acc, curr| format!("{acc}{curr}"));
-    var!(sum)
-}
-
-pub fn recreate(instruction: Instruction) -> Instruction {
-    match instruction {
-        Instruction::Variable(Variable::Array(array)) => calc(&array).into(),
-        Instruction::ArrayRepeat(array_repeat)
-            if array_repeat
-                .value
-                .return_type()
-                .matches(&var_type!(int | float)) =>
-        {
-            let ArrayRepeat { value, len } = Arc::unwrap_or_clone(array_repeat.clone());
-            multiply::create_from_instructions(value.instruction, len.instruction)
-        }
-        Instruction::Array(array) => array
-            .instructions
-            .iter()
-            .cloned()
-            .map(|iws| iws.instruction)
-            .reduce(add::create_from_instructions)
-            .unwrap(),
-        instruction => UnaryOperation {
-            instruction,
-            op: UnaryOperator::Sum,
-        }
-        .into(),
-    }
-}
-
-pub fn exec(var: Variable) -> Variable {
-    let Variable::Array(array) = var else {
-        unreachable!("Tried to sum not array")
+#[cfg(test)]
+mod tests {
+    use crate as simplesl;
+    use crate::{
+        instruction::reduce::sum::ACCEPTED_TYPE, unary_operator::UnaryOperator, variable::Variable,
+        Code, Error, Interpreter,
     };
-    calc(&array)
+    use simplesl_macros::{var, var_type};
+    const OP: UnaryOperator = UnaryOperator::Sum;
+
+    #[test]
+    fn sum() {
+        assert_eq!(
+            parse_and_exec("[45, 76, 15]$+"),
+            Err(Error::IncorectUnaryOperatorOperand {
+                ins: "[45, 76, 15]".into(),
+                op: OP,
+                expected: ACCEPTED_TYPE.clone(),
+                given: var_type!([int])
+            })
+        );
+        assert_eq!(
+            parse_and_exec(r#""abc"$+"#),
+            Err(Error::IncorectUnaryOperatorOperand {
+                ins: r#""abc""#.into(),
+                op: OP,
+                expected: ACCEPTED_TYPE.clone(),
+                given: var_type!(string)
+            })
+        );
+        assert_eq!(
+            parse_and_exec("x:= () -> int {return 5;} x$+"),
+            Err(Error::IncorectUnaryOperatorOperand {
+                ins: "x".into(),
+                op: OP,
+                expected: ACCEPTED_TYPE.clone(),
+                given: var_type!(() -> int)
+            })
+        );
+        assert_eq!(
+            parse_and_exec("x:= (a: int) -> (bool, int) {return (true, a);} x$+"),
+            Err(Error::IncorectUnaryOperatorOperand {
+                ins: "x".into(),
+                op: OP,
+                expected: ACCEPTED_TYPE.clone(),
+                given: var_type!((int) -> (bool, int))
+            })
+        );
+        assert_eq!(parse_and_exec("[45, 16, 3]~$+"), Ok(var!(64)));
+        assert_eq!(parse_and_exec("[5.5, 6.5, 7.4]~$+"), Ok(var!(19.4)));
+        assert_eq!(parse_and_exec(r#"["a", "6.5", "$"]~$+"#), Ok(var!("a6.5$")));
+        assert_eq!(
+            parse_and_exec("[45, 16.5, 3]~$+"),
+            Err(Error::IncorectUnaryOperatorOperand {
+                ins: "[45, 16.5, 3] ~".into(),
+                op: OP,
+                expected: ACCEPTED_TYPE.clone(),
+                given: var_type!(() -> (bool, int|float))
+            })
+        );
+        assert_eq!(
+            parse_and_exec(
+                "x:=() -> ()->(bool, int)|() -> (bool, float){
+                    return [45, 16, 45]~;
+                }
+                x()$+"
+            ),
+            Ok(var!(106))
+        );
+        assert_eq!(
+            parse_and_exec(
+                "x:=() -> ()->(bool, int)|() -> (bool, float){
+                    return [4.5, 1.6, 4.5]~;
+                }
+                x()$+"
+            ),
+            Ok(var!(10.6))
+        );
+    }
+
+    fn parse_and_exec(script: &str) -> Result<Variable, Error> {
+        Code::parse(&Interpreter::without_stdlib(), script)
+            .and_then(|code| code.exec().map_err(Error::from))
+    }
 }

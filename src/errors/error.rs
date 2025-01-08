@@ -1,4 +1,6 @@
-use crate::{function::Param, variable::Type, ExecError};
+use crate::{
+    function::Param, unary_operator::UnaryOperator, variable::Type, BinOperator, ExecError,
+};
 use match_any::match_any;
 use simplesl_parser::Rule;
 use std::{
@@ -28,8 +30,7 @@ pub enum Error {
     Parsing(Box<pest::error::Error<Rule>>),
     IntegerOverflow(Box<str>),
     CannotUnescapeString(unescaper::Error),
-    CannotDo(&'static str, Type),
-    CannotDo2(Type, &'static str, Type),
+    CannotDo2(Type, BinOperator, Type),
     WrongReturn {
         function_name: Option<Arc<str>>,
         function_return_type: Type,
@@ -58,9 +59,9 @@ pub enum Error {
         idents_len: usize,
     },
     WrongCondition(Arc<str>, Type),
-    IncorectPostfixOperatorOperand {
+    IncorectUnaryOperatorOperand {
         ins: Arc<str>,
-        op: &'static str,
+        op: UnaryOperator,
         expected: Type,
         given: Type,
     },
@@ -88,7 +89,6 @@ impl PartialEq for Error {
             (Self::WrongType(l0, l1), Self::WrongType(r0, r1))
             | (Self::WrongCondition(l0, l1), Self::WrongCondition(r0, r1))
             | (Self::WrongNumberOfArguments(l0, l1), Self::WrongNumberOfArguments(r0, r1))
-            | (Self::CannotDo(l0, l1), Self::CannotDo(r0, r1))
              => l0 == r0 && l1 == r1,
             (Self::IO(l0), Self::IO(r0)) | (Self::CannotUnescapeString(l0), Self::CannotUnescapeString(r0)) => {
                 l0.to_string() == r0.to_string()
@@ -121,8 +121,8 @@ impl PartialEq for Error {
                 Self::WrongLength{ ins: ins2, len: len2, idents_len: idents_len2 }
             ) => ins==ins2 && len == len2 && idents_len == idents_len2,
             (
-                Self::IncorectPostfixOperatorOperand{ins, op, expected, given },
-                Self::IncorectPostfixOperatorOperand{ins:ins2, op: op2, expected: expected2, given: given2 })
+                Self::IncorectUnaryOperatorOperand{ins, op, expected, given },
+                Self::IncorectUnaryOperatorOperand{ins:ins2, op: op2, expected: expected2, given: given2 })
                 => ins == ins2 && op == op2 && expected == expected2 && given == given2,
             _ => core::mem::discriminant(self) == core::mem::discriminant(other)
         }
@@ -177,9 +177,6 @@ impl fmt::Display for Error {
             Self::Parsing(error) => write!(f, "{error}"),
             Self::IntegerOverflow(value) => write!(f, "{value} is to big too fit in int type"),
             Self::CannotUnescapeString(error) => write!(f, "{error}"),
-            Self::CannotDo(op, var_type) => {
-                write!(f, "Cannot do {op} {var_type}")
-            }
             Self::CannotDo2(var_type1, op, var_type2) => {
                 write!(f, "Cannot do {var_type1} {op} {var_type2}")
             }
@@ -228,7 +225,9 @@ impl fmt::Display for Error {
             Self::WrongLength { ins, len: length, idents_len: expected_length }
                 => write!(f, "{ins} has {length} elements but {expected_length} idents were given"),
             Self::WrongCondition(ins, var_type) => write!(f, "Condition must be bool but {ins} which is {var_type} was given"),
-            Self::IncorectPostfixOperatorOperand { ins, op, expected, given }
+            Self::IncorectUnaryOperatorOperand { ins, op, expected, given }
+                if op.is_prefix() => write!(f, "Cannot {op} {ins}. Operand need to be {expected} but {ins} which is {given} was given"),
+            Self::IncorectUnaryOperatorOperand { ins, op, expected, given }
                 => write!(f, "Cannot {ins} {op}. Operand need to be {expected} but {ins} which is {given} was given"),
             Self::WrongInitialization { declared, given_type, given }
                 => write!(f, "mut declared to contain {declared} but initialized with {given} that is {given_type}")

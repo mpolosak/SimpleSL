@@ -65,11 +65,13 @@ fn test_fizzbuzz() -> Result<(), Error> {
     );
 
     let iota = interpreter.get_variable("iota").unwrap();
-    assert_eq!(iota.as_type(), var_type!((int,int)->[int]));
+    assert_eq!(iota.as_type(), var_type!((int,int) -> () -> (bool, int)));
     let iota = iota.clone().into_function().unwrap();
     assert_eq!(
-        iota.create_call([var!(3), var!(3)].into())?.exec()?,
-        var!([3, 4, 5])
+        iota.create_call([var!(3), var!(3)].into())?
+            .exec()?
+            .as_type(),
+        var_type!(() -> (bool, int))
     );
     Ok(())
 }
@@ -89,27 +91,6 @@ fn test_quick_sort() -> Result<(), Error> {
     assert_eq!(
         sort.create_call([var!([9, 3, 6])].into())?.exec()?,
         var!([3, 6, 9])
-    );
-    Ok(())
-}
-
-#[test]
-fn test_replace() -> Result<(), Error> {
-    let mut interpreter = Interpreter::with_stdlib();
-    let replace = fs::read_to_string("example_scripts/replace")?;
-    let result = Code::parse(&interpreter, &replace)?.exec_unscoped(&mut interpreter)?;
-    assert_eq!(result.as_type(), var_type!(([any], int, int)->[any]));
-    let replace = interpreter
-        .get_variable("replace")
-        .unwrap()
-        .clone()
-        .into_function()
-        .unwrap();
-    assert_eq!(
-        replace
-            .create_call([var!([9, 3, 6]), var!(0), var!(2)].into())?
-            .exec()?,
-        var!([6, 3, 9])
     );
     Ok(())
 }

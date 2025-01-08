@@ -1,7 +1,5 @@
-use super::{
-    local_variable::LocalVariables, BinOperation, BinOperator, Instruction, InstructionWithStr,
-};
-use crate as simplesl;
+use super::{local_variable::LocalVariables, BinOperation, Instruction, InstructionWithStr};
+use crate::{self as simplesl, BinOperator};
 use crate::{
     variable::{ReturnType, Typed, Variable},
     Error, ExecError,

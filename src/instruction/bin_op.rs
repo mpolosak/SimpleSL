@@ -4,12 +4,13 @@ mod filter;
 mod logic;
 mod map;
 mod math;
+mod partition;
 mod shift;
 use super::{
     at, function::call, local_variable::LocalVariables, reduce::Reduce,
     return_type::return_type_bool, Exec, ExecResult, InstructionWithStr, Recreate,
 };
-use crate as simplesl;
+use crate::{self as simplesl, BinOperator};
 use crate::{
     instruction::Instruction,
     variable::{ReturnType, Type},
@@ -23,7 +24,7 @@ use math::{divide, greater, greater_equal, lower, lower_equal, modulo};
 use pest::iterators::Pair;
 use shift::{lshift, rshift};
 use simplesl_macros::var_type;
-use simplesl_parser::{unexpected, Rule};
+use simplesl_parser::Rule;
 
 lazy_static! {
     pub static ref ACCEPTED_INT_TYPE: Type = var_type!((int, int | [int]) | ([int], int));
@@ -47,45 +48,6 @@ pub struct BinOperation {
     pub lhs: Instruction,
     pub rhs: Instruction,
     pub op: BinOperator,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum BinOperator {
-    Add,
-    Subtract,
-    Multiply,
-    Divide,
-    Modulo,
-    Pow,
-    Equal,
-    NotEqual,
-    Greater,
-    GreaterOrEqual,
-    Lower,
-    LowerOrEqual,
-    And,
-    Or,
-    BitwiseAnd,
-    BitwiseOr,
-    Xor,
-    LShift,
-    RShift,
-    Filter,
-    Map,
-    At,
-    FunctionCall,
-    Assign,
-    AssignAdd,
-    AssignSubtract,
-    AssignMultiply,
-    AssignDivide,
-    AssignModulo,
-    AssignLShift,
-    AssignRShift,
-    AssignBitwiseAnd,
-    AssignBitwiseOr,
-    AssignXor,
-    AssignPow,
 }
 
 impl Exec for BinOperation {
@@ -132,6 +94,7 @@ impl Exec for BinOperation {
             BinOperator::AssignBitwiseOr => assign::exec(lhs, rhs, bitwise_or::exec),
             BinOperator::AssignXor => assign::exec(lhs, rhs, xor::exec),
             BinOperator::AssignPow => assign::try_exec(lhs, rhs, pow::exec)?,
+            BinOperator::Partition => partition::exec(lhs, rhs)?,
             _ => unreachable!(),
         })
     }
@@ -203,6 +166,7 @@ impl ReturnType for BinOperation {
                 }
             }
             BinOperator::Filter => lhs,
+            BinOperator::Partition => partition::return_type(lhs),
             BinOperator::Map => map::return_type(rhs),
             BinOperator::At => lhs.index_result().unwrap(),
             BinOperator::FunctionCall => lhs.return_type().unwrap(),
@@ -269,153 +233,92 @@ impl InstructionWithStr {
                 str,
             });
         }
+        let op = BinOperator::from(rule);
         let (lhs, rhs) = (lhs.instruction, rhs.instruction);
-        fn return_type(lhs: &Type, rhs: &Type) -> Type {
-            if var_type!([]).matches(lhs) {
-                lhs.clone()
-            } else {
-                rhs.clone()
-            }
+
+        let lhs_type = lhs.return_type();
+        let rhs_type = rhs.return_type();
+        if !can_be_used(&lhs_type, &rhs_type, op) {
+            return Err(Error::CannotDo2(lhs_type, op, rhs_type));
         }
-        fn assign_can_be_used_num(a: &Type, b: &Type) -> bool {
-            can_be_used_num(a.clone(), b.clone())
-        }
-        fn assign_can_be_used_int(a: &Type, b: &Type) -> bool {
-            can_be_used_int(a.clone(), b.clone())
-        }
-        fn bitwise_can_be_used(a: &Type, b: &Type) -> bool {
-            bitwise::can_be_used(a.clone(), b.clone())
-        }
-        let instruction = match rule {
-            Rule::pow => pow::create_op(lhs, rhs),
-            Rule::multiply => multiply::create_op(lhs, rhs),
-            Rule::add => add::create_op(lhs, rhs),
-            Rule::subtract => subtract::create_op(lhs, rhs),
-            Rule::divide => divide::create_op(lhs, rhs),
-            Rule::modulo => modulo::create_op(lhs, rhs),
-            Rule::equal => Ok(BinOperation {
-                lhs,
-                rhs,
-                op: BinOperator::Equal,
-            }
-            .into()),
-            Rule::not_equal => Ok(BinOperation {
-                lhs,
-                rhs,
-                op: BinOperator::NotEqual,
-            }
-            .into()),
-            Rule::lower => lower::create_op(lhs, rhs),
-            Rule::lower_equal => lower_equal::create_op(lhs, rhs),
-            Rule::greater => greater::create_op(lhs, rhs),
-            Rule::greater_equal => greater_equal::create_op(lhs, rhs),
-            Rule::map => map::create_op(lhs, rhs),
-            Rule::filter => filter::create_op(lhs, rhs),
-            Rule::bitwise_and => bitwise_and::create_op(lhs, rhs),
-            Rule::bitwise_or => bitwise_or::create_op(lhs, rhs),
-            Rule::xor => xor::create_op(lhs, rhs),
-            Rule::rshift => rshift::create_op(lhs, rhs),
-            Rule::lshift => lshift::create_op(lhs, rhs),
-            Rule::and => and::create_op(lhs, rhs),
-            Rule::or => or::create_op(lhs, rhs),
-            Rule::assign => assign::create_op(
-                lhs,
-                rhs,
-                "=",
-                BinOperator::Assign,
-                |_, _| true,
-                |_, x| x.clone(),
-            ),
-            Rule::assign_add => assign::create_op(
-                lhs,
-                rhs,
-                "+=",
-                BinOperator::AssignAdd,
-                add::can_be_used,
-                |lhs, rhs| add::return_type(lhs.clone(), rhs.clone()),
-            ),
-            Rule::assign_subtract => assign::create_op(
-                lhs,
-                rhs,
-                "-=",
-                BinOperator::AssignSubtract,
-                assign_can_be_used_num,
-                return_type,
-            ),
-            Rule::assing_multiply => assign::create_op(
-                lhs,
-                rhs,
-                "*=",
-                BinOperator::AssignMultiply,
-                assign_can_be_used_num,
-                return_type,
-            ),
-            Rule::assign_divide => assign::create_op(
-                lhs,
-                rhs,
-                "/=",
-                BinOperator::AssignDivide,
-                assign_can_be_used_num,
-                return_type,
-            ),
-            Rule::assign_modulo => assign::create_op(
-                lhs,
-                rhs,
-                "%=",
-                BinOperator::AssignModulo,
-                assign_can_be_used_int,
-                return_type,
-            ),
-            Rule::assign_lshift => assign::create_op(
-                lhs,
-                rhs,
-                "<<=",
-                BinOperator::AssignLShift,
-                assign_can_be_used_int,
-                return_type,
-            ),
-            Rule::assign_rshift => assign::create_op(
-                lhs,
-                rhs,
-                ">>=",
-                BinOperator::AssignRShift,
-                assign_can_be_used_int,
-                return_type,
-            ),
-            Rule::assign_bitwise_and => assign::create_op(
-                lhs,
-                rhs,
-                "&=",
-                BinOperator::AssignBitwiseAnd,
-                bitwise_can_be_used,
-                return_type,
-            ),
-            Rule::assign_bitwise_or => assign::create_op(
-                lhs,
-                rhs,
-                "|=",
-                BinOperator::AssignBitwiseOr,
-                bitwise_can_be_used,
-                return_type,
-            ),
-            Rule::assign_xor => assign::create_op(
-                lhs,
-                rhs,
-                "^=",
-                BinOperator::AssignXor,
-                assign_can_be_used_int,
-                return_type,
-            ),
-            Rule::assign_pow => assign::create_op(
-                lhs,
-                rhs,
-                "**=",
-                BinOperator::AssignPow,
-                assign_can_be_used_num,
-                return_type,
-            ),
-            rule => unexpected!(rule),
-        }?;
+
+        let instruction = BinOperation { lhs, rhs, op }.into();
+
         Ok(Self { instruction, str })
     }
+}
+
+fn can_be_used(lhs: &Type, rhs: &Type, op: BinOperator) -> bool {
+    match op {
+        BinOperator::Add => add::can_be_used(lhs, rhs),
+        BinOperator::Subtract
+        | BinOperator::Multiply
+        | BinOperator::Divide
+        | BinOperator::Pow
+        | BinOperator::Lower
+        | BinOperator::LowerOrEqual
+        | BinOperator::Greater
+        | BinOperator::GreaterOrEqual => can_be_used_num(lhs.clone(), rhs.clone()),
+        BinOperator::LShift | BinOperator::RShift | BinOperator::Modulo => {
+            can_be_used_int(lhs.clone(), rhs.clone())
+        }
+        BinOperator::Equal
+        | BinOperator::NotEqual
+        | BinOperator::At
+        | BinOperator::FunctionCall => true,
+        BinOperator::And | BinOperator::Or => lhs == &Type::Bool && rhs == &Type::Bool,
+        BinOperator::BitwiseAnd | BinOperator::BitwiseOr | BinOperator::Xor => {
+            bitwise::can_be_used(lhs.clone(), rhs.clone())
+        }
+        BinOperator::Filter | BinOperator::Partition => filter::can_be_used(lhs, rhs),
+        BinOperator::Map => map::can_be_used(lhs, rhs),
+        BinOperator::Assign => {
+            assign::can_be_used(lhs.clone(), rhs.clone(), |_, _| true, |_, x| x.clone())
+        }
+        BinOperator::AssignAdd => {
+            assign::can_be_used(lhs.clone(), rhs.clone(), add::can_be_used, |lhs, rhs| {
+                add::return_type(lhs.clone(), rhs.clone())
+            })
+        }
+        BinOperator::AssignSubtract
+        | BinOperator::AssignMultiply
+        | BinOperator::AssignDivide
+        | BinOperator::AssignPow => assign::can_be_used(
+            lhs.clone(),
+            rhs.clone(),
+            assign_can_be_used_num,
+            return_type,
+        ),
+        BinOperator::AssignModulo
+        | BinOperator::AssignLShift
+        | BinOperator::AssignRShift
+        | BinOperator::AssignXor => assign::can_be_used(
+            lhs.clone(),
+            rhs.clone(),
+            assign_can_be_used_int,
+            return_type,
+        ),
+        BinOperator::AssignBitwiseAnd | BinOperator::AssignBitwiseOr => {
+            assign::can_be_used(lhs.clone(), rhs.clone(), bitwise_can_be_used, return_type)
+        }
+    }
+}
+
+fn return_type(lhs: &Type, rhs: &Type) -> Type {
+    if var_type!([]).matches(lhs) {
+        lhs.clone()
+    } else {
+        rhs.clone()
+    }
+}
+
+fn assign_can_be_used_num(a: &Type, b: &Type) -> bool {
+    can_be_used_num(a.clone(), b.clone())
+}
+
+fn assign_can_be_used_int(a: &Type, b: &Type) -> bool {
+    can_be_used_int(a.clone(), b.clone())
+}
+fn bitwise_can_be_used(a: &Type, b: &Type) -> bool {
+    bitwise::can_be_used(a.clone(), b.clone())
 }

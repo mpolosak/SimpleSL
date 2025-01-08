@@ -1,4 +1,4 @@
-mod r#for;
+pub mod r#for;
 pub mod r#while;
 pub mod while_set;
 use super::{
@@ -7,7 +7,6 @@ use super::{
 };
 use crate::{variable::Variable, Error, ExecError, Interpreter};
 use pest::iterators::Pair;
-pub use r#for::For;
 use simplesl_parser::Rule;
 
 #[derive(Debug)]

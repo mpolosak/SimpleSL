@@ -55,9 +55,8 @@ while ident:type = expression statment
 ## for
 ```
 for element_ident in expression statment
-for index_ident, element_ident in expression statment
 ```
-The expression must be an array
+The expression must be an iterator
 
 ## break
 ```

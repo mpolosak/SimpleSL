@@ -17,7 +17,7 @@ mod return_type;
 mod set;
 mod tuple;
 mod type_filter;
-mod unary_operation;
+pub mod unary_operation;
 use self::{
     array::Array,
     array_repeat::ArrayRepeat,
@@ -39,7 +39,7 @@ use crate::{
 use duplicate::duplicate_item;
 use match_any::match_any;
 use pest::iterators::Pair;
-use r#loop::{r#while, while_set, For, Loop};
+use r#loop::{r#for, r#while, while_set, Loop};
 use r#mut::Mut;
 use reduce::Reduce;
 use simplesl_parser::{unexpected, Rule, PRATT_PARSER};
@@ -170,7 +170,6 @@ pub enum Instruction {
     Break,
     Continue,
     DestructTuple(Arc<DestructTuple>),
-    For(Arc<For>),
     FunctionDeclaration(Arc<FunctionDeclaration>),
     IfElse(Arc<IfElse>),
     Import(Import),
@@ -208,7 +207,7 @@ impl Instruction {
             Rule::r#loop => Loop::create_instruction(pair, local_variables),
             Rule::r#while => r#while::create_instruction(pair, local_variables),
             Rule::while_set => while_set::create_instruction(pair, local_variables),
-            Rule::r#for | Rule::for_with_index => For::create_instruction(pair, local_variables),
+            Rule::r#for => r#for::create_instruction(pair, local_variables),
             Rule::r#break if local_variables.in_loop => Ok(Self::Break),
             Rule::r#break => Err(Error::BreakOutsideLoop),
             Rule::r#continue if local_variables.in_loop => Ok(Self::Continue),
@@ -228,7 +227,7 @@ impl Exec for Instruction {
                 .ok_or_else(|| panic!("Tried to get variable {ident} that doest exist")),
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins)
             | Self::Block(ins) | Self::DestructTuple(ins) | Self::Tuple(ins)
-            | Self::BinOperation(ins) | Self::For(ins) | Self::FunctionDeclaration(ins)
+            | Self::BinOperation(ins) | Self::FunctionDeclaration(ins)
             | Self::IfElse(ins) | Self::Import(ins) | Self::Loop(ins) | Self::Match(ins)
             | Self::Mut(ins) | Self::Reduce(ins) | Self::Set(ins) | Self::SetIfElse(ins)
             | Self::TypeFilter(ins) | Self::UnaryOperation(ins) => ins.exec(interpreter),
@@ -257,7 +256,7 @@ impl Recreate for Instruction {
             Self::Variable(variable) => Ok(Self::Variable(variable.clone())),
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins)
             | Self::Block(ins) | Self::DestructTuple(ins) | Self::Tuple(ins)
-            | Self::BinOperation(ins) | Self::For(ins) | Self::FunctionDeclaration(ins)
+            | Self::BinOperation(ins) | Self::FunctionDeclaration(ins)
             | Self::IfElse(ins) | Self::Import(ins) | Self::Loop(ins) | Self::Match(ins)
             | Self::Mut(ins) | Self::Reduce(ins) | Self::Set(ins) | Self::SetIfElse(ins)
             | Self::TypeFilter(ins) | Self::UnaryOperation(ins) => ins.recreate(local_variables),
@@ -277,7 +276,7 @@ impl ReturnType for Instruction {
             | Self::Set(ins) | Self::SetIfElse(ins) | Self::TypeFilter(ins)
             | Self::UnaryOperation(ins)
             => ins.return_type(),
-            Self::Loop(_) | Self::For(_) => Type::Void,
+            Self::Loop(_) => Type::Void,
             Self::Break | Self::Continue => Type::Never
         }
     }

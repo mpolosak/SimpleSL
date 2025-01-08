@@ -17,9 +17,10 @@ pub fn create_instruction(
     if return_type != Type::Bool {
         return Err(Error::WrongCondition(condition.str, return_type));
     }
+    let in_loop = local_variables.in_loop;
     local_variables.in_loop = true;
     let instruction = InstructionWithStr::new(inner.next().unwrap(), local_variables)?;
-    local_variables.in_loop = false;
+    local_variables.in_loop = in_loop;
     if let Instruction::Variable(value) = condition.instruction {
         return if value == Variable::Bool(true) {
             Ok(Loop(instruction).into())

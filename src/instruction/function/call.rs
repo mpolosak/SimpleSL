@@ -1,19 +1,16 @@
 use crate::{
     function::{Function, Param, Params},
-    instruction::{
-        set::Set,
-        unary_operation::{UnaryOperation, UnaryOperator},
-        InstructionWithStr,
-    },
+    instruction::{set::Set, unary_operation::UnaryOperation, InstructionWithStr},
+    unary_operator::UnaryOperator,
     variable::{ReturnType, Typed, Variable},
-    Error,
+    BinOperator, Error,
 };
 use crate::{
     instruction::{
         function::AnonymousFunction,
         local_variable::{LocalVariable, LocalVariables},
         tuple::Tuple,
-        BinOperation, BinOperator, Instruction,
+        BinOperation, Instruction,
     },
     ExecError,
 };

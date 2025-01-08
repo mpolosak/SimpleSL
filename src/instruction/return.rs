@@ -1,9 +1,6 @@
-use super::{
-    local_variable::LocalVariables,
-    unary_operation::{UnaryOperation, UnaryOperator},
-    Instruction,
-};
+use super::{local_variable::LocalVariables, unary_operation::UnaryOperation, Instruction};
 use crate::{
+    unary_operator::UnaryOperator,
     variable::{ReturnType, Variable},
     Error,
 };

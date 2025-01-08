@@ -1,26 +1,11 @@
 pub mod and {
     use crate::{
         instruction::{
-            local_variable::LocalVariables, BinOperation, BinOperator, Exec, ExecResult,
-            Instruction, Recreate,
+            local_variable::LocalVariables, BinOperation, Exec, ExecResult, Instruction, Recreate,
         },
-        variable::{ReturnType, Type, Variable},
-        Error, ExecError, Interpreter,
+        variable::Variable,
+        BinOperator, ExecError, Interpreter,
     };
-
-    pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
-        let lhs_type = lhs.return_type();
-        let rhs_type = rhs.return_type();
-        if lhs_type != Type::Bool || rhs_type != Type::Bool {
-            return Err(Error::CannotDo2(lhs_type, "&&", rhs_type));
-        }
-        Ok(BinOperation {
-            lhs,
-            rhs,
-            op: BinOperator::And,
-        }
-        .into())
-    }
 
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         match (lhs, rhs) {
@@ -64,26 +49,11 @@ pub mod and {
 pub mod or {
     use crate::{
         instruction::{
-            local_variable::LocalVariables, BinOperation, BinOperator, Exec, ExecResult,
-            Instruction, Recreate,
+            local_variable::LocalVariables, BinOperation, Exec, ExecResult, Instruction, Recreate,
         },
-        variable::{ReturnType, Type, Variable},
-        Error, ExecError, Interpreter,
+        variable::Variable,
+        BinOperator, ExecError, Interpreter,
     };
-
-    pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
-        let lhs_type = lhs.return_type();
-        let rhs_type = rhs.return_type();
-        if lhs_type != Type::Bool || rhs_type != Type::Bool {
-            return Err(Error::CannotDo2(lhs_type, "||", rhs_type));
-        }
-        Ok(BinOperation {
-            lhs,
-            rhs,
-            op: BinOperator::Or,
-        }
-        .into())
-    }
 
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
         match (lhs, rhs) {

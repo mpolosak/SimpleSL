@@ -1,6 +1,7 @@
 use super::{function_type::FunctionType, multi_type::MultiType};
 use crate as simplesl;
 use crate::{errors::ParseTypeError, join};
+use lazy_static::lazy_static;
 use match_any::match_any;
 use pest::{iterators::Pair, Parser};
 use simplesl_macros::var_type;
@@ -28,6 +29,10 @@ pub enum Type {
     Mut(Arc<Type>),
     Any,
     Never,
+}
+
+lazy_static! {
+    static ref ITERATOR_TYPE: Type = var_type!(() -> (bool, any));
 }
 
 impl Type {
@@ -232,6 +237,10 @@ impl Type {
         }
     }
 
+    pub fn is_iterator(&self) -> bool {
+        self.matches(&ITERATOR_TYPE)
+    }
+
     pub fn tuple_len(&self) -> Option<usize> {
         match self {
             Self::Tuple(types) => Some(types.len()),
@@ -245,6 +254,28 @@ impl Type {
                         None
                     }
                 })
+            }
+            _ => None,
+        }
+    }
+
+    pub fn iter_element(&self) -> Option<Type> {
+        match self {
+            Self::Function(function) => {
+                if function.params.len() != 0 {
+                    return None;
+                }
+                let return_tuple = function.return_type.clone().flatten_tuple()?;
+                if return_tuple.len() != 2 || return_tuple[0] != Type::Bool {
+                    return None;
+                }
+                Some(return_tuple[1].clone())
+            }
+            Self::Multi(multi) => {
+                let mut iter = multi.iter();
+                let first = iter.next().unwrap().iter_element()?;
+                iter.map(Self::iter_element)
+                    .try_fold(first, |acc, curr| Some(acc | curr?))
             }
             _ => None,
         }

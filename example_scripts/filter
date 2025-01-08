@@ -1,0 +1,42 @@
+i := mut 0;
+x := () -> (bool, int) {
+    i += 1;
+    return (*i <= 5, *i);
+}
+
+filter := (func: () -> (bool, int), predicate: (int) -> bool) -> () -> (bool, int) {
+    return () -> (bool, int) {
+        loop {
+            res := func();
+            (con, value) := res;
+            if !con || predicate(value) return res;
+        }
+        return (false, 0);
+    }
+}
+
+a := filter(x, (a:int) -> bool {return a%2 == 0})
+
+iter := (array: [int]) -> () -> (bool, int) {
+    i := mut -1;
+    len := len(array)
+    return () -> (bool, int) {
+        i+=1;
+        if *i < len {
+            return (true, array[*i])
+        }
+        return (false, 0)
+    }
+} 
+
+collect := (iter: ()->(bool,int)) -> [int]{
+    res := mut [int] [];
+    loop {
+        (con, value) := iter();
+        if (!con) {
+            break;
+        }
+        res += [value];
+    }
+    return *res;
+}

@@ -11,9 +11,10 @@ pub fn create_instruction(
     local_variables: &mut LocalVariables,
 ) -> Result<Instruction, Error> {
     let str = pair.as_str();
+    let in_loop = local_variables.in_loop;
     local_variables.in_loop = true;
     let mut set_if_else = SetIfElse::create(pair, local_variables)?;
-    local_variables.in_loop = false;
+    local_variables.in_loop = in_loop;
     set_if_else.else_instruction = InstructionWithStr {
         instruction: Instruction::Break,
         str: "break".into(),

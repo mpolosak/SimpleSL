@@ -1,0 +1,17 @@
+i:= mut 0
+
+loop {
+    if (*i==3) {
+        i+=1;
+        continue;
+    }
+    j := mut 0
+    while(*j<*i){
+        print(*j)
+        j+=1;
+    }
+    i+=1;
+    if *i>5 {
+        break;
+    }
+}

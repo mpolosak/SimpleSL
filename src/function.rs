@@ -5,6 +5,9 @@ pub use self::param::{Param, Params};
 use crate as simplesl;
 use crate::instruction::block::Block;
 use crate::instruction::function::call;
+use crate::instruction::unary_operation::UnaryOperation;
+use crate::unary_operator::UnaryOperator;
+use crate::variable::FunctionType;
 use crate::{
     instruction::{ExecStop, InstructionWithStr},
     interpreter::Interpreter,
@@ -15,7 +18,7 @@ use crate::{
 use simplesl_macros::var_type;
 use std::{fmt, iter::zip, sync::Arc};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Function {
     pub(crate) ident: Option<Arc<str>>,
     pub(crate) params: Params,
@@ -35,6 +38,36 @@ impl Function {
             body: Body::Native(body),
             return_type,
         }
+    }
+
+    pub fn of_type(fn_type: &FunctionType) -> Option<Self> {
+        let params = fn_type
+            .params
+            .iter()
+            .cloned()
+            .enumerate()
+            .map(|(i, var_type)| Param {
+                name: format!("p{i}").into(),
+                var_type,
+            })
+            .collect();
+        let returned = Variable::of_type(&fn_type.return_type)?;
+        Some(Self {
+            ident: None,
+            params,
+            body: Body::Lang(
+                [InstructionWithStr {
+                    str: format!("return {returned}").into(),
+                    instruction: UnaryOperation {
+                        instruction: returned.into(),
+                        op: UnaryOperator::Return,
+                    }
+                    .into(),
+                }]
+                .into(),
+            ),
+            return_type: fn_type.return_type(),
+        })
     }
 
     pub fn create_call(self: Arc<Self>, args: Vec<Variable>) -> Result<Code, Error> {

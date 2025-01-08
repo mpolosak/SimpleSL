@@ -51,3 +51,10 @@ impl From<Params> for LocalVariableMap {
             .collect()
     }
 }
+
+impl FromIterator<Param> for Params {
+    fn from_iter<T: IntoIterator<Item = Param>>(iter: T) -> Self {
+        let value = iter.into_iter().collect();
+        Self(value)
+    }
+}

@@ -1,45 +1,6 @@
-use crate::instruction::{can_be_used_num, BinOperation, BinOperator, Instruction};
-use crate::variable::{Array, ReturnType, Variable};
-use crate::{Error, ExecError};
+use crate::variable::{Array, Variable};
+use crate::ExecError;
 use std::sync::Arc;
-
-pub fn create_op(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
-    let lhs_type = lhs.return_type();
-    let rhs_type = rhs.return_type();
-    if !can_be_used_num(lhs_type.clone(), rhs_type.clone()) {
-        return Err(Error::CannotDo2(lhs_type, "**", rhs_type));
-    }
-    Ok(BinOperation {
-        lhs,
-        rhs,
-        op: BinOperator::Pow,
-    }
-    .into())
-}
-
-pub fn create_from_instructions(
-    base: Instruction,
-    exp: Instruction,
-) -> Result<Instruction, ExecError> {
-    match (base, exp) {
-        (Instruction::Variable(base), Instruction::Variable(exp)) => Ok(exec(base, exp)?.into()),
-        (_, Instruction::Variable(Variable::Int(exp))) if exp < 0 => {
-            Err(ExecError::NegativeExponent)
-        }
-        (Instruction::ArrayRepeat(array), rhs) => Arc::unwrap_or_clone(array)
-            .try_map(|lhs| create_from_instructions(lhs, rhs.clone()))
-            .map(Instruction::from),
-        (lhs, Instruction::ArrayRepeat(array)) => Arc::unwrap_or_clone(array)
-            .try_map(|rhs| create_from_instructions(lhs.clone(), rhs))
-            .map(Instruction::from),
-        (lhs, rhs) => Ok(BinOperation {
-            lhs,
-            rhs,
-            op: BinOperator::Pow,
-        }
-        .into()),
-    }
-}
 
 pub fn exec(base: Variable, exp: Variable) -> Result<Variable, ExecError> {
     match (base, exp) {

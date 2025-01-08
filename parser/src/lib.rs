@@ -30,9 +30,10 @@ lazy_static::lazy_static! {
             .op(Op::infix(add, Left) | Op::infix(subtract, Left))
             .op(Op::infix(multiply, Left) | Op::infix(divide, Left) | Op::infix(modulo, Left))
             .op(Op::infix(pow, Left))
-            .op(Op::infix(map, Left) | Op::infix(filter, Left) | Op::infix(reduce, Left)
-                | Op::postfix(sum) | Op::postfix(product) | Op::postfix(all)
-                | Op::postfix(reduce_any) | Op::postfix(bitand_reduce) | Op::postfix(bitor_reduce))
+            .op(Op::infix(map, Left) | Op::infix(filter, Left) | Op::infix(partition, Left)
+                | Op::infix(reduce, Left) | Op::postfix(sum) | Op::postfix(product)
+                | Op::postfix(all) | Op::postfix(reduce_any) | Op::postfix(bitand_reduce)
+                | Op::postfix(bitor_reduce) | Op::postfix(collect) | Op::postfix(iter))
             .op(Op::prefix(not) | Op::prefix(unary_minus) | Op::prefix(indirection))
             .op(Op::postfix(at) | Op::postfix(type_filter) | Op::postfix(function_call))
     };

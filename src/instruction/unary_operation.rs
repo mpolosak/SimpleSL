@@ -1,13 +1,15 @@
+mod iter;
 use super::{
     at,
     function::call,
     local_variable::LocalVariables,
     prefix_op::{indirection, not, unary_minus},
-    reduce::{all, any, bitand, bitor, product, sum},
+    reduce::{self, bool_reduce, collect, product, sum},
     type_filter::TypeFilter,
     Exec, ExecResult, ExecStop, Instruction, InstructionWithStr, Recreate,
 };
 use crate::{
+    unary_operator::UnaryOperator,
     variable::{ReturnType, Type},
     Error, Interpreter,
 };
@@ -29,10 +31,12 @@ impl InstructionWithStr {
             Rule::function_call => call::create_instruction(lhs, op, local_variables),
             Rule::sum => sum::create(lhs),
             Rule::product => product::create(lhs),
-            Rule::all => all::create(lhs),
-            Rule::reduce_any => any::create(lhs),
-            Rule::bitand_reduce => bitand::create(lhs),
-            Rule::bitor_reduce => bitor::create(lhs),
+            Rule::all => bool_reduce::create(lhs, UnaryOperator::All),
+            Rule::reduce_any => bool_reduce::create(lhs, UnaryOperator::Any),
+            Rule::bitand_reduce => reduce::bit::create(lhs, UnaryOperator::BitAnd),
+            Rule::bitor_reduce => reduce::bit::create(lhs, UnaryOperator::BitOr),
+            Rule::collect => collect::create(lhs),
+            Rule::iter => iter::create(lhs),
             rule => unexpected!(rule),
         }?;
         Ok(Self { instruction, str })
@@ -45,36 +49,23 @@ pub struct UnaryOperation {
     pub op: UnaryOperator,
 }
 
-#[derive(Debug, Clone, Copy)]
-pub enum UnaryOperator {
-    All,
-    Any,
-    BitAnd,
-    BitOr,
-    Sum,
-    Product,
-    Not,
-    UnaryMinus,
-    Return,
-    Indirection,
-    FunctionCall,
-}
-
 impl Exec for UnaryOperation {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let var = self.instruction.exec(interpreter)?;
         Ok(match self.op {
-            UnaryOperator::All => all::exec(var),
-            UnaryOperator::Any => any::exec(var),
-            UnaryOperator::BitAnd => bitand::exec(var),
-            UnaryOperator::BitOr => bitor::exec(var),
-            UnaryOperator::Sum => sum::exec(var),
-            UnaryOperator::Product => product::exec(var),
+            UnaryOperator::Sum => sum::exec(var)?,
+            UnaryOperator::Product => product::exec(var)?,
             UnaryOperator::Not => not::exec(var),
             UnaryOperator::UnaryMinus => unary_minus::exec(var),
             UnaryOperator::Return => return Err(ExecStop::Return(var)),
             UnaryOperator::Indirection => indirection::exec(var),
             UnaryOperator::FunctionCall => var.into_function().unwrap().exec(interpreter)?,
+            UnaryOperator::Collect => collect::exec(var, interpreter)?,
+            UnaryOperator::Iter => iter::exec(var),
+            UnaryOperator::All
+            | UnaryOperator::Any
+            | UnaryOperator::BitAnd
+            | UnaryOperator::BitOr => unreachable!(),
         })
     }
 }
@@ -86,17 +77,9 @@ impl Recreate for UnaryOperation {
     ) -> Result<super::Instruction, crate::ExecError> {
         let instruction = self.instruction.recreate(local_variables)?;
         Ok(match self.op {
-            UnaryOperator::All => all::recreate(instruction),
-            UnaryOperator::Any => any::recreate(instruction),
-            UnaryOperator::BitAnd => bitand::recreate(instruction),
-            UnaryOperator::BitOr => bitor::recreate(instruction),
-            UnaryOperator::Sum => sum::recreate(instruction),
-            UnaryOperator::Product => product::recreate(instruction),
             UnaryOperator::Not => not::create_from_instruction(instruction),
             UnaryOperator::UnaryMinus => unary_minus::create_from_instruction(instruction),
-            op @ (UnaryOperator::Return
-            | UnaryOperator::Indirection
-            | UnaryOperator::FunctionCall) => UnaryOperation { instruction, op }.into(),
+            op => UnaryOperation { instruction, op }.into(),
         })
     }
 }
@@ -105,13 +88,17 @@ impl ReturnType for UnaryOperation {
     fn return_type(&self) -> Type {
         let return_type = self.instruction.return_type();
         match self.op {
-            UnaryOperator::All | UnaryOperator::Any => Type::Bool,
-            UnaryOperator::BitAnd | UnaryOperator::BitOr => Type::Int,
-            UnaryOperator::Sum | UnaryOperator::Product => return_type.element_type().unwrap(),
+            UnaryOperator::Sum | UnaryOperator::Product => return_type.iter_element().unwrap(),
             UnaryOperator::Not | UnaryOperator::UnaryMinus => return_type,
-            UnaryOperator::Return => Type::Never,
             UnaryOperator::Indirection => indirection::return_type(return_type),
             UnaryOperator::FunctionCall => return_type.return_type().unwrap(),
+            UnaryOperator::Collect => collect::return_type(return_type),
+            UnaryOperator::Iter => iter::return_type(return_type),
+            UnaryOperator::All
+            | UnaryOperator::Any
+            | UnaryOperator::BitAnd
+            | UnaryOperator::BitOr
+            | UnaryOperator::Return => Type::Never,
         }
     }
 }

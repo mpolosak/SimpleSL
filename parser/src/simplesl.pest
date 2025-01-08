@@ -1,171 +1,273 @@
-restricted_keywords = _{ bool | "mut" | "return" | "loop" | "while" | "for" | break | continue }
-ident = @{ !(restricted_keywords~!(ASCII_ALPHANUMERIC|"_")) ~ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC|"_")* }
-var = _{ bool | float | int | array | array_repeat | string | function | void | tuple | mut }
-  bool = _{ true | false }
-    true = {"true"}
-    false = {"false"}
-  function = {params ~ return_type_decl? ~"{"~line*~"}"}
-  param = {ident ~ ":" ~ type}
-  params_list = _{ (param ~ ("," ~ param)*)?}
-    params = {"(" ~ params_list? ~ ")"}
-  return_type_decl = {("->" ~ type | return_type)}
-  tuple =  {"(" ~ expr ~ "," ~ expression_list ~ ")"}
-  int = ${ binary_int | octal_int | hexadecimal_int | decimal_int }
-    binary_int = ${ "0b" ~ binary }
-      binary = @{ "_"* ~ ASCII_BIN_DIGIT ~ ( ASCII_BIN_DIGIT | "_" )* }
-    octal_int = $ { "0o" ~ octal }
-      octal = @{ "_"* ~ ASCII_OCT_DIGIT ~ ( ASCII_OCT_DIGIT | "_" )* }
-    decimal_int = ${ decimal }
-      decimal = @{ ASCII_DIGIT ~ ( ASCII_DIGIT | "_" )* }
-    hexadecimal_int = $ { "0x" ~ hexadecimal }
-      hexadecimal = @{ "_"* ~ ASCII_HEX_DIGIT ~ ( ASCII_HEX_DIGIT | "_" )* }
-  float = @{ ( decimal ~ ("." ~ decimal)? ~ ("e"|"E") ~ ("+"|"-")? ~ "_"* ~ decimal) | (decimal ~ "." ~ decimal) }
-  void = {"()"}
-  array = {"[" ~ expression_list? ~ "]"}
-  array_repeat = {"[" ~ expr ~ ";" ~ expr ~ "]"}
-  string = ${ quotation_mark ~ inner ~ quotation_mark }
-    quotation_mark = _{"\""}
-    inner = @{ char* }
-    char = {
-        !("\"" | "\\") ~ ANY
-        | "\\" ~ ANY
-    }
-  mut = {"mut" ~ type? ~ expr}
-primary = _{ ident | var | expr_in_brackets }
-  expr_in_brackets = _{ "(" ~ expr ~ ")" }
-atom = _{ prefix_op? ~ primary ~ postfix_op? }
-expr = { (atom ~ (bin_op ~ atom)*) }
-bin_op = _{ equal | assigns | comp | and | or | bitwise_and | bitwise_or | xor | pow | multiply | divide
-          | add | subtract | modulo | map | filter | reduce }
-  equal = { "==" }
-  comp = _{ not_equal | greater_equal | greater | lower_equal | lower }
-    not_equal = { "!=" }
-    lshift = { "<<" }
-    rshift = { ">>" }
-    greater = { ">" }
-    greater_equal = { ">=" }
-    lower = { "<" }
-    lower_equal = { "<=" }
-  and = { "&&" }
-  or = { "||" }
-  bitwise_and = { "&" }
-  bitwise_or = { "|" }
-  xor = { "^" }
-  pow = { "**" }
-  multiply = { "*" }
-  divide = { "/" }
-  add = { "+" }
-  subtract = { "-" }
-  modulo = { "%" }
-  map = { "@" }
-  filter = { "?" }
-  reduce = { "$" ~ expr }
-  assigns = _{ assign | assign_add | assign_subtract | assing_multiply | assign_divide
-              | assign_modulo | assign_lshift | assign_rshift | assign_bitwise_and
-              | assign_bitwise_or | assign_xor | assign_pow }
-    assign = { "=" }
-    assign_add = { "+=" }
-    assign_subtract = { "-=" }
-    assing_multiply = { "*=" }
-    assign_divide = { "/=" }
-    assign_modulo = { "%=" }
-    assign_lshift = { "<<=" }
-    assign_rshift = { ">>=" }
-    assign_bitwise_and = { "&=" }
-    assign_bitwise_or = { "|=" }
-    assign_xor = { "^=" }
-    assign_pow = { "**=" }
-prefix_op = _{not | unary_minus | indirection }
-  not = { "!" }
-  unary_minus = { "-" }
-  indirection = { "*" }
-postfix_op = _{ type_filter | at | function_call | sum | product | all | reduce_any | bitand_reduce
-               | bitor_reduce }
-  type_filter = { "?" ~ type }
-  at = { "[" ~ expr ~ "]"  }
-  function_call = {"("~expression_list?~")"}
-  sum = { "$+" }
-  product = { "$*" }
-  all = { "$&&" }
-  reduce_any = { "$||" }
-  bitand_reduce = { "$&" }
-  bitor_reduce = { "$|" }
-stm = _{ block | if_else | set_if_else | match | import | return | loop | while | while_set | for
-        | for_with_index | break | continue | expr }
-  block = { "{" ~ line* ~ "}" }
-  body = _{ block | return | expr }
-  if_else = { "if" ~ expr ~ body ~ ("else" ~ stm)? }
-  set_if_else = { "if" ~ ident ~ ":" ~ type ~ "=" ~ expr ~ body ~ ("else" ~ stm)? }
-  match = { "match" ~ expr ~  "{" ~ match_arm* ~ "}" }
-    match_arm = _{ match_type | match_value | match_other }
-    match_type = { ident ~ ":" ~ type ~ "=>" ~ body ~ "," }
-    match_value = { values ~ "=>" ~ body ~ "," }
-    match_other = { "=>" ~ body ~ "," }
-    values = _{ (expr ~ ("," ~ expr)*)}
-  import = { "import" ~ string }
-  return = { "return" ~ stm? }
-  break = { "break" }
-  continue = { "continue" }
-  while = { "while" ~ expr ~ stm }
-  while_set = { "while" ~ ident ~ ":" ~ type ~ "=" ~ expr ~ stm }
-  for = { "for" ~ ident ~ "in" ~ expr ~ stm}
-  for_with_index = { "for" ~ ident ~ "," ~ ident ~ "in" ~ expr ~ stm}
-  loop = { "loop" ~ stm }
-expression_list = _{ (expr ~ ("," ~ expr)*)}
-line = _{ COMMENT* ~ (( return | function_declaration | set | destruct_tuple | stm ) ~  line_end?) }
-	line_end = _{ ";" }
-  function_declaration = { ident ~ ":=" ~ function }
-  set = { ident ~ ":=" ~ stm}
-  destruct_tuple = { destruct_idents ~ ":=" ~ stm }
-    destruct_idents =  {"(" ~ (ident ~ ("," ~ ident)*)? ~ ")"}
-type = _{ multi | standard_types }
-  bool_type = {"bool"}
-  int_type = {"int"}
-  float_type = {"float"}
-  string_type = {"string"}
-  function_type = {function_type_params ~ "->" ~ return_type}
-    function_type_params = {"(" ~ (type ~ ("," ~ type)*)? ~ ")"}
-    return_type = _{ standard_types | "(" ~ multi ~ ")" }
-  array_type = { "[" ~ type? ~ "]" }
-  tuple_type = {"(" ~ (type ~ ("," ~ type)+) ~ ")"}
-  standard_types = _{ bool_type | int_type | float_type | string_type | function_type | void | array_type
-    | tuple_type | any | never | mut_type }
-  multi = { ( standard_types ) ~ ( "|" ~ standard_types )+ }
-  any = {"any"}
-  never = {"!"}
-  mut_type = {"mut" ~ return_type}
+restricted_keywords  = _{ bool | "mut" | "return" | "loop" | "while" | "for" | break | continue }
+ident                = @{ !(restricted_keywords ~ !(ASCII_ALPHANUMERIC | "_")) ~ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
+var                  = _{ bool | float | int | array | array_repeat | string | function | void | tuple | mut }
+bool                 = _{ true | false }
+true                 =  { "true" }
+false                =  { "false" }
+function             =  { params ~ return_type_decl? ~ "{" ~ line* ~ "}" }
+param                =  { ident ~ ":" ~ type }
+params_list          = _{ (param ~ ("," ~ param)*)? }
+params               =  { "(" ~ params_list? ~ ")" }
+return_type_decl     =  { ("->" ~ type | return_type) }
+tuple                =  { "(" ~ expr ~ "," ~ expression_list ~ ")" }
+int                  = ${ binary_int | octal_int | hexadecimal_int | decimal_int }
+binary_int           = ${ "0b" ~ binary }
+binary               = @{ "_"* ~ ASCII_BIN_DIGIT ~ (ASCII_BIN_DIGIT | "_")* }
+octal_int            = ${ "0o" ~ octal }
+octal                = @{ "_"* ~ ASCII_OCT_DIGIT ~ (ASCII_OCT_DIGIT | "_")* }
+decimal_int          = ${ decimal }
+decimal              = @{ ASCII_DIGIT ~ (ASCII_DIGIT | "_")* }
+hexadecimal_int      = ${ "0x" ~ hexadecimal }
+hexadecimal          = @{ "_"* ~ ASCII_HEX_DIGIT ~ (ASCII_HEX_DIGIT | "_")* }
+float                = @{ (decimal ~ ("." ~ decimal)? ~ ("e" | "E") ~ ("+" | "-")? ~ "_"* ~ decimal) | (decimal ~ "." ~ decimal) }
+void                 =  { "()" }
+array                =  { "[" ~ expression_list? ~ "]" }
+array_repeat         =  { "[" ~ expr ~ ";" ~ expr ~ "]" }
+string               = ${ quotation_mark ~ inner ~ quotation_mark }
+quotation_mark       = _{ "\"" }
+inner                = @{ char* }
+char                 =  {
+    !("\"" | "\\") ~ ANY
+  | "\\" ~ ANY
+}
+mut                  =  { "mut" ~ type? ~ expr }
+primary              = _{ ident | var | expr_in_brackets }
+expr_in_brackets     = _{ "(" ~ expr ~ ")" }
+atom                 = _{ prefix_op? ~ primary ~ postfix_op* }
+expr                 =  { (atom ~ (bin_op ~ atom)*) }
+bin_op               = _{
+    equal
+  | assigns
+  | lshift
+  | rshift
+  | comp
+  | and
+  | or
+  | bitwise_and
+  | bitwise_or
+  | xor
+  | pow
+  | multiply
+  | divide
+  | add
+  | subtract
+  | modulo
+  | map
+  | filter
+  | partition
+  | reduce
+}
+equal                =  { "==" }
+comp                 = _{ not_equal | greater_equal | greater | lower_equal | lower }
+not_equal            =  { "!=" }
+lshift               =  { "<<" }
+rshift               =  { ">>" }
+greater              =  { ">" }
+greater_equal        =  { ">=" }
+lower                =  { "<" }
+lower_equal          =  { "<=" }
+and                  =  { "&&" }
+or                   =  { "||" }
+bitwise_and          =  { "&" }
+bitwise_or           =  { "|" }
+xor                  =  { "^" }
+pow                  =  { "**" }
+multiply             =  { "*" }
+divide               =  { "/" }
+add                  =  { "+" }
+subtract             =  { "-" }
+modulo               =  { "%" }
+map                  =  { "@" }
+filter               =  { "?" }
+partition            =  { "\\" }
+reduce               =  { "$" ~ expr }
+assigns              = _{
+    assign
+  | assign_add
+  | assign_subtract
+  | assing_multiply
+  | assign_divide
+  | assign_modulo
+  | assign_lshift
+  | assign_rshift
+  | assign_bitwise_and
+  | assign_bitwise_or
+  | assign_xor
+  | assign_pow
+}
+assign               =  { "=" }
+assign_add           =  { "+=" }
+assign_subtract      =  { "-=" }
+assing_multiply      =  { "*=" }
+assign_divide        =  { "/=" }
+assign_modulo        =  { "%=" }
+assign_lshift        =  { "<<=" }
+assign_rshift        =  { ">>=" }
+assign_bitwise_and   =  { "&=" }
+assign_bitwise_or    =  { "|=" }
+assign_xor           =  { "^=" }
+assign_pow           =  { "**=" }
+prefix_op            = _{ not | unary_minus | indirection }
+not                  =  { "!" }
+unary_minus          =  { "-" }
+indirection          =  { "*" }
+postfix_op           = _{
+    type_filter
+  | at
+  | function_call
+  | sum
+  | product
+  | all
+  | reduce_any
+  | bitand_reduce
+  | bitor_reduce
+  | collect
+  | iter
+}
+type_filter          =  { "?" ~ type }
+at                   =  { "[" ~ expr ~ "]" }
+function_call        =  { "(" ~ expression_list? ~ ")" }
+sum                  =  { "$+" }
+product              =  { "$*" }
+all                  =  { "$&&" }
+reduce_any           =  { "$||" }
+bitand_reduce        =  { "$&" }
+bitor_reduce         =  { "$|" }
+collect              =  { "$]" }
+iter                 =  { "~" }
+stm                  = _{
+    block
+  | if_else
+  | set_if_else
+  | match
+  | import
+  | return
+  | loop
+  | while
+  | while_set
+  | for
+  | break
+  | continue
+  | expr
+}
+block                =  { "{" ~ line* ~ "}" }
+body                 = _{ block | return | expr }
+if_else              =  { "if" ~ expr ~ body ~ ("else" ~ stm)? }
+set_if_else          =  { "if" ~ ident ~ ":" ~ type ~ "=" ~ expr ~ body ~ ("else" ~ stm)? }
+match                =  { "match" ~ expr ~ "{" ~ match_arm* ~ "}" }
+match_arm            = _{ match_type | match_value | match_other }
+match_type           =  { ident ~ ":" ~ type ~ "=>" ~ body ~ "," }
+match_value          =  { values ~ "=>" ~ body ~ "," }
+match_other          =  { "=>" ~ body ~ "," }
+values               = _{ (expr ~ ("," ~ expr)*) }
+import               =  { "import" ~ string }
+return               =  { "return" ~ stm? }
+break                =  { "break" }
+continue             =  { "continue" }
+while                =  { "while" ~ expr ~ stm }
+while_set            =  { "while" ~ ident ~ ":" ~ type ~ "=" ~ expr ~ stm }
+for                  =  { "for" ~ ident ~ "in" ~ expr ~ stm }
+loop                 =  { "loop" ~ stm }
+expression_list      = _{ (expr ~ ("," ~ expr)*) }
+line                 = _{ COMMENT* ~ ((return | function_declaration | set | destruct_tuple | stm) ~ line_end?) }
+line_end             = _{ ";" }
+function_declaration =  { ident ~ ":=" ~ function }
+set                  =  { ident ~ ":=" ~ stm }
+destruct_tuple       =  { destruct_idents ~ ":=" ~ stm }
+destruct_idents      =  { "(" ~ (ident ~ ("," ~ ident)*)? ~ ")" }
+type                 = _{ multi | standard_types }
+bool_type            =  { "bool" }
+int_type             =  { "int" }
+float_type           =  { "float" }
+string_type          =  { "string" }
+function_type        =  { function_type_params ~ "->" ~ return_type }
+function_type_params =  { "(" ~ (type ~ ("," ~ type)*)? ~ ")" }
+return_type          = _{ standard_types | "(" ~ multi ~ ")" }
+array_type           =  { "[" ~ type? ~ "]" }
+tuple_type           =  { "(" ~ (type ~ ("," ~ type)+) ~ ")" }
+standard_types       = _{
+    bool_type
+  | int_type
+  | float_type
+  | string_type
+  | function_type
+  | void
+  | array_type
+  | tuple_type
+  | any
+  | never
+  | mut_type
+}
+multi                =  { (standard_types) ~ ("|" ~ standard_types)+ }
+any                  =  { "any" }
+never                =  { "!" }
+mut_type             =  { "mut" ~ return_type }
 // type + ident for macro var_type!
-type_ident = _{ multi_ident | standard_types_ident }
-  function_type_ident = {(function_type_params_ident | ident) ~ "->" ~ return_type_ident}
-    function_type_params_ident = {"(" ~ (type_ident ~ ("," ~ type_ident)*)? ~ ")"}
-    return_type_ident = _{ standard_types_ident | "(" ~ multi_ident ~ ")" }
-  array_type_ident = { "[" ~ type_ident? ~ "]" }
-  tuple_type_ident = {"(" ~ (type_ident ~ ("," ~ type_ident)+) ~ ")"}
-  standard_types_ident = _{bool_type | int_type | float_type | string_type | function_type_ident | void
-    | array_type_ident | tuple_type_ident | any | never | mut_type_ident | ident}
-  multi_ident = { ( standard_types_ident ) ~ ( "|" ~ standard_types_ident )+ }
-  mut_type_ident = {"mut" ~ return_type_ident}
-input = _{ line* ~ &EOI}
-block_comment = _{"/*" ~ (!"*/" ~ ANY)* ~ "*/"}
-line_comment = _{"//"~(!NEWLINE ~ ANY)*}
+type_ident                 = _{ multi_ident | standard_types_ident }
+function_type_ident        =  { (function_type_params_ident | ident) ~ "->" ~ return_type_ident }
+function_type_params_ident =  { "(" ~ (type_ident ~ ("," ~ type_ident)*)? ~ ")" }
+return_type_ident          = _{ standard_types_ident | "(" ~ multi_ident ~ ")" }
+array_type_ident           =  { "[" ~ type_ident? ~ "]" }
+tuple_type_ident           =  { "(" ~ (type_ident ~ ("," ~ type_ident)+) ~ ")" }
+standard_types_ident       = _{
+    bool_type
+  | int_type
+  | float_type
+  | string_type
+  | function_type_ident
+  | void
+  | array_type_ident
+  | tuple_type_ident
+  | any
+  | never
+  | mut_type_ident
+  | ident
+}
+multi_ident                =  { (standard_types_ident) ~ ("|" ~ standard_types_ident)+ }
+mut_type_ident             =  { "mut" ~ return_type_ident }
+input                      = _{ line* ~ &EOI }
+block_comment              = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
+line_comment               = _{ "//" ~ (!NEWLINE ~ ANY)* }
 // rule for Variable::from_str
-only_var = _{var_from_str ~ &EOI}
-  var_from_str = _{bool | minus_float | float | minus_int|  int | array_from_str | array_repeat_from_str
-    | string | void | tuple_from_str }
-  minus_float = {"-" ~ float}
-  minus_int = {"-" ~ int}
-  array_from_str = {"[" ~ var_list? ~ "]"}
-  array_repeat_from_str =  {"[" ~ var_from_str ~ ";" ~ int ~ "]"}
-  tuple_from_str =  {"(" ~ var_from_str ~ "," ~ var_list ~ ")"}
-  var_list = _{ (var_from_str ~ ("," ~ var_from_str)*)}
+only_var              = _{ var_from_str ~ &EOI }
+var_from_str          = _{
+    bool
+  | minus_float
+  | float
+  | minus_int
+  | int
+  | array_from_str
+  | array_repeat_from_str
+  | string
+  | void
+  | tuple_from_str
+}
+minus_float           =  { "-" ~ float }
+minus_int             =  { "-" ~ int }
+array_from_str        =  { "[" ~ var_list? ~ "]" }
+array_repeat_from_str =  { "[" ~ var_from_str ~ ";" ~ int ~ "]" }
+tuple_from_str        =  { "(" ~ var_from_str ~ "," ~ var_list ~ ")" }
+var_list              = _{ (var_from_str ~ ("," ~ var_from_str)*) }
 // rule for var! macro
-var_macro = _{var_ident ~ &EOI}
-  var_ident = _{bool | minus_float | float | minus_int |  int | array_ident | array_ident_repeat
-    | string | void | tuple_ident | minus_ident | ident}
-  minus_ident = {"-" ~ ident}
-  array_ident = {"[" ~ var_ident_list? ~ "]"}
-  array_ident_repeat =  {"[" ~ var_ident ~ ";" ~ (int | ident) ~ "]"}
-  tuple_ident =  {"(" ~ var_ident ~ "," ~ var_ident_list ~ ")"}
-  var_ident_list = _{ (var_ident ~ ("," ~ var_ident)*)}
-COMMENT = _{block_comment|line_comment}
-WHITESPACE = _{ " " | "\t"| NEWLINE }
+var_macro          = _{ var_ident ~ &EOI }
+var_ident          = _{
+    bool
+  | minus_float
+  | float
+  | minus_int
+  | int
+  | array_ident
+  | array_ident_repeat
+  | string
+  | void
+  | tuple_ident
+  | minus_ident
+  | ident
+}
+minus_ident        =  { "-" ~ ident }
+array_ident        =  { "[" ~ var_ident_list? ~ "]" }
+array_ident_repeat =  { "[" ~ var_ident ~ ";" ~ (int | ident) ~ "]" }
+tuple_ident        =  { "(" ~ var_ident ~ "," ~ var_ident_list ~ ")" }
+var_ident_list     = _{ (var_ident ~ ("," ~ var_ident)*) }
+COMMENT            = _{ block_comment | line_comment }
+WHITESPACE         = _{ " " | "\t" | NEWLINE }
