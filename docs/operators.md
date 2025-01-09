@@ -103,7 +103,6 @@ Creates iterator returning only this elements of iterator on left for which func
 | lhs             | rhs                            | result     |
 | --------------- | ------------------------------ | ---------- |
 | () -> (bool, T) | (value: T) -> bool             | ([T], [T]) |
-| () -> (bool, T) | (index: int, value: T) -> bool | ([T], [T]) |
 
 Returns tuple containing two arrays. First array contains all elements for which function returned
 true, second array contains all other elements.
