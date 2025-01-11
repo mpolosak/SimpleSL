@@ -1,20 +1,12 @@
 use crate::{
-    instruction::{BinOperation, Instruction},
+    instruction::{create_from_instructions_with_exec, Instruction},
     variable::Variable,
     BinOperator,
 };
 use match_any::match_any;
 
 pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
-    match (lhs, rhs) {
-        (Instruction::Variable(lhs), Instruction::Variable(rhs)) => exec(lhs, rhs).into(),
-        (lhs, rhs) => BinOperation {
-            lhs,
-            rhs,
-            op: BinOperator::Multiply,
-        }
-        .into(),
-    }
+    create_from_instructions_with_exec(lhs, rhs, BinOperator::Subtract, exec)
 }
 
 pub fn exec(lhs: Variable, rhs: Variable) -> Variable {

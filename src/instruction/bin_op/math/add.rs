@@ -1,4 +1,4 @@
-use crate::instruction::{BinOperation, Instruction};
+use crate::instruction::{create_from_instructions_with_exec, Instruction};
 use crate::variable::{Array, Type, Variable};
 use crate::{self as simplesl, BinOperator};
 use lazy_static::lazy_static;
@@ -16,15 +16,7 @@ pub(crate) fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
 }
 
 pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
-    match (lhs, rhs) {
-        (Instruction::Variable(lhs), Instruction::Variable(rhs)) => exec(lhs, rhs).into(),
-        (lhs, rhs) => BinOperation {
-            lhs,
-            rhs,
-            op: BinOperator::Add,
-        }
-        .into(),
-    }
+    create_from_instructions_with_exec(lhs, rhs, BinOperator::Add, exec)
 }
 
 pub fn exec(lhs: Variable, rhs: Variable) -> Variable {

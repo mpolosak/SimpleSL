@@ -20,21 +20,13 @@ pub fn can_be_used(lhs: Type, rhs: Type) -> bool {
 )]
 pub mod bitwise {
     use crate::{
-        instruction::{BinOperation, Instruction},
+        instruction::{create_from_instructions_with_exec, Instruction},
         variable::Variable,
         BinOperator,
     };
 
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
-        match (lhs, rhs) {
-            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => exec(lhs, rhs).into(),
-            (lhs, rhs) => BinOperation {
-                lhs,
-                rhs,
-                op: BinOperator::Bitwise,
-            }
-            .into(),
-        }
+        create_from_instructions_with_exec(lhs, rhs, BinOperator::Bitwise, exec)
     }
 
     pub fn exec(lhs: Variable, rhs: Variable) -> Variable {

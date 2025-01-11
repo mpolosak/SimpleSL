@@ -10,6 +10,7 @@ use super::{
     at, function::call, local_variable::LocalVariables, reduce::Reduce, Exec, ExecResult,
     InstructionWithStr, Recreate,
 };
+use crate::variable::Variable;
 use crate::{self as simplesl, BinOperator};
 use crate::{
     instruction::Instruction,
@@ -169,7 +170,7 @@ impl ReturnType for BinOperation {
 }
 
 mod equal {
-    use super::{BinOperation, BinOperator};
+    use super::{create_from_instructions_with_exec, BinOperator};
     use crate::{instruction::Instruction, variable::Variable};
 
     pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
@@ -177,20 +178,12 @@ mod equal {
     }
 
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
-        match (lhs, rhs) {
-            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => exec(lhs, rhs).into(),
-            (lhs, rhs) => BinOperation {
-                lhs,
-                rhs,
-                op: BinOperator::Equal,
-            }
-            .into(),
-        }
+        create_from_instructions_with_exec(lhs, rhs, BinOperator::Equal, exec)
     }
 }
 
 mod not_equal {
-    use super::{BinOperation, BinOperator};
+    use super::{create_from_instructions_with_exec, BinOperator};
     use crate::{instruction::Instruction, variable::Variable};
 
     pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
@@ -198,15 +191,7 @@ mod not_equal {
     }
 
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
-        match (lhs, rhs) {
-            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => exec(lhs, rhs).into(),
-            (lhs, rhs) => BinOperation {
-                lhs,
-                rhs,
-                op: BinOperator::NotEqual,
-            }
-            .into(),
-        }
+        create_from_instructions_with_exec(lhs, rhs, BinOperator::NotEqual, exec)
     }
 }
 
@@ -312,4 +297,16 @@ fn assign_can_be_used_int(a: &Type, b: &Type) -> bool {
 }
 fn bitwise_can_be_used(a: &Type, b: &Type) -> bool {
     bitwise::can_be_used(a.clone(), b.clone())
+}
+
+pub fn create_from_instructions_with_exec<T: FnOnce(Variable, Variable) -> Variable>(
+    lhs: Instruction,
+    rhs: Instruction,
+    op: BinOperator,
+    exec: T,
+) -> Instruction {
+    match (lhs, rhs) {
+        (Instruction::Variable(lhs), Instruction::Variable(rhs)) => exec(lhs, rhs).into(),
+        (lhs, rhs) => BinOperation { lhs, rhs, op }.into(),
+    }
 }
