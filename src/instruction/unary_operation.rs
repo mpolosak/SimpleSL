@@ -5,6 +5,7 @@ use super::{
     local_variable::LocalVariables,
     prefix_op::{indirection, not, unary_minus},
     reduce::{self, bool_reduce, collect, product, sum},
+    tuple_access::TupleAccess,
     type_filter::TypeFilter,
     Exec, ExecResult, ExecStop, Instruction, InstructionWithStr, Recreate,
 };
@@ -29,6 +30,7 @@ impl InstructionWithStr {
                 TypeFilter::create_instruction(lhs, op.into_inner().next().unwrap())
             }
             Rule::function_call => call::create_instruction(lhs, op, local_variables),
+            Rule::tuple_access => TupleAccess::create_instruction(lhs, op),
             Rule::sum => sum::create(lhs),
             Rule::product => product::create(lhs),
             Rule::all => bool_reduce::create(lhs, UnaryOperator::All),

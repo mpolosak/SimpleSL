@@ -115,6 +115,7 @@ postfix_op           = _{
     type_filter
   | at
   | function_call
+  | tuple_access
   | sum
   | product
   | all
@@ -127,6 +128,7 @@ postfix_op           = _{
 type_filter          =  { "?" ~ type }
 at                   =  { "[" ~ expr ~ "]" }
 function_call        =  { "(" ~ expression_list? ~ ")" }
+tuple_access         =  { "." ~ int }
 sum                  =  { "$+" }
 product              =  { "$*" }
 all                  =  { "$&&" }

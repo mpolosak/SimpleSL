@@ -259,6 +259,24 @@ impl Type {
         }
     }
 
+    pub fn min_tuple_len(&self) -> Option<usize> {
+        let Self::Multi(multi) = self else {
+            return self.tuple_len();
+        };
+        let mut iter = multi.iter();
+        let first = iter.next().unwrap().tuple_len()?;
+        iter.map(Self::tuple_len).try_fold(
+            first,
+            |acc, curr| {
+                if acc < curr? {
+                    Some(acc)
+                } else {
+                    curr
+                }
+            },
+        )
+    }
+
     pub fn iter_element(&self) -> Option<Type> {
         match self {
             Self::Function(function) => {
@@ -275,6 +293,19 @@ impl Type {
                 let mut iter = multi.iter();
                 let first = iter.next().unwrap().iter_element()?;
                 iter.map(Self::iter_element)
+                    .try_fold(first, |acc, curr| Some(acc | curr?))
+            }
+            _ => None,
+        }
+    }
+
+    pub fn tuple_element_at(&self, index: usize) -> Option<Type> {
+        match self {
+            Self::Tuple(tuple) => tuple.get(index).cloned(),
+            Self::Multi(multi) => {
+                let mut iter = multi.iter();
+                let first = iter.next().unwrap().iter_element()?;
+                iter.map(|t| t.tuple_element_at(index))
                     .try_fold(first, |acc, curr| Some(acc | curr?))
             }
             _ => None,

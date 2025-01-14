@@ -16,11 +16,13 @@ pub enum Error {
     WrongType(Arc<str>, Type),
     WrongNumberOfArguments(Arc<str>, usize),
     IndexToBig,
+    TupleIndexTooBig(usize, Arc<str>, usize),
     NegativeIndex,
     NegativeLength,
     NegativeExponent,
     CannotBeParsed(Box<str>),
     CannotIndexInto(Type),
+    CannotTupleAccess(Arc<str>, Type),
     CannotIndexWith(Arc<str>),
     ZeroDivision,
     ZeroModulo,
@@ -89,11 +91,13 @@ impl PartialEq for Error {
             (Self::WrongType(l0, l1), Self::WrongType(r0, r1))
             | (Self::WrongCondition(l0, l1), Self::WrongCondition(r0, r1))
             | (Self::WrongNumberOfArguments(l0, l1), Self::WrongNumberOfArguments(r0, r1))
+            | (Self::CannotTupleAccess(l0, l1), Self::CannotTupleAccess(r0, r1))
              => l0 == r0 && l1 == r1,
             (Self::IO(l0), Self::IO(r0)) | (Self::CannotUnescapeString(l0), Self::CannotUnescapeString(r0)) => {
                 l0.to_string() == r0.to_string()
             },
-            (Self::CannotDo2(l0, l1, l2), Self::CannotDo2(r0, r1, r2)) => {
+            (Self::CannotDo2(l0, l1, l2), Self::CannotDo2(r0, r1, r2))
+            | (Self::TupleIndexTooBig(l0, l1, l2), Self::TupleIndexTooBig(r0, r1, r2))=> {
                 l0 == r0 && l1 == r1 && l2 == r2
             },
             (
@@ -149,6 +153,9 @@ impl fmt::Display for Error {
                 write!(f, "{name} requires {num} args")
             }
             Self::IndexToBig => write!(f, "index must be lower than array size"),
+            Self::TupleIndexTooBig(index, ins, len) => {
+                write!(f, "Cannot get element {index} of tuple {ins}. Tuple has len of {len}")
+            },
             Self::NegativeIndex => write!(f, "cannot index with negative value"),
             Self::NegativeLength => write!(f, "length of an array cannot be negative"),
             Self::NegativeExponent => write!(f, "int value cannot be rised to a negative power"),
@@ -160,6 +167,9 @@ impl fmt::Display for Error {
             }
             Self::CannotIndexWith(var_type) => {
                 write!(f, "Cannot index with {var_type}. Index must be int")
+            }
+            Self::CannotTupleAccess(ins, var_type) => {
+                write!(f, "Cannot access element of {ins} which is {var_type}. Only accessing elements of tuple is posible")
             }
             Self::ZeroDivision => {
                 write!(f, "Cannot divide by 0")
