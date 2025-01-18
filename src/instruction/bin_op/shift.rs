@@ -30,14 +30,16 @@ pub mod shift {
     }
 
     pub fn exec(lhs: Variable, rhs: Variable) -> Result<Variable, ExecError> {
-        match (lhs, rhs) {
-            (_, Variable::Int(rhs)) if !(0..=63).contains(&rhs) => Err(ExecError::OverflowShift),
-            (Variable::Int(lhs), Variable::Int(rhs)) => Ok((op1).into()),
-            (lhs, rhs) => panic!(
+        let (Variable::Int(lhs), Variable::Int(rhs)) = (&lhs, &rhs) else {
+            unreachable!(
                 "Tried to do {lhs} {} {rhs} which is imposible",
                 stringify!(op2)
-            ),
+            )
+        };
+        if !(0..=63).contains(rhs) {
+            return Err(ExecError::OverflowShift);
         }
+        Ok((op1).into())
     }
 }
 
