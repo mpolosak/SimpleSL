@@ -15,9 +15,8 @@ pub enum Error {
     VariableDoesntExist(Arc<str>),
     WrongType(Arc<str>, Type),
     WrongNumberOfArguments(Arc<str>, usize),
-    IndexToBig,
+    IndexOutOfBounds,
     TupleIndexTooBig(usize, Arc<str>, usize),
-    NegativeIndex,
     NegativeLength,
     NegativeExponent,
     CannotBeParsed(Box<str>),
@@ -152,11 +151,10 @@ impl fmt::Display for Error {
             Self::WrongNumberOfArguments(name, num) => {
                 write!(f, "{name} requires {num} args")
             }
-            Self::IndexToBig => write!(f, "index must be lower than array size"),
+            Self::IndexOutOfBounds => write!(f, "index out of bounds"),
             Self::TupleIndexTooBig(index, ins, len) => {
                 write!(f, "Cannot get element {index} of tuple {ins}. Tuple has len of {len}")
             },
-            Self::NegativeIndex => write!(f, "cannot index with negative value"),
             Self::NegativeLength => write!(f, "length of an array cannot be negative"),
             Self::NegativeExponent => write!(f, "int value cannot be rised to a negative power"),
             Self::CannotBeParsed(text) => {
@@ -266,8 +264,7 @@ impl From<unescaper::Error> for Error {
 impl From<ExecError> for Error {
     fn from(value: ExecError) -> Self {
         match value {
-            ExecError::IndexToBig => Self::IndexToBig,
-            ExecError::NegativeIndex => Self::NegativeIndex,
+            ExecError::IndexOutOfBounds => Self::IndexOutOfBounds,
             ExecError::NegativeLength => Self::NegativeLength,
             ExecError::NegativeExponent => Self::NegativeExponent,
             ExecError::ZeroDivision => Self::ZeroDivision,
