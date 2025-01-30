@@ -6,7 +6,7 @@ use crate::{
 use match_any::match_any;
 
 pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
-    create_from_instructions_with_exec(lhs, rhs, BinOperator::Subtract, exec)
+    create_from_instructions_with_exec(lhs, rhs, BinOperator::Multiply, exec)
 }
 
 pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
