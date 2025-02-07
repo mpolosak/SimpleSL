@@ -222,7 +222,7 @@ lhs % rhs
 ## + - Addition/Concatenation
 | lhs      | rhs      | result     | description |
 | -------- | -------- | ---------- | ------------|
-| int      | int      | int        | lhs + rhs   |
+| int      | int      | int        | lhs + rhs, wraps around boudary of the type  |
 | float    | float    | float      | lhs + rhs   |
 | [T]      | [S]      | [T\|S]     | Array concatenation
 | string   | string   | string     | String concatenation

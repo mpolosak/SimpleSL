@@ -21,7 +21,7 @@ pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instructi
 
 pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
     match (lhs, rhs) {
-        (Variable::Int(value1), Variable::Int(value2)) => (value1 + value2).into(),
+        (Variable::Int(value1), Variable::Int(value2)) => value1.wrapping_add(value2).into(),
         (Variable::Float(value1), Variable::Float(value2)) => (value1 + value2).into(),
         (Variable::String(value1), Variable::String(value2)) => format!("{value1}{value2}").into(),
         (Variable::Array(array1), Variable::Array(array2)) => Array::concat(array1, array2).into(),
