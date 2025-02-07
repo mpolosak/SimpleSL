@@ -202,9 +202,9 @@ Create iterator over elements of array
 | float   | float   | float      |
 lhs to the power of rhs
 ## * - Multiplication
-| lhs     | rhs     | result     |
-| ------- | ------- | ---------- |
-| int     | int     | int        |
+| lhs     | rhs     | result     | comment |
+| ------- | ------- | ---------- | ------- |
+| int     | int     | int        | wraps around boundary of the type
 | float   | float   | float      |
 
 ## / - Division
@@ -222,7 +222,7 @@ lhs % rhs
 ## + - Addition/Concatenation
 | lhs      | rhs      | result     | description |
 | -------- | -------- | ---------- | ------------|
-| int      | int      | int        | lhs + rhs, wraps around boudary of the type  |
+| int      | int      | int        | lhs + rhs, wraps around boundary of the type  |
 | float    | float    | float      | lhs + rhs   |
 | [T]      | [S]      | [T\|S]     | Array concatenation
 | string   | string   | string     | String concatenation
