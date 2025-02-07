@@ -208,9 +208,9 @@ lhs to the power of rhs
 | float   | float   | float      |
 
 ## / - Division
-| lhs     | rhs     | result     |
-| ------- | ------- | ---------- |
-| int     | int     | int        |
+| lhs     | rhs     | result     | comment |
+| ------- | ------- | ---------- | ------- |
+| int     | int     | int        | MIN_INT / -1 == MIN_INT
 | float   | float   | float      |
 
 ## % - Remainder
