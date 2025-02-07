@@ -217,7 +217,9 @@ lhs to the power of rhs
 | lhs     | rhs     | result     |
 | ------- | ------- | ---------- |
 | int     | int     | int        |
-lhs % rhs
+
+lhs % rhs  
+`MIN_INT % -1 == 0`
 
 ## + - Addition/Concatenation
 | lhs      | rhs      | result     | description |
