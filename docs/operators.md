@@ -81,6 +81,7 @@ Calls the function with given arguments.
 | ------------ | ------------ |
 | int \| float | int\|float   |
 Additive inverse
+`-MIN_INT == MIN_INT`
 
 ## * - Indirection
 | operand | result | description |

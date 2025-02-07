@@ -64,7 +64,7 @@ pub mod unary_minus {
 
     pub fn exec(variable: Variable) -> Variable {
         match variable {
-            Variable::Int(num) => var!(-num),
+            Variable::Int(num) => num.wrapping_neg().into(),
             Variable::Float(num) => var!(-num),
             operand => panic!("Tried to - {operand}"),
         }
