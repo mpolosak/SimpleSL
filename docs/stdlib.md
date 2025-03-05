@@ -85,6 +85,15 @@ Returns true if `string` contains `pat`, false otherwise.
 ## chars(string: string) -> [string]
 Returns an array containing all UTF-8 characters of 'string'.
 
+## bytes(string: string) -> [int]
+Returns an array containing bytes of string
+
+## str_from_utf8(string: string) -> string | ()
+Converts array of bytes into string. Return () if array contains incorrect utf8.
+
+## str_from_utf8_lossy(string: string) -> string
+Converts array of bytes into string replacing any incorrect utf8 sequence with U+FFFD REPLACEMENT CHARACTER. 
+
 ## to_lowercase(string: string) -> string
 Returns the lowercase equivalent of `string`.
 
