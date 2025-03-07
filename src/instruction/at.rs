@@ -74,9 +74,10 @@ pub fn exec(variable: Variable, index: Variable) -> Result<Variable, ExecError> 
     };
     match variable {
         Variable::String(string) => string
-            .get(index..=index)
+            .chars()
+            .nth(index)
             .ok_or(ExecError::IndexOutOfBounds)
-            .map(Variable::from),
+            .map(|ch| ch.to_string().into()),
         Variable::Array(array) => array.get(index).ok_or(ExecError::IndexOutOfBounds).cloned(),
         variable => unreachable!("Tried to index into {}", variable.as_type()),
     }

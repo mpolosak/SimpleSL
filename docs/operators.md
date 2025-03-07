@@ -55,8 +55,9 @@
 ```
 array/string [index]
 ```
-Index must be of type int. Indexing is 0-based. Indexing with values less than zero or greater than the length of the array/string results in an error.
+Index must be of type int. Indexing is 0-based. Indexing with negative values allow accesing items from end.
 Indexing of a string returns a string containing an UTF-8 character on the given position. 
+-len <= index < len
 
 ## ? type - Filter by type
 ```

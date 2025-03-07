@@ -5,7 +5,6 @@ use simplesl_macros::export;
 pub(crate) mod add_string {
     use crate as simplesl;
     use crate::variable::Variable;
-    use match_any::match_any;
     use simplesl_macros::var;
     use std::sync::Arc;
 
@@ -67,9 +66,10 @@ pub(crate) mod add_string {
     }
 
     pub fn len(#[var_type([any]|string)] variable: &Variable) -> usize {
-        match_any! { variable,
-            Variable::Array(var) | Variable::String(var) => var.len(),
-            _ => unreachable!()
+        match variable {
+            Variable::Array(var) => var.len(),
+            Variable::String(string) => string.chars().count(),
+            _ => unreachable!(),
         }
     }
 }
