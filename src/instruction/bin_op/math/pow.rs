@@ -19,7 +19,7 @@ mod tests {
     #[test]
     fn test_pow_operator() {
         assert_eq!(parse_and_exec("4 ** 4"), Ok(Variable::Int(256)));
-        assert_eq!(parse_and_exec("4.0 ** 2"), Ok(Variable::Float(16.0)));
+        assert_eq!(parse_and_exec("4.0 ** 2.0"), Ok(Variable::Float(16.0)));
         assert_eq!(parse_and_exec("4.0 ** 0.5"), Ok(Variable::Float(2.0)));
         assert_eq!(parse_and_exec("50 ** 0"), Ok(Variable::Int(1)));
         assert_eq!(parse_and_exec("50.0 ** 0.0"), Ok(Variable::Float(1.0)));
