@@ -1,9 +1,9 @@
 use super::{
-    local_variable::LocalVariables, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
+    Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
 };
 use crate::{
-    variable::{self, ReturnType, Type},
     Error, ExecError, Interpreter,
+    variable::{self, ReturnType, Type},
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;

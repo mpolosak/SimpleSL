@@ -1,10 +1,10 @@
-use crate::instruction::tuple::Tuple;
-use crate::instruction::{BinOperation, Instruction, InstructionWithStr};
-use crate::stdlib::operators::{ALL, ANY};
-use crate::unary_operator::UnaryOperator;
-use crate::variable::ReturnType;
-use crate::variable::Type;
-use crate::{self as simplesl, BinOperator, Error};
+use crate::{
+    self as simplesl, BinOperator, Error,
+    instruction::{BinOperation, Instruction, InstructionWithStr, tuple::Tuple},
+    stdlib::operators::{ALL, ANY},
+    unary_operator::UnaryOperator,
+    variable::{ReturnType, Type},
+};
 use lazy_static::lazy_static;
 use simplesl_macros::var_type;
 
@@ -41,10 +41,10 @@ pub fn create(iterator: InstructionWithStr, op: UnaryOperator) -> Result<Instruc
 
 #[cfg(test)]
 mod tests {
-    use crate as simplesl;
     use crate::{
+        self as simplesl, Code, Error, Interpreter,
         instruction::reduce::bool_reduce::ACCEPTED_TYPE, unary_operator::UnaryOperator,
-        variable::Variable, Code, Error, Interpreter,
+        variable::Variable,
     };
     use simplesl_macros::{var, var_type};
     const ALL: UnaryOperator = UnaryOperator::All;

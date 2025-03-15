@@ -2,18 +2,14 @@ mod body;
 mod param;
 pub(crate) use self::body::Body;
 pub use self::param::{Param, Params};
-use crate as simplesl;
-use crate::instruction::block::Block;
-use crate::instruction::function::call;
-use crate::instruction::unary_operation::UnaryOperation;
-use crate::unary_operator::UnaryOperator;
-use crate::variable::FunctionType;
 use crate::{
-    instruction::{ExecStop, InstructionWithStr},
-    interpreter::Interpreter,
+    self as simplesl, Code, Error, ExecError, Interpreter,
+    instruction::{
+        ExecStop, InstructionWithStr, block::Block, function::call, unary_operation::UnaryOperation,
+    },
     join,
-    variable::{ReturnType, Type, Typed, Variable},
-    Code, Error, ExecError,
+    unary_operator::UnaryOperator,
+    variable::{FunctionType, ReturnType, Type, Typed, Variable},
 };
 use simplesl_macros::var_type;
 use std::{fmt, iter::zip, sync::Arc};

@@ -1,9 +1,8 @@
-use crate::variable::Typed;
-use crate::{self as simplesl, Code, Interpreter};
 use crate::{
+    self as simplesl, Code, Interpreter,
     function::Function,
     instruction::ExecResult,
-    variable::{Type, Variable},
+    variable::{Type, Typed, Variable},
 };
 use lazy_static::lazy_static;
 use simplesl_macros::var_type;

@@ -1,7 +1,7 @@
 use crate::{
+    BinOperator, ExecError,
     instruction::{BinOperation, Instruction},
     variable::Variable,
-    BinOperator, ExecError,
 };
 
 pub fn create_from_instructions(

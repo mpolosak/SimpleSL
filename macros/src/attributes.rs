@@ -4,8 +4,8 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use std::rc::Rc;
 use syn::{
-    parse::Parser, punctuated::Punctuated, Attribute, Expr, ExprLit, Lit, MetaList, MetaNameValue,
-    Token,
+    Attribute, Expr, ExprLit, Lit, MetaList, MetaNameValue, Token, parse::Parser,
+    punctuated::Punctuated,
 };
 
 #[derive(Default)]

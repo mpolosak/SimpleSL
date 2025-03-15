@@ -1,11 +1,10 @@
-use super::{function::AnonymousFunction, Instruction, InstructionWithStr};
-use crate as simplesl;
+use super::{Instruction, InstructionWithStr, function::AnonymousFunction};
 use crate::{
+    self as simplesl, Error, Interpreter,
     function::{Param, Params},
     variable::{ReturnType, Type, Typed, Variable},
-    Error, Interpreter,
 };
-use pest::{iterators::Pairs, Parser};
+use pest::{Parser, iterators::Pairs};
 use simplesl_macros::var_type;
 use simplesl_parser::{Rule, SimpleSLParser};
 use std::{collections::HashMap, fs, sync::Arc};

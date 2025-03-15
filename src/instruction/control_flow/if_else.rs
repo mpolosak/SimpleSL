@@ -1,10 +1,10 @@
-use crate::instruction::{
-    local_variable::LocalVariables, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
-};
 use crate::{
+    Error, ExecError,
+    instruction::{
+        Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
+    },
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
-    Error, ExecError,
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;

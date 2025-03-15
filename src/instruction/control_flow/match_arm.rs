@@ -1,14 +1,15 @@
 use crate::{
+    Error, ExecError,
     instruction::{
+        Exec, ExecResult, ExecStop, InstructionWithStr,
         local_variable::{LocalVariable, LocalVariables},
-        recreate_instructions, Exec, ExecResult, ExecStop, InstructionWithStr,
+        recreate_instructions,
     },
     interpreter::Interpreter,
     variable::{ReturnType, Type, Typed, Variable},
-    Error, ExecError,
 };
 use pest::iterators::Pair;
-use simplesl_parser::{unexpected, Rule};
+use simplesl_parser::{Rule, unexpected};
 use std::sync::Arc;
 
 #[derive(Debug)]

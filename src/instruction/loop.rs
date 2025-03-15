@@ -2,10 +2,10 @@ pub mod r#for;
 pub mod r#while;
 pub mod while_set;
 use super::{
-    local_variable::LocalVariables, Exec, ExecResult, ExecStop, Instruction, InstructionWithStr,
-    Recreate,
+    Exec, ExecResult, ExecStop, Instruction, InstructionWithStr, Recreate,
+    local_variable::LocalVariables,
 };
-use crate::{variable::Variable, Error, ExecError, Interpreter};
+use crate::{Error, ExecError, Interpreter, variable::Variable};
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
 

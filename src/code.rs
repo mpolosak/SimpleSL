@@ -1,7 +1,7 @@
 use crate::{
-    instruction::{local_variable::LocalVariables, Exec, ExecStop, InstructionWithStr},
-    variable::{ReturnType, Type, Variable},
     Error, ExecError, Interpreter,
+    instruction::{Exec, ExecStop, InstructionWithStr, local_variable::LocalVariables},
+    variable::{ReturnType, Type, Variable},
 };
 use pest::Parser;
 use simplesl_parser::{Rule, SimpleSLParser};

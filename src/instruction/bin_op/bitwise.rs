@@ -20,9 +20,9 @@ pub fn can_be_used(lhs: Type, rhs: Type) -> bool {
 )]
 pub mod bitwise {
     use crate::{
-        instruction::{create_from_instructions_with_exec, Instruction},
-        variable::Variable,
         BinOperator,
+        instruction::{Instruction, create_from_instructions_with_exec},
+        variable::Variable,
     };
 
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {

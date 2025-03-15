@@ -1,11 +1,11 @@
 use super::InstructionWithStr;
 use crate as simplesl;
-use crate::variable::Type;
 use crate::Error;
+use crate::variable::Type;
 use lazy_static::lazy_static;
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
-use simplesl_parser::{unexpected, Rule};
+use simplesl_parser::{Rule, unexpected};
 
 impl InstructionWithStr {
     pub fn create_prefix(op: Pair<'_, Rule>, rhs: Self) -> Result<Self, Error> {
@@ -26,12 +26,12 @@ lazy_static! {
 }
 
 pub mod unary_minus {
-    use crate as simplesl;
-    use crate::instruction::unary_operation::UnaryOperation;
-    use crate::instruction::InstructionWithStr;
-    use crate::unary_operator::UnaryOperator;
-    use crate::variable::ReturnType;
-    use crate::{instruction::Instruction, variable::Variable, Error};
+    use crate::{
+        self as simplesl, Error,
+        instruction::{Instruction, InstructionWithStr, unary_operation::UnaryOperation},
+        unary_operator::UnaryOperator,
+        variable::{ReturnType, Variable},
+    };
     use match_any::match_any;
     use simplesl_macros::var;
 
@@ -72,13 +72,11 @@ pub mod unary_minus {
 }
 
 pub mod not {
-    use crate as simplesl;
-    use crate::instruction::InstructionWithStr;
-    use crate::unary_operator::UnaryOperator;
     use crate::{
-        instruction::{unary_operation::UnaryOperation, Instruction},
+        self as simplesl, Error,
+        instruction::{Instruction, InstructionWithStr, unary_operation::UnaryOperation},
+        unary_operator::UnaryOperator,
         variable::{ReturnType, Type, Variable},
-        Error,
     };
     use lazy_static::lazy_static;
     use match_any::match_any;
@@ -123,10 +121,10 @@ pub mod not {
 
 pub mod indirection {
     use crate::{
-        instruction::{unary_operation::UnaryOperation, Instruction, InstructionWithStr},
+        Error,
+        instruction::{Instruction, InstructionWithStr, unary_operation::UnaryOperation},
         unary_operator::UnaryOperator,
         variable::{ReturnType, Type, Variable},
-        Error,
     };
 
     pub fn create_instruction(instruction: InstructionWithStr) -> Result<Instruction, Error> {
@@ -161,8 +159,8 @@ pub mod indirection {
 #[cfg(test)]
 mod tests {
     use crate::{
-        self as simplesl, unary_operator::UnaryOperator, variable::Variable, Code, Error,
-        Interpreter,
+        self as simplesl, Code, Error, Interpreter, unary_operator::UnaryOperator,
+        variable::Variable,
     };
     use simplesl_macros::{var, var_type};
 

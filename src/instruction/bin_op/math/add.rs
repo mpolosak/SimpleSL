@@ -1,4 +1,4 @@
-use crate::instruction::{create_from_instructions_with_exec, Instruction};
+use crate::instruction::{Instruction, create_from_instructions_with_exec};
 use crate::variable::{Array, Type, Variable};
 use crate::{self as simplesl, BinOperator};
 use lazy_static::lazy_static;
@@ -34,13 +34,15 @@ pub fn return_type(lhs: Type, rhs: Type) -> Type {
         return lhs;
     };
     let rhs_element = rhs.element_type().unwrap();
-    return var_type!([lhs_element | rhs_element]);
+    var_type!([lhs_element | rhs_element])
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{self as simplesl, BinOperator};
-    use crate::{instruction::bin_op::add, variable::Variable, Code, Error, Interpreter};
+    use crate::{
+        self as simplesl, BinOperator, Code, Error, Interpreter, instruction::bin_op::add,
+        variable::Variable,
+    };
     use simplesl_macros::{var, var_type};
 
     #[test]

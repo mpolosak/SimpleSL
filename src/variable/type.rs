@@ -1,9 +1,8 @@
 use super::{function_type::FunctionType, multi_type::MultiType};
-use crate as simplesl;
-use crate::{errors::ParseTypeError, join};
+use crate::{self as simplesl, errors::ParseTypeError, join};
 use lazy_static::lazy_static;
 use match_any::match_any;
-use pest::{iterators::Pair, Parser};
+use pest::{Parser, iterators::Pair};
 use simplesl_macros::var_type;
 use simplesl_parser::{Rule, SimpleSLParser};
 use std::{
@@ -248,11 +247,7 @@ impl Type {
                 let mut iter = multi.iter();
                 let first = iter.next().unwrap().tuple_len()?;
                 iter.map(Self::tuple_len).try_fold(first, |acc, curr| {
-                    if acc == curr? {
-                        Some(acc)
-                    } else {
-                        None
-                    }
+                    if acc == curr? { Some(acc) } else { None }
                 })
             }
             _ => None,
@@ -268,11 +263,7 @@ impl Type {
         iter.map(Self::tuple_len).try_fold(
             first,
             |acc, curr| {
-                if acc < curr? {
-                    Some(acc)
-                } else {
-                    curr
-                }
+                if acc < curr? { Some(acc) } else { curr }
             },
         )
     }
@@ -423,8 +414,8 @@ pub trait ReturnType {
 
 #[cfg(test)]
 mod tests {
-    use crate as simplesl;
     use crate::{
+        self as simplesl,
         errors::ParseTypeError,
         variable::{FunctionType, Type},
     };

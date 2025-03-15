@@ -1,12 +1,8 @@
-use crate::instruction::unary_operation::UnaryOperation;
-use crate::instruction::ExecResult;
-use crate::unary_operator::UnaryOperator;
-use crate::variable::{ReturnType, Variable};
-use crate::{self as simplesl, Interpreter};
 use crate::{
-    instruction::{Instruction, InstructionWithStr},
-    variable::Type,
-    Error,
+    self as simplesl, Error, Interpreter,
+    instruction::{ExecResult, Instruction, InstructionWithStr, unary_operation::UnaryOperation},
+    unary_operator::UnaryOperator,
+    variable::{ReturnType, Type, Variable},
 };
 use lazy_static::lazy_static;
 use simplesl_macros::var_type;
@@ -46,7 +42,7 @@ pub(crate) fn exec(var: Variable, interpreter: &mut Interpreter) -> ExecResult {
         };
         vec.push(tuple[1].clone());
     }
-    return Ok(vec.into());
+    Ok(vec.into())
 }
 
 pub(crate) fn return_type(lhs: Type) -> Type {
@@ -56,10 +52,9 @@ pub(crate) fn return_type(lhs: Type) -> Type {
 
 #[cfg(test)]
 mod tests {
-    use crate as simplesl;
     use crate::{
-        instruction::reduce::collect::ACCEPTED_TYPE, unary_operator::UnaryOperator,
-        variable::Variable, Code, Error, Interpreter,
+        self as simplesl, Code, Error, Interpreter, instruction::reduce::collect::ACCEPTED_TYPE,
+        unary_operator::UnaryOperator, variable::Variable,
     };
     use simplesl_macros::{var, var_type};
     const OP: UnaryOperator = UnaryOperator::Collect;

@@ -5,14 +5,14 @@ mod r#mut;
 mod try_from;
 mod r#type;
 mod type_of;
-use crate::{function::Function, Error};
+use crate::{Error, function::Function};
 use enum_as_inner::EnumAsInner;
 use match_any::match_any;
-use pest::{iterators::Pair, Parser};
-pub use r#type::{ReturnType, Type, Typed};
-use simplesl_parser::{unexpected, Rule, SimpleSLParser};
+use pest::{Parser, iterators::Pair};
+use simplesl_parser::{Rule, SimpleSLParser, unexpected};
 use std::{fmt, io, str::FromStr, sync::Arc};
-pub use typle::typle;
+pub use r#type::{ReturnType, Type, Typed};
+use typle::typle;
 pub use {
     array::Array, function_type::FunctionType, multi_type::MultiType, r#mut::Mut, type_of::TypeOf,
 };
@@ -63,7 +63,7 @@ impl Variable {
             Type::Int => Some(0.into()),
             Type::Float => Some(0.0.into()),
             Type::String => Some("".into()),
-            Type::Function(arc) => Some(Function::of_type(&arc).into()),
+            Type::Function(arc) => Some(Function::of_type(arc).into()),
             Type::Array(arc) => Some(
                 Array {
                     element_type: arc.as_ref().clone(),
@@ -83,7 +83,7 @@ impl Variable {
             Type::Mut(arc) => Some(
                 Mut {
                     var_type: arc.as_ref().clone(),
-                    variable: Variable::of_type(&arc)?.into(),
+                    variable: Variable::of_type(arc)?.into(),
                 }
                 .into(),
             ),

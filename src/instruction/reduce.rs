@@ -3,14 +3,13 @@ pub mod bool_reduce;
 pub mod collect;
 pub mod product;
 pub mod sum;
-use crate as simplesl;
 use crate::{
+    self as simplesl, Error, ExecError,
     instruction::{
-        local_variable::LocalVariables, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
+        Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
     },
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
-    Error, ExecError,
 };
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
@@ -98,9 +97,7 @@ impl ReturnType for Reduce {
 
 #[cfg(test)]
 mod tests {
-    use crate as simplesl;
-    use crate::variable::Variable;
-    use crate::{Code, Error, Interpreter};
+    use crate::{self as simplesl, Code, Error, Interpreter, variable::Variable};
     use simplesl_macros::var_type;
 
     #[test]

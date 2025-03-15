@@ -6,9 +6,9 @@ use duplicate::duplicate_item;
 )]
 pub mod shift {
     use crate::{
+        BinOperator, ExecError,
         instruction::{BinOperation, Instruction},
         variable::Variable,
-        BinOperator, ExecError,
     };
 
     pub fn create_from_instructions(
@@ -45,7 +45,7 @@ pub mod shift {
 
 #[cfg(test)]
 mod tests {
-    use crate::{variable::Variable, Code, Error, Interpreter};
+    use crate::{Code, Error, Interpreter, variable::Variable};
     use proptest::proptest;
 
     #[test]

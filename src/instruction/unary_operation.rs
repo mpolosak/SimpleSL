@@ -1,21 +1,20 @@
 mod iter;
 use super::{
-    at,
+    Exec, ExecResult, ExecStop, Instruction, InstructionWithStr, Recreate, at,
     function::call,
     local_variable::LocalVariables,
     prefix_op::{indirection, not, unary_minus},
     reduce::{self, bool_reduce, collect, product, sum},
     tuple_access::TupleAccess,
     type_filter::TypeFilter,
-    Exec, ExecResult, ExecStop, Instruction, InstructionWithStr, Recreate,
 };
 use crate::{
+    Error, Interpreter,
     unary_operator::UnaryOperator,
     variable::{ReturnType, Type},
-    Error, Interpreter,
 };
 use pest::iterators::Pair;
-use simplesl_parser::{unexpected, Rule};
+use simplesl_parser::{Rule, unexpected};
 
 impl InstructionWithStr {
     pub fn create_postfix(

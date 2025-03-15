@@ -1,5 +1,5 @@
-use crate::variable::Variable;
 use crate::ExecError;
+use crate::variable::Variable;
 
 pub fn exec(base: Variable, exp: Variable) -> Result<Variable, ExecError> {
     match (base, exp) {
@@ -12,8 +12,7 @@ pub fn exec(base: Variable, exp: Variable) -> Result<Variable, ExecError> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{self as simplesl, BinOperator};
-    use crate::{variable::Variable, Code, Error, Interpreter};
+    use crate::{self as simplesl, BinOperator, Code, Error, Interpreter, variable::Variable};
     use simplesl_macros::var_type;
 
     #[test]

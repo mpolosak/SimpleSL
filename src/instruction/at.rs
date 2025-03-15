@@ -1,15 +1,13 @@
-use std::ops::Range;
-
-use super::{local_variable::LocalVariables, BinOperation, Instruction, InstructionWithStr};
-use crate::stdlib::add_string::len;
-use crate::{self as simplesl, BinOperator};
+use super::{BinOperation, Instruction, InstructionWithStr, local_variable::LocalVariables};
 use crate::{
+    self as simplesl, BinOperator, Error, ExecError,
+    stdlib::add_string::len,
     variable::{ReturnType, Typed, Variable},
-    Error, ExecError,
 };
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
 use simplesl_parser::Rule;
+use std::ops::Range;
 
 pub fn create(
     instruction: InstructionWithStr,
@@ -86,7 +84,7 @@ pub fn exec(variable: Variable, index: Variable) -> Result<Variable, ExecError> 
 #[cfg(test)]
 mod tests {
     use crate as simplesl;
-    use crate::{instruction::at::exec as at, ExecError};
+    use crate::{ExecError, instruction::at::exec as at};
     use simplesl_macros::var;
 
     #[test]

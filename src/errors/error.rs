@@ -1,5 +1,5 @@
 use crate::{
-    function::Param, unary_operator::UnaryOperator, variable::Type, BinOperator, ExecError,
+    BinOperator, ExecError, function::Param, unary_operator::UnaryOperator, variable::Type,
 };
 use match_any::match_any;
 use simplesl_parser::Rule;
@@ -153,8 +153,11 @@ impl fmt::Display for Error {
             }
             Self::IndexOutOfBounds => write!(f, "index out of bounds"),
             Self::TupleIndexTooBig(index, ins, len) => {
-                write!(f, "Cannot get element {index} of tuple {ins}. Tuple has len of {len}")
-            },
+                write!(
+                    f,
+                    "Cannot get element {index} of tuple {ins}. Tuple has len of {len}"
+                )
+            }
             Self::NegativeLength => write!(f, "length of an array cannot be negative"),
             Self::NegativeExponent => write!(f, "int value cannot be rised to a negative power"),
             Self::CannotBeParsed(text) => {
@@ -167,7 +170,10 @@ impl fmt::Display for Error {
                 write!(f, "Cannot index with {var_type}. Index must be int")
             }
             Self::CannotTupleAccess(ins, var_type) => {
-                write!(f, "Cannot access element of {ins} which is {var_type}. Only accessing elements of tuple is posible")
+                write!(
+                    f,
+                    "Cannot access element of {ins} which is {var_type}. Only accessing elements of tuple is posible"
+                )
             }
             Self::ZeroDivision => {
                 write!(f, "Cannot divide by 0")
@@ -221,24 +227,66 @@ impl fmt::Display for Error {
                     .map(|value| format!(" {value}"))
                     .unwrap_or("".into())
             ),
-            Self::WrongLengthType(str)=>write!(f, "Cannot create array of length {str}. Length must be int"),
+            Self::WrongLengthType(str) => {
+                write!(f, "Cannot create array of length {str}. Length must be int")
+            }
             Self::NotAFunction(str) => write!(f, "Cannot call {str}. It is not a function"),
-            Self::WrongArgument { function, param, given, given_type }=>{
-                write!(f, "Argument {} of function {function} needs to be {}. But {given} that is {given_type} was given", param.name, param.var_type)
-            },
-            Self::CannotDetermineParams(function) => write!(f, "Cannot determine params of function {function}"),
+            Self::WrongArgument {
+                function,
+                param,
+                given,
+                given_type,
+            } => {
+                write!(
+                    f,
+                    "Argument {} of function {function} needs to be {}. But {given} that is {given_type} was given",
+                    param.name, param.var_type
+                )
+            }
+            Self::CannotDetermineParams(function) => {
+                write!(f, "Cannot determine params of function {function}")
+            }
             Self::CannotDetermineLength(tuple) => write!(f, "Cannot determine length of {tuple}"),
             Self::CannotReduce(given) => write!(f, "Cannot reduce {given}. It is not an array"),
             Self::NotATuple(str) => write!(f, "Cannot destruct {str}. It is not a tuple"),
-            Self::WrongLength { ins, len: length, idents_len: expected_length }
-                => write!(f, "{ins} has {length} elements but {expected_length} idents were given"),
-            Self::WrongCondition(ins, var_type) => write!(f, "Condition must be bool but {ins} which is {var_type} was given"),
-            Self::IncorectUnaryOperatorOperand { ins, op, expected, given }
-                if op.is_prefix() => write!(f, "Cannot {op} {ins}. Operand need to be {expected} but {ins} which is {given} was given"),
-            Self::IncorectUnaryOperatorOperand { ins, op, expected, given }
-                => write!(f, "Cannot {ins} {op}. Operand need to be {expected} but {ins} which is {given} was given"),
-            Self::WrongInitialization { declared, given_type, given }
-                => write!(f, "mut declared to contain {declared} but initialized with {given} that is {given_type}")
+            Self::WrongLength {
+                ins,
+                len: length,
+                idents_len: expected_length,
+            } => write!(
+                f,
+                "{ins} has {length} elements but {expected_length} idents were given"
+            ),
+            Self::WrongCondition(ins, var_type) => write!(
+                f,
+                "Condition must be bool but {ins} which is {var_type} was given"
+            ),
+            Self::IncorectUnaryOperatorOperand {
+                ins,
+                op,
+                expected,
+                given,
+            } if op.is_prefix() => write!(
+                f,
+                "Cannot {op} {ins}. Operand need to be {expected} but {ins} which is {given} was given"
+            ),
+            Self::IncorectUnaryOperatorOperand {
+                ins,
+                op,
+                expected,
+                given,
+            } => write!(
+                f,
+                "Cannot {ins} {op}. Operand need to be {expected} but {ins} which is {given} was given"
+            ),
+            Self::WrongInitialization {
+                declared,
+                given_type,
+                given,
+            } => write!(
+                f,
+                "mut declared to contain {declared} but initialized with {given} that is {given_type}"
+            ),
         }
     }
 }

@@ -1,8 +1,8 @@
-use super::{local_variable::LocalVariables, unary_operation::UnaryOperation, Instruction};
+use super::{Instruction, local_variable::LocalVariables, unary_operation::UnaryOperation};
 use crate::{
+    Error,
     unary_operator::UnaryOperator,
     variable::{ReturnType, Variable},
-    Error,
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;

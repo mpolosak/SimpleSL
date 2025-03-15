@@ -2,7 +2,7 @@
 name = "simplesl_parser"
 version = "0.1.0"
 authors = ["Michał Połosak <mpolosak@op.pl>"]
-edition = "2021"
+edition = "2024"
 license = "MIT"
 description = "SimpleSLParser"
 repository = "https://github.com/mpolosak/SimpleSL"

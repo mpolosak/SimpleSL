@@ -1,8 +1,6 @@
-use std::{convert::Infallible, sync::Arc};
-
-use crate::function::Function;
-
 use super::{Array, Variable};
+use crate::function::Function;
+use std::{convert::Infallible, sync::Arc};
 
 impl TryFrom<Variable> for bool {
     type Error = Variable;

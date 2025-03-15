@@ -1,7 +1,7 @@
 use super::Type;
 use crate::join;
 use std::{
-    collections::{hash_set::Iter, HashSet},
+    collections::{HashSet, hash_set::Iter},
     fmt::Display,
     hash::Hash,
     sync::Arc,

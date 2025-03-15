@@ -7,15 +7,12 @@ mod math;
 mod partition;
 mod shift;
 use super::{
-    at, function::call, local_variable::LocalVariables, reduce::Reduce, Exec, ExecResult,
-    InstructionWithStr, Recreate,
+    Exec, ExecResult, Instruction, InstructionWithStr, Recreate, at, function::call,
+    local_variable::LocalVariables, reduce::Reduce,
 };
-use crate::variable::Variable;
-use crate::{self as simplesl, BinOperator};
 use crate::{
-    instruction::Instruction,
-    variable::{ReturnType, Type},
-    Error, ExecError, Interpreter,
+    self as simplesl, BinOperator, Error, ExecError, Interpreter,
+    variable::{ReturnType, Type, Variable},
 };
 pub use bitwise::{bitwise_and, bitwise_or, xor};
 use lazy_static::lazy_static;
@@ -169,7 +166,7 @@ impl ReturnType for BinOperation {
 }
 
 mod equal {
-    use super::{create_from_instructions_with_exec, BinOperator};
+    use super::{BinOperator, create_from_instructions_with_exec};
     use crate::{instruction::Instruction, variable::Variable};
 
     pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
@@ -182,7 +179,7 @@ mod equal {
 }
 
 mod not_equal {
-    use super::{create_from_instructions_with_exec, BinOperator};
+    use super::{BinOperator, create_from_instructions_with_exec};
     use crate::{instruction::Instruction, variable::Variable};
 
     pub fn exec(lhs: Variable, rhs: Variable) -> Variable {

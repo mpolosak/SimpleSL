@@ -1,4 +1,4 @@
-use rustyline::{error::ReadlineError, DefaultEditor};
+use rustyline::{DefaultEditor, error::ReadlineError};
 use simplesl::{Code, Error, Interpreter};
 use std::{env, fs, process::ExitCode};
 

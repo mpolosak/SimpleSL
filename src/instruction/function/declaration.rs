@@ -1,13 +1,13 @@
-use crate as simplesl;
 use crate::{
+    self as simplesl, Error, ExecError,
     function::{Body, Function, Param, Params},
     instruction::{
+        Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
         local_variable::{FunctionInfo, LocalVariable, LocalVariableMap, LocalVariables},
-        recreate_instructions, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
+        recreate_instructions,
     },
     interpreter::Interpreter,
     variable::{ReturnType, Type},
-    Error, ExecError,
 };
 use pest::iterators::Pair;
 use simplesl_macros::var_type;

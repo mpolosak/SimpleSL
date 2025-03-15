@@ -1,7 +1,6 @@
-use std::fs;
-
-use markdown::{tokenize, Block};
+use markdown::{Block, tokenize};
 use simplesl::{Code, Interpreter};
+use std::fs;
 
 #[test]
 fn test_code_samples_in_readme() {

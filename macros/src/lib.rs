@@ -7,7 +7,7 @@ use attributes::Attributes;
 use export_function::export_item_fn;
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, Item, ItemConst, ItemFn, ItemMod, ItemUse, Visibility};
+use syn::{Item, ItemConst, ItemFn, ItemMod, ItemUse, Visibility, parse_macro_input};
 use var::quote;
 use var_type::type_quote;
 

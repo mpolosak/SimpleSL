@@ -32,17 +32,17 @@ use self::{
     tuple::Tuple,
 };
 use crate::{
+    Error, ExecError,
     interpreter::Interpreter,
     variable::{ReturnType, Type, Typed, Variable},
-    Error, ExecError,
 };
 use duplicate::duplicate_item;
+use r#loop::{Loop, r#for, r#while, while_set};
 use match_any::match_any;
-use pest::iterators::Pair;
-use r#loop::{r#for, r#while, while_set, Loop};
 use r#mut::Mut;
+use pest::iterators::Pair;
 use reduce::Reduce;
-use simplesl_parser::{unexpected, Rule, PRATT_PARSER};
+use simplesl_parser::{PRATT_PARSER, Rule, unexpected};
 use std::sync::Arc;
 use tuple_access::TupleAccess;
 use type_filter::TypeFilter;

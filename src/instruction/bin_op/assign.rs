@@ -1,6 +1,6 @@
 use crate::{
-    variable::{Type, Variable},
     ExecError,
+    variable::{Type, Variable},
 };
 
 pub fn can_be_used<T, S>(lhs: Type, rhs: Type, can_be_used: T, return_type: S) -> bool

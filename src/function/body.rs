@@ -1,5 +1,5 @@
 use crate::{
-    instruction::InstructionWithStr, interpreter::Interpreter, variable::Variable, ExecError,
+    ExecError, instruction::InstructionWithStr, interpreter::Interpreter, variable::Variable,
 };
 use std::sync::Arc;
 
