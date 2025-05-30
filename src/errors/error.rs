@@ -23,6 +23,7 @@ pub enum Error {
     CannotIndexInto(Type),
     CannotTupleAccess(Arc<str>, Type),
     CannotIndexWith(Arc<str>),
+    CannotSlice(Arc<str>, Type),
     ZeroDivision,
     ZeroModulo,
     OverflowShift,
@@ -91,6 +92,7 @@ impl PartialEq for Error {
             | (Self::WrongCondition(l0, l1), Self::WrongCondition(r0, r1))
             | (Self::WrongNumberOfArguments(l0, l1), Self::WrongNumberOfArguments(r0, r1))
             | (Self::CannotTupleAccess(l0, l1), Self::CannotTupleAccess(r0, r1))
+            | (Self::CannotSlice(l0, l1), Self::CannotSlice(r0, r1))
              => l0 == r0 && l1 == r1,
             (Self::IO(l0), Self::IO(r0)) | (Self::CannotUnescapeString(l0), Self::CannotUnescapeString(r0)) => {
                 l0.to_string() == r0.to_string()
@@ -173,6 +175,12 @@ impl fmt::Display for Error {
                 write!(
                     f,
                     "Cannot access element of {ins} which is {var_type}. Only accessing elements of tuple is posible"
+                )
+            }
+            Self::CannotSlice(ins, var_type) => {
+                write!(
+                    f,
+                    "Cannot slice {ins} which is {var_type}. Only variables of type string | [any] can be sliced"
                 )
             }
             Self::ZeroDivision => {

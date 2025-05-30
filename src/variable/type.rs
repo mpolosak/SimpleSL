@@ -302,6 +302,11 @@ impl Type {
             _ => None,
         }
     }
+
+    // Return true if variable of type can be indexed, false - otherwise
+    pub fn can_be_indexed(&self) -> bool {
+        self.matches(&var_type!(string | [any]))
+    }
 }
 
 impl Display for Type {

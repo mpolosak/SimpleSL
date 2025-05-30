@@ -25,6 +25,7 @@ match_any = "1.0.1"
 duplicate = "2.0.0"
 enum-as-inner = "0.6.1"
 derive_more = { version = "2.0.1", features = ["display"] }
+slyce = "0.3.1"
 pest.workspace = true
 lazy_static.workspace = true
 simplesl_parser.workspace = true

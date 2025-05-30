@@ -595,6 +595,7 @@ dependencies = [
  "rustyline",
  "simplesl_macros",
  "simplesl_parser",
+ "slyce",
  "typle",
  "unescaper",
 ]
@@ -619,6 +620,12 @@ dependencies = [
  "pest",
  "pest_derive",
 ]
+
+[[package]]
+name = "slyce"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "046d1c67b37db818d93f1d04a924ddbd7396c96cf9cfaa593d038259ae484729"
 
 [[package]]
 name = "smallvec"

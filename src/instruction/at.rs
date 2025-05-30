@@ -1,11 +1,10 @@
 use super::{BinOperation, Instruction, InstructionWithStr, local_variable::LocalVariables};
 use crate::{
-    self as simplesl, BinOperator, Error, ExecError,
+    BinOperator, Error, ExecError,
     stdlib::add_string::len,
-    variable::{ReturnType, Typed, Variable},
+    variable::{ReturnType, Type, Typed, Variable},
 };
 use pest::iterators::Pair;
-use simplesl_macros::var_type;
 use simplesl_parser::Rule;
 use std::ops::Range;
 
@@ -16,12 +15,11 @@ pub fn create(
 ) -> Result<Instruction, Error> {
     let pair = index.into_inner().next().unwrap();
     let index = InstructionWithStr::new_expression(pair, local_variables)?;
-    let required_instruction_type = var_type!(string | [any]);
     let instruction_return_type = instruction.return_type();
-    if index.return_type() != var_type!(int) {
+    if index.return_type() != Type::Int {
         return Err(Error::CannotIndexWith(index.str));
     }
-    if !instruction_return_type.matches(&required_instruction_type) {
+    if !instruction_return_type.can_be_indexed() {
         return Err(Error::CannotIndexInto(instruction_return_type));
     }
     Ok(BinOperation {
