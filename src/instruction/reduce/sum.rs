@@ -1,13 +1,9 @@
-use crate::instruction::unary_operation::UnaryOperation;
-use crate::instruction::ExecResult;
-use crate::instruction::{Instruction, InstructionWithStr};
-use crate::stdlib::operators::{FLOAT_SUM, INT_SUM, STRING_SUM};
-use crate::unary_operator::UnaryOperator;
-use crate::variable::{Type, Typed};
-use crate::{self as simplesl};
 use crate::{
-    variable::{ReturnType, Variable},
-    Error,
+    self as simplesl, Error,
+    instruction::{ExecResult, Instruction, InstructionWithStr, unary_operation::UnaryOperation},
+    stdlib::operators::{FLOAT_SUM, INT_SUM, STRING_SUM},
+    unary_operator::UnaryOperator,
+    variable::{ReturnType, Type, Typed, Variable},
 };
 use lazy_static::lazy_static;
 use simplesl_macros::var_type;
@@ -48,10 +44,9 @@ pub fn exec(var: Variable) -> ExecResult {
 
 #[cfg(test)]
 mod tests {
-    use crate as simplesl;
     use crate::{
-        instruction::reduce::sum::ACCEPTED_TYPE, unary_operator::UnaryOperator, variable::Variable,
-        Code, Error, Interpreter,
+        self as simplesl, Code, Error, Interpreter, instruction::reduce::sum::ACCEPTED_TYPE,
+        unary_operator::UnaryOperator, variable::Variable,
     };
     use simplesl_macros::{var, var_type};
     const OP: UnaryOperator = UnaryOperator::Sum;

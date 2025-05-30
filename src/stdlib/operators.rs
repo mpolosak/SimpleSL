@@ -1,4 +1,4 @@
-use crate::{variable::Variable, Code, Interpreter};
+use crate::{Code, Interpreter, variable::Variable};
 use lazy_static::lazy_static;
 
 #[macro_export]

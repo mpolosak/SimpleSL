@@ -1,7 +1,7 @@
-use pest::{iterators::Pair, Parser};
+use pest::{Parser, iterators::Pair};
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
-use simplesl_parser::{unexpected, Rule, SimpleSLParser};
+use simplesl_parser::{Rule, SimpleSLParser, unexpected};
 
 use crate::var_type::type_from_str;
 

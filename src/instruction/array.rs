@@ -1,12 +1,11 @@
 use super::{
-    local_variable::LocalVariables, recreate_instructions, Exec, ExecResult, Instruction,
-    InstructionWithStr, Recreate,
+    Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
+    recreate_instructions,
 };
-use crate as simplesl;
 use crate::{
+    self as simplesl, Error, ExecError,
     interpreter::Interpreter,
     variable::{ReturnType, Type},
-    Error, ExecError,
 };
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
@@ -38,22 +37,6 @@ impl Array {
             element_type,
         }
         .into())
-    }
-
-    pub fn map<F>(self, mut f: F) -> Self
-    where
-        F: FnMut(Instruction) -> Instruction,
-    {
-        let instructions = self
-            .instructions
-            .iter()
-            .cloned()
-            .map(|iws| iws.map(&mut f))
-            .collect();
-        Array {
-            instructions,
-            element_type: self.element_type,
-        }
     }
 }
 

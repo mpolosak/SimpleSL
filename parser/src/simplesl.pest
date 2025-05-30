@@ -114,7 +114,9 @@ indirection          =  { "*" }
 postfix_op           = _{
     type_filter
   | at
+  | slicing
   | function_call
+  | tuple_access
   | sum
   | product
   | all
@@ -126,7 +128,12 @@ postfix_op           = _{
 }
 type_filter          =  { "?" ~ type }
 at                   =  { "[" ~ expr ~ "]" }
+slicing              =  { "[" ~ start? ~ ":" ~ stop? ~ (":" ~ step?)? ~ "]" }
+start                =  { expr }
+stop                 =  { expr }
+step                 =  { expr }
 function_call        =  { "(" ~ expression_list? ~ ")" }
+tuple_access         =  { "." ~ int }
 sum                  =  { "$+" }
 product              =  { "$*" }
 all                  =  { "$&&" }

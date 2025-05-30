@@ -1,4 +1,4 @@
-use simplesl::{variable::Typed, Code, Error, Interpreter};
+use simplesl::{Code, Error, Interpreter, variable::Typed};
 use simplesl_macros::{var, var_type};
 use std::fs;
 

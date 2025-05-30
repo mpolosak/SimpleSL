@@ -1,20 +1,21 @@
 mod iter;
 use super::{
-    at,
+    Exec, ExecResult, ExecStop, Instruction, InstructionWithStr, Recreate, at,
     function::call,
     local_variable::LocalVariables,
     prefix_op::{indirection, not, unary_minus},
     reduce::{self, bool_reduce, collect, product, sum},
+    slicing::Slicing,
+    tuple_access::TupleAccess,
     type_filter::TypeFilter,
-    Exec, ExecResult, ExecStop, Instruction, InstructionWithStr, Recreate,
 };
 use crate::{
+    Error, Interpreter,
     unary_operator::UnaryOperator,
     variable::{ReturnType, Type},
-    Error, Interpreter,
 };
 use pest::iterators::Pair;
-use simplesl_parser::{unexpected, Rule};
+use simplesl_parser::{Rule, unexpected};
 
 impl InstructionWithStr {
     pub fn create_postfix(
@@ -29,6 +30,7 @@ impl InstructionWithStr {
                 TypeFilter::create_instruction(lhs, op.into_inner().next().unwrap())
             }
             Rule::function_call => call::create_instruction(lhs, op, local_variables),
+            Rule::tuple_access => TupleAccess::create_instruction(lhs, op),
             Rule::sum => sum::create(lhs),
             Rule::product => product::create(lhs),
             Rule::all => bool_reduce::create(lhs, UnaryOperator::All),
@@ -37,6 +39,7 @@ impl InstructionWithStr {
             Rule::bitor_reduce => reduce::bit::create(lhs, UnaryOperator::BitOr),
             Rule::collect => collect::create(lhs),
             Rule::iter => iter::create(lhs),
+            Rule::slicing => Slicing::create(lhs, op, local_variables),
             rule => unexpected!(rule),
         }?;
         Ok(Self { instruction, str })

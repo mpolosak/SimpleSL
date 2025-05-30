@@ -85,3 +85,9 @@ impl TypeOf for Option<f64> {
         var_type!(float | ())
     }
 }
+
+impl TypeOf for Option<String> {
+    fn type_of() -> Type {
+        var_type!(string | ())
+    }
+}

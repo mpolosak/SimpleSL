@@ -1,50 +1,15 @@
-use crate::instruction::{BinOperation, Instruction};
-use crate::variable::{Array, Variable};
 use crate::BinOperator;
-use match_any::match_any;
+use crate::instruction::{Instruction, create_from_instructions_with_exec};
+use crate::variable::Variable;
 
 pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
-    match (lhs, rhs) {
-        (Instruction::Variable(lhs), Instruction::Variable(rhs)) => exec(lhs, rhs).into(),
-        (lhs, rhs) => BinOperation {
-            lhs,
-            rhs,
-            op: BinOperator::Subtract,
-        }
-        .into(),
-    }
+    create_from_instructions_with_exec(lhs, rhs, BinOperator::Subtract, exec)
 }
 
 pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
-    match_any! { (lhs, rhs),
-        (Variable::Int(lhs), Variable::Int(rhs)) | (Variable::Float(lhs), Variable::Float(rhs))
-            => (lhs - rhs).into(),
-        (lhs, Variable::Array(array)) => {
-            let elements = array
-                .iter()
-                .cloned()
-                .map(|rhs| exec(lhs.clone(), rhs))
-                .collect();
-            let element_type = array.element_type().clone();
-            Array {
-                element_type,
-                elements,
-            }
-            .into()
-        },
-        (Variable::Array(array), rhs) => {
-            let elements = array
-                .iter()
-                .cloned()
-                .map(|lhs| exec(lhs, rhs.clone()))
-                .collect();
-            let element_type = array.element_type().clone();
-            Array {
-                element_type,
-                elements,
-            }
-            .into()
-        },
-        (lhs, rhs) => panic!("Tried to do {lhs} - {rhs}")
+    match (lhs, rhs) {
+        (Variable::Int(lhs), Variable::Int(rhs)) => lhs.wrapping_sub(rhs).into(),
+        (Variable::Float(lhs), Variable::Float(rhs)) => (lhs - rhs).into(),
+        (lhs, rhs) => panic!("Tried to do {lhs} - {rhs}"),
     }
 }

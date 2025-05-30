@@ -1,16 +1,11 @@
-use super::Loop;
-use crate::instruction::block::Block;
-use crate::instruction::control_flow::IfElse;
-use crate::instruction::destruct_tuple::DestructTuple;
-use crate::instruction::local_variable::LocalVariable;
-use crate::instruction::set::Set;
-use crate::instruction::BinOperation;
-use crate::variable::{Type, Variable};
-use crate::{self as simplesl, BinOperator};
 use crate::{
-    instruction::{local_variable::LocalVariables, Instruction, InstructionWithStr},
-    variable::ReturnType,
-    Error,
+    self as simplesl, BinOperator, Error,
+    instruction::{
+        BinOperation, Instruction, InstructionWithStr, Loop, block::Block, control_flow::IfElse,
+        destruct_tuple::DestructTuple, local_variable::LocalVariable,
+        local_variable::LocalVariables, set::Set,
+    },
+    variable::{ReturnType, Type, Variable},
 };
 use lazy_static::lazy_static;
 use pest::iterators::Pair;
@@ -61,7 +56,7 @@ pub fn create_instruction(
             op: BinOperator::FunctionCall,
         }
         .into(),
-        str: format!("$iter()").into(),
+        str: "$iter()".into(),
     };
     let str = format!("($con, {ident}) = {}", iter_call.str).into();
     let destruct = InstructionWithStr {

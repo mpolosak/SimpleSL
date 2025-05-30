@@ -1,11 +1,9 @@
 use crate::{
-    instruction::{
-        local_variable::{LocalVariable, LocalVariables},
-        Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
-    },
     Error, ExecError,
-};
-use crate::{
+    instruction::{
+        Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
+        local_variable::{LocalVariable, LocalVariables},
+    },
     interpreter::Interpreter,
     variable::{ReturnType, Type, Typed, Variable},
 };

@@ -1,11 +1,10 @@
-use super::InstructionWithStr;
-use crate::variable::Variable;
-use crate::{self as simplesl, BinOperator, Code};
+use super::{
+    Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
+};
 use crate::{
-    instruction::{local_variable::LocalVariables, Exec, ExecResult, Instruction, Recreate},
+    self as simplesl, BinOperator, Code, Error, ExecError,
     interpreter::Interpreter,
-    variable::{ReturnType, Type},
-    Error, ExecError,
+    variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
 use simplesl_macros::var_type;

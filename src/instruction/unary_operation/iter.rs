@@ -1,9 +1,11 @@
 use super::UnaryOperation;
-use crate::function::Function;
-use crate::instruction::{Instruction, InstructionWithStr};
-use crate::unary_operator::UnaryOperator;
-use crate::variable::{ReturnType, Type, Typed, Variable};
-use crate::{self as simplesl, Code, Error, Interpreter};
+use crate::{
+    self as simplesl, Code, Error, Interpreter,
+    function::Function,
+    instruction::{Instruction, InstructionWithStr},
+    unary_operator::UnaryOperator,
+    variable::{ReturnType, Type, Typed, Variable},
+};
 use lazy_static::lazy_static;
 use simplesl_macros::var_type;
 use std::sync::Arc;
@@ -68,9 +70,11 @@ pub(crate) fn create(lhs: InstructionWithStr) -> Result<Instruction, Error> {
 
 #[cfg(test)]
 mod tests {
-    use crate::variable::{Typed, Variable};
-    use crate::{self as simplesl, Code, Interpreter};
-    use crate::{unary_operator::UnaryOperator, Error};
+    use crate::{
+        self as simplesl, Code, Error, Interpreter,
+        unary_operator::UnaryOperator,
+        variable::{Typed, Variable},
+    };
     use simplesl_macros::{var, var_type};
     const OP: UnaryOperator = UnaryOperator::Iter;
 

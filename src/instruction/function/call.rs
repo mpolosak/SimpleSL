@@ -1,18 +1,16 @@
 use crate::{
+    BinOperator, Error, ExecError,
     function::{Function, Param, Params},
-    instruction::{set::Set, unary_operation::UnaryOperation, InstructionWithStr},
-    unary_operator::UnaryOperator,
-    variable::{ReturnType, Typed, Variable},
-    BinOperator, Error,
-};
-use crate::{
     instruction::{
+        BinOperation, Instruction, InstructionWithStr,
         function::AnonymousFunction,
         local_variable::{LocalVariable, LocalVariables},
+        set::Set,
         tuple::Tuple,
-        BinOperation, Instruction,
+        unary_operation::UnaryOperation,
     },
-    ExecError,
+    unary_operator::UnaryOperator,
+    variable::{ReturnType, Typed, Variable},
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;

@@ -1,11 +1,11 @@
 use super::{
-    local_variable::LocalVariables, tuple::Tuple, Exec, ExecResult, Instruction,
-    InstructionWithStr, Recreate,
+    Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
+    tuple::Tuple,
 };
 use crate::{
+    Error, ExecError,
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
-    Error, ExecError,
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;

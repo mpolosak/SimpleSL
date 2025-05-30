@@ -1,8 +1,8 @@
-use pest::{iterators::Pair, Parser};
+use pest::{Parser, iterators::Pair};
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
-use simplesl_parser::{unexpected, Rule, SimpleSLParser};
+use simplesl_parser::{Rule, SimpleSLParser, unexpected};
 
 pub fn type_quote(item: &TokenStream) -> TokenStream2 {
     let item_str = item.to_string();

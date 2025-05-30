@@ -2,8 +2,7 @@ use std::fmt::Display;
 
 #[derive(Debug, PartialEq)]
 pub enum ExecError {
-    IndexToBig,
-    NegativeIndex,
+    IndexOutOfBounds,
     NegativeLength,
     NegativeExponent,
     ZeroDivision,
@@ -14,8 +13,7 @@ pub enum ExecError {
 impl Display for ExecError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::IndexToBig => write!(f, "index must be lower than array size"),
-            Self::NegativeIndex => write!(f, "cannot index with negative value"),
+            Self::IndexOutOfBounds => write!(f, "index out of bounds"),
             Self::NegativeLength => write!(f, "length of an array cannot be negative"),
             Self::NegativeExponent => write!(f, "int value cannot be rised to a negative power"),
             Self::ZeroDivision => {

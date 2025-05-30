@@ -1,5 +1,4 @@
-use crate::instruction::Exec;
-use crate::instruction::{ExecStop, InstructionWithStr};
+use crate::instruction::{Exec, ExecStop, InstructionWithStr};
 use crate::{stdlib, variable::*};
 use std::collections::HashMap;
 use std::sync::Arc;

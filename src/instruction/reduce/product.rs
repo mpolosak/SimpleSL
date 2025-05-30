@@ -1,10 +1,9 @@
 use crate::{
-    self as simplesl,
-    instruction::{unary_operation::UnaryOperation, ExecResult, Instruction, InstructionWithStr},
+    self as simplesl, Error,
+    instruction::{ExecResult, Instruction, InstructionWithStr, unary_operation::UnaryOperation},
     stdlib::operators::{FLOAT_PRODUCT, INT_PRODUCT},
     unary_operator::UnaryOperator,
     variable::{ReturnType, Type, Typed, Variable},
-    Error,
 };
 use lazy_static::lazy_static;
 use simplesl_macros::var_type;
@@ -44,10 +43,9 @@ pub fn exec(var: Variable) -> ExecResult {
 
 #[cfg(test)]
 mod tests {
-    use crate as simplesl;
     use crate::{
-        instruction::reduce::product::ACCEPTED_TYPE, unary_operator::UnaryOperator,
-        variable::Variable, Code, Error, Interpreter,
+        self as simplesl, Code, Error, Interpreter, instruction::reduce::product::ACCEPTED_TYPE,
+        unary_operator::UnaryOperator, variable::Variable,
     };
     use simplesl_macros::{var, var_type};
     const OP: UnaryOperator = UnaryOperator::Product;

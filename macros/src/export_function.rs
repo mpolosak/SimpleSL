@@ -104,7 +104,7 @@ fn get_type_from_attrs(attrs: &[Attribute]) -> Option<TokenStream> {
             syn::Meta::List(MetaList { path, tokens, .. })
                 if quote!(#path).to_string() == "var_type" =>
             {
-                return Some(type_quote(&tokens.clone().into()))
+                return Some(type_quote(&tokens.clone().into()));
             }
             _ => (),
         };

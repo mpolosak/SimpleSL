@@ -1,10 +1,10 @@
 pub mod and {
     use crate::{
+        BinOperator, ExecError, Interpreter,
         instruction::{
-            local_variable::LocalVariables, BinOperation, Exec, ExecResult, Instruction, Recreate,
+            BinOperation, Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
         },
         variable::Variable,
-        BinOperator, ExecError, Interpreter,
     };
 
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
@@ -48,11 +48,11 @@ pub mod and {
 
 pub mod or {
     use crate::{
+        BinOperator, ExecError, Interpreter,
         instruction::{
-            local_variable::LocalVariables, BinOperation, Exec, ExecResult, Instruction, Recreate,
+            BinOperation, Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
         },
         variable::Variable,
-        BinOperator, ExecError, Interpreter,
     };
 
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {

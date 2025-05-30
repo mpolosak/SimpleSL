@@ -1,7 +1,9 @@
-use super::{Instruction, InstructionWithStr, Loop};
 use crate::{
-    instruction::{control_flow::SetIfElse, local_variable::LocalVariables},
     Error,
+    instruction::{
+        Instruction, InstructionWithStr, Loop, control_flow::SetIfElse,
+        local_variable::LocalVariables,
+    },
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;

@@ -5,12 +5,10 @@ use duplicate::duplicate_item;
     [lshift] [LShift] [lhs << rhs] [>>]; [rshift] [RShift] [lhs >> rhs] [>>];
 )]
 pub mod shift {
-    use std::sync::Arc;
-
     use crate::{
-        instruction::{BinOperation, Instruction},
-        variable::{Array, Variable},
         BinOperator, ExecError,
+        instruction::{BinOperation, Instruction},
+        variable::Variable,
     };
 
     pub fn create_from_instructions(
@@ -22,12 +20,6 @@ pub mod shift {
             (_, Instruction::Variable(Variable::Int(rhs))) if !(0..=63).contains(&rhs) => {
                 Err(ExecError::OverflowShift)
             }
-            (Instruction::ArrayRepeat(array), rhs) => Arc::unwrap_or_clone(array)
-                .try_map(|lhs| create_from_instructions(lhs, rhs.clone()))
-                .map(Instruction::from),
-            (lhs, Instruction::ArrayRepeat(array)) => Arc::unwrap_or_clone(array)
-                .try_map(|rhs| create_from_instructions(lhs.clone(), rhs))
-                .map(Instruction::from),
             (lhs, rhs) => Ok(BinOperation {
                 lhs,
                 rhs,
@@ -38,72 +30,28 @@ pub mod shift {
     }
 
     pub fn exec(lhs: Variable, rhs: Variable) -> Result<Variable, ExecError> {
-        match (lhs, rhs) {
-            (_, Variable::Int(rhs)) if !(0..=63).contains(&rhs) => Err(ExecError::OverflowShift),
-            (Variable::Int(lhs), Variable::Int(rhs)) => Ok((op1).into()),
-            (value, Variable::Array(array)) => {
-                let elements = array
-                    .iter()
-                    .cloned()
-                    .map(|rhs| exec(value.clone(), rhs))
-                    .collect::<Result<Arc<_>, _>>()?;
-                let element_type = array.element_type().clone();
-                Ok(Array {
-                    element_type,
-                    elements,
-                }
-                .into())
-            }
-            (Variable::Array(array), value) => {
-                let elements = array
-                    .iter()
-                    .cloned()
-                    .map(|lhs| exec(lhs, value.clone()))
-                    .collect::<Result<Arc<_>, _>>()?;
-                let element_type = array.element_type().clone();
-                Ok(Array {
-                    element_type,
-                    elements,
-                }
-                .into())
-            }
-            (lhs, rhs) => panic!(
+        let (Variable::Int(lhs), Variable::Int(rhs)) = (&lhs, &rhs) else {
+            unreachable!(
                 "Tried to do {lhs} {} {rhs} which is imposible",
                 stringify!(op2)
-            ),
+            )
+        };
+        if !(0..=63).contains(rhs) {
+            return Err(ExecError::OverflowShift);
         }
+        Ok((op1).into())
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{variable::Variable, Code, Error, Interpreter};
+    use crate::{Code, Error, Interpreter, variable::Variable};
     use proptest::proptest;
 
     #[test]
     pub fn lshift() {
         assert_eq!(parse_and_exec("4 << 5"), Ok(Variable::Int(4 << 5)));
         assert_eq!(parse_and_exec("0 << 4"), Ok(Variable::Int(0 << 4)));
-        assert_eq!(
-            parse_and_exec("[45, 15, 56, 67] << 4"),
-            Ok([
-                Variable::Int(45 << 4),
-                Variable::Int(15 << 4),
-                Variable::Int(56 << 4),
-                Variable::Int(67 << 4)
-            ]
-            .into())
-        );
-        assert_eq!(
-            parse_and_exec("15 << [1, 2, 3, 4]"),
-            Ok([
-                Variable::Int(15 << 1),
-                Variable::Int(15 << 2),
-                Variable::Int(15 << 3),
-                Variable::Int(15 << 4)
-            ]
-            .into())
-        );
         assert_eq!(parse_and_exec("45 << 64"), Err(Error::OverflowShift));
         assert_eq!(parse_and_exec("45 >> 90"), Err(Error::OverflowShift))
     }
@@ -112,26 +60,6 @@ mod tests {
     pub fn rshift() {
         assert_eq!(parse_and_exec("4 >> 5"), Ok(Variable::Int(4 >> 5)));
         assert_eq!(parse_and_exec("0 >> 4"), Ok(Variable::Int(0 >> 4)));
-        assert_eq!(
-            parse_and_exec("[45, 15, 56, 67] >> 4"),
-            Ok([
-                Variable::Int(45 >> 4),
-                Variable::Int(15 >> 4),
-                Variable::Int(56 >> 4),
-                Variable::Int(67 >> 4)
-            ]
-            .into())
-        );
-        assert_eq!(
-            parse_and_exec("15 >> [1, 2, 3, 4]"),
-            Ok([
-                Variable::Int(15 >> 1),
-                Variable::Int(15 >> 2),
-                Variable::Int(15 >> 3),
-                Variable::Int(15 >> 4)
-            ]
-            .into())
-        );
         assert_eq!(parse_and_exec("45 >> 64"), Err(Error::OverflowShift));
         assert_eq!(parse_and_exec("45 >> 90"), Err(Error::OverflowShift))
     }

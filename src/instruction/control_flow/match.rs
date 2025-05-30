@@ -1,11 +1,11 @@
 use super::match_arm::MatchArm;
 use crate::{
+    Error, ExecError,
     instruction::{
-        local_variable::LocalVariables, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
+        Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
     },
     interpreter::Interpreter,
     variable::{ReturnType, Type},
-    Error, ExecError,
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;

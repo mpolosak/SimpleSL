@@ -1,8 +1,7 @@
-use crate as simplesl;
-use crate::variable::{Type, Typed};
 use crate::{
+    self as simplesl,
     instruction::ExecResult,
-    variable::{Array, Variable},
+    variable::{Array, Type, Typed, Variable},
 };
 use simplesl_macros::{var, var_type};
 

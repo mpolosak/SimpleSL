@@ -1,11 +1,10 @@
 use super::{
-    local_variable::LocalVariables, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
+    Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
 };
-use crate as simplesl;
 use crate::{
+    self as simplesl, Error, ExecError,
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
-    Error, ExecError,
 };
 use pest::iterators::Pair;
 use simplesl_macros::{var, var_type};
@@ -55,26 +54,6 @@ impl ArrayRepeat {
             ) => Ok(Instruction::Variable(var!([value; len]))),
             (value, len) => Ok(Self { value, len }.into()),
         }
-    }
-    pub fn map<F>(self, f: F) -> Self
-    where
-        F: FnOnce(Instruction) -> Instruction,
-    {
-        let value = self.value.map(f);
-        ArrayRepeat {
-            value,
-            len: self.len,
-        }
-    }
-    pub fn try_map<F, E>(self, f: F) -> Result<Self, E>
-    where
-        F: FnOnce(Instruction) -> Result<Instruction, E>,
-    {
-        let value = self.value.try_map(f)?;
-        Ok(ArrayRepeat {
-            value,
-            len: self.len,
-        })
     }
 }
 

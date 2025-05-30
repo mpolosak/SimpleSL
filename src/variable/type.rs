@@ -1,9 +1,8 @@
 use super::{function_type::FunctionType, multi_type::MultiType};
-use crate as simplesl;
-use crate::{errors::ParseTypeError, join};
+use crate::{self as simplesl, errors::ParseTypeError, join};
 use lazy_static::lazy_static;
 use match_any::match_any;
-use pest::{iterators::Pair, Parser};
+use pest::{Parser, iterators::Pair};
 use simplesl_macros::var_type;
 use simplesl_parser::{Rule, SimpleSLParser};
 use std::{
@@ -248,15 +247,25 @@ impl Type {
                 let mut iter = multi.iter();
                 let first = iter.next().unwrap().tuple_len()?;
                 iter.map(Self::tuple_len).try_fold(first, |acc, curr| {
-                    if acc == curr? {
-                        Some(acc)
-                    } else {
-                        None
-                    }
+                    if acc == curr? { Some(acc) } else { None }
                 })
             }
             _ => None,
         }
+    }
+
+    pub fn min_tuple_len(&self) -> Option<usize> {
+        let Self::Multi(multi) = self else {
+            return self.tuple_len();
+        };
+        let mut iter = multi.iter();
+        let first = iter.next().unwrap().tuple_len()?;
+        iter.map(Self::tuple_len).try_fold(
+            first,
+            |acc, curr| {
+                if acc < curr? { Some(acc) } else { curr }
+            },
+        )
     }
 
     pub fn iter_element(&self) -> Option<Type> {
@@ -279,6 +288,24 @@ impl Type {
             }
             _ => None,
         }
+    }
+
+    pub fn tuple_element_at(&self, index: usize) -> Option<Type> {
+        match self {
+            Self::Tuple(tuple) => tuple.get(index).cloned(),
+            Self::Multi(multi) => {
+                let mut iter = multi.iter();
+                let first = iter.next().unwrap().iter_element()?;
+                iter.map(|t| t.tuple_element_at(index))
+                    .try_fold(first, |acc, curr| Some(acc | curr?))
+            }
+            _ => None,
+        }
+    }
+
+    // Return true if variable of type can be indexed, false - otherwise
+    pub fn can_be_indexed(&self) -> bool {
+        self.matches(&var_type!(string | [any]))
     }
 }
 
@@ -392,8 +419,8 @@ pub trait ReturnType {
 
 #[cfg(test)]
 mod tests {
-    use crate as simplesl;
     use crate::{
+        self as simplesl,
         errors::ParseTypeError,
         variable::{FunctionType, Type},
     };
