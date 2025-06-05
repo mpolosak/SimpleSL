@@ -41,7 +41,8 @@ impl Type {
         match_any! { (self, other),
             (Type::Never, _) => true,
             (Self::Function(var_type), Self::Function(var_type2))
-            | (Self::Array(var_type), Self::Array(var_type2)) => {
+            | (Self::Array(var_type), Self::Array(var_type2))
+            | (Self::Struct(var_type), Self::Struct(var_type2)) => {
                 var_type.matches(var_type2)
             },
             (Self::Multi(types), other) => types.iter().all(|var_type| var_type.matches(other)),
