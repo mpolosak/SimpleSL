@@ -231,10 +231,12 @@ standard_types_ident       = _{
   | any
   | never
   | mut_type_ident
+  | struct_type_ident
   | ident
 }
 multi_ident                =  { (standard_types_ident) ~ ("|" ~ standard_types_ident)+ }
 mut_type_ident             =  { "mut" ~ return_type_ident }
+struct_type_ident          =  { "struct" ~ "{" ~ (ident ~ ":" ~ type_ident ~ ("," ~ ident ~ ":" ~ type_ident)*)? ~ "}" }
 input                      = _{ line* ~ &EOI }
 block_comment              = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 line_comment               = _{ "//" ~ (!NEWLINE ~ ANY)* }

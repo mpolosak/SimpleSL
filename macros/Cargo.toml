@@ -17,3 +17,4 @@ proc-macro2 = "1.0"
 simplesl_parser.workspace = true
 pest.workspace = true
 unescaper.workspace = true
+itertools.workspace = true
