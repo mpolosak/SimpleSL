@@ -309,6 +309,20 @@ impl Type {
     pub fn can_be_indexed(&self) -> bool {
         self.matches(&var_type!(string | [any]))
     }
+
+    // Return type of field if self is struct and has field with name, None - otherwise
+    pub fn field_type(&self, ident: &str) -> Option<Type> {
+        match self {
+            Self::Struct(tm) => tm.0.get(ident).cloned(),
+            Self::Multi(multi) => {
+                let mut iter = multi.iter();
+                let first = iter.next().unwrap().field_type(ident)?;
+                iter.map(|t| t.field_type(ident))
+                    .try_fold(first, |acc, curr| Some(acc | curr?))
+            }
+            _ => None,
+        }
+    }
 }
 
 impl Display for Type {
@@ -726,6 +740,28 @@ mod tests {
         assert_eq!(var_type!([int] | float).element_type(), None);
         assert_eq!(var_type!(any).element_type(), None);
         assert_eq!(var_type!(string | (int, float)).element_type(), None);
+    }
+
+    #[test]
+    fn field_type() {
+        let s1 = var_type!(struct{a: int, b: float});
+        assert_eq!(s1.field_type("a"), Some(var_type!(int)));
+        assert_eq!(s1.field_type("b"), Some(var_type!(float)));
+        assert_eq!(s1.field_type("c"), None);
+        let c = s1.clone();
+        let c2 = s1.clone();
+        let s2 = var_type!(struct{b: string | (), c: c});
+        assert_eq!(s2.field_type("a"), None);
+        assert_eq!(s2.field_type("b"), Some(var_type!(string | ())));
+        assert_eq!(s2.field_type("c"), Some(c2));
+        let s3 = s1 | s2;
+        assert_eq!(s3.field_type("a"), None);
+        assert_eq!(s3.field_type("b"), Some(var_type!(float | string | ())));
+        assert_eq!(s3.field_type("c"), None);
+        let s3 = var_type!(s3 | int);
+        assert_eq!(s3.field_type("a"), None);
+        assert_eq!(Type::Int.field_type("a"), None);
+        assert_eq!(Type::String.field_type("a"), None);
     }
 
     proptest! {
