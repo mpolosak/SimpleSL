@@ -29,7 +29,7 @@ fn main() -> ExitCode {
 fn run_shell() -> Result<(), ReadlineError> {
     let mut interpreter = Interpreter::with_stdlib();
     interpreter.insert(
-        "struct".into(),
+        "s".into(),
         Variable::Struct(
             HashMap::from([
                 ("a".into(), Variable::Int(5)),

@@ -1,11 +1,11 @@
-restricted_keywords  = _{ bool | "mut" | "return" | "loop" | "while" | "for" | break | continue }
+restricted_keywords  = _{ bool | "mut" | "return" | "loop" | "while" | "for" | "struct" | break | continue }
 ident                = @{ !(restricted_keywords ~ !(ASCII_ALPHANUMERIC | "_")) ~ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
 var                  = _{ bool | float | int | array | array_repeat | string | function | void | tuple | mut }
 bool                 = _{ true | false }
 true                 =  { "true" }
 false                =  { "false" }
 function             =  { params ~ return_type_decl? ~ "{" ~ line* ~ "}" }
-param                =  { ident ~ ":" ~ type }
+param                =  { ident_type }
 params_list          = _{ (param ~ ("," ~ param)*)? }
 params               =  { "(" ~ params_list? ~ ")" }
 return_type_decl     =  { ("->" ~ type | return_type) }
@@ -157,13 +157,14 @@ stm                  = _{
   | continue
   | expr
 }
+ident_type           = _{ ident ~ ":" ~ type }
 block                =  { "{" ~ line* ~ "}" }
 body                 = _{ block | return | expr }
 if_else              =  { "if" ~ expr ~ body ~ ("else" ~ stm)? }
-set_if_else          =  { "if" ~ ident ~ ":" ~ type ~ "=" ~ expr ~ body ~ ("else" ~ stm)? }
+set_if_else          =  { "if" ~ ident_type ~ "=" ~ expr ~ body ~ ("else" ~ stm)? }
 match                =  { "match" ~ expr ~ "{" ~ match_arm* ~ "}" }
 match_arm            = _{ match_type | match_value | match_other }
-match_type           =  { ident ~ ":" ~ type ~ "=>" ~ body ~ "," }
+match_type           =  { ident_type ~ "=>" ~ body ~ "," }
 match_value          =  { values ~ "=>" ~ body ~ "," }
 match_other          =  { "=>" ~ body ~ "," }
 values               = _{ (expr ~ ("," ~ expr)*) }
@@ -172,7 +173,7 @@ return               =  { "return" ~ stm? }
 break                =  { "break" }
 continue             =  { "continue" }
 while                =  { "while" ~ expr ~ stm }
-while_set            =  { "while" ~ ident ~ ":" ~ type ~ "=" ~ expr ~ stm }
+while_set            =  { "while" ~ ident_type ~ "=" ~ expr ~ stm }
 for                  =  { "for" ~ ident ~ "in" ~ expr ~ stm }
 loop                 =  { "loop" ~ stm }
 expression_list      = _{ (expr ~ ("," ~ expr)*) }
@@ -192,6 +193,7 @@ function_type_params =  { "(" ~ (type ~ ("," ~ type)*)? ~ ")" }
 return_type          = _{ standard_types | "(" ~ multi ~ ")" }
 array_type           =  { "[" ~ type? ~ "]" }
 tuple_type           =  { "(" ~ (type ~ ("," ~ type)+) ~ ")" }
+struct_type          =  { "struct" ~ "{" ~ (ident_type ~ ("," ~ ident_type)*)? ~ "}" }
 standard_types       = _{
     bool_type
   | int_type
@@ -204,6 +206,7 @@ standard_types       = _{
   | any
   | never
   | mut_type
+  | struct_type
 }
 multi                =  { (standard_types) ~ ("|" ~ standard_types)+ }
 any                  =  { "any" }

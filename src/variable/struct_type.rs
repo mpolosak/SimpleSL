@@ -1,6 +1,8 @@
 use std::{collections::HashMap, fmt::Display, hash::Hash, sync::Arc};
 
 use itertools::Itertools;
+use pest::iterators::Pair;
+use simplesl_parser::Rule;
 
 use crate::variable::Type;
 
@@ -38,9 +40,27 @@ impl Display for StructType {
     }
 }
 
-impl<T: Into<HashMap<Arc<str>, Type>>> From<T> for StructType {
-    fn from(value: T) -> Self {
+impl From<HashMap<Arc<str>, Type>> for StructType {
+    fn from(value: HashMap<Arc<str>, Type>) -> Self {
+        StructType(value.into())
+    }
+}
+
+impl<const N: usize> From<[(Arc<str>, Type); N]> for StructType {
+    fn from(value: [(Arc<str>, Type); N]) -> Self {
         StructType(Arc::new(value.into()))
+    }
+}
+
+#[doc(hidden)]
+impl From<Pair<'_, Rule>> for StructType {
+    fn from(pair: Pair<'_, Rule>) -> Self {
+        let tm = pair
+            .into_inner()
+            .tuples()
+            .map(|(key, value)| (key.as_str().into(), Type::from(value)))
+            .collect();
+        Self(Arc::new(tm))
     }
 }
 

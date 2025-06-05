@@ -381,6 +381,7 @@ impl From<Pair<'_, Rule>> for Type {
                 let element_type = pair.into_inner().next().map(Type::from).unwrap();
                 Self::Mut(element_type.into())
             }
+            Rule::struct_type => StructType::from(pair).into(),
             rule => panic!("Type cannot be built from rule: {rule:?}"),
         }
     }
