@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use pest::{Parser, iterators::Pair};
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
@@ -69,6 +70,20 @@ fn var_token_from_pair(pair: Pair<Rule>) -> quote::__private::TokenStream {
                 .map(var_token_from_pair)
                 .reduce(|acc, curr| quote!(#acc, # curr));
             quote!(simplesl::variable::Variable::Tuple([#elements].into()))
+        }
+        Rule::struct_ident => {
+            let fields = pair
+                .into_inner()
+                .tuples()
+                .map(|(ident, value)| {
+                    let ident = ident.as_str();
+                    let value = var_token_from_pair(value);
+                    Some(quote!((#ident.into(), #value)))
+                })
+                .reduce(|acc, curr| Some(quote!(#acc, #curr)));
+            quote!(simplesl::variable::Variable::Struct(
+                std::collections::HashMap::from([#fields]).into()
+            ))
         }
         Rule::array_ident_repeat => {
             let mut inner = pair.into_inner();
@@ -168,6 +183,20 @@ fn var_type_from_var_pair(pair: Pair<Rule>) -> Option<quote::__private::TokenStr
                 })
                 .unwrap()?;
             Some(quote!(simplesl::variable::Type::Tuple([#elements].into())))
+        }
+        Rule::struct_ident => {
+            let fields = pair
+                .into_inner()
+                .tuples()
+                .map(|(ident, value)| {
+                    let ident = ident.as_str();
+                    let value = var_type_from_var_pair(value).unwrap();
+                    Some(quote!((#ident.into(), #value)))
+                })
+                .reduce(|acc, curr| Some(quote!(#acc, #curr)));
+            Some(quote!(simplesl::variable::Variable::Struct(
+                std::collections::HashMap::from([#fields]).into()
+            )))
         }
         Rule::array_ident_repeat => {
             let element_type = var_type_from_var_pair(

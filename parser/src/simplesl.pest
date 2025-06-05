@@ -277,6 +277,7 @@ var_ident          = _{
   | string
   | void
   | tuple_ident
+  | struct_ident
   | minus_ident
   | ident
 }
@@ -284,6 +285,8 @@ minus_ident        =  { "-" ~ ident }
 array_ident        =  { "[" ~ var_ident_list? ~ "]" }
 array_ident_repeat =  { "[" ~ var_ident ~ ";" ~ (int | ident) ~ "]" }
 tuple_ident        =  { "(" ~ var_ident ~ "," ~ var_ident_list ~ ")" }
+struct_ident       =  { "struct" ~ "{" ~ (field_ident ~ ("," ~ field_ident)*)? ~ "}" }
+field_ident        = _{ ident ~ "=" ~ var_ident }
 var_ident_list     = _{ (var_ident ~ ("," ~ var_ident)*) }
 COMMENT            = _{ block_comment | line_comment }
 WHITESPACE         = _{ " " | "\t" | NEWLINE }

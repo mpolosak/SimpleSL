@@ -1,5 +1,6 @@
-use crate::{Code, Interpreter, variable::Variable};
+use crate::{self as simplesl, Code, Interpreter, variable::Variable};
 use lazy_static::lazy_static;
+use simplesl_macros::var;
 
 #[macro_export]
 macro_rules! lazy_var {
@@ -100,14 +101,27 @@ lazy_var!(
     }"#
 );
 
-pub fn add_operators(interpreter: &mut Interpreter) {
-    interpreter.insert("bitand_reduce".into(), AND.clone());
-    interpreter.insert("bitor_reduce".into(), OR.clone());
-    interpreter.insert("all".into(), ALL.clone());
-    interpreter.insert("any".into(), ANY.clone());
-    interpreter.insert("int_product".into(), INT_PRODUCT.clone());
-    interpreter.insert("float_product".into(), FLOAT_PRODUCT.clone());
-    interpreter.insert("int_sum".into(), INT_SUM.clone());
-    interpreter.insert("float_sum".into(), FLOAT_SUM.clone());
-    interpreter.insert("string_sum".into(), STRING_SUM.clone());
+lazy_static! {
+    pub static ref OPERATORS: Variable = {
+        let and = AND.clone();
+        let or = OR.clone();
+        let all = ALL.clone();
+        let any = ANY.clone();
+        let int_product = INT_PRODUCT.clone();
+        let float_product = FLOAT_PRODUCT.clone();
+        let int_sum = INT_SUM.clone();
+        let float_sum = FLOAT_SUM.clone();
+        let string_sum = STRING_SUM.clone();
+        var!(struct{
+            bitand_reduce = and,
+            bitor_reduce = or,
+            all = all,
+            any = any,
+            int_product = int_product,
+            float_product = float_product,
+            int_sum = int_sum,
+            float_sum = float_sum,
+            string_sum = string_sum
+        })
+    };
 }
