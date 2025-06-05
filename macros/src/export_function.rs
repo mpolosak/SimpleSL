@@ -25,7 +25,7 @@ pub fn export_item_fn(
     let return_type = get_return_type(function, attr.return_type);
     quote!(
         {
-            interpreter.insert(
+            vm.insert(
                 #ident_str.into(),
                 simplesl::function::Function::new(
                     simplesl::function::Params(std::sync::Arc::new([#params])),

@@ -6,7 +6,7 @@ mod var_type;
 use attributes::Attributes;
 use export_function::export_item_fn;
 use proc_macro::TokenStream;
-use quote::quote;
+use quote::{format_ident, quote};
 use syn::{Item, ItemConst, ItemFn, ItemMod, ItemUse, Visibility, parse_macro_input};
 use var::quote;
 use var_type::type_quote;
@@ -29,7 +29,7 @@ pub fn export(_attr: TokenStream, module: TokenStream) -> TokenStream {
                 ..
             }) => {
                 let ident_string = ident.to_string();
-                quote!(interpreter.insert(#ident_string.into(), (#mod_ident::#ident).into());)
+                quote!(vm.insert(#ident_string.into(), (#mod_ident::#ident).into());)
             }
             Item::Fn(function) => {
                 if matches!(function.vis, Visibility::Inherited) {
@@ -55,10 +55,16 @@ pub fn export(_attr: TokenStream, module: TokenStream) -> TokenStream {
                 #curr
             )
         });
+
+    let var_ident = format_ident!("{}_var", mod_ident);
     quote!(
         #module
-        pub fn #mod_ident(interpreter: &mut simplesl::Interpreter){
-            #items
+        lazy_static::lazy_static! {
+            pub static ref #var_ident: simplesl::variable::Variable = {
+                let mut vm = simplesl::interpreter::VariableMap::new();
+                #items
+                simplesl::variable::Variable::Struct(vm.into())
+            };
         }
     )
     .into()

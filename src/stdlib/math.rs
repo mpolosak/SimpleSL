@@ -2,7 +2,7 @@ use crate as simplesl;
 use simplesl_macros::export;
 
 #[export]
-mod add_math {
+pub mod add_math {
     use std::f64::consts;
 
     pub const MIN_INT: i64 = i64::MIN;

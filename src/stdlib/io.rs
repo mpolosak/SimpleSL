@@ -2,7 +2,7 @@ use crate as simplesl;
 use simplesl_macros::export;
 
 #[export]
-mod add_io {
+pub mod add_io {
     use crate::join;
     pub use {crate::variable::Variable, std::io};
 

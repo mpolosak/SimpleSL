@@ -2,7 +2,7 @@ use crate as simplesl;
 use simplesl_macros::export;
 
 #[export]
-pub(crate) mod add_string {
+pub mod add_string {
     use crate as simplesl;
     use crate::variable::Variable;
     use simplesl_macros::var;
