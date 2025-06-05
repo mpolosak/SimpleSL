@@ -11,6 +11,7 @@ use super::{
 };
 use crate::{
     Error, Interpreter,
+    instruction::field_access::FieldAccess,
     unary_operator::UnaryOperator,
     variable::{ReturnType, Type},
 };
@@ -31,6 +32,7 @@ impl InstructionWithStr {
             }
             Rule::function_call => call::create_instruction(lhs, op, local_variables),
             Rule::tuple_access => TupleAccess::create_instruction(lhs, op),
+            Rule::field_access => FieldAccess::create_instruction(lhs, op),
             Rule::sum => sum::create(lhs),
             Rule::product => product::create(lhs),
             Rule::all => bool_reduce::create(lhs, UnaryOperator::All),

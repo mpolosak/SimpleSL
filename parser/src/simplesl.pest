@@ -117,6 +117,7 @@ postfix_op           = _{
   | slicing
   | function_call
   | tuple_access
+  | field_access
   | sum
   | product
   | all
@@ -134,6 +135,7 @@ stop                 =  { expr }
 step                 =  { expr }
 function_call        =  { "(" ~ expression_list? ~ ")" }
 tuple_access         =  { "." ~ int }
+field_access         =  { "." ~ ident }
 sum                  =  { "$+" }
 product              =  { "$*" }
 all                  =  { "$&&" }
