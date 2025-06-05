@@ -1,6 +1,6 @@
 restricted_keywords  = _{ bool | "mut" | "return" | "loop" | "while" | "for" | "struct" | break | continue }
 ident                = @{ !(restricted_keywords ~ !(ASCII_ALPHANUMERIC | "_")) ~ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
-var                  = _{ bool | float | int | array | array_repeat | string | function | void | tuple | mut }
+var                  = _{ bool | float | int | array | array_repeat | string | function | void | tuple | mut | struct }
 bool                 = _{ true | false }
 true                 =  { "true" }
 false                =  { "false" }
@@ -31,6 +31,8 @@ char                 =  {
   | "\\" ~ ANY
 }
 mut                  =  { "mut" ~ type? ~ expr }
+struct               =  { "struct" ~ "{" ~ (field ~ ("," ~ field)*)? ~ "}" }
+field                = _{ ident ~ "=" ~ expr }
 primary              = _{ ident | var | expr_in_brackets }
 expr_in_brackets     = _{ "(" ~ expr ~ ")" }
 atom                 = _{ prefix_op? ~ primary ~ postfix_op* }

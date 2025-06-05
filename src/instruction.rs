@@ -16,6 +16,7 @@ mod reduce;
 mod r#return;
 mod set;
 mod slicing;
+mod r#struct;
 mod tuple;
 pub mod tuple_access;
 mod type_filter;
@@ -35,7 +36,7 @@ use self::{
 };
 use crate::{
     Error, ExecError,
-    instruction::field_access::FieldAccess,
+    instruction::{field_access::FieldAccess, r#struct::Struct},
     interpreter::Interpreter,
     variable::{ReturnType, Type, Typed, Variable},
 };
@@ -112,6 +113,7 @@ impl InstructionWithStr {
             Rule::array => Array::create_instruction(pair, local_variables),
             Rule::array_repeat => ArrayRepeat::create_instruction(pair, local_variables),
             Rule::function => AnonymousFunction::create_instruction(pair, local_variables),
+            Rule::r#struct => Struct::create_instruction(pair, local_variables),
             rule => unexpected!(rule),
         }?;
         Ok(Self { instruction, str })
@@ -187,6 +189,7 @@ pub enum Instruction {
     Set(Arc<Set>),
     SetIfElse(Arc<SetIfElse>),
     Slicing(Arc<Slicing>),
+    Struct(Arc<Struct>),
     Tuple(Tuple),
     TupleAccess(Arc<TupleAccess>),
     TypeFilter(Arc<TypeFilter>),
@@ -238,8 +241,8 @@ impl Exec for Instruction {
             | Self::BinOperation(ins) | Self::FieldAccess(ins) | Self::FunctionDeclaration(ins)
             | Self::IfElse(ins) | Self::Import(ins) | Self::Loop(ins) | Self::Match(ins)
             | Self::Mut(ins) | Self::Reduce(ins) | Self::Set(ins) | Self::SetIfElse(ins)
-            | Self::Slicing(ins) | Self::TypeFilter(ins) | Self::UnaryOperation(ins)
-            | Self::TupleAccess(ins) => ins.exec(interpreter),
+            | Self::Slicing(ins) | Self::Struct(ins) | Self::TypeFilter(ins)
+            | Self::UnaryOperation(ins) | Self::TupleAccess(ins) => ins.exec(interpreter),
             Self::Break => Err(ExecStop::Break),
             Self::Continue => Err(ExecStop::Continue)
         }
@@ -268,8 +271,8 @@ impl Recreate for Instruction {
             | Self::BinOperation(ins) | Self::FieldAccess(ins) | Self::FunctionDeclaration(ins)
             | Self::IfElse(ins) | Self::Import(ins) | Self::Loop(ins) | Self::Match(ins)
             | Self::Mut(ins) | Self::Reduce(ins) | Self::Set(ins) | Self::SetIfElse(ins)
-            | Self::Slicing(ins) | Self::TypeFilter(ins) | Self::UnaryOperation(ins)
-            | Self::TupleAccess(ins) => ins.recreate(local_variables),
+            | Self::Slicing(ins) | Self::Struct(ins) |  Self::TypeFilter(ins)
+            | Self::UnaryOperation(ins) | Self::TupleAccess(ins) => ins.recreate(local_variables),
             _ => Ok(self.clone())
         }
     }
@@ -284,8 +287,8 @@ impl ReturnType for Instruction {
             | Self::BinOperation(ins) | Self::FieldAccess(ins) | Self::FunctionDeclaration(ins)
             | Self::IfElse(ins) | Self::Import(ins) | Self::Match(ins) | Self::Mut(ins)
             | Self::Reduce(ins) | Self::Set(ins) | Self::SetIfElse(ins) | Self::Slicing(ins)
-            | Self::TypeFilter(ins) | Self::UnaryOperation(ins) | Self::TupleAccess(ins)
-            => ins.return_type(),
+            | Self::Struct(ins) | Self::TypeFilter(ins) | Self::UnaryOperation(ins)
+            | Self::TupleAccess(ins) => ins.return_type(),
             Self::Loop(_) => Type::Void,
             Self::Break | Self::Continue => Type::Never
         }
@@ -295,7 +298,8 @@ impl ReturnType for Instruction {
 #[duplicate_item(
     T; [Block]; [Variable]; [UnaryOperation]; [BinOperation]; [AnonymousFunction]; [Array];
     [ArrayRepeat]; [Tuple]; [DestructTuple]; [FieldAccess]; [FunctionDeclaration]; [IfElse];
-    [Import]; [Reduce]; [Slicing]; [TypeFilter]; [Match]; [Mut]; [Set]; [SetIfElse]; [TupleAccess]
+    [Import]; [Reduce]; [Slicing]; [Struct]; [TypeFilter]; [Match]; [Mut]; [Set]; [SetIfElse];
+    [TupleAccess]
 )]
 impl From<T> for Instruction {
     fn from(value: T) -> Self {
