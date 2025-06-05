@@ -35,6 +35,10 @@ lazy_static! {
     static ref ITERATOR_TYPE: Type = var_type!(() -> (bool, any));
 }
 
+lazy_static! {
+    static ref EMPTY_STRUCT_TYPE: Type = var_type!(struct{});
+}
+
 impl Type {
     #[must_use]
     pub fn matches(&self, other: &Self) -> bool {
@@ -242,6 +246,10 @@ impl Type {
         self.matches(&ITERATOR_TYPE)
     }
 
+    pub fn is_struct(&self) -> bool {
+        self.matches(&EMPTY_STRUCT_TYPE)
+    }
+
     pub fn tuple_len(&self) -> Option<usize> {
         match self {
             Self::Tuple(types) => Some(types.len()),
@@ -321,6 +329,15 @@ impl Type {
                     .try_fold(first, |acc, curr| Some(acc | curr?))
             }
             _ => None,
+        }
+    }
+
+    // Return true if self is struct and has field with given ident
+    pub fn has_field(&self, ident: &str) -> bool {
+        match self {
+            Self::Struct(tm) => tm.0.contains_key(ident),
+            Self::Multi(multi) => multi.iter().all(|t| t.has_field(ident)),
+            _ => false,
         }
     }
 }
@@ -781,6 +798,26 @@ mod tests {
         assert_eq!(s3.field_type("a"), None);
         assert_eq!(Type::Int.field_type("a"), None);
         assert_eq!(Type::String.field_type("a"), None);
+    }
+
+    #[test]
+    fn has_field() {
+        let s1 = var_type!(struct{a: int, b: float});
+        assert!(s1.has_field("a"));
+        assert!(s1.has_field("b"));
+        assert!(!s1.has_field("c"));
+        let s2 = var_type!(struct{b: string | (), c: string});
+        assert!(!s2.has_field("a"));
+        assert!(s2.has_field("b"));
+        assert!(s2.has_field("c"));
+        let s3 = s1 | s2;
+        assert!(!s3.has_field("a"));
+        assert!(s3.has_field("b"));
+        assert!(!s3.has_field("c"));
+        let s3 = var_type!(s3 | int);
+        assert!(!s3.has_field("a"));
+        assert!(!Type::Int.has_field("a"));
+        assert!(!Type::String.has_field("a"));
     }
 
     proptest! {
