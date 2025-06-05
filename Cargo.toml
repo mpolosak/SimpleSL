@@ -30,8 +30,8 @@ pest.workspace = true
 lazy_static.workspace = true
 simplesl_parser.workspace = true
 unescaper.workspace = true
+itertools = "0.14.0"
 
 [dev-dependencies]
-itertools = "0.14.0"
 markdown = "0.3"
 proptest = "1.6.0"

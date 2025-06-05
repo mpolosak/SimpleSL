@@ -2,19 +2,22 @@ mod array;
 mod function_type;
 mod multi_type;
 mod r#mut;
+mod struct_type;
 mod try_from;
 mod r#type;
 mod type_of;
-use crate::{Error, function::Function};
+use crate::{Error, function::Function, interpreter::VariableMap};
 use enum_as_inner::EnumAsInner;
+use itertools::Itertools;
 use match_any::match_any;
 use pest::{Parser, iterators::Pair};
 use simplesl_parser::{Rule, SimpleSLParser, unexpected};
-use std::{fmt, io, str::FromStr, sync::Arc};
+use std::{collections::HashMap, fmt, io, str::FromStr, sync::Arc};
 pub use r#type::{ReturnType, Type, Typed};
 use typle::typle;
 pub use {
-    array::Array, function_type::FunctionType, multi_type::MultiType, r#mut::Mut, type_of::TypeOf,
+    array::Array, function_type::FunctionType, multi_type::MultiType, r#mut::Mut,
+    struct_type::StructType, type_of::TypeOf,
 };
 
 #[derive(Clone, EnumAsInner)]
@@ -27,6 +30,7 @@ pub enum Variable {
     Array(Arc<Array>),
     Tuple(Arc<[Variable]>),
     Mut(Arc<Mut>),
+    Struct(Arc<VariableMap>),
     Void,
 }
 
@@ -44,6 +48,10 @@ impl Variable {
             Variable::Array(value) => value.string(depth),
             Variable::Mut(value) => value.string(depth+1),
             Variable::Tuple(elements) => format!("({})", elements.iter().map(|v| v.debug(depth+1)).collect::<Box<[_]>>().join(", ")),
+            Variable::Struct(vm) => {
+                let elements = vm.iter().map(|(key, value)| format!("{}={}", key, value.debug(depth))).join(", ");
+                format!("struct{{{elements}}}")
+            },
             Variable::Void => format!("()")
         }
     }
@@ -87,6 +95,13 @@ impl Variable {
                 }
                 .into(),
             ),
+            Type::Struct(s) => {
+                let vm: Option<VariableMap> =
+                    s.0.iter()
+                        .map(|(key, value)| Some((key.clone(), Variable::of_type(value)?)))
+                        .collect();
+                Some(Variable::Struct(vm?.into()))
+            }
             Type::Any => Some(Variable::Void),
             Type::Never => None,
         }
@@ -104,6 +119,12 @@ impl Typed for Variable {
             Variable::Tuple(elements) => {
                 let types = elements.iter().map(Variable::as_type).collect();
                 Type::Tuple(types)
+            },
+            Variable::Struct(vm) => {
+                let tm: HashMap<Arc<str>, Type> = vm.iter().map(|(key, value)|{
+                    (key.clone(), value.as_type())
+                }).collect();
+                StructType(Arc::from(tm)).into()
             },
             Variable::Void => Type::Void
         }

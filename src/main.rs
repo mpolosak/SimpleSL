@@ -1,6 +1,6 @@
 use rustyline::{DefaultEditor, error::ReadlineError};
-use simplesl::{Code, Error, Interpreter};
-use std::{env, fs, process::ExitCode};
+use simplesl::{Code, Error, Interpreter, variable::Variable};
+use std::{collections::HashMap, env, fs, process::ExitCode};
 
 fn main() -> ExitCode {
     let mut args = env::args();
@@ -28,6 +28,16 @@ fn main() -> ExitCode {
 
 fn run_shell() -> Result<(), ReadlineError> {
     let mut interpreter = Interpreter::with_stdlib();
+    interpreter.insert(
+        "struct".into(),
+        Variable::Struct(
+            HashMap::from([
+                ("a".into(), Variable::Int(5)),
+                ("masa".into(), Variable::String("string".into())),
+            ])
+            .into(),
+        ),
+    );
     let mut rl = DefaultEditor::new()?;
     loop {
         let readline = rl.readline("> ");

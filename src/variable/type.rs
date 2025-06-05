@@ -1,5 +1,5 @@
 use super::{function_type::FunctionType, multi_type::MultiType};
-use crate::{self as simplesl, errors::ParseTypeError, join};
+use crate::{self as simplesl, errors::ParseTypeError, join, variable::struct_type::StructType};
 use lazy_static::lazy_static;
 use match_any::match_any;
 use pest::{Parser, iterators::Pair};
@@ -26,6 +26,7 @@ pub enum Type {
     Void,
     Multi(MultiType),
     Mut(Arc<Type>),
+    Struct(StructType),
     Any,
     Never,
 }
@@ -322,6 +323,7 @@ impl Display for Type {
             Self::Tuple(types) => write!(f, "({})", join(types.as_ref(), ", ")),
             Self::Void => write!(f, "()"),
             Self::Multi(types) => write!(f, "{types}"),
+            Self::Struct(st) => write!(f, "{st}"),
             Self::Mut(var_type) if matches!(var_type.as_ref(), Type::Multi(_)) => {
                 write!(f, "mut ({var_type})")
             }

@@ -10,7 +10,7 @@ pub struct Interpreter<'a> {
     lower_layer: Option<&'a Self>,
 }
 
-type VariableMap = HashMap<Arc<str>, Variable>;
+pub type VariableMap = HashMap<Arc<str>, Variable>;
 
 impl<'a> Interpreter<'a> {
     /// Constructs a new Interpreter with simplesl stdlib
