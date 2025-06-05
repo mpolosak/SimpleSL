@@ -297,7 +297,7 @@ impl Type {
             Self::Tuple(tuple) => tuple.get(index).cloned(),
             Self::Multi(multi) => {
                 let mut iter = multi.iter();
-                let first = iter.next().unwrap().iter_element()?;
+                let first = iter.next().unwrap().tuple_element_at(index)?;
                 iter.map(|t| t.tuple_element_at(index))
                     .try_fold(first, |acc, curr| Some(acc | curr?))
             }
@@ -740,6 +740,25 @@ mod tests {
         assert_eq!(var_type!([int] | float).element_type(), None);
         assert_eq!(var_type!(any).element_type(), None);
         assert_eq!(var_type!(string | (int, float)).element_type(), None);
+    }
+
+    #[test]
+    fn tuple_element_at() {
+        let l1 = var_type!((int, float));
+        assert_eq!(l1.tuple_element_at(0), Some(var_type!(int)));
+        assert_eq!(l1.tuple_element_at(1), Some(var_type!(float)));
+        assert_eq!(l1.tuple_element_at(2), None);
+        let l2 = var_type!((string, (), struct{}));
+        assert_eq!(l2.tuple_element_at(0), Some(var_type!(string)));
+        assert_eq!(l2.tuple_element_at(1), Some(var_type!(())));
+        assert_eq!(l2.tuple_element_at(2), Some(var_type!(struct{})));
+        let l3 = l1 | l2;
+        assert_eq!(l3.tuple_element_at(0), Some(var_type!(int | string)));
+        assert_eq!(l3.tuple_element_at(1), Some(var_type!(float | ())));
+        assert_eq!(l3.tuple_element_at(2), None);
+        let l4 = var_type!(l3 | ());
+        assert_eq!(l4.tuple_element_at(0), None);
+        assert_eq!(Type::Int.tuple_element_at(0), None);
     }
 
     #[test]
