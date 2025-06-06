@@ -257,12 +257,15 @@ var_from_str          = _{
   | string
   | void
   | tuple_from_str
+  | struct_from_str
 }
 minus_float           =  { "-" ~ float }
 minus_int             =  { "-" ~ int }
 array_from_str        =  { "[" ~ var_list? ~ "]" }
 array_repeat_from_str =  { "[" ~ var_from_str ~ ";" ~ int ~ "]" }
 tuple_from_str        =  { "(" ~ var_from_str ~ "," ~ var_list ~ ")" }
+struct_from_str       =  { "struct" ~ "{" ~ (field_from_str ~ ("," ~ field_from_str)*)? ~ "}" }
+field_from_str        = _{ ident ~ "=" ~ var_from_str }
 var_list              = _{ (var_from_str ~ ("," ~ var_from_str)*) }
 // rule for var! macro
 var_macro          = _{ var_ident ~ &EOI }

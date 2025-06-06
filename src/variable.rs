@@ -246,6 +246,18 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
                 let len = parse_int(len_pair)?;
                 Ok(Array::new_repeat(value, len as usize).into())
             }
+            Rule::struct_from_str => {
+                let vm = pair
+                    .into_inner()
+                    .tuples()
+                    .map(|(ident, value)| {
+                        let ident: Arc<str> = ident.as_str().into();
+                        let value = Variable::try_from(value)?;
+                        Ok((ident, value))
+                    })
+                    .collect::<Result<VariableMap, Error>>()?;
+                Ok(Variable::Struct(vm.into()))
+            }
             Rule::void => Ok(Variable::Void),
             _ => Err(Error::CannotBeParsed(pair.as_str().into())),
         }
@@ -407,7 +419,7 @@ pub fn is_correct_variable_name(name: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
+    use std::{collections::HashMap, str::FromStr};
 
     use crate::variable::{Array, Variable};
     use proptest::prelude::*;
@@ -439,7 +451,7 @@ mod tests {
         assert!(is_correct_variable_name("areturn"));
     }
     #[test]
-    fn check_variable_from_str() {
+    fn from_str() {
         use crate::variable::Variable;
         use std::str::FromStr;
         assert_eq!(Variable::from_str("true"), Ok(Variable::Bool(true)));
@@ -481,7 +493,25 @@ mod tests {
                 Variable::Float(3.5)
             ]))
         );
-        assert_eq!(Variable::from_str("[]"), Ok(Variable::from([])))
+        assert_eq!(Variable::from_str("[]"), Ok(Variable::from([])));
+        let empty_struct = Variable::from_str("struct{}");
+        assert_eq!(empty_struct, Ok(Variable::Struct(HashMap::from([]).into())));
+        assert_eq!(
+            Variable::from_str("struct{a=5}"),
+            Ok(Variable::Struct(
+                HashMap::from([("a".into(), Variable::Int(5))]).into()
+            ))
+        );
+        assert_eq!(
+            Variable::from_str(r#"struct{a="hello", b=struct{}}"#),
+            Ok(Variable::Struct(
+                HashMap::from([
+                    ("a".into(), Variable::String("hello".into())),
+                    ("b".into(), empty_struct.unwrap())
+                ])
+                .into()
+            ))
+        )
     }
 
     proptest! {
