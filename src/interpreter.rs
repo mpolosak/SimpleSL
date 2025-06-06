@@ -16,7 +16,7 @@ impl<'a> Interpreter<'a> {
     /// Constructs a new Interpreter with simplesl stdlib
     pub fn with_stdlib() -> Self {
         let mut interpreter = Self::without_stdlib();
-        stdlib::add_all(&mut interpreter);
+        interpreter.insert("std".into(), stdlib::stdlib.clone());
         interpreter
     }
 
