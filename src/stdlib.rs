@@ -21,13 +21,6 @@ lazy_static! {
         let math = math_var.clone();
         let operators = OPERATORS.clone();
         let string = add_string_var.clone();
-        var!(struct{
-            convert = convert,
-            fs = fs,
-            io = io,
-            math = math,
-            operators = operators,
-            string = string
-        })
+        var!(struct{convert, fs, io, math, operators, string})
     };
 }

@@ -81,6 +81,11 @@ impl InstructionWithStr {
             .parse(pair.into_inner())
     }
 
+    pub fn new_ident(str: Arc<str>, local_variables: &LocalVariables) -> Result<Self, Error> {
+        let instruction = Instruction::new_ident(&str, local_variables)?;
+        Ok(Self { instruction, str })
+    }
+
     fn create_primary(
         pair: Pair<'_, Rule>,
         local_variables: &LocalVariables<'_>,
@@ -91,20 +96,7 @@ impl InstructionWithStr {
         }
         let str: Arc<str> = pair.as_str().into();
         let instruction = match rule {
-            Rule::ident => local_variables.get(&str).map_or_else(
-                || {
-                    local_variables
-                        .interpreter
-                        .get_variable(&str)
-                        .cloned()
-                        .map(Instruction::from)
-                        .ok_or_else(|| Error::VariableDoesntExist(str.clone()))
-                },
-                |var| match var.clone() {
-                    LocalVariable::Variable(variable) => Ok(Instruction::Variable(variable)),
-                    local_variable => Ok(Instruction::LocalVariable(str.clone(), local_variable)),
-                },
-            ),
+            Rule::ident => Instruction::new_ident(&str, local_variables),
             Rule::r#true | Rule::r#false | Rule::int | Rule::float | Rule::string | Rule::void => {
                 Variable::try_from(pair).map(Instruction::from)
             }
@@ -225,6 +217,26 @@ impl Instruction {
             Rule::r#continue => Err(Error::ContinueOutsideLoop),
             rule => unexpected!(rule),
         }
+    }
+
+    fn new_ident(
+        str: &Arc<str>,
+        local_variables: &LocalVariables<'_>,
+    ) -> Result<Instruction, Error> {
+        local_variables.get(str).map_or_else(
+            || {
+                local_variables
+                    .interpreter
+                    .get_variable(str)
+                    .cloned()
+                    .map(Instruction::from)
+                    .ok_or_else(|| Error::VariableDoesntExist(str.clone()))
+            },
+            |var| match var.clone() {
+                LocalVariable::Variable(variable) => Ok(Instruction::Variable(variable)),
+                local_variable => Ok(Instruction::LocalVariable(str.clone(), local_variable)),
+            },
+        )
     }
 }
 

@@ -115,13 +115,7 @@ lazy_static! {
         var!(struct{
             bitand_reduce = and,
             bitor_reduce = or,
-            all = all,
-            any = any,
-            int_product = int_product,
-            float_product = float_product,
-            int_sum = int_sum,
-            float_sum = float_sum,
-            string_sum = string_sum
+            all, any, int_product, float_product, int_sum, float_sum, string_sum
         })
     };
 }

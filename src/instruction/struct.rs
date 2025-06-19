@@ -7,7 +7,6 @@ use crate::{
     interpreter::{Interpreter, VariableMap},
     variable::{ReturnType, StructType, Type, Variable},
 };
-use itertools::Itertools;
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
 use std::{collections::HashMap, sync::Arc};
@@ -22,10 +21,16 @@ impl Struct {
     ) -> Result<Instruction, Error> {
         let fields = pair
             .into_inner()
-            .tuples()
-            .map(|(ident, value)| {
-                let ident: Arc<str> = ident.as_str().into();
-                let value = InstructionWithStr::new_expression(value, local_variables)?;
+            .map(|pair| {
+                if pair.as_rule() == Rule::ident {
+                    let ident: Arc<str> = pair.as_str().into();
+                    let value = InstructionWithStr::new_ident(ident.clone(), local_variables)?;
+                    return Ok((ident, value));
+                }
+                let mut inner = pair.into_inner();
+                let ident: Arc<str> = inner.next().unwrap().as_str().into();
+                let value =
+                    InstructionWithStr::new_expression(inner.next().unwrap(), local_variables)?;
                 Ok((ident, value))
             })
             .collect::<Result<_, Error>>()?;

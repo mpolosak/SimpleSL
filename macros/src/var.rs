@@ -74,13 +74,18 @@ fn var_token_from_pair(pair: Pair<Rule>) -> quote::__private::TokenStream {
         Rule::struct_ident => {
             let fields = pair
                 .into_inner()
-                .tuples()
-                .map(|(ident, value)| {
-                    let ident = ident.as_str();
-                    let value = var_token_from_pair(value);
-                    Some(quote!((#ident.into(), #value)))
+                .map(|pair| {
+                    if pair.as_rule() == Rule::ident {
+                        let ident = pair.as_str();
+                        let value = var_token_from_pair(pair);
+                        return quote!((#ident.into(), #value));
+                    }
+                    let mut inner = pair.into_inner();
+                    let ident = inner.next().unwrap().as_str();
+                    let value = var_token_from_pair(inner.next().unwrap());
+                    quote!((#ident.into(), #value))
                 })
-                .reduce(|acc, curr| Some(quote!(#acc, #curr)));
+                .reduce(|acc, curr| quote!(#acc, #curr));
             quote!(simplesl::variable::Variable::Struct(
                 std::collections::HashMap::from([#fields]).into()
             ))
@@ -190,7 +195,7 @@ fn var_type_from_var_pair(pair: Pair<Rule>) -> Option<quote::__private::TokenStr
                 .tuples()
                 .map(|(ident, value)| {
                     let ident = ident.as_str();
-                    let value = var_type_from_var_pair(value).unwrap();
+                    let value = var_type_from_var_pair(value)?;
                     Some(quote!((#ident.into(), #value)))
                 })
                 .reduce(|acc, curr| Some(quote!(#acc, #curr)));
