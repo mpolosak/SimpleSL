@@ -38,7 +38,7 @@ impl Array {
 
     pub fn new_repeat(value: Variable, len: usize) -> Self {
         let element_type = value.as_type();
-        let elements = std::iter::repeat(value).take(len).collect();
+        let elements = std::iter::repeat_n(value, len).collect();
         Self {
             element_type,
             elements,

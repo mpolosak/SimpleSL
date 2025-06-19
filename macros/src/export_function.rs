@@ -107,7 +107,7 @@ fn get_type_from_attrs(attrs: &[Attribute]) -> Option<TokenStream> {
                 return Some(type_quote(&tokens.clone().into()));
             }
             _ => (),
-        };
+        }
     }
     None
 }

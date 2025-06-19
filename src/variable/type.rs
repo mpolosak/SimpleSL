@@ -281,7 +281,7 @@ impl Type {
     pub fn iter_element(&self) -> Option<Type> {
         match self {
             Self::Function(function) => {
-                if function.params.len() != 0 {
+                if !function.params.is_empty() {
                     return None;
                 }
                 let return_tuple = function.return_type.clone().flatten_tuple()?;

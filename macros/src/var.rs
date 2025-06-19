@@ -24,14 +24,7 @@ fn var_token_from_pair(pair: Pair<Rule>) -> quote::__private::TokenStream {
         Rule::r#true => quote!(simplesl::variable::Variable::Bool(true)),
         Rule::r#false => quote!(simplesl::variable::Variable::Bool(false)),
         Rule::int | Rule::minus_int => quote_int(pair),
-        Rule::float | Rule::minus_float => {
-            let value = pair
-                .as_str()
-                .replace([' ', '_'], "")
-                .parse::<f64>()
-                .unwrap();
-            quote!(simplesl::variable::Variable::Float(#value))
-        }
+        Rule::float | Rule::minus_float => parse_float(&pair),
         Rule::string => {
             let value = pair.into_inner().next().unwrap().as_str();
             let value = unescaper::unescape(value).unwrap();
@@ -127,6 +120,15 @@ fn var_token_from_pair(pair: Pair<Rule>) -> quote::__private::TokenStream {
         }
         rule => unexpected!(rule),
     }
+}
+
+fn parse_float(pair: &Pair<'_, Rule>) -> proc_macro2::TokenStream {
+    let value = pair
+        .as_str()
+        .replace([' ', '_'], "")
+        .parse::<f64>()
+        .unwrap();
+    quote!(simplesl::variable::Variable::Float(#value))
 }
 
 fn parse_int(pair: Pair<Rule>) -> i64 {

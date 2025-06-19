@@ -147,8 +147,7 @@ pub mod indirection {
 
     pub fn exec(var: Variable) -> Variable {
         let var = var.into_mut().unwrap();
-        let var = var.variable.read().unwrap().clone();
-        var
+        var.variable.read().unwrap().clone()
     }
 
     pub fn return_type(var_type: Type) -> Type {
