@@ -1,7 +1,9 @@
+use std::sync::Arc;
+
 use super::{Instruction, InstructionWithStr, local_variable::LocalVariables};
 use crate::{
     Error,
-    instruction::{block::Block, r#struct::Struct},
+    instruction::{block::Block, local_variable::LocalVariableMap, r#struct::Struct},
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
@@ -13,8 +15,14 @@ pub fn create_instruction(
     let mut local_variables = local_variables.create_layer();
     let instructions =
         local_variables.create_instructions(pair.into_inner().next().unwrap().into_inner())?;
-    let fields = local_variables
-        .drop_layer()
+    new(instructions, local_variables.drop_layer())
+}
+
+pub fn new(
+    instructions: Arc<[InstructionWithStr]>,
+    lv_layer: LocalVariableMap,
+) -> Result<Instruction, Error> {
+    let fields = lv_layer
         .iter()
         .map(|(ident, var)| {
             (

@@ -4,7 +4,8 @@
 import path
 ```
 path is string literal
-Imports code from given path. Importing happens during parsing. Import statement is replaced with code read from file.
+Imports code from given path. Importing happens during parsing. Import produces a struct holding
+all variables declared in the file
 
 ## return
 ```

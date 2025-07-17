@@ -30,7 +30,6 @@ use self::{
     control_flow::{IfElse, Match, SetIfElse},
     destruct_tuple::DestructTuple,
     function::{AnonymousFunction, FunctionDeclaration},
-    import::Import,
     local_variable::{LocalVariable, LocalVariables},
     set::Set,
     tuple::Tuple,
@@ -174,7 +173,6 @@ pub enum Instruction {
     FieldAccess(Arc<FieldAccess>),
     FunctionDeclaration(Arc<FunctionDeclaration>),
     IfElse(Arc<IfElse>),
-    Import(Import),
     LocalVariable(Arc<str>, LocalVariable),
     Loop(Arc<Loop>),
     Match(Arc<Match>),
@@ -198,7 +196,7 @@ impl Instruction {
             Rule::set => Set::create_instruction(pair, local_variables),
             Rule::destruct_tuple => DestructTuple::create_instruction(pair, local_variables),
             Rule::block => Block::create_instruction(pair, local_variables),
-            Rule::import => Import::create_instruction(pair, local_variables),
+            Rule::import => import::create_instruction(pair, local_variables),
             Rule::if_else => IfElse::create_instruction(pair, local_variables),
             Rule::set_if_else => SetIfElse::create_instruction(pair, local_variables),
             Rule::r#match => Match::create_instruction(pair, local_variables),
@@ -253,10 +251,10 @@ impl Exec for Instruction {
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins)
             | Self::Block(ins) | Self::DestructTuple(ins) | Self::Tuple(ins)
             | Self::BinOperation(ins) | Self::FieldAccess(ins) | Self::FunctionDeclaration(ins)
-            | Self::IfElse(ins) | Self::Import(ins) | Self::Loop(ins) | Self::Match(ins)
-            | Self::Mut(ins) | Self::Reduce(ins) | Self::Set(ins) | Self::SetIfElse(ins)
-            | Self::Slicing(ins) | Self::Struct(ins) | Self::TypeFilter(ins)
-            | Self::UnaryOperation(ins) | Self::TupleAccess(ins) => ins.exec(interpreter),
+            | Self::IfElse(ins) | Self::Loop(ins) | Self::Match(ins) | Self::Mut(ins)
+            | Self::Reduce(ins) | Self::Set(ins) | Self::SetIfElse(ins) | Self::Slicing(ins)
+            | Self::Struct(ins) | Self::TypeFilter(ins) | Self::UnaryOperation(ins)
+            | Self::TupleAccess(ins) => ins.exec(interpreter),
             Self::Break => Err(ExecStop::Break),
             Self::Continue => Err(ExecStop::Continue)
         }
@@ -283,10 +281,10 @@ impl Recreate for Instruction {
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins)
             | Self::Block(ins) | Self::DestructTuple(ins) | Self::Tuple(ins)
             | Self::BinOperation(ins) | Self::FieldAccess(ins) | Self::FunctionDeclaration(ins)
-            | Self::IfElse(ins) | Self::Import(ins) | Self::Loop(ins) | Self::Match(ins)
-            | Self::Mut(ins) | Self::Reduce(ins) | Self::Set(ins) | Self::SetIfElse(ins)
-            | Self::Slicing(ins) | Self::Struct(ins) |  Self::TypeFilter(ins)
-            | Self::UnaryOperation(ins) | Self::TupleAccess(ins) => ins.recreate(local_variables),
+            | Self::IfElse(ins) | Self::Loop(ins) | Self::Match(ins) | Self::Mut(ins)
+            | Self::Reduce(ins) | Self::Set(ins) | Self::SetIfElse(ins) | Self::Slicing(ins)
+            | Self::Struct(ins) |  Self::TypeFilter(ins) | Self::UnaryOperation(ins)
+            | Self::TupleAccess(ins) => ins.recreate(local_variables),
             _ => Ok(self.clone())
         }
     }
@@ -299,10 +297,10 @@ impl ReturnType for Instruction {
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins)
             | Self::Block(ins) | Self::DestructTuple(ins) | Self::Tuple(ins)
             | Self::BinOperation(ins) | Self::FieldAccess(ins) | Self::FunctionDeclaration(ins)
-            | Self::IfElse(ins) | Self::Import(ins) | Self::Match(ins) | Self::Mut(ins)
-            | Self::Reduce(ins) | Self::Set(ins) | Self::SetIfElse(ins) | Self::Slicing(ins)
-            | Self::Struct(ins) | Self::TypeFilter(ins) | Self::UnaryOperation(ins)
-            | Self::TupleAccess(ins) => ins.return_type(),
+            | Self::IfElse(ins) | Self::Match(ins) | Self::Mut(ins) | Self::Reduce(ins)
+            | Self::Set(ins) | Self::SetIfElse(ins) | Self::Slicing(ins) | Self::Struct(ins)
+            | Self::TypeFilter(ins) | Self::UnaryOperation(ins) | Self::TupleAccess(ins)
+                => ins.return_type(),
             Self::Loop(_) => Type::Void,
             Self::Break | Self::Continue => Type::Never
         }
@@ -312,8 +310,7 @@ impl ReturnType for Instruction {
 #[duplicate_item(
     T; [Block]; [Variable]; [UnaryOperation]; [BinOperation]; [AnonymousFunction]; [Array];
     [ArrayRepeat]; [Tuple]; [DestructTuple]; [FieldAccess]; [FunctionDeclaration]; [IfElse];
-    [Import]; [Reduce]; [Slicing]; [Struct]; [TypeFilter]; [Match]; [Mut]; [Set]; [SetIfElse];
-    [TupleAccess]
+    [Reduce]; [Slicing]; [Struct]; [TypeFilter]; [Match]; [Mut]; [Set]; [SetIfElse]; [TupleAccess]
 )]
 impl From<T> for Instruction {
     fn from(value: T) -> Self {
