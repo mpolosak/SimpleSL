@@ -71,14 +71,13 @@ impl Slicing {
             ),
             _ => return Ok(lhs.instruction),
         };
-        match (&start, &stop, &step) {
-            (Some(index), _, _) | (_, Some(index), _) | (_, _, Some(index))
-                if index.return_type() != Type::Int =>
-            {
-                return Err(Error::CannotIndexWith(index.str.clone()));
-            }
-            _ => (),
+        if let (Some(index), _, _) | (_, Some(index), _) | (_, _, Some(index)) =
+            (&start, &stop, &step)
+            && index.return_type() != Type::Int
+        {
+            return Err(Error::CannotIndexWith(index.str.clone()));
         }
+
         Ok(Self {
             lhs,
             start,
