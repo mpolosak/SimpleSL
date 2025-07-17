@@ -12,7 +12,7 @@ use simplesl_parser::Rule;
 use std::{collections::HashMap, sync::Arc};
 
 #[derive(Debug, Clone)]
-pub struct Struct(HashMap<Arc<str>, InstructionWithStr>);
+pub struct Struct(pub HashMap<Arc<str>, InstructionWithStr>);
 
 impl Struct {
     pub fn create_instruction(

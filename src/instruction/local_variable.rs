@@ -67,6 +67,11 @@ impl<'a> LocalVariables<'a> {
     }
 
     #[must_use]
+    pub fn drop_layer(self) -> LocalVariableMap {
+        self.variables
+    }
+
+    #[must_use]
     pub fn function_layer(&'a self, layer: LocalVariableMap, function: FunctionInfo) -> Self {
         Self {
             variables: layer,

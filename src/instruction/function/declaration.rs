@@ -16,7 +16,7 @@ use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct FunctionDeclaration {
-    ident: Arc<str>,
+    pub ident: Arc<str>,
     pub params: Params,
     body: Arc<[InstructionWithStr]>,
     return_type: Type,

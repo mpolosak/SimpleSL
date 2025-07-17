@@ -53,4 +53,8 @@ impl<'a> Interpreter<'a> {
             lower_layer: Some(self),
         }
     }
+
+    pub fn drop_layer(self) -> VariableMap {
+        self.variables
+    }
 }

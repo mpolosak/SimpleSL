@@ -10,6 +10,7 @@ pub mod function;
 mod import;
 pub mod local_variable;
 mod r#loop;
+mod module;
 mod r#mut;
 mod prefix_op;
 mod reduce;
@@ -106,6 +107,7 @@ impl InstructionWithStr {
             Rule::array_repeat => ArrayRepeat::create_instruction(pair, local_variables),
             Rule::function => AnonymousFunction::create_instruction(pair, local_variables),
             Rule::r#struct => Struct::create_instruction(pair, local_variables),
+            Rule::r#mod => module::create_instruction(pair, local_variables),
             rule => unexpected!(rule),
         }?;
         Ok(Self { instruction, str })
