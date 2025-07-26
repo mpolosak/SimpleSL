@@ -16,7 +16,7 @@ fib := (n:int) -> int {
 };
  
 custom_array_fib := (elements: [int], n: int) -> [int] {
-    len := len(elements);
+    len := std.string.len(elements);
     if len >= n return elements;
     next_fib := elements[len-1] + elements[len-2];
     return custom_array_fib(elements+[next_fib], n);

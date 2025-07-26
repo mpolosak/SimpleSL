@@ -18,4 +18,4 @@ iota := (start: int, end: int) -> () -> (bool, int) {
     }
 };
 
-iota(1, 15) @ fizzbuzz @ print $];
+iota(1, 15) @ fizzbuzz @ std.io.print $];
