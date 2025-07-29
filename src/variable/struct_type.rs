@@ -34,7 +34,7 @@ impl Display for StructType {
         let elements = self
             .0
             .iter()
-            .map(|(key, value)| format!("{}: {}", key, value))
+            .map(|(key, value)| format!("{key}: {value}"))
             .join(", ");
         write!(f, "struct{{{elements}}}")
     }
