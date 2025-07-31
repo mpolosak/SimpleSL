@@ -465,6 +465,56 @@ mod tests {
     use std::str::FromStr;
 
     #[test]
+    fn to_string() {
+        assert_eq!("int", Type::Int.to_string());
+        assert_eq!("float", Type::Float.to_string());
+        assert_eq!("string", Type::String.to_string());
+        assert_eq!("any", Type::Any.to_string());
+        assert_eq!("bool", Type::Bool.to_string());
+        assert_eq!("()", Type::Void.to_string());
+        assert_eq!("!", Type::Never.to_string());
+        let f = FunctionType {
+            params: [].into(),
+            return_type: Type::Void,
+        };
+        assert_eq!(f.to_string(), Type::Function(f.into()).to_string());
+        let f = Type::Function(
+            FunctionType {
+                params: [Type::Int, Type::Float].into(),
+                return_type: Type::Int | Type::String,
+            }
+            .into(),
+        )
+        .to_string();
+        assert!(f == "(int, float)->(int|string)" || f == "(int, float)->(string|int)");
+        assert_eq!("[int]", Type::Array((Type::Int).into()).to_string());
+        assert_eq!("[float]", Type::Array((Type::Float).into()).to_string());
+        assert_eq!("[string]", Type::Array((Type::String).into()).to_string());
+        let r = Type::Array((Type::Float | Type::String).into()).to_string();
+        assert!(r == "[float|string]" || r == "[string|float]");
+        assert_eq!("[any]", Type::Array(Type::Any.into()).to_string());
+        assert_eq!("[int]", Type::Array(Type::Int.into()).to_string());
+        assert_eq!("[()]", Type::Array(Type::Void.into()).to_string());
+        assert_eq!(
+            "(int, string)",
+            Type::Tuple([Type::Int, Type::String].into()).to_string()
+        );
+        let r = (Type::Tuple([Type::Int, Type::String].into()) | Type::Float).to_string();
+        assert!(r == "(int, string)|float" || r == "float|(int, string)");
+        let r = (FunctionType {
+            params: [Type::String, Type::Int | Type::Float].into(),
+            return_type: Type::Int,
+        } | Type::String)
+            .to_string();
+        assert!(
+            r == "(string, int|float)->int|string"
+                || r == "(string, float|int)->int|string"
+                || r == "(string, int|float)->string|int"
+                || r == "(string, float|int)->string|int"
+        );
+    }
+
+    #[test]
     fn from_str() {
         assert_eq!(Type::from_str("int"), Ok(Type::Int));
         assert_eq!(Type::from_str("float"), Ok(Type::Float));
