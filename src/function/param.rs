@@ -1,18 +1,14 @@
 use crate::{instruction::local_variable::LocalVariableMap, join, variable::Type};
+use derive_more::Display;
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
-use std::{fmt, ops::Deref, sync::Arc};
+use std::{ops::Deref, sync::Arc};
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Display, PartialEq, Eq)]
+#[display("{name}: {var_type}")]
 pub struct Param {
     pub name: Arc<str>,
     pub var_type: Type,
-}
-
-impl fmt::Display for Param {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}: {}", self.name, self.var_type)
-    }
 }
 
 #[doc(hidden)]
@@ -26,14 +22,9 @@ impl From<Pair<'_, Rule>> for Param {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Display)]
+#[display("{}", join(self.as_ref(), ", "))]
 pub struct Params(pub Arc<[Param]>);
-
-impl fmt::Display for Params {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", join(self.as_ref(), ", "))
-    }
-}
 
 impl Deref for Params {
     type Target = Arc<[Param]>;

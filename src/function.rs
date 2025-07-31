@@ -11,10 +11,12 @@ use crate::{
     unary_operator::UnaryOperator,
     variable::{FunctionType, ReturnType, Type, Typed, Variable},
 };
+use derive_more::Display;
 use simplesl_macros::var_type;
-use std::{fmt, iter::zip, sync::Arc};
+use std::{iter::zip, sync::Arc};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Display, Clone)]
+#[display("({params})->{return_type}")]
 pub struct Function {
     pub(crate) ident: Option<Arc<str>>,
     pub(crate) params: Params,
@@ -122,12 +124,5 @@ impl Typed for Function {
 impl ReturnType for Function {
     fn return_type(&self) -> Type {
         self.return_type.clone()
-    }
-}
-
-impl fmt::Display for Function {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let return_type = self.return_type();
-        write!(f, "({})->{return_type}", self.params)
     }
 }
