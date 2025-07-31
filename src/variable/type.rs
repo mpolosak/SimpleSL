@@ -1,12 +1,12 @@
 use super::{function_type::FunctionType, multi_type::MultiType};
 use crate::{self as simplesl, errors::ParseTypeError, join, variable::struct_type::StructType};
+use derive_more::Display;
 use lazy_static::lazy_static;
 use match_any::match_any;
 use pest::{Parser, iterators::Pair};
 use simplesl_macros::var_type;
 use simplesl_parser::{Rule, SimpleSLParser};
 use std::{
-    fmt::Display,
     hash::Hash,
     iter::zip,
     ops::{BitOr, BitOrAssign},
@@ -14,20 +14,30 @@ use std::{
     sync::Arc,
 };
 
-#[derive(Clone, Debug, Hash, Eq, PartialEq)]
+#[derive(Clone, Debug, Display, Hash, Eq, PartialEq)]
 pub enum Type {
+    #[display("bool")]
     Bool,
+    #[display("int")]
     Int,
+    #[display("float")]
     Float,
+    #[display("string")]
     String,
     Function(Arc<FunctionType>),
+    #[display("[{}]", if _0.matches(&Type::Never) {"".into()}else{_0.to_string()})]
     Array(Arc<Type>),
+    #[display("({})", join(_0.as_ref(), ", "))]
     Tuple(Arc<[Type]>),
+    #[display("()")]
     Void,
     Multi(MultiType),
+    #[display("mut {}", if let Type::Multi(_)=_0.as_ref(){format!("({_0})")}else{format!("{_0}")})]
     Mut(Arc<Type>),
     Struct(StructType),
+    #[display("any")]
     Any,
+    #[display("!")]
     Never,
 }
 
@@ -342,32 +352,6 @@ impl Type {
     }
 }
 
-impl Display for Type {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Bool => write!(f, "bool"),
-            Self::Int => write!(f, "int"),
-            Self::Float => write!(f, "float"),
-            Self::String => write!(f, "string"),
-            Self::Function(function_type) => write!(f, "{function_type}"),
-            Self::Array(var_type) if var_type.matches(&Type::Never) => write!(f, "[]"),
-            Self::Array(var_type) => write!(f, "[{var_type}]"),
-            Self::Tuple(types) => write!(f, "({})", join(types.as_ref(), ", ")),
-            Self::Void => write!(f, "()"),
-            Self::Multi(types) => write!(f, "{types}"),
-            Self::Struct(st) => write!(f, "{st}"),
-            Self::Mut(var_type) if matches!(var_type.as_ref(), Type::Multi(_)) => {
-                write!(f, "mut ({var_type})")
-            }
-            Self::Mut(var_type) => {
-                write!(f, "mut {var_type}")
-            }
-            Self::Any => write!(f, "any"),
-            Self::Never => write!(f, "!"),
-        }
-    }
-}
-
 impl FromStr for Type {
     type Err = ParseTypeError;
 
@@ -506,11 +490,12 @@ mod tests {
             return_type: Type::Int,
         } | Type::String)
             .to_string();
+        println!("{r}");
         assert!(
             r == "(string, int|float)->int|string"
                 || r == "(string, float|int)->int|string"
-                || r == "(string, int|float)->string|int"
-                || r == "(string, float|int)->string|int"
+                || r == "string|(string, int|float)->int"
+                || r == "string|(string, float|int)->int"
         );
     }
 
