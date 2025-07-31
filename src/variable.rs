@@ -7,6 +7,7 @@ mod try_from;
 mod r#type;
 mod type_of;
 use crate::{Error, function::Function, interpreter::VariableMap};
+use derive_more::Display;
 use enum_as_inner::EnumAsInner;
 use itertools::Itertools;
 use match_any::match_any;
@@ -20,7 +21,8 @@ pub use {
     struct_type::StructType, type_of::TypeOf,
 };
 
-#[derive(Clone, EnumAsInner)]
+#[derive(Clone, Display, EnumAsInner)]
+#[display("{}", self.string(0))]
 pub enum Variable {
     Bool(bool),
     Int(i64),
@@ -128,12 +130,6 @@ impl Typed for Variable {
             },
             Variable::Void => Type::Void
         }
-    }
-}
-
-impl fmt::Display for Variable {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.string(0))
     }
 }
 

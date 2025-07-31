@@ -1,12 +1,13 @@
-use std::{collections::HashMap, fmt::Display, hash::Hash, sync::Arc};
-
+use derive_more::Display;
 use itertools::Itertools;
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
+use std::{collections::HashMap, hash::Hash, sync::Arc};
 
 use crate::variable::Type;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Display, PartialEq, Eq)]
+#[display("struct{{{}}}", _0.iter().map(|(key, value)| format!("{key}: {value}")).join(", "))]
 pub struct StructType(pub Arc<HashMap<Arc<str>, Type>>);
 
 impl StructType {
@@ -26,17 +27,6 @@ impl StructType {
 impl Hash for StructType {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.0.keys().collect::<Box<[&Arc<str>]>>().hash(state)
-    }
-}
-
-impl Display for StructType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let elements = self
-            .0
-            .iter()
-            .map(|(key, value)| format!("{key}: {value}"))
-            .join(", ");
-        write!(f, "struct{{{elements}}}")
     }
 }
 

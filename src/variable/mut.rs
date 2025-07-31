@@ -1,6 +1,9 @@
 use super::{Type, Typed, Variable};
-use std::{fmt::Display, sync::RwLock};
+use derive_more::Display;
+use std::sync::RwLock;
 
+#[derive(Display)]
+#[display("{}", self.string(0))]
 pub struct Mut {
     pub var_type: Type,
     pub variable: RwLock<Variable>,
@@ -13,12 +16,6 @@ impl Mut {
             self.var_type,
             self.variable.read().unwrap().debug(depth)
         )
-    }
-}
-
-impl Display for Mut {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.string(0))
     }
 }
 

@@ -1,13 +1,14 @@
 use super::Type;
 use crate::join;
+use derive_more::Display;
 use std::{
     collections::{HashSet, hash_set::Iter},
-    fmt::Display,
     hash::Hash,
     sync::Arc,
 };
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Display, Eq, PartialEq)]
+#[display("{}", join(self, "|"))]
 pub struct MultiType(pub(crate) Arc<HashSet<Type>>);
 
 impl MultiType {
@@ -25,12 +26,6 @@ impl Hash for MultiType {
 impl<const N: usize> From<[Type; N]> for MultiType {
     fn from(value: [Type; N]) -> Self {
         Self(HashSet::from(value).into())
-    }
-}
-
-impl Display for MultiType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", join(self, "|"))
     }
 }
 
