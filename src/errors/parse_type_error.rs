@@ -1,10 +1,7 @@
-use std::{error::Error, fmt::Display};
+use derive_more::Display;
+use std::error::Error;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Display, PartialEq)]
+#[display("Type parsing failed")]
 pub struct ParseTypeError;
-impl Display for ParseTypeError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Type parsing failed")
-    }
-}
 impl Error for ParseTypeError {}

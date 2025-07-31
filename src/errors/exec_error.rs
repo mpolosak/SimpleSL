@@ -1,32 +1,19 @@
-use std::fmt::Display;
+use derive_more::Display;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Display, PartialEq)]
 pub enum ExecError {
+    #[display("index out of bounds")]
     IndexOutOfBounds,
+    #[display("length of an array cannot be negative")]
     NegativeLength,
+    #[display("int value cannot be rised to a negative power")]
     NegativeExponent,
+    #[display("Cannot divide by 0")]
     ZeroDivision,
+    #[display("Cannot calculate the remainder with a divisor of 0")]
     ZeroModulo,
+    #[display("Cannot shift with overflow")]
     OverflowShift,
-}
-
-impl Display for ExecError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::IndexOutOfBounds => write!(f, "index out of bounds"),
-            Self::NegativeLength => write!(f, "length of an array cannot be negative"),
-            Self::NegativeExponent => write!(f, "int value cannot be rised to a negative power"),
-            Self::ZeroDivision => {
-                write!(f, "Cannot divide by 0")
-            }
-            Self::ZeroModulo => {
-                write!(f, "Cannot calculate the remainder with a divisor of 0")
-            }
-            Self::OverflowShift => {
-                write!(f, "Cannot shift with overflow")
-            }
-        }
-    }
 }
 
 impl std::error::Error for ExecError {}
