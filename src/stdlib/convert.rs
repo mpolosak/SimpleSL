@@ -1,8 +1,8 @@
 use crate as simplesl;
 use simplesl_macros::export;
 
-#[export]
-pub mod convert {
+#[export(Convert)]
+mod inner {
     pub use crate::variable::Variable;
 
     pub fn to_float(#[var_type(int|float)] value: &Variable) -> f64 {

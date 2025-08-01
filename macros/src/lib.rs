@@ -7,13 +7,14 @@ use attributes::Attributes;
 use export_function::export_item_fn;
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
-use syn::{Item, ItemConst, ItemFn, ItemMod, ItemUse, Visibility, parse_macro_input};
+use syn::{Ident, Item, ItemConst, ItemFn, ItemMod, ItemUse, Visibility, parse_macro_input};
 use var::quote;
 use var_type::type_quote;
 
 /// Macro simplifying exporting modules into `SimpleSL`
 #[proc_macro_attribute]
-pub fn export(_attr: TokenStream, module: TokenStream) -> TokenStream {
+pub fn export(attr: TokenStream, module: TokenStream) -> TokenStream {
+    let ident = parse_macro_input!(attr as Ident);
     let mut module = parse_macro_input!(module as ItemMod);
     let Some(items) = &mut module.content else {
         panic!("Cannot export module from another file")
@@ -60,11 +61,18 @@ pub fn export(_attr: TokenStream, module: TokenStream) -> TokenStream {
     quote!(
         #module
         lazy_static::lazy_static! {
-            pub static ref #var_ident: simplesl::variable::Variable = {
+            static ref #var_ident: simplesl::variable::Variable = {
                 let mut vm = simplesl::interpreter::VariableMap::new();
                 #items
                 simplesl::variable::Variable::Struct(vm.into())
             };
+        }
+        pub struct #ident;
+
+        impl From<#ident> for simplesl::variable::Variable{
+            fn from(_: #ident) -> simplesl::variable::Variable {
+                #var_ident.clone()
+            }
         }
     )
     .into()

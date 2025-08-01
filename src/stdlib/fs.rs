@@ -1,8 +1,8 @@
 use crate as simplesl;
 use simplesl_macros::export;
 
-#[export]
-pub mod fs {
+#[export(FS)]
+mod fs {
     use std::fs;
     pub use std::io;
     pub fn file_read_to_string(path: &str) -> io::Result<String> {

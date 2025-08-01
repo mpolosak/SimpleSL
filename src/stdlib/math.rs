@@ -1,8 +1,8 @@
 use crate as simplesl;
 use simplesl_macros::export;
 
-#[export]
-pub mod math {
+#[export(Math)]
+mod math {
     use std::f64::consts;
 
     pub const MIN_INT: i64 = i64::MIN;

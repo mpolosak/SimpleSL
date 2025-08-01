@@ -1,11 +1,12 @@
 use crate as simplesl;
 use simplesl_macros::export;
 
-#[export]
-pub mod add_string {
+#[export(String)]
+mod inner {
     use crate as simplesl;
     use crate::variable::Variable;
     use simplesl_macros::var;
+    pub use std::string::String;
     use std::sync::Arc;
 
     #[return_type([string])]
