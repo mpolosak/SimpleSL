@@ -1,6 +1,6 @@
 print:=std.io.print;
 print_array:=std.io.print_array;
-len:=std.string.len;
+len:=std.len;
 print("Hello world!");
 x := 5;
 y := 6;

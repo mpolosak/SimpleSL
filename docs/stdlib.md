@@ -7,6 +7,10 @@ Standard library is contained in struct named std made of structs:
 * [string](#string)
 * [operators](#operators)
 
+and function:
+### len(variable: [any]|string) -> int
+Returns length of `variable`.
+
 ## convert
 This part of standard library contains functions related to converting variables and parsing strings.
 
@@ -99,16 +103,13 @@ Returns an array containing bytes of string
 Converts array of bytes into string. Return () if array contains incorrect utf8.
 
 ## str_from_utf8_lossy(string: string) -> string
-Converts array of bytes into string replacing any incorrect utf8 sequence with U+FFFD REPLACEMENT CHARACTER. 
+Converts array of bytes into string replacing any incorrect utf8 sequence with U+FFFD REPLACEMENT CHARACTER.
 
 ## to_lowercase(string: string) -> string
 Returns the lowercase equivalent of `string`.
 
 ## to_uppercase(string: string) -> string
 Returns the uppercase equivalent of `string`.
-
-## len(variable: [any]|string) -> int 
-Returns length of `variable`.
 
 # math
 This part of the standard library contains common math functions and constants
@@ -183,19 +184,19 @@ Returns the integer part of num. This means that non-integer numbers are always 
 Returns the fractional part of `num`.
 
 ## ln(num: float) -> float
-Returns natural logarithm of `num`.  
+Returns natural logarithm of `num`.
 This returns NaN when `num` is negative, and negative infinity when `num` is zero.
 
 ## log(num: float, base: float) -> float
-Returns the logarithm of `num` with respect to an arbitrary base.  
+Returns the logarithm of `num` with respect to an arbitrary base.
 This returns NaN when `num` is negative, and negative infinity when `num` is zero.
 
 ## log2(num: float) -> float
-Returns the base 2 logarithm of `num`.  
+Returns the base 2 logarithm of `num`.
 This returns NaN when `num` is negative, and negative infinity when `num` is zero.
 
 ## log10(num: float) -> float
-Returns the base 10 logarithm of `num`.  
+Returns the base 10 logarithm of `num`.
 This returns NaN when `num` is negative, and negative infinity when `num` is zero.
 
 ## sin(angle: float) -> float
@@ -227,7 +228,7 @@ Computes the four quadrant arctangent of `num1` (y) and `num2` (x) in radians.
 Returns `E**(num) - 1` in a way that is accurate even if `num` is close to zero.
 
 ## ln_1p(num: float) -> float
-Returns ln(1+num) more accurately than if the operations were performed separately.  
+Returns ln(1+num) more accurately than if the operations were performed separately.
 This returns NaN when `num < -1.0`, and negative infinity when `n == -1.0`.
 
 ## sinh(num: float) -> float
@@ -270,10 +271,10 @@ Returns `true` if `num` has a positive sign, including `0.0`, NaNs with positive
 Returns `true` if `num` has a negative sign, including `-0.0`, NaNs with negative sign bit and negative infinity.
 
 ## to_bits(num: float) -> int
-Raw transmutation from float to int. 
+Raw transmutation from float to int.
 
 ## to_bits(num: float) -> int
-Raw transmutation from float to int. 
+Raw transmutation from float to int.
 
 # operators
 This part of the standard library contains some functions doing the same as built-in operators

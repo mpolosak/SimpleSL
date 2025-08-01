@@ -65,12 +65,4 @@ mod inner {
     pub fn to_uppercase(string: &str) -> String {
         string.to_uppercase()
     }
-
-    pub fn len(#[var_type([any]|string)] variable: &Variable) -> usize {
-        match variable {
-            Variable::Array(var) => var.len(),
-            Variable::String(string) => string.chars().count(),
-            _ => unreachable!(),
-        }
-    }
 }

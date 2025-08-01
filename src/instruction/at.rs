@@ -1,7 +1,7 @@
 use super::{BinOperation, Instruction, InstructionWithStr, local_variable::LocalVariables};
 use crate::{
     BinOperator, Error, ExecError,
-    stdlib::add_string::len,
+    stdlib::len,
     variable::{ReturnType, Type, Typed, Variable},
 };
 use pest::iterators::Pair;

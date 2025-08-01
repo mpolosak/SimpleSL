@@ -19,7 +19,7 @@ a := filter(x, (a:int) -> bool {return a%2 == 0})
 
 iter := (array: [int]) -> () -> (bool, int) {
     i := mut -1;
-    len := len(array)
+    len := std.len(array)
     return () -> (bool, int) {
         i+=1;
         if *i < len {
@@ -27,7 +27,7 @@ iter := (array: [int]) -> () -> (bool, int) {
         }
         return (false, 0)
     }
-} 
+}
 
 collect := (iter: ()->(bool,int)) -> [int]{
     res := mut [int] [];
