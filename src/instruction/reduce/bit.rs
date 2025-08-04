@@ -3,7 +3,7 @@ use crate::{
     instruction::{Instruction, InstructionWithStr, bin_op::BinOperation, tuple::Tuple},
     stdlib::operators::{AND, OR},
     unary_operator::UnaryOperator,
-    variable::{ReturnType, Type},
+    variable::{ReturnType, Type, Variable},
 };
 use lazy_static::lazy_static;
 use simplesl_macros::var_type;
@@ -23,9 +23,9 @@ pub fn create(iterator: InstructionWithStr, op: UnaryOperator) -> Result<Instruc
         });
     }
     let lhs = if op == UnaryOperator::BitAnd {
-        AND.clone().into()
+        Variable::from(AND).into()
     } else {
-        OR.clone().into()
+        Variable::from(OR).into()
     };
     let rhs = Tuple {
         elements: [iterator].into(),

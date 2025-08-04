@@ -292,5 +292,9 @@ tuple_ident        =  { "(" ~ var_ident ~ "," ~ var_ident_list ~ ")" }
 struct_ident       =  { "struct" ~ "{" ~ ((field_ident | ident) ~ ("," ~ (field_ident | ident))*)? ~ "}" }
 field_ident        =  { ident ~ "=" ~ var_ident }
 var_ident_list     = _{ (var_ident ~ ("," ~ var_ident)*) }
+//decls macro
+decl               =  { ident ~ ":=" ~ (function | var_ident) }
+decl_line          = _{ COMMENT* ~ decl ~ line_end? }
+decls              = _{ decl* ~ &EOI }
 COMMENT            = _{ block_comment | line_comment }
 WHITESPACE         = _{ " " | "\t" | NEWLINE }

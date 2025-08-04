@@ -1,16 +1,34 @@
 #![warn(clippy::pedantic)]
 mod attributes;
+mod decl;
 mod export;
 mod var;
 mod var_type;
+use crate::{decl::lazy_decl, export::export_module, var::var_token_from_pair};
+use decl::decl;
 use export::export_item_fn;
+use pest::Parser;
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
+use simplesl_parser::{Rule, SimpleSLParser};
 use syn::{Ident, ItemFn, ItemMod, parse, parse_macro_input};
 use var::quote;
 use var_type::type_quote;
 
-use crate::export::export_module;
+#[proc_macro]
+pub fn decls(item: TokenStream) -> TokenStream {
+    let str = item.to_string();
+    SimpleSLParser::parse(Rule::decls, &str)
+        .unwrap_or_else(|error| panic!("{error}"))
+        .map(decl)
+        .fold(quote!(), |acc, curr| {
+            quote!(
+                #acc
+                #curr
+            )
+        })
+        .into()
+}
 
 /// Macro simplifying exporting functions and modules into `SimpleSL`
 #[proc_macro_attribute]
@@ -26,20 +44,10 @@ pub fn export(attr: TokenStream, module: TokenStream) -> TokenStream {
     };
 
     let var_ident = format_ident!("{}_var", mod_ident);
+    let decl = lazy_decl(&ident, &var_ident, &val);
     quote!(
         #module
-        lazy_static::lazy_static! {
-            static ref #var_ident: simplesl::variable::Variable = {
-                #val
-            };
-        }
-        pub struct #ident;
-
-        impl From<#ident> for simplesl::variable::Variable{
-            fn from(_: #ident) -> simplesl::variable::Variable {
-                #var_ident.clone()
-            }
-        }
+        #decl
     )
     .into()
 }

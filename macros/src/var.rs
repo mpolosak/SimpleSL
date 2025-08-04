@@ -6,12 +6,12 @@ use simplesl_parser::{Rule, SimpleSLParser, unexpected};
 
 use crate::var_type::type_from_str;
 
-pub fn quote(item: &TokenStream) -> quote::__private::TokenStream {
+pub fn quote(item: &TokenStream) -> proc_macro2::TokenStream {
     let item_str = item.to_string();
     from_str(&item_str)
 }
 
-pub fn from_str(item_str: &str) -> quote::__private::TokenStream {
+pub fn from_str(item_str: &str) -> proc_macro2::TokenStream {
     let pair = SimpleSLParser::parse(Rule::var_macro, item_str)
         .unwrap_or_else(|error| panic!("{error}"))
         .next()
@@ -19,7 +19,7 @@ pub fn from_str(item_str: &str) -> quote::__private::TokenStream {
     var_token_from_pair(pair)
 }
 
-fn var_token_from_pair(pair: Pair<Rule>) -> quote::__private::TokenStream {
+pub fn var_token_from_pair(pair: Pair<Rule>) -> quote::__private::TokenStream {
     match pair.as_rule() {
         Rule::r#true => quote!(simplesl::variable::Variable::Bool(true)),
         Rule::r#false => quote!(simplesl::variable::Variable::Bool(false)),

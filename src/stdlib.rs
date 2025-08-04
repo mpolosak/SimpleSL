@@ -5,26 +5,22 @@ mod math;
 pub(crate) mod operators;
 mod string;
 pub use self::{
-    convert::Convert, fs::FS, io::IO, math::Math, operators::OPERATORS, string::String,
+    convert::Convert, fs::FS, io::IO, math::Math, operators::Operators, string::String,
 };
 use crate as simplesl;
 use crate::variable::Variable;
-use lazy_static::lazy_static;
-use simplesl_macros::{export, var};
+use simplesl_macros::{decls, export};
 
-lazy_static! {
-    pub static ref stdlib: Variable = {
-        let operators = OPERATORS.clone();
-        var!(struct{
-            convert=Convert,
-            fs=FS,
-            io=IO,
-            math=Math,
-            operators,
-            string=String,
-            len=Len
-        })
-    };
+decls! {
+    Std:=struct{
+        convert=Convert,
+        fs=FS,
+        io=IO,
+        math=Math,
+        operators=Operators,
+        string=String,
+        len=Len
+    }
 }
 
 #[export(Len)]
