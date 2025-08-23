@@ -7,7 +7,7 @@ mod try_from;
 mod r#type;
 mod type_of;
 use crate::{Error, function::Function, interpreter::VariableMap};
-use derive_more::Display;
+use derive_more::{Display, From};
 use enum_as_inner::EnumAsInner;
 use itertools::Itertools;
 use match_any::match_any;
@@ -21,18 +21,26 @@ pub use {
     struct_type::StructType, type_of::TypeOf,
 };
 
-#[derive(Clone, Display, EnumAsInner)]
+#[derive(Clone, Display, EnumAsInner, From)]
 #[display("{}", self.string(0))]
 pub enum Variable {
+    #[from]
     Bool(bool),
+    #[from(i32, u32, i64)]
     Int(i64),
+    #[from]
     Float(f64),
+    #[from(Arc<str>, &str, String)]
     String(Arc<str>),
+    #[from(Function, Arc<Function>)]
     Function(Arc<Function>),
+    #[from(Array, Arc<Array>)]
     Array(Arc<Array>),
     Tuple(Arc<[Variable]>),
+    #[from(Mut, Arc<Mut>)]
     Mut(Arc<Mut>),
     Struct(Arc<VariableMap>),
+    #[from]
     Void,
 }
 
@@ -260,75 +268,9 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
     }
 }
 
-impl From<i32> for Variable {
-    fn from(value: i32) -> Self {
-        Self::Int(value as i64)
-    }
-}
-
-impl From<u32> for Variable {
-    fn from(value: u32) -> Self {
-        Self::Int(value as i64)
-    }
-}
-
-impl From<i64> for Variable {
-    fn from(value: i64) -> Self {
-        Self::Int(value)
-    }
-}
-
-impl From<bool> for Variable {
-    fn from(value: bool) -> Self {
-        Self::Bool(value)
-    }
-}
-
 impl From<usize> for Variable {
     fn from(value: usize) -> Self {
         Self::Int(value as i64)
-    }
-}
-
-impl From<f64> for Variable {
-    fn from(value: f64) -> Self {
-        Self::Float(value)
-    }
-}
-
-impl From<Arc<str>> for Variable {
-    fn from(value: Arc<str>) -> Self {
-        Self::String(value)
-    }
-}
-
-impl From<&str> for Variable {
-    fn from(value: &str) -> Self {
-        Self::String(value.into())
-    }
-}
-
-impl From<String> for Variable {
-    fn from(value: String) -> Self {
-        Self::String(value.into())
-    }
-}
-
-impl From<Function> for Variable {
-    fn from(value: Function) -> Self {
-        Self::Function(value.into())
-    }
-}
-
-impl From<Arc<Function>> for Variable {
-    fn from(value: Arc<Function>) -> Self {
-        Self::Function(value)
-    }
-}
-
-impl From<()> for Variable {
-    fn from(_value: ()) -> Self {
-        Self::Void
     }
 }
 
@@ -356,18 +298,6 @@ impl From<io::ErrorKind> for Variable {
     }
 }
 
-impl From<Array> for Variable {
-    fn from(value: Array) -> Self {
-        Variable::Array(value.into())
-    }
-}
-
-impl From<Arc<Array>> for Variable {
-    fn from(value: Arc<Array>) -> Self {
-        Variable::Array(value)
-    }
-}
-
 impl From<Arc<[Variable]>> for Variable {
     fn from(value: Arc<[Variable]>) -> Self {
         Array::from(value).into()
@@ -391,18 +321,6 @@ impl<T: Tuple<Variable>> From<T> for Variable {
     fn from(value: T) -> Self {
         let vars: [Variable; Tuple::LEN] = value.into();
         Variable::Tuple(vars.into())
-    }
-}
-
-impl From<Mut> for Variable {
-    fn from(value: Mut) -> Self {
-        Variable::Mut(value.into())
-    }
-}
-
-impl From<Arc<Mut>> for Variable {
-    fn from(value: Arc<Mut>) -> Self {
-        Variable::Mut(value)
     }
 }
 

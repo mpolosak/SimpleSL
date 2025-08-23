@@ -40,7 +40,7 @@ use crate::{
     interpreter::Interpreter,
     variable::{ReturnType, Type, Typed, Variable},
 };
-use duplicate::duplicate_item;
+use derive_more::From;
 use r#loop::{Loop, r#for, r#while, while_set};
 use match_any::match_any;
 use r#mut::Mut;
@@ -161,32 +161,54 @@ impl From<Variable> for InstructionWithStr {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, From)]
 pub enum Instruction {
+    #[from]
     AnonymousFunction(AnonymousFunction),
+    #[from(Array)]
     Array(Arc<Array>),
+    #[from(ArrayRepeat)]
     ArrayRepeat(Arc<ArrayRepeat>),
+    #[from]
     Block(Block),
     Break,
     Continue,
+    #[from(DestructTuple)]
     DestructTuple(Arc<DestructTuple>),
+    #[from(FieldAccess)]
     FieldAccess(Arc<FieldAccess>),
+    #[from(FunctionDeclaration)]
     FunctionDeclaration(Arc<FunctionDeclaration>),
+    #[from(IfElse)]
     IfElse(Arc<IfElse>),
     LocalVariable(Arc<str>, LocalVariable),
+    #[from(Loop)]
     Loop(Arc<Loop>),
+    #[from(Match)]
     Match(Arc<Match>),
+    #[from(Mut)]
     Mut(Arc<Mut>),
+    #[from(Reduce)]
     Reduce(Arc<Reduce>),
+    #[from(Set)]
     Set(Arc<Set>),
+    #[from(SetIfElse)]
     SetIfElse(Arc<SetIfElse>),
+    #[from(Slicing)]
     Slicing(Arc<Slicing>),
+    #[from(Struct)]
     Struct(Arc<Struct>),
+    #[from]
     Tuple(Tuple),
+    #[from(TupleAccess)]
     TupleAccess(Arc<TupleAccess>),
+    #[from(TypeFilter)]
     TypeFilter(Arc<TypeFilter>),
+    #[from]
     Variable(Variable),
+    #[from(BinOperation)]
     BinOperation(Arc<BinOperation>),
+    #[from(UnaryOperation)]
     UnaryOperation(Arc<UnaryOperation>),
 }
 
@@ -304,18 +326,6 @@ impl ReturnType for Instruction {
             Self::Loop(_) => Type::Void,
             Self::Break | Self::Continue => Type::Never
         }
-    }
-}
-
-#[duplicate_item(
-    T; [Block]; [Variable]; [UnaryOperation]; [BinOperation]; [AnonymousFunction]; [Array];
-    [ArrayRepeat]; [Tuple]; [DestructTuple]; [FieldAccess]; [FunctionDeclaration]; [IfElse];
-    [Reduce]; [Slicing]; [Struct]; [TypeFilter]; [Match]; [Mut]; [Set]; [SetIfElse]; [TupleAccess]
-)]
-impl From<T> for Instruction {
-    fn from(value: T) -> Self {
-        #[allow(clippy::useless_conversion)]
-        Self::T(value.into())
     }
 }
 

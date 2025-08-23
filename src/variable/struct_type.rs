@@ -54,12 +54,6 @@ impl From<Pair<'_, Rule>> for StructType {
     }
 }
 
-impl From<StructType> for Type {
-    fn from(value: StructType) -> Self {
-        Type::Struct(value)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use crate as simplesl;

@@ -1,6 +1,7 @@
 use crate::{
     BinOperator, ExecError, function::Param, unary_operator::UnaryOperator, variable::Type,
 };
+use derive_more::From;
 use match_any::match_any;
 use simplesl_parser::Rule;
 use std::{
@@ -8,7 +9,7 @@ use std::{
     sync::Arc,
 };
 
-#[derive(Debug)]
+#[derive(Debug, From)]
 pub enum Error {
     BreakOutsideLoop,
     ContinueOutsideLoop,
@@ -29,9 +30,12 @@ pub enum Error {
     ZeroModulo,
     OverflowShift,
     MatchNotCovered,
+    #[from]
     IO(std::io::Error),
+    #[from(pest::error::Error<Rule>)]
     Parsing(Box<pest::error::Error<Rule>>),
     IntegerOverflow(Box<str>),
+    #[from]
     CannotUnescapeString(unescaper::Error),
     CannotDo2(Type, BinOperator, Type),
     WrongReturn {
@@ -322,24 +326,6 @@ impl fmt::Display for Error {
                 "mut declared to contain {declared} but initialized with {given} that is {given_type}"
             ),
         }
-    }
-}
-
-impl From<pest::error::Error<Rule>> for Error {
-    fn from(value: pest::error::Error<Rule>) -> Self {
-        Error::Parsing(value.into())
-    }
-}
-
-impl From<std::io::Error> for Error {
-    fn from(value: std::io::Error) -> Self {
-        Self::IO(value)
-    }
-}
-
-impl From<unescaper::Error> for Error {
-    fn from(value: unescaper::Error) -> Self {
-        Error::CannotUnescapeString(value)
     }
 }
 

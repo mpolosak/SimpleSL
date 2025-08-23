@@ -1,6 +1,6 @@
 use super::{function_type::FunctionType, multi_type::MultiType};
 use crate::{self as simplesl, errors::ParseTypeError, join, variable::struct_type::StructType};
-use derive_more::Display;
+use derive_more::{Display, From};
 use lazy_static::lazy_static;
 use match_any::match_any;
 use pest::{Parser, iterators::Pair};
@@ -14,7 +14,7 @@ use std::{
     sync::Arc,
 };
 
-#[derive(Clone, Debug, Display, Hash, Eq, PartialEq)]
+#[derive(Clone, Debug, Display, Hash, Eq, From, PartialEq)]
 pub enum Type {
     #[display("bool")]
     Bool,
@@ -24,6 +24,7 @@ pub enum Type {
     Float,
     #[display("string")]
     String,
+    #[from(FunctionType)]
     Function(Arc<FunctionType>),
     #[display("[{}]", if _0.matches(&Type::Never) {"".into()}else{_0.to_string()})]
     Array(Arc<Type>),
@@ -34,6 +35,7 @@ pub enum Type {
     Multi(MultiType),
     #[display("mut {}", if let Type::Multi(_)=_0.as_ref(){format!("({_0})")}else{format!("{_0}")})]
     Mut(Arc<Type>),
+    #[from]
     Struct(StructType),
     #[display("any")]
     Any,

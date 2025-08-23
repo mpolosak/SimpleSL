@@ -62,12 +62,6 @@ impl From<Pair<'_, Rule>> for FunctionType {
     }
 }
 
-impl From<FunctionType> for Type {
-    fn from(value: FunctionType) -> Self {
-        Self::Function(value.into())
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use simplesl_macros::var_type;
