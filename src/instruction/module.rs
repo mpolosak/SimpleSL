@@ -22,7 +22,7 @@ pub fn new(
     instructions: Arc<[InstructionWithStr]>,
     lv_layer: LocalVariableMap,
 ) -> Result<Instruction, Error> {
-    let fields = lv_layer
+    let (idents, values): (Vec<_>, Vec<_>) = lv_layer
         .iter()
         .map(|(ident, var)| {
             (
@@ -33,8 +33,12 @@ pub fn new(
                 },
             )
         })
-        .collect();
-    let struct_ins = Struct(fields).into();
+        .unzip();
+    let struct_ins = Struct {
+        idents: idents.into(),
+        values: values.into(),
+    }
+    .into();
     let struct_ins = InstructionWithStr {
         instruction: struct_ins,
         str: "struct".into(),

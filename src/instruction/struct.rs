@@ -12,14 +12,17 @@ use simplesl_parser::Rule;
 use std::{collections::HashMap, sync::Arc};
 
 #[derive(Debug, Clone)]
-pub struct Struct(pub HashMap<Arc<str>, InstructionWithStr>);
+pub struct Struct {
+    pub idents: Arc<[Arc<str>]>,
+    pub values: Arc<[InstructionWithStr]>,
+}
 
 impl Struct {
     pub fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &LocalVariables,
     ) -> Result<Instruction, Error> {
-        let fields = pair
+        let (idents, values) = pair
             .into_inner()
             .map(|pair| {
                 if pair.as_rule() == Rule::ident {
@@ -33,16 +36,21 @@ impl Struct {
                     InstructionWithStr::new_expression(inner.next().unwrap(), local_variables)?;
                 Ok((ident, value))
             })
-            .collect::<Result<_, Error>>()?;
-        Ok(Self(fields).into())
+            .collect::<Result<(Vec<Arc<str>>, Vec<InstructionWithStr>), Error>>()?;
+        Ok(Self {
+            idents: idents.into(),
+            values: values.into(),
+        }
+        .into())
     }
 }
 
 impl Exec for Struct {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let vm = self
-            .0
+            .idents
             .iter()
+            .zip(self.values.iter())
             .map(|(ident, value)| {
                 let value = value.exec(interpreter)?;
                 let ident = ident.clone();
@@ -55,24 +63,22 @@ impl Exec for Struct {
 
 impl Recreate for Struct {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let fields = self
-            .0
+        let idents = self.idents.clone();
+        let values = self
+            .values
             .iter()
-            .map(|(ident, value)| {
-                let value = value.recreate(local_variables)?;
-                let ident = ident.clone();
-                Ok((ident, value))
-            })
-            .collect::<Result<_, ExecError>>()?;
-        Ok(Self(fields).into())
+            .map(|value| value.recreate(local_variables))
+            .collect::<Result<_, _>>()?;
+        Ok(Self { idents, values }.into())
     }
 }
 
 impl ReturnType for Struct {
     fn return_type(&self) -> Type {
         let tm: HashMap<Arc<str>, Type> = self
-            .0
+            .idents
             .iter()
+            .zip(self.values.iter())
             .map(|(key, value)| (key.clone(), value.return_type()))
             .collect();
         StructType(Arc::from(tm)).into()
