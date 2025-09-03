@@ -1,6 +1,6 @@
 use super::{Array, Variable};
 use crate::function::Function;
-use std::{convert::Infallible, sync::Arc};
+use std::sync::Arc;
 
 impl TryFrom<Variable> for bool {
     type Error = Variable;
@@ -127,10 +127,8 @@ impl<'a> TryFrom<&'a Variable> for &'a Arc<Function> {
     }
 }
 
-impl TryFrom<&Variable> for Variable {
-    type Error = Infallible;
-
-    fn try_from(value: &Variable) -> Result<Self, Self::Error> {
-        Ok(value.clone())
+impl From<&Variable> for Variable {
+    fn from(value: &Variable) -> Self {
+        value.clone()
     }
 }
