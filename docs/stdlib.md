@@ -32,40 +32,40 @@ Converts given variable to string
 ## fs
 This part of standard library contains functions to deal with files and directories
 
-### file_read_to_string(path: string) -> string|(int, string)
+### file_read_to_string(path: string) -> string|struct{error_code: int, msg: string}
 Opens file on path and reads its content. Returns string with file content when succesful or tuple containg error number and message when something went wrong
 
-### write_to_file(path: string, contents: string) -> ()|(int|string)
+### write_to_file(path: string, contents: string) -> ()|struct{error_code: int, msg: string}
 Writes given contents to file on given path.
 Returns () when succesful or tuple containg error number and message when something went wrong
 
-### copy_file(from: string, to: string) -> ()|(int|string)
+### copy_file(from: string, to: string) -> ()|struct{error_code: int, msg: string}
 Copies file on path `from` to path `to`.
 Returns () when succesful or tuple containg error number and message when something went wrong
 
-### remove_file(path: string) -> ()|(int|string)
+### remove_file(path: string) -> ()|struct{error_code: int, msg: string}
 Removes file on path `path`.
 Returns () when succesful or tuple containg error number and message when something went wrong
 
-### remove_dir(path: string) -> ()|(int|string)
+### remove_dir(path: string) -> ()|struct{error_code: int, msg: string}
 Removes directory on path `path`.
 Returns () when succesful or tuple containg error number and message when something went wrong.
 This will fail when directory is not empty
 
-### remove_dir_all(path: string) -> ()|(int|string)
+### remove_dir_all(path: string) -> ()|struct{error_code: int, msg: string}
 Removes directory on path `path` and all of it contents.
 Returns () when succesful or tuple containg error number and message when something went wrong.
 
-### create_dir(path: string) -> ()|(int|string)
+### create_dir(path: string) -> ()|struct{error_code: int, msg: string}
 Creates directory with name `path`.
 Returns () when succesful or tuple containg error number and message when something went wrong
 
-### create_dir(path: string) -> ()|(int|string)
+### create_dir(path: string) -> ()|struct{error_code: int, msg: string}
 Creates directory with path `path`.
 Returns () when succesful or tuple containg error number and message when something went wrong.
 This will create all parents directories
 
-### renames(from: string, to: string) -> ()|(int|string)
+### renames(from: string, to: string) -> ()|struct{error_code: int, msg: string}
 Renames file or directory from `from` to `to`.
 Returns () when succesful or tuple containg error number and message when something went wrong
 

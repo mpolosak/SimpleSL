@@ -6,12 +6,13 @@ mod struct_type;
 mod try_from;
 mod r#type;
 mod type_of;
-use crate::{Error, function::Function, interpreter::VariableMap};
+use crate::{self as simplesl, Error, function::Function, interpreter::VariableMap};
 use derive_more::{Display, From};
 use enum_as_inner::EnumAsInner;
 use itertools::Itertools;
 use match_any::match_any;
 use pest::{Parser, iterators::Pair};
+use simplesl_macros::var;
 use simplesl_parser::{Rule, SimpleSLParser, unexpected};
 use std::{collections::HashMap, fmt, io, str::FromStr, sync::Arc};
 pub use r#type::{ReturnType, Type, Typed};
@@ -288,7 +289,14 @@ impl<T: Into<Variable>> From<io::Result<T>> for Variable {
 
 impl From<io::Error> for Variable {
     fn from(value: io::Error) -> Self {
-        (value.kind().into(), value.to_string().into()).into()
+        let error_code = value.kind();
+        let msg = value.to_string();
+        var!(
+            struct{
+                error_code,
+                msg
+            }
+        )
     }
 }
 
