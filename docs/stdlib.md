@@ -90,8 +90,18 @@ Splits 'string' on 'pat'.
 ## replace(string: string, from: string, to: string) -> string
 Return an string that is a result of replacing all occurences of 'from' in 'string' with 'to'.
 
-## string_contains(string: string, pat: string) -> bool
+## contains(string: string, pat: string) -> bool
 Returns true if `string` contains `pat`, false otherwise.
+
+## starts_with(string: string, prefix: string) -> bool
+Returns true if `string` starts with `prefix`.
+
+Returns false if it does not.
+
+## ends_with(string: string, suffix: string) -> bool
+Returns true if `string` ends with `suffix`.
+
+Returns false if it does not.
 
 ## chars(string: string) -> [string]
 Returns an array containing all UTF-8 characters of 'string'.
@@ -110,6 +120,15 @@ Returns the lowercase equivalent of `string`.
 
 ## to_uppercase(string: string) -> string
 Returns the uppercase equivalent of `string`.
+
+## trim(string: string) -> string
+Returns a string with leading and trailing whitespace removed.
+
+## trim_start(string: string) -> string
+Returns a string with leading whitespace removed.
+
+## trim_end(string: string) -> string
+Returns a string with trailing whitespace removed.
 
 # math
 This part of the standard library contains common math functions and constants

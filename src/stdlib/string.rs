@@ -18,8 +18,16 @@ mod inner {
         string.replace(from, to.as_ref())
     }
 
-    pub fn string_contains(string: &str, pat: &str) -> bool {
+    pub fn contains(string: &str, pat: &str) -> bool {
         string.contains(pat)
+    }
+
+    pub fn starts_with(string: &str, prefix: &str) -> bool {
+        string.starts_with(prefix)
+    }
+
+    pub fn ends_with(string: &str, suffix: &str) -> bool {
+        string.ends_with(suffix)
     }
 
     #[return_type([string])]
@@ -64,5 +72,17 @@ mod inner {
 
     pub fn to_uppercase(string: &str) -> String {
         string.to_uppercase()
+    }
+
+    pub fn trim(string: &str) -> &str {
+        string.trim()
+    }
+
+    pub fn trim_start(string: &str) -> &str {
+        string.trim_start()
+    }
+
+    pub fn trim_end(string: &str) -> &str {
+        string.trim_end()
     }
 }
