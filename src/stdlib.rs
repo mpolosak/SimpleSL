@@ -13,13 +13,13 @@ use simplesl_macros::{decls, export};
 
 decls! {
     Std:=struct{
-        convert=Convert,
-        fs=FS,
-        io=IO,
-        math=Math,
-        operators=Operators,
-        string=String,
-        len=Len
+        convert:=Convert,
+        fs:=FS,
+        io:=IO,
+        math:=Math,
+        operators:=Operators,
+        string:=String,
+        len:=Len
     }
 }
 

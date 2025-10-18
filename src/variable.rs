@@ -419,13 +419,13 @@ mod tests {
         let empty_struct = Variable::from_str("struct{}");
         assert_eq!(empty_struct, Ok(Variable::Struct(HashMap::from([]).into())));
         assert_eq!(
-            Variable::from_str("struct{a=5}"),
+            Variable::from_str("struct{a:=5}"),
             Ok(Variable::Struct(
                 HashMap::from([("a".into(), Variable::Int(5))]).into()
             ))
         );
         assert_eq!(
-            Variable::from_str(r#"struct{a="hello", b=struct{}}"#),
+            Variable::from_str(r#"struct{a:="hello", b:=struct{}}"#),
             Ok(Variable::Struct(
                 HashMap::from([
                     ("a".into(), Variable::String("hello".into())),

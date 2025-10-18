@@ -32,7 +32,7 @@ char                 =  {
 }
 mut                  =  { "mut" ~ type? ~ expr }
 struct               =  { "struct" ~ "{" ~ ((field | ident) ~ ("," ~ (field | ident))*)? ~ "}" }
-field                =  { ident ~ "=" ~ expr }
+field                =  { ident ~ ":=" ~ expr }
 primary              = _{ ident | var | expr_in_brackets }
 expr_in_brackets     = _{ "(" ~ expr ~ ")" }
 atom                 = _{ prefix_op? ~ primary ~ postfix_op* }
@@ -266,7 +266,7 @@ array_from_str        =  { "[" ~ var_list? ~ "]" }
 array_repeat_from_str =  { "[" ~ var_from_str ~ ";" ~ int ~ "]" }
 tuple_from_str        =  { "(" ~ var_from_str ~ "," ~ var_list ~ ")" }
 struct_from_str       =  { "struct" ~ "{" ~ (field_from_str ~ ("," ~ field_from_str)*)? ~ "}" }
-field_from_str        = _{ ident ~ "=" ~ var_from_str }
+field_from_str        = _{ ident ~ ":=" ~ var_from_str }
 var_list              = _{ (var_from_str ~ ("," ~ var_from_str)*) }
 // rule for var! macro
 var_macro          = _{ var_ident ~ &EOI }
@@ -290,7 +290,7 @@ array_ident        =  { "[" ~ var_ident_list? ~ "]" }
 array_ident_repeat =  { "[" ~ var_ident ~ ";" ~ (int | ident) ~ "]" }
 tuple_ident        =  { "(" ~ var_ident ~ "," ~ var_ident_list ~ ")" }
 struct_ident       =  { "struct" ~ "{" ~ ((field_ident | ident) ~ ("," ~ (field_ident | ident))*)? ~ "}" }
-field_ident        =  { ident ~ "=" ~ var_ident }
+field_ident        =  { ident ~ ":=" ~ var_ident }
 var_ident_list     = _{ (var_ident ~ ("," ~ var_ident)*) }
 //decls macro
 decl               =  { ident ~ ":=" ~ (function | var_ident) }

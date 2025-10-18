@@ -54,14 +54,14 @@ decls! {
         }
     }
     Operators:=struct{
-        bitand_reduce = AND,
-        bitor_reduce = OR,
-        all = ALL,
-        any = ANY,
-        int_product = INT_PRODUCT,
-        float_product = FLOAT_PRODUCT,
-        int_sum = INT_SUM,
-        float_sum = FLOAT_SUM,
-        string_sum = STRING_SUM
+        bitand_reduce := AND,
+        bitor_reduce := OR,
+        all := ALL,
+        any := ANY,
+        int_product := INT_PRODUCT,
+        float_product := FLOAT_PRODUCT,
+        int_sum := INT_SUM,
+        float_sum := FLOAT_SUM,
+        string_sum := STRING_SUM
     }
 }
