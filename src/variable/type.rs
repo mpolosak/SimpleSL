@@ -1,12 +1,12 @@
 use super::{function_type::FunctionType, multi_type::MultiType};
-use crate::{self as simplesl, errors::ParseTypeError, join};
+use crate::{self as simplesl, errors::ParseTypeError, join, variable::struct_type::StructType};
+use derive_more::{Display, From};
 use lazy_static::lazy_static;
 use match_any::match_any;
 use pest::{Parser, iterators::Pair};
 use simplesl_macros::var_type;
 use simplesl_parser::{Rule, SimpleSLParser};
 use std::{
-    fmt::Display,
     hash::Hash,
     iter::zip,
     ops::{BitOr, BitOrAssign},
@@ -14,24 +14,41 @@ use std::{
     sync::Arc,
 };
 
-#[derive(Clone, Debug, Hash, Eq, PartialEq)]
+#[derive(Clone, Debug, Display, Hash, Eq, From, PartialEq)]
 pub enum Type {
+    #[display("bool")]
     Bool,
+    #[display("int")]
     Int,
+    #[display("float")]
     Float,
+    #[display("string")]
     String,
+    #[from(FunctionType)]
     Function(Arc<FunctionType>),
+    #[display("[{}]", if _0.matches(&Type::Never) {"".into()}else{_0.to_string()})]
     Array(Arc<Type>),
+    #[display("({})", join(_0.as_ref(), ", "))]
     Tuple(Arc<[Type]>),
+    #[display("()")]
     Void,
     Multi(MultiType),
+    #[display("mut {}", if let Type::Multi(_)=_0.as_ref(){format!("({_0})")}else{format!("{_0}")})]
     Mut(Arc<Type>),
+    #[from]
+    Struct(StructType),
+    #[display("any")]
     Any,
+    #[display("!")]
     Never,
 }
 
 lazy_static! {
     static ref ITERATOR_TYPE: Type = var_type!(() -> (bool, any));
+}
+
+lazy_static! {
+    static ref EMPTY_STRUCT_TYPE: Type = var_type!(struct{});
 }
 
 impl Type {
@@ -40,7 +57,8 @@ impl Type {
         match_any! { (self, other),
             (Type::Never, _) => true,
             (Self::Function(var_type), Self::Function(var_type2))
-            | (Self::Array(var_type), Self::Array(var_type2)) => {
+            | (Self::Array(var_type), Self::Array(var_type2))
+            | (Self::Struct(var_type), Self::Struct(var_type2)) => {
                 var_type.matches(var_type2)
             },
             (Self::Multi(types), other) => types.iter().all(|var_type| var_type.matches(other)),
@@ -240,6 +258,10 @@ impl Type {
         self.matches(&ITERATOR_TYPE)
     }
 
+    pub fn is_struct(&self) -> bool {
+        self.matches(&EMPTY_STRUCT_TYPE)
+    }
+
     pub fn tuple_len(&self) -> Option<usize> {
         match self {
             Self::Tuple(types) => Some(types.len()),
@@ -271,7 +293,7 @@ impl Type {
     pub fn iter_element(&self) -> Option<Type> {
         match self {
             Self::Function(function) => {
-                if function.params.len() != 0 {
+                if !function.params.is_empty() {
                     return None;
                 }
                 let return_tuple = function.return_type.clone().flatten_tuple()?;
@@ -295,7 +317,7 @@ impl Type {
             Self::Tuple(tuple) => tuple.get(index).cloned(),
             Self::Multi(multi) => {
                 let mut iter = multi.iter();
-                let first = iter.next().unwrap().iter_element()?;
+                let first = iter.next().unwrap().tuple_element_at(index)?;
                 iter.map(|t| t.tuple_element_at(index))
                     .try_fold(first, |acc, curr| Some(acc | curr?))
             }
@@ -307,29 +329,27 @@ impl Type {
     pub fn can_be_indexed(&self) -> bool {
         self.matches(&var_type!(string | [any]))
     }
-}
 
-impl Display for Type {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    // Return type of field if self is struct and has field with name, None - otherwise
+    pub fn field_type(&self, ident: &str) -> Option<Type> {
         match self {
-            Self::Bool => write!(f, "bool"),
-            Self::Int => write!(f, "int"),
-            Self::Float => write!(f, "float"),
-            Self::String => write!(f, "string"),
-            Self::Function(function_type) => write!(f, "{function_type}"),
-            Self::Array(var_type) if var_type.matches(&Type::Never) => write!(f, "[]"),
-            Self::Array(var_type) => write!(f, "[{var_type}]"),
-            Self::Tuple(types) => write!(f, "({})", join(types.as_ref(), ", ")),
-            Self::Void => write!(f, "()"),
-            Self::Multi(types) => write!(f, "{types}"),
-            Self::Mut(var_type) if matches!(var_type.as_ref(), Type::Multi(_)) => {
-                write!(f, "mut ({var_type})")
+            Self::Struct(tm) => tm.0.get(ident).cloned(),
+            Self::Multi(multi) => {
+                let mut iter = multi.iter();
+                let first = iter.next().unwrap().field_type(ident)?;
+                iter.map(|t| t.field_type(ident))
+                    .try_fold(first, |acc, curr| Some(acc | curr?))
             }
-            Self::Mut(var_type) => {
-                write!(f, "mut {var_type}")
-            }
-            Self::Any => write!(f, "any"),
-            Self::Never => write!(f, "!"),
+            _ => None,
+        }
+    }
+
+    // Return true if self is struct and has field with given ident
+    pub fn has_field(&self, ident: &str) -> bool {
+        match self {
+            Self::Struct(tm) => tm.0.contains_key(ident),
+            Self::Multi(multi) => multi.iter().all(|t| t.has_field(ident)),
+            _ => false,
         }
     }
 }
@@ -378,6 +398,7 @@ impl From<Pair<'_, Rule>> for Type {
                 let element_type = pair.into_inner().next().map(Type::from).unwrap();
                 Self::Mut(element_type.into())
             }
+            Rule::struct_type => StructType::from(pair).into(),
             rule => panic!("Type cannot be built from rule: {rule:?}"),
         }
     }
@@ -428,6 +449,57 @@ mod tests {
     use proptest::proptest;
     use simplesl_macros::var_type;
     use std::str::FromStr;
+
+    #[test]
+    fn to_string() {
+        assert_eq!("int", Type::Int.to_string());
+        assert_eq!("float", Type::Float.to_string());
+        assert_eq!("string", Type::String.to_string());
+        assert_eq!("any", Type::Any.to_string());
+        assert_eq!("bool", Type::Bool.to_string());
+        assert_eq!("()", Type::Void.to_string());
+        assert_eq!("!", Type::Never.to_string());
+        let f = FunctionType {
+            params: [].into(),
+            return_type: Type::Void,
+        };
+        assert_eq!(f.to_string(), Type::Function(f.into()).to_string());
+        let f = Type::Function(
+            FunctionType {
+                params: [Type::Int, Type::Float].into(),
+                return_type: Type::Int | Type::String,
+            }
+            .into(),
+        )
+        .to_string();
+        assert!(f == "(int, float)->(int|string)" || f == "(int, float)->(string|int)");
+        assert_eq!("[int]", Type::Array((Type::Int).into()).to_string());
+        assert_eq!("[float]", Type::Array((Type::Float).into()).to_string());
+        assert_eq!("[string]", Type::Array((Type::String).into()).to_string());
+        let r = Type::Array((Type::Float | Type::String).into()).to_string();
+        assert!(r == "[float|string]" || r == "[string|float]");
+        assert_eq!("[any]", Type::Array(Type::Any.into()).to_string());
+        assert_eq!("[int]", Type::Array(Type::Int.into()).to_string());
+        assert_eq!("[()]", Type::Array(Type::Void.into()).to_string());
+        assert_eq!(
+            "(int, string)",
+            Type::Tuple([Type::Int, Type::String].into()).to_string()
+        );
+        let r = (Type::Tuple([Type::Int, Type::String].into()) | Type::Float).to_string();
+        assert!(r == "(int, string)|float" || r == "float|(int, string)");
+        let r = (FunctionType {
+            params: [Type::String, Type::Int | Type::Float].into(),
+            return_type: Type::Int,
+        } | Type::String)
+            .to_string();
+        println!("{r}");
+        assert!(
+            r == "(string, int|float)->int|string"
+                || r == "(string, float|int)->int|string"
+                || r == "string|(string, int|float)->int"
+                || r == "string|(string, float|int)->int"
+        );
+    }
 
     #[test]
     fn from_str() {
@@ -722,6 +794,67 @@ mod tests {
         assert_eq!(var_type!([int] | float).element_type(), None);
         assert_eq!(var_type!(any).element_type(), None);
         assert_eq!(var_type!(string | (int, float)).element_type(), None);
+    }
+
+    #[test]
+    fn tuple_element_at() {
+        let l1 = var_type!((int, float));
+        assert_eq!(l1.tuple_element_at(0), Some(var_type!(int)));
+        assert_eq!(l1.tuple_element_at(1), Some(var_type!(float)));
+        assert_eq!(l1.tuple_element_at(2), None);
+        let l2 = var_type!((string, (), struct{}));
+        assert_eq!(l2.tuple_element_at(0), Some(var_type!(string)));
+        assert_eq!(l2.tuple_element_at(1), Some(var_type!(())));
+        assert_eq!(l2.tuple_element_at(2), Some(var_type!(struct{})));
+        let l3 = l1 | l2;
+        assert_eq!(l3.tuple_element_at(0), Some(var_type!(int | string)));
+        assert_eq!(l3.tuple_element_at(1), Some(var_type!(float | ())));
+        assert_eq!(l3.tuple_element_at(2), None);
+        let l4 = var_type!(l3 | ());
+        assert_eq!(l4.tuple_element_at(0), None);
+        assert_eq!(Type::Int.tuple_element_at(0), None);
+    }
+
+    #[test]
+    fn field_type() {
+        let s1 = var_type!(struct{a: int, b: float});
+        assert_eq!(s1.field_type("a"), Some(var_type!(int)));
+        assert_eq!(s1.field_type("b"), Some(var_type!(float)));
+        assert_eq!(s1.field_type("c"), None);
+        let c = s1.clone();
+        let c2 = s1.clone();
+        let s2 = var_type!(struct{b: string | (), c: c});
+        assert_eq!(s2.field_type("a"), None);
+        assert_eq!(s2.field_type("b"), Some(var_type!(string | ())));
+        assert_eq!(s2.field_type("c"), Some(c2));
+        let s3 = s1 | s2;
+        assert_eq!(s3.field_type("a"), None);
+        assert_eq!(s3.field_type("b"), Some(var_type!(float | string | ())));
+        assert_eq!(s3.field_type("c"), None);
+        let s3 = var_type!(s3 | int);
+        assert_eq!(s3.field_type("a"), None);
+        assert_eq!(Type::Int.field_type("a"), None);
+        assert_eq!(Type::String.field_type("a"), None);
+    }
+
+    #[test]
+    fn has_field() {
+        let s1 = var_type!(struct{a: int, b: float});
+        assert!(s1.has_field("a"));
+        assert!(s1.has_field("b"));
+        assert!(!s1.has_field("c"));
+        let s2 = var_type!(struct{b: string | (), c: string});
+        assert!(!s2.has_field("a"));
+        assert!(s2.has_field("b"));
+        assert!(s2.has_field("c"));
+        let s3 = s1 | s2;
+        assert!(!s3.has_field("a"));
+        assert!(s3.has_field("b"));
+        assert!(!s3.has_field("c"));
+        let s3 = var_type!(s3 | int);
+        assert!(!s3.has_field("a"));
+        assert!(!Type::Int.has_field("a"));
+        assert!(!Type::String.has_field("a"));
     }
 
     proptest! {

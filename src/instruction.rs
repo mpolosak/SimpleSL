@@ -5,16 +5,19 @@ mod bin_op;
 pub mod block;
 mod control_flow;
 mod destruct_tuple;
+mod field_access;
 pub mod function;
 mod import;
 pub mod local_variable;
 mod r#loop;
+mod module;
 mod r#mut;
 mod prefix_op;
 mod reduce;
 mod r#return;
 mod set;
 mod slicing;
+mod r#struct;
 mod tuple;
 pub mod tuple_access;
 mod type_filter;
@@ -27,17 +30,17 @@ use self::{
     control_flow::{IfElse, Match, SetIfElse},
     destruct_tuple::DestructTuple,
     function::{AnonymousFunction, FunctionDeclaration},
-    import::Import,
     local_variable::{LocalVariable, LocalVariables},
     set::Set,
     tuple::Tuple,
 };
 use crate::{
     Error, ExecError,
+    instruction::{field_access::FieldAccess, r#struct::Struct},
     interpreter::Interpreter,
     variable::{ReturnType, Type, Typed, Variable},
 };
-use duplicate::duplicate_item;
+use derive_more::From;
 use r#loop::{Loop, r#for, r#while, while_set};
 use match_any::match_any;
 use r#mut::Mut;
@@ -78,6 +81,11 @@ impl InstructionWithStr {
             .parse(pair.into_inner())
     }
 
+    pub fn new_ident(str: Arc<str>, local_variables: &LocalVariables) -> Result<Self, Error> {
+        let instruction = Instruction::new_ident(&str, local_variables)?;
+        Ok(Self { instruction, str })
+    }
+
     fn create_primary(
         pair: Pair<'_, Rule>,
         local_variables: &LocalVariables<'_>,
@@ -88,20 +96,7 @@ impl InstructionWithStr {
         }
         let str: Arc<str> = pair.as_str().into();
         let instruction = match rule {
-            Rule::ident => local_variables.get(&str).map_or_else(
-                || {
-                    local_variables
-                        .interpreter
-                        .get_variable(&str)
-                        .cloned()
-                        .map(Instruction::from)
-                        .ok_or_else(|| Error::VariableDoesntExist(str.clone()))
-                },
-                |var| match var.clone() {
-                    LocalVariable::Variable(variable) => Ok(Instruction::Variable(variable)),
-                    local_variable => Ok(Instruction::LocalVariable(str.clone(), local_variable)),
-                },
-            ),
+            Rule::ident => Instruction::new_ident(&str, local_variables),
             Rule::r#true | Rule::r#false | Rule::int | Rule::float | Rule::string | Rule::void => {
                 Variable::try_from(pair).map(Instruction::from)
             }
@@ -110,6 +105,8 @@ impl InstructionWithStr {
             Rule::array => Array::create_instruction(pair, local_variables),
             Rule::array_repeat => ArrayRepeat::create_instruction(pair, local_variables),
             Rule::function => AnonymousFunction::create_instruction(pair, local_variables),
+            Rule::r#struct => Struct::create_instruction(pair, local_variables),
+            Rule::r#mod => module::create_instruction(pair, local_variables),
             rule => unexpected!(rule),
         }?;
         Ok(Self { instruction, str })
@@ -164,31 +161,54 @@ impl From<Variable> for InstructionWithStr {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, From)]
 pub enum Instruction {
+    #[from]
     AnonymousFunction(AnonymousFunction),
+    #[from(Array)]
     Array(Arc<Array>),
+    #[from(ArrayRepeat)]
     ArrayRepeat(Arc<ArrayRepeat>),
+    #[from]
     Block(Block),
     Break,
     Continue,
+    #[from(DestructTuple)]
     DestructTuple(Arc<DestructTuple>),
+    #[from(FieldAccess)]
+    FieldAccess(Arc<FieldAccess>),
+    #[from(FunctionDeclaration)]
     FunctionDeclaration(Arc<FunctionDeclaration>),
+    #[from(IfElse)]
     IfElse(Arc<IfElse>),
-    Import(Import),
     LocalVariable(Arc<str>, LocalVariable),
+    #[from(Loop)]
     Loop(Arc<Loop>),
+    #[from(Match)]
     Match(Arc<Match>),
+    #[from(Mut)]
     Mut(Arc<Mut>),
+    #[from(Reduce)]
     Reduce(Arc<Reduce>),
+    #[from(Set)]
     Set(Arc<Set>),
+    #[from(SetIfElse)]
     SetIfElse(Arc<SetIfElse>),
+    #[from(Slicing)]
     Slicing(Arc<Slicing>),
+    #[from(Struct)]
+    Struct(Arc<Struct>),
+    #[from]
     Tuple(Tuple),
+    #[from(TupleAccess)]
     TupleAccess(Arc<TupleAccess>),
+    #[from(TypeFilter)]
     TypeFilter(Arc<TypeFilter>),
+    #[from]
     Variable(Variable),
+    #[from(BinOperation)]
     BinOperation(Arc<BinOperation>),
+    #[from(UnaryOperation)]
     UnaryOperation(Arc<UnaryOperation>),
 }
 
@@ -198,7 +218,7 @@ impl Instruction {
             Rule::set => Set::create_instruction(pair, local_variables),
             Rule::destruct_tuple => DestructTuple::create_instruction(pair, local_variables),
             Rule::block => Block::create_instruction(pair, local_variables),
-            Rule::import => Import::create_instruction(pair, local_variables),
+            Rule::import => import::create_instruction(pair, local_variables),
             Rule::if_else => IfElse::create_instruction(pair, local_variables),
             Rule::set_if_else => SetIfElse::create_instruction(pair, local_variables),
             Rule::r#match => Match::create_instruction(pair, local_variables),
@@ -220,6 +240,26 @@ impl Instruction {
             rule => unexpected!(rule),
         }
     }
+
+    fn new_ident(
+        str: &Arc<str>,
+        local_variables: &LocalVariables<'_>,
+    ) -> Result<Instruction, Error> {
+        local_variables.get(str).map_or_else(
+            || {
+                local_variables
+                    .interpreter
+                    .get_variable(str)
+                    .cloned()
+                    .map(Instruction::from)
+                    .ok_or_else(|| Error::VariableDoesntExist(str.clone()))
+            },
+            |var| match var.clone() {
+                LocalVariable::Variable(variable) => Ok(Instruction::Variable(variable)),
+                local_variable => Ok(Instruction::LocalVariable(str.clone(), local_variable)),
+            },
+        )
+    }
 }
 
 impl Exec for Instruction {
@@ -232,10 +272,10 @@ impl Exec for Instruction {
                 .ok_or_else(|| panic!("Tried to get variable {ident} that doest exist")),
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins)
             | Self::Block(ins) | Self::DestructTuple(ins) | Self::Tuple(ins)
-            | Self::BinOperation(ins) | Self::FunctionDeclaration(ins)
-            | Self::IfElse(ins) | Self::Import(ins) | Self::Loop(ins) | Self::Match(ins)
-            | Self::Mut(ins) | Self::Reduce(ins) | Self::Set(ins) | Self::SetIfElse(ins)
-            | Self::Slicing(ins) | Self::TypeFilter(ins) | Self::UnaryOperation(ins)
+            | Self::BinOperation(ins) | Self::FieldAccess(ins) | Self::FunctionDeclaration(ins)
+            | Self::IfElse(ins) | Self::Loop(ins) | Self::Match(ins) | Self::Mut(ins)
+            | Self::Reduce(ins) | Self::Set(ins) | Self::SetIfElse(ins) | Self::Slicing(ins)
+            | Self::Struct(ins) | Self::TypeFilter(ins) | Self::UnaryOperation(ins)
             | Self::TupleAccess(ins) => ins.exec(interpreter),
             Self::Break => Err(ExecStop::Break),
             Self::Continue => Err(ExecStop::Continue)
@@ -262,10 +302,10 @@ impl Recreate for Instruction {
             Self::Variable(variable) => Ok(Self::Variable(variable.clone())),
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins)
             | Self::Block(ins) | Self::DestructTuple(ins) | Self::Tuple(ins)
-            | Self::BinOperation(ins) | Self::FunctionDeclaration(ins)
-            | Self::IfElse(ins) | Self::Import(ins) | Self::Loop(ins) | Self::Match(ins)
-            | Self::Mut(ins) | Self::Reduce(ins) | Self::Set(ins) | Self::SetIfElse(ins)
-            | Self::Slicing(ins) | Self::TypeFilter(ins) | Self::UnaryOperation(ins)
+            | Self::BinOperation(ins) | Self::FieldAccess(ins) | Self::FunctionDeclaration(ins)
+            | Self::IfElse(ins) | Self::Loop(ins) | Self::Match(ins) | Self::Mut(ins)
+            | Self::Reduce(ins) | Self::Set(ins) | Self::SetIfElse(ins) | Self::Slicing(ins)
+            | Self::Struct(ins) |  Self::TypeFilter(ins) | Self::UnaryOperation(ins)
             | Self::TupleAccess(ins) => ins.recreate(local_variables),
             _ => Ok(self.clone())
         }
@@ -278,26 +318,14 @@ impl ReturnType for Instruction {
             Self::Variable(variable) | Self::LocalVariable(_, variable) => variable.as_type(),
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins)
             | Self::Block(ins) | Self::DestructTuple(ins) | Self::Tuple(ins)
-            | Self::BinOperation(ins) | Self::FunctionDeclaration(ins) | Self::IfElse(ins)
-            | Self::Import(ins) | Self::Match(ins) | Self::Mut(ins) | Self::Reduce(ins)
-            | Self::Set(ins) | Self::SetIfElse(ins) | Self::Slicing(ins) | Self::TypeFilter(ins)
-            | Self::UnaryOperation(ins) | Self::TupleAccess(ins)
-            => ins.return_type(),
+            | Self::BinOperation(ins) | Self::FieldAccess(ins) | Self::FunctionDeclaration(ins)
+            | Self::IfElse(ins) | Self::Match(ins) | Self::Mut(ins) | Self::Reduce(ins)
+            | Self::Set(ins) | Self::SetIfElse(ins) | Self::Slicing(ins) | Self::Struct(ins)
+            | Self::TypeFilter(ins) | Self::UnaryOperation(ins) | Self::TupleAccess(ins)
+                => ins.return_type(),
             Self::Loop(_) => Type::Void,
             Self::Break | Self::Continue => Type::Never
         }
-    }
-}
-
-#[duplicate_item(
-    T; [Block]; [Variable]; [UnaryOperation]; [BinOperation]; [AnonymousFunction]; [Array];
-    [ArrayRepeat]; [Tuple]; [DestructTuple]; [FunctionDeclaration]; [IfElse]; [Import]; [Reduce];
-    [Slicing]; [TypeFilter]; [Match]; [Mut]; [Set]; [SetIfElse]; [TupleAccess]
-)]
-impl From<T> for Instruction {
-    fn from(value: T) -> Self {
-        #[allow(clippy::useless_conversion)]
-        Self::T(value.into())
     }
 }
 

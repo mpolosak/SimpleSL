@@ -45,9 +45,3 @@ impl Recreate for Loop {
         Ok(Self(instruction).into())
     }
 }
-
-impl From<Loop> for Instruction {
-    fn from(value: Loop) -> Self {
-        Self::Loop(value.into())
-    }
-}

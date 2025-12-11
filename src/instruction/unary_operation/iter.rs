@@ -15,7 +15,7 @@ lazy_static! {
         &Interpreter::with_stdlib(),
         "(array: [int], default: int) -> () -> (bool, int) {
             i := mut -1;
-            len := len(array)
+            len := std.len(array)
             return () -> (bool, int) {
                 i+=1;
                 if *i < len {

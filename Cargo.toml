@@ -4,6 +4,7 @@ pest = "2.7"
 lazy_static = "1.5.0"
 simplesl_parser = { path = "parser", version = "0.1.0" }
 unescaper = "0.1.5"
+itertools = "0.14.0"
 
 [package]
 name = "simplesl"
@@ -24,14 +25,14 @@ simplesl_macros = { path = "macros", version = "0.1.0" }
 match_any = "1.0.1"
 duplicate = "2.0.0"
 enum-as-inner = "0.6.1"
-derive_more = { version = "2.0.1", features = ["display"] }
+derive_more = { version = "2.0.1", features = ["display", "from"] }
 slyce = "0.3.1"
 pest.workspace = true
 lazy_static.workspace = true
 simplesl_parser.workspace = true
 unescaper.workspace = true
+itertools.workspace = true
 
 [dev-dependencies]
-itertools = "0.14.0"
 markdown = "0.3"
 proptest = "1.6.0"

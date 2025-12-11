@@ -1,5 +1,6 @@
 use crate::instruction::{Exec, ExecStop, InstructionWithStr};
-use crate::{stdlib, variable::*};
+use crate::stdlib::Std;
+use crate::variable::*;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -10,13 +11,13 @@ pub struct Interpreter<'a> {
     lower_layer: Option<&'a Self>,
 }
 
-type VariableMap = HashMap<Arc<str>, Variable>;
+pub type VariableMap = HashMap<Arc<str>, Variable>;
 
 impl<'a> Interpreter<'a> {
     /// Constructs a new Interpreter with simplesl stdlib
     pub fn with_stdlib() -> Self {
         let mut interpreter = Self::without_stdlib();
-        stdlib::add_all(&mut interpreter);
+        interpreter.insert("std".into(), Std.into());
         interpreter
     }
 
@@ -52,5 +53,9 @@ impl<'a> Interpreter<'a> {
             variables: VariableMap::new(),
             lower_layer: Some(self),
         }
+    }
+
+    pub fn drop_layer(self) -> VariableMap {
+        self.variables
     }
 }

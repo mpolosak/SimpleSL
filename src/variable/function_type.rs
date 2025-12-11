@@ -1,10 +1,20 @@
 use super::{ReturnType, Type};
 use crate::join;
+use derive_more::Display;
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
-use std::{fmt::Display, iter::zip, ops::BitOr, sync::Arc};
+use std::{iter::zip, ops::BitOr, sync::Arc};
 
-#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+#[derive(Clone, Debug, Display, Hash, PartialEq, Eq)]
+#[display(
+    "({})->{}",
+    join(self.params.as_ref(), ", "),
+    if let Type::Multi(_) = self.return_type {
+        format!("({})", self.return_type)
+    } else {
+        self.return_type.to_string()
+    }
+)]
 pub struct FunctionType {
     pub params: Arc<[Type]>,
     pub return_type: Type,
@@ -22,25 +32,6 @@ impl FunctionType {
     #[must_use]
     pub fn concat(self, other: Self) -> Type {
         Type::from(self) | Type::from(other)
-    }
-}
-
-impl Display for FunctionType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if matches!(self.return_type, Type::Multi(_)) {
-            return write!(
-                f,
-                "({})->({})",
-                join(self.params.as_ref(), ", "),
-                self.return_type
-            );
-        }
-        write!(
-            f,
-            "({})->{}",
-            join(self.params.as_ref(), ", "),
-            self.return_type
-        )
     }
 }
 
@@ -68,12 +59,6 @@ impl From<Pair<'_, Rule>> for FunctionType {
             params,
             return_type,
         }
-    }
-}
-
-impl From<FunctionType> for Type {
-    fn from(value: FunctionType) -> Self {
-        Self::Function(value.into())
     }
 }
 

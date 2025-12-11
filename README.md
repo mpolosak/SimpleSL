@@ -17,7 +17,7 @@ use simplesl::{Code, Interpreter};
 
 fn main() {
     let interpreter = Interpreter::with_stdlib();
-    let _ = Code::parse(&interpreter, "print(\"Hello world!\")")
+    let _ = Code::parse(&interpreter, "std.io.print(\"Hello world!\")")
         .unwrap()
         .exec();
 }
@@ -26,7 +26,7 @@ fn main() {
 ## Syntax
 ### Hello world example
 ```SimpleSL
-print("Hello world")
+std.io.print("Hello world")
 ```
 ### Comments
 Comment works like in C or Rust
@@ -35,7 +35,7 @@ Comment works like in C or Rust
 /* 
 Multiline comment
 */
-print("Hello world"/* Comment */)
+std.io.print("Hello world"/* Comment */)
 ```
 ### Variables
 ```SimpleSL
@@ -49,9 +49,9 @@ x := [0; 5] // array containg five zeros
 tuple := (5, 7.8, "value") // tuple
 {
     tuple := (4, "rgg", 56)
-    print(tuple) // prints (4, "rgg", 56)
+    std.io.print(tuple) // prints (4, "rgg", 56)
 }
-print(tuple) //prints (5, 7.8, "value")
+std.io.print(tuple) //prints (5, 7.8, "value")
 ```
 ### Functions
 ```SimpleSL
@@ -59,6 +59,7 @@ delta := (a: float, b: float, c: float) -> float {
     return b**2.0+4.0*a*c
 } // function taking free arguments of type float and returning value of type float
 name := "Tom"
+print:=std.io.print;
 x := (){
     print("Hello "+name);
 }

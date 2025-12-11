@@ -34,11 +34,20 @@ pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
 pub fn exec(var: Variable) -> ExecResult {
     let return_type = var.as_type();
     if return_type.matches(&var_type!(() -> (bool, int))) {
-        Ok(INT_SUM.as_function().unwrap().exec_with_args(&[var])?)
+        Ok(Variable::from(INT_SUM)
+            .as_function()
+            .unwrap()
+            .exec_with_args(&[var])?)
     } else if return_type.matches(&var_type!(() -> (bool, float))) {
-        Ok(FLOAT_SUM.as_function().unwrap().exec_with_args(&[var])?)
+        Ok(Variable::from(FLOAT_SUM)
+            .as_function()
+            .unwrap()
+            .exec_with_args(&[var])?)
     } else {
-        Ok(STRING_SUM.as_function().unwrap().exec_with_args(&[var])?)
+        Ok(Variable::from(STRING_SUM)
+            .as_function()
+            .unwrap()
+            .exec_with_args(&[var])?)
     }
 }
 

@@ -1,11 +1,12 @@
 use crate as simplesl;
 use simplesl_macros::export;
 
-#[export]
-pub(crate) mod add_string {
+#[export(String)]
+mod inner {
     use crate as simplesl;
     use crate::variable::Variable;
     use simplesl_macros::var;
+    pub use std::string::String;
     use std::sync::Arc;
 
     #[return_type([string])]
@@ -17,8 +18,16 @@ pub(crate) mod add_string {
         string.replace(from, to.as_ref())
     }
 
-    pub fn string_contains(string: &str, pat: &str) -> bool {
+    pub fn contains(string: &str, pat: &str) -> bool {
         string.contains(pat)
+    }
+
+    pub fn starts_with(string: &str, prefix: &str) -> bool {
+        string.starts_with(prefix)
+    }
+
+    pub fn ends_with(string: &str, suffix: &str) -> bool {
+        string.ends_with(suffix)
     }
 
     #[return_type([string])]
@@ -65,11 +74,15 @@ pub(crate) mod add_string {
         string.to_uppercase()
     }
 
-    pub fn len(#[var_type([any]|string)] variable: &Variable) -> usize {
-        match variable {
-            Variable::Array(var) => var.len(),
-            Variable::String(string) => string.chars().count(),
-            _ => unreachable!(),
-        }
+    pub fn trim(string: &str) -> &str {
+        string.trim()
+    }
+
+    pub fn trim_start(string: &str) -> &str {
+        string.trim_start()
+    }
+
+    pub fn trim_end(string: &str) -> &str {
+        string.trim_end()
     }
 }

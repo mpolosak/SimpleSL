@@ -16,9 +16,10 @@ pub fn exec(iter: Variable, function: Variable) -> ExecResult {
             break;
         }
         let element = tuple[1].clone();
-        match function.exec_with_args(&[element.clone()])? {
-            Variable::Bool(true) => left.push(element),
-            _ => right.push(element),
+        if let Variable::Bool(true) = function.exec_with_args(std::slice::from_ref(&element))? {
+            left.push(element)
+        } else {
+            right.push(element)
         };
     }
 

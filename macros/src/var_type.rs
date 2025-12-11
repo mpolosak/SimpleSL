@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use pest::{Parser, iterators::Pair};
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
@@ -70,6 +71,20 @@ fn type_token_from_pair(pair: Pair<Rule>) -> TokenStream2 {
         Rule::mut_type_ident => {
             let return_type = pair.into_inner().next().map(type_token_from_pair).unwrap();
             quote!(simplesl::variable::Type::Mut(#return_type.into()))
+        }
+        Rule::struct_type_ident => {
+            let fields = pair
+                .into_inner()
+                .tuples()
+                .map(|(ident, var_type)| {
+                    let ident = ident.as_str();
+                    let var_type = type_token_from_pair(var_type);
+                    quote!((#ident.into(), #var_type))
+                })
+                .reduce(|acc, curr| quote!(#acc, # curr));
+            quote!(simplesl::variable::Type::Struct(
+                simplesl::variable::StructType::from([#fields])
+            ))
         }
         rule => unexpected!(rule),
     }

@@ -3,7 +3,7 @@ use crate::{
     instruction::{BinOperation, Instruction, InstructionWithStr, tuple::Tuple},
     stdlib::operators::{ALL, ANY},
     unary_operator::UnaryOperator,
-    variable::{ReturnType, Type},
+    variable::{ReturnType, Type, Variable},
 };
 use lazy_static::lazy_static;
 use simplesl_macros::var_type;
@@ -23,9 +23,9 @@ pub fn create(iterator: InstructionWithStr, op: UnaryOperator) -> Result<Instruc
         });
     }
     let lhs = if op == UnaryOperator::All {
-        ALL.clone().into()
+        Variable::from(ALL).into()
     } else {
-        ANY.clone().into()
+        Variable::from(ANY).into()
     };
     let rhs = Tuple {
         elements: [iterator].into(),

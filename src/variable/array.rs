@@ -1,13 +1,11 @@
 use super::{Type, Typed, Variable};
 use crate as simplesl;
+use derive_more::Display;
 use simplesl_macros::var_type;
-use std::{
-    fmt::{self, Display},
-    ops::Deref,
-    sync::Arc,
-};
+use std::{ops::Deref, sync::Arc};
 
-#[derive(PartialEq)]
+#[derive(Display, PartialEq)]
+#[display("{}", self.string(0))]
 pub struct Array {
     pub(crate) element_type: Type,
     pub(crate) elements: Arc<[Variable]>,
@@ -38,7 +36,7 @@ impl Array {
 
     pub fn new_repeat(value: Variable, len: usize) -> Self {
         let element_type = value.as_type();
-        let elements = std::iter::repeat(value).take(len).collect();
+        let elements = std::iter::repeat_n(value, len).collect();
         Self {
             element_type,
             elements,
@@ -73,12 +71,6 @@ impl Deref for Array {
 
     fn deref(&self) -> &Self::Target {
         &self.elements
-    }
-}
-
-impl Display for Array {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.string(0))
     }
 }
 

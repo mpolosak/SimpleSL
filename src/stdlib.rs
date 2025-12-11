@@ -5,17 +5,29 @@ mod math;
 pub(crate) mod operators;
 mod string;
 pub use self::{
-    convert::add_convert, fs::add_fs, io::add_io, math::add_math, operators::add_operators,
-    string::add_string,
+    convert::Convert, fs::FS, io::IO, math::Math, operators::Operators, string::String,
 };
-use crate::interpreter::Interpreter;
+use crate as simplesl;
+use crate::variable::Variable;
+use simplesl_macros::{decls, export};
 
-/// Add all of standard library to Interpreter
-pub fn add_all(interpreter: &mut Interpreter) {
-    add_io(interpreter);
-    add_convert(interpreter);
-    add_string(interpreter);
-    add_fs(interpreter);
-    add_math(interpreter);
-    add_operators(interpreter);
+decls! {
+    Std:=struct{
+        convert:=Convert,
+        fs:=FS,
+        io:=IO,
+        math:=Math,
+        operators:=Operators,
+        string:=String,
+        len:=Len
+    }
+}
+
+#[export(Len)]
+pub fn len(#[var_type([any]|string)] variable: &Variable) -> usize {
+    match variable {
+        Variable::Array(var) => var.len(),
+        Variable::String(string) => string.chars().count(),
+        _ => unreachable!(),
+    }
 }

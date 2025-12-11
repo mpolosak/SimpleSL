@@ -8,6 +8,12 @@ pub trait TypeOf {
     fn type_of() -> Type;
 }
 
+impl TypeOf for () {
+    fn type_of() -> Type {
+        Type::Void
+    }
+}
+
 #[duplicate_item(T; [bool]; [Result<bool, ExecError>])]
 impl TypeOf for T {
     fn type_of() -> Type {
@@ -55,15 +61,20 @@ impl TypeOf for T {
     }
 }
 
-impl TypeOf for io::Result<String> {
+impl<T: TypeOf, S: TypeOf> TypeOf for Result<T, S> {
     fn type_of() -> Type {
-        var_type!(string | (int, string))
+        let ok = T::type_of();
+        let err = S::type_of();
+        var_type!(ok | err)
     }
 }
 
-impl TypeOf for io::Result<()> {
+impl TypeOf for io::Error {
     fn type_of() -> Type {
-        var_type!(() | (int, string))
+        var_type!(struct {
+            error_code: int,
+            msg: string
+        })
     }
 }
 

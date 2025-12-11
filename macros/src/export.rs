@@ -1,18 +1,71 @@
 use crate::{
     attributes::Attributes,
+    quote,
     var_type::{type_from_str, type_quote},
 };
 use proc_macro2::TokenStream;
-use quote::quote;
-use syn::{Attribute, Ident, ItemFn, MetaList, PatIdent, PatType, ReturnType, Type};
+use syn::{
+    Attribute, Ident, Item, ItemConst, ItemFn, ItemMod, ItemUse, MetaList, PatIdent, PatType,
+    ReturnType, Type, Visibility,
+};
 
-pub fn export_item_fn(
-    function: &mut ItemFn,
-    attr: Attributes,
-    mod_ident: Option<&Ident>,
-) -> TokenStream {
+pub fn export_module(module: &mut ItemMod) -> TokenStream {
+    let Some(items) = &mut module.content else {
+        panic!("Cannot export module from another file")
+    };
+    let mod_ident = module.ident.clone();
+    let items = items
+        .1
+        .iter_mut()
+        .map(|item| match item {
+            Item::Const(ItemConst {
+                ident,
+                vis: Visibility::Public(_) | Visibility::Restricted(_),
+                ..
+            }) => {
+                let ident_string = ident.to_string();
+                quote!(vm.insert(#ident_string.into(), (#mod_ident::#ident).into());)
+            }
+            Item::Fn(function) => {
+                if matches!(function.vis, Visibility::Inherited) {
+                    return quote!();
+                }
+                let export = export_item_fn(function, Some(&module.ident));
+                let attr = Attributes::from_function_attrs(&function.attrs);
+                let ident = function.sig.ident.clone();
+                let ident_str = attr.name.unwrap_or_else(|| ident.to_string().into());
+                quote!(vm.insert(
+                    #ident_str.into(),
+                    #export,
+                );)
+            }
+            Item::Use(
+                item @ ItemUse {
+                    vis: Visibility::Public(_) | Visibility::Restricted(_),
+                    ..
+                },
+            ) => {
+                quote!(#item)
+            }
+            _ => quote!(),
+        })
+        .fold(quote!(), |acc, curr| {
+            quote!(
+                #acc
+                #curr
+            )
+        });
+    quote!(
+        let mut vm = simplesl::interpreter::VariableMap::new();
+        #items
+        simplesl::variable::Variable::Struct(vm.into())
+    )
+}
+
+pub fn export_item_fn(function: &mut ItemFn, mod_ident: Option<&Ident>) -> TokenStream {
+    let attr = Attributes::from_function_attrs(&function.attrs);
+    function.attrs = vec![];
     let ident = function.sig.ident.clone();
-    let ident_str = attr.name.unwrap_or_else(|| ident.to_string().into());
     let ident = if let Some(mod_ident) = mod_ident {
         quote!(#mod_ident::#ident)
     } else {
@@ -24,21 +77,16 @@ pub fn export_item_fn(
     let params = params_from_function_params(&params);
     let return_type = get_return_type(function, attr.return_type);
     quote!(
-        {
-            interpreter.insert(
-                #ident_str.into(),
-                simplesl::function::Function::new(
-                    simplesl::function::Params(std::sync::Arc::new([#params])),
-                    |interpreter| {
-                        #args_importing
-                        simplesl::ToResult::<_, simplesl::errors::ExecError>::to_result(
-                            #ident(#args)
-                        ).map(|value| value.into())
-                    },
-                    #return_type,
-                ).into(),
-            );
-        }
+        simplesl::function::Function::new(
+            simplesl::function::Params(std::sync::Arc::new([#params])),
+            |interpreter| {
+                #args_importing
+                simplesl::ToResult::<_, simplesl::errors::ExecError>::to_result(
+                    #ident(#args)
+                ).map(|value| value.into())
+            },
+            #return_type,
+        ).into()
     )
 }
 
@@ -100,14 +148,11 @@ fn param_from_function_param(
 
 fn get_type_from_attrs(attrs: &[Attribute]) -> Option<TokenStream> {
     for attr in attrs {
-        match &attr.meta {
-            syn::Meta::List(MetaList { path, tokens, .. })
-                if quote!(#path).to_string() == "var_type" =>
-            {
-                return Some(type_quote(&tokens.clone().into()));
-            }
-            _ => (),
-        };
+        if let syn::Meta::List(MetaList { path, tokens, .. }) = &attr.meta
+            && quote!(#path).to_string() == "var_type"
+        {
+            return Some(type_quote(&tokens.clone().into()));
+        }
     }
     None
 }

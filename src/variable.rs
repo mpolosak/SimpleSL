@@ -2,31 +2,46 @@ mod array;
 mod function_type;
 mod multi_type;
 mod r#mut;
+mod struct_type;
 mod try_from;
 mod r#type;
 mod type_of;
-use crate::{Error, function::Function};
+use crate::{self as simplesl, Error, function::Function, interpreter::VariableMap};
+use derive_more::{Display, From};
 use enum_as_inner::EnumAsInner;
+use itertools::Itertools;
 use match_any::match_any;
 use pest::{Parser, iterators::Pair};
+use simplesl_macros::var;
 use simplesl_parser::{Rule, SimpleSLParser, unexpected};
-use std::{fmt, io, str::FromStr, sync::Arc};
+use std::{collections::HashMap, fmt, io, str::FromStr, sync::Arc};
 pub use r#type::{ReturnType, Type, Typed};
 use typle::typle;
 pub use {
-    array::Array, function_type::FunctionType, multi_type::MultiType, r#mut::Mut, type_of::TypeOf,
+    array::Array, function_type::FunctionType, multi_type::MultiType, r#mut::Mut,
+    struct_type::StructType, type_of::TypeOf,
 };
 
-#[derive(Clone, EnumAsInner)]
+#[derive(Clone, Display, EnumAsInner, From)]
+#[display("{}", self.string(0))]
 pub enum Variable {
+    #[from]
     Bool(bool),
+    #[from(i32, u32, i64)]
     Int(i64),
+    #[from]
     Float(f64),
+    #[from(Arc<str>, &str, String)]
     String(Arc<str>),
+    #[from(Function, Arc<Function>)]
     Function(Arc<Function>),
+    #[from(Array, Arc<Array>)]
     Array(Arc<Array>),
     Tuple(Arc<[Variable]>),
+    #[from(Mut, Arc<Mut>)]
     Mut(Arc<Mut>),
+    Struct(Arc<VariableMap>),
+    #[from]
     Void,
 }
 
@@ -44,6 +59,10 @@ impl Variable {
             Variable::Array(value) => value.string(depth),
             Variable::Mut(value) => value.string(depth+1),
             Variable::Tuple(elements) => format!("({})", elements.iter().map(|v| v.debug(depth+1)).collect::<Box<[_]>>().join(", ")),
+            Variable::Struct(vm) => {
+                let elements = vm.iter().map(|(key, value)| format!("{}={}", key, value.debug(depth))).join(", ");
+                format!("struct{{{elements}}}")
+            },
             Variable::Void => format!("()")
         }
     }
@@ -87,6 +106,13 @@ impl Variable {
                 }
                 .into(),
             ),
+            Type::Struct(s) => {
+                let vm: Option<VariableMap> =
+                    s.0.iter()
+                        .map(|(key, value)| Some((key.clone(), Variable::of_type(value)?)))
+                        .collect();
+                Some(Variable::Struct(vm?.into()))
+            }
             Type::Any => Some(Variable::Void),
             Type::Never => None,
         }
@@ -105,14 +131,14 @@ impl Typed for Variable {
                 let types = elements.iter().map(Variable::as_type).collect();
                 Type::Tuple(types)
             },
+            Variable::Struct(vm) => {
+                let tm: HashMap<Arc<str>, Type> = vm.iter().map(|(key, value)|{
+                    (key.clone(), value.as_type())
+                }).collect();
+                StructType(Arc::from(tm)).into()
+            },
             Variable::Void => Type::Void
         }
-    }
-}
-
-impl fmt::Display for Variable {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.string(0))
     }
 }
 
@@ -141,7 +167,8 @@ impl PartialEq for Variable {
             | (Variable::Int(value1), Variable::Int(value2))
             | (Variable::Float(value1), Variable::Float(value2))
             | (Variable::String(value1), Variable::String(value2))
-            | (Variable::Tuple(value1), Variable::Tuple(value2)) => value1 == value2,
+            | (Variable::Tuple(value1), Variable::Tuple(value2))
+            | (Variable::Struct(value1), Variable::Struct(value2)) => value1 == value2,
             (Variable::Function(value1), Variable::Function(value2))
             | (Variable::Mut(value1), Variable::Mut(value2)) => Arc::ptr_eq(value1, value2),
             (Variable::Void, Variable::Void) => true,
@@ -224,81 +251,27 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
                 let len = parse_int(len_pair)?;
                 Ok(Array::new_repeat(value, len as usize).into())
             }
+            Rule::struct_from_str => {
+                let vm = pair
+                    .into_inner()
+                    .tuples()
+                    .map(|(ident, value)| {
+                        let ident: Arc<str> = ident.as_str().into();
+                        let value = Variable::try_from(value)?;
+                        Ok((ident, value))
+                    })
+                    .collect::<Result<VariableMap, Error>>()?;
+                Ok(Variable::Struct(vm.into()))
+            }
             Rule::void => Ok(Variable::Void),
             _ => Err(Error::CannotBeParsed(pair.as_str().into())),
         }
     }
 }
 
-impl From<i32> for Variable {
-    fn from(value: i32) -> Self {
-        Self::Int(value as i64)
-    }
-}
-
-impl From<u32> for Variable {
-    fn from(value: u32) -> Self {
-        Self::Int(value as i64)
-    }
-}
-
-impl From<i64> for Variable {
-    fn from(value: i64) -> Self {
-        Self::Int(value)
-    }
-}
-
-impl From<bool> for Variable {
-    fn from(value: bool) -> Self {
-        Self::Bool(value)
-    }
-}
-
 impl From<usize> for Variable {
     fn from(value: usize) -> Self {
         Self::Int(value as i64)
-    }
-}
-
-impl From<f64> for Variable {
-    fn from(value: f64) -> Self {
-        Self::Float(value)
-    }
-}
-
-impl From<Arc<str>> for Variable {
-    fn from(value: Arc<str>) -> Self {
-        Self::String(value)
-    }
-}
-
-impl From<&str> for Variable {
-    fn from(value: &str) -> Self {
-        Self::String(value.into())
-    }
-}
-
-impl From<String> for Variable {
-    fn from(value: String) -> Self {
-        Self::String(value.into())
-    }
-}
-
-impl From<Function> for Variable {
-    fn from(value: Function) -> Self {
-        Self::Function(value.into())
-    }
-}
-
-impl From<Arc<Function>> for Variable {
-    fn from(value: Arc<Function>) -> Self {
-        Self::Function(value)
-    }
-}
-
-impl From<()> for Variable {
-    fn from(_value: ()) -> Self {
-        Self::Void
     }
 }
 
@@ -316,25 +289,20 @@ impl<T: Into<Variable>> From<io::Result<T>> for Variable {
 
 impl From<io::Error> for Variable {
     fn from(value: io::Error) -> Self {
-        (value.kind().into(), value.to_string().into()).into()
+        let error_code = value.kind();
+        let msg = value.to_string();
+        var!(
+            struct{
+                error_code,
+                msg
+            }
+        )
     }
 }
 
 impl From<io::ErrorKind> for Variable {
     fn from(value: io::ErrorKind) -> Self {
         (value as i64).into()
-    }
-}
-
-impl From<Array> for Variable {
-    fn from(value: Array) -> Self {
-        Variable::Array(value.into())
-    }
-}
-
-impl From<Arc<Array>> for Variable {
-    fn from(value: Arc<Array>) -> Self {
-        Variable::Array(value)
     }
 }
 
@@ -364,18 +332,6 @@ impl<T: Tuple<Variable>> From<T> for Variable {
     }
 }
 
-impl From<Mut> for Variable {
-    fn from(value: Mut) -> Self {
-        Variable::Mut(value.into())
-    }
-}
-
-impl From<Arc<Mut>> for Variable {
-    fn from(value: Arc<Mut>) -> Self {
-        Variable::Mut(value)
-    }
-}
-
 pub fn is_correct_variable_name(name: &str) -> bool {
     let Ok(parse) = SimpleSLParser::parse(Rule::ident, name) else {
         return false;
@@ -385,7 +341,7 @@ pub fn is_correct_variable_name(name: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
+    use std::{collections::HashMap, str::FromStr};
 
     use crate::variable::{Array, Variable};
     use proptest::prelude::*;
@@ -417,7 +373,7 @@ mod tests {
         assert!(is_correct_variable_name("areturn"));
     }
     #[test]
-    fn check_variable_from_str() {
+    fn from_str() {
         use crate::variable::Variable;
         use std::str::FromStr;
         assert_eq!(Variable::from_str("true"), Ok(Variable::Bool(true)));
@@ -459,7 +415,25 @@ mod tests {
                 Variable::Float(3.5)
             ]))
         );
-        assert_eq!(Variable::from_str("[]"), Ok(Variable::from([])))
+        assert_eq!(Variable::from_str("[]"), Ok(Variable::from([])));
+        let empty_struct = Variable::from_str("struct{}");
+        assert_eq!(empty_struct, Ok(Variable::Struct(HashMap::from([]).into())));
+        assert_eq!(
+            Variable::from_str("struct{a:=5}"),
+            Ok(Variable::Struct(
+                HashMap::from([("a".into(), Variable::Int(5))]).into()
+            ))
+        );
+        assert_eq!(
+            Variable::from_str(r#"struct{a:="hello", b:=struct{}}"#),
+            Ok(Variable::Struct(
+                HashMap::from([
+                    ("a".into(), Variable::String("hello".into())),
+                    ("b".into(), empty_struct.unwrap())
+                ])
+                .into()
+            ))
+        )
     }
 
     proptest! {

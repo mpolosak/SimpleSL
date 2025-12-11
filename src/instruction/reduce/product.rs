@@ -33,9 +33,12 @@ pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
 pub fn exec(var: Variable) -> ExecResult {
     let return_type = var.as_type();
     if return_type.matches(&var_type!(() -> (bool, int))) {
-        return Ok(INT_PRODUCT.as_function().unwrap().exec_with_args(&[var])?);
+        return Ok(Variable::from(INT_PRODUCT)
+            .as_function()
+            .unwrap()
+            .exec_with_args(&[var])?);
     }
-    Ok(FLOAT_PRODUCT
+    Ok(Variable::from(FLOAT_PRODUCT)
         .as_function()
         .unwrap()
         .exec_with_args(&[var])?)

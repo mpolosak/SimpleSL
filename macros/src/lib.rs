@@ -1,78 +1,53 @@
 #![warn(clippy::pedantic)]
 mod attributes;
-mod export_function;
+mod decl;
+mod export;
 mod var;
 mod var_type;
-use attributes::Attributes;
-use export_function::export_item_fn;
+use crate::{decl::lazy_decl, export::export_module, var::var_token_from_pair};
+use decl::decl;
+use export::export_item_fn;
+use pest::Parser;
 use proc_macro::TokenStream;
-use quote::quote;
-use syn::{Item, ItemConst, ItemFn, ItemMod, ItemUse, Visibility, parse_macro_input};
+use quote::{format_ident, quote};
+use simplesl_parser::{Rule, SimpleSLParser};
+use syn::{Ident, ItemFn, ItemMod, parse, parse_macro_input};
 use var::quote;
 use var_type::type_quote;
 
-/// Macro simplifying exporting modules into `SimpleSL`
-#[proc_macro_attribute]
-pub fn export(_attr: TokenStream, module: TokenStream) -> TokenStream {
-    let mut module = parse_macro_input!(module as ItemMod);
-    let Some(items) = &mut module.content else {
-        panic!("Cannot export module from another file")
-    };
-    let mod_ident = &module.ident;
-    let items = items
-        .1
-        .iter_mut()
-        .map(|item| match item {
-            Item::Const(ItemConst {
-                ident,
-                vis: Visibility::Public(_) | Visibility::Restricted(_),
-                ..
-            }) => {
-                let ident_string = ident.to_string();
-                quote!(interpreter.insert(#ident_string.into(), (#mod_ident::#ident).into());)
-            }
-            Item::Fn(function) => {
-                if matches!(function.vis, Visibility::Inherited) {
-                    return quote!();
-                }
-                let attributes = Attributes::from_function_attrs(&function.attrs);
-                function.attrs = vec![];
-                export_item_fn(function, attributes, Some(&module.ident))
-            }
-            Item::Use(
-                item @ ItemUse {
-                    vis: Visibility::Public(_) | Visibility::Restricted(_),
-                    ..
-                },
-            ) => {
-                quote!(#item)
-            }
-            _ => quote!(),
-        })
+#[proc_macro]
+pub fn decls(item: TokenStream) -> TokenStream {
+    let str = item.to_string();
+    SimpleSLParser::parse(Rule::decls, &str)
+        .unwrap_or_else(|error| panic!("{error}"))
+        .map(decl)
         .fold(quote!(), |acc, curr| {
             quote!(
                 #acc
                 #curr
             )
-        });
-    quote!(
-        #module
-        pub fn #mod_ident(interpreter: &mut simplesl::Interpreter){
-            #items
-        }
-    )
-    .into()
+        })
+        .into()
 }
 
-/// Macro simplifying exporting Rust function into `SimpleSL`
+/// Macro simplifying exporting functions and modules into `SimpleSL`
 #[proc_macro_attribute]
-pub fn export_function(attr: TokenStream, function: TokenStream) -> TokenStream {
-    let attr = Attributes::parse(attr);
-    let mut function = parse_macro_input!(function as ItemFn);
-    let export = export_item_fn(&mut function, attr, None);
+pub fn export(attr: TokenStream, module: TokenStream) -> TokenStream {
+    let ident = parse_macro_input!(attr as Ident);
+    let (module, mod_ident, val) = if let Ok(mut function) = parse::<ItemFn>(module.clone()) {
+        let export = export_item_fn(&mut function, None);
+        (quote!(#function), function.sig.ident.clone(), export)
+    } else {
+        let mut module = parse_macro_input!(module as ItemMod);
+        let items = export_module(&mut module);
+        (quote!(#module), module.ident, items)
+    };
+
+    let var_ident = format_ident!("{}_var", mod_ident);
+    let decl = lazy_decl(&ident, &var_ident, &val);
     quote!(
-        #function
-        #export
+        #module
+        #decl
     )
     .into()
 }

@@ -36,7 +36,7 @@ lazy_static::lazy_static! {
                 | Op::postfix(bitor_reduce) | Op::postfix(collect) | Op::postfix(iter))
             .op(Op::prefix(not) | Op::prefix(unary_minus) | Op::prefix(indirection))
             .op(Op::postfix(at) | Op::postfix(slicing) | Op::postfix(type_filter)
-                | Op::postfix(function_call) | Op::postfix(tuple_access))
+                | Op::postfix(function_call) | Op::postfix(tuple_access) | Op::postfix(field_access))
     };
 }
 

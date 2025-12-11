@@ -4,6 +4,7 @@ use crate::{
     function::{Param, Params},
     variable::{ReturnType, Type, Typed, Variable},
 };
+use derive_more::From;
 use pest::{Parser, iterators::Pairs};
 use simplesl_macros::var_type;
 use simplesl_parser::{Rule, SimpleSLParser};
@@ -67,6 +68,11 @@ impl<'a> LocalVariables<'a> {
     }
 
     #[must_use]
+    pub fn drop_layer(self) -> LocalVariableMap {
+        self.variables
+    }
+
+    #[must_use]
     pub fn function_layer(&'a self, layer: LocalVariableMap, function: FunctionInfo) -> Self {
         Self {
             variables: layer,
@@ -127,17 +133,13 @@ where
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, From)]
 pub enum LocalVariable {
     Function(Params, Type),
+    #[from]
     Variable(Variable),
+    #[from]
     Other(Type),
-}
-
-impl From<Type> for LocalVariable {
-    fn from(value: Type) -> Self {
-        Self::Other(value)
-    }
 }
 
 impl From<&Instruction> for LocalVariable {
@@ -148,12 +150,6 @@ impl From<&Instruction> for LocalVariable {
             Instruction::Variable(var) => var.clone().into(),
             ins => ins.return_type().into(),
         }
-    }
-}
-
-impl From<Variable> for LocalVariable {
-    fn from(value: Variable) -> Self {
-        Self::Variable(value)
     }
 }
 

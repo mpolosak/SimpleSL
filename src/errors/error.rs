@@ -1,6 +1,7 @@
 use crate::{
     BinOperator, ExecError, function::Param, unary_operator::UnaryOperator, variable::Type,
 };
+use derive_more::From;
 use match_any::match_any;
 use simplesl_parser::Rule;
 use std::{
@@ -8,7 +9,7 @@ use std::{
     sync::Arc,
 };
 
-#[derive(Debug)]
+#[derive(Debug, From)]
 pub enum Error {
     BreakOutsideLoop,
     ContinueOutsideLoop,
@@ -22,15 +23,19 @@ pub enum Error {
     CannotBeParsed(Box<str>),
     CannotIndexInto(Type),
     CannotTupleAccess(Arc<str>, Type),
+    CannotFieldAccess(Arc<str>, Type),
     CannotIndexWith(Arc<str>),
     CannotSlice(Arc<str>, Type),
     ZeroDivision,
     ZeroModulo,
     OverflowShift,
     MatchNotCovered,
+    #[from]
     IO(std::io::Error),
+    #[from(pest::error::Error<Rule>)]
     Parsing(Box<pest::error::Error<Rule>>),
     IntegerOverflow(Box<str>),
+    #[from]
     CannotUnescapeString(unescaper::Error),
     CannotDo2(Type, BinOperator, Type),
     WrongReturn {
@@ -42,6 +47,11 @@ pub enum Error {
     MissingReturn {
         function_name: Option<Arc<str>>,
         return_type: Type,
+    },
+    NoField {
+        struct_ident: Arc<str>,
+        field_ident: Arc<str>,
+        struct_type: Type,
     },
     WrongLengthType(Arc<str>),
     NotAFunction(Arc<str>),
@@ -92,13 +102,17 @@ impl PartialEq for Error {
             | (Self::WrongCondition(l0, l1), Self::WrongCondition(r0, r1))
             | (Self::WrongNumberOfArguments(l0, l1), Self::WrongNumberOfArguments(r0, r1))
             | (Self::CannotTupleAccess(l0, l1), Self::CannotTupleAccess(r0, r1))
+            | (Self::CannotFieldAccess(l0, l1), Self::CannotFieldAccess(r0, r1))
             | (Self::CannotSlice(l0, l1), Self::CannotSlice(r0, r1))
              => l0 == r0 && l1 == r1,
             (Self::IO(l0), Self::IO(r0)) | (Self::CannotUnescapeString(l0), Self::CannotUnescapeString(r0)) => {
                 l0.to_string() == r0.to_string()
             },
             (Self::CannotDo2(l0, l1, l2), Self::CannotDo2(r0, r1, r2))
-            | (Self::TupleIndexTooBig(l0, l1, l2), Self::TupleIndexTooBig(r0, r1, r2))=> {
+            | (Self::TupleIndexTooBig(l0, l1, l2), Self::TupleIndexTooBig(r0, r1, r2))
+            | (Self::NoField{struct_ident: l0, field_ident: l1, struct_type: l2},
+                Self::NoField{struct_ident: r0, field_ident: r1, struct_type: r2})
+            => {
                 l0 == r0 && l1 == r1 && l2 == r2
             },
             (
@@ -174,13 +188,29 @@ impl fmt::Display for Error {
             Self::CannotTupleAccess(ins, var_type) => {
                 write!(
                     f,
-                    "Cannot access element of {ins} which is {var_type}. Only accessing elements of tuple is posible"
+                    "Cannot access element of {ins} which is {var_type}. Only accessing elements of tuple is possible"
+                )
+            }
+            Self::CannotFieldAccess(ins, var_type) => {
+                write!(
+                    f,
+                    "Cannot access field of {ins} which is {var_type}. Only accessing fields of struct is possible"
                 )
             }
             Self::CannotSlice(ins, var_type) => {
                 write!(
                     f,
                     "Cannot slice {ins} which is {var_type}. Only variables of type string | [any] can be sliced"
+                )
+            }
+            Self::NoField {
+                struct_ident,
+                field_ident,
+                struct_type,
+            } => {
+                write!(
+                    f,
+                    "{struct_ident} has no field '{field_ident}'. Type of {struct_ident} is {struct_type}"
                 )
             }
             Self::ZeroDivision => {
@@ -296,24 +326,6 @@ impl fmt::Display for Error {
                 "mut declared to contain {declared} but initialized with {given} that is {given_type}"
             ),
         }
-    }
-}
-
-impl From<pest::error::Error<Rule>> for Error {
-    fn from(value: pest::error::Error<Rule>) -> Self {
-        Error::Parsing(value.into())
-    }
-}
-
-impl From<std::io::Error> for Error {
-    fn from(value: std::io::Error) -> Self {
-        Self::IO(value)
-    }
-}
-
-impl From<unescaper::Error> for Error {
-    fn from(value: unescaper::Error) -> Self {
-        Error::CannotUnescapeString(value)
     }
 }
 

@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use pest::{Parser, iterators::Pair};
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
@@ -5,12 +6,12 @@ use simplesl_parser::{Rule, SimpleSLParser, unexpected};
 
 use crate::var_type::type_from_str;
 
-pub fn quote(item: &TokenStream) -> quote::__private::TokenStream {
+pub fn quote(item: &TokenStream) -> proc_macro2::TokenStream {
     let item_str = item.to_string();
     from_str(&item_str)
 }
 
-pub fn from_str(item_str: &str) -> quote::__private::TokenStream {
+pub fn from_str(item_str: &str) -> proc_macro2::TokenStream {
     let pair = SimpleSLParser::parse(Rule::var_macro, item_str)
         .unwrap_or_else(|error| panic!("{error}"))
         .next()
@@ -18,19 +19,12 @@ pub fn from_str(item_str: &str) -> quote::__private::TokenStream {
     var_token_from_pair(pair)
 }
 
-fn var_token_from_pair(pair: Pair<Rule>) -> quote::__private::TokenStream {
+pub fn var_token_from_pair(pair: Pair<Rule>) -> quote::__private::TokenStream {
     match pair.as_rule() {
         Rule::r#true => quote!(simplesl::variable::Variable::Bool(true)),
         Rule::r#false => quote!(simplesl::variable::Variable::Bool(false)),
         Rule::int | Rule::minus_int => quote_int(pair),
-        Rule::float | Rule::minus_float => {
-            let value = pair
-                .as_str()
-                .replace([' ', '_'], "")
-                .parse::<f64>()
-                .unwrap();
-            quote!(simplesl::variable::Variable::Float(#value))
-        }
+        Rule::float | Rule::minus_float => parse_float(&pair),
         Rule::string => {
             let value = pair.into_inner().next().unwrap().as_str();
             let value = unescaper::unescape(value).unwrap();
@@ -70,6 +64,25 @@ fn var_token_from_pair(pair: Pair<Rule>) -> quote::__private::TokenStream {
                 .reduce(|acc, curr| quote!(#acc, # curr));
             quote!(simplesl::variable::Variable::Tuple([#elements].into()))
         }
+        Rule::struct_ident => {
+            let fields = pair
+                .into_inner()
+                .map(|pair| {
+                    if pair.as_rule() == Rule::ident {
+                        let ident = pair.as_str();
+                        let value = var_token_from_pair(pair);
+                        return quote!((#ident.into(), #value));
+                    }
+                    let mut inner = pair.into_inner();
+                    let ident = inner.next().unwrap().as_str();
+                    let value = var_token_from_pair(inner.next().unwrap());
+                    quote!((#ident.into(), #value))
+                })
+                .reduce(|acc, curr| quote!(#acc, #curr));
+            quote!(simplesl::variable::Variable::Struct(
+                std::collections::HashMap::from([#fields]).into()
+            ))
+        }
         Rule::array_ident_repeat => {
             let mut inner = pair.into_inner();
             let value_pair = inner.next().unwrap();
@@ -107,6 +120,15 @@ fn var_token_from_pair(pair: Pair<Rule>) -> quote::__private::TokenStream {
         }
         rule => unexpected!(rule),
     }
+}
+
+fn parse_float(pair: &Pair<'_, Rule>) -> proc_macro2::TokenStream {
+    let value = pair
+        .as_str()
+        .replace([' ', '_'], "")
+        .parse::<f64>()
+        .unwrap();
+    quote!(simplesl::variable::Variable::Float(#value))
 }
 
 fn parse_int(pair: Pair<Rule>) -> i64 {
@@ -168,6 +190,20 @@ fn var_type_from_var_pair(pair: Pair<Rule>) -> Option<quote::__private::TokenStr
                 })
                 .unwrap()?;
             Some(quote!(simplesl::variable::Type::Tuple([#elements].into())))
+        }
+        Rule::struct_ident => {
+            let fields = pair
+                .into_inner()
+                .tuples()
+                .map(|(ident, value)| {
+                    let ident = ident.as_str();
+                    let value = var_type_from_var_pair(value)?;
+                    Some(quote!((#ident.into(), #value)))
+                })
+                .reduce(|acc, curr| Some(quote!(#acc, #curr)));
+            Some(quote!(simplesl::variable::Variable::Struct(
+                std::collections::HashMap::from([#fields]).into()
+            )))
         }
         Rule::array_ident_repeat => {
             let element_type = var_type_from_var_pair(
