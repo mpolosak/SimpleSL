@@ -26,7 +26,7 @@ impl Match {
         let expression = InstructionWithStr::new(pair, local_variables)?;
         let var_type = expression.return_type();
         let arms = inner
-            .map(|pair| MatchArm::new(pair, local_variables))
+            .map(|pair| MatchArm::new(pair, local_variables, &var_type))
             .collect::<Result<Box<[MatchArm]>, Error>>()?;
         let result = Self { expression, arms };
         if !result.is_covering_type(&var_type) {
@@ -60,10 +60,11 @@ impl Exec for Match {
 impl Recreate for Match {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
         let expression = self.expression.recreate(local_variables)?;
+        let exp_type = expression.return_type();
         let arms = self
             .arms
             .iter()
-            .map(|arm| arm.recreate(local_variables))
+            .map(|arm| arm.recreate(local_variables, &exp_type))
             .collect::<Result<Box<[MatchArm]>, ExecError>>()?;
         Ok(Self { expression, arms }.into())
     }

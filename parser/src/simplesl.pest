@@ -168,11 +168,10 @@ body                 = _{ block | return | expr }
 if_else              =  { "if" ~ expr ~ body ~ ("else" ~ stm)? }
 set_if_else          =  { "if" ~ set ~ body ~ ("else" ~ stm)? }
 match                =  { "match" ~ expr ~ "{" ~ match_arm* ~ "}" }
-match_arm            = _{ match_pattern | match_value | match_other }
-match_pattern        =  { pattern ~ "=>" ~ body ~ "," }
-match_value          =  { values ~ "=>" ~ body ~ "," }
-match_other          =  { "=>" ~ body ~ "," }
-values               = _{ (expr ~ ("," ~ expr)*) }
+  match_arm          =  { match_pattern ~ "=>" ~ body ~ "," }
+  match_pattern      = _{ pattern | values | other }
+  values             = _{ (expr ~ ("," ~ expr)*) }
+  other              =  { "" }
 import               =  { "import" ~ string }
 return               =  { "return" ~ stm? }
 break                =  { "break" }
