@@ -21,6 +21,7 @@ mod r#struct;
 mod tuple;
 pub mod tuple_access;
 mod type_filter;
+mod pattern;
 pub mod unary_operation;
 use self::{
     array::Array,

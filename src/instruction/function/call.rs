@@ -90,7 +90,7 @@ pub fn create_from_variables(
     let str = format!("{ident} = {function}").into();
     let rec = InstructionWithStr {
         instruction: Set {
-            ident: ident.clone(),
+            pattern: ident.clone().into(),
             instruction: InstructionWithStr {
                 instruction: instruction.clone(),
                 str: format!("{function}").into(),
@@ -113,7 +113,7 @@ pub fn create_from_variables(
             let str = format!("{} := {}", param.name, arg.str).into();
             InstructionWithStr {
                 instruction: Set {
-                    ident: param.name.clone(),
+                    pattern: param.name.clone().into(),
                     instruction: arg,
                 }
                 .into(),

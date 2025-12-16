@@ -5,13 +5,15 @@ use derive_more::From;
 use match_any::match_any;
 use simplesl_parser::Rule;
 use std::{
-    fmt::{self},
-    sync::Arc,
+    fmt::{self}, sync::Arc
 };
 
 #[derive(Debug, From)]
 pub enum Error {
     BreakOutsideLoop,
+    CannotDetermineLength(Arc<str>),
+    CannotDetermineParams(Arc<str>),
+    CannotReduce(Arc<str>),
     ContinueOutsideLoop,
     VariableDoesntExist(Arc<str>),
     WrongType(Arc<str>, Type),
@@ -35,9 +37,16 @@ pub enum Error {
     #[from(pest::error::Error<Rule>)]
     Parsing(Box<pest::error::Error<Rule>>),
     IntegerOverflow(Box<str>),
+    IncorectUnaryOperatorOperand {
+        ins: Arc<str>,
+        op: UnaryOperator,
+        expected: Type,
+        given: Type,
+    },
     #[from]
     CannotUnescapeString(unescaper::Error),
     CannotDo2(Type, BinOperator, Type),
+    NotATuple(Arc<str>),
     WrongReturn {
         function_name: Option<Arc<str>>,
         function_return_type: Type,
@@ -61,22 +70,12 @@ pub enum Error {
         given: Arc<str>,
         given_type: Type,
     },
-    CannotDetermineParams(Arc<str>),
-    CannotReduce(Arc<str>),
-    NotATuple(Arc<str>),
-    CannotDetermineLength(Arc<str>),
     WrongLength {
         ins: Arc<str>,
         len: usize,
         idents_len: usize,
     },
     WrongCondition(Arc<str>, Type),
-    IncorectUnaryOperatorOperand {
-        ins: Arc<str>,
-        op: UnaryOperator,
-        expected: Type,
-        given: Type,
-    },
     WrongInitialization {
         declared: Type,
         given: Arc<str>,

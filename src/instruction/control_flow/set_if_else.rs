@@ -1,20 +1,14 @@
 use crate::{
-    Error, ExecError,
     instruction::{
-        Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
-        local_variable::{LocalVariable, LocalVariables},
-    },
-    interpreter::Interpreter,
-    variable::{ReturnType, Type, Typed, Variable},
+        local_variable::{LocalVariable, LocalVariables}, pattern::Pattern, Exec, ExecResult, Instruction, InstructionWithStr, Recreate
+    }, interpreter::Interpreter, variable::{ReturnType, Type, Typed, Variable}, Error, ExecError
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
-use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct SetIfElse {
-    ident: Arc<str>,
-    var_type: Type,
+    pattern: Pattern,
     expression: InstructionWithStr,
     if_match: InstructionWithStr,
     pub else_instruction: InstructionWithStr,
@@ -23,15 +17,15 @@ pub struct SetIfElse {
 impl SetIfElse {
     pub fn create(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<Self, Error> {
         let mut inner = pair.into_inner();
-        let ident: Arc<str> = inner.next().unwrap().as_str().into();
         let pair = inner.next().unwrap();
-        let var_type = Type::from(pair);
+        let pattern = Pattern::create_instruction(pair, local_variables);
         let pair = inner.next().unwrap();
         let expression = InstructionWithStr::new(pair, local_variables)?;
         let pair = inner.next().unwrap();
         let if_match = {
             let mut local_variables = local_variables.create_layer();
-            local_variables.insert(ident.clone(), LocalVariable::Other(var_type.clone()));
+            let var_type = pattern.var_type.clone().unwrap_or_else(|| expression.return_type());
+            local_variables.insert(pattern.ident.clone(), LocalVariable::Other(var_type));
             InstructionWithStr::new(pair, &mut local_variables)?
         };
         let else_instruction = inner
@@ -39,8 +33,7 @@ impl SetIfElse {
             .map(|pair| InstructionWithStr::new(pair, local_variables))
             .unwrap_or(Ok(Variable::Void.into()))?;
         Ok(Self {
-            ident,
-            var_type,
+            pattern,
             expression,
             if_match,
             else_instruction,
@@ -59,11 +52,11 @@ impl Exec for SetIfElse {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let expression_result = self.expression.exec(interpreter)?;
         let result_type = expression_result.as_type();
-        if !result_type.matches(&self.var_type) {
+        if !self.pattern.is_matched(&result_type) {
             return self.else_instruction.exec(interpreter);
         }
         let mut interpreter = interpreter.create_layer();
-        interpreter.insert(self.ident.clone(), expression_result);
+        interpreter.insert(self.pattern.ident.clone(), expression_result);
         self.if_match.exec(&mut interpreter)
     }
 }
@@ -73,16 +66,16 @@ impl Recreate for SetIfElse {
         let expression = self.expression.recreate(local_variables)?;
         let if_match = {
             let mut local_variables = local_variables.create_layer();
+            let var_type = self.pattern.var_type.clone().unwrap_or_else(|| expression.return_type());
             local_variables.insert(
-                self.ident.clone(),
-                LocalVariable::Other(self.var_type.clone()),
+                self.pattern.ident.clone(),
+                LocalVariable::Other(var_type),
             );
             self.if_match.recreate(&mut local_variables)?
         };
         let else_instruction = self.else_instruction.recreate(local_variables)?;
         Ok(Self {
-            ident: self.ident.clone(),
-            var_type: self.var_type.clone(),
+            pattern: self.pattern.clone(),
             expression,
             if_match,
             else_instruction,

@@ -2,28 +2,25 @@ use super::{
     Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
 };
 use crate::{
-    Error, ExecError,
-    interpreter::Interpreter,
-    variable::{ReturnType, Type},
+    instruction::pattern::Pattern, interpreter::Interpreter, variable::{ReturnType, Type}, Error, ExecError
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
-use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Set {
-    pub ident: Arc<str>,
+    pub pattern: Pattern,
     pub instruction: InstructionWithStr,
 }
 
 impl Set {
     pub fn new(
-        ident: Arc<str>,
+        pattern: Pattern,
         instruction: InstructionWithStr,
         local_variables: &mut LocalVariables,
     ) -> Self {
-        local_variables.insert(ident.clone(), (&instruction.instruction).into());
-        Self { ident, instruction }
+        local_variables.insert(pattern.ident.clone(), (&instruction.instruction).into());
+        Self { pattern, instruction }
     }
 
     pub fn create_instruction(
@@ -31,17 +28,22 @@ impl Set {
         local_variables: &mut LocalVariables,
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
-        let ident: Arc<str> = inner.next().unwrap().as_str().into();
+        let pattern_pair = inner.next().unwrap();
+        let pattern = Pattern::create_instruction(pattern_pair, local_variables);
         let pair = inner.next().unwrap();
         let instruction = InstructionWithStr::new(pair, local_variables)?;
-        Ok(Self::new(ident, instruction, local_variables).into())
+        let var_type = instruction.return_type();
+        if !pattern.is_matched(&var_type) {
+            panic!("pattern not matched")
+        }
+        Ok(Self::new(pattern, instruction, local_variables).into())
     }
 }
 
 impl Exec for Set {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let result = self.instruction.exec(interpreter)?;
-        interpreter.insert(self.ident.clone(), result.clone());
+        interpreter.insert(self.pattern.ident.clone(), result.clone());
         Ok(result)
     }
 }
@@ -49,9 +51,9 @@ impl Exec for Set {
 impl Recreate for Set {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
         let instruction = self.instruction.recreate(local_variables)?;
-        local_variables.insert(self.ident.clone(), (&instruction.instruction).into());
+        local_variables.insert(self.pattern.ident.clone(), (&instruction.instruction).into());
         Ok(Self {
-            ident: self.ident.clone(),
+            pattern: self.pattern.clone(),
             instruction,
         }
         .into())

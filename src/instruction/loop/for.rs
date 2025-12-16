@@ -40,7 +40,7 @@ pub fn create_instruction(
     let str = format!("$iter = {}", iter.str).into();
     let iter = InstructionWithStr {
         instruction: Set {
-            ident: ITER.clone(),
+            pattern: ITER.clone().into(),
             instruction: iter,
         }
         .into(),
