@@ -21,7 +21,7 @@ impl MatchArm {
     pub fn new(pair: Pair<Rule>, local_variables: &mut LocalVariables, exp_type: &Type) -> Result<Self, Error> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
-        let pattern = MatchPattern::new(pair, local_variables)?;
+        let pattern = MatchPattern::new(pair, local_variables, exp_type)?;
         let pair = inner.next().unwrap();
         let MatchPattern::Pattern(p) = &pattern else {
             let instruction = InstructionWithStr::new(pair, local_variables)?;
@@ -31,7 +31,7 @@ impl MatchArm {
             });
         };
         let mut local_variables = local_variables.create_layer();
-        let var_type = p.var_type.clone().unwrap_or_else(|| exp_type.clone());
+        let var_type = p.var_type.clone();
         local_variables.insert(p.ident.clone(), LocalVariable::Other(var_type));
         let instruction = InstructionWithStr::new(pair, &mut local_variables)?;
         Ok(MatchArm {
@@ -58,7 +58,7 @@ impl MatchArm {
         interpreter.insert(pattern.ident.clone(), variable);
         self.instruction.exec(&mut interpreter)
     }
-    pub fn recreate(&self, local_variables: &mut LocalVariables, exp_type: &Type) -> Result<Self, ExecError> {
+    pub fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Self, ExecError> {
         let pattern = self.pattern.recreate(local_variables)?;
         let MatchPattern::Pattern(p) = &self.pattern else {
             let instruction = self.instruction.recreate(local_variables)?;
@@ -68,7 +68,7 @@ impl MatchArm {
             });
         };
         let mut local_variables = local_variables.create_layer();
-        let var_type = p.var_type.clone().unwrap_or_else(|| exp_type.clone());
+        let var_type = p.var_type.clone();
         local_variables.insert(p.ident.clone(), LocalVariable::Other(var_type));
         let instruction = self.instruction.recreate(&mut local_variables)?;
         Ok(Self {

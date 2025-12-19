@@ -1,11 +1,7 @@
 use crate::{
-    self as simplesl, BinOperator, Error,
-    instruction::{
-        BinOperation, Instruction, InstructionWithStr, Loop, block::Block, control_flow::IfElse,
-        destruct_tuple::DestructTuple, local_variable::LocalVariable,
-        local_variable::LocalVariables, set::Set,
-    },
-    variable::{ReturnType, Type, Variable},
+    self as simplesl, instruction::{
+        block::Block, control_flow::IfElse, destruct_tuple::DestructTuple, local_variable::{LocalVariable, LocalVariables}, pattern::Pattern, set::Set, BinOperation, Instruction, InstructionWithStr, Loop
+    }, variable::{ReturnType, Type, Variable}, BinOperator, Error
 };
 use lazy_static::lazy_static;
 use pest::iterators::Pair;
@@ -40,7 +36,7 @@ pub fn create_instruction(
     let str = format!("$iter = {}", iter.str).into();
     let iter = InstructionWithStr {
         instruction: Set {
-            pattern: ITER.clone().into(),
+            pattern: Pattern::new_ident_pattern(ITER.clone(), iter.return_type()),
             instruction: iter,
         }
         .into(),

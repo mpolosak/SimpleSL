@@ -17,14 +17,14 @@ pub struct SetIfElse {
 impl SetIfElse {
     pub fn create(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<Self, Error> {
         let mut inner = pair.into_inner();
-        let pair = inner.next().unwrap();
-        let pattern = Pattern::create_instruction(pair, local_variables);
+        let pattern_pair = inner.next().unwrap();
         let pair = inner.next().unwrap();
         let expression = InstructionWithStr::new(pair, local_variables)?;
+        let pattern = Pattern::create_instruction(pattern_pair, local_variables, &expression.return_type());
         let pair = inner.next().unwrap();
         let if_match = {
             let mut local_variables = local_variables.create_layer();
-            let var_type = pattern.var_type.clone().unwrap_or_else(|| expression.return_type());
+            let var_type = pattern.var_type.clone();
             local_variables.insert(pattern.ident.clone(), LocalVariable::Other(var_type));
             InstructionWithStr::new(pair, &mut local_variables)?
         };
@@ -66,7 +66,7 @@ impl Recreate for SetIfElse {
         let expression = self.expression.recreate(local_variables)?;
         let if_match = {
             let mut local_variables = local_variables.create_layer();
-            let var_type = self.pattern.var_type.clone().unwrap_or_else(|| expression.return_type());
+            let var_type = self.pattern.var_type.clone();
             local_variables.insert(
                 self.pattern.ident.clone(),
                 LocalVariable::Other(var_type),

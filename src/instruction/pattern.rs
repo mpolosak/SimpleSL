@@ -1,6 +1,5 @@
 use crate::{
-    instruction::{local_variable::LocalVariables},
-    variable::Type,
+    function::Param, instruction::local_variable::LocalVariables, variable::Type
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
@@ -9,27 +8,28 @@ use std::sync::Arc;
 #[derive(Debug, Clone)]
 pub struct Pattern {
     pub ident: Arc<str>,
-    pub var_type: Option<Type>,
+    pub var_type: Type,
 }
 
 impl Pattern {
-    pub fn create_instruction(pair: Pair<Rule>, _local_variables: &mut LocalVariables) -> Self {
+    pub fn new_ident_pattern(ident: Arc<str>, var_type: Type) -> Self {
+        Pattern { ident, var_type }
+    }
+
+    pub fn create_instruction(pair: Pair<Rule>, _local_variables: &mut LocalVariables, var_type: &Type) -> Self {
         let mut inner = pair.into_inner();
         let ident = inner.next().unwrap().as_str().into();
-        let var_type = inner.next().map(Type::from);
+        let var_type = inner.next().map(Type::from).unwrap_or_else(|| var_type.clone());
         Self { ident, var_type }
     }
 
     pub fn is_matched(&self, var_type: &Type) -> bool {
-        self.var_type.as_ref().is_none_or(|st| var_type.matches(st))
+        var_type.matches(&self.var_type)
     }
 }
 
-impl From<Arc<str>> for Pattern {
-    fn from(value: Arc<str>) -> Self {
-        Pattern {
-            ident: value,
-            var_type: None,
-        }
+impl From<Param> for Pattern {
+    fn from(value: Param) -> Self {
+        Self { ident: value.name, var_type: value.var_type}
     }
 }

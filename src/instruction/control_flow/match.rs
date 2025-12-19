@@ -60,11 +60,10 @@ impl Exec for Match {
 impl Recreate for Match {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
         let expression = self.expression.recreate(local_variables)?;
-        let exp_type = expression.return_type();
         let arms = self
             .arms
             .iter()
-            .map(|arm| arm.recreate(local_variables, &exp_type))
+            .map(|arm| arm.recreate(local_variables))
             .collect::<Result<Box<[MatchArm]>, ExecError>>()?;
         Ok(Self { expression, arms }.into())
     }

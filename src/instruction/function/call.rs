@@ -1,16 +1,7 @@
 use crate::{
-    BinOperator, Error, ExecError,
-    function::{Function, Param, Params},
-    instruction::{
-        BinOperation, Instruction, InstructionWithStr,
-        function::AnonymousFunction,
-        local_variable::{LocalVariable, LocalVariables},
-        set::Set,
-        tuple::Tuple,
-        unary_operation::UnaryOperation,
-    },
-    unary_operator::UnaryOperator,
-    variable::{ReturnType, Typed, Variable},
+    function::{Function, Param, Params}, instruction::{
+        function::AnonymousFunction, local_variable::{LocalVariable, LocalVariables}, pattern::Pattern, set::Set, tuple::Tuple, unary_operation::UnaryOperation, BinOperation, Instruction, InstructionWithStr
+    }, unary_operator::UnaryOperator, variable::{ReturnType, Typed, Variable}, BinOperator, Error, ExecError
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
@@ -90,7 +81,7 @@ pub fn create_from_variables(
     let str = format!("{ident} = {function}").into();
     let rec = InstructionWithStr {
         instruction: Set {
-            pattern: ident.clone().into(),
+            pattern: Pattern{ident: ident.clone(), var_type: instruction.return_type()},
             instruction: InstructionWithStr {
                 instruction: instruction.clone(),
                 str: format!("{function}").into(),
@@ -108,12 +99,12 @@ pub fn create_from_variables(
         str: format!("{ident}()").into(),
     };
     let args = args.into_iter().map(InstructionWithStr::from);
-    Ok(zip(function.params.iter(), args)
+    Ok(zip(function.params.iter().cloned(), args)
         .map(|(param, arg)| {
             let str = format!("{} := {}", param.name, arg.str).into();
             InstructionWithStr {
                 instruction: Set {
-                    pattern: param.name.clone().into(),
+                    pattern: param.into(),
                     instruction: arg,
                 }
                 .into(),

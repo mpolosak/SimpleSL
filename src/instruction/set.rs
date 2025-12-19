@@ -29,10 +29,10 @@ impl Set {
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let pattern_pair = inner.next().unwrap();
-        let pattern = Pattern::create_instruction(pattern_pair, local_variables);
         let pair = inner.next().unwrap();
         let instruction = InstructionWithStr::new(pair, local_variables)?;
         let var_type = instruction.return_type();
+        let pattern = Pattern::create_instruction(pattern_pair, local_variables, &var_type);
         if !pattern.is_matched(&var_type) {
             panic!("pattern not matched")
         }

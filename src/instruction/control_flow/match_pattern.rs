@@ -21,10 +21,11 @@ impl MatchPattern {
     pub fn new(
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
+        exp_type: &Type
     ) -> Result<MatchPattern, Error> {
         let rule = pair.as_rule();
         Ok(match rule {
-            Rule::pattern => Pattern::create_instruction(pair, local_variables).into(),
+            Rule::pattern => Pattern::create_instruction(pair, local_variables, exp_type).into(),
             Rule::values => {
                 let inner_values = pair.into_inner();
                 let values = inner_values
