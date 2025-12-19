@@ -35,7 +35,7 @@ impl Set {
 impl Exec for Set {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let result = self.instruction.exec(interpreter)?;
-        interpreter.insert(self.pattern.ident.clone(), result.clone());
+        self.pattern.insert_variables(interpreter, result.clone());
         Ok(result)
     }
 }

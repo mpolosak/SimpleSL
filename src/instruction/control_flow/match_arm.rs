@@ -54,7 +54,7 @@ impl MatchArm {
             return self.instruction.exec(interpreter);
         };
         let mut interpreter = interpreter.create_layer();
-        interpreter.insert(pattern.ident.clone(), variable);
+        pattern.insert_variables(&mut interpreter, variable);
         self.instruction.exec(&mut interpreter)
     }
     pub fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Self, ExecError> {

@@ -1,5 +1,5 @@
 use crate::{
-    function::Param, instruction::local_variable::{LocalVariable, LocalVariables}, variable::Type
+    function::Param, instruction::local_variable::{LocalVariable, LocalVariables}, variable::{Type, Variable}, Interpreter
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
@@ -29,6 +29,10 @@ impl Pattern {
 
     pub fn insert_local_variables(&self, local_variables: &mut LocalVariables) {
         local_variables.insert(self.ident.clone(), LocalVariable::Other(self.var_type.clone()));
+    }
+
+    pub fn insert_variables(&self, interpreter: &mut Interpreter, variable: Variable) {
+        interpreter.insert(self.ident.clone(), variable);
     }
 }
 

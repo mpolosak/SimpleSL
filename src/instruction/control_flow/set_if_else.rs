@@ -55,7 +55,7 @@ impl Exec for SetIfElse {
             return self.else_instruction.exec(interpreter);
         }
         let mut interpreter = interpreter.create_layer();
-        interpreter.insert(self.pattern.ident.clone(), expression_result);
+        self.pattern.insert_variables(&mut interpreter, expression_result);
         self.if_match.exec(&mut interpreter)
     }
 }
