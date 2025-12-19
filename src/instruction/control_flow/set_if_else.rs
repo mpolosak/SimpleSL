@@ -1,6 +1,6 @@
 use crate::{
     instruction::{
-        local_variable::{LocalVariable, LocalVariables}, pattern::Pattern, Exec, ExecResult, Instruction, InstructionWithStr, Recreate
+        local_variable::LocalVariables, pattern::Pattern, Exec, ExecResult, Instruction, InstructionWithStr, Recreate
     }, interpreter::Interpreter, variable::{ReturnType, Type, Typed, Variable}, Error, ExecError
 };
 use pest::iterators::Pair;
@@ -24,8 +24,7 @@ impl SetIfElse {
         let pair = inner.next().unwrap();
         let if_match = {
             let mut local_variables = local_variables.create_layer();
-            let var_type = pattern.var_type.clone();
-            local_variables.insert(pattern.ident.clone(), LocalVariable::Other(var_type));
+            pattern.insert_local_variables(&mut local_variables);
             InstructionWithStr::new(pair, &mut local_variables)?
         };
         let else_instruction = inner
@@ -66,11 +65,7 @@ impl Recreate for SetIfElse {
         let expression = self.expression.recreate(local_variables)?;
         let if_match = {
             let mut local_variables = local_variables.create_layer();
-            let var_type = self.pattern.var_type.clone();
-            local_variables.insert(
-                self.pattern.ident.clone(),
-                LocalVariable::Other(var_type),
-            );
+            self.pattern.insert_local_variables(&mut local_variables);
             self.if_match.recreate(&mut local_variables)?
         };
         let else_instruction = self.else_instruction.recreate(local_variables)?;

@@ -3,7 +3,7 @@ use crate::{
     instruction::{
         Exec, ExecResult, ExecStop, InstructionWithStr,
         control_flow::match_pattern::MatchPattern,
-        local_variable::{LocalVariable, LocalVariables},
+        local_variable::{LocalVariables},
     },
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
@@ -31,8 +31,7 @@ impl MatchArm {
             });
         };
         let mut local_variables = local_variables.create_layer();
-        let var_type = p.var_type.clone();
-        local_variables.insert(p.ident.clone(), LocalVariable::Other(var_type));
+        p.insert_local_variables(&mut local_variables);
         let instruction = InstructionWithStr::new(pair, &mut local_variables)?;
         Ok(MatchArm {
             pattern,
@@ -68,8 +67,7 @@ impl MatchArm {
             });
         };
         let mut local_variables = local_variables.create_layer();
-        let var_type = p.var_type.clone();
-        local_variables.insert(p.ident.clone(), LocalVariable::Other(var_type));
+        p.insert_local_variables(&mut local_variables);
         let instruction = self.instruction.recreate(&mut local_variables)?;
         Ok(Self {
             pattern,

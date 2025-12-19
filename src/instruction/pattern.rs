@@ -1,5 +1,5 @@
 use crate::{
-    function::Param, instruction::local_variable::LocalVariables, variable::Type
+    function::Param, instruction::local_variable::{LocalVariable, LocalVariables}, variable::Type
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
@@ -25,6 +25,10 @@ impl Pattern {
 
     pub fn is_matched(&self, var_type: &Type) -> bool {
         var_type.matches(&self.var_type)
+    }
+
+    pub fn insert_local_variables(&self, local_variables: &mut LocalVariables) {
+        local_variables.insert(self.ident.clone(), LocalVariable::Other(self.var_type.clone()));
     }
 }
 

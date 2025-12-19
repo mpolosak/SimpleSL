@@ -14,15 +14,6 @@ pub struct Set {
 }
 
 impl Set {
-    pub fn new(
-        pattern: Pattern,
-        instruction: InstructionWithStr,
-        local_variables: &mut LocalVariables,
-    ) -> Self {
-        local_variables.insert(pattern.ident.clone(), (&instruction.instruction).into());
-        Self { pattern, instruction }
-    }
-
     pub fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
@@ -36,7 +27,8 @@ impl Set {
         if !pattern.is_matched(&var_type) {
             panic!("pattern not matched")
         }
-        Ok(Self::new(pattern, instruction, local_variables).into())
+        pattern.insert_local_variables(local_variables);
+        Ok(Self{ pattern, instruction }.into())
     }
 }
 
@@ -51,7 +43,7 @@ impl Exec for Set {
 impl Recreate for Set {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
         let instruction = self.instruction.recreate(local_variables)?;
-        local_variables.insert(self.pattern.ident.clone(), (&instruction.instruction).into());
+        self.pattern.insert_local_variables(local_variables);
         Ok(Self {
             pattern: self.pattern.clone(),
             instruction,
