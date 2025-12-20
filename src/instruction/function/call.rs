@@ -81,7 +81,7 @@ pub fn create_from_variables(
     let str = format!("{ident} = {function}").into();
     let rec = InstructionWithStr {
         instruction: Set {
-            pattern: Pattern{ident: ident.clone(), var_type: instruction.return_type()},
+            pattern: Pattern::new_ident_pattern(ident.clone(), instruction.return_type()),
             instruction: InstructionWithStr {
                 instruction: instruction.clone(),
                 str: format!("{function}").into(),

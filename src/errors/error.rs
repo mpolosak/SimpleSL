@@ -5,13 +5,13 @@ use derive_more::From;
 use match_any::match_any;
 use simplesl_parser::Rule;
 use std::{
-    fmt::{self}, sync::Arc
+    fmt::{self},
+    sync::Arc,
 };
 
 #[derive(Debug, From)]
 pub enum Error {
     BreakOutsideLoop,
-    CannotDetermineLength(Arc<str>),
     CannotDetermineParams(Arc<str>),
     CannotReduce(Arc<str>),
     ContinueOutsideLoop,
@@ -46,7 +46,6 @@ pub enum Error {
     #[from]
     CannotUnescapeString(unescaper::Error),
     CannotDo2(Type, BinOperator, Type),
-    NotATuple(Arc<str>),
     WrongReturn {
         function_name: Option<Arc<str>>,
         function_return_type: Type,
@@ -62,6 +61,12 @@ pub enum Error {
         field_ident: Arc<str>,
         struct_type: Type,
     },
+    SelfContradictoryPattern(Arc<str>),
+    SetPatternNotMatched {
+        ins: Arc<str>,
+        var_type: Type,
+        pattern: Arc<str>,
+    },
     WrongLengthType(Arc<str>),
     NotAFunction(Arc<str>),
     WrongArgument {
@@ -69,11 +74,6 @@ pub enum Error {
         param: Param,
         given: Arc<str>,
         given_type: Type,
-    },
-    WrongLength {
-        ins: Arc<str>,
-        len: usize,
-        idents_len: usize,
     },
     WrongCondition(Arc<str>, Type),
     WrongInitialization {
@@ -93,10 +93,10 @@ impl PartialEq for Error {
             | (Self::Parsing(l0), Self::Parsing(r0))
             | (Self::IntegerOverflow(l0), Self::IntegerOverflow(r0))
             | (Self::NotAFunction(l0), Self::NotAFunction(r0))
-            | (Self::NotATuple(l0), Self::NotATuple(r0))
             | (Self::CannotDetermineParams(l0), Self::CannotDetermineParams(r0))
-            | (Self::CannotDetermineLength(l0), Self::CannotDetermineLength(r0))
-            | (Self::CannotReduce(l0), Self::CannotReduce(r0)) => l0 == r0,
+            | (Self::CannotReduce(l0), Self::CannotReduce(r0))
+            | (Self::SelfContradictoryPattern(l0), Self::SelfContradictoryPattern(r0))
+                => l0 == r0,
             (Self::WrongType(l0, l1), Self::WrongType(r0, r1))
             | (Self::WrongCondition(l0, l1), Self::WrongCondition(r0, r1))
             | (Self::WrongNumberOfArguments(l0, l1), Self::WrongNumberOfArguments(r0, r1))
@@ -111,6 +111,8 @@ impl PartialEq for Error {
             | (Self::TupleIndexTooBig(l0, l1, l2), Self::TupleIndexTooBig(r0, r1, r2))
             | (Self::NoField{struct_ident: l0, field_ident: l1, struct_type: l2},
                 Self::NoField{struct_ident: r0, field_ident: r1, struct_type: r2})
+            | (Self::SetPatternNotMatched{pattern: l0, ins: l1, var_type: l2},
+                Self::SetPatternNotMatched{pattern: r0, ins: r1, var_type: r2})
             => {
                 l0 == r0 && l1 == r1 && l2 == r2
             },
@@ -134,10 +136,6 @@ impl PartialEq for Error {
                 Self::WrongArgument{ function: f, param: p, given: g, given_type: gt },
                 Self::WrongArgument{ function: f2, param: p2, given: g2, given_type: gt2 }
             ) => f == f2 && p == p2 && g == g2 && gt == gt2,
-            (
-                Self::WrongLength{ ins, len, idents_len },
-                Self::WrongLength{ ins: ins2, len: len2, idents_len: idents_len2 }
-            ) => ins==ins2 && len == len2 && idents_len == idents_len2,
             (
                 Self::IncorectUnaryOperatorOperand{ins, op, expected, given },
                 Self::IncorectUnaryOperatorOperand{ins:ins2, op: op2, expected: expected2, given: given2 })
@@ -283,17 +281,7 @@ impl fmt::Display for Error {
             Self::CannotDetermineParams(function) => {
                 write!(f, "Cannot determine params of function {function}")
             }
-            Self::CannotDetermineLength(tuple) => write!(f, "Cannot determine length of {tuple}"),
             Self::CannotReduce(given) => write!(f, "Cannot reduce {given}. It is not an array"),
-            Self::NotATuple(str) => write!(f, "Cannot destruct {str}. It is not a tuple"),
-            Self::WrongLength {
-                ins,
-                len: length,
-                idents_len: expected_length,
-            } => write!(
-                f,
-                "{ins} has {length} elements but {expected_length} idents were given"
-            ),
             Self::WrongCondition(ins, var_type) => write!(
                 f,
                 "Condition must be bool but {ins} which is {var_type} was given"
@@ -316,6 +304,19 @@ impl fmt::Display for Error {
                 f,
                 "Cannot {ins} {op}. Operand need to be {expected} but {ins} which is {given} was given"
             ),
+            Self::SelfContradictoryPattern(pattern) => {
+                write!(f, "Pattern {pattern} is self-contradictory")
+            }
+            Self::SetPatternNotMatched {
+                pattern,
+                ins,
+                var_type,
+            } => {
+                write!(
+                    f,
+                    "{ins} of type {var_type} doesn't match pattern {pattern}"
+                )
+            }
             Self::WrongInitialization {
                 declared,
                 given_type,

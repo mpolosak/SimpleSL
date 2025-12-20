@@ -17,10 +17,12 @@ pub struct SetIfElse {
 impl SetIfElse {
     pub fn create(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<Self, Error> {
         let mut inner = pair.into_inner();
-        let pattern_pair = inner.next().unwrap();
-        let pair = inner.next().unwrap();
+        let set_pair = inner.next().unwrap();
+        let mut set_inner = set_pair.into_inner();
+        let pattern_pair = set_inner.next().unwrap();
+        let pair = set_inner.next().unwrap();
         let expression = InstructionWithStr::new(pair, local_variables)?;
-        let pattern = Pattern::create_instruction(pattern_pair, local_variables, &expression.return_type());
+        let pattern = Pattern::create_instruction(pattern_pair, local_variables, &expression.return_type())?;
         let pair = inner.next().unwrap();
         let if_match = {
             let mut local_variables = local_variables.create_layer();

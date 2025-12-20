@@ -1,6 +1,6 @@
 use crate::{
     self as simplesl, instruction::{
-        block::Block, control_flow::IfElse, destruct_tuple::DestructTuple, local_variable::{LocalVariable, LocalVariables}, pattern::Pattern, set::Set, BinOperation, Instruction, InstructionWithStr, Loop
+        block::Block, control_flow::IfElse, local_variable::{LocalVariable, LocalVariables}, pattern::{destruct_pattern::DestructPattern, Pattern}, set::Set, BinOperation, Instruction, InstructionWithStr, Loop
     }, variable::{ReturnType, Type, Variable}, BinOperator, Error
 };
 use lazy_static::lazy_static;
@@ -56,8 +56,8 @@ pub fn create_instruction(
     };
     let str = format!("($con, {ident}) = {}", iter_call.str).into();
     let destruct = InstructionWithStr {
-        instruction: DestructTuple {
-            idents: [CON.clone(), ident].into(),
+        instruction: Set {
+            pattern: Pattern { destruct_pattern: DestructPattern::Tuple([CON.clone(), ident].into()), var_type: iter_call.return_type() },
             instruction: iter_call,
         }
         .into(),

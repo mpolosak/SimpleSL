@@ -20,12 +20,14 @@ impl Set {
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let pattern_pair = inner.next().unwrap();
+        let pattern_str = pattern_pair.as_str().into();
         let pair = inner.next().unwrap();
+        let ins = pair.as_str().into();
         let instruction = InstructionWithStr::new(pair, local_variables)?;
         let var_type = instruction.return_type();
-        let pattern = Pattern::create_instruction(pattern_pair, local_variables, &var_type);
+        let pattern = Pattern::create_instruction(pattern_pair, local_variables, &var_type)?;
         if !pattern.is_matched(&var_type) {
-            panic!("pattern not matched")
+            return Err(Error::SetPatternNotMatched { ins, var_type, pattern: pattern_str })
         }
         pattern.insert_local_variables(local_variables);
         Ok(Self{ pattern, instruction }.into())

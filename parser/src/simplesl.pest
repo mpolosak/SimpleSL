@@ -161,7 +161,9 @@ stm                  = _{
   | continue
   | expr
 }
-pattern              =  { ident ~ ":" ~ type? }
+pattern              =  { destruct_pattern ~ ":" ~ type? }
+  destruct_pattern   = _{ ident | destruct_tuple }
+  destruct_tuple     =  { "(" ~ ident ~ ("," ~ ident)+ ~ ")" }
 block                =  { "{" ~ line* ~ "}" }
 mod                  =  { "mod" ~ block }
 body                 = _{ block | return | expr }
@@ -181,12 +183,10 @@ while_set            =  { "while" ~ pattern ~ "=" ~ expr ~ stm }
 for                  =  { "for" ~ ident ~ "in" ~ expr ~ stm }
 loop                 =  { "loop" ~ stm }
 expression_list      = _{ (expr ~ ("," ~ expr)*) }
-line                 = _{ COMMENT* ~ ((return | function_declaration | set | destruct_tuple | stm) ~ line_end?) }
+line                 = _{ COMMENT* ~ ((return | function_declaration | set | stm) ~ line_end?) }
 line_end             = _{ ";" }
 function_declaration =  { ident ~ ":=" ~ function }
 set                  =  { pattern ~ "=" ~ stm }
-destruct_tuple       =  { destruct_idents ~ ":=" ~ stm }
-destruct_idents      =  { "(" ~ (ident ~ ("," ~ ident)*)? ~ ")" }
 type                 = _{ multi | standard_types }
 bool_type            =  { "bool" }
 int_type             =  { "int" }
