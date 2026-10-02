@@ -28,7 +28,7 @@ use self::{
     bin_op::*,
     block::Block,
     control_flow::{IfElse, Match, SetIfElse},
-    function::{AnonymousFunction, FunctionDeclaration},
+    function::Function,
     local_variable::{LocalVariable, LocalVariables},
     set::Set,
     tuple::Tuple,
@@ -103,7 +103,7 @@ impl InstructionWithStr {
             Rule::tuple => Tuple::create_instruction(pair, local_variables),
             Rule::array => Array::create_instruction(pair, local_variables),
             Rule::array_repeat => ArrayRepeat::create_instruction(pair, local_variables),
-            Rule::function => AnonymousFunction::create_instruction(pair, local_variables),
+            Rule::function => Function::create_instruction(pair, local_variables, None),
             Rule::r#struct => Struct::create_instruction(pair, local_variables),
             Rule::r#mod => module::create_instruction(pair, local_variables),
             rule => unexpected!(rule),
@@ -163,7 +163,7 @@ impl From<Variable> for InstructionWithStr {
 #[derive(Debug, Clone, From)]
 pub enum Instruction {
     #[from]
-    AnonymousFunction(AnonymousFunction),
+    AnonymousFunction(Function),
     #[from(Array)]
     Array(Arc<Array>),
     #[from(ArrayRepeat)]
@@ -174,8 +174,6 @@ pub enum Instruction {
     Continue,
     #[from(FieldAccess)]
     FieldAccess(Arc<FieldAccess>),
-    #[from(FunctionDeclaration)]
-    FunctionDeclaration(Arc<FunctionDeclaration>),
     #[from(IfElse)]
     IfElse(Arc<IfElse>),
     LocalVariable(Arc<str>, LocalVariable),
@@ -218,9 +216,6 @@ impl Instruction {
             Rule::if_else => IfElse::create_instruction(pair, local_variables),
             Rule::set_if_else => SetIfElse::create_instruction(pair, local_variables),
             Rule::r#match => Match::create_instruction(pair, local_variables),
-            Rule::function_declaration => {
-                FunctionDeclaration::create_instruction(pair, local_variables)
-            }
             Rule::r#return => r#return::create(pair, local_variables),
             Rule::expr => {
                 InstructionWithStr::new_expression(pair, local_variables).map(|iws| iws.instruction)
@@ -268,10 +263,10 @@ impl Exec for Instruction {
                 .ok_or_else(|| panic!("Tried to get variable {ident} that doest exist")),
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins)
             | Self::Block(ins) | Self::Tuple(ins) | Self::BinOperation(ins)
-            | Self::FieldAccess(ins) | Self::FunctionDeclaration(ins)
-            | Self::IfElse(ins) | Self::Loop(ins) | Self::Match(ins) | Self::Mut(ins)
-            | Self::Reduce(ins) | Self::Set(ins) | Self::SetIfElse(ins) | Self::Slicing(ins)
-            | Self::Struct(ins) | Self::TypeFilter(ins) | Self::UnaryOperation(ins)
+            | Self::FieldAccess(ins) | Self::IfElse(ins) | Self::Loop(ins) 
+            | Self::Match(ins) | Self::Mut(ins) | Self::Reduce(ins) | Self::Set(ins)
+            | Self::SetIfElse(ins) | Self::Slicing(ins) | Self::Struct(ins)
+            | Self::TypeFilter(ins) | Self::UnaryOperation(ins)
             | Self::TupleAccess(ins) => ins.exec(interpreter),
             Self::Break => Err(ExecStop::Break),
             Self::Continue => Err(ExecStop::Continue)
@@ -297,8 +292,8 @@ impl Recreate for Instruction {
             )),
             Self::Variable(variable) => Ok(Self::Variable(variable.clone())),
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins)
-            | Self::Block(ins) | Self::Tuple(ins) | Self::BinOperation(ins) | Self::FieldAccess(ins)
-            | Self::FunctionDeclaration(ins) | Self::IfElse(ins) | Self::Loop(ins) | Self::Match(ins)
+            | Self::Block(ins) | Self::Tuple(ins) | Self::BinOperation(ins) | Self::FieldAccess(ins) 
+            | Self::IfElse(ins) | Self::Loop(ins) | Self::Match(ins)
             | Self::Mut(ins) | Self::Reduce(ins) | Self::Set(ins) | Self::SetIfElse(ins)
             | Self::Slicing(ins)| Self::Struct(ins) |  Self::TypeFilter(ins)
             | Self::UnaryOperation(ins) | Self::TupleAccess(ins) => ins.recreate(local_variables),
@@ -312,12 +307,11 @@ impl ReturnType for Instruction {
         match_any! { self,
             Self::Variable(variable) | Self::LocalVariable(_, variable) => variable.as_type(),
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins)
-            | Self::Block(ins) | Self::Tuple(ins) | Self::BinOperation(ins) | Self::FieldAccess(ins)
-            | Self::FunctionDeclaration(ins) | Self::IfElse(ins) | Self::Match(ins) | Self::Mut(ins)
+            | Self::Block(ins) | Self::Tuple(ins) | Self::BinOperation(ins)
+            | Self::FieldAccess(ins) | Self::IfElse(ins) | Self::Match(ins) | Self::Mut(ins)
             | Self::Reduce(ins) | Self::Set(ins) | Self::SetIfElse(ins) | Self::Slicing(ins)
             | Self::Struct(ins) | Self::TypeFilter(ins) | Self::UnaryOperation(ins)
-            | Self::TupleAccess(ins)
-                => ins.return_type(),
+            | Self::TupleAccess(ins) => ins.return_type(),
             Self::Loop(_) => Type::Void,
             Self::Break | Self::Continue => Type::Never
         }

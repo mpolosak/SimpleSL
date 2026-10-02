@@ -1,6 +1,6 @@
 use crate::{
-    function::{Function, Param, Params}, instruction::{
-        function::AnonymousFunction, local_variable::{LocalVariable, LocalVariables}, pattern::Pattern, set::Set, tuple::Tuple, unary_operation::UnaryOperation, BinOperation, Instruction, InstructionWithStr
+    function::{Function as VarFunc, Param, Params}, instruction::{
+        function::Function, local_variable::{LocalVariable, LocalVariables}, pattern::Pattern, set::Set, tuple::Tuple, unary_operation::UnaryOperation, BinOperation, Instruction, InstructionWithStr
     }, unary_operator::UnaryOperator, variable::{ReturnType, Typed, Variable}, BinOperator, Error, ExecError
 };
 use pest::iterators::Pair;
@@ -23,7 +23,7 @@ pub fn create_instruction(
         Instruction::LocalVariable(ident, LocalVariable::Function(params, _)) => {
             check_args_with_params(ident, params, &args)?;
         }
-        Instruction::AnonymousFunction(AnonymousFunction { params, .. }) => {
+        Instruction::AnonymousFunction(Function { params, .. }) => {
             check_args_with_params(&function.str, params, &args)?;
         }
         _ => {
@@ -56,7 +56,7 @@ pub fn create_instruction(
 
 pub fn create_from_variables(
     ident: Arc<str>,
-    function: Arc<Function>,
+    function: Arc<VarFunc>,
     args: Vec<Variable>,
 ) -> Result<Arc<[InstructionWithStr]>, Error> {
     if function.params.len() != args.len() {

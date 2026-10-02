@@ -183,10 +183,9 @@ while_set            =  { "while" ~ pattern ~ "=" ~ expr ~ stm }
 for                  =  { "for" ~ ident ~ "in" ~ expr ~ stm }
 loop                 =  { "loop" ~ stm }
 expression_list      = _{ (expr ~ ("," ~ expr)*) }
-line                 = _{ COMMENT* ~ ((return | function_declaration | set | stm) ~ line_end?) }
+line                 = _{ COMMENT* ~ ((return | set | stm) ~ line_end?) }
 line_end             = _{ ";" }
-function_declaration =  { ident ~ ":=" ~ function }
-set                  =  { pattern ~ "=" ~ stm }
+set                  =  { pattern ~ "=" ~ (function | stm) }
 type                 = _{ multi | standard_types }
 bool_type            =  { "bool" }
 int_type             =  { "int" }
