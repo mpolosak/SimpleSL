@@ -210,7 +210,7 @@ pub enum Instruction {
 impl Instruction {
     pub fn new(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<Self, Error> {
         match pair.as_rule() {
-            Rule::set => Set::create_instruction(pair, local_variables),
+            Rule::set => Set::create_standalone(pair, local_variables),
             Rule::block => Block::create_instruction(pair, local_variables),
             Rule::import => import::create_instruction(pair, local_variables),
             Rule::if_else => IfElse::create_instruction(pair, local_variables),
