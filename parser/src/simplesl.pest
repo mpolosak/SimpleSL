@@ -172,7 +172,7 @@ set_if_else          =  { "if" ~ set ~ body ~ ("else" ~ stm)? }
 match                =  { "match" ~ expr ~ "{" ~ match_arm* ~ "}" }
   match_arm          =  { match_pattern ~ "=>" ~ body ~ "," }
   match_pattern      = _{ pattern | values | other }
-  values             = _{ (expr ~ ("," ~ expr)*) }
+  values             =  { (expr ~ ("," ~ expr)*) }
   other              =  { "" }
 import               =  { "import" ~ string }
 return               =  { "return" ~ stm? }
