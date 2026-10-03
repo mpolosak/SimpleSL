@@ -5,9 +5,8 @@ pub use self::param::{Param, Params};
 use crate::{
     self as simplesl, Code, Error, ExecError, Interpreter,
     instruction::{
-        ExecStop, InstructionWithStr, block::Block, function::call, unary_operation::UnaryOperation,
+        ExecStop, function::call, unary_operation::UnaryOperation,
     },
-    join,
     unary_operator::UnaryOperator,
     variable::{FunctionType, ReturnType, Type, Typed, Variable},
 };
@@ -67,14 +66,8 @@ impl Function {
 
     pub fn create_call(self: Arc<Self>, args: Vec<Variable>) -> Result<Code, Error> {
         let ident = self.ident.clone().unwrap_or_else(|| Arc::from("function"));
-        let str = format!("{}({})", ident, join(args.iter(), ", ")).into();
         let instructions = call::create_from_variables(ident, self, args)?;
-        Ok(Code {
-            instructions: Arc::new([InstructionWithStr {
-                instruction: Block { instructions }.into(),
-                str,
-            }]),
-        })
+        Ok(Code { instructions })
     }
 
     pub(crate) fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, ExecError> {

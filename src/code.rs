@@ -1,7 +1,5 @@
 use crate::{
-    Error, ExecError, Interpreter,
-    instruction::{Exec, ExecStop, InstructionWithStr, local_variable::LocalVariables},
-    variable::{ReturnType, Type, Variable},
+    instruction::{local_variable::LocalVariables, Exec, ExecStop, Instruction, Recreate}, variable::{ReturnType, Type, Variable}, Error, ExecError, Interpreter
 };
 use pest::Parser;
 use simplesl_parser::{Rule, SimpleSLParser};
@@ -9,7 +7,7 @@ use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct Code {
-    pub(crate) instructions: Arc<[InstructionWithStr]>,
+    pub(crate) instructions: Arc<[Instruction]>,
 }
 
 impl Code {
@@ -18,8 +16,8 @@ impl Code {
         let mut local_variables = LocalVariables::new(interpreter);
         let instructions = parse
             .map(|pair| {
-                InstructionWithStr::new(pair, &mut local_variables)
-                    .and_then(|iws| Ok(iws.recreate(&mut local_variables)?))
+                Instruction::new(pair, &mut local_variables)
+                    .and_then(|i| Ok(i.recreate(&mut local_variables)?))
             })
             .collect::<Result<_, Error>>()?;
         Ok(Self { instructions })
