@@ -12,8 +12,8 @@ use simplesl_parser::Rule;
 
 #[derive(Debug, Clone)]
 pub struct ArrayRepeat {
-    pub value: InstructionWithStr,
-    pub len: InstructionWithStr,
+    pub value: Instruction,
+    pub len: Instruction,
 }
 
 impl ArrayRepeat {
@@ -22,35 +22,26 @@ impl ArrayRepeat {
         local_variables: &LocalVariables,
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
-        let value = InstructionWithStr::new_expression(inner.next().unwrap(), local_variables)?;
+        let value = InstructionWithStr::new_expression(inner.next().unwrap(), local_variables)?.instruction;
         let len = InstructionWithStr::new_expression(inner.next().unwrap(), local_variables)?;
         if !len.return_type().matches(&Type::Int) {
             return Err(Error::WrongLengthType(len.str));
         }
-        Ok(Self { value, len }.into())
+        Ok(Self { value, len: len.instruction }.into())
     }
 
     fn create_from_instructions(
-        value: InstructionWithStr,
-        len: InstructionWithStr,
+        value: Instruction,
+        len: Instruction,
     ) -> Result<Instruction, ExecError> {
         match (value, len) {
             (
                 _,
-                InstructionWithStr {
-                    instruction: Instruction::Variable(Variable::Int(len)),
-                    ..
-                },
+                Instruction::Variable(Variable::Int(len)),
             ) if len < 0 => Err(ExecError::NegativeLength),
             (
-                InstructionWithStr {
-                    instruction: Instruction::Variable(value),
-                    ..
-                },
-                InstructionWithStr {
-                    instruction: Instruction::Variable(Variable::Int(len)),
-                    ..
-                },
+                Instruction::Variable(value),
+                Instruction::Variable(Variable::Int(len)),
             ) => Ok(Instruction::Variable(var!([value; len]))),
             (value, len) => Ok(Self { value, len }.into()),
         }
