@@ -54,14 +54,11 @@ impl Function {
             ident: None,
             params,
             body: Body::Lang(
-                [InstructionWithStr {
-                    str: format!("return {returned}").into(),
-                    instruction: UnaryOperation {
-                        instruction: returned.into(),
-                        op: UnaryOperator::Return,
-                    }
-                    .into(),
-                }]
+                [UnaryOperation {
+                    instruction: returned.into(),
+                    op: UnaryOperator::Return,
+                }
+                .into()]
                 .into(),
             ),
             return_type: fn_type.return_type(),
@@ -85,7 +82,7 @@ impl Function {
             Body::Lang(body) => body,
             Body::Native(body) => return (body)(interpreter),
         };
-        match interpreter.exec_iwses(body) {
+        match interpreter.exec(body) {
             Ok(_) => Ok(Variable::Void),
             Err(ExecStop::Return(var)) => Ok(var),
             Err(ExecStop::Error(error)) => Err(error),

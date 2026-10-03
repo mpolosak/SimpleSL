@@ -1,4 +1,4 @@
-use super::{Instruction, InstructionWithStr, function::Function};
+use super::{Instruction, function::Function};
 use crate::{
     self as simplesl, Error, Interpreter,
     function::{Param, Params},
@@ -97,29 +97,6 @@ impl<'a> LocalVariables<'a> {
     pub(crate) fn parse_input(&mut self, input: &str) -> Result<Arc<[Instruction]>, Error> {
         let pairs = SimpleSLParser::parse(Rule::input, input)?;
         self.create_instructions(pairs)
-    }
-
-    pub(crate) fn create_iws(
-        &mut self,
-        pairs: Pairs<'_, Rule>,
-    ) -> Result<Arc<[InstructionWithStr]>, Error> {
-        let mut instructions = pairs
-            .map(|pair| InstructionWithStr::new(pair, self))
-            .collect::<Result<Vec<InstructionWithStr>, Error>>()?;
-        let Some(last) = instructions.pop() else {
-            return Ok(Arc::from([]));
-        };
-        instructions.retain(|instruction| {
-            !matches!(
-                instruction,
-                InstructionWithStr {
-                    instruction: Instruction::Variable(..),
-                    ..
-                }
-            )
-        });
-        instructions.push(last);
-        Ok(instructions.into())
     }
 
     pub(crate) fn create_instructions(

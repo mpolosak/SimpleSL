@@ -39,7 +39,7 @@ impl Array {
 
 impl Exec for Array {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let elements = interpreter.exec_instructions(&self.instructions)?;
+        let elements = interpreter.exec(&self.instructions)?;
         Ok(elements.into())
     }
 }

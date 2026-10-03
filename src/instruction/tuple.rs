@@ -40,7 +40,7 @@ impl Tuple {
 
 impl Exec for Tuple {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let elements = interpreter.exec_instructions(&self.elements)?;
+        let elements = interpreter.exec(&self.elements)?;
         Ok(Variable::Tuple(elements))
     }
 }

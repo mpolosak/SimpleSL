@@ -28,7 +28,7 @@ impl Exec for Block {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let mut interpreter = interpreter.create_layer();
         Ok(interpreter
-            .exec_instructions(&self.instructions)?
+            .exec(&self.instructions)?
             .last()
             .cloned()
             .unwrap_or(Variable::Void))
