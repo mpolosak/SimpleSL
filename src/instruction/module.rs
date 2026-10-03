@@ -27,10 +27,7 @@ pub fn new(
         .map(|(ident, var)| {
             (
                 ident.clone(),
-                InstructionWithStr {
-                    instruction: Instruction::LocalVariable(ident.clone(), var.clone()),
-                    str: ident.clone(),
-                },
+                Instruction::LocalVariable(ident.clone(), var.clone()),
             )
         })
         .unzip();

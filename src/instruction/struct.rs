@@ -14,7 +14,7 @@ use std::{collections::HashMap, sync::Arc};
 #[derive(Debug, Clone)]
 pub struct Struct {
     pub idents: Arc<[Arc<str>]>,
-    pub values: Arc<[InstructionWithStr]>,
+    pub values: Arc<[Instruction]>,
 }
 
 impl Struct {
@@ -27,16 +27,16 @@ impl Struct {
             .map(|pair| {
                 if pair.as_rule() == Rule::ident {
                     let ident: Arc<str> = pair.as_str().into();
-                    let value = InstructionWithStr::new_ident(ident.clone(), local_variables)?;
+                    let value = Instruction::new_ident(&ident, local_variables)?;
                     return Ok((ident, value));
                 }
                 let mut inner = pair.into_inner();
                 let ident: Arc<str> = inner.next().unwrap().as_str().into();
                 let value =
-                    InstructionWithStr::new_expression(inner.next().unwrap(), local_variables)?;
+                    InstructionWithStr::new_expression(inner.next().unwrap(), local_variables)?.instruction;
                 Ok((ident, value))
             })
-            .collect::<Result<(Vec<Arc<str>>, Vec<InstructionWithStr>), Error>>()?;
+            .collect::<Result<(Vec<Arc<str>>, Vec<Instruction>), Error>>()?;
         Ok(Self {
             idents: idents.into(),
             values: values.into(),

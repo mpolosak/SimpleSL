@@ -232,7 +232,7 @@ impl Instruction {
         }
     }
 
-    fn new_ident(
+    pub fn new_ident(
         str: &Arc<str>,
         local_variables: &LocalVariables<'_>,
     ) -> Result<Instruction, Error> {
