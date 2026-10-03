@@ -1,5 +1,5 @@
 use super::{
-    Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
+    Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
 };
 use crate::{
     self as simplesl, instruction::recreate_instructions, interpreter::Interpreter, variable::{ReturnType, Type}, Error, ExecError
@@ -21,8 +21,9 @@ impl Array {
         local_variables: &LocalVariables,
     ) -> Result<Instruction, Error> {
         let inner = pair.into_inner();
+        let mut local_variables = local_variables.create_layer();
         let instructions = inner
-            .map(|arg| Ok(InstructionWithStr::new_expression(arg, local_variables)?.instruction))
+            .map(|arg| Instruction::new(arg, &mut local_variables))
             .collect::<Result<Arc<_>, Error>>()?;
         let element_type = instructions
             .iter()
