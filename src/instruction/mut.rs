@@ -11,7 +11,7 @@ use simplesl_parser::Rule;
 #[derive(Debug)]
 pub struct Mut {
     var_type: Type,
-    instruction: InstructionWithStr,
+    instruction: Instruction,
 }
 
 impl Mut {
@@ -26,7 +26,7 @@ impl Mut {
             let var_type = instruction.return_type();
             return Ok(Mut {
                 var_type,
-                instruction,
+                instruction: instruction.instruction,
             }
             .into());
         }
@@ -43,7 +43,7 @@ impl Mut {
         }
         Ok(Mut {
             var_type,
-            instruction,
+            instruction: instruction.instruction,
         }
         .into())
     }
