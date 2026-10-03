@@ -80,11 +80,6 @@ impl InstructionWithStr {
             .parse(pair.into_inner())
     }
 
-    pub fn new_ident(str: Arc<str>, local_variables: &LocalVariables) -> Result<Self, Error> {
-        let instruction = Instruction::new_ident(&str, local_variables)?;
-        Ok(Self { instruction, str })
-    }
-
     fn create_primary(
         pair: Pair<'_, Rule>,
         local_variables: &LocalVariables<'_>,
