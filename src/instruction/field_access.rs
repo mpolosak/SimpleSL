@@ -8,7 +8,7 @@ use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct FieldAccess {
-    var: InstructionWithStr,
+    var: Instruction,
     ident: Arc<str>,
 }
 
@@ -31,7 +31,7 @@ impl FieldAccess {
             });
         }
         Ok(Self {
-            var: tuple,
+            var: tuple.instruction,
             ident: ident.into(),
         }
         .into())
