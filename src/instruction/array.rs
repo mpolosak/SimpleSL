@@ -1,11 +1,8 @@
 use super::{
     Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
-    recreate_iwses,
 };
 use crate::{
-    self as simplesl, Error, ExecError,
-    interpreter::Interpreter,
-    variable::{ReturnType, Type},
+    self as simplesl, instruction::recreate_instructions, interpreter::Interpreter, variable::{ReturnType, Type}, Error, ExecError
 };
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
@@ -14,7 +11,7 @@ use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct Array {
-    pub instructions: Arc<[InstructionWithStr]>,
+    pub instructions: Arc<[Instruction]>,
     pub element_type: Type,
 }
 
@@ -25,7 +22,7 @@ impl Array {
     ) -> Result<Instruction, Error> {
         let inner = pair.into_inner();
         let instructions = inner
-            .map(|arg| InstructionWithStr::new_expression(arg, local_variables))
+            .map(|arg| Ok(InstructionWithStr::new_expression(arg, local_variables)?.instruction))
             .collect::<Result<Arc<_>, Error>>()?;
         let element_type = instructions
             .iter()
@@ -42,20 +39,17 @@ impl Array {
 
 impl Exec for Array {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let elements = interpreter.exec_iwses(&self.instructions)?;
+        let elements = interpreter.exec_instructions(&self.instructions)?;
         Ok(elements.into())
     }
 }
 
 impl Recreate for Array {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let instructions = recreate_iwses(&self.instructions, local_variables)?;
+        let instructions = recreate_instructions(&self.instructions, local_variables)?;
         let mut array = Vec::new();
         for instruction in &*instructions {
-            let InstructionWithStr {
-                instruction: Instruction::Variable(variable),
-                ..
-            } = instruction
+            let Instruction::Variable(variable) = instruction
             else {
                 return Ok(Self {
                     instructions,
