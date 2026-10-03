@@ -1,12 +1,7 @@
 use crate::{
-    Error, ExecError,
     instruction::{
-        Exec, ExecResult, ExecStop, InstructionWithStr,
-        control_flow::match_pattern::MatchPattern,
-        local_variable::{LocalVariables},
-    },
-    interpreter::Interpreter,
-    variable::{ReturnType, Type, Variable},
+        control_flow::match_pattern::MatchPattern, local_variable::LocalVariables, Exec, ExecResult, ExecStop, Instruction, Recreate
+    }, interpreter::Interpreter, variable::{ReturnType, Type, Variable}, Error, ExecError
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
@@ -14,7 +9,7 @@ use simplesl_parser::Rule;
 #[derive(Debug)]
 pub struct MatchArm {
     pattern: MatchPattern,
-    instruction: InstructionWithStr,
+    instruction: Instruction,
 }
 
 impl MatchArm {
@@ -24,7 +19,7 @@ impl MatchArm {
         let pattern = MatchPattern::new(pair, local_variables, exp_type)?;
         let pair = inner.next().unwrap();
         let MatchPattern::Pattern(p) = &pattern else {
-            let instruction = InstructionWithStr::new(pair, local_variables)?;
+            let instruction = Instruction::new(pair, local_variables)?;
             return Ok(MatchArm {
                 pattern,
                 instruction,
@@ -32,7 +27,7 @@ impl MatchArm {
         };
         let mut local_variables = local_variables.create_layer();
         p.insert_local_variables(&mut local_variables);
-        let instruction = InstructionWithStr::new(pair, &mut local_variables)?;
+        let instruction = Instruction::new(pair, &mut local_variables)?;
         Ok(MatchArm {
             pattern,
             instruction,
