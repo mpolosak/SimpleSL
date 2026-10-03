@@ -1,7 +1,7 @@
 use crate::{
     Error, ExecError,
     instruction::{
-        Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
+        Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
     },
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
@@ -11,9 +11,9 @@ use simplesl_parser::Rule;
 
 #[derive(Debug)]
 pub struct IfElse {
-    pub condition: InstructionWithStr,
-    pub if_true: InstructionWithStr,
-    pub if_false: InstructionWithStr,
+    pub condition: Instruction,
+    pub if_true: Instruction,
+    pub if_false: Instruction,
 }
 
 impl IfElse {
@@ -23,16 +23,17 @@ impl IfElse {
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let condition_pair = inner.next().unwrap();
-        let condition = InstructionWithStr::new(condition_pair, local_variables)?;
+        let condition_str = condition_pair.as_str().into();
+        let condition = Instruction::new(condition_pair, local_variables)?;
         let return_type = condition.return_type();
         if return_type != Type::Bool {
-            return Err(Error::WrongCondition(condition.str, return_type));
+            return Err(Error::WrongCondition(condition_str, return_type));
         }
         let true_pair = inner.next().unwrap();
-        let if_true = InstructionWithStr::new(true_pair, local_variables)?;
+        let if_true = Instruction::new(true_pair, local_variables)?;
         let if_false = inner.next().map_or_else(
             || Ok(Variable::Void.into()),
-            |pair| InstructionWithStr::new(pair, local_variables),
+            |pair| Instruction::new(pair, local_variables),
         )?;
         Ok(Self {
             condition,
@@ -56,7 +57,7 @@ impl Exec for IfElse {
 impl Recreate for IfElse {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
         let condition = self.condition.recreate(local_variables)?;
-        let Instruction::Variable(Variable::Bool(condition)) = condition.instruction else {
+        let Instruction::Variable(Variable::Bool(condition)) = condition else {
             let if_true = self.if_true.recreate(local_variables)?;
             let if_false = self.if_false.recreate(local_variables)?;
             return Ok(Self {
@@ -67,9 +68,9 @@ impl Recreate for IfElse {
             .into());
         };
         if condition {
-            return self.if_true.instruction.recreate(local_variables);
+            return self.if_true.recreate(local_variables);
         }
-        self.if_false.instruction.recreate(local_variables)
+        self.if_false.recreate(local_variables)
     }
 }
 

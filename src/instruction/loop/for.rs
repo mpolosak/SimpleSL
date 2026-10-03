@@ -55,19 +55,12 @@ pub fn create_instruction(
         instruction: iter_call,
     }
     .into();
-    let instruction = InstructionWithStr::new(inner.next().unwrap(), &mut local_variables)?;
-    let condition = InstructionWithStr {
-        instruction: Instruction::LocalVariable(CON.clone(), LocalVariable::Other(Type::Bool)),
-        str: CON.clone(),
-    };
-    let if_false = InstructionWithStr {
-        instruction: Instruction::Break,
-        str: "break".into(),
-    };
+    let instruction = Instruction::new(inner.next().unwrap(), &mut local_variables)?;
+    let condition = Instruction::LocalVariable(CON.clone(), LocalVariable::Other(Type::Bool));
     let if_else = IfElse {
         condition,
         if_true: instruction,
-        if_false,
+        if_false: Instruction::Break,
     }
     .into();
     let body = Block {
