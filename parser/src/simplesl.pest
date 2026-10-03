@@ -1,4 +1,11 @@
-restricted_keywords  = _{ bool | "mut" | "return" | "loop" | "while" | "for" | "struct" | "mod" | break | continue }
+restricted_keywords  = _{ bool | mutkw | returnkw | loopkw | whilekw | forkw | structkw | modkw | break | continue }
+  mutkw = _{ "mut" }
+  returnkw = _{ "return" }
+  loopkw = _{ "loop" }
+  whilekw = _{ "while" }
+  forkw = _{ "forkw" }
+  structkw = _{ "struct" }
+  modkw = _{ "mod" }
 ident                = @{ !(restricted_keywords ~ !(ASCII_ALPHANUMERIC | "_")) ~ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
 var                  = _{ bool | float | int | array | array_repeat | string | function | void | tuple | mut | struct | mod }
 bool                 = _{ true | false }
@@ -30,8 +37,8 @@ char                 =  {
     !("\"" | "\\") ~ ANY
   | "\\" ~ ANY
 }
-mut                  =  { "mut" ~ type? ~ expr }
-struct               =  { "struct" ~ "{" ~ ((field | ident) ~ ("," ~ (field | ident))*)? ~ "}" }
+mut                  =  { mutkw ~ type? ~ expr }
+struct               =  { structkw ~ "{" ~ ((field | ident) ~ ("," ~ (field | ident))*)? ~ "}" }
 field                =  { ident ~ ":=" ~ expr }
 primary              = _{ ident | var | expr_in_brackets }
 expr_in_brackets     = _{ "(" ~ expr ~ ")" }
@@ -165,7 +172,7 @@ pattern              =  { destruct_pattern ~ ":" ~ type? }
   destruct_pattern   = _{ ident | destruct_tuple }
   destruct_tuple     =  { "(" ~ ident ~ ("," ~ ident)+ ~ ")" }
 block                =  { "{" ~ line* ~ "}" }
-mod                  =  { "mod" ~ block }
+mod                  =  { modkw ~ block }
 body                 = _{ block | return | expr }
 if_else              =  { "if" ~ expr ~ body ~ ("else" ~ stm)? }
 set_if_else          =  { "if" ~ set ~ body ~ ("else" ~ stm)? }
@@ -175,13 +182,13 @@ match                =  { "match" ~ expr ~ "{" ~ match_arm* ~ "}" }
   values             =  { (expr ~ ("," ~ expr)*) }
   other              =  { "" }
 import               =  { "import" ~ string }
-return               =  { "return" ~ stm? }
+return               =  { returnkw ~ stm? }
 break                =  { "break" }
 continue             =  { "continue" }
-while                =  { "while" ~ expr ~ stm }
-while_set            =  { "while" ~ set ~ stm }
-for                  =  { "for" ~ ident ~ "in" ~ expr ~ stm }
-loop                 =  { "loop" ~ stm }
+while                =  { whilekw ~ expr ~ stm }
+while_set            =  { whilekw ~ set ~ stm }
+for                  =  { forkw ~ ident ~ "in" ~ expr ~ stm }
+loop                 =  { loopkw ~ stm }
 expression_list      = _{ (expr ~ ("," ~ expr)*) }
 line                 = _{ COMMENT* ~ ((return | set | stm) ~ line_end?) }
 line_end             = _{ ";" }
@@ -196,7 +203,7 @@ function_type_params =  { "(" ~ (type ~ ("," ~ type)*)? ~ ")" }
 return_type          = _{ standard_types | "(" ~ multi ~ ")" }
 array_type           =  { "[" ~ type? ~ "]" }
 tuple_type           =  { "(" ~ (type ~ ("," ~ type)+) ~ ")" }
-struct_type          =  { "struct" ~ "{" ~ (pattern     ~ ("," ~ pattern    )*)? ~ "}" }
+struct_type          =  { structkw ~ "{" ~ (pattern     ~ ("," ~ pattern    )*)? ~ "}" }
 standard_types       = _{
     bool_type
   | int_type
@@ -214,7 +221,7 @@ standard_types       = _{
 multi                =  { (standard_types) ~ ("|" ~ standard_types)+ }
 any                  =  { "any" }
 never                =  { "!" }
-mut_type             =  { "mut" ~ return_type }
+mut_type             =  { mutkw ~ return_type }
 // type + ident for macro var_type!
 type_ident                 = _{ multi_ident | standard_types_ident }
 function_type_ident        =  { (function_type_params_ident | ident) ~ "->" ~ return_type_ident }
@@ -238,8 +245,8 @@ standard_types_ident       = _{
   | ident
 }
 multi_ident                =  { (standard_types_ident) ~ ("|" ~ standard_types_ident)+ }
-mut_type_ident             =  { "mut" ~ return_type_ident }
-struct_type_ident          =  { "struct" ~ "{" ~ (ident ~ ":" ~ type_ident ~ ("," ~ ident ~ ":" ~ type_ident)*)? ~ "}" }
+mut_type_ident             =  { mutkw ~ return_type_ident }
+struct_type_ident          =  { structkw ~ "{" ~ (ident ~ ":" ~ type_ident ~ ("," ~ ident ~ ":" ~ type_ident)*)? ~ "}" }
 input                      = _{ line* ~ &EOI }
 block_comment              = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 line_comment               = _{ "//" ~ (!NEWLINE ~ ANY)* }
@@ -263,7 +270,7 @@ minus_int             =  { "-" ~ int }
 array_from_str        =  { "[" ~ var_list? ~ "]" }
 array_repeat_from_str =  { "[" ~ var_from_str ~ ";" ~ int ~ "]" }
 tuple_from_str        =  { "(" ~ var_from_str ~ "," ~ var_list ~ ")" }
-struct_from_str       =  { "struct" ~ "{" ~ (field_from_str ~ ("," ~ field_from_str)*)? ~ "}" }
+struct_from_str       =  { structkw ~ "{" ~ (field_from_str ~ ("," ~ field_from_str)*)? ~ "}" }
 field_from_str        = _{ ident ~ ":=" ~ var_from_str }
 var_list              = _{ (var_from_str ~ ("," ~ var_from_str)*) }
 // rule for var! macro
@@ -287,7 +294,7 @@ minus_ident        =  { "-" ~ ident }
 array_ident        =  { "[" ~ var_ident_list? ~ "]" }
 array_ident_repeat =  { "[" ~ var_ident ~ ";" ~ (int | ident) ~ "]" }
 tuple_ident        =  { "(" ~ var_ident ~ "," ~ var_ident_list ~ ")" }
-struct_ident       =  { "struct" ~ "{" ~ ((field_ident | ident) ~ ("," ~ (field_ident | ident))*)? ~ "}" }
+struct_ident       =  { structkw ~ "{" ~ ((field_ident | ident) ~ ("," ~ (field_ident | ident))*)? ~ "}" }
 field_ident        =  { ident ~ ":=" ~ var_ident }
 var_ident_list     = _{ (var_ident ~ ("," ~ var_ident)*) }
 //decls macro
