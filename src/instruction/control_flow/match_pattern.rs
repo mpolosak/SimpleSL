@@ -1,10 +1,7 @@
 use crate::{
-    Error, ExecError, Interpreter,
     instruction::{
-        Exec, ExecStop, InstructionWithStr, local_variable::LocalVariables, pattern::Pattern,
-        recreate_iwses,
-    },
-    variable::{Type, Typed, Variable},
+        local_variable::LocalVariables, pattern::Pattern, recreate_instructions, Exec, ExecStop, Instruction
+    }, variable::{Type, Typed, Variable}, Error, ExecError, Interpreter
 };
 use pest::iterators::Pair;
 use simplesl_parser::{Rule, unexpected};
@@ -13,7 +10,7 @@ use std::sync::Arc;
 #[derive(Clone, Debug)]
 pub enum MatchPattern {
     Pattern(Pattern),
-    Values(Arc<[InstructionWithStr]>),
+    Values(Arc<[Instruction]>),
     Other,
 }
 
@@ -29,8 +26,8 @@ impl MatchPattern {
             Rule::values => {
                 let inner_values = pair.into_inner();
                 let values = inner_values
-                    .map(|pair| InstructionWithStr::new(pair, local_variables))
-                    .collect::<Result<Arc<[InstructionWithStr]>, Error>>()?;
+                    .map(|pair| Instruction::new(pair, local_variables))
+                    .collect::<Result<Arc<[Instruction]>, Error>>()?;
                 MatchPattern::Values(values)
             }
             Rule::other => MatchPattern::Other,
@@ -70,7 +67,7 @@ impl MatchPattern {
         let MatchPattern::Values(instructions) = self else {
             return Ok(self.clone());
         };
-        let instructions = recreate_iwses(instructions, local_variables)?;
+        let instructions = recreate_instructions(instructions, local_variables)?;
         Ok(MatchPattern::Values(instructions))
     }
 }
