@@ -1,5 +1,5 @@
 use super::{
-    Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
+    Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
 };
 use crate::{
     self as simplesl, BinOperator, Code, Error, ExecError,
@@ -12,13 +12,13 @@ use simplesl_parser::Rule;
 
 #[derive(Debug)]
 pub struct TypeFilter {
-    iterator: InstructionWithStr,
+    iterator: Instruction,
     var_type: Type,
 }
 
 impl TypeFilter {
     pub fn create_instruction(
-        iterator: InstructionWithStr,
+        iterator: Instruction,
         var_type: Pair<Rule>,
     ) -> Result<Instruction, Error> {
         let array_type = iterator.return_type();
