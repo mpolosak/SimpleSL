@@ -1,6 +1,6 @@
 use std::{sync::Arc};
 use super::{
-    Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
+    Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
 };
 use crate::{ instruction::{function::Function, pattern::{destruct_pattern::DestructPattern, Pattern}, ExecStop}, interpreter::Interpreter, variable::{ReturnType, Type, Typed}, Error, ExecError
 };
@@ -10,7 +10,7 @@ use simplesl_parser::Rule;
 #[derive(Debug)]
 pub struct Set {
     pub pattern: Pattern,
-    pub instruction: InstructionWithStr,
+    pub instruction: Instruction,
 }
 
 impl Set {
@@ -43,7 +43,7 @@ impl Set {
         if pair.as_rule() == Rule::function {
             return Self::create_function_declaration(pattern_pair, pair, local_variables);
         }
-        let instruction = InstructionWithStr::new(pair, local_variables)?;
+        let instruction = Instruction::new(pair, local_variables)?;
         let var_type = instruction.return_type();
         let pattern_str = pattern_pair.as_str().into();
         let pattern = Pattern::create_instruction(pattern_pair, local_variables, &var_type)?;
@@ -58,11 +58,10 @@ impl Set {
             None
         };
         let ins: Arc<str> = function_pair.as_str().into();
-        let function = Function::create_instruction(function_pair, local_variables, ident.cloned())?;
-        let var_type = function.return_type();
-        pattern.var_type = pattern.var_type.conjoin(&function.return_type());
+        let instruction = Function::create_instruction(function_pair, local_variables, ident.cloned())?;
+        let var_type = instruction.return_type();
+        pattern.var_type = pattern.var_type.conjoin(&instruction.return_type());
         pattern.insert_local_variables(local_variables);
-        let instruction = InstructionWithStr { instruction: function, str: ins.clone() };
         Ok((Self{ pattern, instruction }, Error::SetPatternNotMatched { ins, var_type, pattern: pattern_str }))
     }
 

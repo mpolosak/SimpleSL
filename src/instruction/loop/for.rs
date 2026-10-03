@@ -1,7 +1,14 @@
 use crate::{
-    self as simplesl, instruction::{
-        block::Block, control_flow::IfElse, local_variable::{LocalVariable, LocalVariables}, pattern::{destruct_pattern::DestructPattern, Pattern}, set::Set, BinOperation, Instruction, InstructionWithStr, Loop
-    }, variable::{ReturnType, Type, Variable}, BinOperator, Error
+    self as simplesl, BinOperator, Error,
+    instruction::{
+        BinOperation, Instruction, Loop,
+        block::Block,
+        control_flow::IfElse,
+        local_variable::{LocalVariable, LocalVariables},
+        pattern::{Pattern, destruct_pattern::DestructPattern},
+        set::Set,
+    },
+    variable::{ReturnType, Type, Variable},
 };
 use lazy_static::lazy_static;
 use pest::iterators::Pair;
@@ -23,7 +30,7 @@ pub fn create_instruction(
 ) -> Result<Instruction, Error> {
     let mut inner = pair.into_inner();
     let ident: Arc<str> = inner.next().unwrap().as_str().into();
-    let iter = InstructionWithStr::new(inner.next().unwrap(), local_variables)?;
+    let iter = Instruction::new(inner.next().unwrap(), local_variables)?;
     let Some(iter_element) = iter.return_type().iter_element() else {
         return Err(Error::WrongType(
             "iterator".into(),
@@ -34,24 +41,24 @@ pub fn create_instruction(
     local_variables.in_loop = true;
     local_variables.insert(ident.clone(), LocalVariable::Other(iter_element));
     let iter = Set {
-            pattern: Pattern::new_ident_pattern(ITER.clone(), iter.return_type()),
-            instruction: iter,
-        }
-        .into();
-    let iter_call = InstructionWithStr {
-        instruction: BinOperation {
-            lhs: Instruction::LocalVariable(
-                ITER.clone(),
-                LocalVariable::Other(var_type!(()->(bool, any))),
-            ),
-            rhs: Variable::Tuple([].into()).into(),
-            op: BinOperator::FunctionCall,
-        }
-        .into(),
-        str: "$iter()".into(),
-    };
+        pattern: Pattern::new_ident_pattern(ITER.clone(), iter.return_type()),
+        instruction: iter,
+    }
+    .into();
+    let iter_call:Instruction = BinOperation {
+        lhs: Instruction::LocalVariable(
+            ITER.clone(),
+            LocalVariable::Other(var_type!(()->(bool, any))),
+        ),
+        rhs: Variable::Tuple([].into()).into(),
+        op: BinOperator::FunctionCall,
+    }
+    .into();
     let destruct: Instruction = Set {
-        pattern: Pattern { destruct_pattern: DestructPattern::Tuple([CON.clone(), ident].into()), var_type: iter_call.return_type() },
+        pattern: Pattern {
+            destruct_pattern: DestructPattern::Tuple([CON.clone(), ident].into()),
+            var_type: iter_call.return_type(),
+        },
         instruction: iter_call,
     }
     .into();

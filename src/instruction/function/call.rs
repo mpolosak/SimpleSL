@@ -81,10 +81,7 @@ pub fn create_from_variables(
     let ident = function.ident.clone().unwrap_or_else(|| "$".into());
     let rec = Set {
             pattern: Pattern::new_ident_pattern(ident.clone(), instruction.return_type()),
-            instruction: InstructionWithStr {
-                instruction: instruction.clone(),
-                str: format!("{function}").into(),
-            },
+            instruction: instruction.clone(),
         }
         .into();
     let call = UnaryOperation {
@@ -92,7 +89,7 @@ pub fn create_from_variables(
             op: UnaryOperator::FunctionCall,
         }
         .into();
-    let args = args.into_iter().map(InstructionWithStr::from);
+    let args = args.into_iter().map(Instruction::from);
     Ok(zip(function.params.iter().cloned(), args)
         .map(|(param, arg)| {
             Set {
