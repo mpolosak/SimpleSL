@@ -26,7 +26,7 @@ impl InstructionWithStr {
     ) -> Result<Self, Error> {
         let str = format!("{} {}", lhs.str, op.as_str()).into();
         let instruction = match op.as_rule() {
-            Rule::at => at::create(lhs, op, local_variables),
+            Rule::at => at::create(lhs.instruction, op, local_variables),
             Rule::type_filter => {
                 TypeFilter::create_instruction(lhs, op.into_inner().next().unwrap())
             }

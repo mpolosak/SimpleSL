@@ -9,13 +9,13 @@ use simplesl_parser::Rule;
 use std::ops::Range;
 
 pub fn create(
-    instruction: InstructionWithStr,
+    lhs: Instruction,
     index: Pair<Rule>,
     local_variables: &LocalVariables,
 ) -> Result<Instruction, Error> {
     let pair = index.into_inner().next().unwrap();
     let index = InstructionWithStr::new_expression(pair, local_variables)?;
-    let instruction_return_type = instruction.return_type();
+    let instruction_return_type = lhs.return_type();
     if index.return_type() != Type::Int {
         return Err(Error::CannotIndexWith(index.str));
     }
@@ -23,7 +23,7 @@ pub fn create(
         return Err(Error::CannotIndexInto(instruction_return_type));
     }
     Ok(BinOperation {
-        lhs: instruction.instruction,
+        lhs,
         rhs: index.instruction,
         op: BinOperator::At,
     }
