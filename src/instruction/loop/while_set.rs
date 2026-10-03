@@ -1,7 +1,7 @@
 use crate::{
     Error,
     instruction::{
-        Instruction, InstructionWithStr, Loop, control_flow::SetIfElse,
+        Instruction, Loop, control_flow::SetIfElse,
         local_variable::LocalVariables,
     },
 };
@@ -16,9 +16,6 @@ pub fn create_instruction(
     local_variables.in_loop = true;
     let mut set_if_else = SetIfElse::create(pair, local_variables)?;
     local_variables.in_loop = in_loop;
-    set_if_else.else_instruction = InstructionWithStr {
-        instruction: Instruction::Break,
-        str: "break".into(),
-    };
+    set_if_else.else_instruction = Instruction::Break;
     Ok(Loop(set_if_else.into()).into())
 }

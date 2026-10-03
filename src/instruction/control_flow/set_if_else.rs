@@ -1,6 +1,6 @@
 use crate::{
     instruction::{
-        local_variable::LocalVariables, set::Set, Exec, ExecResult, Instruction, InstructionWithStr, Recreate
+        local_variable::LocalVariables, set::Set, Exec, ExecResult, Instruction, Recreate
     }, interpreter::Interpreter, variable::{ReturnType, Type, Variable}, Error, ExecError
 };
 use pest::iterators::Pair;
@@ -9,8 +9,8 @@ use simplesl_parser::Rule;
 #[derive(Debug)]
 pub struct SetIfElse {
     set: Set,
-    if_match: InstructionWithStr,
-    pub else_instruction: InstructionWithStr,
+    if_match: Instruction,
+    pub else_instruction: Instruction,
 }
 
 impl SetIfElse {
@@ -22,12 +22,12 @@ impl SetIfElse {
             let mut local_variables = local_variables.create_layer();
             (
                 Set::create_condition(set_pair, &mut local_variables)?,
-                InstructionWithStr::new(pair, &mut local_variables)?
+                Instruction::new(pair, &mut local_variables)?
             )
         };
         let else_instruction = inner
             .next()
-            .map(|pair| InstructionWithStr::new(pair, local_variables))
+            .map(|pair| Instruction::new(pair, local_variables))
             .unwrap_or(Ok(Variable::Void.into()))?;
         Ok(Self {
             set,
