@@ -179,7 +179,7 @@ return               =  { "return" ~ stm? }
 break                =  { "break" }
 continue             =  { "continue" }
 while                =  { "while" ~ expr ~ stm }
-while_set            =  { "while" ~ pattern ~ "=" ~ expr ~ stm }
+while_set            =  { "while" ~ set ~ stm }
 for                  =  { "for" ~ ident ~ "in" ~ expr ~ stm }
 loop                 =  { "loop" ~ stm }
 expression_list      = _{ (expr ~ ("," ~ expr)*) }
