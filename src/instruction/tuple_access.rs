@@ -10,7 +10,7 @@ use simplesl_parser::Rule;
 
 #[derive(Debug, Clone)]
 pub struct TupleAccess {
-    tuple: InstructionWithStr,
+    tuple: Instruction,
     index: usize,
 }
 
@@ -29,7 +29,7 @@ impl TupleAccess {
         if index >= len {
             return Err(Error::TupleIndexTooBig(index, tuple.str, len));
         }
-        Ok(Self { tuple, index }.into())
+        Ok(Self { tuple: tuple.instruction, index }.into())
     }
 }
 
