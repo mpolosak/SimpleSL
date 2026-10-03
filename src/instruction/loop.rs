@@ -2,7 +2,7 @@ pub mod r#for;
 pub mod r#while;
 pub mod while_set;
 use super::{
-    Exec, ExecResult, ExecStop, Instruction, InstructionWithStr, Recreate,
+    Exec, ExecResult, ExecStop, Instruction, Recreate,
     local_variable::LocalVariables,
 };
 use crate::{Error, ExecError, Interpreter, variable::Variable};
@@ -10,7 +10,7 @@ use pest::iterators::Pair;
 use simplesl_parser::Rule;
 
 #[derive(Debug)]
-pub struct Loop(pub InstructionWithStr);
+pub struct Loop(pub Instruction);
 
 impl Loop {
     pub fn create_instruction(
@@ -20,7 +20,7 @@ impl Loop {
         let mut inner = pair.into_inner();
         let in_loop = local_variables.in_loop;
         local_variables.in_loop = true;
-        let instruction = InstructionWithStr::new(inner.next().unwrap(), local_variables)?;
+        let instruction = Instruction::new(inner.next().unwrap(), local_variables)?;
         local_variables.in_loop = in_loop;
         Ok(Self(instruction).into())
     }

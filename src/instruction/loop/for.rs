@@ -82,16 +82,11 @@ pub fn create_instruction(
         .into(),
         str,
     };
-    let str = format!("{{{}\n{}}}", destruct.str, if_else.str).into();
+    let str = format!("loop {{{}\n{}}}", destruct.str, if_else.str).into();
     let body = Block {
         instructions: [destruct, if_else].into(),
     }
     .into();
-    let body = InstructionWithStr {
-        instruction: body,
-        str,
-    };
-    let str = format!("loop {}", body.str).into();
     let l = InstructionWithStr {
         instruction: Loop(body).into(),
         str,

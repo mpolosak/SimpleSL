@@ -20,20 +20,20 @@ pub fn create_instruction(
     }
     let in_loop = local_variables.in_loop;
     local_variables.in_loop = true;
-    let instruction = InstructionWithStr::new(inner.next().unwrap(), local_variables)?;
+    let iws = InstructionWithStr::new(inner.next().unwrap(), local_variables)?;
     local_variables.in_loop = in_loop;
     if let Instruction::Variable(value) = condition.instruction {
         return if value == Variable::Bool(true) {
-            Ok(Loop(instruction).into())
+            Ok(Loop(iws.instruction).into())
         } else {
             Ok(Variable::Void.into())
         };
     }
-    let str = format!("if {} {} else break", condition.str, instruction.str).into();
+    let str = format!("if {} {} else break", condition.str, iws.str).into();
     let instruction = InstructionWithStr {
         instruction: IfElse {
             condition,
-            if_true: instruction,
+            if_true: iws,
             if_false: InstructionWithStr {
                 instruction: Instruction::Break,
                 str: "Break".into(),
@@ -42,5 +42,5 @@ pub fn create_instruction(
         .into(),
         str,
     };
-    Ok(Loop(instruction).into())
+    Ok(Loop(instruction.instruction).into())
 }
