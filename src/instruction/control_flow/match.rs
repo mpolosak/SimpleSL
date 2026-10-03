@@ -2,7 +2,7 @@ use super::match_arm::MatchArm;
 use crate::{
     Error, ExecError,
     instruction::{
-        Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
+        Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
     },
     interpreter::Interpreter,
     variable::{ReturnType, Type},
@@ -12,7 +12,7 @@ use simplesl_parser::Rule;
 
 #[derive(Debug)]
 pub struct Match {
-    expression: InstructionWithStr,
+    expression: Instruction,
     arms: Box<[MatchArm]>,
 }
 
@@ -23,7 +23,7 @@ impl Match {
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
-        let expression = InstructionWithStr::new(pair, local_variables)?;
+        let expression = Instruction::new(pair, local_variables)?;
         let var_type = expression.return_type();
         let arms = inner
             .map(|pair| MatchArm::new(pair, local_variables, &var_type))
