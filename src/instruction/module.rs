@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use super::{Instruction, InstructionWithStr, local_variable::LocalVariables};
+use super::{Instruction, local_variable::LocalVariables};
 use crate::{
     Error,
     instruction::{block::Block, local_variable::LocalVariableMap, r#struct::Struct},
@@ -19,7 +19,7 @@ pub fn create_instruction(
 }
 
 pub fn new(
-    instructions: Arc<[InstructionWithStr]>,
+    instructions: Arc<[Instruction]>,
     lv_layer: LocalVariableMap,
 ) -> Result<Instruction, Error> {
     let (idents, values): (Vec<_>, Vec<_>) = lv_layer
@@ -36,10 +36,6 @@ pub fn new(
         values: values.into(),
     }
     .into();
-    let struct_ins = InstructionWithStr {
-        instruction: struct_ins,
-        str: "struct".into(),
-    };
     let instructions = [instructions, [struct_ins].into()].concat().into();
     Ok(Block { instructions }.into())
 }

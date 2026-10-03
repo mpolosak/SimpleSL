@@ -2,7 +2,7 @@ use crate::{
     Error, ExecError, Interpreter,
     instruction::{
         Exec, ExecStop, InstructionWithStr, local_variable::LocalVariables, pattern::Pattern,
-        recreate_instructions,
+        recreate_iwses,
     },
     variable::{Type, Typed, Variable},
 };
@@ -70,7 +70,7 @@ impl MatchPattern {
         let MatchPattern::Values(instructions) = self else {
             return Ok(self.clone());
         };
-        let instructions = recreate_instructions(instructions, local_variables)?;
+        let instructions = recreate_iwses(instructions, local_variables)?;
         Ok(MatchPattern::Values(instructions))
     }
 }

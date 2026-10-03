@@ -33,15 +33,11 @@ pub fn create_instruction(
     let mut local_variables = local_variables.create_layer();
     local_variables.in_loop = true;
     local_variables.insert(ident.clone(), LocalVariable::Other(iter_element));
-    let str = format!("$iter = {}", iter.str).into();
-    let iter = InstructionWithStr {
-        instruction: Set {
+    let iter = Set {
             pattern: Pattern::new_ident_pattern(ITER.clone(), iter.return_type()),
             instruction: iter,
         }
-        .into(),
-        str,
-    };
+        .into();
     let iter_call = InstructionWithStr {
         instruction: BinOperation {
             lhs: Instruction::LocalVariable(
@@ -54,15 +50,11 @@ pub fn create_instruction(
         .into(),
         str: "$iter()".into(),
     };
-    let str = format!("($con, {ident}) = {}", iter_call.str).into();
-    let destruct = InstructionWithStr {
-        instruction: Set {
-            pattern: Pattern { destruct_pattern: DestructPattern::Tuple([CON.clone(), ident].into()), var_type: iter_call.return_type() },
-            instruction: iter_call,
-        }
-        .into(),
-        str,
-    };
+    let destruct: Instruction = Set {
+        pattern: Pattern { destruct_pattern: DestructPattern::Tuple([CON.clone(), ident].into()), var_type: iter_call.return_type() },
+        instruction: iter_call,
+    }
+    .into();
     let instruction = InstructionWithStr::new(inner.next().unwrap(), &mut local_variables)?;
     let condition = InstructionWithStr {
         instruction: Instruction::LocalVariable(CON.clone(), LocalVariable::Other(Type::Bool)),
@@ -72,25 +64,17 @@ pub fn create_instruction(
         instruction: Instruction::Break,
         str: "break".into(),
     };
-    let str = format!("if $con {} else break", instruction.str).into();
-    let if_else = InstructionWithStr {
-        instruction: IfElse {
-            condition,
-            if_true: instruction,
-            if_false,
-        }
-        .into(),
-        str,
-    };
-    let str = format!("loop {{{}\n{}}}", destruct.str, if_else.str).into();
+    let if_else = IfElse {
+        condition,
+        if_true: instruction,
+        if_false,
+    }
+    .into();
     let body = Block {
         instructions: [destruct, if_else].into(),
     }
     .into();
-    let l = InstructionWithStr {
-        instruction: Loop(body).into(),
-        str,
-    };
+    let l: Instruction = Loop(body).into();
     Ok(Block {
         instructions: [iter, l].into(),
     }

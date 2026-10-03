@@ -85,7 +85,7 @@ impl Function {
             Body::Lang(body) => body,
             Body::Native(body) => return (body)(interpreter),
         };
-        match interpreter.exec(body) {
+        match interpreter.exec_iwses(body) {
             Ok(_) => Ok(Variable::Void),
             Err(ExecStop::Return(var)) => Ok(var),
             Err(ExecStop::Error(error)) => Err(error),

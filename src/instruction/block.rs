@@ -1,11 +1,8 @@
 use super::{
-    Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
-    recreate_instructions,
+    Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
 };
 use crate::{
-    Error, ExecError,
-    interpreter::Interpreter,
-    variable::{ReturnType, Type, Variable},
+    instruction::recreate_instructions, interpreter::Interpreter, variable::{ReturnType, Type, Variable}, Error, ExecError
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
@@ -13,7 +10,7 @@ use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct Block {
-    pub instructions: Arc<[InstructionWithStr]>,
+    pub instructions: Arc<[Instruction]>,
 }
 
 impl Block {
@@ -31,7 +28,7 @@ impl Exec for Block {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let mut interpreter = interpreter.create_layer();
         Ok(interpreter
-            .exec(&self.instructions)?
+            .exec_instructions(&self.instructions)?
             .last()
             .cloned()
             .unwrap_or(Variable::Void))

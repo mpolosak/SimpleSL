@@ -1,6 +1,6 @@
 use super::{
     Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
-    recreate_instructions,
+    recreate_iwses,
 };
 use crate::{
     self as simplesl, Error, ExecError,
@@ -42,14 +42,14 @@ impl Array {
 
 impl Exec for Array {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let elements = interpreter.exec(&self.instructions)?;
+        let elements = interpreter.exec_iwses(&self.instructions)?;
         Ok(elements.into())
     }
 }
 
 impl Recreate for Array {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let instructions = recreate_instructions(&self.instructions, local_variables)?;
+        let instructions = recreate_iwses(&self.instructions, local_variables)?;
         let mut array = Vec::new();
         for instruction in &*instructions {
             let InstructionWithStr {

@@ -318,13 +318,24 @@ impl ReturnType for Instruction {
     }
 }
 
-pub(crate) fn recreate_instructions(
+pub(crate) fn recreate_iwses(
     instructions: &[InstructionWithStr],
     local_variables: &mut LocalVariables,
 ) -> Result<Arc<[InstructionWithStr]>, ExecError> {
     instructions
         .iter()
         .map(|iws| iws.recreate(local_variables))
+        .collect()
+}
+
+
+pub(crate) fn recreate_instructions(
+    instructions: &[Instruction],
+    local_variables: &mut LocalVariables,
+) -> Result<Arc<[Instruction]>, ExecError> {
+    instructions
+        .iter()
+        .map(|i| i.recreate(local_variables))
         .collect()
 }
 

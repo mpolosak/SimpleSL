@@ -58,7 +58,7 @@ pub fn create_from_variables(
     ident: Arc<str>,
     function: Arc<VarFunc>,
     args: Vec<Variable>,
-) -> Result<Arc<[InstructionWithStr]>, Error> {
+) -> Result<Arc<[Instruction]>, Error> {
     if function.params.len() != args.len() {
         return Err(Error::WrongNumberOfArguments(
             ident.clone(),
@@ -78,38 +78,27 @@ pub fn create_from_variables(
     }
     let instruction: Instruction = Variable::Function(function.clone()).into();
     let ident = function.ident.clone().unwrap_or_else(|| "$".into());
-    let str = format!("{ident} = {function}").into();
-    let rec = InstructionWithStr {
-        instruction: Set {
+    let rec = Set {
             pattern: Pattern::new_ident_pattern(ident.clone(), instruction.return_type()),
             instruction: InstructionWithStr {
                 instruction: instruction.clone(),
                 str: format!("{function}").into(),
             },
         }
-        .into(),
-        str,
-    };
-    let call = InstructionWithStr {
-        instruction: UnaryOperation {
+        .into();
+    let call = UnaryOperation {
             instruction,
             op: UnaryOperator::FunctionCall,
         }
-        .into(),
-        str: format!("{ident}()").into(),
-    };
+        .into();
     let args = args.into_iter().map(InstructionWithStr::from);
     Ok(zip(function.params.iter().cloned(), args)
         .map(|(param, arg)| {
-            let str = format!("{} := {}", param.name, arg.str).into();
-            InstructionWithStr {
-                instruction: Set {
+            Set {
                     pattern: param.into(),
                     instruction: arg,
-                }
-                .into(),
-                str,
             }
+            .into()
         })
         .chain(std::iter::once(rec))
         .chain(std::iter::once(call))

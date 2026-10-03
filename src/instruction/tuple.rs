@@ -1,6 +1,6 @@
 use super::{
     Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
-    recreate_instructions,
+    recreate_iwses,
 };
 use crate::{
     Error, ExecError,
@@ -46,14 +46,14 @@ impl Tuple {
 
 impl Exec for Tuple {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let elements = interpreter.exec(&self.elements)?;
+        let elements = interpreter.exec_iwses(&self.elements)?;
         Ok(Variable::Tuple(elements))
     }
 }
 
 impl Recreate for Tuple {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let elements = recreate_instructions(&self.elements, local_variables)?;
+        let elements = recreate_iwses(&self.elements, local_variables)?;
         Ok(Self::create_from_elements(elements))
     }
 }

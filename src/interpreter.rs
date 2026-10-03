@@ -1,4 +1,4 @@
-use crate::instruction::{Exec, ExecStop, InstructionWithStr};
+use crate::instruction::{Exec, ExecStop, Instruction, InstructionWithStr};
 use crate::stdlib::Std;
 use crate::variable::*;
 use std::collections::HashMap;
@@ -29,9 +29,19 @@ impl<'a> Interpreter<'a> {
         }
     }
 
-    pub(crate) fn exec(
+    pub(crate) fn exec_iwses(
         &mut self,
         instructions: &[InstructionWithStr],
+    ) -> Result<Arc<[Variable]>, ExecStop> {
+        instructions
+            .iter()
+            .map(|instruction| instruction.exec(self))
+            .collect()
+    }
+
+    pub(crate) fn exec_instructions(
+        &mut self,
+        instructions: &[Instruction],
     ) -> Result<Arc<[Variable]>, ExecStop> {
         instructions
             .iter()

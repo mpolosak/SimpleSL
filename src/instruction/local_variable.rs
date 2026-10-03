@@ -89,17 +89,17 @@ impl<'a> LocalVariables<'a> {
             .or_else(|| self.lower_layer.and_then(LocalVariables::function))
     }
 
-    pub(crate) fn load(&mut self, path: &str) -> Result<Arc<[InstructionWithStr]>, Error> {
+    pub(crate) fn load(&mut self, path: &str) -> Result<Arc<[Instruction]>, Error> {
         let contents = fs::read_to_string(path)?;
         self.parse_input(&contents)
     }
 
-    pub(crate) fn parse_input(&mut self, input: &str) -> Result<Arc<[InstructionWithStr]>, Error> {
+    pub(crate) fn parse_input(&mut self, input: &str) -> Result<Arc<[Instruction]>, Error> {
         let pairs = SimpleSLParser::parse(Rule::input, input)?;
         self.create_instructions(pairs)
     }
 
-    pub(crate) fn create_instructions(
+    pub(crate) fn create_iws(
         &mut self,
         pairs: Pairs<'_, Rule>,
     ) -> Result<Arc<[InstructionWithStr]>, Error> {
@@ -116,6 +116,26 @@ impl<'a> LocalVariables<'a> {
                     instruction: Instruction::Variable(..),
                     ..
                 }
+            )
+        });
+        instructions.push(last);
+        Ok(instructions.into())
+    }
+
+    pub(crate) fn create_instructions(
+        &mut self,
+        pairs: Pairs<'_, Rule>,
+    ) -> Result<Arc<[Instruction]>, Error> {
+        let mut instructions = pairs
+            .map(|pair| Instruction::new(pair, self))
+            .collect::<Result<Vec<Instruction>, Error>>()?;
+        let Some(last) = instructions.pop() else {
+            return Ok(Arc::from([]));
+        };
+        instructions.retain(|instruction| {
+            !matches!(
+                instruction,
+                Instruction::Variable(..),
             )
         });
         instructions.push(last);

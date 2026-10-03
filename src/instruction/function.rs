@@ -1,7 +1,7 @@
 pub mod call;
 use crate::{
     self as simplesl, function::{Body, Function as VarFunc, Param, Params}, instruction::{
-        local_variable::{FunctionInfo, LocalVariable, LocalVariableMap, LocalVariables}, recreate_instructions, Exec, ExecResult, Instruction, InstructionWithStr, Recreate
+        local_variable::{FunctionInfo, LocalVariable, LocalVariableMap, LocalVariables}, recreate_iwses, Exec, ExecResult, Instruction, InstructionWithStr, Recreate
     }, interpreter::Interpreter, variable::{ReturnType, Type}, Error, ExecError
 };
 use pest::iterators::Pair;
@@ -43,7 +43,7 @@ impl Function {
             LocalVariable::Function(params.clone(), return_type.clone()),
         );
         }
-        let body = local_variables.create_instructions(inner)?;
+        let body = local_variables.create_iws(inner)?;
         if !Type::Void.matches(&return_type)
             && !body
                 .iter()
@@ -74,7 +74,7 @@ impl Exec for Function {
                 LocalVariable::Function(self.params.clone(), self.return_type.clone()),
             );
         }
-        let body = recreate_instructions(&self.body, &mut fn_local_variables)?;
+        let body = recreate_iwses(&self.body, &mut fn_local_variables)?;
         Ok(VarFunc {
             ident: self.ident.clone(),
             params: self.params.clone(),
@@ -97,7 +97,7 @@ impl Recreate for Function {
                 LocalVariable::Function(self.params.clone(), self.return_type.clone()),
             );
         }
-        let body = recreate_instructions(&self.body, &mut local_variables)?;
+        let body = recreate_iwses(&self.body, &mut local_variables)?;
         Ok(Self {
             ident: self.ident.clone(),
             params: self.params.clone(),
