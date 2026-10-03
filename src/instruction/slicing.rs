@@ -8,14 +8,14 @@ use crate::{
     variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
-use simplesl_parser::Rule;
+use simplesl_parser::{unexpected, Rule};
 
 #[derive(Debug)]
 pub struct Slicing {
-    lhs: InstructionWithStr,
-    start: Option<InstructionWithStr>,
-    stop: Option<InstructionWithStr>,
-    step: Option<InstructionWithStr>,
+    lhs: Instruction,
+    start: Option<Instruction>,
+    stop: Option<Instruction>,
+    step: Option<Instruction>,
 }
 
 impl Slicing {
@@ -28,58 +28,28 @@ impl Slicing {
         if !lhs_type.can_be_indexed() {
             return Err(Error::CannotSlice(lhs.str, lhs_type));
         }
-        let mut inner = pair.into_inner();
-        let (start, stop, step) = match (inner.next(), inner.next(), inner.next()) {
-            (Some(start), Some(stop), Some(step)) => (
-                Some(InstructionWithStr::new_expression(start, local_variables)?),
-                Some(InstructionWithStr::new_expression(stop, local_variables)?),
-                Some(InstructionWithStr::new_expression(step, local_variables)?),
-            ),
-            (Some(start), Some(stop), None)
-                if start.as_rule() == Rule::start && stop.as_rule() == Rule::stop =>
-            {
-                (
-                    Some(InstructionWithStr::new_expression(start, local_variables)?),
-                    Some(InstructionWithStr::new_expression(stop, local_variables)?),
-                    None,
-                )
-            }
-            (Some(start), Some(step), None) if start.as_rule() == Rule::start => (
-                Some(InstructionWithStr::new_expression(start, local_variables)?),
-                None,
-                Some(InstructionWithStr::new_expression(step, local_variables)?),
-            ),
-            (Some(stop), Some(step), None) => (
-                None,
-                Some(InstructionWithStr::new_expression(stop, local_variables)?),
-                Some(InstructionWithStr::new_expression(step, local_variables)?),
-            ),
-            (Some(start), None, None) if start.as_rule() == Rule::start => (
-                Some(InstructionWithStr::new_expression(start, local_variables)?),
-                None,
-                None,
-            ),
-            (Some(stop), None, None) if stop.as_rule() == Rule::stop => (
-                None,
-                Some(InstructionWithStr::new_expression(stop, local_variables)?),
-                None,
-            ),
-            (Some(step), None, None) => (
-                None,
-                None,
-                Some(InstructionWithStr::new_expression(step, local_variables)?),
-            ),
-            _ => return Ok(lhs.instruction),
-        };
-        if let (Some(index), _, _) | (_, Some(index), _) | (_, _, Some(index)) =
-            (&start, &stop, &step)
-            && index.return_type() != Type::Int
-        {
-            return Err(Error::CannotIndexWith(index.str.clone()));
+        let inner = pair.into_inner();
+        if inner.peek().is_none() {
+            return Ok(lhs.instruction);
         }
-
+        let mut start = None;
+        let mut stop = None;
+        let mut step = None;
+        for pair in inner {
+            let rule = pair.as_rule();
+            let instruction = InstructionWithStr::new_expression(pair, local_variables)?;
+            if instruction.return_type() != Type::Int {
+                return Err(Error::CannotIndexWith(instruction.str));
+            }
+            match rule {
+                Rule::start => start = Some(instruction.instruction),
+                Rule::step => step = Some(instruction.instruction),
+                Rule::stop => stop = Some(instruction.instruction),
+                rule => unexpected!(rule)
+            }
+        }
         Ok(Self {
-            lhs,
+            lhs: lhs.instruction,
             start,
             stop,
             step,
@@ -88,10 +58,10 @@ impl Slicing {
     }
 
     fn exec_index(
-        index: &Option<InstructionWithStr>,
+        index: &Option<Instruction>,
         interpreter: &mut Interpreter,
     ) -> Result<Option<isize>, super::ExecStop> {
-        let exec = |ins: &InstructionWithStr| ins.exec(interpreter);
+        let exec = |ins: &Instruction| ins.exec(interpreter);
         let start = index
             .as_ref()
             .map(exec)
