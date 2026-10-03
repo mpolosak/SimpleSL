@@ -17,9 +17,9 @@ use simplesl_parser::Rule;
 
 #[derive(Debug)]
 pub struct Reduce {
-    iter: InstructionWithStr,
-    initial_value: InstructionWithStr,
-    function: InstructionWithStr,
+    iter: Instruction,
+    initial_value: Instruction,
+    function: Instruction,
 }
 
 impl Reduce {
@@ -45,9 +45,9 @@ impl Reduce {
             return Err(Error::WrongType("function".into(), expected_function));
         }
         Ok(Self {
-            iter,
-            initial_value,
-            function,
+            iter: iter.instruction,
+            initial_value: initial_value.instruction,
+            function: function.instruction,
         }
         .into())
     }
