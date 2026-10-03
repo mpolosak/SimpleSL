@@ -28,7 +28,7 @@ pub fn create(iterator: InstructionWithStr, op: UnaryOperator) -> Result<Instruc
         Variable::from(ANY).into()
     };
     let rhs = Tuple {
-        elements: [iterator].into(),
+        elements: [iterator.instruction].into(),
     }
     .into();
     Ok(BinOperation {

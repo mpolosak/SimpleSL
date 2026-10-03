@@ -15,7 +15,7 @@ pub fn create_instruction(
     let args = args
         .into_inner()
         .map(|pair| InstructionWithStr::new_expression(pair, local_variables))
-        .collect::<Result<Arc<_>, Error>>()?;
+        .collect::<Result<Box<_>, Error>>()?;
     match &function.instruction {
         Instruction::Variable(Variable::Function(function2)) => {
             check_args_with_params(&function.str, &function2.params, &args)?;
@@ -45,7 +45,8 @@ pub fn create_instruction(
             check_args_with_params(&function.str, &Params(params), &args)?;
         }
     };
-    let args = Tuple { elements: args }.into();
+    let elements = args.into_iter().map(|arg| arg.instruction).collect();
+    let args = Tuple { elements }.into();
     Ok(BinOperation {
         lhs: function.instruction,
         rhs: args,

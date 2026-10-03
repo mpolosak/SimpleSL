@@ -1,11 +1,8 @@
 use super::{
     Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
-    recreate_iwses,
 };
 use crate::{
-    Error, ExecError,
-    interpreter::Interpreter,
-    variable::{ReturnType, Type, Variable},
+    instruction::recreate_instructions, interpreter::Interpreter, variable::{ReturnType, Type, Variable}, Error, ExecError
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
@@ -13,7 +10,7 @@ use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct Tuple {
-    pub elements: Arc<[InstructionWithStr]>,
+    pub elements: Arc<[Instruction]>,
 }
 
 impl Tuple {
@@ -23,18 +20,15 @@ impl Tuple {
     ) -> Result<Instruction, Error> {
         let elements = pair
             .into_inner()
-            .map(|pair| InstructionWithStr::new_expression(pair, local_variables))
-            .collect::<Result<Arc<[InstructionWithStr]>, Error>>()?;
+            .map(|pair| Ok(InstructionWithStr::new_expression(pair, local_variables)?.instruction))
+            .collect::<Result<Arc<[Instruction]>, Error>>()?;
         Ok(Self { elements }.into())
     }
 
-    fn create_from_elements(elements: Arc<[InstructionWithStr]>) -> Instruction {
+    fn create_from_elements(elements: Arc<[Instruction]>) -> Instruction {
         let mut array = Vec::new();
         for instruction in &*elements {
-            let InstructionWithStr {
-                instruction: Instruction::Variable(variable),
-                ..
-            } = instruction
+            let Instruction::Variable(variable) = instruction
             else {
                 return Self { elements }.into();
             };
@@ -46,14 +40,14 @@ impl Tuple {
 
 impl Exec for Tuple {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let elements = interpreter.exec_iwses(&self.elements)?;
+        let elements = interpreter.exec_instructions(&self.elements)?;
         Ok(Variable::Tuple(elements))
     }
 }
 
 impl Recreate for Tuple {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let elements = recreate_iwses(&self.elements, local_variables)?;
+        let elements = recreate_instructions(&self.elements, local_variables)?;
         Ok(Self::create_from_elements(elements))
     }
 }
