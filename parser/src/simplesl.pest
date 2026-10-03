@@ -207,7 +207,7 @@ function_type_params =  { "(" ~ (type ~ ("," ~ type)*)? ~ ")" }
 return_type          = _{ standard_types | "(" ~ multi ~ ")" }
 array_type           =  { "[" ~ type? ~ "]" }
 tuple_type           =  { "(" ~ (type ~ ("," ~ type)+) ~ ")" }
-struct_type          =  { structkw ~ "{" ~ (pattern     ~ ("," ~ pattern    )*)? ~ "}" }
+struct_type          =  { structkw ~ "{" ~ params_list ~ "}" }
 standard_types       = _{
     bool_type
   | int_type
