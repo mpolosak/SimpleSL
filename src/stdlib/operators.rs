@@ -13,17 +13,13 @@ decls! {
         }
     }
     ALL:=(iter: () -> (bool, bool)) -> bool {
-        loop {
-            (con, value) := iter();
-            if !con { break; }
+        for value in iter {
             if !value { return false; }
         }
         return true;
     }
     ANY:=(iter: () -> (bool, bool)) -> bool {
-        loop {
-            (con, value) := iter();
-            if !con { break; }
+        for value in iter {
             if value { return true; }
         }
         return false;
