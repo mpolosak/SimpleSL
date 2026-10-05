@@ -6,28 +6,9 @@ use duplicate::duplicate_item;
 )]
 pub mod shift {
     use crate::{
-        BinOperator, ExecError,
-        instruction::{BinOperation, Instruction},
+        ExecError,
         variable::Variable,
     };
-
-    pub fn create_from_instructions(
-        lhs: Instruction,
-        rhs: Instruction,
-    ) -> Result<Instruction, ExecError> {
-        match (lhs, rhs) {
-            (Instruction::Variable(lhs), Instruction::Variable(rhs)) => Ok(exec(lhs, rhs)?.into()),
-            (_, Instruction::Variable(Variable::Int(rhs))) if !(0..=63).contains(&rhs) => {
-                Err(ExecError::OverflowShift)
-            }
-            (lhs, rhs) => Ok(BinOperation {
-                lhs,
-                rhs,
-                op: BinOperator::Shift,
-            }
-            .into()),
-        }
-    }
 
     pub fn exec(lhs: Variable, rhs: Variable) -> Result<Variable, ExecError> {
         let (Variable::Int(lhs), Variable::Int(rhs)) = (&lhs, &rhs) else {
