@@ -153,9 +153,9 @@ impl FromStr for Variable {
 
     fn from_str(s: &str) -> Result<Self, Error> {
         let s = s.trim();
-        let parse = SimpleSLParser::parse(Rule::only_var, s)?;
-        let pairs: Box<[Pair<Rule>]> = parse.collect();
-        Self::try_from(pairs[0].clone())
+        let mut parse = SimpleSLParser::parse(Rule::only_var, s)?;
+        let pair = parse.next().unwrap();
+        Self::try_from(pair)
     }
 }
 
