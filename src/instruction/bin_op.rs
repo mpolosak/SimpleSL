@@ -8,7 +8,7 @@ mod partition;
 mod shift;
 use super::{
     Exec, ExecResult, Instruction, InstructionWithStr, Recreate, at, function::call,
-    local_variable::LocalVariables, reduce::Reduce,
+    local_variable::LocalVariables, reduce,
 };
 use crate::{
     self as simplesl, BinOperator, Error, ExecError, Interpreter,
@@ -197,7 +197,7 @@ impl InstructionWithStr {
         let rule = op.as_rule();
         if rule == Rule::reduce {
             return Ok(Self {
-                instruction: Reduce::create_instruction(lhs, op, rhs, local_variables)?,
+                instruction: reduce::create_instruction(lhs, op, rhs, local_variables)?,
                 str,
             });
         }

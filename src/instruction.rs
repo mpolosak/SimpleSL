@@ -44,7 +44,6 @@ use r#loop::{Loop, r#for, r#while, while_set};
 use match_any::match_any;
 use r#mut::Mut;
 use pest::iterators::Pair;
-use reduce::Reduce;
 use simplesl_parser::{PRATT_PARSER, Rule, unexpected};
 use slicing::Slicing;
 use std::sync::Arc;
@@ -177,8 +176,6 @@ pub enum Instruction {
     Match(Arc<Match>),
     #[from(Mut)]
     Mut(Arc<Mut>),
-    #[from(Reduce)]
-    Reduce(Arc<Reduce>),
     #[from(Set)]
     Set(Arc<Set>),
     #[from(SetIfElse)]
@@ -258,10 +255,9 @@ impl Exec for Instruction {
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins)
             | Self::Block(ins) | Self::Tuple(ins) | Self::BinOperation(ins)
             | Self::FieldAccess(ins) | Self::IfElse(ins) | Self::Loop(ins) 
-            | Self::Match(ins) | Self::Mut(ins) | Self::Reduce(ins) | Self::Set(ins)
-            | Self::SetIfElse(ins) | Self::Slicing(ins) | Self::Struct(ins)
-            | Self::TypeFilter(ins) | Self::UnaryOperation(ins)
-            | Self::TupleAccess(ins) => ins.exec(interpreter),
+            | Self::Match(ins) | Self::Mut(ins) | Self::Set(ins) | Self::SetIfElse(ins)
+            | Self::Slicing(ins) | Self::Struct(ins) | Self::TypeFilter(ins)
+            | Self::UnaryOperation(ins) | Self::TupleAccess(ins) => ins.exec(interpreter),
             Self::Break => Err(ExecStop::Break),
             Self::Continue => Err(ExecStop::Continue)
         }
@@ -288,9 +284,9 @@ impl Recreate for Instruction {
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins)
             | Self::Block(ins) | Self::Tuple(ins) | Self::BinOperation(ins) | Self::FieldAccess(ins) 
             | Self::IfElse(ins) | Self::Loop(ins) | Self::Match(ins)
-            | Self::Mut(ins) | Self::Reduce(ins) | Self::Set(ins) | Self::SetIfElse(ins)
-            | Self::Slicing(ins)| Self::Struct(ins) |  Self::TypeFilter(ins)
-            | Self::UnaryOperation(ins) | Self::TupleAccess(ins) => ins.recreate(local_variables),
+            | Self::Mut(ins) | Self::Set(ins) | Self::SetIfElse(ins)
+            | Self::Slicing(ins)| Self::Struct(ins) |  Self::TypeFilter(ins) | Self::UnaryOperation(ins)
+            | Self::TupleAccess(ins) => ins.recreate(local_variables),
             _ => Ok(self.clone())
         }
     }
@@ -303,9 +299,9 @@ impl ReturnType for Instruction {
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins)
             | Self::Block(ins) | Self::Tuple(ins) | Self::BinOperation(ins)
             | Self::FieldAccess(ins) | Self::IfElse(ins) | Self::Match(ins) | Self::Mut(ins)
-            | Self::Reduce(ins) | Self::Set(ins) | Self::SetIfElse(ins) | Self::Slicing(ins)
-            | Self::Struct(ins) | Self::TypeFilter(ins) | Self::UnaryOperation(ins)
-            | Self::TupleAccess(ins) => ins.return_type(),
+            | Self::Set(ins) | Self::SetIfElse(ins) | Self::Slicing(ins) | Self::Struct(ins)
+            | Self::TypeFilter(ins) | Self::UnaryOperation(ins) | Self::TupleAccess(ins)
+                => ins.return_type(),
             Self::Loop(_) => Type::Void,
             Self::Break | Self::Continue => Type::Never
         }

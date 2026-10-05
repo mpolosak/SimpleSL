@@ -53,6 +53,13 @@ decls! {
             return acc + curr;
         }
     }
+    REDUCE:=(iter: () -> (bool, any), initial_value: any, function: (any, any) -> any) -> any {
+        result:=mut initial_value;
+        for element in iter {
+            result=function(*result, element)
+        }
+        return *result
+    }
     Operators:=struct{
         bitand_reduce := AND,
         bitor_reduce := OR,
@@ -62,6 +69,7 @@ decls! {
         float_product := FLOAT_PRODUCT,
         int_sum := INT_SUM,
         float_sum := FLOAT_SUM,
-        string_sum := STRING_SUM
+        string_sum := STRING_SUM,
+        reduce := REDUCE
     }
 }

@@ -324,3 +324,6 @@ The same as `iter$+`
 
 ## string_sum(iter: () -> (bool, string)) -> string
 The same as `iter$+`
+
+## reduce(iter: () -> (bool, any), initial_value: any, function: (any, any) -> any) -> any
+The same as `iter $initial_value function`

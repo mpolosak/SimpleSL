@@ -3,96 +3,74 @@ pub mod bool_reduce;
 pub mod collect;
 pub mod product;
 pub mod sum;
+use std::sync::Arc;
+
 use crate::{
-    self as simplesl, Error, ExecError,
+    self as simplesl, Error,
     instruction::{
-        Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
+        Instruction, InstructionWithStr, block::Block, local_variable::LocalVariables,
+        pattern::Pattern, set::Set, unary_operation::function_call,
     },
-    interpreter::Interpreter,
-    variable::{ReturnType, Type, Variable},
+    stdlib::operators::REDUCE,
+    variable::{ReturnType, Variable},
 };
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
 use simplesl_parser::Rule;
 
-#[derive(Debug)]
-pub struct Reduce {
-    iter: Instruction,
-    initial_value: Instruction,
-    function: Instruction,
-}
-
-impl Reduce {
-    pub fn create_instruction(
-        iter: InstructionWithStr,
-        initial_value: Pair<Rule>,
-        function: InstructionWithStr,
-        local_variables: &LocalVariables,
-    ) -> Result<Instruction, Error> {
-        let initial_value = InstructionWithStr::new_expression(initial_value, local_variables)?;
-        let Some(element_type) = iter.return_type().iter_element() else {
-            return Err(Error::CannotReduce(iter.str));
-        };
-        let Some(return_type) = function.return_type().return_type() else {
-            return Err(Error::WrongType(
-                "function".into(),
-                var_type!((any, element_type)->any),
-            ));
-        };
-        let acc_type = initial_value.return_type() | element_type.clone() | return_type.clone();
-        let expected_function = var_type!((acc_type, element_type)->return_type);
-        if !function.return_type().matches(&expected_function) {
-            return Err(Error::WrongType("function".into(), expected_function));
-        }
-        Ok(Self {
-            iter: iter.instruction,
-            initial_value: initial_value.instruction,
-            function: function.instruction,
-        }
-        .into())
+pub fn create_instruction(
+    iter: InstructionWithStr,
+    initial_value: Pair<Rule>,
+    function: InstructionWithStr,
+    local_variables: &LocalVariables,
+) -> Result<Instruction, Error> {
+    let initial_value = InstructionWithStr::new_expression(initial_value, local_variables)?;
+    let iter_type = iter.return_type();
+    let Some(element_type) = iter_type.iter_element() else {
+        return Err(Error::CannotReduce(iter.str));
+    };
+    let function_return_type = function.return_type();
+    let Some(return_type) = function_return_type.return_type() else {
+        return Err(Error::WrongType(
+            "function".into(),
+            var_type!((any, element_type)->any),
+        ));
+    };
+    let acc_type = initial_value.return_type() | element_type.clone() | return_type.clone();
+    let expected_function = var_type!((acc_type, element_type)->return_type);
+    if !function.return_type().matches(&expected_function) {
+        return Err(Error::WrongType("function".into(), expected_function));
     }
-}
 
-impl Recreate for Reduce {
-    fn recreate(
-        &self,
-        local_variables: &mut crate::instruction::local_variable::LocalVariables,
-    ) -> Result<Instruction, ExecError> {
-        let array = self.iter.recreate(local_variables)?;
-        let initial_value = self.initial_value.recreate(local_variables)?;
-        let function = self.function.recreate(local_variables)?;
-        Ok(Self {
-            iter: array,
-            initial_value,
-            function,
-        }
-        .into())
-    }
-}
+    let mut reduce = Arc::unwrap_or_clone(Variable::from(REDUCE).into_function().unwrap());
+    reduce.return_type = function_return_type.return_type().unwrap();
 
-impl Exec for Reduce {
-    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let iter = self.iter.exec(interpreter)?;
-        let initial_value = self.initial_value.exec(interpreter)?;
-        let function = self.function.exec(interpreter)?;
-        let (Variable::Function(iter), Variable::Function(function)) = (&iter, &function) else {
-            unreachable!("Tried to do {iter} ${initial_value} {function}")
-        };
-        let mut result = initial_value;
-        while let Variable::Tuple(tuple) = iter.exec(interpreter)? {
-            if tuple[0] == Variable::Bool(false) {
-                break;
-            };
-            result = function.exec_with_args(&[result, tuple[1].clone()])?;
-        }
-        Ok(result)
+    let iter_set = Set {
+        pattern: Pattern::new_ident_pattern("iter".into(), iter_type),
+        instruction: iter.instruction,
     }
-}
+    .into();
+    let initial_value_set = Set {
+        pattern: Pattern::new_ident_pattern("initial_value".into(), initial_value.return_type()),
+        instruction: initial_value.instruction,
+    }
+    .into();
+    let function_set = Set {
+        pattern: Pattern::new_ident_pattern("function".into(), function_return_type),
+        instruction: function.instruction,
+    }
+    .into();
 
-impl ReturnType for Reduce {
-    fn return_type(&self) -> Type {
-        self.function.return_type().return_type().unwrap() | self.initial_value.return_type()
+    Ok(Block {
+        instructions: [
+            iter_set,
+            initial_value_set,
+            function_set,
+            function_call(reduce),
+        ]
+        .into(),
     }
+    .into())
 }
 
 #[cfg(test)]
