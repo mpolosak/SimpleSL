@@ -111,7 +111,6 @@ impl Recreate for BinOperation {
             BinOperator::Add => Ok(add::create_from_instructions(lhs, rhs)),
             BinOperator::Subtract => Ok(subtract::create_from_instructions(lhs, rhs)),
             BinOperator::Multiply => Ok(multiply::create_from_instructions(lhs, rhs)),
-            BinOperator::Divide => divide::create_from_instructions(lhs, rhs),
             BinOperator::Modulo => modulo::create_from_instructions(lhs, rhs),
             BinOperator::Equal => Ok(equal::create_from_instructions(lhs, rhs)),
             BinOperator::NotEqual => Ok(not_equal::create_from_instructions(lhs, rhs)),
