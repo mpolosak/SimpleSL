@@ -6,7 +6,6 @@ use crate::{
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
-use std::ops::Range;
 
 pub fn create(
     lhs: Instruction,
@@ -28,33 +27,6 @@ pub fn create(
         op: BinOperator::At,
     }
     .into())
-}
-
-pub fn create_from_instructions(
-    instruction: Instruction,
-    index: Instruction,
-) -> Result<Instruction, ExecError> {
-    match (instruction, index) {
-        (Instruction::Variable(variable), Instruction::Variable(index)) => {
-            Ok(exec(variable, index)?.into())
-        }
-        (Instruction::Array(array), Instruction::Variable(Variable::Int(value)))
-            if !range(array.instructions.len()).contains(&value) =>
-        {
-            Err(ExecError::IndexOutOfBounds)
-        }
-        (instruction, index) => Ok(BinOperation {
-            lhs: instruction,
-            rhs: index,
-            op: BinOperator::At,
-        }
-        .into()),
-    }
-}
-
-fn range(value: usize) -> Range<i64> {
-    let value = value as i64;
-    -value..value
 }
 
 pub fn exec(variable: Variable, index: Variable) -> Result<Variable, ExecError> {

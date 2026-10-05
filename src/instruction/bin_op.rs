@@ -126,7 +126,6 @@ impl Recreate for BinOperation {
             BinOperator::Xor => Ok(xor::create_from_instructions(lhs, rhs)),
             BinOperator::LShift => lshift::create_from_instructions(lhs, rhs),
             BinOperator::RShift => rshift::create_from_instructions(lhs, rhs),
-            BinOperator::At => at::create_from_instructions(lhs, rhs),
             op => Ok(Self { lhs, rhs, op }.into()),
         }
     }
