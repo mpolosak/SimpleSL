@@ -10,7 +10,7 @@ restricted_keywords  = _{ bool | mutkw | returnkw | loopkw | whilekw | forkw | s
   elsekw = _{ "else" }
   importkw = _{ "import" }
 ident                = @{ !(restricted_keywords ~ !(ASCII_ALPHANUMERIC | "_")) ~ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
-var                  = _{ bool | float | int | array | array_repeat | string | function | void | tuple | mut | struct | mod }
+var                  = _{ bool | float | int | array | array_repeat | string | function | void | tuple | struct | mod }
 bool                 = _{ true | false }
 true                 =  { "true" }
 false                =  { "false" }
@@ -40,12 +40,11 @@ char                 =  {
     !("\"" | "\\") ~ ANY
   | "\\" ~ ANY
 }
-mut                  =  { mutkw ~ type? ~ expr }
 struct               =  { structkw ~ "{" ~ ((field | ident) ~ ("," ~ (field | ident))*)? ~ "}" }
 field                =  { ident ~ ":=" ~ expr }
 primary              = _{ ident | var | expr_in_brackets }
 expr_in_brackets     = _{ "(" ~ expr ~ ")" }
-atom                 = _{ prefix_op? ~ primary ~ postfix_op* }
+atom                 = _{ prefix_op* ~ primary ~ postfix_op* }
 expr                 =  { (atom ~ (bin_op ~ atom)*) }
 bin_op               = _{
     equal
@@ -119,10 +118,11 @@ assign_bitwise_and   =  { "&=" }
 assign_bitwise_or    =  { "|=" }
 assign_xor           =  { "^=" }
 assign_pow           =  { "**=" }
-prefix_op            = _{ not | unary_minus | indirection }
-not                  =  { "!" }
-unary_minus          =  { "-" }
-indirection          =  { "*" }
+prefix_op            = _{ not | unary_minus | indirection | mut }
+  not                  =  { "!" }
+  unary_minus          =  { "-" }
+  indirection          =  { "*" }
+  mut                  =  { mutkw ~ type? }
 postfix_op           = _{
     type_filter
   | at
@@ -139,23 +139,23 @@ postfix_op           = _{
   | collect
   | iter
 }
-type_filter          =  { "?" ~ type }
-at                   =  { "[" ~ expr ~ "]" }
-slicing              =  { "[" ~ start? ~ ":" ~ stop? ~ (":" ~ step?)? ~ "]" }
-start                =  { expr }
-stop                 =  { expr }
-step                 =  { expr }
-function_call        =  { "(" ~ expression_list? ~ ")" }
-tuple_access         =  { "." ~ int }
-field_access         =  { "." ~ ident }
-sum                  =  { "$+" }
-product              =  { "$*" }
-all                  =  { "$&&" }
-reduce_any           =  { "$||" }
-bitand_reduce        =  { "$&" }
-bitor_reduce         =  { "$|" }
-collect              =  { "$]" }
-iter                 =  { "~" }
+  type_filter          =  { "?" ~ type }
+  at                   =  { "[" ~ expr ~ "]" }
+  slicing              =  { "[" ~ start? ~ ":" ~ stop? ~ (":" ~ step?)? ~ "]" }
+  start                =  { expr }
+  stop                 =  { expr }
+  step                 =  { expr }
+  function_call        =  { "(" ~ expression_list? ~ ")" }
+  tuple_access         =  { "." ~ int }
+  field_access         =  { "." ~ ident }
+  sum                  =  { "$+" }
+  product              =  { "$*" }
+  all                  =  { "$&&" }
+  reduce_any           =  { "$||" }
+  bitand_reduce        =  { "$&" }
+  bitor_reduce         =  { "$|" }
+  collect              =  { "$]" }
+  iter                 =  { "~" }
 stm                  = _{
     block
   | if_else

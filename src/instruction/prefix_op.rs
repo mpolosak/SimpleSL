@@ -1,5 +1,5 @@
 use super::InstructionWithStr;
-use crate as simplesl;
+use crate::{self as simplesl, instruction::r#mut::Mut};
 use crate::Error;
 use crate::variable::Type;
 use lazy_static::lazy_static;
@@ -10,13 +10,14 @@ use simplesl_parser::{Rule, unexpected};
 impl InstructionWithStr {
     pub fn create_prefix(op: Pair<'_, Rule>, rhs: Self) -> Result<Self, Error> {
         let str = rhs.str.clone();
+        let str = format!("{} {}", op.as_str(), str).into();
         let instruction = match op.as_rule() {
             Rule::not => not::create_instruction(rhs),
             Rule::unary_minus => unary_minus::create_instruction(rhs),
             Rule::indirection => indirection::create_instruction(rhs),
+            Rule::r#mut => Mut::create_instruction(op, rhs),
             rule => unexpected!(rule),
         }?;
-        let str = format!("{} {}", op.as_str(), str).into();
         Ok(Self { instruction, str })
     }
 }

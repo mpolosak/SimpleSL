@@ -16,34 +16,28 @@ pub struct Mut {
 
 impl Mut {
     pub fn create_instruction(
-        pair: Pair<Rule>,
-        local_variables: &LocalVariables,
+        op: Pair<Rule>,
+        rhs: InstructionWithStr,
     ) -> Result<Instruction, Error> {
-        let mut inner = pair.into_inner();
-        let pair = inner.next().unwrap();
-        if pair.as_rule() == Rule::expr {
-            let instruction = InstructionWithStr::new_expression(pair, local_variables)?;
-            let var_type = instruction.return_type();
+        let mut inner = op.into_inner();
+        let Some(type_pair) = inner.next() else {
             return Ok(Mut {
-                var_type,
-                instruction: instruction.instruction,
-            }
-            .into());
-        }
-        let var_type = Type::from(pair);
-        let pair = inner.next().unwrap();
-        let instruction = InstructionWithStr::new_expression(pair, local_variables)?;
-        let instruction_return_type = instruction.return_type();
+                var_type: rhs.return_type(),
+                instruction: rhs.instruction
+            }.into())
+        };
+        let var_type = Type::from(type_pair);
+        let instruction_return_type = rhs.return_type();
         if !instruction_return_type.matches(&var_type) {
             return Err(Error::WrongInitialization {
                 declared: var_type,
-                given: instruction.str,
+                given: rhs.str,
                 given_type: instruction_return_type,
             });
         }
         Ok(Mut {
             var_type,
-            instruction: instruction.instruction,
+            instruction: rhs.instruction,
         }
         .into())
     }

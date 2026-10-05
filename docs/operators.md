@@ -50,6 +50,7 @@
 |            | ^=           | Bitwise XOR and assignment  |               |
 |            | <<=          | Left shift and assignment   |               |
 |            | >>=          | Right shift and assignment  |               |
+|            | mut type?    | Mut creation                | Left-to-right |
 
 ## [] - Array/string indexing
 ```
@@ -315,3 +316,13 @@ Returns true if the element on the left is greater than or equal to the element 
 | lhs        | rhs | result | description |
 | ---------- | --- | ------ | ----------- |
 | mut (T\|S) | T   | T      | assign value on right to mut on left returns value on right
+
+## mut type - Mut creation
+|```
+mut type? value
+```
+Creates mutable container holding given value.
+| type | value | result   |
+| ---- | ----- | -------- |
+| T\|S | T     | mut T\|S |
+| none | T     | mut T    |
