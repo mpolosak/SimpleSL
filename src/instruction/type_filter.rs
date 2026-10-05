@@ -41,10 +41,7 @@ impl Exec for TypeFilter {
             &interpreter,
             &format!(
                 "() -> (bool, {}) {{
-                    loop {{
-                        res := iterator();
-                        (con, value) := res;
-                        if !con return (false, default);
+                    for value in iterator {{
                         if value:{0} = value return (true, value);
                     }}
                     return (false, default);
