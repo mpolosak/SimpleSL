@@ -12,8 +12,8 @@ use simplesl_parser::Rule;
 
 #[derive(Debug)]
 pub struct Match {
-    expression: Instruction,
-    arms: Box<[MatchArm]>,
+    pub expression: Instruction,
+    pub arms: Box<[MatchArm]>,
 }
 
 impl Match {

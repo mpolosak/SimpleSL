@@ -8,8 +8,8 @@ use simplesl_parser::Rule;
 
 #[derive(Debug)]
 pub struct MatchArm {
-    pattern: MatchPattern,
-    instruction: Instruction,
+    pub pattern: MatchPattern,
+    pub instruction: Instruction,
 }
 
 impl MatchArm {

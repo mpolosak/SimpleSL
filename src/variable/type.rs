@@ -186,6 +186,7 @@ impl Type {
         }
     }
 
+    #[must_use]
     pub fn return_type(&self) -> Option<Type> {
         match self {
             Type::Function(function) => Some(function.return_type()),
