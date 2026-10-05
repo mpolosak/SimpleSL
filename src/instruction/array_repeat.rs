@@ -4,7 +4,7 @@ use super::{
 use crate::{
     self as simplesl, Error, ExecError,
     interpreter::Interpreter,
-    variable::{ReturnType, Type, Variable},
+    variable::{ReturnType, Type},
 };
 use pest::iterators::Pair;
 use simplesl_macros::{var, var_type};
@@ -22,29 +22,17 @@ impl ArrayRepeat {
         local_variables: &LocalVariables,
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
-        let value = InstructionWithStr::new_expression(inner.next().unwrap(), local_variables)?.instruction;
+        let value =
+            InstructionWithStr::new_expression(inner.next().unwrap(), local_variables)?.instruction;
         let len = InstructionWithStr::new_expression(inner.next().unwrap(), local_variables)?;
         if !len.return_type().matches(&Type::Int) {
             return Err(Error::WrongLengthType(len.str));
         }
-        Ok(Self { value, len: len.instruction }.into())
-    }
-
-    fn create_from_instructions(
-        value: Instruction,
-        len: Instruction,
-    ) -> Result<Instruction, ExecError> {
-        match (value, len) {
-            (
-                _,
-                Instruction::Variable(Variable::Int(len)),
-            ) if len < 0 => Err(ExecError::NegativeLength),
-            (
-                Instruction::Variable(value),
-                Instruction::Variable(Variable::Int(len)),
-            ) => Ok(Instruction::Variable(var!([value; len]))),
-            (value, len) => Ok(Self { value, len }.into()),
+        Ok(Self {
+            value,
+            len: len.instruction,
         }
+        .into())
     }
 }
 
@@ -63,7 +51,7 @@ impl Recreate for ArrayRepeat {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
         let value = self.value.recreate(local_variables)?;
         let len = self.len.recreate(local_variables)?;
-        Self::create_from_instructions(value, len)
+        Ok(Self { value, len }.into())
     }
 }
 
