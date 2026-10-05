@@ -1,5 +1,5 @@
 use crate::{
-    self as simplesl, instruction::{block::Block, control_flow::{Match, MatchArm, MatchPattern}, pattern::Pattern, set::Set, unary_operation::UnaryOperation, Instruction, InstructionWithStr}, stdlib::operators::{FLOAT_PRODUCT, INT_PRODUCT}, unary_operator::UnaryOperator, variable::{MultiType, ReturnType, Type, Variable}, Error
+    self as simplesl, instruction::{block::Block, control_flow::{Match, MatchArm, MatchPattern}, pattern::Pattern, set::Set, unary_operation::{function_call, UnaryOperation}, Instruction, InstructionWithStr}, stdlib::operators::{FLOAT_PRODUCT, INT_PRODUCT}, unary_operator::UnaryOperator, variable::{MultiType, ReturnType, Type, Variable}, Error
 };
 use lazy_static::lazy_static;
 use simplesl_macros::var_type;
@@ -62,14 +62,6 @@ fn create_match(iterator: Instruction, types: MultiType) -> Instruction {
         _ => unreachable!()
     }).collect();
     Match{ expression: iterator, arms }.into()
-}
-
-fn function_call<T: Into<Variable>>(function: T) -> Instruction {
-    UnaryOperation {
-        instruction: function.into().into(),
-        op: UnaryOperator::FunctionCall,
-    }
-    .into()
 }
 
 #[cfg(test)]

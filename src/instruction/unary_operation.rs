@@ -10,10 +10,7 @@ use super::{
     type_filter::TypeFilter,
 };
 use crate::{
-    Error, Interpreter,
-    instruction::field_access::FieldAccess,
-    unary_operator::UnaryOperator,
-    variable::{ReturnType, Type},
+    instruction::field_access::FieldAccess, unary_operator::UnaryOperator, variable::{ReturnType, Type, Variable}, Error, Interpreter
 };
 use pest::iterators::Pair;
 use simplesl_parser::{Rule, unexpected};
@@ -88,17 +85,20 @@ impl ReturnType for UnaryOperation {
     fn return_type(&self) -> Type {
         let return_type = self.instruction.return_type();
         match self.op {
-            UnaryOperator::Sum | UnaryOperator::Product => return_type.iter_element().unwrap(),
             UnaryOperator::Not | UnaryOperator::UnaryMinus => return_type,
             UnaryOperator::Indirection => indirection::return_type(return_type),
             UnaryOperator::FunctionCall => return_type.return_type().unwrap(),
             UnaryOperator::Collect => collect::return_type(return_type),
             UnaryOperator::Iter => iter::return_type(return_type),
-            UnaryOperator::All
-            | UnaryOperator::Any
-            | UnaryOperator::BitAnd
-            | UnaryOperator::BitOr
-            | UnaryOperator::Return => Type::Never,
+            _ => Type::Never,
         }
     }
+}
+
+pub fn function_call<T: Into<Variable>>(function: T) -> Instruction {
+    UnaryOperation {
+        instruction: function.into().into(),
+        op: UnaryOperator::FunctionCall,
+    }
+    .into()
 }

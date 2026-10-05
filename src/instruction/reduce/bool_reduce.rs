@@ -1,9 +1,5 @@
 use crate::{
-    self as simplesl, BinOperator, Error,
-    instruction::{BinOperation, Instruction, InstructionWithStr, tuple::Tuple},
-    stdlib::operators::{ALL, ANY},
-    unary_operator::UnaryOperator,
-    variable::{ReturnType, Type, Variable},
+    self as simplesl, instruction::{block::Block, pattern::Pattern, set::Set, unary_operation::{function_call, UnaryOperation}, Instruction, InstructionWithStr}, stdlib::operators::{ALL, ANY}, unary_operator::UnaryOperator, variable::{ReturnType, Type, Variable}, Error
 };
 use lazy_static::lazy_static;
 use simplesl_macros::var_type;
@@ -22,21 +18,17 @@ pub fn create(iterator: InstructionWithStr, op: UnaryOperator) -> Result<Instruc
             given: return_type,
         });
     }
-    let lhs = if op == UnaryOperator::All {
-        Variable::from(ALL).into()
+    let function = if op == UnaryOperator::All {
+        Variable::from(ALL)
     } else {
-        Variable::from(ANY).into()
+        Variable::from(ANY)
     };
-    let rhs = Tuple {
-        elements: [iterator.instruction].into(),
-    }
-    .into();
-    Ok(BinOperation {
-        lhs,
-        rhs,
-        op: BinOperator::FunctionCall,
-    }
-    .into())
+    let pattern = Pattern::new_ident_pattern("iterator".into(), return_type);
+    let set = Set{
+        pattern,
+        instruction: iterator.instruction,
+    }.into();
+    Ok(Block{ instructions: [set, function_call(function)].into() }.into())
 }
 
 #[cfg(test)]
