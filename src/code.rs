@@ -69,7 +69,7 @@ mod tests {
     proptest! {
         #[test]
         fn code_doesnt_crash(s in "\\PC*"){
-            let _ = Code::parse(&Interpreter::without_stdlib(), &s).and_then(|code| Ok(code.exec()?));
+            let _ = Code::parse(&Interpreter::without_stdlib(), &s).map(|code| code.exec());
         }
     }
 }
