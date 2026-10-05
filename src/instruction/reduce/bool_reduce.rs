@@ -30,7 +30,7 @@ pub fn create(iterator: InstructionWithStr, op: UnaryOperator) -> Result<Instruc
     } else {
         Variable::from(ANY)
     };
-    let pattern = Pattern::new_ident_pattern("iterator".into(), return_type);
+    let pattern = Pattern::new_ident_pattern("iter".into(), return_type);
     let set = Set {
         pattern,
         instruction: iterator.instruction,
