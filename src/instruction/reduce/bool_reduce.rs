@@ -1,5 +1,12 @@
 use crate::{
-    self as simplesl, instruction::{block::Block, pattern::Pattern, set::Set, unary_operation::{function_call, UnaryOperation}, Instruction, InstructionWithStr}, stdlib::operators::{ALL, ANY}, unary_operator::UnaryOperator, variable::{ReturnType, Type, Variable}, Error
+    self as simplesl, Error,
+    instruction::{
+        Instruction, InstructionWithStr, block::Block, pattern::Pattern, set::Set,
+        unary_operation::function_call,
+    },
+    stdlib::operators::{ALL, ANY},
+    unary_operator::UnaryOperator,
+    variable::{ReturnType, Type, Variable},
 };
 use lazy_static::lazy_static;
 use simplesl_macros::var_type;
@@ -24,11 +31,15 @@ pub fn create(iterator: InstructionWithStr, op: UnaryOperator) -> Result<Instruc
         Variable::from(ANY)
     };
     let pattern = Pattern::new_ident_pattern("iterator".into(), return_type);
-    let set = Set{
+    let set = Set {
         pattern,
         instruction: iterator.instruction,
-    }.into();
-    Ok(Block{ instructions: [set, function_call(function)].into() }.into())
+    }
+    .into();
+    Ok(Block {
+        instructions: [set, function_call(function)].into(),
+    }
+    .into())
 }
 
 #[cfg(test)]

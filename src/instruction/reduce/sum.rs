@@ -1,7 +1,16 @@
 use crate::{
-    self as simplesl, instruction::{
-        block::Block, control_flow::{Match, MatchArm, MatchPattern}, pattern::Pattern, set::Set, unary_operation::{function_call, UnaryOperation}, Instruction, InstructionWithStr
-    }, stdlib::operators::{FLOAT_SUM, INT_SUM, STRING_SUM}, unary_operator::UnaryOperator, variable::{MultiType, ReturnType, Type, Variable}, Error
+    self as simplesl, Error,
+    instruction::{
+        Instruction, InstructionWithStr,
+        block::Block,
+        control_flow::{Match, MatchArm, MatchPattern},
+        pattern::Pattern,
+        set::Set,
+        unary_operation::function_call,
+    },
+    stdlib::operators::{FLOAT_SUM, INT_SUM, STRING_SUM},
+    unary_operator::UnaryOperator,
+    variable::{MultiType, ReturnType, Type},
 };
 use lazy_static::lazy_static;
 use simplesl_macros::var_type;
@@ -24,19 +33,13 @@ pub fn create(iterator: InstructionWithStr) -> Result<Instruction, Error> {
     let iterator = iterator.instruction;
     let iter_element = return_type.iter_element().unwrap();
     if let Type::Multi(types) = iter_element {
-        return  Ok(create_match(iterator, types))
+        return Ok(create_match(iterator, types));
     }
-    
+
     let call = match return_type.iter_element().unwrap() {
-        Type::Int => {
-            function_call(INT_SUM)
-        }
-        Type::Float => {
-            function_call(FLOAT_SUM)
-        }
-        Type::String => {
-            function_call(STRING_SUM)
-        }
+        Type::Int => function_call(INT_SUM),
+        Type::Float => function_call(FLOAT_SUM),
+        Type::String => function_call(STRING_SUM),
         _ => unreachable!(),
     };
     let set = Set {
@@ -44,37 +47,45 @@ pub fn create(iterator: InstructionWithStr) -> Result<Instruction, Error> {
         instruction: iterator,
     }
     .into();
-    Ok(Block{
+    Ok(Block {
         instructions: [set, call].into(),
-    }.into())
+    }
+    .into())
 }
 
 fn create_match(iterator: Instruction, types: MultiType) -> Instruction {
-    let arms = types.iter().map(|t| match t {
-        Type::Int => MatchArm {
-            pattern: MatchPattern::Pattern(Pattern::new_ident_pattern(
-                "iter".into(),
-                var_type!(() -> (bool, int)),
-            )),
-            instruction: function_call(INT_SUM),
-        },
-        Type::Float => MatchArm {
-            pattern: MatchPattern::Pattern(Pattern::new_ident_pattern(
-                "iter".into(),
-                var_type!(() -> (bool, float)),
-            )),
-            instruction: function_call(FLOAT_SUM),
-        },
-        Type::String => MatchArm {
-            pattern: MatchPattern::Pattern(Pattern::new_ident_pattern(
-                "iter".into(),
-                var_type!(() -> (bool, string)),
-            )),
-            instruction: function_call(STRING_SUM),
-        },
-        _ => unreachable!()
-    }).collect();
-    Match{ expression: iterator, arms }.into()
+    let arms = types
+        .iter()
+        .map(|t| match t {
+            Type::Int => MatchArm {
+                pattern: MatchPattern::Pattern(Pattern::new_ident_pattern(
+                    "iter".into(),
+                    var_type!(() -> (bool, int)),
+                )),
+                instruction: function_call(INT_SUM),
+            },
+            Type::Float => MatchArm {
+                pattern: MatchPattern::Pattern(Pattern::new_ident_pattern(
+                    "iter".into(),
+                    var_type!(() -> (bool, float)),
+                )),
+                instruction: function_call(FLOAT_SUM),
+            },
+            Type::String => MatchArm {
+                pattern: MatchPattern::Pattern(Pattern::new_ident_pattern(
+                    "iter".into(),
+                    var_type!(() -> (bool, string)),
+                )),
+                instruction: function_call(STRING_SUM),
+            },
+            _ => unreachable!(),
+        })
+        .collect();
+    Match {
+        expression: iterator,
+        arms,
+    }
+    .into()
 }
 
 #[cfg(test)]
