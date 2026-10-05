@@ -58,7 +58,6 @@ impl Exec for UnaryOperation {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let var = self.instruction.exec(interpreter)?;
         Ok(match self.op {
-            UnaryOperator::Product => product::exec(var)?,
             UnaryOperator::Not => not::exec(var),
             UnaryOperator::UnaryMinus => unary_minus::exec(var),
             UnaryOperator::Return => return Err(ExecStop::Return(var)),
