@@ -1,12 +1,15 @@
 use crate::{
-    function::Param, instruction::{
+    Error, Interpreter,
+    function::Param,
+    instruction::{
         local_variable::{LocalVariable, LocalVariables},
         pattern::destruct_pattern::DestructPattern,
-    }, variable::{Type, Typed, Variable}, Error, Interpreter
+    },
+    variable::{Type, Typed, Variable},
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 pub mod destruct_pattern;
 
 #[derive(Debug, Clone)]
@@ -33,17 +36,19 @@ impl Pattern {
         let destruct_pattern_pair = inner.next().unwrap();
         let destruct_pattern =
             DestructPattern::create_instruction(destruct_pattern_pair, local_variables);
-        let var_type = inner
-            .next()
-            .map(Type::from);
+        let var_type = inner.next().map(Type::from);
         let destruct_pattern_type = destruct_pattern.as_type();
         let Some(var_type) = var_type else {
             let ct = destruct_pattern_type.conjoin(ex_type);
-            let var_type = if ct!=Type::Never {ct} else {destruct_pattern_type};
+            let var_type = if ct != Type::Never {
+                ct
+            } else {
+                destruct_pattern_type
+            };
             return Ok(Self {
                 destruct_pattern,
                 var_type,
-            })
+            });
         };
         if !var_type.matches(&destruct_pattern_type) {
             return Err(Error::SelfContradictoryPattern(str));
@@ -76,12 +81,26 @@ impl Pattern {
     pub fn insert_variables(&self, interpreter: &mut Interpreter, variable: Variable) {
         match &self.destruct_pattern {
             DestructPattern::Ident(ident) => interpreter.insert(ident.clone(), variable),
-            DestructPattern::Tuple(idents) =>  {
+            DestructPattern::Tuple(idents) => {
                 let tuple = variable.into_tuple().unwrap();
                 for (ident, var) in idents.iter().cloned().zip(tuple.iter().cloned()) {
                     interpreter.insert(ident, var);
                 }
-            },
+            }
+        }
+    }
+
+    pub fn insert_types(&self, tm: &mut HashMap<Arc<str>, Type>) {
+        match &self.destruct_pattern {
+            DestructPattern::Ident(ident) => {
+                tm.insert(ident.clone(), self.var_type.clone());
+            }
+            DestructPattern::Tuple(idents) => {
+                let tuple = self.var_type.clone().flatten_tuple().unwrap();
+                for (ident, var) in idents.iter().cloned().zip(tuple.iter().cloned()) {
+                    tm.insert(ident, var);
+                }
+            }
         }
     }
 }

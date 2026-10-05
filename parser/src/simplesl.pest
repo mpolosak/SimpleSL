@@ -40,8 +40,8 @@ char                 =  {
     !("\"" | "\\") ~ ANY
   | "\\" ~ ANY
 }
-struct               =  { structkw ~ "{" ~ ((field | ident) ~ ("," ~ (field | ident))*)? ~ "}" }
-field                =  { ident ~ ":=" ~ expr }
+struct               =  { structkw ~ "{" ~ (field ~ ("," ~ field)*)? ~ "}" }
+  field              = _{ set | ident }
 primary              = _{ ident | var | expr_in_brackets }
 expr_in_brackets     = _{ "(" ~ expr ~ ")" }
 atom                 = _{ prefix_op* ~ primary ~ postfix_op* }

@@ -17,12 +17,12 @@ impl Set {
     pub fn create_standalone(
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, Error> {
+    ) -> Result<Self, Error> {
         let (set, error) = Self::create(pair, local_variables)?;
         if !set.pattern.is_matched(&set.instruction.return_type()) {
             return Err(error)
         }
-        Ok(set.into())
+        Ok(set)
     }
 
     pub fn create_condition(
