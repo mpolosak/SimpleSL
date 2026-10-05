@@ -65,8 +65,7 @@ impl Function {
     }
 
     pub fn create_call(self: Arc<Self>, args: Vec<Variable>) -> Result<Code, Error> {
-        let ident = self.ident.clone().unwrap_or_else(|| Arc::from("function"));
-        let instructions = call::create_from_variables(ident, self, args)?;
+        let instructions = call::create_from_variables(self, args)?;
         Ok(Code { instructions })
     }
 

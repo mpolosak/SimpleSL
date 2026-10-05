@@ -56,13 +56,12 @@ pub fn create_instruction(
 }
 
 pub fn create_from_variables(
-    ident: Arc<str>,
     function: Arc<VarFunc>,
     args: Vec<Variable>,
 ) -> Result<Arc<[Instruction]>, Error> {
     if function.params.len() != args.len() {
         return Err(Error::WrongNumberOfArguments(
-            ident.clone(),
+            function.ident.clone().unwrap_or_else(|| Arc::from("function")),
             function.params.len(),
         ));
     }
@@ -70,7 +69,7 @@ pub fn create_from_variables(
         let arg_type = arg.as_type();
         if !arg_type.matches(&param.var_type) {
             return Err(Error::WrongArgument {
-                function: ident.clone(),
+                function: function.ident.clone().unwrap_or_else(|| Arc::from("function")),
                 param: param.clone(),
                 given: arg.to_string().into(),
                 given_type: arg_type,
