@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use super::{Instruction, local_variable::LocalVariables};
 use crate::{
-    instruction::{block::Block, local_variable::LocalVariableMap, pattern::{destruct_pattern::DestructPattern, Pattern}, set::Set, r#struct::Struct}, variable::Typed, Error
+    instruction::{block::Block, local_variable::LocalVariableMap, set::Set, r#struct::Struct}, Error
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
@@ -24,14 +24,7 @@ pub fn new(
     let sets = lv_layer
         .into_iter()
         .map(|(ident, var)| {
-            let pattern = Pattern{
-                destruct_pattern: DestructPattern::Ident(ident.clone()),
-                var_type: var.as_type(),
-            };
-            Set{
-                pattern,
-                instruction: Instruction::LocalVariable(ident, var),
-            }
+            Set::new_ident(ident.clone(), Instruction::LocalVariable(ident, var))
         })
         .collect();
     let struct_ins = Struct {

@@ -1,7 +1,16 @@
 use crate::{
-    function::{Function as VarFunc, Param, Params}, instruction::{
-        function::Function, local_variable::{LocalVariable, LocalVariables}, pattern::Pattern, set::Set, tuple::Tuple, unary_operation::UnaryOperation, BinOperation, Instruction, InstructionWithStr
-    }, unary_operator::UnaryOperator, variable::{ReturnType, Typed, Variable}, BinOperator, Error, ExecError
+    BinOperator, Error, ExecError,
+    function::{Function as VarFunc, Param, Params},
+    instruction::{
+        BinOperation, Instruction, InstructionWithStr,
+        function::Function,
+        local_variable::{LocalVariable, LocalVariables},
+        set::Set,
+        tuple::Tuple,
+        unary_operation::UnaryOperation,
+    },
+    unary_operator::UnaryOperator,
+    variable::{ReturnType, Typed, Variable},
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
@@ -61,7 +70,10 @@ pub fn create_from_variables(
 ) -> Result<Arc<[Instruction]>, Error> {
     if function.params.len() != args.len() {
         return Err(Error::WrongNumberOfArguments(
-            function.ident.clone().unwrap_or_else(|| Arc::from("function")),
+            function
+                .ident
+                .clone()
+                .unwrap_or_else(|| Arc::from("function")),
             function.params.len(),
         ));
     }
@@ -69,7 +81,10 @@ pub fn create_from_variables(
         let arg_type = arg.as_type();
         if !arg_type.matches(&param.var_type) {
             return Err(Error::WrongArgument {
-                function: function.ident.clone().unwrap_or_else(|| Arc::from("function")),
+                function: function
+                    .ident
+                    .clone()
+                    .unwrap_or_else(|| Arc::from("function")),
                 param: param.clone(),
                 given: arg.to_string().into(),
                 given_type: arg_type,
@@ -78,22 +93,18 @@ pub fn create_from_variables(
     }
     let instruction: Instruction = Variable::Function(function.clone()).into();
     let ident = function.ident.clone().unwrap_or_else(|| "$".into());
-    let rec = Set {
-            pattern: Pattern::new_ident_pattern(ident.clone(), instruction.return_type()),
-            instruction: instruction.clone(),
-        }
-        .into();
+    let rec = Set::new_ident(ident.clone(), instruction.clone()).into();
     let call = UnaryOperation {
-            instruction,
-            op: UnaryOperator::FunctionCall,
-        }
-        .into();
+        instruction,
+        op: UnaryOperator::FunctionCall,
+    }
+    .into();
     let args = args.into_iter().map(Instruction::from);
     Ok(zip(function.params.iter().cloned(), args)
         .map(|(param, arg)| {
             Set {
-                    pattern: param.into(),
-                    instruction: arg,
+                pattern: param.into(),
+                instruction: arg,
             }
             .into()
         })

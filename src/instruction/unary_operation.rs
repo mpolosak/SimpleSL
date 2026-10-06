@@ -5,12 +5,11 @@ use super::{
     local_variable::LocalVariables,
     prefix_op::{indirection, not, unary_minus},
     reduce::{self, bool_reduce, collect, product, sum},
-    slicing::Slicing,
     tuple_access::TupleAccess,
     type_filter::TypeFilter,
 };
 use crate::{
-    instruction::field_access::FieldAccess, unary_operator::UnaryOperator, variable::{ReturnType, Type, Variable}, Error, Interpreter
+    instruction::{field_access::FieldAccess, slicing}, unary_operator::UnaryOperator, variable::{ReturnType, Type, Variable}, Error, Interpreter
 };
 use pest::iterators::Pair;
 use simplesl_parser::{Rule, unexpected};
@@ -38,7 +37,7 @@ impl InstructionWithStr {
             Rule::bitor_reduce => reduce::bit::create(lhs, UnaryOperator::BitOr),
             Rule::collect => collect::create(lhs),
             Rule::iter => iter::create(lhs),
-            Rule::slicing => Slicing::create(lhs, op, local_variables),
+            Rule::slicing => slicing::create(lhs, op, local_variables),
             rule => unexpected!(rule),
         }?;
         Ok(Self { instruction, str })

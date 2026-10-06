@@ -3,10 +3,7 @@ use super::{
 };
 use crate::{
     Error, ExecError,
-    instruction::{
-        pattern::{Pattern, destruct_pattern::DestructPattern},
-        set::Set,
-    },
+    instruction::set::Set,
     interpreter::{Interpreter, VariableMap},
     variable::{ReturnType, Type, Variable},
 };
@@ -30,14 +27,7 @@ impl Struct {
                 if pair.as_rule() == Rule::ident {
                     let ident: Arc<str> = pair.as_str().into();
                     let instruction = Instruction::new_ident(&ident, local_variables)?;
-                    let pattern = Pattern {
-                        destruct_pattern: DestructPattern::Ident(ident),
-                        var_type: instruction.return_type(),
-                    };
-                    return Ok(Set {
-                        pattern,
-                        instruction,
-                    });
+                    return Ok(Set::new_ident(ident, instruction));
                 }
                 let mut local_variables = local_variables.create_layer();
                 Set::create_standalone(pair, &mut local_variables)

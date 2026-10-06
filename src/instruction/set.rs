@@ -1,11 +1,17 @@
-use std::{sync::Arc};
-use super::{
-    Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
-};
-use crate::{ instruction::{function::Function, pattern::{destruct_pattern::DestructPattern, Pattern}, ExecStop}, interpreter::Interpreter, variable::{ReturnType, Type, Typed}, Error, ExecError
+use super::{Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables};
+use crate::{
+    Error, ExecError,
+    instruction::{
+        ExecStop,
+        function::Function,
+        pattern::{Pattern, destruct_pattern::DestructPattern},
+    },
+    interpreter::Interpreter,
+    variable::{ReturnType, Type, Typed},
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Set {
@@ -20,7 +26,7 @@ impl Set {
     ) -> Result<Self, Error> {
         let (set, error) = Self::create(pair, local_variables)?;
         if !set.pattern.is_matched(&set.instruction.return_type()) {
-            return Err(error)
+            return Err(error);
         }
         Ok(set)
     }
@@ -48,21 +54,48 @@ impl Set {
         let pattern_str = pattern_pair.as_str().into();
         let pattern = Pattern::create_instruction(pattern_pair, local_variables, &var_type)?;
         pattern.insert_local_variables(local_variables);
-        Ok((Self{ pattern, instruction }, Error::SetPatternNotMatched { ins, var_type, pattern: pattern_str }))
+        Ok((
+            Self {
+                pattern,
+                instruction,
+            },
+            Error::SetPatternNotMatched {
+                ins,
+                var_type,
+                pattern: pattern_str,
+            },
+        ))
     }
 
-    fn create_function_declaration(pattern_pair: Pair<Rule>, function_pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<(Self, Error), Error> { 
+    fn create_function_declaration(
+        pattern_pair: Pair<Rule>,
+        function_pair: Pair<Rule>,
+        local_variables: &mut LocalVariables,
+    ) -> Result<(Self, Error), Error> {
         let pattern_str = pattern_pair.as_str().into();
         let mut pattern = Pattern::create_instruction(pattern_pair, local_variables, &Type::Any)?;
-        let ident = if let DestructPattern::Ident(ident) = &pattern.destruct_pattern { Some(ident) } else {
+        let ident = if let DestructPattern::Ident(ident) = &pattern.destruct_pattern {
+            Some(ident)
+        } else {
             None
         };
         let ins: Arc<str> = function_pair.as_str().into();
-        let instruction = Function::create_instruction(function_pair, local_variables, ident.cloned())?;
+        let instruction =
+            Function::create_instruction(function_pair, local_variables, ident.cloned())?;
         let var_type = instruction.return_type();
         pattern.var_type = pattern.var_type.conjoin(&instruction.return_type());
         pattern.insert_local_variables(local_variables);
-        Ok((Self{ pattern, instruction }, Error::SetPatternNotMatched { ins, var_type, pattern: pattern_str }))
+        Ok((
+            Self {
+                pattern,
+                instruction,
+            },
+            Error::SetPatternNotMatched {
+                ins,
+                var_type,
+                pattern: pattern_str,
+            },
+        ))
     }
 
     pub fn inner_recreate(&self, local_variables: &mut LocalVariables) -> Result<Self, ExecError> {
@@ -81,6 +114,13 @@ impl Set {
         }
         self.pattern.insert_variables(interpreter, result.clone());
         Ok(true)
+    }
+
+    pub fn new_ident(ident: Arc<str>, instruction: Instruction) -> Set {
+        Set {
+            pattern: Pattern::new_ident_pattern(ident, instruction.return_type()),
+            instruction,
+        }
     }
 }
 

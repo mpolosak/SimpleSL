@@ -1,7 +1,7 @@
 use crate::{
     self as simplesl, Error,
     instruction::{
-        Instruction, InstructionWithStr, block::Block, pattern::Pattern, set::Set,
+        Instruction, InstructionWithStr, block::Block, set::Set,
         unary_operation::function_call,
     },
     stdlib::operators::{ALL, ANY},
@@ -30,12 +30,7 @@ pub fn create(iterator: InstructionWithStr, op: UnaryOperator) -> Result<Instruc
     } else {
         Variable::from(ANY)
     };
-    let pattern = Pattern::new_ident_pattern("iter".into(), return_type);
-    let set = Set {
-        pattern,
-        instruction: iterator.instruction,
-    }
-    .into();
+    let set = Set::new_ident("iter".into(), iterator.instruction).into();
     Ok(Block {
         instructions: [set, function_call(function)].into(),
     }

@@ -1,5 +1,30 @@
-use crate as simplesl;
-use simplesl_macros::decls;
+use std::sync::Arc;
+
+use crate::{self as simplesl, variable::Variable};
+use simplesl_macros::{decls, export};
+
+#[export(Slice)]
+#[return_type([any]|string)]
+fn slice(
+    #[var_type([any]|string)] variable: Variable,
+    start: Option<isize>,
+    end: Option<isize>,
+    step: Option<isize>,
+) -> Variable {
+    let s = slyce::Slice {
+        start: start.into(),
+        end: end.into(),
+        step,
+    };
+    if let Variable::String(variable) = variable {
+        let chars: Box<[char]> = variable.chars().collect();
+        let result: String = s.apply(&chars).cloned().collect();
+        return result.into();
+    }
+    let array = variable.into_array().unwrap();
+    let result: Arc<[Variable]> = s.apply(array.as_ref()).cloned().collect();
+    result.into()
+}
 
 decls! {
     AND:=(iter: () -> (bool, int)) -> int {
@@ -77,6 +102,7 @@ decls! {
         float_sum := FLOAT_SUM,
         string_sum := STRING_SUM,
         reduce := REDUCE,
-        filter := FILTER
+        filter := FILTER,
+        slice := Slice
     }
 }

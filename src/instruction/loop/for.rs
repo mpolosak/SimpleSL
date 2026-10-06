@@ -40,12 +40,8 @@ pub fn create_instruction(
     let mut local_variables = local_variables.create_layer();
     local_variables.in_loop = true;
     local_variables.insert(ident.clone(), LocalVariable::Other(iter_element));
-    let iter = Set {
-        pattern: Pattern::new_ident_pattern(ITER.clone(), iter.return_type()),
-        instruction: iter,
-    }
-    .into();
-    let iter_call:Instruction = BinOperation {
+    let iter = Set::new_ident(ITER.clone(), iter).into();
+    let iter_call: Instruction = BinOperation {
         lhs: Instruction::LocalVariable(
             ITER.clone(),
             LocalVariable::Other(var_type!(()->(bool, any))),

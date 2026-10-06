@@ -22,7 +22,7 @@ impl TypeOf for T {
 }
 
 #[duplicate_item(T; [i64]; [usize]; [u32]; [Result<i64, ExecError>];
-    [Result<usize, ExecError>]; [Result<u32, ExecError>])]
+    [Result<usize, ExecError>]; [Result<u32, ExecError>]; [isize])]
 impl TypeOf for T {
     fn type_of() -> Type {
         Type::Int
@@ -84,7 +84,7 @@ impl TypeOf for Option<bool> {
     }
 }
 
-#[duplicate_item(T; [Option<i64>]; [Option<u32>]; [Option<i32>])]
+#[duplicate_item(T; [Option<i64>]; [Option<u32>]; [Option<i32>]; [Option<usize>]; [Option<isize>])]
 impl TypeOf for T {
     fn type_of() -> Type {
         var_type!(int | ())

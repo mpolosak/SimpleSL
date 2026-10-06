@@ -42,11 +42,7 @@ pub fn create(iterator: InstructionWithStr) -> Result<Instruction, Error> {
         Type::String => function_call(STRING_SUM),
         _ => unreachable!(),
     };
-    let set = Set {
-        pattern: Pattern::new_ident_pattern("iter".into(), return_type),
-        instruction: iterator,
-    }
-    .into();
+    let set = Set::new_ident("iter".into(), iterator).into();
     Ok(Block {
         instructions: [set, call].into(),
     }
