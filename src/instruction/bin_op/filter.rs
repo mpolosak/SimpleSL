@@ -1,33 +1,8 @@
 use crate::{
-    self as simplesl, Code, Interpreter,
-    function::Function,
-    instruction::ExecResult,
-    variable::{Type, Typed, Variable},
+    self as simplesl, instruction::ExecResult, stdlib::operators::FILTER, variable::{Type, Typed, Variable}
 };
-use lazy_static::lazy_static;
 use simplesl_macros::var_type;
 use std::sync::Arc;
-
-lazy_static! {
-    static ref FILTER: Arc<Function> = Code::parse(
-        &Interpreter::without_stdlib(),
-        "(func: () -> (bool, int), predicate: (int) -> bool) -> () -> (bool, int) {
-            return () -> (bool, int) {
-                loop {
-                    res := func();
-                    (con, value) := res;
-                    if !con || predicate(value) return res;
-                }
-                return (false, 0);
-            }
-        }"
-    )
-    .unwrap()
-    .exec()
-    .unwrap()
-    .into_function()
-    .unwrap();
-}
 
 pub fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
     let Some(element_type) = lhs.iter_element() else {
@@ -38,13 +13,15 @@ pub fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
 }
 
 pub fn exec(iter: Variable, function: Variable) -> ExecResult {
-    let element = iter.as_type().return_type().unwrap();
-    let result = FILTER
+    let return_type = iter.as_type().return_type().unwrap();
+    let result = Variable::from(FILTER)
+        .into_function()
+        .unwrap()
         .exec_with_args(&[iter, function])?
         .into_function()
         .unwrap();
     let mut result = Arc::unwrap_or_clone(result);
-    result.return_type = element;
+    result.return_type = return_type;
     Ok(result.into())
 }
 

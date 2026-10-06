@@ -56,6 +56,16 @@ decls! {
         }
         return *result
     }
+    FILTER:=(iter: () -> (bool, any), predicate: (any) -> bool) -> () -> (bool, any) {
+        return () -> (bool, any) {
+            loop {
+                res := iter();
+                (con, value) := res;
+                if !con || predicate(value) return res;
+            }
+            return (false, 0);
+        }
+    }
     Operators:=struct{
         bitand_reduce := AND,
         bitor_reduce := OR,
@@ -66,6 +76,7 @@ decls! {
         int_sum := INT_SUM,
         float_sum := FLOAT_SUM,
         string_sum := STRING_SUM,
-        reduce := REDUCE
+        reduce := REDUCE,
+        filter := FILTER
     }
 }
