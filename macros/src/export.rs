@@ -81,9 +81,9 @@ pub fn export_item_fn(function: &mut ItemFn, mod_ident: Option<&Ident>) -> Token
             simplesl::function::Params(std::sync::Arc::new([#params])),
             |interpreter| {
                 #args_importing
-                simplesl::ToResult::<_, simplesl::errors::ExecError>::to_result(
+                simplesl::ToResult::<simplesl::variable::Variable, simplesl::errors::ExecError>::to_result(
                     #ident(#args)
-                ).map(|value| value.into())
+                )
             },
             #return_type,
         ).into()

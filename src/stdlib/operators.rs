@@ -1,7 +1,6 @@
 use std::sync::Arc;
-
-use crate::{self as simplesl, variable::Variable};
-use simplesl_macros::{decls, export};
+use crate::{self as simplesl, ExecError, variable::Variable};
+use simplesl_macros::{decls, export, var};
 
 #[export(Slice)]
 #[return_type([any]|string)]
@@ -24,6 +23,16 @@ fn slice(
     let array = variable.into_array().unwrap();
     let result: Arc<[Variable]> = s.apply(array.as_ref()).cloned().collect();
     result.into()
+}
+
+#[export(ArrayRepeat)]
+#[return_type([any])]
+fn array_repeat(value: Variable, len: i64) -> Result<Variable, ExecError> {
+    if len < 0 {
+        return Err(ExecError::NegativeLength);
+    }
+
+    Ok(var!([value; len]))
 }
 
 decls! {
@@ -103,6 +112,7 @@ decls! {
         string_sum := STRING_SUM,
         reduce := REDUCE,
         filter := FILTER,
-        slice := Slice
+        slice := Slice,
+        array_repeat := ArrayRepeat
     }
 }

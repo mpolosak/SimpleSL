@@ -24,7 +24,6 @@ mod pattern;
 pub mod unary_operation;
 use self::{
     array::Array,
-    array_repeat::ArrayRepeat,
     bin_op::*,
     block::Block,
     control_flow::{IfElse, Match, SetIfElse},
@@ -94,7 +93,7 @@ impl InstructionWithStr {
             }
             Rule::tuple => Tuple::create_instruction(pair, local_variables),
             Rule::array => Array::create_instruction(pair, local_variables),
-            Rule::array_repeat => ArrayRepeat::create_instruction(pair, local_variables),
+            Rule::array_repeat => array_repeat::create_instruction(pair, local_variables),
             Rule::function => Function::create_instruction(pair, local_variables, None),
             Rule::r#struct => Struct::create_instruction(pair, local_variables),
             Rule::r#mod => module::create_instruction(pair, local_variables),
@@ -158,8 +157,6 @@ pub enum Instruction {
     AnonymousFunction(Function),
     #[from(Array)]
     Array(Arc<Array>),
-    #[from(ArrayRepeat)]
-    ArrayRepeat(Arc<ArrayRepeat>),
     #[from]
     Block(Block),
     Break,
@@ -249,12 +246,11 @@ impl Exec for Instruction {
                 .get_variable(ident)
                 .cloned()
                 .ok_or_else(|| panic!("Tried to get variable {ident} that doest exist")),
-            Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins)
-            | Self::Block(ins) | Self::Tuple(ins) | Self::BinOperation(ins)
-            | Self::FieldAccess(ins) | Self::IfElse(ins) | Self::Loop(ins) 
-            | Self::Match(ins) | Self::Mut(ins) | Self::Set(ins) | Self::SetIfElse(ins)
-            | Self::Struct(ins) | Self::TypeFilter(ins) | Self::UnaryOperation(ins)
-            | Self::TupleAccess(ins) => ins.exec(interpreter),
+            Self::AnonymousFunction(ins) | Self::Array(ins) | Self::Block(ins) | Self::Tuple(ins)
+            | Self::BinOperation(ins) | Self::FieldAccess(ins) | Self::IfElse(ins)
+            | Self::Loop(ins) | Self::Match(ins) | Self::Mut(ins) | Self::Set(ins)
+            | Self::SetIfElse(ins) | Self::Struct(ins) | Self::TypeFilter(ins)
+            | Self::UnaryOperation(ins) | Self::TupleAccess(ins) => ins.exec(interpreter),
             Self::Break => Err(ExecStop::Break),
             Self::Continue => Err(ExecStop::Continue)
         }
@@ -278,11 +274,11 @@ impl Recreate for Instruction {
                 },
             )),
             Self::Variable(variable) => Ok(Self::Variable(variable.clone())),
-            Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins)
-            | Self::Block(ins) | Self::Tuple(ins) | Self::BinOperation(ins)
-            | Self::FieldAccess(ins) | Self::IfElse(ins) | Self::Loop(ins) | Self::Match(ins)
-            | Self::Mut(ins) | Self::Set(ins) | Self::SetIfElse(ins) | Self::Struct(ins)
-            |  Self::TypeFilter(ins) | Self::UnaryOperation(ins) | Self::TupleAccess(ins)
+            Self::AnonymousFunction(ins) | Self::Array(ins) | Self::Block(ins) | Self::Tuple(ins)
+            | Self::BinOperation(ins) | Self::FieldAccess(ins) | Self::IfElse(ins)
+            | Self::Loop(ins) | Self::Match(ins) | Self::Mut(ins) | Self::Set(ins)
+            | Self::SetIfElse(ins) | Self::Struct(ins) | Self::TypeFilter(ins)
+            | Self::UnaryOperation(ins) | Self::TupleAccess(ins)
                 => ins.recreate(local_variables),
             _ => Ok(self.clone())
         }
@@ -293,12 +289,11 @@ impl ReturnType for Instruction {
     fn return_type(&self) -> Type {
         match_any! { self,
             Self::Variable(variable) | Self::LocalVariable(_, variable) => variable.as_type(),
-            Self::AnonymousFunction(ins) | Self::Array(ins) | Self::ArrayRepeat(ins)
-            | Self::Block(ins) | Self::Tuple(ins) | Self::BinOperation(ins)
-            | Self::FieldAccess(ins) | Self::IfElse(ins) | Self::Match(ins) | Self::Mut(ins)
-            | Self::Set(ins) | Self::SetIfElse(ins) | Self::Struct(ins) | Self::TypeFilter(ins)
-            | Self::UnaryOperation(ins) | Self::TupleAccess(ins)
-                => ins.return_type(),
+            Self::AnonymousFunction(ins) | Self::Array(ins) | Self::Block(ins) | Self::Tuple(ins)
+            | Self::BinOperation(ins) | Self::FieldAccess(ins) | Self::IfElse(ins)
+            | Self::Match(ins) | Self::Mut(ins) | Self::Set(ins) | Self::SetIfElse(ins)
+            | Self::Struct(ins) | Self::TypeFilter(ins) | Self::UnaryOperation(ins)
+            | Self::TupleAccess(ins) => ins.return_type(),
             Self::Loop(_) => Type::Void,
             Self::Break | Self::Continue => Type::Never
         }

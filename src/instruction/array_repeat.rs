@@ -1,63 +1,36 @@
+use std::sync::Arc;
+use crate::{self as simplesl, instruction::{block::Block, unary_operation::function_call}};
 use super::{
-    Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
+    Instruction, InstructionWithStr, local_variable::LocalVariables,
 };
 use crate::{
-    self as simplesl, Error, ExecError,
-    interpreter::Interpreter,
-    variable::{ReturnType, Type},
+    instruction::set::Set, stdlib::operators::ArrayRepeat, variable::{ReturnType, Type, Variable}, Error
 };
 use pest::iterators::Pair;
-use simplesl_macros::{var, var_type};
+use simplesl_macros::var_type;
 use simplesl_parser::Rule;
 
-#[derive(Debug, Clone)]
-pub struct ArrayRepeat {
-    pub value: Instruction,
-    pub len: Instruction,
-}
 
-impl ArrayRepeat {
-    pub fn create_instruction(
-        pair: Pair<Rule>,
-        local_variables: &LocalVariables,
-    ) -> Result<Instruction, Error> {
-        let mut inner = pair.into_inner();
-        let value =
-            InstructionWithStr::new_expression(inner.next().unwrap(), local_variables)?.instruction;
-        let len = InstructionWithStr::new_expression(inner.next().unwrap(), local_variables)?;
-        if !len.return_type().matches(&Type::Int) {
-            return Err(Error::WrongLengthType(len.str));
-        }
-        Ok(Self {
-            value,
-            len: len.instruction,
-        }
-        .into())
+pub fn create_instruction(
+    pair: Pair<Rule>,
+    local_variables: &LocalVariables,
+) -> Result<Instruction, Error> {
+    let mut inner = pair.into_inner();
+    let value =
+        InstructionWithStr::new_expression(inner.next().unwrap(), local_variables)?.instruction;
+    let len = InstructionWithStr::new_expression(inner.next().unwrap(), local_variables)?;
+    if !len.return_type().matches(&Type::Int) {
+        return Err(Error::WrongLengthType(len.str));
     }
-}
 
-impl Exec for ArrayRepeat {
-    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let value = self.value.exec(interpreter)?;
-        let len = self.len.exec(interpreter)?.into_int().unwrap();
-        if len < 0 {
-            return Err(ExecError::NegativeLength.into());
-        }
-        Ok(var!([value; len]))
-    }
-}
+    let value_type = value.return_type();
+    let value_set = Set::new_ident("value".into(), value).into();
+    let len_set = Set::new_ident("len".into(), len.instruction).into();
+    
+    let mut function = Arc::unwrap_or_clone(Variable::from(ArrayRepeat).into_function().unwrap());
+    function.return_type = var_type!([value_type]);
 
-impl Recreate for ArrayRepeat {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let value = self.value.recreate(local_variables)?;
-        let len = self.len.recreate(local_variables)?;
-        Ok(Self { value, len }.into())
-    }
-}
+    let call = function_call(function);
 
-impl ReturnType for ArrayRepeat {
-    fn return_type(&self) -> Type {
-        let element_type = self.value.return_type();
-        var_type!([element_type])
-    }
+    Ok(Block{ instructions: [value_set, len_set, call].into() }.into())
 }
