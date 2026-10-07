@@ -9,7 +9,10 @@ use super::{
     type_filter::TypeFilter,
 };
 use crate::{
-    instruction::{field_access, slicing}, unary_operator::UnaryOperator, variable::{ReturnType, Type, Variable}, Error, Interpreter
+    Error, Interpreter,
+    instruction::{field_access, slicing},
+    unary_operator::UnaryOperator,
+    variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
 use simplesl_parser::{Rule, unexpected};
@@ -59,7 +62,6 @@ impl Exec for UnaryOperation {
             UnaryOperator::Return => return Err(ExecStop::Return(var)),
             UnaryOperator::Indirection => indirection::exec(var),
             UnaryOperator::FunctionCall => var.into_function().unwrap().exec(interpreter)?,
-            UnaryOperator::Collect => collect::exec(var, interpreter)?,
             UnaryOperator::Iter => iter::exec(var),
             _ => unreachable!(),
         })
@@ -87,7 +89,6 @@ impl ReturnType for UnaryOperation {
             UnaryOperator::Not | UnaryOperator::UnaryMinus => return_type,
             UnaryOperator::Indirection => indirection::return_type(return_type),
             UnaryOperator::FunctionCall => return_type.return_type().unwrap(),
-            UnaryOperator::Collect => collect::return_type(return_type),
             UnaryOperator::Iter => iter::return_type(return_type),
             _ => Type::Never,
         }

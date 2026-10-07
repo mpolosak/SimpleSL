@@ -1,8 +1,5 @@
 use crate::{
-    self as simplesl, ExecError,
-    interpreter::VariableMap,
-    stdlib::len,
-    variable::{Typed, Variable},
+    self as simplesl, function::Function, interpreter::VariableMap, stdlib::len, variable::{Array, Typed, Variable}, ExecError
 };
 use simplesl_macros::{decls, export, var};
 use std::sync::Arc;
@@ -66,6 +63,15 @@ fn at(#[var_type([any]|string)] variable: &Variable, index: i64) -> Result<Varia
 #[export(GetField)]
 fn get_field(variable: &VariableMap, field: &str) -> Option<Variable> {
     variable.get(field).cloned()
+}
+
+#[export(Collect)]
+pub(crate) fn collect(#[var_type(() -> (bool, any))] iter: &Arc<Function>) -> Result<Array, ExecError> {
+    let mut vec = Vec::new();
+    while let Variable::Tuple(tuple) = iter.exec_with_args(&[])? && tuple[0] == Variable::Bool(true){
+        vec.push(tuple[1].clone());
+    }
+    Ok(vec.into())
 }
 
 decls! {
@@ -144,6 +150,7 @@ decls! {
         float_sum := FLOAT_SUM,
         string_sum := STRING_SUM,
         reduce := REDUCE,
+        collect := Collect,
         filter := FILTER,
         slice := Slice,
         array_repeat := ArrayRepeat,

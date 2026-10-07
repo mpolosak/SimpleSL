@@ -46,7 +46,7 @@ impl TypeOf for T {
 
 #[duplicate_item(T; [Arc<Array>]; [Array]; [&Array]; [&[Variable]];
     [Result<Arc<Array>, ExecError>]; [Result<Array, ExecError>]; [Result<&Array, ExecError>];
-    [Result<&[Variable], ExecError>]
+    [Result<&[Variable], ExecError>]; 
 )]
 impl TypeOf for T {
     fn type_of() -> Type {

@@ -1,6 +1,11 @@
+use std::sync::Arc;
+
 use crate::{
-    self as simplesl, Error, Interpreter,
-    instruction::{ExecResult, Instruction, InstructionWithStr, unary_operation::UnaryOperation},
+    self as simplesl, Error,
+    instruction::{
+        Instruction, InstructionWithStr, block::Block, set::Set, unary_operation::function_call,
+    },
+    stdlib::operators::Collect,
     unary_operator::UnaryOperator,
     variable::{ReturnType, Type, Variable},
 };
@@ -14,40 +19,25 @@ lazy_static! {
 pub(crate) fn create(lhs: InstructionWithStr) -> Result<Instruction, Error> {
     let op = UnaryOperator::Collect;
     let return_type = lhs.return_type();
-    if !can_be_used(&return_type) {
+    let Some(element_type) = return_type.iter_element() else {
         return Err(Error::IncorectUnaryOperatorOperand {
             ins: lhs.str,
             op,
             expected: ACCEPTED_TYPE.clone(),
             given: return_type,
         });
-    }
-    Ok(UnaryOperation {
-        instruction: lhs.instruction,
-        op,
+    };
+
+    let iter_set = Set::new_ident("iter".into(), lhs.instruction).into();
+
+    let mut function = Arc::unwrap_or_clone(Variable::from(Collect).into_function().unwrap());
+    function.return_type = var_type!([element_type]);
+    let call = function_call(function);
+
+    Ok(Block {
+        instructions: [iter_set, call].into(),
     }
     .into())
-}
-
-pub fn can_be_used(lhs: &Type) -> bool {
-    lhs.matches(&ACCEPTED_TYPE)
-}
-
-pub(crate) fn exec(var: Variable, interpreter: &mut Interpreter) -> ExecResult {
-    let iter = var.into_function().unwrap();
-    let mut vec = Vec::new();
-    while let Variable::Tuple(tuple) = iter.exec(interpreter)? {
-        if tuple[0] == Variable::Bool(false) {
-            break;
-        };
-        vec.push(tuple[1].clone());
-    }
-    Ok(vec.into())
-}
-
-pub(crate) fn return_type(lhs: Type) -> Type {
-    let element = lhs.iter_element().unwrap();
-    var_type!([element])
 }
 
 #[cfg(test)]
