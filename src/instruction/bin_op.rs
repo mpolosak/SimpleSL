@@ -7,7 +7,7 @@ mod math;
 mod partition;
 mod shift;
 use super::{
-    Exec, ExecResult, Instruction, InstructionWithStr, Recreate, at, function::call,
+    Exec, ExecResult, Instruction, InstructionWithStr, Recreate, function::call,
     local_variable::LocalVariables, reduce,
 };
 use crate::{
@@ -77,7 +77,6 @@ impl Exec for BinOperation {
             BinOperator::RShift => rshift::exec(lhs, rhs)?,
             BinOperator::Filter => filter::exec(lhs, rhs)?,
             BinOperator::Map => map::exec(lhs, rhs)?,
-            BinOperator::At => at::exec(lhs, rhs)?,
             BinOperator::FunctionCall => call::exec(lhs, rhs)?,
             BinOperator::Assign => assign::exec(lhs, rhs, |_, b| b),
             BinOperator::AssignAdd => assign::exec(lhs, rhs, add::exec),
@@ -151,7 +150,6 @@ impl ReturnType for BinOperation {
             | BinOperator::Xor => lhs,
             BinOperator::Partition => partition::return_type(lhs),
             BinOperator::Map => map::return_type(rhs),
-            BinOperator::At => lhs.index_result().unwrap(),
             BinOperator::FunctionCall => lhs.return_type().unwrap(),
             BinOperator::Assign => rhs,
             BinOperator::LShift | BinOperator::RShift | BinOperator::Modulo => Type::Int,
@@ -232,7 +230,6 @@ fn can_be_used(lhs: &Type, rhs: &Type, op: BinOperator) -> bool {
         }
         BinOperator::Equal
         | BinOperator::NotEqual
-        | BinOperator::At
         | BinOperator::FunctionCall => true,
         BinOperator::And | BinOperator::Or => lhs == &Type::Bool && rhs == &Type::Bool,
         BinOperator::BitwiseAnd | BinOperator::BitwiseOr | BinOperator::Xor => {
