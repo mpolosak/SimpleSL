@@ -11,7 +11,7 @@ pub mod local_variable;
 mod r#loop;
 mod module;
 mod r#mut;
-mod pattern;
+pub mod pattern;
 mod prefix_op;
 mod reduce;
 mod r#return;

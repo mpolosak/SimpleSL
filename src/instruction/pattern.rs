@@ -1,11 +1,8 @@
 use crate::{
-    Error, Interpreter,
-    function::Param,
-    instruction::{
+    function::Param, instruction::{
         local_variable::{LocalVariable, LocalVariables},
         pattern::destruct_pattern::DestructPattern,
-    },
-    variable::{Type, Typed, Variable},
+    }, interpreter::VariableMap, variable::{Type, Typed, Variable}, Error, Interpreter
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
@@ -28,14 +25,13 @@ impl Pattern {
 
     pub fn create_instruction(
         pair: Pair<Rule>,
-        local_variables: &mut LocalVariables,
         ex_type: &Type,
     ) -> Result<Self, Error> {
         let str = pair.as_str().into();
         let mut inner = pair.into_inner();
         let destruct_pattern_pair = inner.next().unwrap();
         let destruct_pattern =
-            DestructPattern::create_instruction(destruct_pattern_pair, local_variables);
+            DestructPattern::create_instruction(destruct_pattern_pair);
         let var_type = inner.next().map(Type::from);
         let destruct_pattern_type = destruct_pattern.as_type();
         let Some(var_type) = var_type else {
@@ -85,6 +81,18 @@ impl Pattern {
                 let tuple = variable.into_tuple().unwrap();
                 for (ident, var) in idents.iter().cloned().zip(tuple.iter().cloned()) {
                     interpreter.insert(ident, var);
+                }
+            }
+        }
+    }
+
+    pub fn insert_variables_into_vm(&self, vm: &mut VariableMap, variable: Variable) {
+        match &self.destruct_pattern {
+            DestructPattern::Ident(ident) => {vm.insert(ident.clone(), variable);},
+            DestructPattern::Tuple(idents) => {
+                let tuple = variable.into_tuple().unwrap();
+                for (ident, var) in idents.iter().cloned().zip(tuple.iter().cloned()) {
+                    vm.insert(ident, var);
                 }
             }
         }

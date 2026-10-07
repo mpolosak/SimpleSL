@@ -1,7 +1,10 @@
 use crate::{
+    Error, ExecError, Interpreter,
     instruction::{
-        local_variable::LocalVariables, pattern::Pattern, recreate_instructions, Exec, ExecStop, Instruction
-    }, variable::{Type, Typed, Variable}, Error, ExecError, Interpreter
+        Exec, ExecStop, Instruction, local_variable::LocalVariables, pattern::Pattern,
+        recreate_instructions,
+    },
+    variable::{Type, Typed, Variable},
 };
 use pest::iterators::Pair;
 use simplesl_parser::{Rule, unexpected};
@@ -18,11 +21,11 @@ impl MatchPattern {
     pub fn new(
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
-        exp_type: &Type
+        exp_type: &Type,
     ) -> Result<MatchPattern, Error> {
         let rule = pair.as_rule();
         Ok(match rule {
-            Rule::pattern => Pattern::create_instruction(pair, local_variables, exp_type)?.into(),
+            Rule::pattern => Pattern::create_instruction(pair, exp_type)?.into(),
             Rule::values => {
                 let inner_values = pair.into_inner();
                 let values = inner_values

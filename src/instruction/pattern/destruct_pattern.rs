@@ -1,7 +1,4 @@
-use crate::{
-    instruction::local_variable::LocalVariables,
-    variable::{Type, Typed},
-};
+use crate::variable::{Type, Typed};
 use pest::iterators::Pair;
 use simplesl_parser::{Rule, unexpected};
 use std::{iter::repeat_n, sync::Arc};
@@ -13,7 +10,7 @@ pub enum DestructPattern {
 }
 
 impl DestructPattern {
-    pub fn create_instruction(pair: Pair<Rule>, _local_variables: &mut LocalVariables) -> Self {
+    pub fn create_instruction(pair: Pair<Rule>) -> Self {
         let rule = pair.as_rule();
         match rule {
             Rule::ident => Self::Ident(pair.as_str().into()),

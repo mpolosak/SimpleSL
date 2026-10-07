@@ -52,7 +52,7 @@ impl Set {
         let instruction = Instruction::new(pair, local_variables)?;
         let var_type = instruction.return_type();
         let pattern_str = pattern_pair.as_str().into();
-        let pattern = Pattern::create_instruction(pattern_pair, local_variables, &var_type)?;
+        let pattern = Pattern::create_instruction(pattern_pair, &var_type)?;
         pattern.insert_local_variables(local_variables);
         Ok((
             Self {
@@ -73,7 +73,7 @@ impl Set {
         local_variables: &mut LocalVariables,
     ) -> Result<(Self, Error), Error> {
         let pattern_str = pattern_pair.as_str().into();
-        let mut pattern = Pattern::create_instruction(pattern_pair, local_variables, &Type::Any)?;
+        let mut pattern = Pattern::create_instruction(pattern_pair, &Type::Any)?;
         let ident = if let DestructPattern::Ident(ident) = &pattern.destruct_pattern {
             Some(ident)
         } else {
