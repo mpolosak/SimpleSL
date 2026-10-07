@@ -1,6 +1,10 @@
-use std::sync::Arc;
-use crate::{self as simplesl, stdlib::len, variable::{Typed, Variable}, ExecError};
+use crate::{
+    self as simplesl, ExecError,
+    stdlib::len,
+    variable::{Typed, Variable},
+};
 use simplesl_macros::{decls, export, var};
+use std::sync::Arc;
 
 #[export(Slice)]
 #[return_type([any]|string)]
@@ -36,7 +40,7 @@ fn array_repeat(value: Variable, len: i64) -> Result<Variable, ExecError> {
 }
 
 #[export(At)]
-fn at(#[var_type([any]|string)]variable: &Variable, index: i64) -> Result<Variable, ExecError> {
+fn at(#[var_type([any]|string)] variable: &Variable, index: i64) -> Result<Variable, ExecError> {
     let index = if index >= 0 {
         index as usize
     } else {
@@ -53,6 +57,7 @@ fn at(#[var_type([any]|string)]variable: &Variable, index: i64) -> Result<Variab
             .ok_or(ExecError::IndexOutOfBounds)
             .map(|ch| ch.to_string().into()),
         Variable::Array(array) => array.get(index).ok_or(ExecError::IndexOutOfBounds).cloned(),
+        Variable::Tuple(tuple) => tuple.get(index).ok_or(ExecError::IndexOutOfBounds).cloned(),
         variable => unreachable!("Tried to index into {}", variable.as_type()),
     }
 }
@@ -142,9 +147,9 @@ decls! {
 
 #[cfg(test)]
 mod tests {
-    use crate::stdlib::operators::at;
     use crate as simplesl;
     use crate::ExecError;
+    use crate::stdlib::operators::at;
     use simplesl_macros::var;
 
     #[test]
@@ -158,10 +163,7 @@ mod tests {
         let string = var!("tex");
         assert_eq!(at(&string, 0), Ok(var!("t")));
         assert_eq!(at(&string, 2), Ok(var!("x")));
-        assert_eq!(
-            at(&string, 3),
-            Err(ExecError::IndexOutOfBounds)
-        );
+        assert_eq!(at(&string, 3), Err(ExecError::IndexOutOfBounds));
         assert_eq!(at(&string, -1), Ok(var!("x")))
     }
 }

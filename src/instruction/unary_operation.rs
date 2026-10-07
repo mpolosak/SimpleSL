@@ -5,11 +5,14 @@ use super::{
     local_variable::LocalVariables,
     prefix_op::{indirection, not, unary_minus},
     reduce::{self, bool_reduce, collect, product, sum},
-    tuple_access::TupleAccess,
+    tuple_access,
     type_filter::TypeFilter,
 };
 use crate::{
-    instruction::{field_access::FieldAccess, slicing}, unary_operator::UnaryOperator, variable::{ReturnType, Type, Variable}, Error, Interpreter
+    Error, Interpreter,
+    instruction::{field_access::FieldAccess, slicing},
+    unary_operator::UnaryOperator,
+    variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
 use simplesl_parser::{Rule, unexpected};
@@ -27,7 +30,7 @@ impl InstructionWithStr {
                 TypeFilter::create_instruction(lhs.instruction, op.into_inner().next().unwrap())
             }
             Rule::function_call => call::create_instruction(lhs, op, local_variables),
-            Rule::tuple_access => TupleAccess::create_instruction(lhs, op),
+            Rule::tuple_access => tuple_access::create_instruction(lhs, op),
             Rule::field_access => FieldAccess::create_instruction(lhs, op),
             Rule::sum => sum::create(lhs),
             Rule::product => product::create(lhs),

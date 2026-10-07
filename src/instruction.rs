@@ -11,6 +11,7 @@ pub mod local_variable;
 mod r#loop;
 mod module;
 mod r#mut;
+mod pattern;
 mod prefix_op;
 mod reduce;
 mod r#return;
@@ -20,7 +21,6 @@ mod r#struct;
 mod tuple;
 pub mod tuple_access;
 mod type_filter;
-mod pattern;
 pub mod unary_operation;
 use self::{
     array::Array,
@@ -45,7 +45,6 @@ use r#mut::Mut;
 use pest::iterators::Pair;
 use simplesl_parser::{PRATT_PARSER, Rule, unexpected};
 use std::sync::Arc;
-use tuple_access::TupleAccess;
 use type_filter::TypeFilter;
 use unary_operation::UnaryOperation;
 
@@ -180,8 +179,6 @@ pub enum Instruction {
     Struct(Arc<Struct>),
     #[from]
     Tuple(Tuple),
-    #[from(TupleAccess)]
-    TupleAccess(Arc<TupleAccess>),
     #[from(TypeFilter)]
     TypeFilter(Arc<TypeFilter>),
     #[from]
@@ -250,7 +247,7 @@ impl Exec for Instruction {
             | Self::BinOperation(ins) | Self::FieldAccess(ins) | Self::IfElse(ins)
             | Self::Loop(ins) | Self::Match(ins) | Self::Mut(ins) | Self::Set(ins)
             | Self::SetIfElse(ins) | Self::Struct(ins) | Self::TypeFilter(ins)
-            | Self::UnaryOperation(ins) | Self::TupleAccess(ins) => ins.exec(interpreter),
+            | Self::UnaryOperation(ins) => ins.exec(interpreter),
             Self::Break => Err(ExecStop::Break),
             Self::Continue => Err(ExecStop::Continue)
         }
@@ -278,8 +275,7 @@ impl Recreate for Instruction {
             | Self::BinOperation(ins) | Self::FieldAccess(ins) | Self::IfElse(ins)
             | Self::Loop(ins) | Self::Match(ins) | Self::Mut(ins) | Self::Set(ins)
             | Self::SetIfElse(ins) | Self::Struct(ins) | Self::TypeFilter(ins)
-            | Self::UnaryOperation(ins) | Self::TupleAccess(ins)
-                => ins.recreate(local_variables),
+            | Self::UnaryOperation(ins) => ins.recreate(local_variables),
             _ => Ok(self.clone())
         }
     }
@@ -293,13 +289,12 @@ impl ReturnType for Instruction {
             | Self::BinOperation(ins) | Self::FieldAccess(ins) | Self::IfElse(ins)
             | Self::Match(ins) | Self::Mut(ins) | Self::Set(ins) | Self::SetIfElse(ins)
             | Self::Struct(ins) | Self::TypeFilter(ins) | Self::UnaryOperation(ins)
-            | Self::TupleAccess(ins) => ins.return_type(),
+                => ins.return_type(),
             Self::Loop(_) => Type::Void,
             Self::Break | Self::Continue => Type::Never
         }
     }
 }
-
 
 pub(crate) fn recreate_instructions(
     instructions: &[Instruction],
