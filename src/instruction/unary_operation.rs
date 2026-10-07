@@ -3,7 +3,7 @@ use super::{
     Exec, ExecResult, ExecStop, Instruction, InstructionWithStr, Recreate, at,
     function::call,
     local_variable::LocalVariables,
-    prefix_op::{indirection, not, unary_minus},
+    prefix_op::{not, unary_minus},
     reduce::{self, bool_reduce, collect, product, sum},
     tuple_access,
     type_filter::TypeFilter,
@@ -60,7 +60,6 @@ impl Exec for UnaryOperation {
             UnaryOperator::Not => not::exec(var),
             UnaryOperator::UnaryMinus => unary_minus::exec(var),
             UnaryOperator::Return => return Err(ExecStop::Return(var)),
-            UnaryOperator::Indirection => indirection::exec(var),
             UnaryOperator::FunctionCall => var.into_function().unwrap().exec(interpreter)?,
             UnaryOperator::Iter => iter::exec(var),
             _ => unreachable!(),
@@ -87,7 +86,6 @@ impl ReturnType for UnaryOperation {
         let return_type = self.instruction.return_type();
         match self.op {
             UnaryOperator::Not | UnaryOperator::UnaryMinus => return_type,
-            UnaryOperator::Indirection => indirection::return_type(return_type),
             UnaryOperator::FunctionCall => return_type.return_type().unwrap(),
             UnaryOperator::Iter => iter::return_type(return_type),
             _ => Type::Never,

@@ -66,12 +66,20 @@ fn get_field(variable: &VariableMap, field: &str) -> Option<Variable> {
 }
 
 #[export(Collect)]
-pub(crate) fn collect(#[var_type(() -> (bool, any))] iter: &Arc<Function>) -> Result<Array, ExecError> {
+fn collect(#[var_type(() -> (bool, any))] iter: &Arc<Function>) -> Result<Array, ExecError> {
     let mut vec = Vec::new();
     while let Variable::Tuple(tuple) = iter.exec_with_args(&[])? && tuple[0] == Variable::Bool(true){
         vec.push(tuple[1].clone());
     }
     Ok(vec.into())
+}
+
+#[export(Deref)]
+fn deref(variable: Variable) -> Variable {
+    if let Variable::Mut(var) = variable {
+        return var.variable.read().unwrap().clone()
+    }
+    variable
 }
 
 decls! {
@@ -155,7 +163,8 @@ decls! {
         slice := Slice,
         array_repeat := ArrayRepeat,
         at := At,
-        get_field := GetField
+        get_field := GetField,
+        deref := Deref
     }
 }
 

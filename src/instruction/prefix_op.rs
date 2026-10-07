@@ -1,7 +1,15 @@
+use std::sync::Arc;
+
 use super::InstructionWithStr;
-use crate::{self as simplesl, instruction::r#mut::Mut};
+use crate::instruction::block::Block;
+use crate::instruction::set::Set;
+use crate::instruction::unary_operation::function_call;
+use crate::instruction::Instruction;
+use crate::stdlib::operators::Deref;
+use crate::unary_operator::UnaryOperator;
 use crate::Error;
-use crate::variable::Type;
+use crate::variable::{ReturnType, Type, Variable};
+use crate::{self as simplesl, instruction::r#mut::Mut};
 use lazy_static::lazy_static;
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
@@ -14,7 +22,7 @@ impl InstructionWithStr {
         let instruction = match op.as_rule() {
             Rule::not => not::create_instruction(rhs),
             Rule::unary_minus => unary_minus::create_instruction(rhs),
-            Rule::indirection => indirection::create_instruction(rhs),
+            Rule::indirection => create_deref(rhs),
             Rule::r#mut => Mut::create_instruction(op, rhs),
             rule => unexpected!(rule),
         }?;
@@ -120,40 +128,28 @@ pub mod not {
     }
 }
 
-pub mod indirection {
-    use crate::{
-        Error,
-        instruction::{Instruction, InstructionWithStr, unary_operation::UnaryOperation},
-        unary_operator::UnaryOperator,
-        variable::{ReturnType, Type, Variable},
+pub fn create_deref(instruction: InstructionWithStr) -> Result<Instruction, Error> {
+    let op = UnaryOperator::Indirection;
+    let return_type = instruction.return_type();
+    let Some(return_type) = return_type.mut_element_type() else {
+        return Err(Error::IncorectUnaryOperatorOperand {
+            ins: instruction.str,
+            op,
+            expected: Type::Mut(Type::Any.into()),
+            given: return_type,
+        });
     };
 
-    pub fn create_instruction(instruction: InstructionWithStr) -> Result<Instruction, Error> {
-        let op = UnaryOperator::Indirection;
-        let return_type = instruction.return_type();
-        if !return_type.is_mut() {
-            return Err(Error::IncorectUnaryOperatorOperand {
-                ins: instruction.str,
-                op,
-                expected: Type::Mut(Type::Any.into()),
-                given: return_type,
-            });
-        }
-        Ok(UnaryOperation {
-            instruction: instruction.instruction,
-            op,
-        }
-        .into())
-    }
+    let variable_set = Set::new_ident("variable".into(), instruction.instruction).into();
 
-    pub fn exec(var: Variable) -> Variable {
-        let var = var.into_mut().unwrap();
-        var.variable.read().unwrap().clone()
-    }
+    let mut function = Arc::unwrap_or_clone(Variable::from(Deref).into_function().unwrap());
+    function.return_type = return_type;
+    let call = function_call(function);
 
-    pub fn return_type(var_type: Type) -> Type {
-        var_type.mut_element_type().unwrap()
+    Ok(Block {
+        instructions: [variable_set, call].into(),
     }
+    .into())
 }
 
 #[cfg(test)]
