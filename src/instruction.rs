@@ -34,7 +34,7 @@ use self::{
 };
 use crate::{
     Error, ExecError,
-    instruction::{field_access::FieldAccess, r#struct::Struct},
+    instruction::r#struct::Struct,
     interpreter::Interpreter,
     variable::{ReturnType, Type, Typed, Variable},
 };
@@ -160,8 +160,6 @@ pub enum Instruction {
     Block(Block),
     Break,
     Continue,
-    #[from(FieldAccess)]
-    FieldAccess(Arc<FieldAccess>),
     #[from(IfElse)]
     IfElse(Arc<IfElse>),
     LocalVariable(Arc<str>, LocalVariable),
@@ -244,10 +242,9 @@ impl Exec for Instruction {
                 .cloned()
                 .ok_or_else(|| panic!("Tried to get variable {ident} that doest exist")),
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::Block(ins) | Self::Tuple(ins)
-            | Self::BinOperation(ins) | Self::FieldAccess(ins) | Self::IfElse(ins)
-            | Self::Loop(ins) | Self::Match(ins) | Self::Mut(ins) | Self::Set(ins)
-            | Self::SetIfElse(ins) | Self::Struct(ins) | Self::TypeFilter(ins)
-            | Self::UnaryOperation(ins) => ins.exec(interpreter),
+            | Self::BinOperation(ins) | Self::IfElse(ins) | Self::Loop(ins) | Self::Match(ins)
+            | Self::Mut(ins) | Self::Set(ins) | Self::SetIfElse(ins) | Self::Struct(ins)
+            | Self::TypeFilter(ins) | Self::UnaryOperation(ins) => ins.exec(interpreter),
             Self::Break => Err(ExecStop::Break),
             Self::Continue => Err(ExecStop::Continue)
         }
@@ -272,10 +269,10 @@ impl Recreate for Instruction {
             )),
             Self::Variable(variable) => Ok(Self::Variable(variable.clone())),
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::Block(ins) | Self::Tuple(ins)
-            | Self::BinOperation(ins) | Self::FieldAccess(ins) | Self::IfElse(ins)
-            | Self::Loop(ins) | Self::Match(ins) | Self::Mut(ins) | Self::Set(ins)
-            | Self::SetIfElse(ins) | Self::Struct(ins) | Self::TypeFilter(ins)
-            | Self::UnaryOperation(ins) => ins.recreate(local_variables),
+            | Self::BinOperation(ins) | Self::IfElse(ins) | Self::Loop(ins) | Self::Match(ins)
+            | Self::Mut(ins) | Self::Set(ins) | Self::SetIfElse(ins) | Self::Struct(ins)
+            | Self::TypeFilter(ins) | Self::UnaryOperation(ins)
+                => ins.recreate(local_variables),
             _ => Ok(self.clone())
         }
     }
@@ -286,10 +283,9 @@ impl ReturnType for Instruction {
         match_any! { self,
             Self::Variable(variable) | Self::LocalVariable(_, variable) => variable.as_type(),
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::Block(ins) | Self::Tuple(ins)
-            | Self::BinOperation(ins) | Self::FieldAccess(ins) | Self::IfElse(ins)
-            | Self::Match(ins) | Self::Mut(ins) | Self::Set(ins) | Self::SetIfElse(ins)
-            | Self::Struct(ins) | Self::TypeFilter(ins) | Self::UnaryOperation(ins)
-                => ins.return_type(),
+            | Self::BinOperation(ins) | Self::IfElse(ins) | Self::Match(ins) | Self::Mut(ins)
+            | Self::Set(ins) | Self::SetIfElse(ins) | Self::Struct(ins) | Self::TypeFilter(ins)
+            | Self::UnaryOperation(ins) => ins.return_type(),
             Self::Loop(_) => Type::Void,
             Self::Break | Self::Continue => Type::Never
         }

@@ -9,10 +9,7 @@ use super::{
     type_filter::TypeFilter,
 };
 use crate::{
-    Error, Interpreter,
-    instruction::{field_access::FieldAccess, slicing},
-    unary_operator::UnaryOperator,
-    variable::{ReturnType, Type, Variable},
+    instruction::{field_access, slicing}, unary_operator::UnaryOperator, variable::{ReturnType, Type, Variable}, Error, Interpreter
 };
 use pest::iterators::Pair;
 use simplesl_parser::{Rule, unexpected};
@@ -31,7 +28,7 @@ impl InstructionWithStr {
             }
             Rule::function_call => call::create_instruction(lhs, op, local_variables),
             Rule::tuple_access => tuple_access::create_instruction(lhs, op),
-            Rule::field_access => FieldAccess::create_instruction(lhs, op),
+            Rule::field_access => field_access::create_instruction(lhs, op),
             Rule::sum => sum::create(lhs),
             Rule::product => product::create(lhs),
             Rule::all => bool_reduce::create(lhs, UnaryOperator::All),

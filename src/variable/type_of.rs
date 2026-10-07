@@ -1,5 +1,5 @@
 use super::{Array, Type, Variable};
-use crate::{self as simplesl, ExecError};
+use crate::{self as simplesl, interpreter::VariableMap, ExecError};
 use duplicate::duplicate_item;
 use simplesl_macros::var_type;
 use std::{io, sync::Arc};
@@ -37,7 +37,7 @@ impl TypeOf for T {
 }
 
 #[duplicate_item(T; [&str]; [Arc<str>]; [String]; [Result<Arc<&str>, ExecError>];
-    [Result<Arc<str>, ExecError>]; [Result<String, ExecError>];)]
+    [Result<Arc<str>, ExecError>]; [Result<String, ExecError>]; [&Arc<str>];)]
 impl TypeOf for T {
     fn type_of() -> Type {
         Type::String
@@ -100,5 +100,18 @@ impl TypeOf for Option<f64> {
 impl TypeOf for Option<String> {
     fn type_of() -> Type {
         var_type!(string | ())
+    }
+}
+
+impl TypeOf for Option<Variable> {
+    fn type_of() -> Type {
+        var_type!(any)
+    }
+}
+
+#[duplicate_item(T; [VariableMap]; [&VariableMap];)]
+impl TypeOf for T {
+    fn type_of() -> Type {
+        var_type!(struct{})
     }
 }

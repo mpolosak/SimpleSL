@@ -1,5 +1,6 @@
 use crate::{
     self as simplesl, ExecError,
+    interpreter::VariableMap,
     stdlib::len,
     variable::{Typed, Variable},
 };
@@ -60,6 +61,11 @@ fn at(#[var_type([any]|string)] variable: &Variable, index: i64) -> Result<Varia
         Variable::Tuple(tuple) => tuple.get(index).ok_or(ExecError::IndexOutOfBounds).cloned(),
         variable => unreachable!("Tried to index into {}", variable.as_type()),
     }
+}
+
+#[export(GetField)]
+fn get_field(variable: &VariableMap, field: &str) -> Option<Variable> {
+    variable.get(field).cloned()
 }
 
 decls! {
@@ -141,7 +147,8 @@ decls! {
         filter := FILTER,
         slice := Slice,
         array_repeat := ArrayRepeat,
-        at := At
+        at := At,
+        get_field := GetField
     }
 }
 
