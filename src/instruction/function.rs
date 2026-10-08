@@ -1,8 +1,14 @@
 pub mod call;
 use crate::{
-    self as simplesl, function::{Body, Function as VarFunc, Param, Params}, instruction::{
-        local_variable::{FunctionInfo, LocalVariable, LocalVariableMap, LocalVariables}, recreate_instructions, Exec, ExecResult, Instruction, Recreate
-    }, interpreter::Interpreter, variable::{ReturnType, Type}, Error, ExecError
+    self as simplesl, Error, ExecError,
+    function::{Body, Function as VarFunc, Param, Params},
+    instruction::{
+        Exec, ExecResult, Instruction, Recreate,
+        local_variable::{FunctionInfo, LocalVariable, LocalVariableMap, LocalVariables},
+        recreate_instructions,
+    },
+    interpreter::Interpreter,
+    variable::{ReturnType, Type},
 };
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
@@ -38,10 +44,10 @@ impl Function {
             FunctionInfo::new(ident.clone(), return_type.clone()),
         );
         if let Some(ident) = &ident {
-             local_variables.insert(
-            ident.clone(),
-            LocalVariable::Function(params.clone(), return_type.clone()),
-        );
+            local_variables.insert(
+                ident.clone(),
+                LocalVariable::Function(params.clone(), return_type.clone()),
+            );
         }
         let body = local_variables.create_instructions(inner)?;
         if !Type::Void.matches(&return_type)

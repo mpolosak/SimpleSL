@@ -1,7 +1,4 @@
-use crate::{
-    ExecError,
-    variable::Variable,
-};
+use crate::{ExecError, variable::Variable};
 
 pub fn exec(dividend: Variable, divisor: Variable) -> Result<Variable, ExecError> {
     match (dividend, divisor) {

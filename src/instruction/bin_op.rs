@@ -228,9 +228,7 @@ fn can_be_used(lhs: &Type, rhs: &Type, op: BinOperator) -> bool {
         BinOperator::LShift | BinOperator::RShift | BinOperator::Modulo => {
             can_be_used_int(lhs.clone(), rhs.clone())
         }
-        BinOperator::Equal
-        | BinOperator::NotEqual
-        | BinOperator::FunctionCall => true,
+        BinOperator::Equal | BinOperator::NotEqual | BinOperator::FunctionCall => true,
         BinOperator::And | BinOperator::Or => lhs == &Type::Bool && rhs == &Type::Bool,
         BinOperator::BitwiseAnd | BinOperator::BitwiseOr | BinOperator::Xor => {
             bitwise::can_be_used(lhs.clone(), rhs.clone())

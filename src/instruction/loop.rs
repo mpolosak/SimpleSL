@@ -1,10 +1,6 @@
 pub mod r#for;
 pub mod r#while;
-pub mod while_set;
-use super::{
-    Exec, ExecResult, ExecStop, Instruction, Recreate,
-    local_variable::LocalVariables,
-};
+use super::{Exec, ExecResult, ExecStop, Instruction, Recreate, local_variable::LocalVariables};
 use crate::{Error, ExecError, Interpreter, variable::Variable};
 use pest::iterators::Pair;
 use simplesl_parser::Rule;

@@ -3,7 +3,7 @@ use crate::{
     instruction::{
         BinOperation, Instruction, Loop,
         block::Block,
-        control_flow::IfElse,
+        control_flow::If,
         local_variable::{LocalVariable, LocalVariables},
         pattern::{Pattern, destruct_pattern::DestructPattern},
         set::Set,
@@ -60,10 +60,10 @@ pub fn create_instruction(
     .into();
     let instruction = Instruction::new(inner.next().unwrap(), &mut local_variables)?;
     let condition = Instruction::LocalVariable(CON.clone(), LocalVariable::Other(Type::Bool));
-    let if_else = IfElse {
-        condition,
+    let if_else = If {
+        conditions: [condition].into(),
         if_true: instruction,
-        if_false: Instruction::Break,
+        else_instruction: Instruction::Break,
     }
     .into();
     let body = Block {

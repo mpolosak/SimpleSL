@@ -2,7 +2,10 @@ use super::{
     Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
 };
 use crate::{
-    instruction::recreate_instructions, interpreter::Interpreter, variable::{ReturnType, Type, Variable}, Error, ExecError
+    Error, ExecError,
+    instruction::recreate_instructions,
+    interpreter::Interpreter,
+    variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
@@ -28,8 +31,7 @@ impl Tuple {
     fn create_from_elements(elements: Arc<[Instruction]>) -> Instruction {
         let mut array = Vec::new();
         for instruction in &*elements {
-            let Instruction::Variable(variable) = instruction
-            else {
+            let Instruction::Variable(variable) = instruction else {
                 return Self { elements }.into();
             };
             array.push(variable.clone());

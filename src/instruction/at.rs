@@ -2,7 +2,10 @@ use std::sync::Arc;
 
 use super::{Instruction, InstructionWithStr, local_variable::LocalVariables};
 use crate::{
-    instruction::{block::Block, set::Set, unary_operation::function_call}, stdlib::operators::At, variable::{ReturnType, Type, Variable}, Error
+    Error,
+    instruction::{block::Block, set::Set, unary_operation::function_call},
+    stdlib::operators::At,
+    variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
@@ -30,5 +33,8 @@ pub fn create(
     function.return_type = return_type;
     let call = function_call(function);
 
-    Ok(Block{ instructions:  [variable_set, index_set, call].into()}.into())
+    Ok(Block {
+        instructions: [variable_set, index_set, call].into(),
+    }
+    .into())
 }

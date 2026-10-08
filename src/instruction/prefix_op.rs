@@ -1,13 +1,13 @@
 use std::sync::Arc;
 
 use super::InstructionWithStr;
+use crate::Error;
+use crate::instruction::Instruction;
 use crate::instruction::block::Block;
 use crate::instruction::set::Set;
 use crate::instruction::unary_operation::function_call;
-use crate::instruction::Instruction;
 use crate::stdlib::operators::Deref;
 use crate::unary_operator::UnaryOperator;
-use crate::Error;
 use crate::variable::{ReturnType, Type, Variable};
 use crate::{self as simplesl, instruction::r#mut::Mut};
 use lazy_static::lazy_static;

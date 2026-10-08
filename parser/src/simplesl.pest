@@ -158,14 +158,12 @@ postfix_op           = _{
   iter                 =  { "~" }
 stm                  = _{
     block
-  | if_else
-  | set_if_else
+  | if
   | match
   | import
   | return
   | loop
   | while
-  | while_set
   | for
   | break
   | continue
@@ -177,8 +175,10 @@ pattern              =  { destruct_pattern ~ ":" ~ type? }
 block                =  { "{" ~ line* ~ "}" }
 mod                  =  { modkw ~ block }
 body                 = _{ block | return | expr }
-if_else              =  { ifkw ~ expr ~ body ~ else? }
-set_if_else          =  { ifkw ~ set ~ body ~ else? }
+condition_chain      =  { condition ~ (";" ~ condition)* }
+  condition          = _{ set_expr | expr }
+  set_expr           =  { pattern ~ "=" ~ expr } 
+if                   =  { ifkw ~ condition_chain ~ body ~ else? }
   else               = _{ elsekw ~ stm }
 match                =  { "match" ~ expr ~ "{" ~ match_arm* ~ "}" }
   match_arm          =  { match_pattern ~ "=>" ~ body ~ "," }
@@ -189,8 +189,7 @@ import               =  { importkw ~ string }
 return               =  { returnkw ~ stm? }
 break                =  { "break" }
 continue             =  { "continue" }
-while                =  { whilekw ~ expr ~ stm }
-while_set            =  { whilekw ~ set ~ stm }
+while                =  { whilekw ~ condition_chain ~ stm }
 for                  =  { forkw ~ ident ~ "in" ~ expr ~ stm }
 loop                 =  { loopkw ~ stm }
 expression_list      = _{ (expr ~ ("," ~ expr)*) }

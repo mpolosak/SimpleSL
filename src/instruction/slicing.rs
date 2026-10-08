@@ -1,14 +1,12 @@
-use super::{
-    Instruction, InstructionWithStr, local_variable::LocalVariables,
-};
-use crate::{
-    instruction::{block::Block, unary_operation::function_call},
-    stdlib::operators::Slice,
-};
+use super::{Instruction, InstructionWithStr, local_variable::LocalVariables};
 use crate::{
     Error,
     instruction::set::Set,
     variable::{ReturnType, Type, Variable},
+};
+use crate::{
+    instruction::{block::Block, unary_operation::function_call},
+    stdlib::operators::Slice,
 };
 use pest::iterators::Pair;
 use simplesl_parser::{Rule, unexpected};
@@ -49,7 +47,7 @@ pub fn create(
     let step = step.unwrap_or_else(|| Variable::Void.into());
 
     let variable_type = lhs.return_type();
-    
+
     let variable_set = Set::new_ident("variable".into(), lhs.instruction).into();
     let start_set = Set::new_ident("start".into(), start).into();
     let stop_set = Set::new_ident("end".into(), stop).into();

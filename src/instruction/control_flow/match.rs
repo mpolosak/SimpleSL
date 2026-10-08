@@ -1,9 +1,7 @@
 use super::match_arm::MatchArm;
 use crate::{
     Error, ExecError,
-    instruction::{
-        Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
-    },
+    instruction::{Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables},
     interpreter::Interpreter,
     variable::{ReturnType, Type},
 };

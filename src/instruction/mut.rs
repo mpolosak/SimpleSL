@@ -23,8 +23,9 @@ impl Mut {
         let Some(type_pair) = inner.next() else {
             return Ok(Mut {
                 var_type: rhs.return_type(),
-                instruction: rhs.instruction
-            }.into())
+                instruction: rhs.instruction,
+            }
+            .into());
         };
         let var_type = Type::from(type_pair);
         let instruction_return_type = rhs.return_type();

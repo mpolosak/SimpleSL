@@ -1,4 +1,4 @@
-use crate::{variable::Variable, ExecError};
+use crate::{ExecError, variable::Variable};
 
 pub trait ToResult<T, E> {
     fn to_result(self) -> Result<T, E>;

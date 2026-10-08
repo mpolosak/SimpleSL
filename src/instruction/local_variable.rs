@@ -109,12 +109,7 @@ impl<'a> LocalVariables<'a> {
         let Some(last) = instructions.pop() else {
             return Ok(Arc::from([]));
         };
-        instructions.retain(|instruction| {
-            !matches!(
-                instruction,
-                Instruction::Variable(..),
-            )
-        });
+        instructions.retain(|instruction| !matches!(instruction, Instruction::Variable(..),));
         instructions.push(last);
         Ok(instructions.into())
     }

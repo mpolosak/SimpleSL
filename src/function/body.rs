@@ -1,6 +1,4 @@
-use crate::{
-    instruction::Instruction, interpreter::Interpreter, variable::Variable, ExecError
-};
+use crate::{ExecError, instruction::Instruction, interpreter::Interpreter, variable::Variable};
 use std::sync::Arc;
 
 #[derive(Debug, Clone)]

@@ -1,6 +1,4 @@
-use super::{
-    Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
-};
+use super::{Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables};
 use crate::{
     self as simplesl, BinOperator, Code, Error, ExecError,
     interpreter::Interpreter,

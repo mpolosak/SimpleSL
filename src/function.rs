@@ -4,9 +4,7 @@ pub(crate) use self::body::Body;
 pub use self::param::{Param, Params};
 use crate::{
     self as simplesl, Code, Error, ExecError, Interpreter,
-    instruction::{
-        ExecStop, function::call, unary_operation::UnaryOperation,
-    },
+    instruction::{ExecStop, function::call, unary_operation::UnaryOperation},
     unary_operator::UnaryOperator,
     variable::{FunctionType, ReturnType, Type, Typed, Variable},
 };

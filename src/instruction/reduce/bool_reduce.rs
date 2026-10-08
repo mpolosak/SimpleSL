@@ -1,8 +1,7 @@
 use crate::{
     self as simplesl, Error,
     instruction::{
-        Instruction, InstructionWithStr, block::Block, set::Set,
-        unary_operation::function_call,
+        Instruction, InstructionWithStr, block::Block, set::Set, unary_operation::function_call,
     },
     stdlib::operators::{ALL, ANY},
     unary_operator::UnaryOperator,

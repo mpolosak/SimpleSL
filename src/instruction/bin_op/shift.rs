@@ -5,10 +5,7 @@ use duplicate::duplicate_item;
     [lshift] [LShift] [lhs << rhs] [>>]; [rshift] [RShift] [lhs >> rhs] [>>];
 )]
 pub mod shift {
-    use crate::{
-        ExecError,
-        variable::Variable,
-    };
+    use crate::{ExecError, variable::Variable};
 
     pub fn exec(lhs: Variable, rhs: Variable) -> Result<Variable, ExecError> {
         let (Variable::Int(lhs), Variable::Int(rhs)) = (&lhs, &rhs) else {

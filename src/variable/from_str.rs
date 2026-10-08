@@ -1,8 +1,13 @@
-use std::{str::FromStr, sync::Arc};
+use crate::{
+    Error,
+    instruction::pattern::Pattern,
+    interpreter::VariableMap,
+    variable::{Array, Type, Typed, Variable},
+};
 use itertools::Itertools;
-use pest::{iterators::Pair, Parser};
-use simplesl_parser::{unexpected, Rule, SimpleSLParser};
-use crate::{instruction::pattern::Pattern, interpreter::VariableMap, variable::{Array, Type, Typed, Variable}, Error};
+use pest::{Parser, iterators::Pair};
+use simplesl_parser::{Rule, SimpleSLParser, unexpected};
+use std::{str::FromStr, sync::Arc};
 
 impl FromStr for Variable {
     type Err = Error;
@@ -121,11 +126,14 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
 
 #[cfg(test)]
 mod tests {
-    use std::{collections::HashMap, str::FromStr};
-    use simplesl_macros::var_type;
-    use crate::{variable::{Array, Type, Variable}, Error};
     use crate as simplesl;
+    use crate::{
+        Error,
+        variable::{Array, Type, Variable},
+    };
     use proptest::prelude::*;
+    use simplesl_macros::var_type;
+    use std::{collections::HashMap, str::FromStr};
 
     #[test]
     fn from_str() {

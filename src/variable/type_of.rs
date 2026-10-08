@@ -1,5 +1,5 @@
 use super::{Array, Type, Variable};
-use crate::{self as simplesl, interpreter::VariableMap, ExecError};
+use crate::{self as simplesl, ExecError, interpreter::VariableMap};
 use duplicate::duplicate_item;
 use simplesl_macros::var_type;
 use std::{io, sync::Arc};

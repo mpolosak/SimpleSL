@@ -1,5 +1,8 @@
 use crate::{
-    self as simplesl, instruction::ExecResult, stdlib::operators::FILTER, variable::{Type, Typed, Variable}
+    self as simplesl,
+    instruction::ExecResult,
+    stdlib::operators::FILTER,
+    variable::{Type, Typed, Variable},
 };
 use simplesl_macros::var_type;
 use std::sync::Arc;

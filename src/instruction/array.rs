@@ -1,8 +1,9 @@
-use super::{
-    Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
-};
+use super::{Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables};
 use crate::{
-    self as simplesl, instruction::recreate_instructions, interpreter::Interpreter, variable::{ReturnType, Type}, Error, ExecError
+    self as simplesl, Error, ExecError,
+    instruction::recreate_instructions,
+    interpreter::Interpreter,
+    variable::{ReturnType, Type},
 };
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
@@ -50,8 +51,7 @@ impl Recreate for Array {
         let instructions = recreate_instructions(&self.instructions, local_variables)?;
         let mut array = Vec::new();
         for instruction in &*instructions {
-            let Instruction::Variable(variable) = instruction
-            else {
+            let Instruction::Variable(variable) = instruction else {
                 return Ok(Self {
                     instructions,
                     element_type: self.element_type.clone(),

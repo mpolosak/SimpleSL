@@ -1,7 +1,11 @@
 use crate::{
+    Error, ExecError,
     instruction::{
-        control_flow::match_pattern::MatchPattern, local_variable::LocalVariables, Exec, ExecResult, ExecStop, Instruction, Recreate
-    }, interpreter::Interpreter, variable::{ReturnType, Type, Variable}, Error, ExecError
+        Exec, ExecResult, ExecStop, Instruction, Recreate,
+        control_flow::match_pattern::MatchPattern, local_variable::LocalVariables,
+    },
+    interpreter::Interpreter,
+    variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
@@ -13,7 +17,11 @@ pub struct MatchArm {
 }
 
 impl MatchArm {
-    pub fn new(pair: Pair<Rule>, local_variables: &mut LocalVariables, exp_type: &Type) -> Result<Self, Error> {
+    pub fn new(
+        pair: Pair<Rule>,
+        local_variables: &mut LocalVariables,
+        exp_type: &Type,
+    ) -> Result<Self, Error> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
         let pattern = MatchPattern::new(pair, local_variables, exp_type)?;

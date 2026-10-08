@@ -26,7 +26,7 @@ use self::{
     array::Array,
     bin_op::*,
     block::Block,
-    control_flow::{IfElse, Match, SetIfElse},
+    control_flow::{If, Match},
     function::Function,
     local_variable::{LocalVariable, LocalVariables},
     set::Set,
@@ -39,7 +39,7 @@ use crate::{
     variable::{ReturnType, Type, Typed, Variable},
 };
 use derive_more::From;
-use r#loop::{Loop, r#for, r#while, while_set};
+use r#loop::{Loop, r#for, r#while};
 use match_any::match_any;
 use r#mut::Mut;
 use pest::iterators::Pair;
@@ -160,8 +160,8 @@ pub enum Instruction {
     Block(Block),
     Break,
     Continue,
-    #[from(IfElse)]
-    IfElse(Arc<IfElse>),
+    #[from(If)]
+    IfElse(Arc<If>),
     LocalVariable(Arc<str>, LocalVariable),
     #[from(Loop)]
     Loop(Arc<Loop>),
@@ -171,8 +171,6 @@ pub enum Instruction {
     Mut(Arc<Mut>),
     #[from(Set)]
     Set(Arc<Set>),
-    #[from(SetIfElse)]
-    SetIfElse(Arc<SetIfElse>),
     #[from(Struct)]
     Struct(Arc<Struct>),
     #[from]
@@ -190,11 +188,12 @@ pub enum Instruction {
 impl Instruction {
     pub fn new(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<Self, Error> {
         match pair.as_rule() {
-            Rule::set => Set::create_standalone(pair, local_variables).map(Self::from),
+            Rule::set | Rule::set_expr => {
+                Set::create_standalone(pair, local_variables).map(Self::from)
+            }
             Rule::block => Block::create_instruction(pair, local_variables),
             Rule::import => import::create_instruction(pair, local_variables),
-            Rule::if_else => IfElse::create_instruction(pair, local_variables),
-            Rule::set_if_else => SetIfElse::create_instruction(pair, local_variables),
+            Rule::r#if => If::create(pair, local_variables).map(Self::from),
             Rule::r#match => Match::create_instruction(pair, local_variables),
             Rule::r#return => r#return::create(pair, local_variables),
             Rule::expr => {
@@ -202,7 +201,6 @@ impl Instruction {
             }
             Rule::r#loop => Loop::create_instruction(pair, local_variables),
             Rule::r#while => r#while::create_instruction(pair, local_variables),
-            Rule::while_set => while_set::create_instruction(pair, local_variables),
             Rule::r#for => r#for::create_instruction(pair, local_variables),
             Rule::r#break if local_variables.in_loop => Ok(Self::Break),
             Rule::r#break => Err(Error::BreakOutsideLoop),
@@ -243,8 +241,8 @@ impl Exec for Instruction {
                 .ok_or_else(|| panic!("Tried to get variable {ident} that doest exist")),
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::Block(ins) | Self::Tuple(ins)
             | Self::BinOperation(ins) | Self::IfElse(ins) | Self::Loop(ins) | Self::Match(ins)
-            | Self::Mut(ins) | Self::Set(ins) | Self::SetIfElse(ins) | Self::Struct(ins)
-            | Self::TypeFilter(ins) | Self::UnaryOperation(ins) => ins.exec(interpreter),
+            | Self::Mut(ins) | Self::Set(ins) | Self::Struct(ins) | Self::TypeFilter(ins)
+            | Self::UnaryOperation(ins) => ins.exec(interpreter),
             Self::Break => Err(ExecStop::Break),
             Self::Continue => Err(ExecStop::Continue)
         }
@@ -270,9 +268,8 @@ impl Recreate for Instruction {
             Self::Variable(variable) => Ok(Self::Variable(variable.clone())),
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::Block(ins) | Self::Tuple(ins)
             | Self::BinOperation(ins) | Self::IfElse(ins) | Self::Loop(ins) | Self::Match(ins)
-            | Self::Mut(ins) | Self::Set(ins) | Self::SetIfElse(ins) | Self::Struct(ins)
-            | Self::TypeFilter(ins) | Self::UnaryOperation(ins)
-                => ins.recreate(local_variables),
+            | Self::Mut(ins) | Self::Set(ins) | Self::Struct(ins) | Self::TypeFilter(ins)
+            | Self::UnaryOperation(ins) => ins.recreate(local_variables),
             _ => Ok(self.clone())
         }
     }
@@ -284,8 +281,8 @@ impl ReturnType for Instruction {
             Self::Variable(variable) | Self::LocalVariable(_, variable) => variable.as_type(),
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::Block(ins) | Self::Tuple(ins)
             | Self::BinOperation(ins) | Self::IfElse(ins) | Self::Match(ins) | Self::Mut(ins)
-            | Self::Set(ins) | Self::SetIfElse(ins) | Self::Struct(ins) | Self::TypeFilter(ins)
-            | Self::UnaryOperation(ins) => ins.return_type(),
+            | Self::Set(ins) | Self::Struct(ins) | Self::TypeFilter(ins) | Self::UnaryOperation(ins)
+                => ins.return_type(),
             Self::Loop(_) => Type::Void,
             Self::Break | Self::Continue => Type::Never
         }
