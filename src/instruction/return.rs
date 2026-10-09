@@ -1,6 +1,8 @@
-use super::{local_variable::LocalVariables, ExecStop, Instruction};
+use super::{ExecStop, Instruction, local_variable::LocalVariables};
 use crate::{
-    instruction::{BaseInstruction, Exec, Recreate}, variable::{ReturnType, Type, Variable}, Error
+    Error,
+    instruction::{BaseInstruction, Exec, Recreate},
+    variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
@@ -33,9 +35,9 @@ impl Return {
     }
 }
 
-impl BaseInstruction for Return{}
+impl BaseInstruction for Return {}
 
-impl Exec for Return{
+impl Exec for Return {
     fn exec(&self, interpreter: &mut crate::Interpreter) -> super::ExecResult {
         let variable = self.0.exec(interpreter)?;
         Err(ExecStop::Return(variable))

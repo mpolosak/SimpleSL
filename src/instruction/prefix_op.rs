@@ -1,12 +1,12 @@
 use std::sync::Arc;
 
-use super::local_variable::LocalVariables;
 use super::InstructionWithStr;
+use super::local_variable::LocalVariables;
 use crate::Error;
-use crate::instruction::{BaseInstruction, Exec, Instruction, Recreate};
 use crate::instruction::block::Block;
+use crate::instruction::postfix_op::function_call;
 use crate::instruction::set::Set;
-use crate::instruction::unary_operation::function_call;
+use crate::instruction::{BaseInstruction, Exec, Instruction, Recreate};
 use crate::stdlib::operators::Deref;
 use crate::unary_operator::UnaryOperator;
 use crate::variable::{ReturnType, Type, Variable};
@@ -64,7 +64,7 @@ impl UnaryMinus {
 
 impl BaseInstruction for UnaryMinus {}
 
-impl Exec for UnaryMinus{
+impl Exec for UnaryMinus {
     fn exec(&self, interpreter: &mut crate::Interpreter) -> super::ExecResult {
         let variable = self.0.exec(interpreter)?;
         Ok(Self::calc(variable))
@@ -76,12 +76,12 @@ impl Recreate for UnaryMinus {
         let instruction = self.0.recreate(local_variables);
         match instruction {
             Instruction::Variable(operand) => Self::calc(operand).into(),
-            instruction => Self(instruction).into()
+            instruction => Self(instruction).into(),
         }
     }
 }
 
-impl ReturnType for UnaryMinus{
+impl ReturnType for UnaryMinus {
     fn return_type(&self) -> Type {
         self.0.return_type()
     }
@@ -118,9 +118,9 @@ impl Not {
     }
 }
 
-impl BaseInstruction for Not{}
+impl BaseInstruction for Not {}
 
-impl Exec for Not{
+impl Exec for Not {
     fn exec(&self, interpreter: &mut crate::Interpreter) -> super::ExecResult {
         let variable = self.0.exec(interpreter)?;
         Ok(Self::calc(variable))
@@ -132,7 +132,7 @@ impl Recreate for Not {
         let instruction = self.0.recreate(local_variables);
         match instruction {
             Instruction::Variable(operand) => Self::calc(operand).into(),
-            instruction => Self(instruction).into()
+            instruction => Self(instruction).into(),
         }
     }
 }

@@ -3,7 +3,7 @@ use std::sync::Arc;
 use super::{Instruction, InstructionWithStr, local_variable::LocalVariables};
 use crate::{
     Error,
-    instruction::{block::Block, set::Set, unary_operation::function_call},
+    instruction::{block::Block, postfix_op::function_call, set::Set},
     stdlib::operators::At,
     variable::{ReturnType, Type, Variable},
 };

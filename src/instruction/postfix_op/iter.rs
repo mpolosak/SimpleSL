@@ -1,5 +1,12 @@
 use crate::{
-    self as simplesl, function::Function, instruction::{local_variable::LocalVariables, BaseInstruction, Exec, ExecResult, Instruction, InstructionWithStr, Recreate}, unary_operator::UnaryOperator, variable::{ReturnType, Type, Typed, Variable}, Code, Error, Interpreter
+    self as simplesl, Code, Error, Interpreter,
+    function::Function,
+    instruction::{
+        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
+        local_variable::LocalVariables,
+    },
+    unary_operator::UnaryOperator,
+    variable::{ReturnType, Type, Typed, Variable},
 };
 use lazy_static::lazy_static;
 use simplesl_macros::var_type;

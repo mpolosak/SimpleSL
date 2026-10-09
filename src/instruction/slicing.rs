@@ -5,7 +5,7 @@ use crate::{
     variable::{ReturnType, Type, Variable},
 };
 use crate::{
-    instruction::{block::Block, unary_operation::function_call},
+    instruction::{block::Block, postfix_op::function_call},
     stdlib::operators::Slice,
 };
 use pest::iterators::Pair;

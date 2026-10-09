@@ -2,10 +2,9 @@ use crate::{
     BinOperator, Error, ExecError,
     function::{Function as VarFunc, Param, Params},
     instruction::{
-        BinOperation, Instruction, InstructionWithStr, local_variable::LocalVariables, set::Set,
-        tuple::Tuple, unary_operation::UnaryOperation,
+        BinOperation, Instruction, InstructionWithStr, local_variable::LocalVariables,
+        postfix_op::UnaryFunctionCall, set::Set, tuple::Tuple,
     },
-    unary_operator::UnaryOperator,
     variable::{ReturnType, Typed, Variable},
 };
 use pest::iterators::Pair;
@@ -84,11 +83,7 @@ pub fn create_from_variables(
     let instruction: Instruction = Variable::Function(function.clone()).into();
     let ident = function.ident.clone().unwrap_or_else(|| "$".into());
     let rec = Set::new_ident(ident.clone(), instruction.clone()).into();
-    let call = UnaryOperation {
-        instruction,
-        op: UnaryOperator::FunctionCall,
-    }
-    .into();
+    let call = UnaryFunctionCall(instruction).into();
     let args = args.into_iter().map(Instruction::from);
     Ok(zip(function.params.iter().cloned(), args)
         .map(|(param, arg)| {

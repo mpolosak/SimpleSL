@@ -13,6 +13,7 @@ mod r#loop;
 mod module;
 mod r#mut;
 pub mod pattern;
+pub mod postfix_op;
 mod prefix_op;
 mod reduce;
 pub mod r#return;
@@ -22,7 +23,6 @@ mod r#struct;
 mod tuple;
 pub mod tuple_access;
 mod type_filter;
-pub mod unary_operation;
 use self::{
     array::Array,
     bin_op::*,
@@ -34,7 +34,10 @@ use self::{
     tuple::Tuple,
 };
 use crate::{
-    instruction::{ident::Ident, r#return::Return, r#struct::Struct}, interpreter::Interpreter, variable::{ReturnType, Type, Typed, Variable}, Error, ExecError
+    Error, ExecError,
+    instruction::{ident::Ident, r#return::Return, r#struct::Struct},
+    interpreter::Interpreter,
+    variable::{ReturnType, Type, Typed, Variable},
 };
 use derive_more::From;
 use r#loop::{Loop, r#for, r#while};

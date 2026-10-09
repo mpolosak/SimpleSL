@@ -3,7 +3,9 @@ mod param;
 pub(crate) use self::body::Body;
 pub use self::param::{Param, Params};
 use crate::{
-    self as simplesl, instruction::{function::call, r#return::Return, ExecStop}, variable::{FunctionType, ReturnType, Type, Typed, Variable}, Code, Error, ExecError, Interpreter
+    self as simplesl, Code, Error, ExecError, Interpreter,
+    instruction::{ExecStop, function::call, r#return::Return},
+    variable::{FunctionType, ReturnType, Type, Typed, Variable},
 };
 use derive_more::Display;
 use simplesl_macros::var_type;
@@ -47,11 +49,7 @@ impl Function {
         Some(Self {
             ident: None,
             params,
-            body: Body::Lang(
-                [Return(returned.into())
-                .into()]
-                .into(),
-            ),
+            body: Body::Lang([Return(returned.into()).into()].into()),
             return_type: fn_type.return_type(),
         })
     }

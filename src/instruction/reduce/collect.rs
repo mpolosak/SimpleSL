@@ -3,7 +3,7 @@ use std::sync::Arc;
 use crate::{
     self as simplesl, Error,
     instruction::{
-        Instruction, InstructionWithStr, block::Block, set::Set, unary_operation::function_call,
+        Instruction, InstructionWithStr, block::Block, postfix_op::function_call, set::Set,
     },
     stdlib::operators::Collect,
     unary_operator::UnaryOperator,

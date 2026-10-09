@@ -9,7 +9,7 @@ use super::{
 };
 use crate::{
     Error, Interpreter,
-    instruction::{BaseInstruction, field_access, slicing, unary_operation::iter::Iter},
+    instruction::{BaseInstruction, ExecStop, field_access, postfix_op::iter::Iter, slicing},
     unary_operator::UnaryOperator,
     variable::{ReturnType, Type, Variable},
 };
@@ -47,44 +47,33 @@ impl InstructionWithStr {
 }
 
 #[derive(Debug)]
-pub struct UnaryOperation {
-    pub instruction: Instruction,
-    pub op: UnaryOperator,
-}
+pub struct UnaryFunctionCall(pub Instruction);
 
-impl BaseInstruction for UnaryOperation {}
+impl BaseInstruction for UnaryFunctionCall {}
 
-impl Exec for UnaryOperation {
+impl Exec for UnaryFunctionCall {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let var = self.instruction.exec(interpreter)?;
-        Ok(match self.op {
-            UnaryOperator::FunctionCall => var.into_function().unwrap().exec(interpreter)?,
-            _ => unreachable!(),
-        })
+        let var = self.0.exec(interpreter)?;
+        var.into_function()
+            .unwrap()
+            .exec(interpreter)
+            .map_err(ExecStop::from)
     }
 }
 
-impl Recreate for UnaryOperation {
+impl Recreate for UnaryFunctionCall {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
-        let instruction = self.instruction.recreate(local_variables);
-        UnaryOperation { instruction, op: self.op }.into()
+        let instruction = self.0.recreate(local_variables);
+        Self(instruction).into()
     }
 }
 
-impl ReturnType for UnaryOperation {
+impl ReturnType for UnaryFunctionCall {
     fn return_type(&self) -> Type {
-        let return_type = self.instruction.return_type();
-        if let UnaryOperator::FunctionCall = self.op {
-            return return_type.return_type().unwrap()
-        } 
-        unreachable!()
+        self.0.return_type().return_type().unwrap()
     }
 }
 
 pub fn function_call<T: Into<Variable>>(function: T) -> Instruction {
-    UnaryOperation {
-        instruction: function.into().into(),
-        op: UnaryOperator::FunctionCall,
-    }
-    .into()
+    UnaryFunctionCall(function.into().into()).into()
 }
