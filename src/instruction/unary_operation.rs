@@ -1,6 +1,6 @@
 mod iter;
 use super::{
-    Exec, ExecResult, ExecStop, Instruction, InstructionWithStr, Recreate, at,
+    Exec, ExecResult, Instruction, InstructionWithStr, Recreate, at,
     function::call,
     local_variable::LocalVariables,
     prefix_op::{not, unary_minus},
@@ -61,7 +61,6 @@ impl Exec for UnaryOperation {
         Ok(match self.op {
             UnaryOperator::Not => not::exec(var),
             UnaryOperator::UnaryMinus => unary_minus::exec(var),
-            UnaryOperator::Return => return Err(ExecStop::Return(var)),
             UnaryOperator::FunctionCall => var.into_function().unwrap().exec(interpreter)?,
             UnaryOperator::Iter => iter::exec(var),
             _ => unreachable!(),

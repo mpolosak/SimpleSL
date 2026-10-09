@@ -3,10 +3,7 @@ mod param;
 pub(crate) use self::body::Body;
 pub use self::param::{Param, Params};
 use crate::{
-    self as simplesl, Code, Error, ExecError, Interpreter,
-    instruction::{ExecStop, function::call, unary_operation::UnaryOperation},
-    unary_operator::UnaryOperator,
-    variable::{FunctionType, ReturnType, Type, Typed, Variable},
+    self as simplesl, instruction::{function::call, r#return::Return, ExecStop}, variable::{FunctionType, ReturnType, Type, Typed, Variable}, Code, Error, ExecError, Interpreter
 };
 use derive_more::Display;
 use simplesl_macros::var_type;
@@ -51,10 +48,7 @@ impl Function {
             ident: None,
             params,
             body: Body::Lang(
-                [UnaryOperation {
-                    instruction: returned.into(),
-                    op: UnaryOperator::Return,
-                }
+                [Return(returned.into())
                 .into()]
                 .into(),
             ),

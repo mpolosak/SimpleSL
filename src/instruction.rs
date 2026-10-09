@@ -15,7 +15,7 @@ mod r#mut;
 pub mod pattern;
 mod prefix_op;
 mod reduce;
-mod r#return;
+pub mod r#return;
 mod set;
 mod slicing;
 mod r#struct;
@@ -34,10 +34,7 @@ use self::{
     tuple::Tuple,
 };
 use crate::{
-    Error, ExecError,
-    instruction::{ident::Ident, r#struct::Struct},
-    interpreter::Interpreter,
-    variable::{ReturnType, Type, Typed, Variable},
+    instruction::{ident::Ident, r#return::Return, r#struct::Struct}, interpreter::Interpreter, variable::{ReturnType, Type, Typed, Variable}, Error, ExecError
 };
 use derive_more::From;
 use r#loop::{Loop, r#for, r#while};
@@ -131,7 +128,7 @@ impl Instruction {
             Rule::import => import::create_instruction(pair, local_variables),
             Rule::r#if => If::create(pair, local_variables).map(Self::from),
             Rule::r#match => Match::create_instruction(pair, local_variables),
-            Rule::r#return => r#return::create(pair, local_variables),
+            Rule::r#return => Return::create_instruction(pair, local_variables),
             Rule::expr => {
                 InstructionWithStr::new_expression(pair, local_variables).map(|iws| iws.instruction)
             }
