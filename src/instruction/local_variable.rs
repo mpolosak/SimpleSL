@@ -82,12 +82,12 @@ impl<'a> LocalVariables<'a> {
             .or_else(|| self.lower_layer.and_then(LocalVariables::function))
     }
 
-    pub(crate) fn load(&mut self, path: &str) -> Result<Arc<[Instruction]>, Error> {
+    pub(crate) fn load(&mut self, path: &str) -> Result<Box<[Instruction]>, Error> {
         let contents = fs::read_to_string(path)?;
         self.parse_input(&contents)
     }
 
-    pub(crate) fn parse_input(&mut self, input: &str) -> Result<Arc<[Instruction]>, Error> {
+    pub(crate) fn parse_input(&mut self, input: &str) -> Result<Box<[Instruction]>, Error> {
         let pairs = SimpleSLParser::parse(Rule::input, input)?;
         self.create_instructions(pairs)
     }
@@ -95,12 +95,12 @@ impl<'a> LocalVariables<'a> {
     pub(crate) fn create_instructions(
         &mut self,
         pairs: Pairs<'_, Rule>,
-    ) -> Result<Arc<[Instruction]>, Error> {
+    ) -> Result<Box<[Instruction]>, Error> {
         let mut instructions = pairs
             .map(|pair| Instruction::new(pair, self))
             .collect::<Result<Vec<Instruction>, Error>>()?;
         let Some(last) = instructions.pop() else {
-            return Ok(Arc::from([]));
+            return Ok(Box::from([]));
         };
         instructions.retain(|instruction| !matches!(instruction, Instruction::Variable(..),));
         instructions.push(last);
@@ -121,8 +121,6 @@ where
 #[derive(Clone, Debug, From)]
 pub enum LocalVariable {
     Function(Params, Type),
-    // #[from]
-    // Variable(Variable),
     #[from]
     Other(Type),
 }

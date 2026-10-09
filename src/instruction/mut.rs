@@ -3,6 +3,7 @@ use super::{
 };
 use crate::{
     Error, ExecError, Interpreter,
+    instruction::BaseInstruction,
     variable::{self, ReturnType, Type},
 };
 use pest::iterators::Pair;
@@ -13,6 +14,8 @@ pub struct Mut {
     var_type: Type,
     instruction: Instruction,
 }
+
+impl BaseInstruction for Mut {}
 
 impl Mut {
     pub fn create_instruction(

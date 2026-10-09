@@ -290,12 +290,18 @@ mod tests {
 
     #[test]
     fn display_tuple() {
-        assert_eq!(format!("{}", var!((5, "a", (4.5, false)))), r#"(5, "a", (4.5, false))"#)
+        assert_eq!(
+            format!("{}", var!((5, "a", (4.5, false)))),
+            r#"(5, "a", (4.5, false))"#
+        )
     }
 
     #[test]
     fn display_array() {
-        assert_eq!(format!("{}", var!([5, "a", 4.5, false])), r#"[5, "a", 4.5, false]"#)
+        assert_eq!(
+            format!("{}", var!([5, "a", 4.5, false])),
+            r#"[5, "a", 4.5, false]"#
+        )
     }
 
     #[test]
@@ -313,7 +319,7 @@ mod tests {
         assert_eq!(format!("{}", var!(struct{a:=5})), r#"struct{a:=5}"#)
     }
 
-    proptest!{
+    proptest! {
         #[test]
         fn display_int(int: i64) {
             assert_eq!(format!("{}", Variable::Int(int)), format!("{int}"))

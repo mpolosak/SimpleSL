@@ -4,6 +4,7 @@ use crate::{
         BinOperation, Instruction, Loop,
         block::Block,
         control_flow::If,
+        ident::Ident,
         local_variable::{LocalVariable, LocalVariables},
         pattern::{Pattern, destruct_pattern::DestructPattern},
         set::Set,
@@ -42,10 +43,11 @@ pub fn create_instruction(
     local_variables.insert(ident.clone(), LocalVariable::Other(iter_element));
     let iter = Set::new_ident(ITER.clone(), iter).into();
     let iter_call: Instruction = BinOperation {
-        lhs: Instruction::LocalVariable(
-            ITER.clone(),
-            LocalVariable::Other(var_type!(()->(bool, any))),
-        ),
+        lhs: Ident {
+            ident: ITER.clone(),
+            variable: LocalVariable::Other(var_type!(()->(bool, any))),
+        }
+        .into(),
         rhs: Variable::Tuple([].into()).into(),
         op: BinOperator::FunctionCall,
     }
@@ -59,7 +61,11 @@ pub fn create_instruction(
     }
     .into();
     let instruction = Instruction::new(inner.next().unwrap(), &mut local_variables)?;
-    let condition = Instruction::LocalVariable(CON.clone(), LocalVariable::Other(Type::Bool));
+    let condition = Ident {
+        ident: CON.clone(),
+        variable: LocalVariable::Other(Type::Bool),
+    }
+    .into();
     let if_else = If {
         conditions: [condition].into(),
         if_true: instruction,

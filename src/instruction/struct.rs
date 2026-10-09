@@ -1,7 +1,7 @@
 use super::{Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables};
 use crate::{
     Error, ExecError,
-    instruction::set::Set,
+    instruction::{BaseInstruction, ident::Ident, set::Set},
     interpreter::{Interpreter, VariableMap},
     variable::{ReturnType, Type, Variable},
 };
@@ -14,6 +14,8 @@ pub struct Struct {
     pub sets: Arc<[Set]>,
 }
 
+impl BaseInstruction for Struct {}
+
 impl Struct {
     pub fn create_instruction(
         pair: Pair<Rule>,
@@ -24,11 +26,11 @@ impl Struct {
             .map(|pair| {
                 if pair.as_rule() == Rule::ident {
                     let ident: Arc<str> = pair.as_str().into();
-                    let instruction = Instruction::new_ident(&ident, local_variables)?;
+                    let instruction = Ident::create_instruction(&ident, local_variables)?;
                     return Ok(Set::new_ident(ident, instruction));
                 }
                 let mut local_variables = local_variables.create_layer();
-                Set::create_standalone(pair, &mut local_variables)
+                Set::create(pair, &mut local_variables)
             })
             .collect::<Result<Arc<[Set]>, Error>>()?;
         Ok(Self { sets }.into())

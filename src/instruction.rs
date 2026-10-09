@@ -6,6 +6,7 @@ pub mod block;
 mod control_flow;
 mod field_access;
 pub mod function;
+mod ident;
 mod import;
 pub mod local_variable;
 mod r#loop;
@@ -28,25 +29,21 @@ use self::{
     block::Block,
     control_flow::{If, Match},
     function::Function,
-    local_variable::{LocalVariable, LocalVariables},
+    local_variable::LocalVariables,
     set::Set,
     tuple::Tuple,
 };
 use crate::{
     Error, ExecError,
-    instruction::r#struct::Struct,
+    instruction::{ident::Ident, r#struct::Struct},
     interpreter::Interpreter,
     variable::{ReturnType, Type, Typed, Variable},
 };
 use derive_more::From;
 use r#loop::{Loop, r#for, r#while};
-use match_any::match_any;
-use r#mut::Mut;
 use pest::iterators::Pair;
 use simplesl_parser::{PRATT_PARSER, Rule, unexpected};
-use std::sync::Arc;
-use type_filter::TypeFilter;
-use unary_operation::UnaryOperation;
+use std::{fmt::Debug, sync::Arc};
 
 #[derive(Debug, Clone)]
 pub struct InstructionWithStr {
@@ -55,7 +52,7 @@ pub struct InstructionWithStr {
 }
 
 impl InstructionWithStr {
-   pub(crate) fn new_expression(
+    pub(crate) fn new_expression(
         pair: Pair<Rule>,
         local_variables: &LocalVariables,
     ) -> Result<Self, Error> {
@@ -77,7 +74,7 @@ impl InstructionWithStr {
         }
         let str: Arc<str> = pair.as_str().into();
         let instruction = match rule {
-            Rule::ident => Instruction::new_ident(&str, local_variables),
+            Rule::ident => Ident::create_instruction(&str, local_variables),
             Rule::r#true | Rule::r#false | Rule::int | Rule::float | Rule::string | Rule::void => {
                 Variable::try_from(pair).map(Instruction::from)
             }
@@ -115,47 +112,21 @@ impl From<Variable> for InstructionWithStr {
     }
 }
 
+pub trait BaseInstruction: Debug + ReturnType + Recreate + Exec + Sync + Send {}
+
 #[derive(Debug, Clone, From)]
 pub enum Instruction {
-    #[from(Function)]
-    AnonymousFunction(Arc<Function>),
-    #[from(Array)]
-    Array(Arc<Array>),
-    #[from]
-    Block(Block),
     Break,
     Continue,
-    #[from(If)]
-    IfElse(Arc<If>),
-    LocalVariable(Arc<str>, LocalVariable),
-    #[from(Loop)]
-    Loop(Arc<Loop>),
-    #[from(Match)]
-    Match(Arc<Match>),
-    #[from(Mut)]
-    Mut(Arc<Mut>),
-    #[from(Set)]
-    Set(Arc<Set>),
-    #[from(Struct)]
-    Struct(Arc<Struct>),
-    #[from]
-    Tuple(Tuple),
-    #[from(TypeFilter)]
-    TypeFilter(Arc<TypeFilter>),
     #[from]
     Variable(Variable),
-    #[from(BinOperation)]
-    BinOperation(Arc<BinOperation>),
-    #[from(UnaryOperation)]
-    UnaryOperation(Arc<UnaryOperation>),
+    Base(Arc<dyn BaseInstruction>),
 }
 
 impl Instruction {
     pub fn new(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<Self, Error> {
         match pair.as_rule() {
-            Rule::set | Rule::set_expr => {
-                Set::create_standalone(pair, local_variables).map(Self::from)
-            }
+            Rule::set | Rule::set_expr => Set::create(pair, local_variables).map(Self::from),
             Rule::block => Block::create_instruction(pair, local_variables),
             Rule::import => import::create_instruction(pair, local_variables),
             Rule::r#if => If::create(pair, local_variables).map(Self::from),
@@ -174,76 +145,35 @@ impl Instruction {
             rule => unexpected!(rule),
         }
     }
-
-    pub fn new_ident(
-        str: &Arc<str>,
-        local_variables: &LocalVariables<'_>,
-    ) -> Result<Instruction, Error> {
-        local_variables.get(str).map_or_else(
-            || {
-                local_variables
-                    .interpreter
-                    .get_variable(str)
-                    .cloned()
-                    .map(Instruction::from)
-                    .ok_or_else(|| Error::VariableDoesntExist(str.clone()))
-            },
-            |var| Ok(Instruction::LocalVariable(str.clone(), var.clone())),
-        )
-    }
 }
 
 impl Exec for Instruction {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        match_any! { self,
+        match self {
             Self::Variable(var) => Ok(var.clone()),
-            Self::LocalVariable(ident, _) => interpreter
-                .get_variable(ident)
-                .cloned()
-                .ok_or_else(|| panic!("Tried to get variable {ident} that doest exist")),
-            Self::AnonymousFunction(ins) | Self::Array(ins) | Self::Block(ins) | Self::Tuple(ins)
-            | Self::BinOperation(ins) | Self::IfElse(ins) | Self::Loop(ins) | Self::Match(ins)
-            | Self::Mut(ins) | Self::Set(ins) | Self::Struct(ins) | Self::TypeFilter(ins)
-            | Self::UnaryOperation(ins) => ins.exec(interpreter),
+            Self::Base(ins) => ins.exec(interpreter),
             Self::Break => Err(ExecStop::Break),
-            Self::Continue => Err(ExecStop::Continue)
+            Self::Continue => Err(ExecStop::Continue),
         }
     }
 }
 
 impl Recreate for Instruction {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        match_any! {self,
-            Self::LocalVariable(ident, _) => Ok(local_variables.get(ident).map_or_else(
-                || {
-                    local_variables.interpreter
-                        .get_variable(ident)
-                        .cloned()
-                        .map(Instruction::from)
-                        .unwrap_or_else(|| panic!("Tried to get variable {ident} that doest exist"))
-                },
-                |var| Self::LocalVariable(ident.clone(), var.clone()),
-            )),
+        match self {
             Self::Variable(variable) => Ok(Self::Variable(variable.clone())),
-            Self::AnonymousFunction(ins) | Self::Array(ins) | Self::Block(ins) | Self::Tuple(ins)
-            | Self::BinOperation(ins) | Self::IfElse(ins) | Self::Loop(ins) | Self::Match(ins)
-            | Self::Mut(ins) | Self::Set(ins) | Self::Struct(ins) | Self::TypeFilter(ins)
-            | Self::UnaryOperation(ins) => ins.recreate(local_variables),
-            _ => Ok(self.clone())
+            Self::Base(ins) => ins.recreate(local_variables),
+            _ => Ok(self.clone()),
         }
     }
 }
 
 impl ReturnType for Instruction {
     fn return_type(&self) -> Type {
-        match_any! { self,
-            Self::Variable(variable) | Self::LocalVariable(_, variable) => variable.as_type(),
-            Self::AnonymousFunction(ins) | Self::Array(ins) | Self::Block(ins) | Self::Tuple(ins)
-            | Self::BinOperation(ins) | Self::IfElse(ins) | Self::Match(ins) | Self::Mut(ins)
-            | Self::Set(ins) | Self::Struct(ins) | Self::TypeFilter(ins) | Self::UnaryOperation(ins)
-                => ins.return_type(),
-            Self::Loop(_) => Type::Void,
-            Self::Break | Self::Continue => Type::Never
+        match self {
+            Self::Variable(variable) => variable.as_type(),
+            Self::Base(ins) => ins.return_type(),
+            Self::Break | Self::Continue => Type::Never,
         }
     }
 }
@@ -251,7 +181,7 @@ impl ReturnType for Instruction {
 pub(crate) fn recreate_instructions(
     instructions: &[Instruction],
     local_variables: &mut LocalVariables,
-) -> Result<Arc<[Instruction]>, ExecError> {
+) -> Result<Box<[Instruction]>, ExecError> {
     instructions
         .iter()
         .map(|i| i.recreate(local_variables))
@@ -277,5 +207,11 @@ pub enum ExecStop {
 impl From<ExecError> for ExecStop {
     fn from(value: ExecError) -> Self {
         Self::Error(value)
+    }
+}
+
+impl<T: BaseInstruction + 'static> From<T> for Instruction {
+    fn from(value: T) -> Self {
+        Self::Base(Arc::from(value))
     }
 }

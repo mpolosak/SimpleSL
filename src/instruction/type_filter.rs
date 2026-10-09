@@ -1,6 +1,7 @@
 use super::{Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables};
 use crate::{
     self as simplesl, BinOperator, Code, Error, ExecError,
+    instruction::BaseInstruction,
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
 };
@@ -27,6 +28,8 @@ impl TypeFilter {
         Ok(Self { iterator, var_type }.into())
     }
 }
+
+impl BaseInstruction for TypeFilter {}
 
 impl Exec for TypeFilter {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {

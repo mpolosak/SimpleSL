@@ -10,7 +10,7 @@ use super::{
 };
 use crate::{
     Error, Interpreter,
-    instruction::{field_access, slicing},
+    instruction::{BaseInstruction, field_access, slicing},
     unary_operator::UnaryOperator,
     variable::{ReturnType, Type, Variable},
 };
@@ -52,6 +52,8 @@ pub struct UnaryOperation {
     pub instruction: Instruction,
     pub op: UnaryOperator,
 }
+
+impl BaseInstruction for UnaryOperation {}
 
 impl Exec for UnaryOperation {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {

@@ -2,7 +2,7 @@ use super::{Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariab
 use crate::{
     Error, ExecError,
     instruction::{
-        ExecStop,
+        BaseInstruction,
         function::Function,
         pattern::{Pattern, destruct_pattern::DestructPattern},
     },
@@ -20,28 +20,15 @@ pub struct Set {
 }
 
 impl Set {
-    pub fn create_standalone(
-        pair: Pair<Rule>,
-        local_variables: &mut LocalVariables,
-    ) -> Result<Self, Error> {
-        let (set, error) = Self::create(pair, local_variables)?;
+    pub fn create(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<Self, Error> {
+        let (set, error) = Self::new(pair, local_variables)?;
         if !set.pattern.is_matched(&set.instruction.return_type()) {
             return Err(error);
         }
         Ok(set)
     }
 
-    pub fn create_condition(
-        pair: Pair<Rule>,
-        local_variables: &mut LocalVariables,
-    ) -> Result<Self, Error> {
-        Self::create(pair, local_variables).map(|t| t.0)
-    }
-
-    fn create(
-        pair: Pair<Rule>,
-        local_variables: &mut LocalVariables,
-    ) -> Result<(Self, Error), Error> {
+    fn new(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<(Self, Error), Error> {
         let mut inner = pair.into_inner();
         let pattern_pair = inner.next().unwrap();
         let pair = inner.next().unwrap();
@@ -107,15 +94,6 @@ impl Set {
         })
     }
 
-    pub fn check(&self, interpreter: &mut Interpreter) -> Result<bool, ExecStop> {
-        let result = self.instruction.exec(interpreter)?;
-        if !self.pattern.is_matched(&result.as_type()) {
-            return Ok(false);
-        }
-        self.pattern.insert_variables(interpreter, result.clone());
-        Ok(true)
-    }
-
     pub fn new_ident(ident: Arc<str>, instruction: Instruction) -> Set {
         Set {
             pattern: Pattern::new_ident_pattern(ident, instruction.return_type()),
@@ -123,6 +101,8 @@ impl Set {
         }
     }
 }
+
+impl BaseInstruction for Set {}
 
 impl Exec for Set {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
@@ -141,5 +121,39 @@ impl Recreate for Set {
 impl ReturnType for Set {
     fn return_type(&self) -> Type {
         self.instruction.return_type()
+    }
+}
+
+#[derive(Debug)]
+pub struct ConditionSet(Set);
+
+impl ConditionSet {
+    pub fn create(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<Self, Error> {
+        Ok(ConditionSet(Set::new(pair, local_variables).map(|t| t.0)?))
+    }
+}
+
+impl BaseInstruction for ConditionSet {}
+
+impl Exec for ConditionSet {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
+        let result = self.0.instruction.exec(interpreter)?;
+        if !self.0.pattern.is_matched(&result.as_type()) {
+            return Ok(false.into());
+        }
+        self.0.pattern.insert_variables(interpreter, result.clone());
+        Ok(true.into())
+    }
+}
+
+impl Recreate for ConditionSet {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
+        Ok(Self(self.0.inner_recreate(local_variables)?).into())
+    }
+}
+
+impl ReturnType for ConditionSet {
+    fn return_type(&self) -> Type {
+        unreachable!()
     }
 }

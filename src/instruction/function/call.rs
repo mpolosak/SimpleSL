@@ -2,11 +2,8 @@ use crate::{
     BinOperator, Error, ExecError,
     function::{Function as VarFunc, Param, Params},
     instruction::{
-        BinOperation, Instruction, InstructionWithStr,
-        local_variable::{LocalVariable, LocalVariables},
-        set::Set,
-        tuple::Tuple,
-        unary_operation::UnaryOperation,
+        BinOperation, Instruction, InstructionWithStr, local_variable::LocalVariables, set::Set,
+        tuple::Tuple, unary_operation::UnaryOperation,
     },
     unary_operator::UnaryOperator,
     variable::{ReturnType, Typed, Variable},
@@ -27,12 +24,6 @@ pub fn create_instruction(
     match &function.instruction {
         Instruction::Variable(Variable::Function(function2)) => {
             check_args_with_params(&function.str, &function2.params, &args)?;
-        }
-        Instruction::LocalVariable(ident, LocalVariable::Function(params, _)) => {
-            check_args_with_params(ident, params, &args)?;
-        }
-        Instruction::AnonymousFunction(af) => {
-            check_args_with_params(&function.str, &af.params, &args)?;
         }
         _ => {
             let f_type = function.return_type();

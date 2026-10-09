@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     Error, ExecError, Interpreter,
     instruction::{
@@ -8,7 +10,6 @@ use crate::{
 };
 use pest::iterators::Pair;
 use simplesl_parser::{Rule, unexpected};
-use std::sync::Arc;
 
 #[derive(Clone, Debug)]
 pub enum MatchPattern {
@@ -70,7 +71,7 @@ impl MatchPattern {
         let MatchPattern::Values(instructions) = self else {
             return Ok(self.clone());
         };
-        let instructions = recreate_instructions(instructions, local_variables)?;
+        let instructions = recreate_instructions(instructions, local_variables)?.into();
         Ok(MatchPattern::Values(instructions))
     }
 }

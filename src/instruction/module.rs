@@ -1,9 +1,9 @@
-use std::sync::Arc;
-
 use super::{Instruction, local_variable::LocalVariables};
 use crate::{
     Error,
-    instruction::{block::Block, local_variable::LocalVariableMap, set::Set, r#struct::Struct},
+    instruction::{
+        block::Block, ident::Ident, local_variable::LocalVariableMap, set::Set, r#struct::Struct,
+    },
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
@@ -19,12 +19,12 @@ pub fn create_instruction(
 }
 
 pub fn new(
-    instructions: Arc<[Instruction]>,
+    instructions: Box<[Instruction]>,
     lv_layer: LocalVariableMap,
 ) -> Result<Instruction, Error> {
     let sets = lv_layer
         .into_iter()
-        .map(|(ident, var)| Set::new_ident(ident.clone(), Instruction::LocalVariable(ident, var)))
+        .map(|(ident, variable)| Set::new_ident(ident.clone(), Ident { ident, variable }.into()))
         .collect();
     let struct_ins = Struct { sets }.into();
     let instructions = [instructions, [struct_ins].into()].concat().into();

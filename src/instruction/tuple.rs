@@ -3,18 +3,19 @@ use super::{
 };
 use crate::{
     Error, ExecError,
-    instruction::recreate_instructions,
+    instruction::{BaseInstruction, recreate_instructions},
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
-use std::sync::Arc;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Tuple {
-    pub elements: Arc<[Instruction]>,
+    pub elements: Box<[Instruction]>,
 }
+
+impl BaseInstruction for Tuple {}
 
 impl Tuple {
     pub fn create_instruction(
@@ -24,11 +25,11 @@ impl Tuple {
         let elements = pair
             .into_inner()
             .map(|pair| Ok(InstructionWithStr::new_expression(pair, local_variables)?.instruction))
-            .collect::<Result<Arc<[Instruction]>, Error>>()?;
+            .collect::<Result<Box<[Instruction]>, Error>>()?;
         Ok(Self { elements }.into())
     }
 
-    fn create_from_elements(elements: Arc<[Instruction]>) -> Instruction {
+    fn create_from_elements(elements: Box<[Instruction]>) -> Instruction {
         let mut array = Vec::new();
         for instruction in &*elements {
             let Instruction::Variable(variable) = instruction else {

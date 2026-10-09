@@ -1,18 +1,17 @@
 use super::{Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables};
 use crate::{
     self as simplesl, Error, ExecError,
-    instruction::recreate_instructions,
+    instruction::{BaseInstruction, recreate_instructions},
     interpreter::Interpreter,
     variable::{ReturnType, Type},
 };
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
 use simplesl_parser::Rule;
-use std::sync::Arc;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Array {
-    pub instructions: Arc<[Instruction]>,
+    pub instructions: Box<[Instruction]>,
     pub element_type: Type,
 }
 
@@ -25,7 +24,7 @@ impl Array {
         let mut local_variables = local_variables.create_layer();
         let instructions = inner
             .map(|arg| Instruction::new(arg, &mut local_variables))
-            .collect::<Result<Arc<_>, Error>>()?;
+            .collect::<Result<Box<_>, Error>>()?;
         let element_type = instructions
             .iter()
             .map(ReturnType::return_type)
@@ -38,6 +37,8 @@ impl Array {
         .into())
     }
 }
+
+impl BaseInstruction for Array {}
 
 impl Exec for Array {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {

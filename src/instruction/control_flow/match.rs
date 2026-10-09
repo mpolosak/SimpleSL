@@ -1,7 +1,9 @@
 use super::match_arm::MatchArm;
 use crate::{
     Error, ExecError,
-    instruction::{Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables},
+    instruction::{
+        BaseInstruction, Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
+    },
     interpreter::Interpreter,
     variable::{ReturnType, Type},
 };
@@ -42,6 +44,8 @@ impl Match {
             .any(|arm| arm.is_covering_type(checked_type))
     }
 }
+
+impl BaseInstruction for Match {}
 
 impl Exec for Match {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {

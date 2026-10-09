@@ -1,7 +1,11 @@
 pub mod r#for;
 pub mod r#while;
 use super::{Exec, ExecResult, ExecStop, Instruction, Recreate, local_variable::LocalVariables};
-use crate::{Error, ExecError, Interpreter, variable::Variable};
+use crate::{
+    Error, ExecError, Interpreter,
+    instruction::BaseInstruction,
+    variable::{ReturnType, Type, Variable},
+};
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
 
@@ -22,6 +26,8 @@ impl Loop {
     }
 }
 
+impl BaseInstruction for Loop {}
+
 impl Exec for Loop {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         loop {
@@ -39,5 +45,11 @@ impl Recreate for Loop {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
         let instruction = self.0.recreate(local_variables)?;
         Ok(Self(instruction).into())
+    }
+}
+
+impl ReturnType for Loop {
+    fn return_type(&self) -> Type {
+        Type::Void
     }
 }

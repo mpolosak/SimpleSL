@@ -3,7 +3,7 @@ use crate::{
     self as simplesl, Error, ExecError,
     function::{Body, Function as VarFunc, Param, Params},
     instruction::{
-        Exec, ExecResult, Instruction, Recreate,
+        BaseInstruction, Exec, ExecResult, Instruction, Recreate,
         local_variable::{FunctionInfo, LocalVariable, LocalVariableMap, LocalVariables},
         recreate_instructions,
     },
@@ -15,13 +15,15 @@ use simplesl_macros::var_type;
 use simplesl_parser::Rule;
 use std::sync::Arc;
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Function {
     ident: Option<Arc<str>>,
     pub params: Params,
-    body: Arc<[Instruction]>,
+    body: Box<[Instruction]>,
     return_type: Type,
 }
+
+impl BaseInstruction for Function {}
 
 impl Function {
     pub fn create_instruction(
@@ -80,7 +82,7 @@ impl Exec for Function {
                 LocalVariable::Function(self.params.clone(), self.return_type.clone()),
             );
         }
-        let body = recreate_instructions(&self.body, &mut fn_local_variables)?;
+        let body = recreate_instructions(&self.body, &mut fn_local_variables)?.into();
         Ok(VarFunc {
             ident: self.ident.clone(),
             params: self.params.clone(),

@@ -1,19 +1,18 @@
 use crate::{
     Error, ExecError,
     instruction::{
-        Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
-        recreate_instructions, set::Set,
+        BaseInstruction, Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
+        recreate_instructions, set::ConditionSet,
     },
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
-use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct If {
-    pub conditions: Arc<[Instruction]>,
+    pub conditions: Box<[Instruction]>,
     pub if_true: Instruction,
     pub else_instruction: Instruction,
 }
@@ -28,7 +27,7 @@ impl If {
                 .into_inner()
                 .map(|pair| {
                     if pair.as_rule() == Rule::set_expr {
-                        return Ok(Set::create_condition(pair, &mut local_variables)?.into());
+                        return Ok(ConditionSet::create(pair, &mut local_variables)?.into());
                     }
                     let condition_str = pair.as_str().into();
                     let condition = Instruction::new(pair, &mut local_variables)?;
@@ -56,15 +55,13 @@ impl If {
     }
 }
 
+impl BaseInstruction for If {}
+
 impl Exec for If {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let mut interpreter2 = interpreter.create_layer();
         for condition in self.conditions.iter() {
-            if let Instruction::Set(set) = condition {
-                if !set.check(&mut interpreter2)? {
-                    return self.else_instruction.exec(interpreter);
-                }
-            } else if let Variable::Bool(false) = condition.exec(&mut interpreter2)? {
+            if let Variable::Bool(false) = condition.exec(&mut interpreter2)? {
                 return self.else_instruction.exec(interpreter);
             }
         }

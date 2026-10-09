@@ -1,18 +1,19 @@
 use super::{Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables};
 use crate::{
     Error, ExecError,
-    instruction::recreate_instructions,
+    instruction::{BaseInstruction, recreate_instructions},
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
-use std::sync::Arc;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Block {
-    pub instructions: Arc<[Instruction]>,
+    pub instructions: Box<[Instruction]>,
 }
+
+impl BaseInstruction for Block {}
 
 impl Block {
     pub fn create_instruction(

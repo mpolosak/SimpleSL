@@ -12,6 +12,7 @@ use super::{
 };
 use crate::{
     self as simplesl, BinOperator, Error, ExecError, Interpreter,
+    instruction::BaseInstruction,
     variable::{ReturnType, Type, Variable},
 };
 pub use bitwise::{bitwise_and, bitwise_or, xor};
@@ -46,6 +47,8 @@ pub struct BinOperation {
     pub rhs: Instruction,
     pub op: BinOperator,
 }
+
+impl BaseInstruction for BinOperation {}
 
 impl Exec for BinOperation {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
