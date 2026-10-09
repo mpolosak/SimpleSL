@@ -1,8 +1,8 @@
-use super::{Instruction, function::Function};
+use super::Instruction;
 use crate::{
     self as simplesl, Error, Interpreter,
     function::{Param, Params},
-    variable::{ReturnType, Type, Typed, Variable},
+    variable::{Type, Typed},
 };
 use derive_more::From;
 use pest::{Parser, iterators::Pairs};
@@ -48,13 +48,6 @@ impl<'a> LocalVariables<'a> {
         self.variables
             .get(name)
             .or_else(|| self.lower_layer?.get(name))
-    }
-    #[must_use]
-    pub fn contains_key(&self, name: &Arc<str>) -> bool {
-        self.variables.contains_key(name)
-            || self
-                .lower_layer
-                .is_some_and(|layer| layer.contains_key(name))
     }
     #[must_use]
     pub fn create_layer(&'a self) -> Self {
@@ -128,27 +121,10 @@ where
 #[derive(Clone, Debug, From)]
 pub enum LocalVariable {
     Function(Params, Type),
-    #[from]
-    Variable(Variable),
+    // #[from]
+    // Variable(Variable),
     #[from]
     Other(Type),
-}
-
-impl From<&Instruction> for LocalVariable {
-    fn from(value: &Instruction) -> Self {
-        match value {
-            Instruction::AnonymousFunction(function) => function.as_ref().into(),
-            Instruction::LocalVariable(_, var) => var.clone(),
-            Instruction::Variable(var) => var.clone().into(),
-            ins => ins.return_type().into(),
-        }
-    }
-}
-
-impl From<&Function> for LocalVariable {
-    fn from(value: &Function) -> Self {
-        Self::Function(value.params.clone(), value.return_type())
-    }
 }
 
 impl Typed for LocalVariable {
@@ -162,7 +138,6 @@ impl Typed for LocalVariable {
                 let return_type = return_type.clone();
                 var_type!(params -> return_type)
             }
-            LocalVariable::Variable(variable) => variable.as_type(),
             LocalVariable::Other(var_type) => var_type.clone(),
         }
     }

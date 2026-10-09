@@ -55,16 +55,7 @@ pub struct InstructionWithStr {
 }
 
 impl InstructionWithStr {
-    pub fn new(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<Self, Error> {
-        if pair.as_rule() == Rule::expr {
-            return Self::new_expression(pair, local_variables);
-        }
-        let str = pair.as_str().into();
-        let instruction = Instruction::new(pair, local_variables)?;
-        Ok(Self { instruction, str })
-    }
-
-    pub(crate) fn new_expression(
+   pub(crate) fn new_expression(
         pair: Pair<Rule>,
         local_variables: &LocalVariables,
     ) -> Result<Self, Error> {
@@ -99,32 +90,6 @@ impl InstructionWithStr {
             rule => unexpected!(rule),
         }?;
         Ok(Self { instruction, str })
-    }
-
-    pub fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Self, ExecError> {
-        let instruction = self.instruction.recreate(local_variables)?;
-        let str = self.str.clone();
-        Ok(Self { instruction, str })
-    }
-
-    pub fn map<F>(self, f: F) -> Self
-    where
-        F: FnOnce(Instruction) -> Instruction,
-    {
-        Self {
-            instruction: f(self.instruction),
-            str: self.str,
-        }
-    }
-    pub fn try_map<F, E>(self, f: F) -> Result<Self, E>
-    where
-        F: FnOnce(Instruction) -> Result<Instruction, E>,
-    {
-        let instruction = f(self.instruction)?;
-        Ok(Self {
-            instruction,
-            str: self.str,
-        })
     }
 }
 
@@ -223,10 +188,7 @@ impl Instruction {
                     .map(Instruction::from)
                     .ok_or_else(|| Error::VariableDoesntExist(str.clone()))
             },
-            |var| match var.clone() {
-                LocalVariable::Variable(variable) => Ok(Instruction::Variable(variable)),
-                local_variable => Ok(Instruction::LocalVariable(str.clone(), local_variable)),
-            },
+            |var| Ok(Instruction::LocalVariable(str.clone(), var.clone())),
         )
     }
 }
@@ -260,10 +222,7 @@ impl Recreate for Instruction {
                         .map(Instruction::from)
                         .unwrap_or_else(|| panic!("Tried to get variable {ident} that doest exist"))
                 },
-                |var| match var.clone() {
-                    LocalVariable::Variable(variable) => Self::Variable(variable),
-                    local_variable => Self::LocalVariable(ident.clone(), local_variable),
-                },
+                |var| Self::LocalVariable(ident.clone(), var.clone()),
             )),
             Self::Variable(variable) => Ok(Self::Variable(variable.clone())),
             Self::AnonymousFunction(ins) | Self::Array(ins) | Self::Block(ins) | Self::Tuple(ins)
