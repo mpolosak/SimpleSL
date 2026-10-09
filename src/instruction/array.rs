@@ -1,6 +1,6 @@
 use super::{Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables};
 use crate::{
-    self as simplesl, Error, ExecError,
+    self as simplesl, Error,
     instruction::{BaseInstruction, recreate_instructions},
     interpreter::Interpreter,
     variable::{ReturnType, Type},
@@ -48,20 +48,20 @@ impl Exec for Array {
 }
 
 impl Recreate for Array {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let instructions = recreate_instructions(&self.instructions, local_variables)?;
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        let instructions = recreate_instructions(&self.instructions, local_variables);
         let mut array = Vec::new();
         for instruction in &*instructions {
             let Instruction::Variable(variable) = instruction else {
-                return Ok(Self {
+                return Self {
                     instructions,
                     element_type: self.element_type.clone(),
                 }
-                .into());
+                .into();
             };
             array.push(variable.clone());
         }
-        Ok(Instruction::Variable(array.into()))
+        Instruction::Variable(array.into())
     }
 }
 

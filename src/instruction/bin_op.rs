@@ -11,7 +11,7 @@ use super::{
     local_variable::LocalVariables, reduce,
 };
 use crate::{
-    self as simplesl, BinOperator, Error, ExecError, Interpreter,
+    self as simplesl, BinOperator, Error, Interpreter,
     instruction::BaseInstruction,
     variable::{ReturnType, Type, Variable},
 };
@@ -100,31 +100,31 @@ impl Exec for BinOperation {
 }
 
 impl Recreate for BinOperation {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let lhs = self.lhs.recreate(local_variables)?;
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        let lhs = self.lhs.recreate(local_variables);
         if let BinOperator::And = self.op {
             return and::recreate(lhs, &self.rhs, local_variables);
         }
         if let BinOperator::Or = self.op {
             return or::recreate(lhs, &self.rhs, local_variables);
         }
-        let rhs = self.rhs.recreate(local_variables)?;
+        let rhs = self.rhs.recreate(local_variables);
         match self.op {
-            BinOperator::Add => Ok(add::create_from_instructions(lhs, rhs)),
-            BinOperator::Subtract => Ok(subtract::create_from_instructions(lhs, rhs)),
-            BinOperator::Multiply => Ok(multiply::create_from_instructions(lhs, rhs)),
-            BinOperator::Equal => Ok(equal::create_from_instructions(lhs, rhs)),
-            BinOperator::NotEqual => Ok(not_equal::create_from_instructions(lhs, rhs)),
-            BinOperator::Greater => Ok(greater::create_from_instructions(lhs, rhs)),
-            BinOperator::GreaterOrEqual => Ok(greater_equal::create_from_instructions(lhs, rhs)),
-            BinOperator::Lower => Ok(lower::create_from_instructions(lhs, rhs)),
-            BinOperator::LowerOrEqual => Ok(lower_equal::create_from_instructions(lhs, rhs)),
-            BinOperator::And => Ok(and::create_from_instructions(lhs, rhs)),
-            BinOperator::Or => Ok(or::create_from_instructions(lhs, rhs)),
-            BinOperator::BitwiseAnd => Ok(bitwise_and::create_from_instructions(lhs, rhs)),
-            BinOperator::BitwiseOr => Ok(bitwise_or::create_from_instructions(lhs, rhs)),
-            BinOperator::Xor => Ok(xor::create_from_instructions(lhs, rhs)),
-            op => Ok(Self { lhs, rhs, op }.into()),
+            BinOperator::Add => add::create_from_instructions(lhs, rhs),
+            BinOperator::Subtract => subtract::create_from_instructions(lhs, rhs),
+            BinOperator::Multiply => multiply::create_from_instructions(lhs, rhs),
+            BinOperator::Equal => equal::create_from_instructions(lhs, rhs),
+            BinOperator::NotEqual => not_equal::create_from_instructions(lhs, rhs),
+            BinOperator::Greater => greater::create_from_instructions(lhs, rhs),
+            BinOperator::GreaterOrEqual => greater_equal::create_from_instructions(lhs, rhs),
+            BinOperator::Lower => lower::create_from_instructions(lhs, rhs),
+            BinOperator::LowerOrEqual => lower_equal::create_from_instructions(lhs, rhs),
+            BinOperator::And => and::create_from_instructions(lhs, rhs),
+            BinOperator::Or => or::create_from_instructions(lhs, rhs),
+            BinOperator::BitwiseAnd => bitwise_and::create_from_instructions(lhs, rhs),
+            BinOperator::BitwiseOr => bitwise_or::create_from_instructions(lhs, rhs),
+            BinOperator::Xor => xor::create_from_instructions(lhs, rhs),
+            op => Self { lhs, rhs, op }.into(),
         }
     }
 }

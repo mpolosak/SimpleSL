@@ -1,6 +1,6 @@
 pub mod call;
 use crate::{
-    self as simplesl, Error, ExecError,
+    self as simplesl, Error,
     function::{Body, Function as VarFunc, Param, Params},
     instruction::{
         BaseInstruction, Exec, ExecResult, Instruction, Recreate,
@@ -82,7 +82,7 @@ impl Exec for Function {
                 LocalVariable::Function(self.params.clone(), self.return_type.clone()),
             );
         }
-        let body = recreate_instructions(&self.body, &mut fn_local_variables)?.into();
+        let body = recreate_instructions(&self.body, &mut fn_local_variables).into();
         Ok(VarFunc {
             ident: self.ident.clone(),
             params: self.params.clone(),
@@ -94,7 +94,7 @@ impl Exec for Function {
 }
 
 impl Recreate for Function {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
         let mut local_variables = local_variables.function_layer(
             self.params.clone().into(),
             FunctionInfo::new(None, self.return_type.clone()),
@@ -105,14 +105,14 @@ impl Recreate for Function {
                 LocalVariable::Function(self.params.clone(), self.return_type.clone()),
             );
         }
-        let body = recreate_instructions(&self.body, &mut local_variables)?;
-        Ok(Self {
+        let body = recreate_instructions(&self.body, &mut local_variables);
+        Self {
             ident: self.ident.clone(),
             params: self.params.clone(),
             body,
             return_type: self.return_type.clone(),
         }
-        .into())
+        .into()
     }
 }
 

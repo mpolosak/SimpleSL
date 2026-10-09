@@ -1,6 +1,6 @@
 use super::match_arm::MatchArm;
 use crate::{
-    Error, ExecError,
+    Error,
     instruction::{
         BaseInstruction, Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
     },
@@ -60,14 +60,14 @@ impl Exec for Match {
 }
 
 impl Recreate for Match {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let expression = self.expression.recreate(local_variables)?;
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        let expression = self.expression.recreate(local_variables);
         let arms = self
             .arms
             .iter()
             .map(|arm| arm.recreate(local_variables))
-            .collect::<Result<Box<[MatchArm]>, ExecError>>()?;
-        Ok(Self { expression, arms }.into())
+            .collect();
+        Self { expression, arms }.into()
     }
 }
 

@@ -1,5 +1,5 @@
 use crate::{
-    Error, ExecError,
+    Error,
     instruction::{
         Exec, ExecResult, ExecStop, Instruction, Recreate,
         control_flow::match_pattern::MatchPattern, local_variable::LocalVariables,
@@ -60,22 +60,22 @@ impl MatchArm {
         pattern.insert_variables(&mut interpreter, variable);
         self.instruction.exec(&mut interpreter)
     }
-    pub fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Self, ExecError> {
-        let pattern = self.pattern.recreate(local_variables)?;
+    pub fn recreate(&self, local_variables: &mut LocalVariables) -> Self {
+        let pattern = self.pattern.recreate(local_variables);
         let MatchPattern::Pattern(p) = &self.pattern else {
-            let instruction = self.instruction.recreate(local_variables)?;
-            return Ok(Self {
+            let instruction = self.instruction.recreate(local_variables);
+            return Self {
                 pattern,
                 instruction,
-            });
+            };
         };
         let mut local_variables = local_variables.create_layer();
         p.insert_local_variables(&mut local_variables);
-        let instruction = self.instruction.recreate(&mut local_variables)?;
-        Ok(Self {
+        let instruction = self.instruction.recreate(&mut local_variables);
+        Self {
             pattern,
             instruction,
-        })
+        }
     }
 }
 

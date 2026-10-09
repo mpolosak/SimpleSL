@@ -1,6 +1,6 @@
 use super::{Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables};
 use crate::{
-    Error, ExecError,
+    Error,
     instruction::{
         BaseInstruction,
         function::Function,
@@ -85,13 +85,13 @@ impl Set {
         ))
     }
 
-    pub fn inner_recreate(&self, local_variables: &mut LocalVariables) -> Result<Self, ExecError> {
-        let instruction = self.instruction.recreate(local_variables)?;
+    pub fn inner_recreate(&self, local_variables: &mut LocalVariables) -> Self {
+        let instruction = self.instruction.recreate(local_variables);
         self.pattern.insert_local_variables(local_variables);
-        Ok(Self {
+        Self {
             pattern: self.pattern.clone(),
             instruction,
-        })
+        }
     }
 
     pub fn new_ident(ident: Arc<str>, instruction: Instruction) -> Set {
@@ -113,8 +113,8 @@ impl Exec for Set {
 }
 
 impl Recreate for Set {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        Ok(self.inner_recreate(local_variables)?.into())
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        self.inner_recreate(local_variables).into()
     }
 }
 
@@ -147,8 +147,8 @@ impl Exec for ConditionSet {
 }
 
 impl Recreate for ConditionSet {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        Ok(Self(self.0.inner_recreate(local_variables)?).into())
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        Self(self.0.inner_recreate(local_variables)).into()
     }
 }
 

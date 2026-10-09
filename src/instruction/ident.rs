@@ -51,11 +51,8 @@ impl Exec for Ident {
 }
 
 impl Recreate for Ident {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, crate::ExecError> {
-        Ok(local_variables.get(&self.ident).map_or_else(
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        local_variables.get(&self.ident).map_or_else(
             || {
                 local_variables
                     .interpreter
@@ -73,7 +70,7 @@ impl Recreate for Ident {
                 }
                 .into()
             },
-        ))
+        )
     }
 }
 

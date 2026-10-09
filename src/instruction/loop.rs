@@ -2,7 +2,7 @@ pub mod r#for;
 pub mod r#while;
 use super::{Exec, ExecResult, ExecStop, Instruction, Recreate, local_variable::LocalVariables};
 use crate::{
-    Error, ExecError, Interpreter,
+    Error, Interpreter,
     instruction::BaseInstruction,
     variable::{ReturnType, Type, Variable},
 };
@@ -42,9 +42,9 @@ impl Exec for Loop {
 }
 
 impl Recreate for Loop {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let instruction = self.0.recreate(local_variables)?;
-        Ok(Self(instruction).into())
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        let instruction = self.0.recreate(local_variables);
+        Self(instruction).into()
     }
 }
 

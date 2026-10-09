@@ -70,16 +70,13 @@ impl Exec for UnaryOperation {
 }
 
 impl Recreate for UnaryOperation {
-    fn recreate(
-        &self,
-        local_variables: &mut LocalVariables,
-    ) -> Result<super::Instruction, crate::ExecError> {
-        let instruction = self.instruction.recreate(local_variables)?;
-        Ok(match self.op {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        let instruction = self.instruction.recreate(local_variables);
+        match self.op {
             UnaryOperator::Not => not::create_from_instruction(instruction),
             UnaryOperator::UnaryMinus => unary_minus::create_from_instruction(instruction),
             op => UnaryOperation { instruction, op }.into(),
-        })
+        }
     }
 }
 

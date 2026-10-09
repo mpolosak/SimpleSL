@@ -159,11 +159,11 @@ impl Exec for Instruction {
 }
 
 impl Recreate for Instruction {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
         match self {
-            Self::Variable(variable) => Ok(Self::Variable(variable.clone())),
+            Self::Variable(variable) => Self::Variable(variable.clone()),
             Self::Base(ins) => ins.recreate(local_variables),
-            _ => Ok(self.clone()),
+            _ => self.clone(),
         }
     }
 }
@@ -181,7 +181,7 @@ impl ReturnType for Instruction {
 pub(crate) fn recreate_instructions(
     instructions: &[Instruction],
     local_variables: &mut LocalVariables,
-) -> Result<Box<[Instruction]>, ExecError> {
+) -> Box<[Instruction]> {
     instructions
         .iter()
         .map(|i| i.recreate(local_variables))
@@ -189,7 +189,7 @@ pub(crate) fn recreate_instructions(
 }
 
 pub trait Recreate {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError>;
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction;
 }
 
 pub trait Exec {

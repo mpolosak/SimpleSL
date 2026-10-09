@@ -1,6 +1,6 @@
 pub mod and {
     use crate::{
-        BinOperator, ExecError, Interpreter,
+        BinOperator, Interpreter,
         instruction::{
             BinOperation, Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
         },
@@ -24,16 +24,16 @@ pub mod and {
         lhs: Instruction,
         rhs: &Instruction,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, ExecError> {
+    ) -> Instruction {
         match (lhs, rhs) {
             (Instruction::Variable(Variable::Bool(true)), rhs) => rhs.recreate(local_variables),
-            (Instruction::Variable(_), _) => Ok(Instruction::Variable(false.into())),
-            (lhs, rhs) => Ok(BinOperation {
+            (Instruction::Variable(_), _) => Instruction::Variable(false.into()),
+            (lhs, rhs) => BinOperation {
                 lhs,
-                rhs: rhs.recreate(local_variables)?,
+                rhs: rhs.recreate(local_variables),
                 op: BinOperator::And,
             }
-            .into()),
+            .into(),
         }
     }
 
@@ -48,7 +48,7 @@ pub mod and {
 
 pub mod or {
     use crate::{
-        BinOperator, ExecError, Interpreter,
+        BinOperator, Interpreter,
         instruction::{
             BinOperation, Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
         },
@@ -72,18 +72,16 @@ pub mod or {
         lhs: Instruction,
         rhs: &Instruction,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, ExecError> {
+    ) -> Instruction {
         match (lhs, rhs) {
-            (Instruction::Variable(Variable::Bool(true)), _) => {
-                Ok(Instruction::Variable(true.into()))
-            }
+            (Instruction::Variable(Variable::Bool(true)), _) => Instruction::Variable(true.into()),
             (Instruction::Variable(_), rhs) => rhs.recreate(local_variables),
-            (lhs, rhs) => Ok(BinOperation {
+            (lhs, rhs) => BinOperation {
                 lhs,
-                rhs: rhs.recreate(local_variables)?,
+                rhs: rhs.recreate(local_variables),
                 op: BinOperator::Or,
             }
-            .into()),
+            .into(),
         }
     }
 

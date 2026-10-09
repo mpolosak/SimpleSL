@@ -1,6 +1,6 @@
 use super::{Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables};
 use crate::{
-    Error, ExecError,
+    Error,
     instruction::{BaseInstruction, ident::Ident, set::Set},
     interpreter::{Interpreter, VariableMap},
     variable::{ReturnType, Type, Variable},
@@ -50,7 +50,7 @@ impl Exec for Struct {
 }
 
 impl Recreate for Struct {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
         let sets = self
             .sets
             .iter()
@@ -58,8 +58,8 @@ impl Recreate for Struct {
                 let mut local_variables = local_variables.create_layer();
                 set.inner_recreate(&mut local_variables)
             })
-            .collect::<Result<_, _>>()?;
-        Ok(Self { sets }.into())
+            .collect();
+        Self { sets }.into()
     }
 }
 

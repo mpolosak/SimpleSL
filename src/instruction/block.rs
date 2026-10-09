@@ -1,6 +1,6 @@
 use super::{Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables};
 use crate::{
-    Error, ExecError,
+    Error,
     instruction::{BaseInstruction, recreate_instructions},
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
@@ -38,10 +38,10 @@ impl Exec for Block {
 }
 
 impl Recreate for Block {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
         let mut local_variables = local_variables.create_layer();
-        let instructions = recreate_instructions(&self.instructions, &mut local_variables)?;
-        Ok(Self { instructions }.into())
+        let instructions = recreate_instructions(&self.instructions, &mut local_variables);
+        Self { instructions }.into()
     }
 }
 

@@ -1,6 +1,6 @@
 use super::{Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables};
 use crate::{
-    self as simplesl, BinOperator, Code, Error, ExecError,
+    self as simplesl, BinOperator, Code, Error,
     instruction::BaseInstruction,
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
@@ -56,10 +56,10 @@ impl Exec for TypeFilter {
 }
 
 impl Recreate for TypeFilter {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let iterator = self.iterator.recreate(local_variables)?;
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        let iterator = self.iterator.recreate(local_variables);
         let var_type = self.var_type.clone();
-        Ok(Self { iterator, var_type }.into())
+        Self { iterator, var_type }.into()
     }
 }
 

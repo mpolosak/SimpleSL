@@ -1,5 +1,5 @@
 use crate::{
-    Error, ExecError,
+    Error,
     instruction::{
         BaseInstruction, Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
         recreate_instructions, set::ConditionSet,
@@ -70,20 +70,20 @@ impl Exec for If {
 }
 
 impl Recreate for If {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
         let (conditions, if_true) = {
             let mut local_variables = local_variables.create_layer();
-            let conditions = recreate_instructions(&self.conditions, &mut local_variables)?;
-            let if_true = self.if_true.recreate(&mut local_variables)?;
+            let conditions = recreate_instructions(&self.conditions, &mut local_variables);
+            let if_true = self.if_true.recreate(&mut local_variables);
             (conditions, if_true)
         };
-        let if_false = self.else_instruction.recreate(local_variables)?;
-        Ok(Self {
+        let if_false = self.else_instruction.recreate(local_variables);
+        Self {
             conditions,
             if_true,
             else_instruction: if_false,
         }
-        .into())
+        .into()
     }
 }
 

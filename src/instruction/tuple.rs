@@ -2,7 +2,7 @@ use super::{
     Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
 };
 use crate::{
-    Error, ExecError,
+    Error,
     instruction::{BaseInstruction, recreate_instructions},
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
@@ -49,9 +49,9 @@ impl Exec for Tuple {
 }
 
 impl Recreate for Tuple {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let elements = recreate_instructions(&self.elements, local_variables)?;
-        Ok(Self::create_from_elements(elements))
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        let elements = recreate_instructions(&self.elements, local_variables);
+        Self::create_from_elements(elements)
     }
 }
 

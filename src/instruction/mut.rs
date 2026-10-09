@@ -2,7 +2,7 @@ use super::{
     Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
 };
 use crate::{
-    Error, ExecError, Interpreter,
+    Error, Interpreter,
     instruction::BaseInstruction,
     variable::{self, ReturnType, Type},
 };
@@ -59,13 +59,13 @@ impl Exec for Mut {
 }
 
 impl Recreate for Mut {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let instruction = self.instruction.recreate(local_variables)?;
-        Ok(Mut {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        let instruction = self.instruction.recreate(local_variables);
+        Mut {
             var_type: self.var_type.clone(),
             instruction,
         }
-        .into())
+        .into()
     }
 }
 

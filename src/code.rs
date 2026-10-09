@@ -19,7 +19,7 @@ impl Code {
         let instructions = parse
             .map(|pair| {
                 Instruction::new(pair, &mut local_variables)
-                    .and_then(|i| Ok(i.recreate(&mut local_variables)?))
+                    .map(|i| i.recreate(&mut local_variables))
             })
             .collect::<Result<_, Error>>()?;
         Ok(Self { instructions })
