@@ -22,7 +22,7 @@ impl InstructionWithStr {
         let str = format!("{} {}", op.as_str(), str).into();
         let instruction = match op.as_rule() {
             Rule::not => Not::create_instruction(rhs),
-            Rule::unary_minus => unary_minus::create_instruction(rhs),
+            Rule::unary_minus => UnaryMinus::create_instruction(rhs),
             Rule::indirection => create_deref(rhs),
             Rule::r#mut => Mut::create_instruction(op, rhs),
             rule => unexpected!(rule),
@@ -35,18 +35,10 @@ lazy_static! {
     pub static ref ACCEPTED_NUM: Type = var_type!(int | float);
 }
 
-pub mod unary_minus {
-    use crate::{
-        self as simplesl, Error,
-        instruction::{Instruction, InstructionWithStr, unary_operation::UnaryOperation},
-        unary_operator::UnaryOperator,
-        variable::{ReturnType, Variable},
-    };
-    use match_any::match_any;
-    use simplesl_macros::var;
+#[derive(Debug)]
+pub struct UnaryMinus(Instruction);
 
-    use super::ACCEPTED_NUM;
-
+impl UnaryMinus {
     pub fn create_instruction(instruction: InstructionWithStr) -> Result<Instruction, Error> {
         let op = UnaryOperator::UnaryMinus;
         let return_type = instruction.return_type();
@@ -58,26 +50,40 @@ pub mod unary_minus {
                 given: return_type,
             });
         }
-        Ok(UnaryOperation {
-            instruction: instruction.instruction,
-            op,
-        }
-        .into())
+        Ok(UnaryMinus(instruction.instruction).into())
     }
 
-    pub fn create_from_instruction(instruction: Instruction) -> Instruction {
-        match_any! { instruction,
-            Instruction::Variable(operand) => exec(operand).into(),
-            instruction => UnaryOperation {instruction,op:UnaryOperator::UnaryMinus }.into()
-        }
-    }
-
-    pub fn exec(variable: Variable) -> Variable {
+    pub fn calc(variable: Variable) -> Variable {
         match variable {
             Variable::Int(num) => num.wrapping_neg().into(),
-            Variable::Float(num) => var!(-num),
+            Variable::Float(num) => Variable::Float(-num),
             operand => panic!("Tried to - {operand}"),
         }
+    }
+}
+
+impl BaseInstruction for UnaryMinus {}
+
+impl Exec for UnaryMinus{
+    fn exec(&self, interpreter: &mut crate::Interpreter) -> super::ExecResult {
+        let variable = self.0.exec(interpreter)?;
+        Ok(Self::calc(variable))
+    }
+}
+
+impl Recreate for UnaryMinus {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        let instruction = self.0.recreate(local_variables);
+        match instruction {
+            Instruction::Variable(operand) => Self::calc(operand).into(),
+            instruction => Self(instruction).into()
+        }
+    }
+}
+
+impl ReturnType for UnaryMinus{
+    fn return_type(&self) -> Type {
+        self.0.return_type()
     }
 }
 

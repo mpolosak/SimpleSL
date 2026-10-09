@@ -3,7 +3,6 @@ use super::{
     Exec, ExecResult, Instruction, InstructionWithStr, Recreate, at,
     function::call,
     local_variable::LocalVariables,
-    prefix_op::unary_minus,
     reduce::{self, bool_reduce, collect, product, sum},
     tuple_access,
     type_filter::TypeFilter,
@@ -59,7 +58,6 @@ impl Exec for UnaryOperation {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let var = self.instruction.exec(interpreter)?;
         Ok(match self.op {
-            UnaryOperator::UnaryMinus => unary_minus::exec(var),
             UnaryOperator::FunctionCall => var.into_function().unwrap().exec(interpreter)?,
             _ => unreachable!(),
         })
@@ -69,21 +67,17 @@ impl Exec for UnaryOperation {
 impl Recreate for UnaryOperation {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
         let instruction = self.instruction.recreate(local_variables);
-        match self.op {
-            UnaryOperator::UnaryMinus => unary_minus::create_from_instruction(instruction),
-            op => UnaryOperation { instruction, op }.into(),
-        }
+        UnaryOperation { instruction, op: self.op }.into()
     }
 }
 
 impl ReturnType for UnaryOperation {
     fn return_type(&self) -> Type {
         let return_type = self.instruction.return_type();
-        match self.op {
-            UnaryOperator::UnaryMinus => return_type,
-            UnaryOperator::FunctionCall => return_type.return_type().unwrap(),
-            _ => unreachable!(),
-        }
+        if let UnaryOperator::FunctionCall = self.op {
+            return return_type.return_type().unwrap()
+        } 
+        unreachable!()
     }
 }
 
