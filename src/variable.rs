@@ -61,7 +61,7 @@ impl Variable {
             Variable::Mut(value) => value.string(depth+1),
             Variable::Tuple(elements) => format!("({})", elements.iter().map(|v| v.debug(depth+1)).collect::<Box<[_]>>().join(", ")),
             Variable::Struct(vm) => {
-                let elements = vm.iter().map(|(key, value)| format!("{}={}", key, value.debug(depth))).join(", ");
+                let elements = vm.iter().map(|(key, value)| format!("{}:={}", key, value.debug(depth))).join(", ");
                 format!("struct{{{elements}}}")
             },
             Variable::Void => format!("()")
@@ -241,7 +241,10 @@ pub fn is_correct_variable_name(name: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use crate as simplesl;
     use crate::variable::Variable;
+    use proptest::proptest;
+    use simplesl_macros::var;
 
     #[test]
     fn test_send() {
@@ -268,5 +271,62 @@ mod tests {
         assert!(!is_correct_variable_name("return"));
         assert!(is_correct_variable_name("return5"));
         assert!(is_correct_variable_name("areturn"));
+    }
+
+    #[test]
+    fn display_true() {
+        assert_eq!(format!("{}", Variable::Bool(true)), "true")
+    }
+
+    #[test]
+    fn display_false() {
+        assert_eq!(format!("{}", Variable::Bool(false)), "false")
+    }
+
+    #[test]
+    fn display_void() {
+        assert_eq!(format!("{}", Variable::Void), "()")
+    }
+
+    #[test]
+    fn display_tuple() {
+        assert_eq!(format!("{}", var!((5, "a", (4.5, false)))), r#"(5, "a", (4.5, false))"#)
+    }
+
+    #[test]
+    fn display_array() {
+        assert_eq!(format!("{}", var!([5, "a", 4.5, false])), r#"[5, "a", 4.5, false]"#)
+    }
+
+    #[test]
+    fn display_empty_array() {
+        assert_eq!(format!("{}", var!([])), r#"[]"#)
+    }
+
+    #[test]
+    fn display_empty_struct() {
+        assert_eq!(format!("{}", var!(struct{})), r#"struct{}"#)
+    }
+
+    #[test]
+    fn display_one_field_struct() {
+        assert_eq!(format!("{}", var!(struct{a:=5})), r#"struct{a:=5}"#)
+    }
+
+    proptest!{
+        #[test]
+        fn display_int(int: i64) {
+            assert_eq!(format!("{}", Variable::Int(int)), format!("{int}"))
+        }
+
+        #[test]
+        fn display_float(float: f64) {
+            assert_eq!(format!("{}", Variable::Float(float)), format!("{float}"))
+        }
+
+        #[test]
+        fn display_string(s in "\\PC*") {
+            assert_eq!(format!("{}", Variable::String(s.clone().into())), format!("{s}"))
+        }
     }
 }
