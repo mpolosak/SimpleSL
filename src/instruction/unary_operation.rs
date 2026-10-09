@@ -3,13 +3,16 @@ use super::{
     Exec, ExecResult, Instruction, InstructionWithStr, Recreate, at,
     function::call,
     local_variable::LocalVariables,
-    prefix_op::{not, unary_minus},
+    prefix_op::unary_minus,
     reduce::{self, bool_reduce, collect, product, sum},
     tuple_access,
     type_filter::TypeFilter,
 };
 use crate::{
-    instruction::{field_access, slicing, unary_operation::iter::Iter, BaseInstruction}, unary_operator::UnaryOperator, variable::{ReturnType, Type, Variable}, Error, Interpreter
+    Error, Interpreter,
+    instruction::{BaseInstruction, field_access, slicing, unary_operation::iter::Iter},
+    unary_operator::UnaryOperator,
+    variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
 use simplesl_parser::{Rule, unexpected};
@@ -56,7 +59,6 @@ impl Exec for UnaryOperation {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let var = self.instruction.exec(interpreter)?;
         Ok(match self.op {
-            UnaryOperator::Not => not::exec(var),
             UnaryOperator::UnaryMinus => unary_minus::exec(var),
             UnaryOperator::FunctionCall => var.into_function().unwrap().exec(interpreter)?,
             _ => unreachable!(),
@@ -68,7 +70,6 @@ impl Recreate for UnaryOperation {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
         let instruction = self.instruction.recreate(local_variables);
         match self.op {
-            UnaryOperator::Not => not::create_from_instruction(instruction),
             UnaryOperator::UnaryMinus => unary_minus::create_from_instruction(instruction),
             op => UnaryOperation { instruction, op }.into(),
         }
@@ -79,7 +80,7 @@ impl ReturnType for UnaryOperation {
     fn return_type(&self) -> Type {
         let return_type = self.instruction.return_type();
         match self.op {
-            UnaryOperator::Not | UnaryOperator::UnaryMinus => return_type,
+            UnaryOperator::UnaryMinus => return_type,
             UnaryOperator::FunctionCall => return_type.return_type().unwrap(),
             _ => unreachable!(),
         }

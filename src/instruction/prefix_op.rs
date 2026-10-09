@@ -1,8 +1,9 @@
 use std::sync::Arc;
 
+use super::local_variable::LocalVariables;
 use super::InstructionWithStr;
 use crate::Error;
-use crate::instruction::Instruction;
+use crate::instruction::{BaseInstruction, Exec, Instruction, Recreate};
 use crate::instruction::block::Block;
 use crate::instruction::set::Set;
 use crate::instruction::unary_operation::function_call;
@@ -20,7 +21,7 @@ impl InstructionWithStr {
         let str = rhs.str.clone();
         let str = format!("{} {}", op.as_str(), str).into();
         let instruction = match op.as_rule() {
-            Rule::not => not::create_instruction(rhs),
+            Rule::not => Not::create_instruction(rhs),
             Rule::unary_minus => unary_minus::create_instruction(rhs),
             Rule::indirection => create_deref(rhs),
             Rule::r#mut => Mut::create_instruction(op, rhs),
@@ -80,51 +81,59 @@ pub mod unary_minus {
     }
 }
 
-pub mod not {
-    use crate::{
-        self as simplesl, Error,
-        instruction::{Instruction, InstructionWithStr, unary_operation::UnaryOperation},
-        unary_operator::UnaryOperator,
-        variable::{ReturnType, Type, Variable},
-    };
-    use lazy_static::lazy_static;
-    use match_any::match_any;
-    use simplesl_macros::var_type;
+#[derive(Debug)]
+pub struct Not(Instruction);
 
-    lazy_static! {
-        pub static ref ACCEPTED: Type = var_type!(int | bool);
-    }
+lazy_static! {
+    pub static ref ACCEPTED_NOT: Type = var_type!(int | bool);
+}
 
+impl Not {
     pub fn create_instruction(instruction: InstructionWithStr) -> Result<Instruction, Error> {
         let op = UnaryOperator::Not;
         let return_type = instruction.return_type();
-        if !return_type.matches(&ACCEPTED) {
+        if !return_type.matches(&ACCEPTED_NOT) {
             return Err(Error::IncorectUnaryOperatorOperand {
                 ins: instruction.str,
                 op,
-                expected: ACCEPTED.clone(),
+                expected: ACCEPTED_NOT.clone(),
                 given: return_type,
             });
         }
-        Ok(UnaryOperation {
-            instruction: instruction.instruction,
-            op,
-        }
-        .into())
+        Ok(Not(instruction.instruction).into())
     }
 
-    pub fn create_from_instruction(instruction: Instruction) -> Instruction {
-        match_any! { instruction,
-            Instruction::Variable(operand) => exec(operand).into(),
-            instruction => UnaryOperation {instruction, op: UnaryOperator::Not } .into()
-        }
-    }
-    pub fn exec(variable: Variable) -> Variable {
+    fn calc(variable: Variable) -> Variable {
         match variable {
             Variable::Bool(var) => (!var).into(),
             Variable::Int(num) => (!num).into(),
             operand => panic!("Tried to {} {operand}", stringify!(op2)),
         }
+    }
+}
+
+impl BaseInstruction for Not{}
+
+impl Exec for Not{
+    fn exec(&self, interpreter: &mut crate::Interpreter) -> super::ExecResult {
+        let variable = self.0.exec(interpreter)?;
+        Ok(Self::calc(variable))
+    }
+}
+
+impl Recreate for Not {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        let instruction = self.0.recreate(local_variables);
+        match instruction {
+            Instruction::Variable(operand) => Self::calc(operand).into(),
+            instruction => Self(instruction).into()
+        }
+    }
+}
+
+impl ReturnType for Not {
+    fn return_type(&self) -> Type {
+        self.0.return_type()
     }
 }
 
