@@ -137,7 +137,7 @@ pub enum LocalVariable {
 impl From<&Instruction> for LocalVariable {
     fn from(value: &Instruction) -> Self {
         match value {
-            Instruction::AnonymousFunction(function) => function.into(),
+            Instruction::AnonymousFunction(function) => function.as_ref().into(),
             Instruction::LocalVariable(_, var) => var.clone(),
             Instruction::Variable(var) => var.clone().into(),
             ins => ins.return_type().into(),

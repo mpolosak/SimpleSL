@@ -3,7 +3,6 @@ use crate::{
     function::{Function as VarFunc, Param, Params},
     instruction::{
         BinOperation, Instruction, InstructionWithStr,
-        function::Function,
         local_variable::{LocalVariable, LocalVariables},
         set::Set,
         tuple::Tuple,
@@ -32,8 +31,8 @@ pub fn create_instruction(
         Instruction::LocalVariable(ident, LocalVariable::Function(params, _)) => {
             check_args_with_params(ident, params, &args)?;
         }
-        Instruction::AnonymousFunction(Function { params, .. }) => {
-            check_args_with_params(&function.str, params, &args)?;
+        Instruction::AnonymousFunction(af) => {
+            check_args_with_params(&function.str, &af.params, &args)?;
         }
         _ => {
             let f_type = function.return_type();

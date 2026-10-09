@@ -152,8 +152,8 @@ impl From<Variable> for InstructionWithStr {
 
 #[derive(Debug, Clone, From)]
 pub enum Instruction {
-    #[from]
-    AnonymousFunction(Function),
+    #[from(Function)]
+    AnonymousFunction(Arc<Function>),
     #[from(Array)]
     Array(Arc<Array>),
     #[from]
