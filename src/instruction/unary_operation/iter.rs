@@ -1,10 +1,5 @@
-use super::UnaryOperation;
 use crate::{
-    self as simplesl, Code, Error, Interpreter,
-    function::Function,
-    instruction::{Instruction, InstructionWithStr},
-    unary_operator::UnaryOperator,
-    variable::{ReturnType, Type, Typed, Variable},
+    self as simplesl, function::Function, instruction::{local_variable::LocalVariables, BaseInstruction, Exec, ExecResult, Instruction, InstructionWithStr, Recreate}, unary_operator::UnaryOperator, variable::{ReturnType, Type, Typed, Variable}, Code, Error, Interpreter
 };
 use lazy_static::lazy_static;
 use simplesl_macros::var_type;
@@ -32,40 +27,56 @@ lazy_static! {
     .unwrap();
 }
 
-pub(crate) fn exec(var: Variable) -> Variable {
-    let element_type = var.as_type().element_type().unwrap();
-    let default = Variable::of_type(&element_type).unwrap_or(Variable::Void);
-    let result = ITER
-        .exec_with_args(&[var, default])
-        .unwrap()
-        .into_function()
-        .unwrap();
-    let mut result = Arc::unwrap_or_clone(result);
-    result.return_type = var_type!((bool, element_type));
-    result.into()
+#[derive(Debug)]
+pub struct Iter(Instruction);
+
+impl Iter {
+    pub fn create_instruction(lhs: InstructionWithStr) -> Result<Instruction, Error> {
+        let op = UnaryOperator::Iter;
+        let lhs_type = lhs.return_type();
+        if !lhs_type.matches(&var_type!([any])) {
+            return Err(Error::IncorectUnaryOperatorOperand {
+                ins: lhs.str,
+                op,
+                expected: var_type!([any]),
+                given: lhs_type,
+            });
+        }
+        Ok(Self(lhs.instruction).into())
+    }
 }
 
-pub(crate) fn return_type(lhs: Type) -> Type {
-    let element_type = lhs.element_type().unwrap();
-    var_type!(() -> (bool, element_type))
+impl BaseInstruction for Iter {}
+
+impl Exec for Iter {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
+        let var = self.0.exec(interpreter)?;
+        let element_type = var.as_type().element_type().unwrap();
+        let default = Variable::of_type(&element_type).unwrap_or(Variable::Void);
+        let result = ITER
+            .exec_with_args(&[var, default])
+            .unwrap()
+            .into_function()
+            .unwrap();
+        let mut result = Arc::unwrap_or_clone(result);
+        result.return_type = var_type!((bool, element_type));
+        Ok(result.into())
+    }
 }
 
-pub(crate) fn create(lhs: InstructionWithStr) -> Result<Instruction, Error> {
-    let op = UnaryOperator::Iter;
-    let lhs_type = lhs.return_type();
-    if !lhs_type.matches(&var_type!([any])) {
-        return Err(Error::IncorectUnaryOperatorOperand {
-            ins: lhs.str,
-            op,
-            expected: var_type!([any]),
-            given: lhs_type,
-        });
+impl Recreate for Iter {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        let instruction = self.0.recreate(local_variables);
+        Self(instruction).into()
     }
-    Ok(UnaryOperation {
-        instruction: lhs.instruction,
-        op,
+}
+
+impl ReturnType for Iter {
+    fn return_type(&self) -> Type {
+        let instruction_return_type = self.0.return_type();
+        let element_type = instruction_return_type.element_type().unwrap();
+        var_type!(() -> (bool, element_type))
     }
-    .into())
 }
 
 #[cfg(test)]

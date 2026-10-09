@@ -9,10 +9,7 @@ use super::{
     type_filter::TypeFilter,
 };
 use crate::{
-    Error, Interpreter,
-    instruction::{BaseInstruction, field_access, slicing},
-    unary_operator::UnaryOperator,
-    variable::{ReturnType, Type, Variable},
+    instruction::{field_access, slicing, unary_operation::iter::Iter, BaseInstruction}, unary_operator::UnaryOperator, variable::{ReturnType, Type, Variable}, Error, Interpreter
 };
 use pest::iterators::Pair;
 use simplesl_parser::{Rule, unexpected};
@@ -39,7 +36,7 @@ impl InstructionWithStr {
             Rule::bitand_reduce => reduce::bit::create(lhs, UnaryOperator::BitAnd),
             Rule::bitor_reduce => reduce::bit::create(lhs, UnaryOperator::BitOr),
             Rule::collect => collect::create(lhs),
-            Rule::iter => iter::create(lhs),
+            Rule::iter => Iter::create_instruction(lhs),
             Rule::slicing => slicing::create(lhs, op, local_variables),
             rule => unexpected!(rule),
         }?;
@@ -62,7 +59,6 @@ impl Exec for UnaryOperation {
             UnaryOperator::Not => not::exec(var),
             UnaryOperator::UnaryMinus => unary_minus::exec(var),
             UnaryOperator::FunctionCall => var.into_function().unwrap().exec(interpreter)?,
-            UnaryOperator::Iter => iter::exec(var),
             _ => unreachable!(),
         })
     }
@@ -85,8 +81,7 @@ impl ReturnType for UnaryOperation {
         match self.op {
             UnaryOperator::Not | UnaryOperator::UnaryMinus => return_type,
             UnaryOperator::FunctionCall => return_type.return_type().unwrap(),
-            UnaryOperator::Iter => iter::return_type(return_type),
-            _ => Type::Never,
+            _ => unreachable!(),
         }
     }
 }
