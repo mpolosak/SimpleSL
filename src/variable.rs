@@ -7,7 +7,7 @@ mod struct_type;
 mod try_from;
 mod r#type;
 mod type_of;
-use crate::{self as simplesl, function::Function, interpreter::VariableMap};
+use crate::{self as simplesl, function::Function, instruction::{BaseInstruction, Exec, ExecResult, Instruction, Recreate}, interpreter::VariableMap, Interpreter};
 use derive_more::{Display, From};
 use enum_as_inner::EnumAsInner;
 use itertools::Itertools;
@@ -237,6 +237,26 @@ pub fn is_correct_variable_name(name: &str) -> bool {
         return false;
     };
     parse.as_str() == name
+}
+
+impl BaseInstruction for Variable{}
+
+impl Exec for Variable{
+    fn exec(&self, _interpreter: &mut Interpreter) -> ExecResult {
+        Ok(self.clone())
+    }
+}
+
+impl Recreate for Variable{
+    fn recreate(&self, _local_variables: &mut crate::instruction::local_variable::LocalVariables) -> Instruction {
+        self.clone().into()
+    }
+}
+
+impl ReturnType for Variable{
+    fn return_type(&self) -> Type {
+        self.as_type()
+    }
 }
 
 #[cfg(test)]

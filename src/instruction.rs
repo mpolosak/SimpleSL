@@ -42,13 +42,13 @@ use crate::{
         r#struct::Struct,
     },
     interpreter::Interpreter,
-    variable::{ReturnType, Type, Typed, Variable},
+    variable::{ReturnType, Type, Variable},
 };
 use derive_more::From;
 use r#loop::{Loop, r#for, r#while};
 use pest::iterators::Pair;
 use simplesl_parser::{PRATT_PARSER, Rule, unexpected};
-use std::{fmt::Debug, sync::Arc};
+use std::{any::Any, fmt::Debug, sync::Arc};
 
 #[derive(Debug, Clone)]
 pub struct InstructionWithStr {
@@ -107,24 +107,10 @@ impl ReturnType for InstructionWithStr {
     }
 }
 
-impl From<Variable> for InstructionWithStr {
-    fn from(value: Variable) -> Self {
-        let str = value.to_string().into();
-        Self {
-            instruction: Instruction::from(value),
-            str,
-        }
-    }
-}
-
 pub trait BaseInstruction: Debug + ReturnType + Recreate + Exec + Sync + Send {}
 
 #[derive(Debug, Clone, From)]
-pub enum Instruction {
-    #[from]
-    Variable(Variable),
-    Base(Arc<dyn BaseInstruction>),
-}
+pub struct  Instruction(Arc<dyn BaseInstruction>);
 
 impl Instruction {
     pub fn new(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<Self, Error> {
@@ -148,32 +134,28 @@ impl Instruction {
             rule => unexpected!(rule),
         }
     }
+
+    fn downcast_ref<T: BaseInstruction + 'static>(&self) -> Option<&T> {
+        let value_any = &self.0 as &dyn Any;
+        value_any.downcast_ref::<T>()
+    }
 }
 
 impl Exec for Instruction {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        match self {
-            Self::Variable(var) => Ok(var.clone()),
-            Self::Base(ins) => ins.exec(interpreter),
-        }
+        self.0.exec(interpreter)
     }
 }
 
 impl Recreate for Instruction {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
-        match self {
-            Self::Variable(variable) => Self::Variable(variable.clone()),
-            Self::Base(ins) => ins.recreate(local_variables),
-        }
+        self.0.recreate(local_variables)
     }
 }
 
 impl ReturnType for Instruction {
     fn return_type(&self) -> Type {
-        match self {
-            Self::Variable(variable) => variable.as_type(),
-            Self::Base(ins) => ins.return_type(),
-        }
+        self.0.return_type()
     }
 }
 
@@ -211,6 +193,6 @@ impl From<ExecError> for ExecStop {
 
 impl<T: BaseInstruction + 'static> From<T> for Instruction {
     fn from(value: T) -> Self {
-        Self::Base(Arc::from(value))
+        Self(Arc::from(value))
     }
 }

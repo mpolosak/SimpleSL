@@ -1,14 +1,12 @@
 use super::Instruction;
 use crate::{
-    self as simplesl, Error, Interpreter,
-    function::{Param, Params},
-    variable::{Type, Typed},
+    self as simplesl, function::{Param, Params}, variable::{Type, Typed, Variable}, Error, Interpreter
 };
 use derive_more::From;
 use pest::{Parser, iterators::Pairs};
 use simplesl_macros::var_type;
 use simplesl_parser::{Rule, SimpleSLParser};
-use std::{collections::HashMap, fs, sync::Arc};
+use std::{any::{Any, TypeId}, collections::HashMap, fs, sync::Arc};
 
 pub type LocalVariableMap = HashMap<Arc<str>, LocalVariable>;
 pub struct LocalVariables<'a> {
@@ -102,7 +100,7 @@ impl<'a> LocalVariables<'a> {
         let Some(last) = instructions.pop() else {
             return Ok(Box::from([]));
         };
-        instructions.retain(|instruction| !matches!(instruction, Instruction::Variable(..),));
+        instructions.retain(|instruction| instruction.0.type_id() != TypeId::of::<Variable>());
         instructions.push(last);
         Ok(instructions.into())
     }

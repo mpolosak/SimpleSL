@@ -32,12 +32,12 @@ impl Tuple {
     fn create_from_elements(elements: Box<[Instruction]>) -> Instruction {
         let mut array = Vec::new();
         for instruction in &*elements {
-            let Instruction::Variable(variable) = instruction else {
+            let Some(variable) = instruction.downcast_ref::<Variable>() else {
                 return Self { elements }.into();
             };
             array.push(variable.clone());
         }
-        Instruction::Variable(Variable::Tuple(array.into()))
+        Variable::Tuple(array.into()).into()
     }
 }
 

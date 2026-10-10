@@ -8,16 +8,18 @@ pub mod and {
     };
 
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
-        match (lhs, rhs) {
-            (Instruction::Variable(Variable::Bool(true)), rhs) => rhs,
-            (Instruction::Variable(_), _) => Instruction::Variable(false.into()),
-            (lhs, rhs) => BinOperation {
+        let Some(variable) = lhs.downcast_ref::<Variable>() else {
+            return BinOperation {
                 lhs,
                 rhs,
-                op: BinOperator::And,
+                op: BinOperator::Or,
             }
-            .into(),
+            .into();
+        };
+        if let Variable::Bool(true) = variable {
+            return rhs
         }
+        Variable::Bool(false).into()
     }
 
     pub fn recreate(
@@ -25,16 +27,18 @@ pub mod and {
         rhs: &Instruction,
         local_variables: &mut LocalVariables,
     ) -> Instruction {
-        match (lhs, rhs) {
-            (Instruction::Variable(Variable::Bool(true)), rhs) => rhs.recreate(local_variables),
-            (Instruction::Variable(_), _) => Instruction::Variable(false.into()),
-            (lhs, rhs) => BinOperation {
+        let Some(variable) = lhs.downcast_ref::<Variable>() else {
+            return BinOperation {
                 lhs,
                 rhs: rhs.recreate(local_variables),
-                op: BinOperator::And,
+                op: BinOperator::Or,
             }
-            .into(),
+            .into();
+        };
+        if let Variable::Bool(true) = variable {
+            return rhs.recreate(local_variables)
         }
+        Variable::Bool(false).into()
     }
 
     pub fn exec(lhs: Variable, rhs: &Instruction, interpreter: &mut Interpreter) -> ExecResult {
@@ -48,24 +52,24 @@ pub mod and {
 
 pub mod or {
     use crate::{
-        BinOperator, Interpreter,
         instruction::{
-            BinOperation, Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
-        },
-        variable::Variable,
+            local_variable::LocalVariables, BinOperation, Exec, ExecResult, Instruction, Recreate
+        }, variable::Variable, BinOperator, Interpreter
     };
 
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
-        match (lhs, rhs) {
-            (Instruction::Variable(Variable::Bool(true)), _) => Instruction::Variable(true.into()),
-            (Instruction::Variable(_), rhs) => rhs,
-            (lhs, rhs) => BinOperation {
+        let Some(variable) = lhs.downcast_ref::<Variable>() else {
+            return BinOperation {
                 lhs,
                 rhs,
                 op: BinOperator::Or,
             }
-            .into(),
+            .into();
+        };
+        if let Variable::Bool(true) = variable {
+            return Variable::Bool(true).into()
         }
+        rhs
     }
 
     pub fn recreate(
@@ -73,16 +77,18 @@ pub mod or {
         rhs: &Instruction,
         local_variables: &mut LocalVariables,
     ) -> Instruction {
-        match (lhs, rhs) {
-            (Instruction::Variable(Variable::Bool(true)), _) => Instruction::Variable(true.into()),
-            (Instruction::Variable(_), rhs) => rhs.recreate(local_variables),
-            (lhs, rhs) => BinOperation {
+        let Some(variable) = lhs.downcast_ref::<Variable>() else {
+            return BinOperation {
                 lhs,
                 rhs: rhs.recreate(local_variables),
                 op: BinOperator::Or,
             }
-            .into(),
+            .into();
+        };
+        if let Variable::Bool(true) = variable {
+            return Variable::Bool(true).into()
         }
+        rhs.recreate(local_variables)
     }
 
     pub fn exec(lhs: Variable, rhs: &Instruction, interpreter: &mut Interpreter) -> ExecResult {

@@ -20,29 +20,27 @@ pub fn create_instruction(
         .into_inner()
         .map(|pair| InstructionWithStr::new_expression(pair, local_variables))
         .collect::<Result<Box<_>, Error>>()?;
-    match &function.instruction {
-        Instruction::Variable(Variable::Function(function2)) => {
-            check_args_with_params(&function.str, &function2.params, &args)?;
+
+    if let Some(Variable::Function(function2)) = function.instruction.downcast_ref::<Variable>() {
+        check_args_with_params(&function.str, &function2.params, &args)?;
+    } else {
+        let f_type = function.return_type();
+        if !f_type.is_function() {
+            return Err(Error::NotAFunction(function.str));
         }
-        _ => {
-            let f_type = function.return_type();
-            if !f_type.is_function() {
-                return Err(Error::NotAFunction(function.str));
-            }
-            let Some(params) = f_type.params() else {
-                return Err(Error::CannotDetermineParams(function.str));
-            };
-            let params = params
-                .iter()
-                .enumerate()
-                .map(|(i, var_type)| Param {
-                    name: format!("#{i}").into(),
-                    var_type: var_type.clone(),
-                })
-                .collect();
-            check_args_with_params(&function.str, &Params(params), &args)?;
-        }
-    };
+        let Some(params) = f_type.params() else {
+            return Err(Error::CannotDetermineParams(function.str));
+        };
+        let params = params
+            .iter()
+            .enumerate()
+            .map(|(i, var_type)| Param {
+                name: format!("#{i}").into(),
+                var_type: var_type.clone(),
+            })
+            .collect();
+        check_args_with_params(&function.str, &Params(params), &args)?;
+    }
     let elements = args.into_iter().map(|arg| arg.instruction).collect();
     let args = Tuple { elements }.into();
     Ok(BinOperation {

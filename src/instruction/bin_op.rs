@@ -294,8 +294,9 @@ pub fn create_from_instructions_with_exec<T: FnOnce(Variable, Variable) -> Varia
     op: BinOperator,
     exec: T,
 ) -> Instruction {
-    match (lhs, rhs) {
-        (Instruction::Variable(lhs), Instruction::Variable(rhs)) => exec(lhs, rhs).into(),
-        (lhs, rhs) => BinOperation { lhs, rhs, op }.into(),
-    }
+
+    let (Some(lhs), Some(rhs)) = (lhs.downcast_ref::<Variable>(), rhs.downcast_ref::<Variable>()) else {
+        return BinOperation { lhs, rhs, op }.into();
+    };
+    exec(lhs.clone(), rhs.clone()).into()
 }

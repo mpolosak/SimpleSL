@@ -1,9 +1,6 @@
 use super::{Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables};
 use crate::{
-    self as simplesl, Error,
-    instruction::{BaseInstruction, recreate_instructions},
-    interpreter::Interpreter,
-    variable::{ReturnType, Type},
+    self as simplesl, instruction::{recreate_instructions, BaseInstruction}, interpreter::Interpreter, variable::{ReturnType, Type, Variable}, Error
 };
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
@@ -52,7 +49,7 @@ impl Recreate for Array {
         let instructions = recreate_instructions(&self.instructions, local_variables);
         let mut array = Vec::new();
         for instruction in &*instructions {
-            let Instruction::Variable(variable) = instruction else {
+            let Some(variable) = instruction.downcast_ref::<Variable>() else {
                 return Self {
                     instructions,
                     element_type: self.element_type.clone(),
@@ -61,7 +58,7 @@ impl Recreate for Array {
             };
             array.push(variable.clone());
         }
-        Instruction::Variable(array.into())
+        Variable::from(array).into()
     }
 }
 

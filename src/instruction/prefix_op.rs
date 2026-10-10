@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use super::InstructionWithStr;
 use super::local_variable::LocalVariables;
-use crate::Error;
+use crate::{Error, Interpreter};
 use crate::instruction::block::Block;
 use crate::instruction::postfix_op::function_call;
 use crate::instruction::set::Set;
@@ -65,7 +65,7 @@ impl UnaryMinus {
 impl BaseInstruction for UnaryMinus {}
 
 impl Exec for UnaryMinus {
-    fn exec(&self, interpreter: &mut crate::Interpreter) -> super::ExecResult {
+    fn exec(&self, interpreter: &mut Interpreter) -> super::ExecResult {
         let variable = self.0.exec(interpreter)?;
         Ok(Self::calc(variable))
     }
@@ -74,10 +74,10 @@ impl Exec for UnaryMinus {
 impl Recreate for UnaryMinus {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
         let instruction = self.0.recreate(local_variables);
-        match instruction {
-            Instruction::Variable(operand) => Self::calc(operand).into(),
-            instruction => Self(instruction).into(),
-        }
+        let Some(variable) = instruction.downcast_ref::<Variable>() else {
+            return Self(instruction).into()
+        };
+        Self::calc(variable.clone()).into()
     }
 }
 
@@ -121,7 +121,7 @@ impl Not {
 impl BaseInstruction for Not {}
 
 impl Exec for Not {
-    fn exec(&self, interpreter: &mut crate::Interpreter) -> super::ExecResult {
+    fn exec(&self, interpreter: &mut Interpreter) -> super::ExecResult {
         let variable = self.0.exec(interpreter)?;
         Ok(Self::calc(variable))
     }
@@ -130,10 +130,10 @@ impl Exec for Not {
 impl Recreate for Not {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
         let instruction = self.0.recreate(local_variables);
-        match instruction {
-            Instruction::Variable(operand) => Self::calc(operand).into(),
-            instruction => Self(instruction).into(),
-        }
+        let Some(variable) = instruction.downcast_ref::<Variable>() else {
+            return Self(instruction).into()
+        };
+        Self::calc(variable.clone()).into()
     }
 }
 
