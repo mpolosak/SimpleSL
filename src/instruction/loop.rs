@@ -53,3 +53,49 @@ impl ReturnType for Loop {
         Type::Void
     }
 }
+
+#[derive(Debug)]
+pub struct Break;
+
+impl BaseInstruction for Break {}
+
+impl Exec for Break{
+    fn exec(&self, _interpreter: &mut Interpreter) -> ExecResult {
+        Err(ExecStop::Break)
+    }
+}
+
+impl Recreate for Break {
+    fn recreate(&self, _local_variables: &mut LocalVariables) -> Instruction {
+        Self.into()
+    }
+}
+
+impl ReturnType for Break {
+    fn return_type(&self) -> Type {
+        Type::Never
+    }
+}
+
+#[derive(Debug)]
+pub struct Continue;
+
+impl BaseInstruction for Continue{}
+
+impl Exec for Continue{
+    fn exec(&self, _interpreter: &mut Interpreter) -> ExecResult {
+        Err(ExecStop::Continue)
+    }
+}
+
+impl Recreate for Continue {
+    fn recreate(&self, _local_variables: &mut LocalVariables) -> Instruction {
+        Self.into()
+    }
+}
+
+impl ReturnType for Continue{
+    fn return_type(&self) -> Type {
+        Type::Never
+    }
+}

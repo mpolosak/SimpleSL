@@ -1,15 +1,7 @@
 use crate::{
-    self as simplesl, BinOperator, Error,
-    instruction::{
-        BinOperation, Instruction, Loop,
-        block::Block,
-        control_flow::If,
-        ident::Ident,
-        local_variable::{LocalVariable, LocalVariables},
-        pattern::{Pattern, destruct_pattern::DestructPattern},
-        set::Set,
-    },
-    variable::{ReturnType, Type, Variable},
+    self as simplesl, instruction::{
+        block::Block, control_flow::If, ident::Ident, local_variable::{LocalVariable, LocalVariables}, r#loop::Break, pattern::{destruct_pattern::DestructPattern, Pattern}, set::Set, BinOperation, Instruction, Loop
+    }, variable::{ReturnType, Type, Variable}, BinOperator, Error
 };
 use lazy_static::lazy_static;
 use pest::iterators::Pair;
@@ -69,7 +61,7 @@ pub fn create_instruction(
     let if_else = If {
         conditions: [condition].into(),
         if_true: instruction,
-        else_instruction: Instruction::Break,
+        else_instruction: Break.into(),
     }
     .into();
     let body = Block {

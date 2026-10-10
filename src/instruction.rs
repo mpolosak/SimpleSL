@@ -35,7 +35,12 @@ use self::{
 };
 use crate::{
     Error, ExecError,
-    instruction::{ident::Ident, r#return::Return, r#struct::Struct},
+    instruction::{
+        ident::Ident,
+        r#loop::{Break, Continue},
+        r#return::Return,
+        r#struct::Struct,
+    },
     interpreter::Interpreter,
     variable::{ReturnType, Type, Typed, Variable},
 };
@@ -116,8 +121,6 @@ pub trait BaseInstruction: Debug + ReturnType + Recreate + Exec + Sync + Send {}
 
 #[derive(Debug, Clone, From)]
 pub enum Instruction {
-    Break,
-    Continue,
     #[from]
     Variable(Variable),
     Base(Arc<dyn BaseInstruction>),
@@ -138,9 +141,9 @@ impl Instruction {
             Rule::r#loop => Loop::create_instruction(pair, local_variables),
             Rule::r#while => r#while::create_instruction(pair, local_variables),
             Rule::r#for => r#for::create_instruction(pair, local_variables),
-            Rule::r#break if local_variables.in_loop => Ok(Self::Break),
+            Rule::r#break if local_variables.in_loop => Ok(Break.into()),
             Rule::r#break => Err(Error::BreakOutsideLoop),
-            Rule::r#continue if local_variables.in_loop => Ok(Self::Continue),
+            Rule::r#continue if local_variables.in_loop => Ok(Continue.into()),
             Rule::r#continue => Err(Error::ContinueOutsideLoop),
             rule => unexpected!(rule),
         }
@@ -152,8 +155,6 @@ impl Exec for Instruction {
         match self {
             Self::Variable(var) => Ok(var.clone()),
             Self::Base(ins) => ins.exec(interpreter),
-            Self::Break => Err(ExecStop::Break),
-            Self::Continue => Err(ExecStop::Continue),
         }
     }
 }
@@ -163,7 +164,6 @@ impl Recreate for Instruction {
         match self {
             Self::Variable(variable) => Self::Variable(variable.clone()),
             Self::Base(ins) => ins.recreate(local_variables),
-            _ => self.clone(),
         }
     }
 }
@@ -173,7 +173,6 @@ impl ReturnType for Instruction {
         match self {
             Self::Variable(variable) => variable.as_type(),
             Self::Base(ins) => ins.return_type(),
-            Self::Break | Self::Continue => Type::Never,
         }
     }
 }
