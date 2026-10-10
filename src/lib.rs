@@ -8,6 +8,7 @@ pub mod stdlib;
 mod to_result;
 mod unary_operator;
 pub mod variable;
+use itertools::Itertools;
 pub use simplesl_macros::{var, var_type};
 use std::fmt::{Debug, Display};
 pub use {
@@ -23,7 +24,6 @@ where
     items
         .into_iter()
         .map(ToString::to_string)
-        .collect::<Box<[_]>>()
         .join(separator)
 }
 
@@ -35,6 +35,5 @@ where
     items
         .into_iter()
         .map(|element| format!("{element:?}"))
-        .collect::<Box<[_]>>()
         .join(separator)
 }
