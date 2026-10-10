@@ -20,8 +20,6 @@ pub enum UnaryOperator {
     UnaryMinus,
     #[display("*")]
     Indirection,
-    #[display("()")]
-    FunctionCall,
     #[display("$]")]
     Collect,
     #[display("~")]
