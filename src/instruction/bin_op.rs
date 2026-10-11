@@ -11,13 +11,10 @@ use super::{
     reduce,
 };
 use crate::{
-    self as simplesl, BinOperator, Error, Interpreter,
-    instruction::BaseInstruction,
-    variable::{ReturnType, Type, Variable},
+    self as simplesl, instruction::{bin_op::logic::{And, Or}, BaseInstruction}, variable::{ReturnType, Type, Variable}, BinOperator, Error, Interpreter
 };
 pub use bitwise::{bitwise_and, bitwise_or, xor};
 use lazy_static::lazy_static;
-pub use logic::{and, or};
 pub use math::{add, multiply, pow, subtract};
 use math::{divide, greater, greater_equal, lower, lower_equal, modulo};
 use pest::iterators::Pair;
@@ -53,12 +50,6 @@ impl BaseInstruction for BinOperation {}
 impl Exec for BinOperation {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let lhs = self.lhs.exec(interpreter)?;
-        if let BinOperator::And = self.op {
-            return and::exec(lhs, &self.rhs, interpreter);
-        }
-        if let BinOperator::Or = self.op {
-            return or::exec(lhs, &self.rhs, interpreter);
-        }
         let rhs = self.rhs.exec(interpreter)?;
         Ok(match self.op {
             BinOperator::Add => add::exec(lhs, rhs),
@@ -101,12 +92,6 @@ impl Exec for BinOperation {
 impl Recreate for BinOperation {
     fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
         let lhs = self.lhs.recreate(local_variables);
-        if let BinOperator::And = self.op {
-            return and::recreate(lhs, &self.rhs, local_variables);
-        }
-        if let BinOperator::Or = self.op {
-            return or::recreate(lhs, &self.rhs, local_variables);
-        }
         let rhs = self.rhs.recreate(local_variables);
         match self.op {
             BinOperator::Add => add::create_from_instructions(lhs, rhs),
@@ -118,8 +103,6 @@ impl Recreate for BinOperation {
             BinOperator::GreaterOrEqual => greater_equal::create_from_instructions(lhs, rhs),
             BinOperator::Lower => lower::create_from_instructions(lhs, rhs),
             BinOperator::LowerOrEqual => lower_equal::create_from_instructions(lhs, rhs),
-            BinOperator::And => and::create_from_instructions(lhs, rhs),
-            BinOperator::Or => or::create_from_instructions(lhs, rhs),
             BinOperator::BitwiseAnd => bitwise_and::create_from_instructions(lhs, rhs),
             BinOperator::BitwiseOr => bitwise_or::create_from_instructions(lhs, rhs),
             BinOperator::Xor => xor::create_from_instructions(lhs, rhs),
@@ -136,8 +119,6 @@ impl ReturnType for BinOperation {
             BinOperator::Add => add::return_type(lhs, rhs),
             BinOperator::Equal
             | BinOperator::NotEqual
-            | BinOperator::And
-            | BinOperator::Or
             | BinOperator::Greater
             | BinOperator::GreaterOrEqual
             | BinOperator::Lower
@@ -193,12 +174,21 @@ impl InstructionWithStr {
         local_variables: &LocalVariables<'_>,
     ) -> Result<Self, Error> {
         let str = format!("{} {} {}", lhs.str, op.as_str(), rhs.str).into();
+        let instruction = Instruction::create_infix(op, lhs, rhs, local_variables)?;
+        Ok(Self { instruction, str })
+    }
+}
+
+impl Instruction {
+    fn create_infix(
+        op: Pair<'_, Rule>,
+        lhs: InstructionWithStr,
+        rhs: InstructionWithStr,
+        local_variables: &LocalVariables<'_>,
+    ) -> Result<Self, Error> {
         let rule = op.as_rule();
         if rule == Rule::reduce {
-            return Ok(Self {
-                instruction: reduce::create_instruction(lhs, op, rhs, local_variables)?,
-                str,
-            });
+            return reduce::create_instruction(lhs, op, rhs, local_variables);
         }
         let op = BinOperator::from(rule);
         let (lhs, rhs) = (lhs.instruction, rhs.instruction);
@@ -208,10 +198,11 @@ impl InstructionWithStr {
         if !can_be_used(&lhs_type, &rhs_type, op) {
             return Err(Error::CannotDo2(lhs_type, op, rhs_type));
         }
-
-        let instruction = BinOperation { lhs, rhs, op }.into();
-
-        Ok(Self { instruction, str })
+        Ok(match op {
+            BinOperator::And => And{lhs, rhs}.into(),
+            BinOperator::Or => Or{lhs, rhs}.into(),
+            _ => BinOperation { lhs, rhs, op }.into()
+        })
     }
 }
 
