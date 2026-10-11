@@ -1,7 +1,7 @@
 use super::{Instruction, InstructionWithStr};
 use crate::{
     Error,
-    instruction::{block::Block, postfix_op::function_call, set::Set},
+    instruction::{block::Block, function::call::function_call, set::Set},
     stdlib::operators::At,
     variable::{ReturnType, Variable},
 };

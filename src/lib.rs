@@ -21,10 +21,7 @@ where
     T: Display + 'a,
     I: IntoIterator<Item = &'a T>,
 {
-    items
-        .into_iter()
-        .map(ToString::to_string)
-        .join(separator)
+    items.into_iter().map(ToString::to_string).join(separator)
 }
 
 pub fn join_debug<'a, T, I>(items: I, separator: &str) -> String

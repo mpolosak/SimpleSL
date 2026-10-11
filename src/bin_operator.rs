@@ -45,7 +45,6 @@ pub enum BinOperator {
     Filter,
     #[display("@")]
     Map,
-    FunctionCall,
     #[display("=")]
     Assign,
     #[display("+=")]

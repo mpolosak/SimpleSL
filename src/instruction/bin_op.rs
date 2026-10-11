@@ -7,8 +7,8 @@ mod math;
 mod partition;
 mod shift;
 use super::{
-    Exec, ExecResult, Instruction, InstructionWithStr, Recreate, function::call,
-    local_variable::LocalVariables, reduce,
+    Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
+    reduce,
 };
 use crate::{
     self as simplesl, BinOperator, Error, Interpreter,
@@ -80,7 +80,6 @@ impl Exec for BinOperation {
             BinOperator::RShift => rshift::exec(lhs, rhs)?,
             BinOperator::Filter => filter::exec(lhs, rhs)?,
             BinOperator::Map => map::exec(lhs, rhs)?,
-            BinOperator::FunctionCall => call::exec(lhs, rhs)?,
             BinOperator::Assign => assign::exec(lhs, rhs, |_, b| b),
             BinOperator::AssignAdd => assign::exec(lhs, rhs, add::exec),
             BinOperator::AssignSubtract => assign::exec(lhs, rhs, subtract::exec),
@@ -153,7 +152,6 @@ impl ReturnType for BinOperation {
             | BinOperator::Xor => lhs,
             BinOperator::Partition => partition::return_type(lhs),
             BinOperator::Map => map::return_type(rhs),
-            BinOperator::FunctionCall => lhs.return_type().unwrap(),
             BinOperator::Assign => rhs,
             BinOperator::LShift | BinOperator::RShift | BinOperator::Modulo => Type::Int,
             _ => lhs.mut_element_type().unwrap(),
@@ -231,7 +229,7 @@ fn can_be_used(lhs: &Type, rhs: &Type, op: BinOperator) -> bool {
         BinOperator::LShift | BinOperator::RShift | BinOperator::Modulo => {
             can_be_used_int(lhs.clone(), rhs.clone())
         }
-        BinOperator::Equal | BinOperator::NotEqual | BinOperator::FunctionCall => true,
+        BinOperator::Equal | BinOperator::NotEqual => true,
         BinOperator::And | BinOperator::Or => lhs == &Type::Bool && rhs == &Type::Bool,
         BinOperator::BitwiseAnd | BinOperator::BitwiseOr | BinOperator::Xor => {
             bitwise::can_be_used(lhs.clone(), rhs.clone())
@@ -294,8 +292,10 @@ pub fn create_from_instructions_with_exec<T: FnOnce(Variable, Variable) -> Varia
     op: BinOperator,
     exec: T,
 ) -> Instruction {
-
-    let (Some(lhs), Some(rhs)) = (lhs.downcast_ref::<Variable>(), rhs.downcast_ref::<Variable>()) else {
+    let (Some(lhs), Some(rhs)) = (
+        lhs.downcast_ref::<Variable>(),
+        rhs.downcast_ref::<Variable>(),
+    ) else {
         return BinOperation { lhs, rhs, op }.into();
     };
     exec(lhs.clone(), rhs.clone()).into()

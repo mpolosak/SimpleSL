@@ -1,7 +1,7 @@
 use super::{Instruction, InstructionWithStr, local_variable::LocalVariables};
 use crate::{
     self as simplesl,
-    instruction::{block::Block, postfix_op::function_call},
+    instruction::{block::Block, function::call::function_call},
 };
 use crate::{
     Error,

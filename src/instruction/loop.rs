@@ -59,7 +59,7 @@ pub struct Break;
 
 impl BaseInstruction for Break {}
 
-impl Exec for Break{
+impl Exec for Break {
     fn exec(&self, _interpreter: &mut Interpreter) -> ExecResult {
         Err(ExecStop::Break)
     }
@@ -80,9 +80,9 @@ impl ReturnType for Break {
 #[derive(Debug)]
 pub struct Continue;
 
-impl BaseInstruction for Continue{}
+impl BaseInstruction for Continue {}
 
-impl Exec for Continue{
+impl Exec for Continue {
     fn exec(&self, _interpreter: &mut Interpreter) -> ExecResult {
         Err(ExecStop::Continue)
     }
@@ -94,7 +94,7 @@ impl Recreate for Continue {
     }
 }
 
-impl ReturnType for Continue{
+impl ReturnType for Continue {
     fn return_type(&self) -> Type {
         Type::Never
     }

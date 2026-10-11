@@ -1,7 +1,17 @@
 use crate::{
-    self as simplesl, instruction::{
-        block::Block, control_flow::If, ident::Ident, local_variable::{LocalVariable, LocalVariables}, r#loop::Break, pattern::{destruct_pattern::DestructPattern, Pattern}, set::Set, BinOperation, Instruction, Loop
-    }, variable::{ReturnType, Type, Variable}, BinOperator, Error
+    self as simplesl, Error,
+    instruction::{
+        Instruction, Loop,
+        block::Block,
+        control_flow::If,
+        function::call::FunctionCall,
+        ident::Ident,
+        local_variable::{LocalVariable, LocalVariables},
+        r#loop::Break,
+        pattern::{Pattern, destruct_pattern::DestructPattern},
+        set::Set,
+    },
+    variable::{ReturnType, Type},
 };
 use lazy_static::lazy_static;
 use pest::iterators::Pair;
@@ -34,22 +44,20 @@ pub fn create_instruction(
     local_variables.in_loop = true;
     local_variables.insert(ident.clone(), LocalVariable::Other(iter_element));
     let iter = Set::new_ident(ITER.clone(), iter).into();
-    let iter_call: Instruction = BinOperation {
-        lhs: Ident {
+    let iter_call = FunctionCall {
+        function: Ident {
             ident: ITER.clone(),
             variable: LocalVariable::Other(var_type!(()->(bool, any))),
         }
         .into(),
-        rhs: Variable::Tuple([].into()).into(),
-        op: BinOperator::FunctionCall,
-    }
-    .into();
+        args: [].into(),
+    };
     let destruct: Instruction = Set {
         pattern: Pattern {
             destruct_pattern: DestructPattern::Tuple([CON.clone(), ident].into()),
             var_type: iter_call.return_type(),
         },
-        instruction: iter_call,
+        instruction: iter_call.into(),
     }
     .into();
     let instruction = Instruction::new(inner.next().unwrap(), &mut local_variables)?;

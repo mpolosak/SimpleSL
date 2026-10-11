@@ -1,13 +1,10 @@
 use super::{Instruction, InstructionWithStr, local_variable::LocalVariables};
 use crate::{
     Error,
-    instruction::set::Set,
+    instruction::{function::call::function_call, set::Set},
     variable::{ReturnType, Type, Variable},
 };
-use crate::{
-    instruction::{block::Block, postfix_op::function_call},
-    stdlib::operators::Slice,
-};
+use crate::{instruction::block::Block, stdlib::operators::Slice};
 use pest::iterators::Pair;
 use simplesl_parser::{Rule, unexpected};
 use std::sync::Arc;

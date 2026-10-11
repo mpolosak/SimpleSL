@@ -1,12 +1,19 @@
 use super::Instruction;
 use crate::{
-    self as simplesl, function::{Param, Params}, variable::{Type, Typed, Variable}, Error, Interpreter
+    self as simplesl, Error, Interpreter,
+    function::{Param, Params},
+    variable::{Type, Typed, Variable},
 };
 use derive_more::From;
 use pest::{Parser, iterators::Pairs};
 use simplesl_macros::var_type;
 use simplesl_parser::{Rule, SimpleSLParser};
-use std::{any::{Any, TypeId}, collections::HashMap, fs, sync::Arc};
+use std::{
+    any::{Any, TypeId},
+    collections::HashMap,
+    fs,
+    sync::Arc,
+};
 
 pub type LocalVariableMap = HashMap<Arc<str>, LocalVariable>;
 pub struct LocalVariables<'a> {

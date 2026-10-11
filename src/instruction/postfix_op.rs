@@ -1,17 +1,15 @@
 mod iter;
 use super::{
-    Exec, ExecResult, Instruction, InstructionWithStr, Recreate, at,
-    function::call,
+    InstructionWithStr, at,
     local_variable::LocalVariables,
     reduce::{self, bool_reduce, collect, product, sum},
     tuple_access,
     type_filter::TypeFilter,
 };
 use crate::{
-    Error, Interpreter,
-    instruction::{BaseInstruction, ExecStop, field_access, postfix_op::iter::Iter, slicing},
+    Error,
+    instruction::{field_access, function::call::FunctionCall, postfix_op::iter::Iter, slicing},
     unary_operator::UnaryOperator,
-    variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
 use simplesl_parser::{Rule, unexpected};
@@ -28,7 +26,7 @@ impl InstructionWithStr {
             Rule::type_filter => {
                 TypeFilter::create_instruction(lhs.instruction, op.into_inner().next().unwrap())
             }
-            Rule::function_call => call::create_instruction(lhs, op, local_variables),
+            Rule::function_call => FunctionCall::create_instruction(lhs, op, local_variables),
             Rule::tuple_access => tuple_access::create_instruction(lhs, op),
             Rule::field_access => field_access::create_instruction(lhs, op),
             Rule::sum => sum::create(lhs),
@@ -44,36 +42,4 @@ impl InstructionWithStr {
         }?;
         Ok(Self { instruction, str })
     }
-}
-
-#[derive(Debug)]
-pub struct UnaryFunctionCall(pub Instruction);
-
-impl BaseInstruction for UnaryFunctionCall {}
-
-impl Exec for UnaryFunctionCall {
-    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let var = self.0.exec(interpreter)?;
-        var.into_function()
-            .unwrap()
-            .exec(interpreter)
-            .map_err(ExecStop::from)
-    }
-}
-
-impl Recreate for UnaryFunctionCall {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
-        let instruction = self.0.recreate(local_variables);
-        Self(instruction).into()
-    }
-}
-
-impl ReturnType for UnaryFunctionCall {
-    fn return_type(&self) -> Type {
-        self.0.return_type().return_type().unwrap()
-    }
-}
-
-pub fn function_call<T: Into<Variable>>(function: T) -> Instruction {
-    UnaryFunctionCall(function.into().into()).into()
 }

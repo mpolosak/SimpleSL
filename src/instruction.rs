@@ -110,7 +110,7 @@ impl ReturnType for InstructionWithStr {
 pub trait BaseInstruction: Debug + ReturnType + Recreate + Exec + Sync + Send {}
 
 #[derive(Debug, Clone, From)]
-pub struct  Instruction(Arc<dyn BaseInstruction>);
+pub struct Instruction(Arc<dyn BaseInstruction>);
 
 impl Instruction {
     pub fn new(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<Self, Error> {

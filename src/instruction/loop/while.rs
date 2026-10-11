@@ -1,5 +1,8 @@
 use crate::{
-    instruction::{control_flow::If, local_variable::LocalVariables, r#loop::Break, Instruction, Loop}, Error
+    Error,
+    instruction::{
+        Instruction, Loop, control_flow::If, local_variable::LocalVariables, r#loop::Break,
+    },
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;

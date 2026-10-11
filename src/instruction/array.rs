@@ -1,6 +1,9 @@
 use super::{Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables};
 use crate::{
-    self as simplesl, instruction::{recreate_instructions, BaseInstruction}, interpreter::Interpreter, variable::{ReturnType, Type, Variable}, Error
+    self as simplesl, Error,
+    instruction::{BaseInstruction, recreate_instructions},
+    interpreter::Interpreter,
+    variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
 use simplesl_macros::var_type;

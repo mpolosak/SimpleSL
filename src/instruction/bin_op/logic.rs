@@ -17,7 +17,7 @@ pub mod and {
             .into();
         };
         if let Variable::Bool(true) = variable {
-            return rhs
+            return rhs;
         }
         Variable::Bool(false).into()
     }
@@ -36,7 +36,7 @@ pub mod and {
             .into();
         };
         if let Variable::Bool(true) = variable {
-            return rhs.recreate(local_variables)
+            return rhs.recreate(local_variables);
         }
         Variable::Bool(false).into()
     }
@@ -52,9 +52,11 @@ pub mod and {
 
 pub mod or {
     use crate::{
+        BinOperator, Interpreter,
         instruction::{
-            local_variable::LocalVariables, BinOperation, Exec, ExecResult, Instruction, Recreate
-        }, variable::Variable, BinOperator, Interpreter
+            BinOperation, Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
+        },
+        variable::Variable,
     };
 
     pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
@@ -67,7 +69,7 @@ pub mod or {
             .into();
         };
         if let Variable::Bool(true) = variable {
-            return Variable::Bool(true).into()
+            return Variable::Bool(true).into();
         }
         rhs
     }
@@ -86,7 +88,7 @@ pub mod or {
             .into();
         };
         if let Variable::Bool(true) = variable {
-            return Variable::Bool(true).into()
+            return Variable::Bool(true).into();
         }
         rhs.recreate(local_variables)
     }
