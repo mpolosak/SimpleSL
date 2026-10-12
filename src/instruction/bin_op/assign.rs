@@ -1,8 +1,15 @@
+pub mod add;
+mod concat;
 use crate::{
     BinOperator, Error, ExecError, Interpreter,
-    instruction::{BaseInstruction, Exec, ExecResult, Instruction, Recreate},
+    instruction::{
+        BaseInstruction, Exec, ExecResult, Instruction, Recreate,
+        bin_op::assign::{add::AssignAdd, concat::AssignConcat},
+        local_variable::LocalVariables,
+    },
     variable::{ReturnType, Type, Variable},
 };
+use duplicate::duplicate_item;
 
 #[derive(Debug)]
 pub struct Assign {
@@ -17,7 +24,7 @@ impl Assign {
         if let Some(element_type) = lhs_rt.mut_element_type()
             && rhs_rt.matches(&element_type)
         {
-            Ok(Assign{ lhs, rhs }.into())
+            Ok(Assign { lhs, rhs }.into())
         } else {
             Err(Error::CannotDo2(lhs_rt, BinOperator::Assign, rhs_rt))
         }
@@ -37,11 +44,9 @@ impl Exec for Assign {
     }
 }
 
-impl Recreate for Assign {
-    fn recreate(
-        &self,
-        local_variables: &mut crate::instruction::local_variable::LocalVariables,
-    ) -> Instruction {
+#[duplicate_item(T; [Assign]; [AssignAdd]; [AssignConcat];)]
+impl Recreate for T {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
         let lhs = self.lhs.recreate(local_variables);
         let rhs = self.rhs.recreate(local_variables);
         Self { lhs, rhs }.into()

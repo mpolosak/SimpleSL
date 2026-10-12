@@ -1,6 +1,7 @@
+use crate::instruction::bin_op::concat::Concat;
 use crate::instruction::local_variable::LocalVariables;
 use crate::instruction::{BaseInstruction, Exec, Instruction, Recreate};
-use crate::variable::{Array, ReturnType, Type, Variable};
+use crate::variable::{ReturnType, Type, Variable};
 use crate::{self as simplesl, BinOperator, Error};
 use lazy_static::lazy_static;
 use simplesl_macros::var_type;
@@ -23,6 +24,9 @@ impl Add {
         if !Self::can_be_used(lhs_rt.clone(), rhs_rt.clone()) {
             return Err(Error::CannotDo2(lhs_rt, BinOperator::Add, rhs_rt));
         }
+        if lhs_rt.matches(&var_type!([any])) {
+            return Ok(Concat { lhs, rhs }.into());
+        }
         Ok(Self { lhs, rhs }.into())
     }
 
@@ -37,19 +41,8 @@ impl Add {
             (Variable::String(value1), Variable::String(value2)) => {
                 format!("{value1}{value2}").into()
             }
-            (Variable::Array(array1), Variable::Array(array2)) => {
-                Array::concat(array1, array2).into()
-            }
             (lhs, rhs) => panic!("Tried to do {lhs} + {rhs} which is imposible"),
         }
-    }
-
-    pub fn return_type(lhs: Type, rhs: Type) -> Type {
-        let Some(lhs_element) = lhs.element_type() else {
-            return lhs;
-        };
-        let rhs_element = rhs.element_type().unwrap();
-        var_type!([lhs_element | rhs_element])
     }
 }
 
@@ -79,17 +72,14 @@ impl Recreate for Add {
 
 impl ReturnType for Add {
     fn return_type(&self) -> Type {
-        let lhs = self.lhs.return_type();
-        let rhs = self.rhs.return_type();
-        Self::return_type(lhs, rhs)
+        self.lhs.return_type()
     }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::{
-        self as simplesl, BinOperator, Code, Error, Interpreter,
-        instruction::bin_op::add::Add,
+        self as simplesl, BinOperator, Code, Error, Interpreter, instruction::bin_op::add::Add,
         variable::Variable,
     };
     use simplesl_macros::{var, var_type};
@@ -172,46 +162,6 @@ mod tests {
                 var_type!(float)
             ))
         )
-    }
-
-    #[test]
-    fn return_type() {
-        // int
-        assert_eq!(
-            Add::return_type(var_type!(int), var_type!(int)),
-            var_type!(int)
-        );
-        // float
-        assert_eq!(
-            Add::return_type(var_type!(float), var_type!(float)),
-            var_type!(float)
-        );
-        // string
-        assert_eq!(
-            Add::return_type(var_type!(string), var_type!(string)),
-            var_type!(string)
-        );
-        // array + array
-        assert_eq!(
-            Add::return_type(var_type!([int]), var_type!([int])),
-            var_type!([int])
-        );
-        assert_eq!(
-            Add::return_type(var_type!([float]), var_type!([float])),
-            var_type!([float])
-        );
-        assert_eq!(
-            Add::return_type(var_type!([string]), var_type!([string])),
-            var_type!([string])
-        );
-        assert_eq!(
-            Add::return_type(var_type!([int]), var_type!([float])),
-            var_type!([float | int])
-        );
-        assert_eq!(
-            Add::return_type(var_type!([int]), var_type!([any])),
-            var_type!([any])
-        );
     }
 
     fn parse_and_exec(script: &str) -> Result<Variable, crate::Error> {

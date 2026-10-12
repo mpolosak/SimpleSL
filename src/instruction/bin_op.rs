@@ -1,5 +1,6 @@
 mod assign;
 mod bitwise;
+mod concat;
 mod filter;
 mod logic;
 mod map;
@@ -11,11 +12,16 @@ use super::{
     reduce,
 };
 use crate::{
-    self as simplesl, instruction::{
+    self as simplesl, BinOperator, Error, Interpreter,
+    instruction::{
+        BaseInstruction,
         bin_op::{
-            add::Add, assign::Assign, logic::{And, Or}
-        }, BaseInstruction
-    }, variable::{ReturnType, Type, Variable}, BinOperator, Error, Interpreter
+            add::Add,
+            assign::{Assign, add::AssignAdd},
+            logic::{And, Or},
+        },
+    },
+    variable::{ReturnType, Type, Variable},
 };
 pub use bitwise::{bitwise_and, bitwise_or, xor};
 use lazy_static::lazy_static;
@@ -74,7 +80,6 @@ impl Exec for BinOperation {
             BinOperator::RShift => rshift::exec(lhs, rhs)?,
             BinOperator::Filter => filter::exec(lhs, rhs)?,
             BinOperator::Map => map::exec(lhs, rhs)?,
-            BinOperator::AssignAdd => assign::exec(lhs, rhs, Add::calc),
             BinOperator::AssignSubtract => assign::exec(lhs, rhs, subtract::exec),
             BinOperator::AssignMultiply => assign::exec(lhs, rhs, multiply::exec),
             BinOperator::AssignDivide => assign::try_exec(lhs, rhs, divide::exec)?,
@@ -193,9 +198,16 @@ impl Instruction {
         let (lhs, rhs) = (lhs.instruction, rhs.instruction);
 
         match op {
-            BinOperator::Add => {return Add::create_instruction(lhs, rhs);}
-            BinOperator::Assign => {return Assign::create_instruction(lhs, rhs);}
-            _ => ()
+            BinOperator::Add => {
+                return Add::create_instruction(lhs, rhs);
+            }
+            BinOperator::Assign => {
+                return Assign::create_instruction(lhs, rhs);
+            }
+            BinOperator::AssignAdd => {
+                return AssignAdd::create_instruction(lhs, rhs);
+            }
+            _ => (),
         }
 
         let lhs_type = lhs.return_type();
@@ -231,12 +243,6 @@ fn can_be_used(lhs: &Type, rhs: &Type, op: BinOperator) -> bool {
         }
         BinOperator::Filter | BinOperator::Partition => filter::can_be_used(lhs, rhs),
         BinOperator::Map => map::can_be_used(lhs, rhs),
-        BinOperator::AssignAdd => assign::can_be_used(
-            lhs.clone(),
-            rhs.clone(),
-            |lhs, rhs| Add::can_be_used(lhs.clone(), rhs.clone()),
-            |lhs, rhs| Add::return_type(lhs.clone(), rhs.clone()),
-        ),
         BinOperator::AssignSubtract
         | BinOperator::AssignMultiply
         | BinOperator::AssignDivide
