@@ -11,7 +11,15 @@ use super::{
     reduce,
 };
 use crate::{
-    self as simplesl, instruction::{bin_op::logic::{And, Or}, BaseInstruction}, variable::{ReturnType, Type, Variable}, BinOperator, Error, Interpreter
+    self as simplesl, BinOperator, Error, Interpreter,
+    instruction::{
+        BaseInstruction,
+        bin_op::{
+            add::Add,
+            logic::{And, Or},
+        },
+    },
+    variable::{ReturnType, Type, Variable},
 };
 pub use bitwise::{bitwise_and, bitwise_or, xor};
 use lazy_static::lazy_static;
@@ -52,7 +60,6 @@ impl Exec for BinOperation {
         let lhs = self.lhs.exec(interpreter)?;
         let rhs = self.rhs.exec(interpreter)?;
         Ok(match self.op {
-            BinOperator::Add => add::exec(lhs, rhs),
             BinOperator::Subtract => subtract::exec(lhs, rhs),
             BinOperator::Multiply => multiply::exec(lhs, rhs),
             BinOperator::Divide => divide::exec(lhs, rhs)?,
@@ -72,7 +79,7 @@ impl Exec for BinOperation {
             BinOperator::Filter => filter::exec(lhs, rhs)?,
             BinOperator::Map => map::exec(lhs, rhs)?,
             BinOperator::Assign => assign::exec(lhs, rhs, |_, b| b),
-            BinOperator::AssignAdd => assign::exec(lhs, rhs, add::exec),
+            BinOperator::AssignAdd => assign::exec(lhs, rhs, Add::calc),
             BinOperator::AssignSubtract => assign::exec(lhs, rhs, subtract::exec),
             BinOperator::AssignMultiply => assign::exec(lhs, rhs, multiply::exec),
             BinOperator::AssignDivide => assign::try_exec(lhs, rhs, divide::exec)?,
@@ -94,7 +101,6 @@ impl Recreate for BinOperation {
         let lhs = self.lhs.recreate(local_variables);
         let rhs = self.rhs.recreate(local_variables);
         match self.op {
-            BinOperator::Add => add::create_from_instructions(lhs, rhs),
             BinOperator::Subtract => subtract::create_from_instructions(lhs, rhs),
             BinOperator::Multiply => multiply::create_from_instructions(lhs, rhs),
             BinOperator::Equal => equal::create_from_instructions(lhs, rhs),
@@ -116,7 +122,6 @@ impl ReturnType for BinOperation {
         let lhs = self.lhs.return_type();
         let rhs = self.rhs.return_type();
         match self.op {
-            BinOperator::Add => add::return_type(lhs, rhs),
             BinOperator::Equal
             | BinOperator::NotEqual
             | BinOperator::Greater
@@ -193,22 +198,25 @@ impl Instruction {
         let op = BinOperator::from(rule);
         let (lhs, rhs) = (lhs.instruction, rhs.instruction);
 
+        if let BinOperator::Add = op {
+            return Add::create_instruction(lhs, rhs);
+        }
+
         let lhs_type = lhs.return_type();
         let rhs_type = rhs.return_type();
         if !can_be_used(&lhs_type, &rhs_type, op) {
             return Err(Error::CannotDo2(lhs_type, op, rhs_type));
         }
         Ok(match op {
-            BinOperator::And => And{lhs, rhs}.into(),
-            BinOperator::Or => Or{lhs, rhs}.into(),
-            _ => BinOperation { lhs, rhs, op }.into()
+            BinOperator::And => And { lhs, rhs }.into(),
+            BinOperator::Or => Or { lhs, rhs }.into(),
+            _ => BinOperation { lhs, rhs, op }.into(),
         })
     }
 }
 
 fn can_be_used(lhs: &Type, rhs: &Type, op: BinOperator) -> bool {
     match op {
-        BinOperator::Add => add::can_be_used(lhs, rhs),
         BinOperator::Subtract
         | BinOperator::Multiply
         | BinOperator::Divide
@@ -230,11 +238,12 @@ fn can_be_used(lhs: &Type, rhs: &Type, op: BinOperator) -> bool {
         BinOperator::Assign => {
             assign::can_be_used(lhs.clone(), rhs.clone(), |_, _| true, |_, x| x.clone())
         }
-        BinOperator::AssignAdd => {
-            assign::can_be_used(lhs.clone(), rhs.clone(), add::can_be_used, |lhs, rhs| {
-                add::return_type(lhs.clone(), rhs.clone())
-            })
-        }
+        BinOperator::AssignAdd => assign::can_be_used(
+            lhs.clone(),
+            rhs.clone(),
+            |lhs, rhs| Add::can_be_used(lhs.clone(), rhs.clone()),
+            |lhs, rhs| Add::return_type(lhs.clone(), rhs.clone()),
+        ),
         BinOperator::AssignSubtract
         | BinOperator::AssignMultiply
         | BinOperator::AssignDivide
@@ -255,6 +264,7 @@ fn can_be_used(lhs: &Type, rhs: &Type, op: BinOperator) -> bool {
         BinOperator::AssignBitwiseAnd | BinOperator::AssignBitwiseOr | BinOperator::AssignXor => {
             assign::can_be_used(lhs.clone(), rhs.clone(), bitwise_can_be_used, return_type)
         }
+        _ => unreachable!(),
     }
 }
 
