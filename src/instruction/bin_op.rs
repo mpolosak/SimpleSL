@@ -11,15 +11,11 @@ use super::{
     reduce,
 };
 use crate::{
-    self as simplesl, BinOperator, Error, Interpreter,
-    instruction::{
-        BaseInstruction,
+    self as simplesl, instruction::{
         bin_op::{
-            add::Add,
-            logic::{And, Or},
-        },
-    },
-    variable::{ReturnType, Type, Variable},
+            add::Add, assign::Assign, logic::{And, Or}
+        }, BaseInstruction
+    }, variable::{ReturnType, Type, Variable}, BinOperator, Error, Interpreter
 };
 pub use bitwise::{bitwise_and, bitwise_or, xor};
 use lazy_static::lazy_static;
@@ -78,7 +74,6 @@ impl Exec for BinOperation {
             BinOperator::RShift => rshift::exec(lhs, rhs)?,
             BinOperator::Filter => filter::exec(lhs, rhs)?,
             BinOperator::Map => map::exec(lhs, rhs)?,
-            BinOperator::Assign => assign::exec(lhs, rhs, |_, b| b),
             BinOperator::AssignAdd => assign::exec(lhs, rhs, Add::calc),
             BinOperator::AssignSubtract => assign::exec(lhs, rhs, subtract::exec),
             BinOperator::AssignMultiply => assign::exec(lhs, rhs, multiply::exec),
@@ -138,7 +133,6 @@ impl ReturnType for BinOperation {
             | BinOperator::Xor => lhs,
             BinOperator::Partition => partition::return_type(lhs),
             BinOperator::Map => map::return_type(rhs),
-            BinOperator::Assign => rhs,
             BinOperator::LShift | BinOperator::RShift | BinOperator::Modulo => Type::Int,
             _ => lhs.mut_element_type().unwrap(),
         }
@@ -198,8 +192,10 @@ impl Instruction {
         let op = BinOperator::from(rule);
         let (lhs, rhs) = (lhs.instruction, rhs.instruction);
 
-        if let BinOperator::Add = op {
-            return Add::create_instruction(lhs, rhs);
+        match op {
+            BinOperator::Add => {return Add::create_instruction(lhs, rhs);}
+            BinOperator::Assign => {return Assign::create_instruction(lhs, rhs);}
+            _ => ()
         }
 
         let lhs_type = lhs.return_type();
@@ -235,9 +231,6 @@ fn can_be_used(lhs: &Type, rhs: &Type, op: BinOperator) -> bool {
         }
         BinOperator::Filter | BinOperator::Partition => filter::can_be_used(lhs, rhs),
         BinOperator::Map => map::can_be_used(lhs, rhs),
-        BinOperator::Assign => {
-            assign::can_be_used(lhs.clone(), rhs.clone(), |_, _| true, |_, x| x.clone())
-        }
         BinOperator::AssignAdd => assign::can_be_used(
             lhs.clone(),
             rhs.clone(),

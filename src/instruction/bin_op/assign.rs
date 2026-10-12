@@ -1,7 +1,58 @@
 use crate::{
-    ExecError,
-    variable::{Type, Variable},
+    BinOperator, Error, ExecError, Interpreter,
+    instruction::{BaseInstruction, Exec, ExecResult, Instruction, Recreate},
+    variable::{ReturnType, Type, Variable},
 };
+
+#[derive(Debug)]
+pub struct Assign {
+    lhs: Instruction,
+    rhs: Instruction,
+}
+
+impl Assign {
+    pub fn create_instruction(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
+        let lhs_rt = lhs.return_type();
+        let rhs_rt = rhs.return_type();
+        if let Some(element_type) = lhs_rt.mut_element_type()
+            && rhs_rt.matches(&element_type)
+        {
+            Ok(Assign{ lhs, rhs }.into())
+        } else {
+            Err(Error::CannotDo2(lhs_rt, BinOperator::Assign, rhs_rt))
+        }
+    }
+}
+
+impl BaseInstruction for Assign {}
+
+impl Exec for Assign {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
+        let lhs = self.lhs.exec(interpreter)?;
+        let rhs = self.rhs.exec(interpreter)?;
+        let lhs = lhs.into_mut().unwrap();
+        let mut lhs = lhs.variable.write().unwrap();
+        *lhs = rhs;
+        Ok(lhs.clone())
+    }
+}
+
+impl Recreate for Assign {
+    fn recreate(
+        &self,
+        local_variables: &mut crate::instruction::local_variable::LocalVariables,
+    ) -> Instruction {
+        let lhs = self.lhs.recreate(local_variables);
+        let rhs = self.rhs.recreate(local_variables);
+        Self { lhs, rhs }.into()
+    }
+}
+
+impl ReturnType for Assign {
+    fn return_type(&self) -> Type {
+        self.rhs.return_type()
+    }
+}
 
 pub fn can_be_used<T, S>(lhs: Type, rhs: Type, can_be_used: T, return_type: S) -> bool
 where
