@@ -11,19 +11,13 @@ use derive_more::Display;
 use simplesl_macros::var_type;
 use std::{iter::zip, sync::Arc};
 
-#[derive(Debug, Display)]
+#[derive(Clone, Debug, Display)]
 #[display("({params})->{return_type}")]
 pub struct Function {
     pub(crate) ident: Option<Arc<str>>,
     pub(crate) params: Params,
     pub(crate) body: Body,
     pub(crate) return_type: Type,
-}
-
-impl Clone for Function {
-    fn clone(&self) -> Self {
-        Self { ident: self.ident.clone(), params: self.params.clone(), body: self.body.clone(), return_type: self.return_type.clone() }
-    }
 }
 
 impl Function {

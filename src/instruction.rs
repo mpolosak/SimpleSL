@@ -34,18 +34,15 @@ use self::{
     tuple::Tuple,
 };
 use crate::{
-    Error, ExecError,
     instruction::{
         ident::Ident,
-        r#loop::{Break, Continue},
+        r#loop::{r#for::For, Break, Continue},
         r#return::Return,
         r#struct::Struct,
-    },
-    interpreter::Interpreter,
-    variable::{ReturnType, Type, Variable},
+    }, interpreter::Interpreter, variable::{ReturnType, Type, Variable}, Error, ExecError
 };
 use derive_more::From;
-use r#loop::{Loop, r#for, r#while};
+use r#loop::{Loop, r#while};
 use pest::iterators::Pair;
 use simplesl_parser::{PRATT_PARSER, Rule, unexpected};
 use std::{any::Any, fmt::Debug, sync::Arc};
@@ -126,7 +123,7 @@ impl Instruction {
             }
             Rule::r#loop => Loop::create_instruction(pair, local_variables),
             Rule::r#while => r#while::create_instruction(pair, local_variables),
-            Rule::r#for => r#for::create_instruction(pair, local_variables),
+            Rule::r#for => For::create_instruction(pair, local_variables),
             Rule::r#break if local_variables.in_loop => Ok(Break.into()),
             Rule::r#break => Err(Error::BreakOutsideLoop),
             Rule::r#continue if local_variables.in_loop => Ok(Continue.into()),
