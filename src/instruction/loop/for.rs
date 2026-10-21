@@ -48,7 +48,7 @@ impl Exec for For {
         let iter = self.iter.exec(interpreter)?.into_function().unwrap();
         let mut interpreter = interpreter.create_layer();
         loop {
-            let tuple = iter.exec_with_args(&[])?.into_tuple().unwrap();
+            let tuple = iter.exec(&[])?.into_tuple().unwrap();
             if let Variable::Bool(false) = tuple[0] {
                 break;
             }

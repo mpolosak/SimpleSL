@@ -20,7 +20,7 @@ pub fn exec(iter: Variable, function: Variable) -> ExecResult {
     let result = Variable::from(FILTER)
         .into_function()
         .unwrap()
-        .exec_with_args(&[iter, function])?
+        .exec(&[iter, function])?
         .into_function()
         .unwrap();
     let mut result = Arc::unwrap_or_clone(result);

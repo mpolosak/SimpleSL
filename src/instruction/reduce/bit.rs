@@ -25,9 +25,8 @@ pub fn create(iterator: InstructionWithStr, op: UnaryOperator) -> Result<Instruc
         Variable::from(AND)
     } else {
         Variable::from(OR)
-    };
+    }.into();
     
-    let function = Variable::from(function).into();
     let args = Tuple {
         elements: [iterator.instruction].into(),
     }

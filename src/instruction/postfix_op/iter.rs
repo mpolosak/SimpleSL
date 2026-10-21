@@ -61,7 +61,7 @@ impl Exec for Iter {
         let element_type = var.as_type().element_type().unwrap();
         let default = Variable::of_type(&element_type).unwrap_or(Variable::Void);
         let result = ITER
-            .exec_with_args(&[var, default])
+            .exec(&[var, default])
             .unwrap()
             .into_function()
             .unwrap();

@@ -38,7 +38,7 @@ pub fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
 pub fn exec(iter: Variable, function: Variable) -> ExecResult {
     let result_type = function.as_type().return_type().unwrap();
     let result = MAP
-        .exec_with_args(&[iter, function])?
+        .exec(&[iter, function])?
         .into_function()
         .unwrap();
     let mut result = Arc::unwrap_or_clone(result);

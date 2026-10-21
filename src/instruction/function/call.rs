@@ -85,7 +85,7 @@ impl FunctionCall {
             }
         }
         let function = Variable::Function(function.clone()).into();
-        let args = Variable::Tuple(args.into()).into();
+        let args = Variable::Tuple(args).into();
         Ok(FunctionCall { function, args }.into())
     }
 }
@@ -96,7 +96,7 @@ impl Exec for FunctionCall {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let function = self.function.exec(interpreter)?.into_function().unwrap();
         let args = self.args.exec(interpreter)?.into_tuple().unwrap();
-        Ok(function.exec_with_args(&args)?)
+        Ok(function.exec(&args)?)
     }
 }
 

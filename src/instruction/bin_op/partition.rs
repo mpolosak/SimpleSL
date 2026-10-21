@@ -11,12 +11,12 @@ pub fn exec(iter: Variable, function: Variable) -> ExecResult {
     };
     let mut left = Vec::new();
     let mut right = Vec::new();
-    while let Variable::Tuple(tuple) = iter.exec_with_args(&[])? {
+    while let Variable::Tuple(tuple) = iter.exec(&[])? {
         if tuple[0] == Variable::Bool(false) {
             break;
         }
         let element = tuple[1].clone();
-        if let Variable::Bool(true) = function.exec_with_args(std::slice::from_ref(&element))? {
+        if let Variable::Bool(true) = function.exec(std::slice::from_ref(&element))? {
             left.push(element)
         } else {
             right.push(element)

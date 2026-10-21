@@ -3,7 +3,9 @@ mod param;
 pub(crate) use self::body::Body;
 pub use self::param::{Param, Params};
 use crate::{
-    self as simplesl, instruction::{function::call::FunctionCall, r#return::Return, ExecStop}, variable::{FunctionType, ReturnType, Type, Typed, Variable}, Code, Error, ExecError, Interpreter
+    self as simplesl, Code, Error, ExecError, Interpreter,
+    instruction::{ExecStop, function::call::FunctionCall, r#return::Return},
+    variable::{FunctionType, ReturnType, Type, Typed, Variable},
 };
 use derive_more::Display;
 use simplesl_macros::var_type;
@@ -21,7 +23,7 @@ pub struct Function {
 impl Function {
     pub fn new(
         params: Params,
-        body: fn(&mut Interpreter) -> Result<Variable, ExecError>,
+        body: fn(&[Variable]) -> Result<Variable, ExecError>,
         return_type: Type,
     ) -> Self {
         Self {
@@ -54,27 +56,19 @@ impl Function {
 
     pub fn create_call(self: Arc<Self>, args: Arc<[Variable]>) -> Result<Code, Error> {
         let instruction = FunctionCall::create_from_variables(self, args)?;
-        Ok(Code { instructions: [instruction].into() })
+        Ok(Code {
+            instructions: [instruction].into(),
+        })
     }
 
-    pub(crate) fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, ExecError> {
-        let body = match &self.body {
-            Body::Lang(body) => body,
-            Body::Native(body) => return (body)(interpreter),
-        };
-        match interpreter.exec(body) {
-            Ok(_) => Ok(Variable::Void),
-            Err(ExecStop::Return(var)) => Ok(var),
-            Err(ExecStop::Error(error)) => Err(error),
-            Err(ExecStop::Break) => unreachable!("Break outside of loop"),
-            Err(ExecStop::Continue) => unreachable!("Continue outside of loop"),
-        }
-    }
-
-    pub(crate) fn exec_with_args(
+    pub(crate) fn exec(
         self: &Arc<Self>,
         args: &[Variable],
     ) -> Result<Variable, ExecError> {
+        let body = match &self.body {
+            Body::Lang(body) => body,
+            Body::Native(body) => return (body)(args),
+        };
         let mut interpreter = Interpreter::without_stdlib();
         if let Some(ident) = &self.ident {
             interpreter.insert(ident.clone(), self.clone().into())
@@ -82,7 +76,14 @@ impl Function {
         for (arg, Param { var_type: _, name }) in zip(args, self.params.iter()) {
             interpreter.insert(name.clone(), arg.clone());
         }
-        self.exec(&mut interpreter)
+        let interpreter: &mut Interpreter = &mut interpreter;
+        match interpreter.exec(body) {
+            Ok(_) => Ok(Variable::Void),
+            Err(ExecStop::Return(var)) => Ok(var),
+            Err(ExecStop::Error(error)) => Err(error),
+            Err(ExecStop::Break) => unreachable!("Break outside of loop"),
+            Err(ExecStop::Continue) => unreachable!("Continue outside of loop"),
+        }
     }
 }
 
