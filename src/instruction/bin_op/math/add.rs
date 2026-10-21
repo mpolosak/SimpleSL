@@ -1,8 +1,8 @@
 use crate::instruction::bin_op::concat::Concat;
 use crate::instruction::local_variable::LocalVariables;
-use crate::instruction::{BaseInstruction, Exec, Instruction, Recreate};
+use crate::instruction::{BaseInstruction, Exec, ExecResult, Instruction, Recreate};
 use crate::variable::{ReturnType, Type, Variable};
-use crate::{self as simplesl, BinOperator, Error};
+use crate::{self as simplesl, BinOperator, Error, Interpreter};
 use lazy_static::lazy_static;
 use simplesl_macros::var_type;
 
@@ -49,7 +49,7 @@ impl Add {
 impl BaseInstruction for Add {}
 
 impl Exec for Add {
-    fn exec(&self, interpreter: &mut crate::Interpreter) -> crate::instruction::ExecResult {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let lhs = self.lhs.exec(interpreter)?;
         let rhs = self.rhs.exec(interpreter)?;
         Ok(Self::calc(lhs, rhs))
@@ -78,10 +78,7 @@ impl ReturnType for Add {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        self as simplesl, BinOperator, Code, Error, Interpreter, instruction::bin_op::add::Add,
-        variable::Variable,
-    };
+    use crate::{self as simplesl, BinOperator, Code, Error, Interpreter, variable::Variable};
     use simplesl_macros::{var, var_type};
 
     #[test]

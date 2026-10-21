@@ -1,12 +1,8 @@
-use std::sync::Arc;
-
+mod deref;
 use super::InstructionWithStr;
 use super::local_variable::LocalVariables;
-use crate::instruction::block::Block;
-use crate::instruction::function::call::function_call;
-use crate::instruction::set::Set;
+use crate::instruction::prefix_op::deref::Deref;
 use crate::instruction::{BaseInstruction, Exec, Instruction, Recreate};
-use crate::stdlib::operators::Deref;
 use crate::unary_operator::UnaryOperator;
 use crate::variable::{ReturnType, Type, Variable};
 use crate::{self as simplesl, instruction::r#mut::Mut};
@@ -23,7 +19,7 @@ impl InstructionWithStr {
         let instruction = match op.as_rule() {
             Rule::not => Not::create_instruction(rhs),
             Rule::unary_minus => UnaryMinus::create_instruction(rhs),
-            Rule::indirection => create_deref(rhs),
+            Rule::indirection => Deref::create_instruction(rhs),
             Rule::r#mut => Mut::create_instruction(op, rhs),
             rule => unexpected!(rule),
         }?;
@@ -141,30 +137,6 @@ impl ReturnType for Not {
     fn return_type(&self) -> Type {
         self.0.return_type()
     }
-}
-
-pub fn create_deref(instruction: InstructionWithStr) -> Result<Instruction, Error> {
-    let op = UnaryOperator::Indirection;
-    let return_type = instruction.return_type();
-    let Some(return_type) = return_type.mut_element_type() else {
-        return Err(Error::IncorectUnaryOperatorOperand {
-            ins: instruction.str,
-            op,
-            expected: Type::Mut(Type::Any.into()),
-            given: return_type,
-        });
-    };
-
-    let variable_set = Set::new_ident("variable".into(), instruction.instruction).into();
-
-    let mut function = Arc::unwrap_or_clone(Variable::from(Deref).into_function().unwrap());
-    function.return_type = return_type;
-    let call = function_call(function);
-
-    Ok(Block {
-        instructions: [variable_set, call].into(),
-    }
-    .into())
 }
 
 #[cfg(test)]
