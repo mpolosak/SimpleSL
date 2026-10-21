@@ -3,9 +3,7 @@ mod param;
 pub(crate) use self::body::Body;
 pub use self::param::{Param, Params};
 use crate::{
-    self as simplesl, Code, Error, ExecError, Interpreter,
-    instruction::{ExecStop, function::call, r#return::Return},
-    variable::{FunctionType, ReturnType, Type, Typed, Variable},
+    self as simplesl, instruction::{function::call::FunctionCall, r#return::Return, ExecStop}, variable::{FunctionType, ReturnType, Type, Typed, Variable}, Code, Error, ExecError, Interpreter
 };
 use derive_more::Display;
 use simplesl_macros::var_type;
@@ -54,9 +52,9 @@ impl Function {
         })
     }
 
-    pub fn create_call(self: Arc<Self>, args: Vec<Variable>) -> Result<Code, Error> {
-        let instructions = call::create_from_variables(self, args)?;
-        Ok(Code { instructions })
+    pub fn create_call(self: Arc<Self>, args: Arc<[Variable]>) -> Result<Code, Error> {
+        let instruction = FunctionCall::create_from_variables(self, args)?;
+        Ok(Code { instructions: [instruction].into() })
     }
 
     pub(crate) fn exec(&self, interpreter: &mut Interpreter) -> Result<Variable, ExecError> {

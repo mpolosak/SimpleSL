@@ -1,10 +1,10 @@
 use super::{Instruction, InstructionWithStr, local_variable::LocalVariables};
+use crate::stdlib::operators::Slice;
 use crate::{
     Error,
-    instruction::{function::call::function_call, set::Set},
+    instruction::{function::call::FunctionCall, tuple::Tuple},
     variable::{ReturnType, Type, Variable},
 };
-use crate::{instruction::block::Block, stdlib::operators::Slice};
 use pest::iterators::Pair;
 use simplesl_parser::{Rule, unexpected};
 use std::sync::Arc;
@@ -45,19 +45,16 @@ pub fn create(
 
     let variable_type = lhs.return_type();
 
-    let variable_set = Set::new_ident("variable".into(), lhs.instruction).into();
-    let start_set = Set::new_ident("start".into(), start).into();
-    let stop_set = Set::new_ident("end".into(), stop).into();
-    let step_set = Set::new_ident("step".into(), step).into();
-
     let mut function = Arc::unwrap_or_clone(Variable::from(Slice).into_function().unwrap());
     function.return_type = variable_type;
-    let call = function_call(function);
 
-    Ok(Block {
-        instructions: [variable_set, start_set, stop_set, step_set, call].into(),
+    let function = Variable::from(function).into();
+    let args = Tuple {
+        elements: [lhs.instruction, start, stop, step].into(),
     }
-    .into())
+    .into();
+
+    Ok(FunctionCall { function, args }.into())
 }
 
 #[cfg(test)]

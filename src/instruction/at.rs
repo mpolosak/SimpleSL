@@ -3,7 +3,7 @@ use std::sync::Arc;
 use super::{Instruction, InstructionWithStr, local_variable::LocalVariables};
 use crate::{
     Error,
-    instruction::{block::Block, function::call::function_call, set::Set},
+    instruction::{function::call::FunctionCall, tuple::Tuple},
     stdlib::operators::At,
     variable::{ReturnType, Type, Variable},
 };
@@ -26,15 +26,15 @@ pub fn create(
     }
 
     let return_type = lhs.return_type().index_result().unwrap();
-    let variable_set = Set::new_ident("variable".into(), lhs).into();
-    let index_set = Set::new_ident("index".into(), index.instruction).into();
 
     let mut function = Arc::unwrap_or_clone(Variable::from(At).into_function().unwrap());
     function.return_type = return_type;
-    let call = function_call(function);
 
-    Ok(Block {
-        instructions: [variable_set, index_set, call].into(),
+    let function = Variable::from(function).into();
+    let args = Tuple {
+        elements: [lhs, index.instruction].into(),
     }
-    .into())
+    .into();
+
+    Ok(FunctionCall { function, args }.into())
 }

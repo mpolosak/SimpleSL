@@ -1,8 +1,6 @@
 use crate::{
     self as simplesl, Error,
-    instruction::{
-        Instruction, InstructionWithStr, block::Block, function::call::function_call, set::Set,
-    },
+    instruction::{Instruction, InstructionWithStr, function::call::FunctionCall, tuple::Tuple},
     stdlib::operators::{ALL, ANY},
     unary_operator::UnaryOperator,
     variable::{ReturnType, Type, Variable},
@@ -29,11 +27,14 @@ pub fn create(iterator: InstructionWithStr, op: UnaryOperator) -> Result<Instruc
     } else {
         Variable::from(ANY)
     };
-    let set = Set::new_ident("iter".into(), iterator.instruction).into();
-    Ok(Block {
-        instructions: [set, function_call(function)].into(),
+
+    let function = Variable::from(function).into();
+    let args = Tuple {
+        elements: [iterator.instruction].into(),
     }
-    .into())
+    .into();
+
+    Ok(FunctionCall { function, args }.into())
 }
 
 #[cfg(test)]

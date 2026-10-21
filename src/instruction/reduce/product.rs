@@ -1,16 +1,18 @@
+use std::sync::Arc;
 use crate::{
-    self as simplesl, Error,
+    self as simplesl,
+    Error,
     instruction::{
         Instruction, InstructionWithStr,
-        block::Block,
         control_flow::{Match, MatchArm, MatchPattern},
-        function::call::function_call,
+        function::call::FunctionCall,
+        ident::Ident,
         pattern::Pattern,
-        set::Set,
+        tuple::Tuple,
     },
     stdlib::operators::{FLOAT_PRODUCT, INT_PRODUCT},
     unary_operator::UnaryOperator,
-    variable::{MultiType, ReturnType, Type},
+    variable::{MultiType, ReturnType, Type, Variable},
 };
 use lazy_static::lazy_static;
 use simplesl_macros::var_type;
@@ -35,35 +37,64 @@ pub fn create(iterator: InstructionWithStr) -> Result<Instruction, Error> {
         return Ok(create_match(iterator, types));
     }
 
-    let call = match return_type.iter_element().unwrap() {
-        Type::Int => function_call(INT_PRODUCT),
-        Type::Float => function_call(FLOAT_PRODUCT),
+    let function = match return_type.iter_element().unwrap() {
+        Type::Int => Variable::from(INT_PRODUCT),
+        Type::Float => Variable::from(FLOAT_PRODUCT),
         _ => unreachable!(),
-    };
-    let set = Set::new_ident("iter".into(), iterator).into();
-    Ok(Block {
-        instructions: [set, call].into(),
     }
-    .into())
+    .into();
+    let args = Tuple {
+        elements: [iterator].into(),
+    }
+    .into();
+
+    Ok(FunctionCall { function, args }.into())
 }
 
 fn create_match(iterator: Instruction, types: MultiType) -> Instruction {
+    let iter: Arc<str> = "iter".into();
     let arms = types
         .iter()
         .map(|t| match t {
             Type::Int => MatchArm {
                 pattern: MatchPattern::Pattern(Pattern::new_ident_pattern(
-                    "iter".into(),
+                    iter.clone(),
                     var_type!(() -> (bool, int)),
                 )),
-                instruction: function_call(INT_PRODUCT),
+                instruction: {
+                    let function = Variable::from(INT_PRODUCT).into();
+                    let args = Tuple {
+                        elements: [Ident {
+                            ident: iter.clone(),
+                            variable: var_type!(() -> (bool, int)).into(),
+                        }
+                        .into()]
+                        .into(),
+                    }
+                    .into();
+
+                    FunctionCall { function, args }.into()
+                },
             },
             Type::Float => MatchArm {
                 pattern: MatchPattern::Pattern(Pattern::new_ident_pattern(
                     "iter".into(),
                     var_type!(() -> (bool, float)),
                 )),
-                instruction: function_call(FLOAT_PRODUCT),
+                instruction: {
+                    let function = Variable::from(FLOAT_PRODUCT).into();
+                    let args = Tuple {
+                        elements: [Ident {
+                            ident: iter.clone(),
+                            variable: var_type!(() -> (bool, float)).into(),
+                        }
+                        .into()]
+                        .into(),
+                    }
+                    .into();
+
+                    FunctionCall { function, args }.into()
+                },
             },
             _ => unreachable!(),
         })

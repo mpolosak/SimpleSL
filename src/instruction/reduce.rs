@@ -3,13 +3,11 @@ pub mod bool_reduce;
 pub mod collect;
 pub mod product;
 pub mod sum;
-use std::sync::Arc;
-
 use crate::{
     self as simplesl, Error,
     instruction::{
-        Instruction, InstructionWithStr, block::Block, function::call::function_call,
-        local_variable::LocalVariables, set::Set,
+        Instruction, InstructionWithStr, function::call::FunctionCall,
+        local_variable::LocalVariables, tuple::Tuple,
     },
     stdlib::operators::REDUCE,
     variable::{ReturnType, Variable},
@@ -17,6 +15,7 @@ use crate::{
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
 use simplesl_parser::Rule;
+use std::sync::Arc;
 
 pub fn create_instruction(
     iter: InstructionWithStr,
@@ -45,21 +44,18 @@ pub fn create_instruction(
     let mut reduce = Arc::unwrap_or_clone(Variable::from(REDUCE).into_function().unwrap());
     reduce.return_type = function_return_type.return_type().unwrap();
 
-    let iter_set = Set::new_ident("iter".into(), iter.instruction).into();
-    let initial_value_set =
-        Set::new_ident("initial_value".into(), initial_value.instruction).into();
-    let function_set = Set::new_ident("function".into(), function.instruction).into();
-
-    Ok(Block {
-        instructions: [
-            iter_set,
-            initial_value_set,
-            function_set,
-            function_call(reduce),
+    let args = Tuple {
+        elements: [
+            iter.instruction,
+            initial_value.instruction,
+            function.instruction,
         ]
         .into(),
     }
-    .into())
+    .into();
+    let function = Variable::from(reduce).into();
+
+    Ok(FunctionCall { function, args }.into())
 }
 
 #[cfg(test)]

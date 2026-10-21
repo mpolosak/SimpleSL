@@ -1,16 +1,18 @@
+use std::sync::Arc;
+
 use crate::{
     self as simplesl, Error,
     instruction::{
         Instruction, InstructionWithStr,
-        block::Block,
         control_flow::{Match, MatchArm, MatchPattern},
-        function::call::function_call,
+        function::call::FunctionCall,
+        ident::Ident,
         pattern::Pattern,
-        set::Set,
+        tuple::Tuple,
     },
     stdlib::operators::{FLOAT_SUM, INT_SUM, STRING_SUM},
     unary_operator::UnaryOperator,
-    variable::{MultiType, ReturnType, Type},
+    variable::{MultiType, ReturnType, Type, Variable},
 };
 use lazy_static::lazy_static;
 use simplesl_macros::var_type;
@@ -36,20 +38,23 @@ pub fn create(iterator: InstructionWithStr) -> Result<Instruction, Error> {
         return Ok(create_match(iterator, types));
     }
 
-    let call = match return_type.iter_element().unwrap() {
-        Type::Int => function_call(INT_SUM),
-        Type::Float => function_call(FLOAT_SUM),
-        Type::String => function_call(STRING_SUM),
+    let function = match return_type.iter_element().unwrap() {
+        Type::Int => Variable::from(INT_SUM),
+        Type::Float => Variable::from(FLOAT_SUM),
+        Type::String => Variable::from(STRING_SUM),
         _ => unreachable!(),
-    };
-    let set = Set::new_ident("iter".into(), iterator).into();
-    Ok(Block {
-        instructions: [set, call].into(),
     }
-    .into())
+    .into();
+    let args = Tuple {
+        elements: [iterator].into(),
+    }
+    .into();
+
+    Ok(FunctionCall { function, args }.into())
 }
 
 fn create_match(iterator: Instruction, types: MultiType) -> Instruction {
+    let iter: Arc<str> = "iter".into();
     let arms = types
         .iter()
         .map(|t| match t {
@@ -58,21 +63,60 @@ fn create_match(iterator: Instruction, types: MultiType) -> Instruction {
                     "iter".into(),
                     var_type!(() -> (bool, int)),
                 )),
-                instruction: function_call(INT_SUM),
+                instruction: {
+                    let function = Variable::from(INT_SUM).into();
+                    let args = Tuple {
+                        elements: [Ident {
+                            ident: iter.clone(),
+                            variable: var_type!(() -> (bool, int)).into(),
+                        }
+                        .into()]
+                        .into(),
+                    }
+                    .into();
+
+                    FunctionCall { function, args }.into()
+                },
             },
             Type::Float => MatchArm {
                 pattern: MatchPattern::Pattern(Pattern::new_ident_pattern(
                     "iter".into(),
                     var_type!(() -> (bool, float)),
                 )),
-                instruction: function_call(FLOAT_SUM),
+                instruction: {
+                    let function = Variable::from(FLOAT_SUM).into();
+                    let args = Tuple {
+                        elements: [Ident {
+                            ident: iter.clone(),
+                            variable: var_type!(() -> (bool, float)).into(),
+                        }
+                        .into()]
+                        .into(),
+                    }
+                    .into();
+
+                    FunctionCall { function, args }.into()
+                },
             },
             Type::String => MatchArm {
                 pattern: MatchPattern::Pattern(Pattern::new_ident_pattern(
                     "iter".into(),
                     var_type!(() -> (bool, string)),
                 )),
-                instruction: function_call(STRING_SUM),
+                instruction: {
+                    let function = Variable::from(STRING_SUM).into();
+                    let args = Tuple {
+                        elements: [Ident {
+                            ident: iter.clone(),
+                            variable: var_type!(() -> (bool, string)).into(),
+                        }
+                        .into()]
+                        .into(),
+                    }
+                    .into();
+
+                    FunctionCall { function, args }.into()
+                },
             },
             _ => unreachable!(),
         })

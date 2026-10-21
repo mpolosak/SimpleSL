@@ -1,7 +1,7 @@
 use super::{Instruction, InstructionWithStr};
 use crate::{
     Error,
-    instruction::{block::Block, function::call::function_call, set::Set},
+    instruction::{function::call::FunctionCall, tuple::Tuple},
     stdlib::operators::At,
     variable::{ReturnType, Variable},
 };
@@ -24,15 +24,14 @@ pub fn create_instruction(tuple: InstructionWithStr, op: Pair<Rule>) -> Result<I
 
     let return_type = tuple.return_type().tuple_element_at(index).unwrap();
 
-    let tuple_set = Set::new_ident("variable".into(), tuple.instruction).into();
-    let len_set = Set::new_ident("index".into(), index_var.into()).into();
-
     let mut function = Arc::unwrap_or_clone(Variable::from(At).into_function().unwrap());
     function.return_type = return_type;
-    let call = function_call(function);
 
-    Ok(Block {
-        instructions: [tuple_set, len_set, call].into(),
+    let function = Variable::from(function).into();
+    let args = Tuple {
+        elements: [tuple.instruction, index_var.into()].into(),
     }
-    .into())
+    .into();
+
+    Ok(FunctionCall { function, args }.into())
 }

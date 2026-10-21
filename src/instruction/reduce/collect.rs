@@ -1,16 +1,13 @@
-use std::sync::Arc;
-
 use crate::{
     self as simplesl, Error,
-    instruction::{
-        Instruction, InstructionWithStr, block::Block, function::call::function_call, set::Set,
-    },
+    instruction::{Instruction, InstructionWithStr, function::call::FunctionCall, tuple::Tuple},
     stdlib::operators::Collect,
     unary_operator::UnaryOperator,
     variable::{ReturnType, Type, Variable},
 };
 use lazy_static::lazy_static;
 use simplesl_macros::var_type;
+use std::sync::Arc;
 
 lazy_static! {
     pub static ref ACCEPTED_TYPE: Type = var_type!(() -> (bool, any));
@@ -28,16 +25,16 @@ pub(crate) fn create(lhs: InstructionWithStr) -> Result<Instruction, Error> {
         });
     };
 
-    let iter_set = Set::new_ident("iter".into(), lhs.instruction).into();
-
     let mut function = Arc::unwrap_or_clone(Variable::from(Collect).into_function().unwrap());
     function.return_type = var_type!([element_type]);
-    let call = function_call(function);
 
-    Ok(Block {
-        instructions: [iter_set, call].into(),
+    let function = Variable::from(function).into();
+    let args = Tuple {
+        elements: [lhs.instruction].into(),
     }
-    .into())
+    .into();
+
+    Ok(FunctionCall { function, args }.into())
 }
 
 #[cfg(test)]

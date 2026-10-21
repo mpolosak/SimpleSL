@@ -1,11 +1,7 @@
 use super::{Instruction, InstructionWithStr, local_variable::LocalVariables};
+use crate::instruction::{function::call::FunctionCall, tuple::Tuple};
 use crate::{
-    self as simplesl,
-    instruction::{block::Block, function::call::function_call},
-};
-use crate::{
-    Error,
-    instruction::set::Set,
+    self as simplesl, Error,
     stdlib::operators::ArrayRepeat,
     variable::{ReturnType, Type, Variable},
 };
@@ -27,16 +23,14 @@ pub fn create_instruction(
     }
 
     let value_type = value.return_type();
-    let value_set = Set::new_ident("value".into(), value).into();
-    let len_set = Set::new_ident("len".into(), len.instruction).into();
-
     let mut function = Arc::unwrap_or_clone(Variable::from(ArrayRepeat).into_function().unwrap());
     function.return_type = var_type!([value_type]);
 
-    let call = function_call(function);
-
-    Ok(Block {
-        instructions: [value_set, len_set, call].into(),
+    let function = Variable::from(function).into();
+    let args = Tuple {
+        elements: [value, len.instruction].into(),
     }
-    .into())
+    .into();
+
+    Ok(FunctionCall { function, args }.into())
 }
