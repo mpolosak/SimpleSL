@@ -23,7 +23,6 @@ use crate::{
     },
     variable::{ReturnType, Type, Variable},
 };
-pub use bitwise::{bitwise_and, bitwise_or, xor};
 pub use math::{add, multiply, pow, subtract};
 use math::{divide, greater, greater_equal, lower, lower_equal, modulo};
 use pest::iterators::Pair;
@@ -64,9 +63,9 @@ impl Exec for BinOperation {
             BinOperator::GreaterOrEqual => greater_equal::exec(lhs, rhs),
             BinOperator::Lower => lower::exec(lhs, rhs),
             BinOperator::LowerOrEqual => lower_equal::exec(lhs, rhs),
-            BinOperator::BitwiseAnd => bitwise_and::exec(lhs, rhs),
-            BinOperator::BitwiseOr => bitwise_or::exec(lhs, rhs),
-            BinOperator::Xor => xor::exec(lhs, rhs),
+            BinOperator::BitwiseAnd => lhs & rhs,
+            BinOperator::BitwiseOr => lhs | rhs,
+            BinOperator::Xor => lhs ^ rhs,
             BinOperator::LShift => lshift::exec(lhs, rhs)?,
             BinOperator::RShift => rshift::exec(lhs, rhs)?,
             BinOperator::Filter => filter::exec(lhs, rhs)?,
@@ -77,9 +76,9 @@ impl Exec for BinOperation {
             BinOperator::AssignModulo => assign::try_exec(lhs, rhs, modulo::exec)?,
             BinOperator::AssignLShift => assign::try_exec(lhs, rhs, lshift::exec)?,
             BinOperator::AssignRShift => assign::try_exec(lhs, rhs, rshift::exec)?,
-            BinOperator::AssignBitwiseAnd => assign::exec(lhs, rhs, bitwise_and::exec),
-            BinOperator::AssignBitwiseOr => assign::exec(lhs, rhs, bitwise_or::exec),
-            BinOperator::AssignXor => assign::exec(lhs, rhs, xor::exec),
+            BinOperator::AssignBitwiseAnd => assign::exec(lhs, rhs, |lhs, rhs| lhs & rhs),
+            BinOperator::AssignBitwiseOr => assign::exec(lhs, rhs, |lhs, rhs| lhs | rhs),
+            BinOperator::AssignXor => assign::exec(lhs, rhs, |lhs, rhs| lhs ^ rhs),
             BinOperator::AssignPow => assign::try_exec(lhs, rhs, pow::exec)?,
             BinOperator::Partition => partition::exec(lhs, rhs)?,
             _ => unreachable!(),
@@ -100,9 +99,24 @@ impl Recreate for BinOperation {
             BinOperator::GreaterOrEqual => greater_equal::create_from_instructions(lhs, rhs),
             BinOperator::Lower => lower::create_from_instructions(lhs, rhs),
             BinOperator::LowerOrEqual => lower_equal::create_from_instructions(lhs, rhs),
-            BinOperator::BitwiseAnd => bitwise_and::create_from_instructions(lhs, rhs),
-            BinOperator::BitwiseOr => bitwise_or::create_from_instructions(lhs, rhs),
-            BinOperator::Xor => xor::create_from_instructions(lhs, rhs),
+            BinOperator::BitwiseAnd => create_from_instructions_with_exec(
+                lhs,
+                rhs,
+                BinOperator::BitwiseAnd,
+                |lhs, rhs| lhs & rhs,
+            ),
+            BinOperator::BitwiseOr => create_from_instructions_with_exec(
+                lhs,
+                rhs,
+                BinOperator::BitwiseOr,
+                |lhs, rhs| lhs | rhs,
+            ),
+            BinOperator::Xor => create_from_instructions_with_exec(
+                lhs,
+                rhs,
+                BinOperator::Xor,
+                |lhs, rhs| lhs ^ rhs,
+            ),
             op => Self { lhs, rhs, op }.into(),
         }
     }

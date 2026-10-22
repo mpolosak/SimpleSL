@@ -1,4 +1,4 @@
-use std::ops::{Add, Div, Mul, Rem, Sub};
+use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Rem, Sub};
 use crate::variable::{Array, Variable};
 
 impl Add for Variable{
@@ -60,6 +60,42 @@ impl Rem for Variable {
         match (self, rhs) {
             (Variable::Int(lhs), Variable::Int(rhs)) => lhs.wrapping_rem(rhs).into(),
             (lhs, rhs) => panic!("Tried to do {lhs} % {rhs}"),
+        }
+    }
+}
+
+impl BitAnd for Variable {
+    type Output = Variable;
+
+    fn bitand(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (Variable::Int(lhs), Variable::Int(rhs)) => (lhs & rhs).into(),
+            (Variable::Bool(lhs), Variable::Bool(rhs)) => (lhs & rhs).into(),
+            (lhs, rhs) => panic!("Tried to do {lhs} & {rhs}"),
+        }
+    }
+}
+
+impl BitOr for Variable {
+    type Output = Variable;
+
+    fn bitor(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (Variable::Int(lhs), Variable::Int(rhs)) => (lhs | rhs).into(),
+            (Variable::Bool(lhs), Variable::Bool(rhs)) => (lhs | rhs).into(),
+            (lhs, rhs) => panic!("Tried to do {lhs} | {rhs}"),
+        }
+    }
+}
+
+impl BitXor for Variable {
+    type Output = Variable;
+
+    fn bitxor(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (Variable::Int(lhs), Variable::Int(rhs)) => (lhs ^ rhs).into(),
+            (Variable::Bool(lhs), Variable::Bool(rhs)) => (lhs ^ rhs).into(),
+            (lhs, rhs) => panic!("Tried to do {lhs} ^ {rhs}"),
         }
     }
 }
@@ -193,5 +229,53 @@ mod tests {
     #[should_panic]
     fn remainder_int_by_float() {
         let _ = Variable::Int(4) % Variable::Float(2.0);
+    }
+
+    #[test]
+    fn bitwise_and_int_with_int() {
+        assert_eq!(Variable::Int(0b1100) & Variable::Int(0b1010), Variable::Int(0b1000))
+    }
+
+    #[test]
+    fn bitwise_and_bool_with_bool() {
+        assert_eq!(Variable::Bool(true) & Variable::Bool(false), Variable::Bool(false))
+    }
+
+    #[test]
+    #[should_panic]
+    fn bitwise_and_int_with_bool() {
+        let _ = Variable::Int(4) & Variable::Bool(true);
+    }
+
+    #[test]
+    fn bitwise_or_int_with_int() {
+        assert_eq!(Variable::Int(0b1100) | Variable::Int(0b1010), Variable::Int(0b1110))
+    }
+
+    #[test]
+    fn bitwise_or_bool_with_bool() {
+        assert_eq!(Variable::Bool(true) | Variable::Bool(false), Variable::Bool(true))
+    }
+
+    #[test]
+    #[should_panic]
+    fn bitwise_or_int_with_bool() {
+        let _ = Variable::Int(4) | Variable::Bool(true);
+    }
+
+    #[test]
+    fn bitwise_xor_int_with_int() {
+        assert_eq!(Variable::Int(0b1100) ^ Variable::Int(0b1010), Variable::Int(0b0110))
+    }
+
+    #[test]
+    fn bitwise_xor_bool_with_bool() {
+        assert_eq!(Variable::Bool(true) ^ Variable::Bool(false), Variable::Bool(true))
+    }
+
+    #[test]
+    #[should_panic]
+    fn bitwise_xor_int_with_bool() {
+        let _ = Variable::Int(4) ^ Variable::Bool(true);
     }
 }
