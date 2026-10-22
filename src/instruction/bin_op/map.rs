@@ -17,7 +17,9 @@ lazy_static! {
             return () -> (bool, int) {
                 res := func();
                 (con, value) := res;
-                if !con return res;
+                if !con {
+                    return res;
+                }
                 return (true, mapper(value));
             }
         }"

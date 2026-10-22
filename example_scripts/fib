@@ -6,8 +6,12 @@ int := (variable: any, fallback: int) -> int {
 };
 
 custom_fib := (fib0: int, fib1: int, n:int) -> int {
-    if n < 1 return fib0;
-    if n == 1 return fib1;
+    if n < 1 {
+        return fib0;
+    }
+    if n == 1 {
+        return fib1;
+    }
     return custom_fib(fib1, fib0+fib1, n-1);
 };
 
@@ -17,7 +21,9 @@ fib := (n:int) -> int {
 
 custom_array_fib := (elements: [int], n: int) -> [int] {
     len := std.len(elements);
-    if len >= n return elements;
+    if len >= n {
+        return elements;
+    }
     next_fib := elements[len-1] + elements[len-2];
     return custom_array_fib(elements+[next_fib], n);
 };

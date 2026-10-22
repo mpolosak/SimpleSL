@@ -104,7 +104,9 @@ mod tests {
                 "i:=mut 45.5;
                 x:=() -> (bool, float) {
                     val:=*i;
-                    if val>70.0 return (false, val)
+                    if val>70.0 {
+                        return (false, val)
+                    }
                     i+=15.5;
                     return (true, val); 
                 }

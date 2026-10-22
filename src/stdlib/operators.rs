@@ -101,13 +101,17 @@ decls! {
     }
     ALL:=(iter: () -> (bool, bool)) -> bool {
         for value in iter {
-            if !value { return false; }
+            if !value {
+                return false;
+            }
         }
         return true;
     }
     ANY:=(iter: () -> (bool, bool)) -> bool {
         for value in iter {
-            if value { return true; }
+            if value {
+                return true;
+            }
         }
         return false;
     }
@@ -148,7 +152,9 @@ decls! {
             loop {
                 res := iter();
                 (con, value) := res;
-                if !con || predicate(value) return res;
+                if !con || predicate(value) {
+                    return res;
+                }
             }
             return (false, 0);
         }

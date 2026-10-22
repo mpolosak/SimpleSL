@@ -32,8 +32,8 @@ if condition {
 }
 ```
 
-The condition must be a boolean. `else` is optional and can also be followed by
-another `if`.
+The condition must be a boolean. The `if` body must be a block, and an `else`
+body, when present, must also be a block. `else if` chains are supported.
 
 Conditions can be chained with semicolons. All conditions must succeed for the
 body to run:
@@ -104,7 +104,7 @@ loop {
 }
 ```
 
-Repeats the body until it executes `break`.
+The loop body must be a block. It repeats until it executes `break`.
 
 ## While
 
@@ -114,8 +114,9 @@ while condition {
 }
 ```
 
-Repeats the body while the boolean condition is true. Like `if`, `while` can
-use semicolon-separated condition chains and pattern-binding conditions:
+The body must be a block. It repeats while the boolean condition is true. Like
+`if`, `while` can use semicolon-separated condition chains and pattern-binding
+conditions:
 
 ```simplesl
 while item: int = next_value(); item > 0 {
@@ -131,8 +132,8 @@ for element in iterator {
 }
 ```
 
-The expression must be an iterator. The loop calls it until it reports that it
-is exhausted, binding each yielded value to `element`.
+The body must be a block. The expression must be an iterator. The loop calls it
+until it reports that it is exhausted, binding each yielded value to `element`.
 
 ## Break and continue
 

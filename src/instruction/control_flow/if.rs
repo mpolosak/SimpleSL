@@ -94,3 +94,33 @@ impl ReturnType for If {
         true_return_type | false_return_type
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{Code, Interpreter};
+
+    #[test]
+    fn control_flow_bodies_require_blocks() {
+        let interpreter = Interpreter::without_stdlib();
+        for script in [
+            "if true {}",
+            "if false {} else {}",
+            "if false {} else if true {}",
+            "loop { break }",
+            "while false {}",
+            "for value in [1]~ {}",
+        ] {
+            assert!(Code::parse(&interpreter, script).is_ok(), "{script}");
+        }
+
+        for script in [
+            "if true 1",
+            "if true {} else 1",
+            "loop break",
+            "while false break",
+            "for value in [1]~ break",
+        ] {
+            assert!(Code::parse(&interpreter, script).is_err(), "{script}");
+        }
+    }
+}

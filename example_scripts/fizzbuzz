@@ -1,7 +1,13 @@
 fizzbuzz := (number: int) -> string|int {
-    if number%15==0 return "FizzBuzz";
-    if number%3==0 return "Fizz";
-    if number%5==0 return "Buzz";
+    if number%15==0 {
+        return "FizzBuzz";
+    }
+    if number%3==0 {
+        return "Fizz";
+    }
+    if number%5==0 {
+        return "Buzz";
+    }
     return number;
 };
 
@@ -12,7 +18,9 @@ iota := (start: int, end: int) -> () -> (bool, int) {
     i:=mut start;
     return () -> (bool, int) {
         result := *i;
-        if(result > end) return (false, 0);
+        if(result > end) {
+            return (false, 0);
+        }
         i+=1;
         return (true, result);
     }

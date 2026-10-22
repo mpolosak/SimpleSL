@@ -9,7 +9,9 @@ filter := (func: () -> (bool, int), predicate: (int) -> bool) -> () -> (bool, in
         loop {
             res := func();
             (con, value) := res;
-            if !con || predicate(value) return res;
+            if !con || predicate(value) {
+                return res;
+            }
         }
         return (false, 0);
     }
