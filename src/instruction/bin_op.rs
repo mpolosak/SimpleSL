@@ -55,8 +55,8 @@ impl Exec for BinOperation {
             BinOperator::Divide => divide::exec(lhs, rhs)?,
             BinOperator::Modulo => modulo::exec(lhs, rhs)?,
             BinOperator::Pow => pow::exec(lhs, rhs)?,
-            BinOperator::Equal => equal::exec(lhs, rhs),
-            BinOperator::NotEqual => not_equal::exec(lhs, rhs),
+            BinOperator::Equal => (lhs == rhs).into(),
+            BinOperator::NotEqual => (lhs != rhs).into(),
             BinOperator::Greater => (lhs > rhs).into(),
             BinOperator::GreaterOrEqual => (lhs >= rhs).into(),
             BinOperator::Lower => (lhs < rhs).into(),
@@ -91,8 +91,18 @@ impl Recreate for BinOperation {
         match self.op {
             BinOperator::Subtract => subtract::create_from_instructions(lhs, rhs),
             BinOperator::Multiply => multiply::create_from_instructions(lhs, rhs),
-            BinOperator::Equal => equal::create_from_instructions(lhs, rhs),
-            BinOperator::NotEqual => not_equal::create_from_instructions(lhs, rhs),
+            BinOperator::Equal => create_from_instructions_with_exec(
+                lhs,
+                rhs,
+                BinOperator::Equal,
+                |lhs, rhs| (lhs == rhs).into(),
+            ),
+            BinOperator::NotEqual => create_from_instructions_with_exec(
+                lhs,
+                rhs,
+                BinOperator::NotEqual,
+                |lhs, rhs| (lhs != rhs).into(),
+            ),
             BinOperator::Greater => create_from_instructions_with_exec(
                 lhs,
                 rhs,
@@ -164,32 +174,6 @@ impl ReturnType for BinOperation {
             BinOperator::LShift | BinOperator::RShift | BinOperator::Modulo => Type::Int,
             _ => lhs.mut_element_type().unwrap(),
         }
-    }
-}
-
-mod equal {
-    use super::{BinOperator, create_from_instructions_with_exec};
-    use crate::{instruction::Instruction, variable::Variable};
-
-    pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
-        (lhs == rhs).into()
-    }
-
-    pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
-        create_from_instructions_with_exec(lhs, rhs, BinOperator::Equal, exec)
-    }
-}
-
-mod not_equal {
-    use super::{BinOperator, create_from_instructions_with_exec};
-    use crate::{instruction::Instruction, variable::Variable};
-
-    pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
-        (lhs != rhs).into()
-    }
-
-    pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
-        create_from_instructions_with_exec(lhs, rhs, BinOperator::NotEqual, exec)
     }
 }
 
