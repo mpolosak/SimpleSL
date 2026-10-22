@@ -1,72 +1,131 @@
 # Statements
-## import
-```
-import path
-```
-path is string literal
-Imports code from given path. Importing happens during parsing. Import produces a struct holding
-all variables declared in the file
 
-## return
-```
-return statement?
+Statements can be used on their own or inside a block. A block is a sequence of
+statements enclosed in braces; semicolons between statements are optional.
+
+## Import
+
+```simplesl
+import "path/to/script.simplesl"
 ```
 
-Exit function with result of executing given statement or () if no statement.
+The path must be a string literal. Imports are resolved while parsing, and an
+import evaluates to a struct containing the variables declared in the imported
+file.
 
-## if
-```
-if condition instruction [else instruction]
-```
-## if set
-```
-if name:type = expression instruction [else instruction]
+## Return
+
+```simplesl
+return
+return expression
 ```
 
-## match
-```
-match expression {
-    value => instruction      // matches when value of expression is equal to `value` 
-    name: type => instruction // matches when type of expression matches `type`
-    => instruction // matches all expressions
+Return from the current function. A bare `return` returns `()`.
+
+## If
+
+```simplesl
+if condition {
+    statements
+} else {
+    statements
 }
 ```
 
-## variable declaration
-```
-ident := statment
-```
-Declares new variable with given value
+The condition must be a boolean. `else` is optional and can also be followed by
+another `if`.
 
-## loop
-```
-loop statment
-```
+Conditions can be chained with semicolons. All conditions must succeed for the
+body to run:
 
-## while loop
-```
-while condition statment
+```simplesl
+if is_ready(); count > 0 {
+    process(count)
+}
 ```
 
-## while set
-```
-while ident:type = expression statment
+A condition can bind a value using a pattern and `=`. The body runs only when
+the value matches the pattern, and the bound names are available in the
+remaining conditions and body:
+
+```simplesl
+if value: int = get_value(); value > 0 {
+    use(value)
+}
 ```
 
-## for
-```
-for element_ident in expression statment
-```
-The expression must be an iterator
+## Match
 
-## break
+```simplesl
+match expression {
+    value => body,
+    value1, value2 => body,
+    name: type => body,
+    => default_body,
+}
 ```
+
+Match arms are tried in order. Value arms compare against the expression;
+comma-separated values share a body. A type pattern may bind the matched value
+to a name. The final empty pattern (`=>`) matches any value. The arms must cover
+every possible type of the expression; use a final empty pattern when needed.
+Each body can be a block, a `return`, or an expression.
+
+## Variable declaration
+
+```simplesl
+name := expression
+name: type := expression
+(first, second) := expression
+```
+
+Declares a variable using the expression's value. A type annotation is
+optional. Tuple patterns can bind values from a tuple.
+
+## Loop
+
+```simplesl
+loop {
+    statements
+}
+```
+
+Repeats the body until it executes `break`.
+
+## While
+
+```simplesl
+while condition {
+    statements
+}
+```
+
+Repeats the body while the boolean condition is true. Like `if`, `while` can
+use semicolon-separated condition chains and pattern-binding conditions:
+
+```simplesl
+while item: int = next_value(); item > 0 {
+    process(item)
+}
+```
+
+## For
+
+```simplesl
+for element in iterator {
+    statements
+}
+```
+
+The expression must be an iterator. The loop calls it until it reports that it
+is exhausted, binding each yielded value to `element`.
+
+## Break and continue
+
+```simplesl
 break
-```
-Exit loop
-
-## continue
-```
 continue
 ```
-Skip to the next iteration of a loop
+
+`break` exits the nearest loop. `continue` skips the rest of the current
+iteration and advances to the next one. Both are only valid inside a loop.
