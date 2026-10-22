@@ -3,7 +3,7 @@ use crate::{
     BinOperator, Error, Interpreter,
     instruction::{
         BaseInstruction, Exec, ExecResult, Instruction, Recreate,
-        bin_op::filter, local_variable::LocalVariables,
+        bin_op::filter::Filter, local_variable::LocalVariables,
     },
     variable::{Array, ReturnType, Type, Typed, Variable},
 };
@@ -19,7 +19,7 @@ impl Partition {
     pub fn create_instruction(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
         let lhs_type = lhs.return_type();
         let rhs_type = rhs.return_type();
-        if !filter::can_be_used(&lhs_type, &rhs_type) {
+        if !Filter::can_be_used(&lhs_type, &rhs_type) {
             return Err(Error::CannotDo2(lhs_type, BinOperator::Partition, rhs_type));
         }
         Ok(Self { lhs, rhs }.into())

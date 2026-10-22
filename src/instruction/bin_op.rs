@@ -66,7 +66,6 @@ impl Exec for BinOperation {
             BinOperator::Xor => lhs ^ rhs,
             BinOperator::LShift => lhs << rhs,
             BinOperator::RShift => lhs >> rhs,
-            BinOperator::Filter => filter::exec(lhs, rhs)?,
             BinOperator::Map => map::exec(lhs, rhs)?,
             BinOperator::AssignSubtract => assign::exec(lhs, rhs, |lhs, rhs| lhs - rhs),
             BinOperator::AssignMultiply => assign::exec(lhs, rhs, |lhs, rhs| lhs * rhs),
@@ -164,7 +163,6 @@ impl ReturnType for BinOperation {
             | BinOperator::Multiply
             | BinOperator::Divide
             | BinOperator::Pow
-            | BinOperator::Filter
             | BinOperator::BitwiseAnd
             | BinOperator::BitwiseOr
             | BinOperator::Xor => lhs,
@@ -215,6 +213,9 @@ impl Instruction {
             BinOperator::Partition => {
                 return partition::Partition::create_instruction(lhs, rhs);
             }
+            BinOperator::Filter => {
+                return filter::Filter::create_instruction(lhs, rhs);
+            }
             _ => (),
         }
 
@@ -249,7 +250,6 @@ fn can_be_used(lhs: &Type, rhs: &Type, op: BinOperator) -> bool {
         BinOperator::BitwiseAnd | BinOperator::BitwiseOr | BinOperator::Xor => {
             bitwise::can_be_used(lhs, rhs)
         }
-        BinOperator::Filter => filter::can_be_used(lhs, rhs),
         BinOperator::Map => map::can_be_used(lhs, rhs),
         BinOperator::AssignSubtract
         | BinOperator::AssignMultiply
