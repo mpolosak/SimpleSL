@@ -78,7 +78,6 @@ impl Exec for BinOperation {
             BinOperator::AssignBitwiseOr => assign::exec(lhs, rhs, |lhs, rhs| lhs | rhs),
             BinOperator::AssignXor => assign::exec(lhs, rhs, |lhs, rhs| lhs ^ rhs),
             BinOperator::AssignPow => assign::try_exec(lhs, rhs, pow::exec)?,
-            BinOperator::Partition => partition::exec(lhs, rhs)?,
             _ => unreachable!(),
         })
     }
@@ -169,7 +168,6 @@ impl ReturnType for BinOperation {
             | BinOperator::BitwiseAnd
             | BinOperator::BitwiseOr
             | BinOperator::Xor => lhs,
-            BinOperator::Partition => partition::return_type(lhs),
             BinOperator::Map => map::return_type(rhs),
             BinOperator::LShift | BinOperator::RShift | BinOperator::Modulo => Type::Int,
             _ => lhs.mut_element_type().unwrap(),
@@ -214,6 +212,9 @@ impl Instruction {
             BinOperator::AssignAdd => {
                 return AssignAdd::create_instruction(lhs, rhs);
             }
+            BinOperator::Partition => {
+                return partition::Partition::create_instruction(lhs, rhs);
+            }
             _ => (),
         }
 
@@ -248,7 +249,7 @@ fn can_be_used(lhs: &Type, rhs: &Type, op: BinOperator) -> bool {
         BinOperator::BitwiseAnd | BinOperator::BitwiseOr | BinOperator::Xor => {
             bitwise::can_be_used(lhs, rhs)
         }
-        BinOperator::Filter | BinOperator::Partition => filter::can_be_used(lhs, rhs),
+        BinOperator::Filter => filter::can_be_used(lhs, rhs),
         BinOperator::Map => map::can_be_used(lhs, rhs),
         BinOperator::AssignSubtract
         | BinOperator::AssignMultiply
