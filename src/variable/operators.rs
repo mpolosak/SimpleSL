@@ -1,4 +1,4 @@
-use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Not, Rem, Sub};
+use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Not, Rem, Shl, Shr, Sub};
 use crate::variable::{Array, Variable};
 
 impl Add for Variable{
@@ -124,6 +124,28 @@ impl BitXor for Variable {
     }
 }
 
+impl Shl for Variable {
+    type Output = Variable;
+
+    fn shl(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (Variable::Int(lhs), Variable::Int(rhs)) => lhs.wrapping_shl(rhs as u32).into(),
+            (lhs, rhs) => panic!("Tried to do {lhs} << {rhs}"),
+        }
+    }
+}
+
+impl Shr for Variable {
+    type Output = Variable;
+
+    fn shr(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (Variable::Int(lhs), Variable::Int(rhs)) => lhs.wrapping_shr(rhs as u32).into(),
+            (lhs, rhs) => panic!("Tried to do {lhs} >> {rhs}"),
+        }
+    }
+}
+
 
 
 #[cfg(test)]
@@ -135,6 +157,16 @@ mod tests {
     #[test]
     fn add_int_to_int() {
         assert_eq!(Variable::Int(4) + Variable::Int(5), Variable::Int(9))
+    }
+
+    #[test]
+    fn shift_int_left() {
+        assert_eq!(Variable::Int(4) << Variable::Int(5), Variable::Int(4 << 5))
+    }
+
+    #[test]
+    fn shift_int_right() {
+        assert_eq!(Variable::Int(4) >> Variable::Int(1), Variable::Int(4 >> 1))
     }
 
     #[test]

@@ -6,7 +6,6 @@ mod logic;
 mod map;
 mod math;
 mod partition;
-mod shift;
 use super::{
     Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
     reduce,
@@ -26,7 +25,6 @@ use crate::{
 pub use math::{add, multiply, pow, subtract};
 use math::{divide, greater, greater_equal, lower, lower_equal, modulo};
 use pest::iterators::Pair;
-use shift::{lshift, rshift};
 use simplesl_macros::var_type;
 use simplesl_parser::Rule;
 
@@ -66,16 +64,16 @@ impl Exec for BinOperation {
             BinOperator::BitwiseAnd => lhs & rhs,
             BinOperator::BitwiseOr => lhs | rhs,
             BinOperator::Xor => lhs ^ rhs,
-            BinOperator::LShift => lshift::exec(lhs, rhs)?,
-            BinOperator::RShift => rshift::exec(lhs, rhs)?,
+            BinOperator::LShift => lhs << rhs,
+            BinOperator::RShift => lhs >> rhs,
             BinOperator::Filter => filter::exec(lhs, rhs)?,
             BinOperator::Map => map::exec(lhs, rhs)?,
             BinOperator::AssignSubtract => assign::exec(lhs, rhs, |lhs, rhs| lhs - rhs),
             BinOperator::AssignMultiply => assign::exec(lhs, rhs, |lhs, rhs| lhs * rhs),
             BinOperator::AssignDivide => assign::try_exec(lhs, rhs, divide::exec)?,
             BinOperator::AssignModulo => assign::try_exec(lhs, rhs, modulo::exec)?,
-            BinOperator::AssignLShift => assign::try_exec(lhs, rhs, lshift::exec)?,
-            BinOperator::AssignRShift => assign::try_exec(lhs, rhs, rshift::exec)?,
+            BinOperator::AssignLShift => assign::exec(lhs, rhs, |lhs, rhs| lhs << rhs),
+            BinOperator::AssignRShift => assign::exec(lhs, rhs, |lhs, rhs| lhs >> rhs),
             BinOperator::AssignBitwiseAnd => assign::exec(lhs, rhs, |lhs, rhs| lhs & rhs),
             BinOperator::AssignBitwiseOr => assign::exec(lhs, rhs, |lhs, rhs| lhs | rhs),
             BinOperator::AssignXor => assign::exec(lhs, rhs, |lhs, rhs| lhs ^ rhs),
@@ -283,4 +281,22 @@ pub fn create_from_instructions_with_exec<T: FnOnce(Variable, Variable) -> Varia
         return BinOperation { lhs, rhs, op }.into();
     };
     exec(lhs.clone(), rhs.clone()).into()
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{Code, Interpreter, variable::Variable};
+
+    #[test]
+    fn shifts_wrap_shift_counts() {
+        assert_eq!(parse_and_exec("45 << 64"), Variable::Int(45));
+        assert_eq!(parse_and_exec("45 >> 90"), Variable::Int(45_i64.wrapping_shr(90)));
+    }
+
+    fn parse_and_exec(script: &str) -> Variable {
+        Code::parse(&Interpreter::without_stdlib(), script)
+            .expect("script should parse")
+            .exec()
+            .expect("shift should execute")
+    }
 }

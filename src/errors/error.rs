@@ -30,7 +30,6 @@ pub enum Error {
     CannotSlice(Arc<str>, Type),
     ZeroDivision,
     ZeroModulo,
-    OverflowShift,
     MatchNotCovered,
     #[from]
     IO(std::io::Error),
@@ -216,9 +215,6 @@ impl fmt::Display for Error {
             Self::ZeroModulo => {
                 write!(f, "Cannot calculate the remainder with a divisor of 0")
             }
-            Self::OverflowShift => {
-                write!(f, "Cannot shift with overflow")
-            }
             Self::MatchNotCovered => {
                 write!(f, "All posible values must be covered in match")
             }
@@ -337,7 +333,6 @@ impl From<ExecError> for Error {
             ExecError::NegativeExponent => Self::NegativeExponent,
             ExecError::ZeroDivision => Self::ZeroDivision,
             ExecError::ZeroModulo => Self::ZeroModulo,
-            ExecError::OverflowShift => Self::OverflowShift,
         }
     }
 }
