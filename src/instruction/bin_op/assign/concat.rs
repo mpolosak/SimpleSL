@@ -1,7 +1,5 @@
 use crate::{
-    BinOperator, Error,
-    instruction::{BaseInstruction, Exec, Instruction, bin_op::add::Add},
-    variable::{ReturnType, Type},
+    instruction::{bin_op::concat::Concat, BaseInstruction, Exec, Instruction}, variable::{ReturnType, Type}, BinOperator, Error
 };
 
 #[derive(Debug)]
@@ -36,7 +34,7 @@ impl Exec for AssignConcat {
         let rhs = self.rhs.exec(interpreter)?;
         let lhs = lhs.into_mut().unwrap();
         let mut lhs = lhs.variable.write().unwrap();
-        *lhs = Add::calc(lhs.clone(), rhs);
+        *lhs = Concat::calc(lhs.clone(), rhs);
         Ok(lhs.clone())
     }
 }
