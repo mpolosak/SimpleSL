@@ -23,7 +23,7 @@ use crate::{
     variable::{ReturnType, Type, Variable},
 };
 pub use math::{add, multiply, pow, subtract};
-use math::{divide, greater, greater_equal, lower, lower_equal, modulo};
+use math::{divide, modulo};
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
 use simplesl_parser::Rule;
@@ -57,10 +57,10 @@ impl Exec for BinOperation {
             BinOperator::Pow => pow::exec(lhs, rhs)?,
             BinOperator::Equal => equal::exec(lhs, rhs),
             BinOperator::NotEqual => not_equal::exec(lhs, rhs),
-            BinOperator::Greater => greater::exec(lhs, rhs),
-            BinOperator::GreaterOrEqual => greater_equal::exec(lhs, rhs),
-            BinOperator::Lower => lower::exec(lhs, rhs),
-            BinOperator::LowerOrEqual => lower_equal::exec(lhs, rhs),
+            BinOperator::Greater => (lhs > rhs).into(),
+            BinOperator::GreaterOrEqual => (lhs >= rhs).into(),
+            BinOperator::Lower => (lhs < rhs).into(),
+            BinOperator::LowerOrEqual => (lhs <= rhs).into(),
             BinOperator::BitwiseAnd => lhs & rhs,
             BinOperator::BitwiseOr => lhs | rhs,
             BinOperator::Xor => lhs ^ rhs,
@@ -93,10 +93,30 @@ impl Recreate for BinOperation {
             BinOperator::Multiply => multiply::create_from_instructions(lhs, rhs),
             BinOperator::Equal => equal::create_from_instructions(lhs, rhs),
             BinOperator::NotEqual => not_equal::create_from_instructions(lhs, rhs),
-            BinOperator::Greater => greater::create_from_instructions(lhs, rhs),
-            BinOperator::GreaterOrEqual => greater_equal::create_from_instructions(lhs, rhs),
-            BinOperator::Lower => lower::create_from_instructions(lhs, rhs),
-            BinOperator::LowerOrEqual => lower_equal::create_from_instructions(lhs, rhs),
+            BinOperator::Greater => create_from_instructions_with_exec(
+                lhs,
+                rhs,
+                BinOperator::Greater,
+                |lhs, rhs| (lhs > rhs).into(),
+            ),
+            BinOperator::GreaterOrEqual => create_from_instructions_with_exec(
+                lhs,
+                rhs,
+                BinOperator::GreaterOrEqual,
+                |lhs, rhs| (lhs >= rhs).into(),
+            ),
+            BinOperator::Lower => create_from_instructions_with_exec(
+                lhs,
+                rhs,
+                BinOperator::Lower,
+                |lhs, rhs| (lhs < rhs).into(),
+            ),
+            BinOperator::LowerOrEqual => create_from_instructions_with_exec(
+                lhs,
+                rhs,
+                BinOperator::LowerOrEqual,
+                |lhs, rhs| (lhs <= rhs).into(),
+            ),
             BinOperator::BitwiseAnd => create_from_instructions_with_exec(
                 lhs,
                 rhs,

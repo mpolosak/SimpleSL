@@ -1,6 +1,16 @@
 use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Not, Rem, Shl, Shr, Sub};
 use crate::variable::{Array, Variable};
 
+impl PartialOrd for Variable {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        match (self, other) {
+            (Variable::Int(lhs), Variable::Int(rhs)) => lhs.partial_cmp(rhs),
+            (Variable::Float(lhs), Variable::Float(rhs)) => lhs.partial_cmp(rhs),
+            _ => None,
+        }
+    }
+}
+
 impl Add for Variable{
     type Output = Variable;
 
@@ -153,6 +163,7 @@ mod tests {
     use simplesl_macros::var;
     use crate as simplesl;
     use crate::variable::Variable;
+    use std::cmp::Ordering;
 
     #[test]
     fn add_int_to_int() {
@@ -167,6 +178,22 @@ mod tests {
     #[test]
     fn shift_int_right() {
         assert_eq!(Variable::Int(4) >> Variable::Int(1), Variable::Int(4 >> 1))
+    }
+
+    #[test]
+    fn compare_ints() {
+        assert_eq!(Variable::Int(4).partial_cmp(&Variable::Int(5)), Some(Ordering::Less));
+    }
+
+    #[test]
+    fn compare_floats() {
+        assert_eq!(Variable::Float(4.5).partial_cmp(&Variable::Float(4.5)), Some(Ordering::Equal));
+    }
+
+    #[test]
+    fn incomparable_variables() {
+        assert_eq!(Variable::Int(4).partial_cmp(&Variable::Float(4.0)), None);
+        assert_eq!(Variable::Bool(false).partial_cmp(&Variable::Bool(true)), None);
     }
 
     #[test]
