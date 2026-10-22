@@ -66,7 +66,6 @@ impl Exec for BinOperation {
             BinOperator::Xor => lhs ^ rhs,
             BinOperator::LShift => lhs << rhs,
             BinOperator::RShift => lhs >> rhs,
-            BinOperator::Map => map::exec(lhs, rhs)?,
             BinOperator::AssignSubtract => assign::exec(lhs, rhs, |lhs, rhs| lhs - rhs),
             BinOperator::AssignMultiply => assign::exec(lhs, rhs, |lhs, rhs| lhs * rhs),
             BinOperator::AssignDivide => assign::try_exec(lhs, rhs, divide::exec)?,
@@ -151,7 +150,6 @@ impl Recreate for BinOperation {
 impl ReturnType for BinOperation {
     fn return_type(&self) -> Type {
         let lhs = self.lhs.return_type();
-        let rhs = self.rhs.return_type();
         match self.op {
             BinOperator::Equal
             | BinOperator::NotEqual
@@ -166,7 +164,6 @@ impl ReturnType for BinOperation {
             | BinOperator::BitwiseAnd
             | BinOperator::BitwiseOr
             | BinOperator::Xor => lhs,
-            BinOperator::Map => map::return_type(rhs),
             BinOperator::LShift | BinOperator::RShift | BinOperator::Modulo => Type::Int,
             _ => lhs.mut_element_type().unwrap(),
         }
@@ -216,6 +213,9 @@ impl Instruction {
             BinOperator::Filter => {
                 return filter::Filter::create_instruction(lhs, rhs);
             }
+            BinOperator::Map => {
+                return map::Map::create_instruction(lhs, rhs);
+            }
             _ => (),
         }
 
@@ -250,7 +250,6 @@ fn can_be_used(lhs: &Type, rhs: &Type, op: BinOperator) -> bool {
         BinOperator::BitwiseAnd | BinOperator::BitwiseOr | BinOperator::Xor => {
             bitwise::can_be_used(lhs, rhs)
         }
-        BinOperator::Map => map::can_be_used(lhs, rhs),
         BinOperator::AssignSubtract
         | BinOperator::AssignMultiply
         | BinOperator::AssignDivide
