@@ -1,4 +1,4 @@
-use std::ops::{Add, Div, Mul, Sub};
+use std::ops::{Add, Div, Mul, Rem, Sub};
 use crate::variable::{Array, Variable};
 
 impl Add for Variable{
@@ -49,6 +49,17 @@ impl Div for Variable {
             (Variable::Int(lhs), Variable::Int(rhs)) => lhs.wrapping_div(rhs).into(),
             (Variable::Float(lhs), Variable::Float(rhs)) => (lhs / rhs).into(),
             (lhs, rhs) => panic!("Tried to do {lhs} / {rhs}"),
+        }
+    }
+}
+
+impl Rem for Variable {
+    type Output = Variable;
+
+    fn rem(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (Variable::Int(lhs), Variable::Int(rhs)) => lhs.wrapping_rem(rhs).into(),
+            (lhs, rhs) => panic!("Tried to do {lhs} % {rhs}"),
         }
     }
 }
@@ -163,5 +174,24 @@ mod tests {
     #[should_panic]
     fn divide_int_by_float() {
         let _ = Variable::Int(4) / Variable::Float(2.0);
+    }
+
+    #[test]
+    fn remainder_int_by_int() {
+        assert_eq!(Variable::Int(17) % Variable::Int(5), Variable::Int(2))
+    }
+
+    #[test]
+    fn remainder_int_with_wrapping() {
+        assert_eq!(
+            Variable::Int(i64::MIN) % Variable::Int(-1),
+            Variable::Int(0)
+        )
+    }
+
+    #[test]
+    #[should_panic]
+    fn remainder_int_by_float() {
+        let _ = Variable::Int(4) % Variable::Float(2.0);
     }
 }
