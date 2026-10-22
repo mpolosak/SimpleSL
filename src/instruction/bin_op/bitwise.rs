@@ -1,15 +1,8 @@
-use crate as simplesl;
 use crate::variable::Type;
 use duplicate::duplicate_item;
-use lazy_static::lazy_static;
-use simplesl_macros::var_type;
 
-lazy_static! {
-    pub static ref ACCEPTED_TYPE: Type = var_type!((int, int) | (bool, bool));
-}
-
-pub fn can_be_used(lhs: Type, rhs: Type) -> bool {
-    var_type!((lhs, rhs)).matches(&ACCEPTED_TYPE)
+pub fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
+    (lhs == &Type::Int || lhs == &Type::Bool) && lhs == rhs
 }
 
 #[duplicate_item(

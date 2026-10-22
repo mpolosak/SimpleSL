@@ -52,7 +52,7 @@ lazy_static! {
 }
 
 lazy_static! {
-    static ref ARRAY_TYPE: Type = var_type!([]);
+    static ref ARRAY_TYPE: Type = var_type!([any]);
 }
 
 impl Type {

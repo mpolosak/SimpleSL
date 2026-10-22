@@ -24,7 +24,6 @@ use crate::{
     variable::{ReturnType, Type, Variable},
 };
 pub use bitwise::{bitwise_and, bitwise_or, xor};
-use lazy_static::lazy_static;
 pub use math::{add, multiply, pow, subtract};
 use math::{divide, greater, greater_equal, lower, lower_equal, modulo};
 use pest::iterators::Pair;
@@ -32,20 +31,12 @@ use shift::{lshift, rshift};
 use simplesl_macros::var_type;
 use simplesl_parser::Rule;
 
-lazy_static! {
-    pub static ref ACCEPTED_INT_TYPE: Type = var_type!((int, int));
+pub fn can_be_used_int(lhs: &Type, rhs: &Type) -> bool {
+    lhs == &Type::Int && rhs == &Type::Int
 }
 
-pub fn can_be_used_int(lhs: Type, rhs: Type) -> bool {
-    var_type!((lhs, rhs)).matches(&ACCEPTED_INT_TYPE)
-}
-
-lazy_static! {
-    pub static ref ACCEPTED_NUM_TYPE: Type = var_type!((int, int) | (float, float));
-}
-
-pub fn can_be_used_num(lhs: Type, rhs: Type) -> bool {
-    var_type!((lhs, rhs)).matches(&ACCEPTED_NUM_TYPE)
+pub fn can_be_used_num(lhs: &Type, rhs: &Type) -> bool {
+    (lhs == &Type::Int || lhs == &Type::Float) && lhs == rhs
 }
 
 #[derive(Debug)]
@@ -232,36 +223,26 @@ fn can_be_used(lhs: &Type, rhs: &Type, op: BinOperator) -> bool {
         | BinOperator::Lower
         | BinOperator::LowerOrEqual
         | BinOperator::Greater
-        | BinOperator::GreaterOrEqual => can_be_used_num(lhs.clone(), rhs.clone()),
+        | BinOperator::GreaterOrEqual => can_be_used_num(lhs, rhs),
         BinOperator::LShift | BinOperator::RShift | BinOperator::Modulo => {
-            can_be_used_int(lhs.clone(), rhs.clone())
+            can_be_used_int(lhs, rhs)
         }
         BinOperator::Equal | BinOperator::NotEqual => true,
         BinOperator::And | BinOperator::Or => lhs == &Type::Bool && rhs == &Type::Bool,
         BinOperator::BitwiseAnd | BinOperator::BitwiseOr | BinOperator::Xor => {
-            bitwise::can_be_used(lhs.clone(), rhs.clone())
+            bitwise::can_be_used(lhs, rhs)
         }
         BinOperator::Filter | BinOperator::Partition => filter::can_be_used(lhs, rhs),
         BinOperator::Map => map::can_be_used(lhs, rhs),
         BinOperator::AssignSubtract
         | BinOperator::AssignMultiply
         | BinOperator::AssignDivide
-        | BinOperator::AssignPow => assign::can_be_used(
-            lhs.clone(),
-            rhs.clone(),
-            assign_can_be_used_num,
-            return_type,
-        ),
+        | BinOperator::AssignPow => assign::can_be_used(lhs, rhs, can_be_used_num, return_type),
         BinOperator::AssignModulo | BinOperator::AssignLShift | BinOperator::AssignRShift => {
-            assign::can_be_used(
-                lhs.clone(),
-                rhs.clone(),
-                assign_can_be_used_int,
-                return_type,
-            )
+            assign::can_be_used(lhs, rhs, can_be_used_int, return_type)
         }
         BinOperator::AssignBitwiseAnd | BinOperator::AssignBitwiseOr | BinOperator::AssignXor => {
-            assign::can_be_used(lhs.clone(), rhs.clone(), bitwise_can_be_used, return_type)
+            assign::can_be_used(lhs, rhs, bitwise::can_be_used, return_type)
         }
         _ => unreachable!(),
     }
@@ -273,17 +254,6 @@ fn return_type(lhs: &Type, rhs: &Type) -> Type {
     } else {
         rhs.clone()
     }
-}
-
-fn assign_can_be_used_num(a: &Type, b: &Type) -> bool {
-    can_be_used_num(a.clone(), b.clone())
-}
-
-fn assign_can_be_used_int(a: &Type, b: &Type) -> bool {
-    can_be_used_int(a.clone(), b.clone())
-}
-fn bitwise_can_be_used(a: &Type, b: &Type) -> bool {
-    bitwise::can_be_used(a.clone(), b.clone())
 }
 
 pub fn create_from_instructions_with_exec<T: FnOnce(Variable, Variable) -> Variable>(
