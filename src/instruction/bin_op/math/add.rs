@@ -26,17 +26,6 @@ impl Add {
     pub fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
         matches!(lhs, Type::Int | Type::Float | Type::String) && lhs == rhs
     }
-
-    pub fn calc(lhs: Variable, rhs: Variable) -> Variable {
-        match (lhs, rhs) {
-            (Variable::Int(value1), Variable::Int(value2)) => value1.wrapping_add(value2).into(),
-            (Variable::Float(value1), Variable::Float(value2)) => (value1 + value2).into(),
-            (Variable::String(value1), Variable::String(value2)) => {
-                format!("{value1}{value2}").into()
-            }
-            (lhs, rhs) => panic!("Tried to do {lhs} + {rhs} which is imposible"),
-        }
-    }
 }
 
 impl BaseInstruction for Add {}
@@ -45,7 +34,7 @@ impl Exec for Add {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let lhs = self.lhs.exec(interpreter)?;
         let rhs = self.rhs.exec(interpreter)?;
-        Ok(Self::calc(lhs, rhs))
+        Ok(lhs + rhs)
     }
 }
 
@@ -59,7 +48,7 @@ impl Recreate for Add {
         ) else {
             return Self { lhs, rhs }.into();
         };
-        Self::calc(lhs.clone(), rhs.clone()).into()
+        (lhs.clone() + rhs.clone()).into()
     }
 }
 

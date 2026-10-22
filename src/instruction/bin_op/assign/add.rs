@@ -46,7 +46,7 @@ impl Exec for AssignAdd {
         let rhs = self.rhs.exec(interpreter)?;
         let lhs = lhs.into_mut().unwrap();
         let mut lhs = lhs.variable.write().unwrap();
-        *lhs = Add::calc(lhs.clone(), rhs);
+        *lhs = lhs.clone() + rhs;
         Ok(lhs.clone())
     }
 }

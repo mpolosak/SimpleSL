@@ -3,6 +3,7 @@ mod from_str;
 mod function_type;
 mod multi_type;
 mod r#mut;
+mod operators;
 mod struct_type;
 mod try_from;
 mod r#type;
