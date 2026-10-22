@@ -82,6 +82,20 @@ name: type := expression
 Declares a variable using the expression's value. A type annotation is
 optional. Tuple patterns can bind values from a tuple.
 
+## Pattern binding with `else`
+
+```simplesl
+(first, second): (int, int) = expression else {
+    return default_value
+}
+```
+
+Matches the value against a pattern and binds its names when the pattern
+matches. If it does not match, the `else` block runs. That block must diverge
+from the current control flow, for example with `return`, `break`, or
+`continue`; execution cannot continue past the statement after a mismatch.
+Bindings are available after the statement only on the successful path.
+
 ## Loop
 
 ```simplesl

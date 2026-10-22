@@ -193,9 +193,10 @@ while                =  { whilekw ~ condition_chain ~ stm }
 for                  =  { forkw ~ ident ~ "in" ~ expr ~ stm }
 loop                 =  { loopkw ~ stm }
 expression_list      = _{ (expr ~ ("," ~ expr)*) }
-line                 = _{ COMMENT* ~ ((return | set | stm) ~ line_end?) }
+line                 = _{ COMMENT* ~ ((return | set_else | set | stm) ~ line_end?) }
 line_end             = _{ ";" }
 set                  =  { pattern ~ "=" ~ (function | stm) }
+set_else             =  { pattern ~ "=" ~ expr ~ elsekw ~ block }
 type                 = _{ multi | standard_types }
 bool_type            =  { "bool" }
 int_type             =  { "int" }

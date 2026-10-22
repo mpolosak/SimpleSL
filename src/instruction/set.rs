@@ -125,6 +125,72 @@ impl ReturnType for Set {
 }
 
 #[derive(Debug)]
+pub struct SetElse {
+    pattern: Pattern,
+    instruction: Instruction,
+    else_instruction: Instruction,
+}
+
+impl SetElse {
+    pub fn create(
+        pair: Pair<Rule>,
+        local_variables: &mut LocalVariables,
+    ) -> Result<Instruction, Error> {
+        let mut inner = pair.into_inner();
+        let pattern_pair = inner.next().unwrap();
+        let instruction = Instruction::new(inner.next().unwrap(), local_variables)?;
+        let pattern = Pattern::create_instruction(pattern_pair, &instruction.return_type())?;
+        let else_instruction = Instruction::new(inner.next().unwrap(), local_variables)?;
+        if else_instruction.return_type() != Type::Never {
+            return Err(Error::WrongType("else branch".into(), Type::Never));
+        }
+        pattern.insert_local_variables(local_variables);
+        Ok(Self {
+            pattern,
+            instruction,
+            else_instruction,
+        }
+        .into())
+    }
+}
+
+impl BaseInstruction for SetElse {}
+
+impl Exec for SetElse {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
+        let value = self.instruction.exec(interpreter)?;
+        if self.pattern.is_matched(&value.as_type()) {
+            self.pattern.insert_variables(interpreter, value.clone());
+            return Ok(value);
+        }
+        match self.else_instruction.exec(interpreter) {
+            Err(stop) => Err(stop),
+            Ok(_) => unreachable!("let-else branch must diverge"),
+        }
+    }
+}
+
+impl Recreate for SetElse {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        let instruction = self.instruction.recreate(local_variables);
+        let else_instruction = self.else_instruction.recreate(local_variables);
+        self.pattern.insert_local_variables(local_variables);
+        Self {
+            pattern: self.pattern.clone(),
+            instruction,
+            else_instruction,
+        }
+        .into()
+    }
+}
+
+impl ReturnType for SetElse {
+    fn return_type(&self) -> Type {
+        self.instruction.return_type()
+    }
+}
+
+#[derive(Debug)]
 pub struct ConditionSet(Set);
 
 impl ConditionSet {
@@ -155,5 +221,73 @@ impl Recreate for ConditionSet {
 impl ReturnType for ConditionSet {
     fn return_type(&self) -> Type {
         unreachable!()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{Code, Error, Interpreter, variable::Variable};
+
+    #[test]
+    fn destructures_when_pattern_matches() {
+        assert_eq!(
+            parse_and_exec(
+                "sum_pair := (value: int | (int, int)) -> int {
+                    (left, right): (int, int) = value else { return -1 }
+                    return left + right
+                }
+                sum_pair((2, 3))"
+            ),
+            Ok(Variable::Int(5))
+        );
+    }
+
+    #[test]
+    fn executes_else_when_pattern_does_not_match() {
+        assert_eq!(
+            parse_and_exec(
+                "sum_pair := (value: int | (int, int)) -> int {
+                    (left, right): (int, int) = value else { return -1 }
+                    return left + right
+                }
+                sum_pair(4)"
+            ),
+            Ok(Variable::Int(-1))
+        );
+    }
+
+    #[test]
+    fn rejects_non_diverging_else() {
+        assert_eq!(
+            parse_and_exec(
+                "sum_pair := (value: int | (int, int)) -> int {
+                    (left, right): (int, int) = value else { 0 }
+                    return left + right
+                }
+                sum_pair(4)"
+            ),
+            Err(Error::WrongType(
+                "else branch".into(),
+                crate::variable::Type::Never
+            ))
+        );
+    }
+
+    #[test]
+    fn else_can_continue_loop() {
+        assert_eq!(
+            parse_and_exec(
+                "loop {
+                    (left, right): (int, int) = (1, 2) else { break }
+                    break
+                }"
+            ),
+            Ok(Variable::Void)
+        );
+    }
+
+    fn parse_and_exec(script: &str) -> Result<Variable, Error> {
+        Code::parse(&Interpreter::without_stdlib(), script)
+            .and_then(|code| code.exec().map_err(Error::from))
     }
 }
