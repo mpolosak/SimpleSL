@@ -1,332 +1,280 @@
 # Standard library
-Standard library is contained in struct named std made of structs:
-* [convert](#convert)
-* [fs](#fs)
-* [io](#io)
-* [math](#math)
-* [string](#string)
-* [operators](#operators)
 
-and function:
-### len(variable: [any]|string) -> int
-Returns length of `variable`.
+The standard library is available through the `std` struct when the
+interpreter is created with `Interpreter::with_stdlib()`. It contains these
+modules:
 
-## convert
-This part of standard library contains functions related to converting variables and parsing strings.
+* [convert](#convert) — conversions and parsing
+* [fs](#fs) — filesystem operations
+* [io](#io) — standard input and output
+* [math](#math) — numeric functions and constants
+* [operators](#operators) — iterator and collection helpers
+* [string](#string) — string operations
 
-### to_float(value: int|float) -> float
-Converts value to float
+The top-level function `std.len` returns the length of an array or string:
 
-### to_int(value: int|float) -> int
-Converts value to int
+```simplesl
+std.len([10, 20, 30]) // 3
+std.len("hé")         // 2 Unicode characters
+```
 
-### parse_int(string: string) -> int|()
-Parses string as int. Returns an int value when conversion is successful and () otherwise.
+## `std.convert`
 
-### parse_int(string: string) -> float|()
-Parses string as float. Returns an float value when conversion is successful and () otherwise.
+### `to_float(value: int | float) -> float`
 
-### to_string(variable: any) -> string
-Converts given variable to string
+Converts an integer to a float; a float is returned unchanged.
 
-## fs
-This part of standard library contains functions to deal with files and directories
+### `to_int(value: int | float) -> int`
 
-### file_read_to_string(path: string) -> string|struct{error_code: int, msg: string}
-Opens file on path and reads its content. Returns string with file content when succesful or tuple containg error number and message when something went wrong
+Converts a float to an integer by truncating toward zero; an integer is returned
+unchanged.
 
-### write_to_file(path: string, contents: string) -> ()|struct{error_code: int, msg: string}
-Writes given contents to file on given path.
-Returns () when succesful or tuple containg error number and message when something went wrong
+### `parse_int(string: string) -> int | ()`
 
-### copy_file(from: string, to: string) -> ()|struct{error_code: int, msg: string}
-Copies file on path `from` to path `to`.
-Returns () when succesful or tuple containg error number and message when something went wrong
+Parses a string as a signed integer. Returns `()` if parsing fails.
 
-### remove_file(path: string) -> ()|struct{error_code: int, msg: string}
-Removes file on path `path`.
-Returns () when succesful or tuple containg error number and message when something went wrong
+### `parse_float(string: string) -> float | ()`
 
-### remove_dir(path: string) -> ()|struct{error_code: int, msg: string}
-Removes directory on path `path`.
-Returns () when succesful or tuple containg error number and message when something went wrong.
-This will fail when directory is not empty
+Parses a string as a float. Returns `()` if parsing fails.
 
-### remove_dir_all(path: string) -> ()|struct{error_code: int, msg: string}
-Removes directory on path `path` and all of it contents.
-Returns () when succesful or tuple containg error number and message when something went wrong.
+### `to_string(variable: any) -> string`
 
-### create_dir(path: string) -> ()|struct{error_code: int, msg: string}
-Creates directory with name `path`.
-Returns () when succesful or tuple containg error number and message when something went wrong
+Returns the display representation of a value as a string.
 
-### create_dir(path: string) -> ()|struct{error_code: int, msg: string}
-Creates directory with path `path`.
-Returns () when succesful or tuple containg error number and message when something went wrong.
-This will create all parents directories
+## `std.fs`
 
-### renames(from: string, to: string) -> ()|struct{error_code: int, msg: string}
-Renames file or directory from `from` to `to`.
-Returns () when succesful or tuple containg error number and message when something went wrong
+Filesystem functions return `()` on success. On failure, they return an error
+struct with `error_code` and `msg` fields.
 
-# io
-This part of the standard library contains functions to write to a standard output and read from a standard output.
+### `file_read_to_string(path: string) -> string | struct{error_code: int, msg: string}`
 
-## print(var: any)
-Prints variable to stdout.
+Reads a UTF-8 text file and returns its contents.
 
-## print_array(array: [any], sep: string)
-Prints all elements of `array` separated by `sep`.
+### `write_to_file(path: string, contents: string) -> () | struct{error_code: int, msg: string}`
 
-## cgetline() -> string
-Reads line from stdin. Returns a string containg contents of the line. A newline charackter is removed from the returned string.
+Writes `contents` to the file at `path`, creating or replacing the file.
 
-# string
-This part of the standard library contains functions to deal with strings.
+### `copy_file(from: string, to: string) -> () | struct{error_code: int, msg: string}`
 
-## split(string: string, pat: string) -> [string]
-Splits 'string' on 'pat'.
+Copies a file from `from` to `to`.
 
-## replace(string: string, from: string, to: string) -> string
-Return an string that is a result of replacing all occurences of 'from' in 'string' with 'to'.
+### `remove_file(path: string) -> () | struct{error_code: int, msg: string}`
 
-## contains(string: string, pat: string) -> bool
-Returns true if `string` contains `pat`, false otherwise.
+Removes a file.
 
-## starts_with(string: string, prefix: string) -> bool
-Returns true if `string` starts with `prefix`.
+### `remove_dir(path: string) -> () | struct{error_code: int, msg: string}`
 
-Returns false if it does not.
+Removes an empty directory.
 
-## ends_with(string: string, suffix: string) -> bool
-Returns true if `string` ends with `suffix`.
+### `remove_dir_all(path: string) -> () | struct{error_code: int, msg: string}`
 
-Returns false if it does not.
+Removes a directory and its contents recursively.
 
-## chars(string: string) -> [string]
-Returns an array containing all UTF-8 characters of 'string'.
+### `create_dir(path: string) -> () | struct{error_code: int, msg: string}`
 
-## bytes(string: string) -> [int]
-Returns an array containing bytes of string
+Creates a single directory. Its parent directory must already exist.
 
-## str_from_utf8(string: string) -> string | ()
-Converts array of bytes into string. Return () if array contains incorrect utf8.
+### `create_dir_all(path: string) -> () | struct{error_code: int, msg: string}`
 
-## str_from_utf8_lossy(string: string) -> string
-Converts array of bytes into string replacing any incorrect utf8 sequence with U+FFFD REPLACEMENT CHARACTER.
+Creates a directory and any missing parent directories.
 
-## to_lowercase(string: string) -> string
+### `rename(from: string, to: string) -> () | struct{error_code: int, msg: string}`
+
+Renames or moves a file or directory from `from` to `to`.
+
+## `std.io`
+
+### `print(var: any) -> ()`
+
+Prints a value to standard output followed by a newline.
+
+### `print_array(array: [any], sep: string) -> ()`
+
+Prints the array elements joined by `sep`, followed by a newline.
+
+### `cgetline() -> string | struct{error_code: int, msg: string}`
+
+Reads a line from standard input. The line-feed character is removed. Returns
+an error struct if reading fails.
+
+## `std.string`
+
+### `split(string: string, pat: string) -> [string]`
+
+Splits `string` at occurrences of `pat` and returns the pieces as an array.
+
+### `replace(string: string, from: string, to: string) -> string`
+
+Returns a copy of `string` with every occurrence of `from` replaced by `to`.
+
+### `contains(string: string, pat: string) -> bool`
+
+Returns whether `string` contains `pat`.
+
+### `starts_with(string: string, prefix: string) -> bool`
+
+Returns whether `string` starts with `prefix`.
+
+### `ends_with(string: string, suffix: string) -> bool`
+
+Returns whether `string` ends with `suffix`.
+
+### `chars(string: string) -> [string]`
+
+Returns an array containing one string per Unicode character.
+
+### `bytes(string: string) -> [int]`
+
+Returns the UTF-8 encoding of `string` as an array of byte values.
+
+### `str_from_utf8(array: [int]) -> string | ()`
+
+Converts byte values to a string. Returns `()` if the bytes are not valid
+UTF-8.
+
+### `str_from_utf8_lossy(array: [int]) -> string`
+
+Converts byte values to a string, replacing invalid UTF-8 sequences with the
+Unicode replacement character (`U+FFFD`).
+
+### `to_lowercase(string: string) -> string`
+
 Returns the lowercase equivalent of `string`.
 
-## to_uppercase(string: string) -> string
+### `to_uppercase(string: string) -> string`
+
 Returns the uppercase equivalent of `string`.
 
-## trim(string: string) -> string
-Returns a string with leading and trailing whitespace removed.
-
-## trim_start(string: string) -> string
-Returns a string with leading whitespace removed.
-
-## trim_end(string: string) -> string
-Returns a string with trailing whitespace removed.
-
-# math
-This part of the standard library contains common math functions and constants
-
-## MIN_INT: int
-Minimum value of int type
-
-## MAX_INT: int
-Maximum value of int type
-
-## E: float
-Euler's number
-
-## PI: float
-Pi constant
-
-## count_ones(int: int) -> int
-Returns the number of ones in `int`.
-
-## count_zeros(int: int) -> int
-Returns the number of zeros in `int`.
-
-## leading_zeros(int: int) -> int
-Returns the number of leading zeros in `int`.
-
-## trailing_zeros(int: int) -> int
-Returns the number of trailing zeros in `int`.
-
-## leading_ones(int: int) -> int
-Returns the number of leading ones in `int`.
-
-## trailing_ones(int: int) -> int
-Returns the number of trailing ones in `int`.
-
-## swap_bytes(int: int) -> int
-Reverses the byte order of the `int`.
-
-## reverse_bits(int: int) -> int
-Reverses the order of bits in int. The least significant bit becomes the most significant bit, second least-significant bit becomes second most-significant bit, etc.
-
-## ilog(num: int) -> int|()
-Returns the logarithm of `num` with respect to an arbitrary base, rounded down.
-
-Returns () if the number is negative or zero, or if the base is not at least 2.
-
-## ilog2(num: int) -> int|()
-Returns the base 2 logarithm of the number, rounded down.
-
-Returns () if the number is negative or zero.
-
-## ilog10(num: int) -> int|()
-Returns the base 10 logarithm of the number, rounded down.
-
-Returns () if the number is negative or zero.
-
-## floor(num: float) -> float
-Returns the largest integer less than or equal to `num`.
-
-## ceil(num: float) -> float
-Returns the smallest integer greater than or equal to `num`.
-
-## round(num: float) -> float
-Returns the nearest integer to `num`. If a value is half-way between two integers, round away from 0.0.
-
-## round_ties_even(num: float) -> float
-Returns the nearest integer to `num`. Rounds half-way cases to the number with an even least significant digit.
-
-## trunc(num: float) -> float
-Returns the integer part of num. This means that non-integer numbers are always truncated towards zero.
-
-## fract(num: float) -> float
-Returns the fractional part of `num`.
-
-## ln(num: float) -> float
-Returns natural logarithm of `num`.
-This returns NaN when `num` is negative, and negative infinity when `num` is zero.
-
-## log(num: float, base: float) -> float
-Returns the logarithm of `num` with respect to an arbitrary base.
-This returns NaN when `num` is negative, and negative infinity when `num` is zero.
-
-## log2(num: float) -> float
-Returns the base 2 logarithm of `num`.
-This returns NaN when `num` is negative, and negative infinity when `num` is zero.
-
-## log10(num: float) -> float
-Returns the base 10 logarithm of `num`.
-This returns NaN when `num` is negative, and negative infinity when `num` is zero.
-
-## sin(angle: float) -> float
-Computes the sine of `angle` (in radians).
-
-## cos(angle: float) -> float
-Computes the cos of `angle` (in radians).
-
-## tangent(angle: float) -> float
-Computes the tangent of `angle` (in radians).
-
-## asin(num: float) -> float
-Computes the arcsine of `num`. Return value is in radians in the range [-pi/2, pi/2] or NaN if `num` is outside the range [-1, 1].
-
-## acos(num: float) -> float
-Computes the arcosine of `num`. Return value is in radians in the range [-pi/2, pi/2] or NaN if `num` is outside the range [-1, 1].
-
-## atan(num: float) -> float
-Computes the arctangent of `num`. Return value is in radians in the range [-pi/2, pi/2].
-
-## atan(num1: float, num2: float) -> float
-Computes the four quadrant arctangent of `num1` (y) and `num2` (x) in radians.
-* x = 0, y = 0: 0
-* x >= 0: arctan(y/x) -> [-pi/2, pi/2]
-* y >= 0: arctan(y/x) + pi -> (pi/2, pi]
-* y < 0: arctan(y/x) - pi -> (-pi, -pi/2)
-
-## exp_m1(num: float) -> float
-Returns `E**(num) - 1` in a way that is accurate even if `num` is close to zero.
-
-## ln_1p(num: float) -> float
-Returns ln(1+num) more accurately than if the operations were performed separately.
-This returns NaN when `num < -1.0`, and negative infinity when `n == -1.0`.
-
-## sinh(num: float) -> float
-Hyperbolic sine function.
-
-## cosh(num: float) -> float
-Hyperbolic cosine function.
-
-## tanh(num: float) -> float
-Inverse hyperbolic tangent function.
-
-## asinh(num: float) -> float
-Inverse hyperbolic sine function.
-
-## acosh(num: float) -> float
-Inverse hyperbolic cosine function.
-
-## atanh(num: float) -> float
-Inverse hyperbolic tangent function.
-
-## is_nan(num: float) -> bool
-Returns `true` if `num` is NaN.
-
-## is_infinite(num: float) -> bool
-Returns `true` if `num` is positive infinity or negative infinity, and `false` otherwise.
-
-## is_finite(num: float) -> bool
-Returns `true` if `num` is neither infinite nor NaN.
-
-## is_subnormal(num: float) -> bool
-Returns `true` if `num` is [subnormal](https://en.wikipedia.org/wiki/Subnormal_number).
-
-## is_normal(num: float) -> bool
-Returns `true` if `num` is neither zero, infinite, [subnormal](https://en.wikipedia.org/wiki/Subnormal_number), or NaN.
-
-## is_sign_positive(num: float) -> bool
-Returns `true` if `num` has a positive sign, including `0.0`, NaNs with positive sign bit and positive infinity.
-
-## is_sign_negative(num: float) -> bool
-Returns `true` if `num` has a negative sign, including `-0.0`, NaNs with negative sign bit and negative infinity.
-
-## to_bits(num: float) -> int
-Raw transmutation from float to int.
-
-## to_bits(num: float) -> int
-Raw transmutation from float to int.
-
-# operators
-This part of the standard library contains some functions doing the same as built-in operators
-
-## bitand_reduce(iter: () -> (bool, int)) -> int
-The same as `iter$&`
-
-## bitor_reduce(iter: () -> (bool, int)) -> int
-The same as `iter$|`
-
-## all(iter: () -> (bool, bool)) -> bool
-The same as `iter$&&`
-
-## any(iter: () -> (bool, bool)) -> bool
-The same as `iter$||`
-
-## int_product(iter: () -> (bool, int)) -> int
-The same as `iter$*`
-
-## float_product(iter: () -> (bool, float)) -> float
-The same as `iter$*`
-
-## int_sum(iter: () -> (bool, int)) -> int
-The same as `iter$+`
-
-## float_sum(iter: () -> (bool, float)) -> float
-The same as `iter$+`
-
-## string_sum(iter: () -> (bool, string)) -> string
-The same as `iter$+`
-
-## reduce(iter: () -> (bool, any), initial_value: any, function: (any, any) -> any) -> any
-The same as `iter $initial_value function`
-
-## filter(iter: () -> (bool, any), predicate: (any) -> bool) -> () -> (bool, any)
-The same as `iter ? predicate`
+### `trim(string: string) -> string`
+
+Returns `string` with leading and trailing whitespace removed.
+
+### `trim_start(string: string) -> string`
+
+Returns `string` with leading whitespace removed.
+
+### `trim_end(string: string) -> string`
+
+Returns `string` with trailing whitespace removed.
+
+## `std.math`
+
+### Constants
+
+* `MIN_INT: int` — the minimum representable integer.
+* `MAX_INT: int` — the maximum representable integer.
+* `E: float` — Euler's number.
+* `PI: float` — pi.
+
+### Integer functions
+
+All integer arguments and results below are SimpleSL `int` values.
+
+* `count_ones(int: int) -> int` — counts the one bits in the integer.
+* `count_zeros(int: int) -> int` — counts the zero bits in the integer.
+* `leading_zeroes(int: int) -> int` — counts leading zero bits.
+* `trailing_zeroes(int: int) -> int` — counts trailing zero bits.
+* `leading_ones(int: int) -> int` — counts leading one bits.
+* `trailing_ones(int: int) -> int` — counts trailing one bits.
+* `swap_bytes(int: int) -> int` — reverses the integer's byte order.
+* `reverse_bits(int: int) -> int` — reverses all bits in the integer.
+* `ilog(num: int, base: int) -> int | ()` — returns the integer logarithm of
+  `num` to `base`, rounded down; returns `()` when the operation is undefined.
+* `ilog2(num: int) -> int | ()` — returns the base-2 integer logarithm, rounded
+  down, or `()` when undefined.
+* `ilog10(num: int) -> int | ()` — returns the base-10 integer logarithm,
+  rounded down, or `()` when undefined.
+
+### Floating-point functions
+
+* `floor(num: float) -> float` — rounds down to an integral value.
+* `ceil(num: float) -> float` — rounds up to an integral value.
+* `round(num: float) -> float` — rounds to the nearest integral value; halfway
+  cases round away from zero.
+* `round_ties_even(num: float) -> float` — rounds to the nearest integral
+  value; halfway cases round to an even value.
+* `trunc(num: float) -> float` — removes the fractional part, rounding toward
+  zero.
+* `fract(num: float) -> float` — returns the fractional part.
+* `ln(num: float) -> float` — natural logarithm.
+* `log(num: float, base: float) -> float` — logarithm to the specified base.
+* `log2(num: float) -> float` — base-2 logarithm.
+* `log10(num: float) -> float` — base-10 logarithm.
+* `sin(angle: float) -> float` — sine of `angle` in radians.
+* `cos(angle: float) -> float` — cosine of `angle` in radians.
+* `tan(angle: float) -> float` — tangent of `angle` in radians.
+* `asin(num: float) -> float` — arcsine in radians.
+* `acos(num: float) -> float` — arccosine in radians.
+* `atan(num: float) -> float` — arctangent in radians.
+* `atan2(num1: float, num2: float) -> float` — four-quadrant arctangent of
+  `num1` (y) and `num2` (x), in radians.
+* `exp_m1(num: float) -> float` — computes `e^num - 1` with extra accuracy for
+  values near zero.
+* `ln_1p(num: float) -> float` — computes `ln(1 + num)` with extra accuracy
+  for values near zero.
+* `sinh(num: float) -> float` — hyperbolic sine.
+* `cosh(num: float) -> float` — hyperbolic cosine.
+* `tanh(num: float) -> float` — hyperbolic tangent.
+* `asinh(num: float) -> float` — inverse hyperbolic sine.
+* `acosh(num: float) -> float` — inverse hyperbolic cosine.
+* `atanh(num: float) -> float` — inverse hyperbolic tangent.
+* `is_nan(num: float) -> bool` — whether `num` is NaN.
+* `is_infinite(num: float) -> bool` — whether `num` is positive or negative
+  infinity.
+* `is_finite(num: float) -> bool` — whether `num` is neither infinite nor NaN.
+* `is_normal(num: float) -> bool` — whether `num` is a normal floating-point
+  value.
+* `is_subnormal(num: float) -> bool` — whether `num` is subnormal.
+* `is_sign_positive(num: float) -> bool` — whether `num` has a positive sign
+  bit.
+* `is_sign_negative(num: float) -> bool` — whether `num` has a negative sign
+  bit.
+* `to_bits(num: float) -> int` — returns the bit representation of `num` as an
+  integer.
+* `from_bits(num: int) -> float` — constructs a float from its integer bit
+  representation.
+
+## `std.operators`
+
+These functions provide named forms of iterator operators and selected
+collection operations.
+
+### Iterator reductions
+
+* `bitand_reduce(iter: () -> (bool, int)) -> int` — equivalent to `iter $&`.
+* `bitor_reduce(iter: () -> (bool, int)) -> int` — equivalent to `iter $|`.
+* `all(iter: () -> (bool, bool)) -> bool` — equivalent to `iter $&&`.
+* `any(iter: () -> (bool, bool)) -> bool` — equivalent to `iter $||`.
+* `int_product(iter: () -> (bool, int)) -> int` — product of integer elements;
+  equivalent to `iter $*`.
+* `float_product(iter: () -> (bool, float)) -> float` — product of float
+  elements; equivalent to `iter $*`.
+* `int_sum(iter: () -> (bool, int)) -> int` — sum of integer elements;
+  equivalent to `iter $+`.
+* `float_sum(iter: () -> (bool, float)) -> float` — sum of float elements;
+  equivalent to `iter $+`.
+* `string_sum(iter: () -> (bool, string)) -> string` — concatenates string
+  elements; equivalent to `iter $+`.
+* `reduce(iter: () -> (bool, any), initial_value: any, function: (any, any) -> any) -> any`
+  — reduces the iterator using the supplied initial value and function;
+  equivalent to `iter $ initial_value function`.
+* `collect(iter: () -> (bool, any)) -> [any]` — collects iterator elements
+  into an array; equivalent to `iter $]`.
+* `filter(iter: () -> (bool, any), predicate: (any) -> bool) -> () -> (bool, any)`
+  — returns an iterator containing elements for which `predicate` is true;
+  equivalent to `iter ? predicate`.
+
+### Array, string, and value helpers
+
+* `slice(variable: [any] | string, start: int | (), end: int | (), step: int | ()) -> [any] | string`
+  — slices an array or string. Bounds and step are optional; strings are sliced
+  by Unicode character.
+* `array_repeat(value: any, len: int) -> [any]` — creates an array containing
+  `len` copies of `value`. A negative length is an execution error.
+* `at(variable: [any] | string, index: int) -> any` — gets an array element or
+  Unicode character at `index`. Negative indices count from the end; an invalid
+  index is an execution error.
+* `get_field(variable: struct, field: string) -> any | ()` — gets a struct
+  field, or returns `()` if the field does not exist.
+* `deref(variable: any) -> any` — returns the value inside a `mut`; other values
+  are returned unchanged.
