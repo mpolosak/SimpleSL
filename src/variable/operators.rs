@@ -1,4 +1,4 @@
-use std::ops::{Add, Sub};
+use std::ops::{Add, Mul, Sub};
 use crate::variable::{Array, Variable};
 
 impl Add for Variable{
@@ -28,6 +28,19 @@ impl Sub for Variable {
         }
     }
 }
+
+impl Mul for Variable {
+    type Output = Variable;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (Variable::Int(lhs), Variable::Int(rhs)) => lhs.wrapping_mul(rhs).into(),
+            (Variable::Float(lhs), Variable::Float(rhs)) => (lhs * rhs).into(),
+            (lhs, rhs) => panic!("Tried to do {lhs} * {rhs}"),
+        }
+    }
+}
+
 
 
 #[cfg(test)]
@@ -84,5 +97,32 @@ mod tests {
     #[should_panic]
     fn subtract_int_from_float() {
         let _ = Variable::Int(4) - Variable::Float(5.5);
+    }
+
+    #[test]
+    fn multiply_int_by_int() {
+        assert_eq!(Variable::Int(4) * Variable::Int(5), Variable::Int(20))
+    }
+
+    #[test]
+    fn multiply_float_by_float() {
+        assert_eq!(
+            Variable::Float(4.5) * Variable::Float(2.0),
+            Variable::Float(9.0)
+        )
+    }
+
+    #[test]
+    fn multiply_int_with_wrapping() {
+        assert_eq!(
+            Variable::Int(i64::MAX) * Variable::Int(2),
+            Variable::Int(-2)
+        )
+    }
+
+    #[test]
+    #[should_panic]
+    fn multiply_int_by_float() {
+        let _ = Variable::Int(4) * Variable::Float(5.5);
     }
 }
