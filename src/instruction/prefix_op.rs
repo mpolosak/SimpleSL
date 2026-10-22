@@ -49,13 +49,6 @@ impl UnaryMinus {
         Ok(UnaryMinus(instruction.instruction).into())
     }
 
-    pub fn calc(variable: Variable) -> Variable {
-        match variable {
-            Variable::Int(num) => num.wrapping_neg().into(),
-            Variable::Float(num) => Variable::Float(-num),
-            operand => panic!("Tried to - {operand}"),
-        }
-    }
 }
 
 impl BaseInstruction for UnaryMinus {}
@@ -63,7 +56,7 @@ impl BaseInstruction for UnaryMinus {}
 impl Exec for UnaryMinus {
     fn exec(&self, interpreter: &mut Interpreter) -> super::ExecResult {
         let variable = self.0.exec(interpreter)?;
-        Ok(Self::calc(variable))
+        Ok(-variable)
     }
 }
 
@@ -73,7 +66,7 @@ impl Recreate for UnaryMinus {
         let Some(variable) = instruction.downcast_ref::<Variable>() else {
             return Self(instruction).into();
         };
-        Self::calc(variable.clone()).into()
+        (-variable.clone()).into()
     }
 }
 

@@ -1,4 +1,4 @@
-use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Rem, Sub};
+use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Sub};
 use crate::variable::{Array, Variable};
 
 impl Add for Variable{
@@ -25,6 +25,18 @@ impl Sub for Variable {
             (Variable::Int(lhs), Variable::Int(rhs)) => lhs.wrapping_sub(rhs).into(),
             (Variable::Float(lhs), Variable::Float(rhs)) => (lhs - rhs).into(),
             (lhs, rhs) => panic!("Tried to do {lhs} - {rhs} which is impossible"),
+        }
+    }
+}
+
+impl Neg for Variable {
+    type Output = Variable;
+
+    fn neg(self) -> Self::Output {
+        match self {
+            Variable::Int(value) => value.wrapping_neg().into(),
+            Variable::Float(value) => (-value).into(),
+            operand => panic!("Tried to - {operand}"),
         }
     }
 }
@@ -156,6 +168,27 @@ mod tests {
     #[should_panic]
     fn subtract_int_from_float() {
         let _ = Variable::Int(4) - Variable::Float(5.5);
+    }
+
+    #[test]
+    fn negate_int() {
+        assert_eq!(-Variable::Int(5), Variable::Int(-5))
+    }
+
+    #[test]
+    fn negate_int_with_wrapping() {
+        assert_eq!(-Variable::Int(i64::MIN), Variable::Int(i64::MIN))
+    }
+
+    #[test]
+    fn negate_float() {
+        assert_eq!(-Variable::Float(4.5), Variable::Float(-4.5))
+    }
+
+    #[test]
+    #[should_panic]
+    fn negate_bool() {
+        let _ = -Variable::Bool(true);
     }
 
     #[test]
