@@ -1,4 +1,4 @@
-use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Rem, Sub};
+use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Not, Rem, Sub};
 use crate::variable::{Array, Variable};
 
 impl Add for Variable{
@@ -37,6 +37,18 @@ impl Neg for Variable {
             Variable::Int(value) => value.wrapping_neg().into(),
             Variable::Float(value) => (-value).into(),
             operand => panic!("Tried to - {operand}"),
+        }
+    }
+}
+
+impl Not for Variable {
+    type Output = Variable;
+
+    fn not(self) -> Self::Output {
+        match self {
+            Variable::Int(value) => (!value).into(),
+            Variable::Bool(value) => (!value).into(),
+            operand => panic!("Tried to ! {operand}"),
         }
     }
 }
@@ -189,6 +201,22 @@ mod tests {
     #[should_panic]
     fn negate_bool() {
         let _ = -Variable::Bool(true);
+    }
+
+    #[test]
+    fn not_int() {
+        assert_eq!(!Variable::Int(0b1010), Variable::Int(!0b1010))
+    }
+
+    #[test]
+    fn not_bool() {
+        assert_eq!(!Variable::Bool(true), Variable::Bool(false))
+    }
+
+    #[test]
+    #[should_panic]
+    fn not_float() {
+        let _ = !Variable::Float(4.5);
     }
 
     #[test]

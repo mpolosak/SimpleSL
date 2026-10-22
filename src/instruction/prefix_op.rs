@@ -98,13 +98,6 @@ impl Not {
         Ok(Not(instruction.instruction).into())
     }
 
-    fn calc(variable: Variable) -> Variable {
-        match variable {
-            Variable::Bool(var) => (!var).into(),
-            Variable::Int(num) => (!num).into(),
-            operand => panic!("Tried to {} {operand}", stringify!(op2)),
-        }
-    }
 }
 
 impl BaseInstruction for Not {}
@@ -112,7 +105,7 @@ impl BaseInstruction for Not {}
 impl Exec for Not {
     fn exec(&self, interpreter: &mut Interpreter) -> super::ExecResult {
         let variable = self.0.exec(interpreter)?;
-        Ok(Self::calc(variable))
+        Ok(!variable)
     }
 }
 
@@ -122,7 +115,7 @@ impl Recreate for Not {
         let Some(variable) = instruction.downcast_ref::<Variable>() else {
             return Self(instruction).into();
         };
-        Self::calc(variable.clone()).into()
+        (!variable.clone()).into()
     }
 }
 
