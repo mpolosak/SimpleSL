@@ -1,4 +1,4 @@
-use std::ops::Add;
+use std::ops::{Add, Sub};
 use crate::variable::{Array, Variable};
 
 impl Add for Variable{
@@ -16,6 +16,19 @@ impl Add for Variable{
         }
     }
 }
+
+impl Sub for Variable {
+    type Output = Variable;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (Variable::Int(lhs), Variable::Int(rhs)) => lhs.wrapping_sub(rhs).into(),
+            (Variable::Float(lhs), Variable::Float(rhs)) => (lhs - rhs).into(),
+            (lhs, rhs) => panic!("Tried to do {lhs} - {rhs} which is impossible"),
+        }
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -47,5 +60,29 @@ mod tests {
     #[should_panic]
     fn add_int_to_float() {
         let _ = Variable::Int(4) + Variable::Float(5.5);
+    }
+
+    #[test]
+    fn subtract_int_from_int() {
+        assert_eq!(Variable::Int(9) - Variable::Int(5), Variable::Int(4))
+    }
+
+    #[test]
+    fn subtract_float_from_float() {
+        assert_eq!(Variable::Float(9.5) - Variable::Float(5.0), Variable::Float(4.5))
+    }
+
+    #[test]
+    fn subtract_int_with_wrapping() {
+        assert_eq!(
+            Variable::Int(i64::MIN) - Variable::Int(1),
+            Variable::Int(i64::MAX)
+        )
+    }
+
+    #[test]
+    #[should_panic]
+    fn subtract_int_from_float() {
+        let _ = Variable::Int(4) - Variable::Float(5.5);
     }
 }

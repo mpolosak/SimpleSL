@@ -53,7 +53,7 @@ impl Exec for BinOperation {
         let lhs = self.lhs.exec(interpreter)?;
         let rhs = self.rhs.exec(interpreter)?;
         Ok(match self.op {
-            BinOperator::Subtract => subtract::exec(lhs, rhs),
+            BinOperator::Subtract => lhs - rhs,
             BinOperator::Multiply => multiply::exec(lhs, rhs),
             BinOperator::Divide => divide::exec(lhs, rhs)?,
             BinOperator::Modulo => modulo::exec(lhs, rhs)?,
@@ -71,7 +71,7 @@ impl Exec for BinOperation {
             BinOperator::RShift => rshift::exec(lhs, rhs)?,
             BinOperator::Filter => filter::exec(lhs, rhs)?,
             BinOperator::Map => map::exec(lhs, rhs)?,
-            BinOperator::AssignSubtract => assign::exec(lhs, rhs, subtract::exec),
+            BinOperator::AssignSubtract => assign::exec(lhs, rhs, |lhs, rhs| lhs - rhs),
             BinOperator::AssignMultiply => assign::exec(lhs, rhs, multiply::exec),
             BinOperator::AssignDivide => assign::try_exec(lhs, rhs, divide::exec)?,
             BinOperator::AssignModulo => assign::try_exec(lhs, rhs, modulo::exec)?,
