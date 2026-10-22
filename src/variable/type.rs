@@ -51,6 +51,10 @@ lazy_static! {
     static ref EMPTY_STRUCT_TYPE: Type = var_type!(struct{});
 }
 
+lazy_static! {
+    static ref ARRAY_TYPE: Type = var_type!([]);
+}
+
 impl Type {
     #[must_use]
     pub fn matches(&self, other: &Self) -> bool {
@@ -261,6 +265,11 @@ impl Type {
 
     pub fn is_struct(&self) -> bool {
         self.matches(&EMPTY_STRUCT_TYPE)
+    }
+
+    #[must_use]
+    pub fn is_array(&self) -> bool {
+        self.matches(&ARRAY_TYPE)
     }
 
     pub fn tuple_len(&self) -> Option<usize> {
