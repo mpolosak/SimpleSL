@@ -1,328 +1,239 @@
 # Operators
+
 ## Precedence
-| Precedence | Operator     | Description                 | Associativity |
-| ---------- | ------------ | --------------------------- | ------------- |
-| 1          | []           | Array/string indexing       | Left-to-right |
-|            | ? type       | Array filtering by type     |               |
-|            | ()           | Function call               |               |
-| 2          | !            | NOT                         | Right-to-left |
-|            | -            | Unary minus                 |               |
-|            | *            | Indirection                 |               |
-| 3          | @            | Map                         | Left-to-right |
-|            | ?            | Array filtering             |               |
-|            | \\           | Array partition             |               |
-|            | $ expression | Array reducing              |               |
-|            | $+           | Array sum                   |               |
-|            | $*           | Array product               |               |
-|            | $&&          | Logical and reduce(all)     |               |
-|            | $\|\|        | Logical or reduce (any)     |               |
-|            | $&           | Bitwise and reduce          |               |
-|            | $\|          | Bitwise or reduce           |               |
-|            | ~            | Iterate                     |               |
-| 4          | **           | Exponentiation              |               |
-| 5          | *            | Multiplication              |               |
-|            | /            | Division                    |               |
-|            | %            | Remainder                   |               |
-| 6          | +            | Addition                    |               |
-|            | -            | Subtraction                 |               |
-| 7          | <<           | Bitwise left shift          |               |
-|            | >>           | Bitwise right shift         |               |
-| 8          | &            | Bitwise AND                 |               |
-| 9          | ^            | XOR                         |               |
-| 10         | \|           | Bitwise OR                  |               |
-| 11         | ==           | Equal                       |               |
-|            | !=           | Not equal                   |               |
-|            | <            | Less                        |               |
-|            | <=           | Less or equal               |               |
-|            | >            | Greater                     |               |
-|            | >=           | Greater or equal            |               |
-| 12         | &&           | Short-circuting logical AND |               |
-| 13         | \|\|         | Short-circuting logical OR  |               |
-| 14         | =            | Assignment                  | Right-to-left |
-|            | +=           | Addition and assignment     |               |
-|            | -=           | Subtraction and assign      |               |
-|            | *=           | Multiplication and assignment
-|            | /=           | Division and assignment     |               |
-|            | %=           | Remainder and assignment    |               |
-|            | **=          | Exponentiation and assignment
-|            | &=           | Bitwise AND and assignment  |               |
-|            | |=           | Bitwise OR and assignment   |               |
-|            | ^=           | Bitwise XOR and assignment  |               |
-|            | <<=          | Left shift and assignment   |               |
-|            | >>=          | Right shift and assignment  |               |
-|            | mut type?    | Mut creation                | Left-to-right |
 
-## [] - Array/string indexing
+Operators are listed from highest precedence (evaluated first) to lowest.
+Operators on the same row have equal precedence. Infix operators are
+left-associative unless noted otherwise; assignments are right-associative.
+
+| Precedence | Operators | Description |
+| ---------- | --------- | ----------- |
+| 1 | `[]`, `[:]`, `? type`, `()`, `.field`, `.index` | Indexing, slicing, type filtering, calls, and access |
+| 2 | `!`, unary `-`, unary `*` | Logical/bitwise NOT, negation, dereference |
+| 3 | `@`, `?`, `\`, `$ expression`, `$+`, `$*`, `$&&`, `$||`, `$&`, `$|`, `~` | Iterator operations |
+| 4 | `**` | Exponentiation |
+| 5 | `*`, `/`, `%` | Multiplication, division, remainder |
+| 6 | `+`, binary `-` | Addition, concatenation, subtraction |
+| 7 | `<<`, `>>` | Bit shifts |
+| 8 | `&` | Bitwise AND |
+| 9 | `^` | Bitwise XOR |
+| 10 | `\|` | Bitwise OR |
+| 11 | `==`, `!=`, `<`, `<=`, `>`, `>=` | Equality and comparison |
+| 12 | `&&` | Short-circuiting logical AND |
+| 13 | `\|\|` | Short-circuiting logical OR |
+| 14 | `=`, `+=`, `-=`, `*=`, `/=`, `%=`, `**=`, `<<=`, `>>=`, `&=`, `\|=`, `^=`, `mut` | Assignment and mutable-value creation |
+
+## Postfix operators and access
+
+### Indexing: `value[index]`
+
+Indexes arrays, strings, and tuples using an `int`. Indices are zero-based;
+negative indices count backward from the end. A string index returns a
+one-character string. An index outside the value's bounds is an error.
+
+### Slicing: `value[start:end:step]`
+
+Slices an array or string. Each of `start`, `end`, and `step` may be omitted;
+strings are sliced by Unicode character. For example, `values[::-1]` reverses
+an array.
+
+### Type filtering: `iterator ? type`
+
+Creates an iterator that yields only values matching `type`.
+
+### Function call: `function(arguments)`
+
+Calls a function with the supplied arguments.
+
+### Tuple and struct access: `tuple.index`, `struct.field`
+
+Reads a tuple element by its numeric index or a struct field by its name.
+
+### Iterator postfix operators
+
+Postfix iterator operators take an iterator, which has type
+`() -> (bool, T)`. Each call returns `(true, value)` while an element remains
+and `(false, value)` when it is exhausted.
+
+* `iterator ~` — creates an iterator from an array.
+* `iterator $]` — collects iterator elements into an array.
+* `iterator $+` — sums integer or float elements, or concatenates string
+  elements.
+* `iterator $*` — multiplies integer or float elements.
+* `iterator $&&` — returns whether all boolean elements are true.
+* `iterator $||` — returns whether any boolean element is true.
+* `iterator $&` — bitwise-AND reduction of integer elements.
+* `iterator $|` — bitwise-OR reduction of integer elements.
+
+The reductions require an iterator with the element type indicated above.
+`$+` and `$*` require a single supported element type, not a union of types.
+
+## Prefix operators
+
+### `!value` — NOT
+
+| Operand | Result | Behavior |
+| ------- | ------ | -------- |
+| `bool` | `bool` | Logical negation |
+| `int` | `int` | Bitwise complement |
+
+### `-value` — unary minus
+
+Accepts `int` or `float` and returns the same type. Integer negation wraps;
+therefore `-MIN_INT == MIN_INT`.
+
+### `*value` — dereference
+
+Reads and returns the value held by a `mut T`, producing a value of type `T`.
+
+## Iterator infix operators
+
+### `iterator @ mapper` — map
+
+| Left operand | Right operand | Result |
+| ------------ | ------------- | ------ |
+| `() -> (bool, T)` | `(T) -> S` | `() -> (bool, S)` |
+
+Creates a lazy iterator that applies `mapper` to each yielded value.
+
+### `iterator ? predicate` — filter
+
+| Left operand | Right operand | Result |
+| ------------ | ------------- | ------ |
+| `() -> (bool, T)` | `(T) -> bool` | `() -> (bool, T)` |
+
+Creates a lazy iterator that yields only values for which `predicate` returns
+`true`.
+
+### `iterator \ predicate` — partition
+
+| Left operand | Right operand | Result |
+| ------------ | ------------- | ------ |
+| `() -> (bool, T)` | `(T) -> bool` | `([T], [T])` |
+
+Consumes the iterator and returns a tuple of arrays: the first contains values
+for which `predicate` is true; the second contains all other values.
+
+### `iterator $ initial_value function` — reduce
+
+| Iterator | Initial value | Reducer | Result |
+| -------- | ------------- | ------- | ------ |
+| `() -> (bool, T)` | `S` | `(A, T) -> B` | `A \| T \| B` |
+
+Reduces the iterator by applying `function(accumulator, current_value)` to each
+element, starting with `initial_value`. The reducer must accept the possible
+accumulator types and the iterator element type.
+
+## Arithmetic operators
+
+### `**` — exponentiation
+
+| Left | Right | Result |
+| ---- | ----- | ------ |
+| `int` | `int` | `int` |
+| `float` | `float` | `float` |
+
+Integer exponents must be nonnegative. Integer arithmetic wraps on overflow.
+
+### `*` — multiplication
+
+| Left | Right | Result |
+| ---- | ----- | ------ |
+| `int` | `int` | `int` |
+| `float` | `float` | `float` |
+
+Integer arithmetic wraps on overflow.
+
+### `/` — division
+
+| Left | Right | Result |
+| ---- | ----- | ------ |
+| `int` | `int` | `int` |
+| `float` | `float` | `float` |
+
+Integer division truncates toward zero. Integer division by zero is an error;
+`MIN_INT / -1 == MIN_INT` due to wrapping.
+
+### `%` — remainder
+
+Accepts two integers and returns an integer. A zero divisor is an error;
+`MIN_INT % -1 == 0`.
+
+### `+` — addition and concatenation
+
+| Left | Right | Result |
+| ---- | ----- | ------ |
+| `int` | `int` | `int` |
+| `float` | `float` | `float` |
+| `string` | `string` | `string` |
+| `[T]` | `[S]` | `[T \| S]` |
+
+Integer addition wraps on overflow. Strings are concatenated, and arrays are
+concatenated.
+
+### `-` — subtraction
+
+Accepts two integers or two floats and returns the same type. Integer
+subtraction wraps on overflow.
+
+## Bitwise operators
+
+### `<<`, `>>` — shifts
+
+Accept two integers and return an integer. `<<` shifts left; `>>` shifts right
+with sign extension. Shift counts wrap modulo 64, including negative counts.
+
+### `&`, `^`, `|` — bitwise AND, XOR, and OR
+
+Each operator accepts two integers or two booleans and returns the same type.
+For booleans, these are non-short-circuiting logical operations.
+
+## Comparisons
+
+### `==`, `!=` — equality and inequality
+
+Accept values of any type and return a boolean indicating whether the values
+are equal or unequal.
+
+### `<`, `<=`, `>`, `>=` — ordering comparisons
+
+Accept two integers or two floats of the same type and return a boolean.
+
+## Logical operators
+
+### `&&` — logical AND
+
+Accepts two booleans and returns true only when both operands are true. The
+right operand is evaluated only if the left operand is true.
+
+### `||` — logical OR
+
+Accepts two booleans and returns true when either operand is true. The right
+operand is evaluated only if the left operand is false.
+
+## Assignment operators
+
+Assignment operators update a mutable value, written `*value` when reading and
+`value += expression` (for example) when assigning.
+
+* `value = expression` — assign the expression's value.
+* `+=`, `-=`, `*=`, `/=`, `%=`, `**=`, `<<=`, `>>=`, `&=`, `|=`, `^=` — apply
+  the corresponding operator and store the result.
+
+The operation must be valid for the mutable value's type and the expression.
+
+## Mutable values
+
+```simplesl
+mut value
+mut type value
 ```
-array/string [index]
+
+Creates a mutable container holding `value`. The optional type annotation
+checks that the initial value matches `type`. For example:
+
+```simplesl
+count := mut int 0
+count += 1
+*count
 ```
-Index must be of type int. Indexing is 0-based. Indexing with negative values allow accesing items from end.
-Indexing of a string returns a string containing an UTF-8 character on the given position. 
--len <= index < len
-
-## ? type - Filter by type
-```
-iterator ? type
-```
-Creates iterator returning only elements matching given type
-
-## () - Function call
-```
-function (arguments)
-```
-Calls the function with given arguments.
-
-## ! - NOT
-| operand       | result          | description                              |
-| ------------- | --------------- | ---------------------------------------- |
-| bool          | bool            | Negation of value                        |
-| int           | int             | Negation of all bits                     |
-
-## - - Unary minus
-| operand      | result       |
-| ------------ | ------------ |
-| int \| float | int\|float   |
-Additive inverse
-`-MIN_INT == MIN_INT`
-
-## * - Indirection
-| operand | result | description |
-| ------- | ------ | ------------|
-| mut T   | T      | Returns value contained in mut
-
-## @ - Map
-| lhs             | rhs             | result          |
-| --------------- | ----------------| --------------- |
-| () -> (bool, T) | (value: T) -> S | () -> (bool, S) |
-
-## ? - Filter
-| lhs             | rhs                            | result          |
-| --------------- | ------------------------------ | --------------- |
-| () -> (bool, T) | (value: T) -> bool             | () -> (bool, T) |
-
-Creates iterator returning only this elements of iterator on left for which function returned true
-
-## \ - Partition
-| lhs             | rhs                            | result     |
-| --------------- | ------------------------------ | ---------- |
-| () -> (bool, T) | (value: T) -> bool             | ([T], [T]) |
-
-Returns tuple containing two arrays. First array contains all elements for which function returned
-true, second array contains all other elements.
-
-## $ - Reduce
-```
-iterator $ initial_value function
-```
-
-| lhs             | initial value | rhs                            | result  |
-| --------------- | --------------| ------------------------------ | ------- |
-| () -> (bool, T) | S             | (acc: T \| U, current: S) -> U | T \| U  |
-
-## $+ - Sum
-```
-iterator $+
-```
-| lhs                  | result  |
-| -------------------- | ------- |
-| () -> (bool, int)    | int     |
-| () -> (bool, float)  | float   |
-| () -> (bool, string) | string  |
-
-Calculates sum of all elements of iterator.
-
-## $* - Product
-```
-iterator $*
-```
-| lhs                 | result  |
-| ------------------- | ------- |
-| () -> (bool, int)   | int     |
-| () -> (bool, float) | float   |
-
-Calculates product of all elements of iterator.
-
-## $&& - Logical and reduce (all)
-```
-iterator $&&
-```
-| lhs                | result |
-| ------------------ | ------ |
-| () -> (bool, bool) | bool   |
-
-Test if every element of iterator function is true
-
-## $|| - Logical and reduce (any)
-```
-iterator $||
-```
-| lhs                | result |
-| ------------------ | ------ |
-| () -> (bool, bool) | bool   |
-
-Test if any element of iterator function is true
-
-## $& - Bitwise and reduce
-```
-iterator $&
-```
-| lhs               | result  |
-| ----------------- | ------- |
-| () -> (bool, int) | int     |
-
-Equivalent of:
-```
-iterator $!0 (acc: int, curr: int) -> int {return acc & curr}
-```
-
-## $| - Bitwise or reduce
-```
-iterator $|
-```
-| lhs               | result  |
-| ----------------- | ------- |
-| () -> (bool, int) | int     |
-
-Equivalent of:
-```
-iterator $0 (acc: int, curr: int) -> int {return acc | curr}
-```
-
-## ~ - Iterate
-```
-iterator $|
-```
-| lhs | result          |
-| --- | --------------- |
-| [T] | () -> (bool, T) |
-Create iterator over elements of array
-
-## ** - Exponentiation
-| lhs     | rhs     | result     | comment     |
-| ------- | ------- | ---------- | ------------|
-| int     | int     | int        | rhs cannot be negative
-| float   | float   | float      |
-lhs to the power of rhs
-## * - Multiplication
-| lhs     | rhs     | result     | comment |
-| ------- | ------- | ---------- | ------- |
-| int     | int     | int        | wraps around boundary of the type
-| float   | float   | float      |
-
-## / - Division
-| lhs     | rhs     | result     | comment |
-| ------- | ------- | ---------- | ------- |
-| int     | int     | int        | MIN_INT / -1 == MIN_INT
-| float   | float   | float      |
-
-## % - Remainder
-| lhs     | rhs     | result     |
-| ------- | ------- | ---------- |
-| int     | int     | int        |
-
-lhs % rhs  
-`MIN_INT % -1 == 0`
-
-## + - Addition/Concatenation
-| lhs      | rhs      | result     | description |
-| -------- | -------- | ---------- | ------------|
-| int      | int      | int        | lhs + rhs, wraps around boundary of the type  |
-| float    | float    | float      | lhs + rhs   |
-| [T]      | [S]      | [T\|S]     | Array concatenation
-| string   | string   | string     | String concatenation
-
-## - - Subtration
-| lhs     | rhs     | result     | comment |
-| ------- | ------- | ---------- | ------- |
-| int     | int     | int        | wraps around boundary of the type
-| float   | float   | float      |
-
-## << - Bitwise left shift
-| lhs     | rhs     | result     |
-| ------- | ------- | ---------- |
-| int     | int     | int        |
-Shift lhs rhs bits to left
-
-## >> - Bitwise right shift
-| lhs     | rhs     | result     |
-| ------- | ------- | ---------- |
-| int     | int     | int        |
-Shift lhs rhs bits to right
-
-## & - Bitwise AND
-| lhs     | rhs     | result     |
-| ------- | ------- | ---------- |
-| int     | int     | int        |
-| bool    | bool    | bool       | 
-
-## ^ - XOR
-| lhs     | rhs     | result     |
-| ------- | ------- | ---------- |
-| int     | int     | int        |
-| bool    | bool    | bool       |
-
-## | - Bitwise OR
-| lhs     | rhs     | result     |
-| ------- | ------- | ---------- | description |
-| int     | int     | int        |
-| bool    | bool    | bool       |
-
-
-## - == Equal
-Returns true if the element on the right is equal to the element on the left, false - otherwise
-
-## - != Not equal
-Returns true if the element on the right is not equal to the element on the left, false - otherwise
-
-## < - Less
-| lhs     | rhs     | result   |
-| ------- | ------- | -------- |
-| int     | int     | bool     | 
-| float   | float   | bool     |
-Returns true if the element on the left is less than the element on the right, false - otherwise
-
-## <= - Less or equal
-| lhs     | rhs     | result   |
-| ------- | ------- | -------- |
-| int     | int     | bool     | 
-| float   | float   | bool     |
-Returns true if the element on the left is less than or equal to the element on the right, false - otherwise
-
-## > - Greater
-| lhs     | rhs     | result   |
-| ------- | ------- | -------- |
-| int     | int     | bool     |
-| float   | float   | bool     |
-Returns true if the element on the left is greater than the element on the right, false - otherwise
-
-## >= - Greater or equal
-| lhs     | rhs     | result   |
-| ------- | ------- | -------- |
-| int     | int     | bool     |
-| float   | float   | bool     |
-Returns true if the element on the left is greater than or equal to the element on the right, false - otherwise
-
-## && - Logical AND 
-| lhs     | rhs     | result     | description |
-| ------- | ------- | ---------- | ----------- |
-| bool    | bool    | bool       | true if both lhs and rhs are true, false - otherwise
-
-## || - Logical OR
-| lhs     | rhs     | result     | description |
-| ------- | ------- | ---------- | ----------- |
-| bool    | bool    | bool       | false if both lhs and rhs are false, true - otherwise
-
-## = - Assign
-| lhs        | rhs | result | description |
-| ---------- | --- | ------ | ----------- |
-| mut (T\|S) | T   | T      | assign value on right to mut on left returns value on right
-
-## mut type - Mut creation
-|```
-mut type? value
-```
-Creates mutable container holding given value.
-| type | value | result   |
-| ---- | ----- | -------- |
-| T\|S | T     | mut T\|S |
-| none | T     | mut T    |
