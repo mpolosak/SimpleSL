@@ -59,6 +59,7 @@ if value: int = get_value(); value > 0 {
 ```simplesl
 match expression {
     value => body,
+    value if condition; condition => guarded_body,
     value1, value2 => body,
     name: type => body,
     => default_body,
@@ -67,9 +68,12 @@ match expression {
 
 Match arms are tried in order. Value arms compare against the expression;
 comma-separated values share a body. A type pattern may bind the matched value
-to a name. The final empty pattern (`=>`) matches any value. The arms must cover
-every possible type of the expression; use a final empty pattern when needed.
-Each body can be a block, a `return`, or an expression.
+to a name. An optional `if` guard accepts a condition chain like `if` statements;
+conditions run in order and can use names bound by the pattern or earlier
+conditions. The final empty pattern (`=>`) matches any value. The arms must
+cover every possible type of the expression; guarded arms do not count toward
+coverage, so use a final empty pattern when needed. Each body can be a block, a
+`return`, or an expression.
 
 ## Variable declaration
 

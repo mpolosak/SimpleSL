@@ -186,7 +186,8 @@ condition_chain      =  { condition ~ (";" ~ condition)* }
 if                   =  { ifkw ~ condition_chain ~ block ~ else? }
   else               = _{ elsekw ~ (if | block) }
 match                =  { "match" ~ expr ~ "{" ~ match_arm* ~ "}" }
-  match_arm          =  { match_pattern ~ "=>" ~ body ~ "," }
+  match_arm          =  { match_pattern ~ match_guard? ~ "=>" ~ body ~ "," }
+  match_guard        =  { ifkw ~ condition_chain }
   match_pattern      = _{ pattern | values | other }
   values             =  { (expr ~ ("," ~ expr)*) }
   other              =  { "" }

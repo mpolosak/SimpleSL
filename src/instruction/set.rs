@@ -440,4 +440,80 @@ mod tests {
         Code::parse(&Interpreter::without_stdlib(), script)
             .and_then(|code| code.exec().map_err(Error::from))
     }
+
+    #[test]
+    fn match_guard_can_use_pattern_binding() {
+        assert_eq!(
+            parse_and_exec(
+                "match 7 {
+                    value: int if value > 5 => value,
+                    => -1,
+                }"
+            ),
+            Ok(Variable::Int(7))
+        );
+    }
+
+    #[test]
+    fn match_guard_falls_through_when_false() {
+        assert_eq!(
+            parse_and_exec(
+                "match 3 {
+                    value: int if value > 5 => value,
+                    => -1,
+                }"
+            ),
+            Ok(Variable::Int(-1))
+        );
+    }
+
+    #[test]
+    fn match_guard_supports_condition_chains_and_bindings() {
+        assert_eq!(
+            parse_and_exec(
+                "match 7 {
+                    value: int if positive: bool = value > 0; positive && value < 10 => value,
+                    => -1,
+                }"
+            ),
+            Ok(Variable::Int(7))
+        );
+    }
+
+    #[test]
+    fn match_guard_condition_chain_short_circuits() {
+        assert_eq!(
+            parse_and_exec(
+                "match 0 {
+                    value: int if positive: bool = value > 0; positive && 1 / value > 0 => value,
+                    => -1,
+                }"
+            ),
+            Ok(Variable::Int(-1))
+        );
+    }
+
+    #[test]
+    fn guarded_match_arm_does_not_cover_type() {
+        assert_eq!(
+            Code::parse(
+                &Interpreter::without_stdlib(),
+                "match 1 { value: int if true => value, }"
+            )
+            .map(|_| ()),
+            Err(Error::MatchNotCovered)
+        );
+    }
+
+    #[test]
+    fn match_guard_must_be_boolean() {
+        assert_eq!(
+            Code::parse(
+                &Interpreter::without_stdlib(),
+                "match 1 { value: int if value => value, => 0, }"
+            )
+            .map(|_| ()),
+            Err(Error::WrongCondition("value".into(), Type::Int))
+        );
+    }
 }

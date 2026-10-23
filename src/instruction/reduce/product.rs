@@ -61,6 +61,7 @@ fn create_match(iterator: Instruction, types: MultiType) -> Instruction {
                     iter.clone(),
                     var_type!(() -> (bool, int)),
                 )),
+                guard: None,
                 instruction: {
                     let function = Variable::from(INT_PRODUCT).into();
                     let args = Tuple {
@@ -81,6 +82,7 @@ fn create_match(iterator: Instruction, types: MultiType) -> Instruction {
                     "iter".into(),
                     var_type!(() -> (bool, float)),
                 )),
+                guard: None,
                 instruction: {
                     let function = Variable::from(FLOAT_PRODUCT).into();
                     let args = Tuple {
