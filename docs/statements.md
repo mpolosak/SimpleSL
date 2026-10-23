@@ -22,6 +22,21 @@ return expression
 
 Return from the current function. A bare `return` returns `()`.
 
+## For
+
+```simplesl
+for item in iterator {
+    statements
+}
+
+for (name, age) in people~ {
+    use(name, age)
+}
+```
+
+The loop pattern is matched against each item. Items that do not match are
+skipped; names bound by a matching pattern are available in the loop body.
+
 ## If
 
 ```simplesl
