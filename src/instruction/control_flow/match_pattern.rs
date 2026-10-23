@@ -43,7 +43,7 @@ impl MatchPattern {
     pub fn is_covering_type(&self, checked_type: &Type) -> bool {
         match self {
             MatchPattern::Pattern(pattern) => {
-                if matches!(&pattern.destruct_pattern, DestructPattern::Array(_)) {
+                if matches!(&pattern.destruct_pattern, DestructPattern::Array { .. }) {
                     false
                 } else {
                     pattern.is_matched(checked_type)

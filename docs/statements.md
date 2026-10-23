@@ -92,12 +92,17 @@ alias:
 struct{name, age: years} := person
 ```
 
-Array patterns bind each element by position and must match the array's exact
-length. They require an `else` branch because an array's length is not part of
-its type:
+Array patterns bind elements by position and require an `else` branch because
+an array's length is not part of its type. A trailing `..name` captures the
+remaining elements into a new array; without it, the pattern must match the
+array's exact length:
 
 ```simplesl
 [first, second] = values else {
+    return default_value
+}
+
+[first, ..rest] = values else {
     return default_value
 }
 ```

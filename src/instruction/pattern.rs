@@ -6,7 +6,7 @@ use crate::{
         pattern::destruct_pattern::DestructPattern,
     },
     interpreter::VariableMap,
-    variable::{Type, Typed, Variable},
+    variable::{Array, Type, Typed, Variable},
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
@@ -61,7 +61,7 @@ impl Pattern {
             DestructPattern::Struct(fields) => {
                 struct_pattern_matches(fields, &self.var_type, var_type)
             }
-            DestructPattern::Array(_) => array_pattern_matches(&self.var_type, var_type),
+            DestructPattern::Array { .. } => array_pattern_matches(&self.var_type, var_type),
             _ => var_type.matches(&self.var_type),
         }
     }
@@ -69,10 +69,14 @@ impl Pattern {
     pub fn matches_variable(&self, variable: &Variable) -> bool {
         self.is_matched(&variable.as_type())
             && match (&self.destruct_pattern, variable) {
-                (DestructPattern::Array(idents), Variable::Array(array)) => {
-                    idents.len() == array.len()
+                (DestructPattern::Array { items, rest }, Variable::Array(array)) => {
+                    if rest.is_some() {
+                        array.len() >= items.len()
+                    } else {
+                        items.len() == array.len()
+                    }
                 }
-                (DestructPattern::Array(_), _) => false,
+                (DestructPattern::Array { .. }, _) => false,
                 _ => true,
             }
     }
@@ -88,10 +92,16 @@ impl Pattern {
                     local_variables.insert(ident, LocalVariable::Other(var_type));
                 }
             }
-            DestructPattern::Array(idents) => {
+            DestructPattern::Array { items, rest } => {
                 let element_type = self.var_type.element_type().unwrap_or(Type::Any);
-                for ident in idents.iter().cloned() {
+                for ident in items.iter().cloned() {
                     local_variables.insert(ident, LocalVariable::Other(element_type.clone()));
+                }
+                if let Some(rest) = rest {
+                    local_variables.insert(
+                        rest.clone(),
+                        LocalVariable::Other(Type::Array(element_type.into())),
+                    );
                 }
             }
             DestructPattern::Struct(fields) => {
@@ -114,10 +124,20 @@ impl Pattern {
                     interpreter.insert(ident, var);
                 }
             }
-            DestructPattern::Array(idents) => {
+            DestructPattern::Array { items, rest } => {
                 let array = variable.into_array().unwrap();
-                for (ident, var) in idents.iter().cloned().zip(array.iter().cloned()) {
+                for (ident, var) in items.iter().cloned().zip(array.iter().cloned()) {
                     interpreter.insert(ident, var);
+                }
+                if let Some(rest) = rest {
+                    interpreter.insert(
+                        rest.clone(),
+                        Array::new_with_type(
+                            array.element_type().clone(),
+                            array[items.len()..].to_vec().into(),
+                        )
+                        .into(),
+                    );
                 }
             }
             DestructPattern::Struct(fields) => {
@@ -140,10 +160,20 @@ impl Pattern {
                     vm.insert(ident, var);
                 }
             }
-            DestructPattern::Array(idents) => {
+            DestructPattern::Array { items, rest } => {
                 let array = variable.into_array().unwrap();
-                for (ident, var) in idents.iter().cloned().zip(array.iter().cloned()) {
+                for (ident, var) in items.iter().cloned().zip(array.iter().cloned()) {
                     vm.insert(ident, var);
+                }
+                if let Some(rest) = rest {
+                    vm.insert(
+                        rest.clone(),
+                        Array::new_with_type(
+                            array.element_type().clone(),
+                            array[items.len()..].to_vec().into(),
+                        )
+                        .into(),
+                    );
                 }
             }
             DestructPattern::Struct(fields) => {
@@ -166,10 +196,13 @@ impl Pattern {
                     tm.insert(ident, var);
                 }
             }
-            DestructPattern::Array(idents) => {
+            DestructPattern::Array { items, rest } => {
                 let element_type = self.var_type.element_type().unwrap_or(Type::Any);
-                for ident in idents.iter().cloned() {
+                for ident in items.iter().cloned() {
                     tm.insert(ident, element_type.clone());
+                }
+                if let Some(rest) = rest {
+                    tm.insert(rest.clone(), Type::Array(element_type.into()));
                 }
             }
             DestructPattern::Struct(fields) => {

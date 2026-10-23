@@ -8,7 +8,10 @@ pub enum DestructPattern {
     Ident(Arc<str>),
     Tuple(Arc<[Arc<str>]>),
     Struct(Arc<[(Arc<str>, Arc<str>)]>),
-    Array(Arc<[Arc<str>]>),
+    Array {
+        items: Arc<[Arc<str>]>,
+        rest: Option<Arc<str>>,
+    },
 }
 
 impl DestructPattern {
@@ -25,12 +28,26 @@ impl DestructPattern {
                 Self::Tuple(idents)
             }
             Rule::destruct_array => {
-                let idents = pair
-                    .into_inner()
-                    .map(|p| p.as_str())
-                    .map(Arc::<str>::from)
-                    .collect();
-                Self::Array(idents)
+                let mut items = Arc::from([]);
+                let mut rest = None;
+                for part in pair.into_inner() {
+                    match part.as_rule() {
+                        Rule::destruct_array_items => {
+                            items = part
+                                .into_inner()
+                                .map(|p| Arc::<str>::from(p.as_str()))
+                                .collect();
+                        }
+                        Rule::destruct_array_rest => {
+                            rest = part
+                                .into_inner()
+                                .next()
+                                .map(|p| Arc::<str>::from(p.as_str()));
+                        }
+                        rule => unexpected!(rule),
+                    }
+                }
+                Self::Array { items, rest }
             }
             Rule::destruct_struct => {
                 let fields = pair
@@ -58,7 +75,7 @@ impl Typed for DestructPattern {
             DestructPattern::Tuple(items) => {
                 Type::Tuple(repeat_n(Type::Any, items.len()).collect())
             }
-            DestructPattern::Array(_) => Type::Array(Type::Any.into()),
+            DestructPattern::Array { .. } => Type::Array(Type::Any.into()),
             DestructPattern::Struct(fields) => Type::Struct(StructType::from(
                 fields
                     .iter()

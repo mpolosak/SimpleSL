@@ -23,7 +23,8 @@ impl Set {
     pub fn create(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<Self, Error> {
         let is_declaration = pair.as_rule() == Rule::set;
         let (set, error) = Self::new(pair, local_variables)?;
-        if is_declaration && matches!(&set.pattern.destruct_pattern, DestructPattern::Array(_)) {
+        if is_declaration && matches!(&set.pattern.destruct_pattern, DestructPattern::Array { .. })
+        {
             return Err(Error::ArrayPatternRequiresElse);
         }
         if !set.pattern.is_matched(&set.instruction.return_type()) {
@@ -230,7 +231,10 @@ impl ReturnType for ConditionSet {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Code, Error, Interpreter, variable::Variable};
+    use crate::{
+        Code, Error, Interpreter,
+        variable::{Array, Type, Variable},
+    };
 
     #[test]
     fn destructures_when_pattern_matches() {
@@ -344,6 +348,48 @@ mod tests {
     }
 
     #[test]
+    fn captures_array_rest_after_prefix() {
+        assert_eq!(
+            parse_and_exec(
+                "tail := (values: [int]) -> [int] {
+                    [first, ..rest] = values else { return [] }
+                    return rest
+                }
+                tail([1, 2, 3])"
+            ),
+            Ok(Variable::from([2.into(), 3.into()]))
+        );
+    }
+
+    #[test]
+    fn captures_empty_array_rest() {
+        assert_eq!(
+            parse_and_exec(
+                "tail := (values: [int]) -> [int] {
+                    [first, ..rest] = values else { return [] }
+                    return rest
+                }
+                tail([1])"
+            ),
+            Ok(Array::new_with_type(Type::Int, Vec::<Variable>::new().into()).into())
+        );
+    }
+
+    #[test]
+    fn rest_pattern_requires_minimum_prefix_length() {
+        assert_eq!(
+            parse_and_exec(
+                "tail := (values: [int]) -> [int] {
+                    [first, ..rest] = values else { return [] }
+                    return rest
+                }
+                tail([])"
+            ),
+            Ok(Variable::from([]))
+        );
+    }
+
+    #[test]
     fn rejects_array_destructuring_without_else_branch() {
         assert_eq!(
             Code::parse(&Interpreter::without_stdlib(), "[first, second] := [2, 3]").map(|_| ()),
@@ -378,6 +424,15 @@ mod tests {
                 }"
             ),
             Ok(Variable::Int(5))
+        );
+        assert_eq!(
+            parse_and_exec(
+                "match [1, 2, 3] {
+                    [first, ..rest] => rest,
+                    => [],
+                }"
+            ),
+            Ok(Variable::from([2.into(), 3.into()]))
         );
     }
 
