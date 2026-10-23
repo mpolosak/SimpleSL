@@ -7,6 +7,7 @@ use pest::{Parser, iterators::Pair};
 use simplesl_macros::var_type;
 use simplesl_parser::{Rule, SimpleSLParser};
 use std::{
+    collections::HashMap,
     hash::Hash,
     iter::zip,
     ops::{BitOr, BitOrAssign},
@@ -107,6 +108,20 @@ impl Type {
                     .map(|(type1, type2)| type1.conjoin(type2))
                     .collect();
                 Type::Tuple(types)
+            }
+            (Type::Struct(types1), Type::Struct(types2)) => {
+                let mut types = HashMap::new();
+                for (field, type1) in types1.0.iter() {
+                    let Some(type2) = types2.0.get(field) else {
+                        return Type::Never;
+                    };
+                    let field_type = type1.conjoin(type2);
+                    if field_type == Type::Never {
+                        return Type::Never;
+                    }
+                    types.insert(field.clone(), field_type);
+                }
+                Type::Struct(StructType::from(types))
             }
             (Type::Multi(multi), other) | (other, Type::Multi(multi)) => multi
                 .iter()

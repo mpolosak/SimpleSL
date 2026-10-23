@@ -286,6 +286,31 @@ mod tests {
         );
     }
 
+    #[test]
+    fn destructures_struct_fields_by_name_and_alias() {
+        assert_eq!(
+            parse_and_exec(
+                "person := struct{name := \"Ada\", age := 37}
+                struct{name: first_name, age} := person
+                match person {
+                    struct{name: matched_name} => matched_name,
+                    => \"unknown\",
+                }"
+            ),
+            Ok(Variable::String("Ada".into()))
+        );
+        assert_eq!(
+            parse_and_exec(
+                "get_name := (value: struct{name: int} | struct{age: int}) -> int {
+                    struct{name: name} = value else { return -1 }
+                    return name
+                }
+                get_name(struct{age := 3})"
+            ),
+            Ok(Variable::Int(-1))
+        );
+    }
+
     fn parse_and_exec(script: &str) -> Result<Variable, Error> {
         Code::parse(&Interpreter::without_stdlib(), script)
             .and_then(|code| code.exec().map_err(Error::from))

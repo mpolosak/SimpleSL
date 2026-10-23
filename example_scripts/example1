@@ -1,5 +1,4 @@
-print:=std.io.print;
-print_array:=std.io.print_array;
+struct{print, print_array}:=std.io;
 len:=std.len;
 print("Hello world!");
 x := 5;
@@ -11,3 +10,6 @@ example_function := (name:string){
     print("Hello " + name + "!");
 };
 example_function("world");
+person := struct{name := "Ada", age := 37};
+struct{name, age: years} := person;
+print(name + " is " + std.convert.to_string(years));

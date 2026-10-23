@@ -77,10 +77,17 @@ Each body can be a block, a `return`, or an expression.
 name := expression
 name: type := expression
 (first, second) := expression
+struct{name, age: years} := expression
 ```
 
 Declares a variable using the expression's value. A type annotation is
-optional. Tuple patterns can bind values from a tuple.
+optional. Tuple patterns can bind values from a tuple. Struct patterns bind
+fields by name; a field can use its own name as the binding or provide an
+alias:
+
+```simplesl
+struct{name, age: years} := person
+```
 
 ## Pattern binding with `else`
 

@@ -57,7 +57,12 @@ impl Pattern {
     }
 
     pub fn is_matched(&self, var_type: &Type) -> bool {
-        var_type.matches(&self.var_type)
+        match &self.destruct_pattern {
+            DestructPattern::Struct(fields) => {
+                struct_pattern_matches(fields, &self.var_type, var_type)
+            }
+            _ => var_type.matches(&self.var_type),
+        }
     }
 
     pub fn insert_local_variables(&self, local_variables: &mut LocalVariables) {
@@ -71,6 +76,14 @@ impl Pattern {
                     local_variables.insert(ident, LocalVariable::Other(var_type));
                 }
             }
+            DestructPattern::Struct(fields) => {
+                for (field, ident) in fields.iter() {
+                    local_variables.insert(
+                        ident.clone(),
+                        LocalVariable::Other(self.var_type.field_type(field).unwrap()),
+                    );
+                }
+            }
         }
     }
 
@@ -81,6 +94,12 @@ impl Pattern {
                 let tuple = variable.into_tuple().unwrap();
                 for (ident, var) in idents.iter().cloned().zip(tuple.iter().cloned()) {
                     interpreter.insert(ident, var);
+                }
+            }
+            DestructPattern::Struct(fields) => {
+                let struct_fields = variable.into_struct().unwrap();
+                for (field, ident) in fields.iter() {
+                    interpreter.insert(ident.clone(), struct_fields[field].clone());
                 }
             }
         }
@@ -97,6 +116,12 @@ impl Pattern {
                     vm.insert(ident, var);
                 }
             }
+            DestructPattern::Struct(fields) => {
+                let struct_fields = variable.into_struct().unwrap();
+                for (field, ident) in fields.iter() {
+                    vm.insert(ident.clone(), struct_fields[field].clone());
+                }
+            }
         }
     }
 
@@ -111,7 +136,34 @@ impl Pattern {
                     tm.insert(ident, var);
                 }
             }
+            DestructPattern::Struct(fields) => {
+                for (field, ident) in fields.iter() {
+                    tm.insert(ident.clone(), self.var_type.field_type(field).unwrap());
+                }
+            }
         }
+    }
+}
+
+fn struct_pattern_matches(
+    fields: &[(Arc<str>, Arc<str>)],
+    pattern_type: &Type,
+    value_type: &Type,
+) -> bool {
+    match value_type {
+        Type::Multi(types) => types
+            .iter()
+            .any(|type_| struct_pattern_matches(fields, pattern_type, type_)),
+        Type::Struct(value_struct) => fields.iter().all(|(field, _)| {
+            pattern_type
+                .field_type(field)
+                .is_some_and(|pattern_field_type| {
+                    value_struct.0.get(field).is_some_and(|value_field_type| {
+                        pattern_field_type.matches(value_field_type)
+                    })
+                })
+        }),
+        _ => false,
     }
 }
 

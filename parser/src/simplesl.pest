@@ -169,9 +169,11 @@ stm                  = _{
   | continue
   | expr
 }
-pattern              =  { destruct_pattern ~ ":" ~ type? }
-  destruct_pattern   = _{ ident | destruct_tuple }
+pattern              =  { destruct_pattern ~ (":" ~ type?)? }
+  destruct_pattern   = _{ (ident ~ &":") | destruct_tuple | destruct_struct }
   destruct_tuple     =  { "(" ~ ident ~ ("," ~ ident)+ ~ ")" }
+  destruct_struct    =  { structkw ~ "{" ~ (destruct_struct_field ~ ("," ~ destruct_struct_field)*)? ~ "}" }
+  destruct_struct_field = { ident ~ (":" ~ ident)? }
 block                =  { "{" ~ line* ~ "}" }
 mod                  =  { modkw ~ block }
 body                 = _{ block | return | expr }
