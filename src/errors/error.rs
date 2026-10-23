@@ -61,6 +61,7 @@ pub enum Error {
         struct_type: Type,
     },
     SelfContradictoryPattern(Arc<str>),
+    ArrayPatternRequiresElse,
     SetPatternNotMatched {
         ins: Arc<str>,
         var_type: Type,
@@ -302,6 +303,9 @@ impl fmt::Display for Error {
             ),
             Self::SelfContradictoryPattern(pattern) => {
                 write!(f, "Pattern {pattern} is self-contradictory")
+            }
+            Self::ArrayPatternRequiresElse => {
+                write!(f, "Array patterns require an else branch")
             }
             Self::SetPatternNotMatched {
                 pattern,

@@ -107,7 +107,7 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
                     let var_type = value.as_type();
                     let pattern_str = pattern.as_str().into();
                     let pattern = Pattern::create_instruction(pattern, &var_type)?;
-                    if !pattern.is_matched(&var_type) {
+                    if !pattern.matches_variable(&value) {
                         return Err(Error::SetPatternNotMatched {
                             ins: value_str,
                             var_type,

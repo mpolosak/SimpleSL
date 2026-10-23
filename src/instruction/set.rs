@@ -7,7 +7,7 @@ use crate::{
         pattern::{Pattern, destruct_pattern::DestructPattern},
     },
     interpreter::Interpreter,
-    variable::{ReturnType, Type, Typed},
+    variable::{ReturnType, Type},
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
@@ -21,7 +21,11 @@ pub struct Set {
 
 impl Set {
     pub fn create(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<Self, Error> {
+        let is_declaration = pair.as_rule() == Rule::set;
         let (set, error) = Self::new(pair, local_variables)?;
+        if is_declaration && matches!(&set.pattern.destruct_pattern, DestructPattern::Array(_)) {
+            return Err(Error::ArrayPatternRequiresElse);
+        }
         if !set.pattern.is_matched(&set.instruction.return_type()) {
             return Err(error);
         }
@@ -159,7 +163,7 @@ impl BaseInstruction for SetElse {}
 impl Exec for SetElse {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let value = self.instruction.exec(interpreter)?;
-        if self.pattern.is_matched(&value.as_type()) {
+        if self.pattern.matches_variable(&value) {
             self.pattern.insert_variables(interpreter, value.clone());
             return Ok(value);
         }
@@ -204,7 +208,7 @@ impl BaseInstruction for ConditionSet {}
 impl Exec for ConditionSet {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let result = self.0.instruction.exec(interpreter)?;
-        if !self.0.pattern.is_matched(&result.as_type()) {
+        if !self.0.pattern.matches_variable(&result) {
             return Ok(false.into());
         }
         self.0.pattern.insert_variables(interpreter, result.clone());
@@ -308,6 +312,72 @@ mod tests {
                 get_name(struct{age := 3})"
             ),
             Ok(Variable::Int(-1))
+        );
+    }
+
+    #[test]
+    fn destructures_array_with_else_branch() {
+        assert_eq!(
+            parse_and_exec(
+                "sum_pair := (values: [int]) -> int {
+                    [first, second] = values else { return -1 }
+                    return first + second
+                }
+                sum_pair([2, 3])"
+            ),
+            Ok(Variable::Int(5))
+        );
+    }
+
+    #[test]
+    fn executes_else_for_array_with_wrong_length() {
+        assert_eq!(
+            parse_and_exec(
+                "sum_pair := (values: [int]) -> int {
+                    [first, second] = values else { return -1 }
+                    return first + second
+                }
+                sum_pair([2])"
+            ),
+            Ok(Variable::Int(-1))
+        );
+    }
+
+    #[test]
+    fn rejects_array_destructuring_without_else_branch() {
+        assert_eq!(
+            Code::parse(&Interpreter::without_stdlib(), "[first, second] := [2, 3]").map(|_| ()),
+            Err(Error::ArrayPatternRequiresElse)
+        );
+    }
+
+    #[test]
+    fn array_pattern_in_match_checks_length() {
+        assert_eq!(
+            Code::parse(
+                &Interpreter::without_stdlib(),
+                "match [2] { [item] => item, }"
+            )
+            .map(|_| ()),
+            Err(Error::MatchNotCovered)
+        );
+        assert_eq!(
+            parse_and_exec(
+                "match [2] {
+                    [first, second] => first + second,
+                    => -1,
+                }"
+            ),
+            Ok(Variable::Int(-1))
+        );
+        assert_eq!(
+            parse_and_exec(
+                "match [2, 3] {
+                    [first, second] => first + second,
+                    => -1,
+                }"
+            ),
+            Ok(Variable::Int(5))
         );
     }
 

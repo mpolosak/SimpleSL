@@ -1,10 +1,12 @@
 use crate::{
     Error, Interpreter,
     instruction::{
-        Exec, ExecStop, Instruction, local_variable::LocalVariables, pattern::Pattern,
+        Exec, ExecStop, Instruction,
+        local_variable::LocalVariables,
+        pattern::{Pattern, destruct_pattern::DestructPattern},
         recreate_instructions,
     },
-    variable::{Type, Typed, Variable},
+    variable::{Type, Variable},
 };
 use pest::iterators::Pair;
 use simplesl_parser::{Rule, unexpected};
@@ -40,7 +42,13 @@ impl MatchPattern {
 
     pub fn is_covering_type(&self, checked_type: &Type) -> bool {
         match self {
-            MatchPattern::Pattern(pattern) => pattern.is_matched(checked_type),
+            MatchPattern::Pattern(pattern) => {
+                if matches!(&pattern.destruct_pattern, DestructPattern::Array(_)) {
+                    false
+                } else {
+                    pattern.is_matched(checked_type)
+                }
+            }
             MatchPattern::Values(_) => false,
             MatchPattern::Other => true,
         }
@@ -52,7 +60,7 @@ impl MatchPattern {
         interpreter: &mut Interpreter,
     ) -> Result<bool, ExecStop> {
         Ok(match self {
-            MatchPattern::Pattern(pattern) => pattern.is_matched(&variable.as_type()),
+            MatchPattern::Pattern(pattern) => pattern.matches_variable(variable),
             MatchPattern::Values(instructions) => {
                 for instruction in instructions.iter() {
                     let match_variable = instruction.exec(interpreter)?;

@@ -8,6 +8,7 @@ pub enum DestructPattern {
     Ident(Arc<str>),
     Tuple(Arc<[Arc<str>]>),
     Struct(Arc<[(Arc<str>, Arc<str>)]>),
+    Array(Arc<[Arc<str>]>),
 }
 
 impl DestructPattern {
@@ -22,6 +23,14 @@ impl DestructPattern {
                     .map(Arc::<str>::from)
                     .collect();
                 Self::Tuple(idents)
+            }
+            Rule::destruct_array => {
+                let idents = pair
+                    .into_inner()
+                    .map(|p| p.as_str())
+                    .map(Arc::<str>::from)
+                    .collect();
+                Self::Array(idents)
             }
             Rule::destruct_struct => {
                 let fields = pair
@@ -49,6 +58,7 @@ impl Typed for DestructPattern {
             DestructPattern::Tuple(items) => {
                 Type::Tuple(repeat_n(Type::Any, items.len()).collect())
             }
+            DestructPattern::Array(_) => Type::Array(Type::Any.into()),
             DestructPattern::Struct(fields) => Type::Struct(StructType::from(
                 fields
                     .iter()

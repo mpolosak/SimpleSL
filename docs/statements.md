@@ -78,6 +78,9 @@ name := expression
 name: type := expression
 (first, second) := expression
 struct{name, age: years} := expression
+[first, second] := expression else {
+    return default_value
+}
 ```
 
 Declares a variable using the expression's value. A type annotation is
@@ -87,6 +90,16 @@ alias:
 
 ```simplesl
 struct{name, age: years} := person
+```
+
+Array patterns bind each element by position and must match the array's exact
+length. They require an `else` branch because an array's length is not part of
+its type:
+
+```simplesl
+[first, second] = values else {
+    return default_value
+}
 ```
 
 ## Pattern binding with `else`

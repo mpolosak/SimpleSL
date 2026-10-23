@@ -61,8 +61,20 @@ impl Pattern {
             DestructPattern::Struct(fields) => {
                 struct_pattern_matches(fields, &self.var_type, var_type)
             }
+            DestructPattern::Array(_) => array_pattern_matches(&self.var_type, var_type),
             _ => var_type.matches(&self.var_type),
         }
+    }
+
+    pub fn matches_variable(&self, variable: &Variable) -> bool {
+        self.is_matched(&variable.as_type())
+            && match (&self.destruct_pattern, variable) {
+                (DestructPattern::Array(idents), Variable::Array(array)) => {
+                    idents.len() == array.len()
+                }
+                (DestructPattern::Array(_), _) => false,
+                _ => true,
+            }
     }
 
     pub fn insert_local_variables(&self, local_variables: &mut LocalVariables) {
@@ -74,6 +86,12 @@ impl Pattern {
                 let tuple = self.var_type.clone().flatten_tuple().unwrap();
                 for (ident, var_type) in idents.iter().cloned().zip(tuple.iter().cloned()) {
                     local_variables.insert(ident, LocalVariable::Other(var_type));
+                }
+            }
+            DestructPattern::Array(idents) => {
+                let element_type = self.var_type.element_type().unwrap_or(Type::Any);
+                for ident in idents.iter().cloned() {
+                    local_variables.insert(ident, LocalVariable::Other(element_type.clone()));
                 }
             }
             DestructPattern::Struct(fields) => {
@@ -93,6 +111,12 @@ impl Pattern {
             DestructPattern::Tuple(idents) => {
                 let tuple = variable.into_tuple().unwrap();
                 for (ident, var) in idents.iter().cloned().zip(tuple.iter().cloned()) {
+                    interpreter.insert(ident, var);
+                }
+            }
+            DestructPattern::Array(idents) => {
+                let array = variable.into_array().unwrap();
+                for (ident, var) in idents.iter().cloned().zip(array.iter().cloned()) {
                     interpreter.insert(ident, var);
                 }
             }
@@ -116,6 +140,12 @@ impl Pattern {
                     vm.insert(ident, var);
                 }
             }
+            DestructPattern::Array(idents) => {
+                let array = variable.into_array().unwrap();
+                for (ident, var) in idents.iter().cloned().zip(array.iter().cloned()) {
+                    vm.insert(ident, var);
+                }
+            }
             DestructPattern::Struct(fields) => {
                 let struct_fields = variable.into_struct().unwrap();
                 for (field, ident) in fields.iter() {
@@ -136,12 +166,28 @@ impl Pattern {
                     tm.insert(ident, var);
                 }
             }
+            DestructPattern::Array(idents) => {
+                let element_type = self.var_type.element_type().unwrap_or(Type::Any);
+                for ident in idents.iter().cloned() {
+                    tm.insert(ident, element_type.clone());
+                }
+            }
             DestructPattern::Struct(fields) => {
                 for (field, ident) in fields.iter() {
                     tm.insert(ident.clone(), self.var_type.field_type(field).unwrap());
                 }
             }
         }
+    }
+}
+
+fn array_pattern_matches(pattern_type: &Type, value_type: &Type) -> bool {
+    match value_type {
+        Type::Multi(types) => types
+            .iter()
+            .any(|type_| array_pattern_matches(pattern_type, type_)),
+        Type::Array(_) => value_type.matches(pattern_type),
+        _ => false,
     }
 }
 
