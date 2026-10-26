@@ -1,9 +1,6 @@
 use super::{Instruction, InstructionWithStr};
 use crate::{
-    Error,
-    instruction::{function::call::FunctionCall, tuple::Tuple},
-    stdlib::operators::At,
-    variable::{ReturnType, Variable},
+    instruction::{function::call::FunctionCall, tuple::Tuple}, stdlib::operators::At, variable::{from_str::parse_int, ReturnType, Variable}, Error
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
@@ -16,8 +13,7 @@ pub fn create_instruction(tuple: InstructionWithStr, op: Pair<Rule>) -> Result<I
     };
 
     let pair = op.into_inner().next().unwrap();
-    let index_var = Variable::try_from(pair)?;
-    let index = *index_var.as_int().unwrap() as usize;
+    let index = parse_int(pair)? as usize;
 
     let Some(return_type) = tuple_type.tuple_element_at(index) else {
         return Err(Error::TupleIndexTooBig(index, tuple.str, len));
@@ -28,7 +24,7 @@ pub fn create_instruction(tuple: InstructionWithStr, op: Pair<Rule>) -> Result<I
 
     let function = Variable::from(function).into();
     let args = Tuple {
-        elements: [tuple.instruction, index_var.into()].into(),
+        elements: [tuple.instruction, Variable::from(index).into()].into(),
     }
     .into();
 

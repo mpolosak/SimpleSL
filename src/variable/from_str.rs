@@ -25,26 +25,6 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
     type Error = Error;
 
     fn try_from(pair: Pair<Rule>) -> Result<Self, Error> {
-        fn parse_int(pair: Pair<Rule>) -> Result<i64, Error> {
-            let pair = pair.into_inner().next().unwrap();
-            match pair.as_rule() {
-                Rule::binary_int => parse_int_with_radix(pair, 2),
-                Rule::octal_int => parse_int_with_radix(pair, 8),
-                Rule::decimal_int => parse_int_with_radix(pair, 10),
-                Rule::hexadecimal_int => parse_int_with_radix(pair, 16),
-                rule => unexpected!(rule),
-            }
-        }
-        fn parse_int_with_radix(pair: Pair<Rule>, radix: u32) -> Result<i64, Error> {
-            let str = pair.as_str();
-            let inner = pair
-                .into_inner()
-                .next()
-                .unwrap()
-                .as_str()
-                .replace([' ', '_'], "");
-            i64::from_str_radix(&inner, radix).map_err(|_| Error::IntegerOverflow(str.into()))
-        }
         match pair.as_rule() {
             Rule::r#true => Ok(Variable::Bool(true)),
             Rule::r#false => Ok(Variable::Bool(false)),
@@ -123,6 +103,28 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
 pub(crate) fn string_from_pair(pair: Pair<Rule>) -> Result<String, Error> {
     let value = pair.into_inner().next().unwrap().as_str();
     Ok(unescaper::unescape(value)?)
+}
+
+pub(crate) fn parse_int(pair: Pair<Rule>) -> Result<i64, Error> {
+    let pair = pair.into_inner().next().unwrap();
+    match pair.as_rule() {
+        Rule::binary_int => parse_int_with_radix(pair, 2),
+        Rule::octal_int => parse_int_with_radix(pair, 8),
+        Rule::decimal_int => parse_int_with_radix(pair, 10),
+        Rule::hexadecimal_int => parse_int_with_radix(pair, 16),
+        rule => unexpected!(rule),
+    }
+}
+
+fn parse_int_with_radix(pair: Pair<Rule>, radix: u32) -> Result<i64, Error> {
+    let str = pair.as_str();
+    let inner = pair
+        .into_inner()
+        .next()
+        .unwrap()
+        .as_str()
+        .replace([' ', '_'], "");
+    i64::from_str_radix(&inner, radix).map_err(|_| Error::IntegerOverflow(str.into()))
 }
 
 #[cfg(test)]
