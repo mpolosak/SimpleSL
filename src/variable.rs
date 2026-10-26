@@ -1,5 +1,5 @@
 mod array;
-mod from_str;
+pub mod from_str;
 mod function_type;
 mod multi_type;
 mod r#mut;

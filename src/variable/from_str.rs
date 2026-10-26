@@ -64,11 +64,7 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
                 };
                 Ok(Variable::Float(value))
             }
-            Rule::string => {
-                let value = pair.into_inner().next().unwrap().as_str();
-                let value = unescaper::unescape(value)?;
-                Ok(value.into())
-            }
+            Rule::string => Ok(string_from_pair(pair)?.into()),
             Rule::array_from_str => {
                 let elements = pair
                     .into_inner()
@@ -122,6 +118,11 @@ impl TryFrom<Pair<'_, Rule>> for Variable {
             _ => Err(Error::CannotBeParsed(pair.as_str().into())),
         }
     }
+}
+
+pub(crate) fn string_from_pair(pair: Pair<Rule>) -> Result<String, Error> {
+    let value = pair.into_inner().next().unwrap().as_str();
+    Ok(unescaper::unescape(value)?)
 }
 
 #[cfg(test)]
