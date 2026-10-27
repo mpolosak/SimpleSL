@@ -2,7 +2,8 @@ use super::{
     Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
 };
 use crate::{
-    Error, ExecError, Interpreter,
+    Error, Interpreter,
+    instruction::BaseInstruction,
     variable::{self, ReturnType, Type},
 };
 use pest::iterators::Pair;
@@ -11,39 +12,36 @@ use simplesl_parser::Rule;
 #[derive(Debug)]
 pub struct Mut {
     var_type: Type,
-    instruction: InstructionWithStr,
+    instruction: Instruction,
 }
+
+impl BaseInstruction for Mut {}
 
 impl Mut {
     pub fn create_instruction(
-        pair: Pair<Rule>,
-        local_variables: &LocalVariables,
+        op: Pair<Rule>,
+        rhs: InstructionWithStr,
     ) -> Result<Instruction, Error> {
-        let mut inner = pair.into_inner();
-        let pair = inner.next().unwrap();
-        if pair.as_rule() == Rule::expr {
-            let instruction = InstructionWithStr::new_expression(pair, local_variables)?;
-            let var_type = instruction.return_type();
+        let mut inner = op.into_inner();
+        let Some(type_pair) = inner.next() else {
             return Ok(Mut {
-                var_type,
-                instruction,
+                var_type: rhs.return_type(),
+                instruction: rhs.instruction,
             }
             .into());
-        }
-        let var_type = Type::from(pair);
-        let pair = inner.next().unwrap();
-        let instruction = InstructionWithStr::new_expression(pair, local_variables)?;
-        let instruction_return_type = instruction.return_type();
+        };
+        let var_type = Type::from(type_pair);
+        let instruction_return_type = rhs.return_type();
         if !instruction_return_type.matches(&var_type) {
             return Err(Error::WrongInitialization {
                 declared: var_type,
-                given: instruction.str,
+                given: rhs.str,
                 given_type: instruction_return_type,
             });
         }
         Ok(Mut {
             var_type,
-            instruction,
+            instruction: rhs.instruction,
         }
         .into())
     }
@@ -61,13 +59,13 @@ impl Exec for Mut {
 }
 
 impl Recreate for Mut {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let instruction = self.instruction.recreate(local_variables)?;
-        Ok(Mut {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        let instruction = self.instruction.recreate(local_variables);
+        Mut {
             var_type: self.var_type.clone(),
             instruction,
         }
-        .into())
+        .into()
     }
 }
 

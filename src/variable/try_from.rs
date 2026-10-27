@@ -1,5 +1,5 @@
 use super::{Array, Variable};
-use crate::function::Function;
+use crate::{function::Function, interpreter::VariableMap};
 use std::sync::Arc;
 
 impl TryFrom<Variable> for bool {
@@ -63,11 +63,19 @@ impl TryFrom<&Variable> for Arc<str> {
     }
 }
 
-impl<'a> TryFrom<&'a Variable> for &'a str {
-    type Error = ();
+impl<'a> TryFrom<&'a Variable> for &'a Arc<str> {
+    type Error = &'a Variable;
 
     fn try_from(value: &'a Variable) -> Result<Self, Self::Error> {
-        value.as_string().map(|val| val.as_ref()).ok_or(())
+        value.as_string().ok_or(value)
+    }
+}
+
+impl<'a> TryFrom<&'a Variable> for &'a str {
+    type Error = &'a Variable;
+
+    fn try_from(value: &'a Variable) -> Result<Self, Self::Error> {
+        value.as_string().map(|val| val.as_ref()).ok_or(value)
     }
 }
 
@@ -130,5 +138,61 @@ impl<'a> TryFrom<&'a Variable> for &'a Arc<Function> {
 impl From<&Variable> for Variable {
     fn from(value: &Variable) -> Self {
         value.clone()
+    }
+}
+
+impl TryFrom<Variable> for Option<i64> {
+    type Error = Variable;
+
+    fn try_from(value: Variable) -> Result<Self, Self::Error> {
+        match value {
+            Variable::Int(value) => Ok(Some(value)),
+            Variable::Void => Ok(None),
+            _ => Err(value),
+        }
+    }
+}
+
+impl<'a> TryFrom<&'a Variable> for Option<i64> {
+    type Error = &'a Variable;
+
+    fn try_from(value: &'a Variable) -> Result<Self, Self::Error> {
+        match value {
+            Variable::Int(value) => Ok(Some(*value)),
+            Variable::Void => Ok(None),
+            _ => Err(value),
+        }
+    }
+}
+
+impl TryFrom<Variable> for Option<isize> {
+    type Error = Variable;
+
+    fn try_from(value: Variable) -> Result<Self, Self::Error> {
+        match value {
+            Variable::Int(value) => Ok(Some(value as isize)),
+            Variable::Void => Ok(None),
+            _ => Err(value),
+        }
+    }
+}
+
+impl<'a> TryFrom<&'a Variable> for Option<isize> {
+    type Error = &'a Variable;
+
+    fn try_from(value: &'a Variable) -> Result<Self, Self::Error> {
+        match value {
+            Variable::Int(value) => Ok(Some(*value as isize)),
+            Variable::Void => Ok(None),
+            _ => Err(value),
+        }
+    }
+}
+
+impl<'a> TryFrom<&'a Variable> for &'a VariableMap {
+    type Error = &'a Variable;
+
+    fn try_from(value: &'a Variable) -> Result<Self, Self::Error> {
+        value.as_struct().map(|vm| vm.as_ref()).ok_or(value)
     }
 }

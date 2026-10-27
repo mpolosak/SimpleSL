@@ -1,6 +1,6 @@
 use crate::{
     Error, ExecError, Interpreter,
-    instruction::{Exec, ExecStop, InstructionWithStr, local_variable::LocalVariables},
+    instruction::{Exec, ExecStop, Instruction, Recreate, local_variable::LocalVariables},
     variable::{ReturnType, Type, Variable},
 };
 use pest::Parser;
@@ -9,7 +9,7 @@ use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct Code {
-    pub(crate) instructions: Arc<[InstructionWithStr]>,
+    pub(crate) instructions: Arc<[Instruction]>,
 }
 
 impl Code {
@@ -18,8 +18,8 @@ impl Code {
         let mut local_variables = LocalVariables::new(interpreter);
         let instructions = parse
             .map(|pair| {
-                InstructionWithStr::new(pair, &mut local_variables)
-                    .and_then(|iws| Ok(iws.recreate(&mut local_variables)?))
+                Instruction::new(pair, &mut local_variables)
+                    .map(|i| i.recreate(&mut local_variables))
             })
             .collect::<Result<_, Error>>()?;
         Ok(Self { instructions })
@@ -71,7 +71,7 @@ mod tests {
     proptest! {
         #[test]
         fn code_doesnt_crash(s in "\\PC*"){
-            let _ = Code::parse(&Interpreter::without_stdlib(), &s).and_then(|code| Ok(code.exec()?));
+            let _ = Code::parse(&Interpreter::without_stdlib(), &s).map(|code| code.exec());
         }
     }
 }

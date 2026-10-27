@@ -1,60 +1,77 @@
-use super::{
-    Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
+use super::{ExecResult, Instruction, InstructionWithStr, local_variable::LocalVariables};
+use crate::{
+    Error, Interpreter,
+    instruction::{
+        BaseInstruction, Exec, Recreate,
+    },
+    variable::{ReturnType, Type, Variable},
 };
-use crate::{Error, ExecError, Interpreter, variable::ReturnType};
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
 use std::sync::Arc;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct FieldAccess {
-    var: InstructionWithStr,
+    instruction: Instruction,
     ident: Arc<str>,
 }
 
 impl FieldAccess {
     pub fn create_instruction(
-        tuple: InstructionWithStr,
+        instruction: InstructionWithStr,
         op: Pair<Rule>,
     ) -> Result<Instruction, Error> {
-        let return_type = tuple.return_type();
+        let return_type = instruction.return_type();
         if !return_type.is_struct() {
-            return Err(Error::CannotFieldAccess(tuple.str, return_type));
+            return Err(Error::CannotFieldAccess(instruction.str, return_type));
         }
         let pair = op.into_inner().next().unwrap();
-        let ident = pair.as_str();
-        if !return_type.has_field(ident) {
+        let ident = Arc::from(pair.as_str());
+
+        if !return_type.has_field(&ident) {
             return Err(Error::NoField {
-                struct_ident: tuple.str,
-                field_ident: ident.into(),
+                struct_ident: instruction.str,
+                field_ident: ident,
                 struct_type: return_type,
             });
         }
         Ok(Self {
-            var: tuple,
-            ident: ident.into(),
+            instruction: instruction.instruction,
+            ident,
         }
         .into())
     }
 }
 
-impl ReturnType for FieldAccess {
-    fn return_type(&self) -> crate::variable::Type {
-        self.var.return_type().field_type(&self.ident).unwrap()
+impl BaseInstruction for FieldAccess {}
+
+impl Exec for FieldAccess {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
+        let var = self.instruction.exec(interpreter)?.into_struct().unwrap();
+        Ok(var.get(&self.ident).unwrap().clone())
     }
 }
 
 impl Recreate for FieldAccess {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let tuple = self.var.recreate(local_variables)?;
-        let ident = self.ident.clone();
-        Ok(Self { var: tuple, ident }.into())
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        let instruction = self.instruction.recreate(local_variables);
+        if let Some(var) = instruction.downcast_ref::<Variable>() {
+            let s = var.clone().into_struct().unwrap();
+            return s.get(&self.ident).unwrap().clone().into();
+        }
+        Self {
+            instruction,
+            ident: self.ident.clone(),
+        }
+        .into()
     }
 }
 
-impl Exec for FieldAccess {
-    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let var = self.var.exec(interpreter)?.into_struct().unwrap();
-        Ok(var.get(&self.ident).unwrap().clone())
+impl ReturnType for FieldAccess {
+    fn return_type(&self) -> Type {
+        self.instruction
+            .return_type()
+            .field_type(&self.ident)
+            .unwrap()
     }
 }

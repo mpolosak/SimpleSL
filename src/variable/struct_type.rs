@@ -47,8 +47,12 @@ impl From<Pair<'_, Rule>> for StructType {
     fn from(pair: Pair<'_, Rule>) -> Self {
         let tm = pair
             .into_inner()
-            .tuples()
-            .map(|(key, value)| (key.as_str().into(), Type::from(value)))
+            .map(|param| {
+                let mut param = param.into_inner();
+                let key = param.next().unwrap().as_str().into();
+                let value = Type::from(param.next().unwrap());
+                (key, value)
+            })
             .collect();
         Self(Arc::new(tm))
     }

@@ -1,4 +1,4 @@
-use crate::instruction::{Exec, ExecStop, InstructionWithStr};
+use crate::instruction::{Exec, ExecStop, Instruction};
 use crate::stdlib::Std;
 use crate::variable::*;
 use std::collections::HashMap;
@@ -31,7 +31,7 @@ impl<'a> Interpreter<'a> {
 
     pub(crate) fn exec(
         &mut self,
-        instructions: &[InstructionWithStr],
+        instructions: &[Instruction],
     ) -> Result<Arc<[Variable]>, ExecStop> {
         instructions
             .iter()

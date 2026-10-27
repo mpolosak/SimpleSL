@@ -1,20 +1,19 @@
-use super::{
-    Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
-    recreate_instructions,
-};
+use super::{Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables};
 use crate::{
-    Error, ExecError,
+    Error,
+    instruction::{BaseInstruction, recreate_instructions},
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
-use std::sync::Arc;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Block {
-    pub instructions: Arc<[InstructionWithStr]>,
+    pub instructions: Box<[Instruction]>,
 }
+
+impl BaseInstruction for Block {}
 
 impl Block {
     pub fn create_instruction(
@@ -30,19 +29,19 @@ impl Block {
 impl Exec for Block {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let mut interpreter = interpreter.create_layer();
-        Ok(interpreter
-            .exec(&self.instructions)?
-            .last()
-            .cloned()
-            .unwrap_or(Variable::Void))
+        let mut result = Variable::Void;
+        for instruction in &self.instructions {
+            result = instruction.exec(&mut interpreter)?;
+        }
+        Ok(result)
     }
 }
 
 impl Recreate for Block {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
         let mut local_variables = local_variables.create_layer();
-        let instructions = recreate_instructions(&self.instructions, &mut local_variables)?;
-        Ok(Self { instructions }.into())
+        let instructions = recreate_instructions(&self.instructions, &mut local_variables);
+        Self { instructions }.into()
     }
 }
 

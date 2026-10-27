@@ -1,11 +1,13 @@
 use crate::{
-    self as simplesl, Error, Interpreter,
-    instruction::{ExecResult, Instruction, InstructionWithStr, unary_operation::UnaryOperation},
+    self as simplesl, Error,
+    instruction::{Instruction, InstructionWithStr, function::call::FunctionCall, tuple::Tuple},
+    stdlib::operators::Collect,
     unary_operator::UnaryOperator,
     variable::{ReturnType, Type, Variable},
 };
 use lazy_static::lazy_static;
 use simplesl_macros::var_type;
+use std::sync::Arc;
 
 lazy_static! {
     pub static ref ACCEPTED_TYPE: Type = var_type!(() -> (bool, any));
@@ -14,40 +16,25 @@ lazy_static! {
 pub(crate) fn create(lhs: InstructionWithStr) -> Result<Instruction, Error> {
     let op = UnaryOperator::Collect;
     let return_type = lhs.return_type();
-    if !can_be_used(&return_type) {
+    let Some(element_type) = return_type.iter_element() else {
         return Err(Error::IncorectUnaryOperatorOperand {
             ins: lhs.str,
             op,
             expected: ACCEPTED_TYPE.clone(),
             given: return_type,
         });
-    }
-    Ok(UnaryOperation {
-        instruction: lhs.instruction,
-        op,
-    }
-    .into())
-}
+    };
 
-pub fn can_be_used(lhs: &Type) -> bool {
-    lhs.matches(&ACCEPTED_TYPE)
-}
+    let mut function = Arc::unwrap_or_clone(Variable::from(Collect).into_function().unwrap());
+    function.return_type = var_type!([element_type]);
 
-pub(crate) fn exec(var: Variable, interpreter: &mut Interpreter) -> ExecResult {
-    let iter = var.into_function().unwrap();
-    let mut vec = Vec::new();
-    while let Variable::Tuple(tuple) = iter.exec(interpreter)? {
-        if tuple[0] == Variable::Bool(false) {
-            break;
-        };
-        vec.push(tuple[1].clone());
+    let function = Variable::from(function).into();
+    let args = Tuple {
+        elements: [lhs.instruction].into(),
     }
-    Ok(vec.into())
-}
+    .into();
 
-pub(crate) fn return_type(lhs: Type) -> Type {
-    let element = lhs.iter_element().unwrap();
-    var_type!([element])
+    Ok(FunctionCall { function, args }.into())
 }
 
 #[cfg(test)]
@@ -117,7 +104,9 @@ mod tests {
                 "i:=mut 45.5;
                 x:=() -> (bool, float) {
                     val:=*i;
-                    if val>70.0 return (false, val)
+                    if val>70.0 {
+                        return (false, val)
+                    }
                     i+=15.5;
                     return (true, val); 
                 }

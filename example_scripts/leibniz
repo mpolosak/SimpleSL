@@ -1,0 +1,27 @@
+float := std.convert.to_float
+
+range := (start: int, end: int) -> () -> (bool, int) {
+    i:= mut start-1
+    return () -> (bool, int) {
+        i+=1
+        return (*i<end, *i)
+    }
+} 
+
+leibniz := (rounds: int) -> float {
+    pi := mut 1.0
+    x := mut 1.0
+    for i in range(2, rounds + 2) {
+        x = -*x
+        pi += *x / float(2 * i - 1)
+    }
+    return *pi*4.0
+}
+
+main := () {
+    rounds := 1000000
+    pi := leibniz(rounds)
+    std.io.print(pi)
+}
+
+main()

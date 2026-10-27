@@ -1,7 +1,12 @@
+mod deref;
 use super::InstructionWithStr;
-use crate as simplesl;
-use crate::Error;
-use crate::variable::Type;
+use super::local_variable::LocalVariables;
+use crate::instruction::prefix_op::deref::Deref;
+use crate::instruction::{BaseInstruction, Exec, Instruction, Recreate};
+use crate::unary_operator::UnaryOperator;
+use crate::variable::{ReturnType, Type, Variable};
+use crate::{self as simplesl, instruction::r#mut::Mut};
+use crate::{Error, Interpreter};
 use lazy_static::lazy_static;
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
@@ -10,13 +15,14 @@ use simplesl_parser::{Rule, unexpected};
 impl InstructionWithStr {
     pub fn create_prefix(op: Pair<'_, Rule>, rhs: Self) -> Result<Self, Error> {
         let str = rhs.str.clone();
+        let str = format!("{} {}", op.as_str(), str).into();
         let instruction = match op.as_rule() {
-            Rule::not => not::create_instruction(rhs),
-            Rule::unary_minus => unary_minus::create_instruction(rhs),
-            Rule::indirection => indirection::create_instruction(rhs),
+            Rule::not => Not::create_instruction(rhs),
+            Rule::unary_minus => UnaryMinus::create_instruction(rhs),
+            Rule::indirection => Deref::create_instruction(rhs),
+            Rule::r#mut => Mut::create_instruction(op, rhs),
             rule => unexpected!(rule),
         }?;
-        let str = format!("{} {}", op.as_str(), str).into();
         Ok(Self { instruction, str })
     }
 }
@@ -25,18 +31,10 @@ lazy_static! {
     pub static ref ACCEPTED_NUM: Type = var_type!(int | float);
 }
 
-pub mod unary_minus {
-    use crate::{
-        self as simplesl, Error,
-        instruction::{Instruction, InstructionWithStr, unary_operation::UnaryOperation},
-        unary_operator::UnaryOperator,
-        variable::{ReturnType, Variable},
-    };
-    use match_any::match_any;
-    use simplesl_macros::var;
+#[derive(Debug)]
+pub struct UnaryMinus(Instruction);
 
-    use super::ACCEPTED_NUM;
-
+impl UnaryMinus {
     pub fn create_instruction(instruction: InstructionWithStr) -> Result<Instruction, Error> {
         let op = UnaryOperator::UnaryMinus;
         let return_type = instruction.return_type();
@@ -48,110 +46,82 @@ pub mod unary_minus {
                 given: return_type,
             });
         }
-        Ok(UnaryOperation {
-            instruction: instruction.instruction,
-            op,
-        }
-        .into())
+        Ok(UnaryMinus(instruction.instruction).into())
     }
 
-    pub fn create_from_instruction(instruction: Instruction) -> Instruction {
-        match_any! { instruction,
-            Instruction::Variable(operand) => exec(operand).into(),
-            instruction => UnaryOperation {instruction,op:UnaryOperator::UnaryMinus }.into()
-        }
-    }
+}
 
-    pub fn exec(variable: Variable) -> Variable {
-        match variable {
-            Variable::Int(num) => num.wrapping_neg().into(),
-            Variable::Float(num) => var!(-num),
-            operand => panic!("Tried to - {operand}"),
-        }
+impl BaseInstruction for UnaryMinus {}
+
+impl Exec for UnaryMinus {
+    fn exec(&self, interpreter: &mut Interpreter) -> super::ExecResult {
+        let variable = self.0.exec(interpreter)?;
+        Ok(-variable)
     }
 }
 
-pub mod not {
-    use crate::{
-        self as simplesl, Error,
-        instruction::{Instruction, InstructionWithStr, unary_operation::UnaryOperation},
-        unary_operator::UnaryOperator,
-        variable::{ReturnType, Type, Variable},
-    };
-    use lazy_static::lazy_static;
-    use match_any::match_any;
-    use simplesl_macros::var_type;
-
-    lazy_static! {
-        pub static ref ACCEPTED: Type = var_type!(int | bool);
+impl Recreate for UnaryMinus {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        let instruction = self.0.recreate(local_variables);
+        let Some(variable) = instruction.downcast_ref::<Variable>() else {
+            return Self(instruction).into();
+        };
+        (-variable.clone()).into()
     }
+}
 
+impl ReturnType for UnaryMinus {
+    fn return_type(&self) -> Type {
+        self.0.return_type()
+    }
+}
+
+#[derive(Debug)]
+pub struct Not(Instruction);
+
+lazy_static! {
+    pub static ref ACCEPTED_NOT: Type = var_type!(int | bool);
+}
+
+impl Not {
     pub fn create_instruction(instruction: InstructionWithStr) -> Result<Instruction, Error> {
         let op = UnaryOperator::Not;
         let return_type = instruction.return_type();
-        if !return_type.matches(&ACCEPTED) {
+        if !return_type.matches(&ACCEPTED_NOT) {
             return Err(Error::IncorectUnaryOperatorOperand {
                 ins: instruction.str,
                 op,
-                expected: ACCEPTED.clone(),
+                expected: ACCEPTED_NOT.clone(),
                 given: return_type,
             });
         }
-        Ok(UnaryOperation {
-            instruction: instruction.instruction,
-            op,
-        }
-        .into())
+        Ok(Not(instruction.instruction).into())
     }
 
-    pub fn create_from_instruction(instruction: Instruction) -> Instruction {
-        match_any! { instruction,
-            Instruction::Variable(operand) => exec(operand).into(),
-            instruction => UnaryOperation {instruction, op: UnaryOperator::Not } .into()
-        }
-    }
-    pub fn exec(variable: Variable) -> Variable {
-        match variable {
-            Variable::Bool(var) => (!var).into(),
-            Variable::Int(num) => (!num).into(),
-            operand => panic!("Tried to {} {operand}", stringify!(op2)),
-        }
+}
+
+impl BaseInstruction for Not {}
+
+impl Exec for Not {
+    fn exec(&self, interpreter: &mut Interpreter) -> super::ExecResult {
+        let variable = self.0.exec(interpreter)?;
+        Ok(!variable)
     }
 }
 
-pub mod indirection {
-    use crate::{
-        Error,
-        instruction::{Instruction, InstructionWithStr, unary_operation::UnaryOperation},
-        unary_operator::UnaryOperator,
-        variable::{ReturnType, Type, Variable},
-    };
-
-    pub fn create_instruction(instruction: InstructionWithStr) -> Result<Instruction, Error> {
-        let op = UnaryOperator::Indirection;
-        let return_type = instruction.return_type();
-        if !return_type.is_mut() {
-            return Err(Error::IncorectUnaryOperatorOperand {
-                ins: instruction.str,
-                op,
-                expected: Type::Mut(Type::Any.into()),
-                given: return_type,
-            });
-        }
-        Ok(UnaryOperation {
-            instruction: instruction.instruction,
-            op,
-        }
-        .into())
+impl Recreate for Not {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        let instruction = self.0.recreate(local_variables);
+        let Some(variable) = instruction.downcast_ref::<Variable>() else {
+            return Self(instruction).into();
+        };
+        (!variable.clone()).into()
     }
+}
 
-    pub fn exec(var: Variable) -> Variable {
-        let var = var.into_mut().unwrap();
-        var.variable.read().unwrap().clone()
-    }
-
-    pub fn return_type(var_type: Type) -> Type {
-        var_type.mut_element_type().unwrap()
+impl ReturnType for Not {
+    fn return_type(&self) -> Type {
+        self.0.return_type()
     }
 }
 

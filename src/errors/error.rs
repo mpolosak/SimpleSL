@@ -12,6 +12,8 @@ use std::{
 #[derive(Debug, From)]
 pub enum Error {
     BreakOutsideLoop,
+    CannotDetermineParams(Arc<str>),
+    CannotReduce(Arc<str>),
     ContinueOutsideLoop,
     VariableDoesntExist(Arc<str>),
     WrongType(Arc<str>, Type),
@@ -28,13 +30,18 @@ pub enum Error {
     CannotSlice(Arc<str>, Type),
     ZeroDivision,
     ZeroModulo,
-    OverflowShift,
     MatchNotCovered,
     #[from]
     IO(std::io::Error),
     #[from(pest::error::Error<Rule>)]
     Parsing(Box<pest::error::Error<Rule>>),
     IntegerOverflow(Box<str>),
+    IncorectUnaryOperatorOperand {
+        ins: Arc<str>,
+        op: UnaryOperator,
+        expected: Type,
+        given: Type,
+    },
     #[from]
     CannotUnescapeString(unescaper::Error),
     CannotDo2(Type, BinOperator, Type),
@@ -53,6 +60,13 @@ pub enum Error {
         field_ident: Arc<str>,
         struct_type: Type,
     },
+    SelfContradictoryPattern(Arc<str>),
+    ArrayPatternRequiresElse,
+    SetPatternNotMatched {
+        ins: Arc<str>,
+        var_type: Type,
+        pattern: Arc<str>,
+    },
     WrongLengthType(Arc<str>),
     NotAFunction(Arc<str>),
     WrongArgument {
@@ -61,22 +75,7 @@ pub enum Error {
         given: Arc<str>,
         given_type: Type,
     },
-    CannotDetermineParams(Arc<str>),
-    CannotReduce(Arc<str>),
-    NotATuple(Arc<str>),
-    CannotDetermineLength(Arc<str>),
-    WrongLength {
-        ins: Arc<str>,
-        len: usize,
-        idents_len: usize,
-    },
     WrongCondition(Arc<str>, Type),
-    IncorectUnaryOperatorOperand {
-        ins: Arc<str>,
-        op: UnaryOperator,
-        expected: Type,
-        given: Type,
-    },
     WrongInitialization {
         declared: Type,
         given: Arc<str>,
@@ -94,10 +93,10 @@ impl PartialEq for Error {
             | (Self::Parsing(l0), Self::Parsing(r0))
             | (Self::IntegerOverflow(l0), Self::IntegerOverflow(r0))
             | (Self::NotAFunction(l0), Self::NotAFunction(r0))
-            | (Self::NotATuple(l0), Self::NotATuple(r0))
             | (Self::CannotDetermineParams(l0), Self::CannotDetermineParams(r0))
-            | (Self::CannotDetermineLength(l0), Self::CannotDetermineLength(r0))
-            | (Self::CannotReduce(l0), Self::CannotReduce(r0)) => l0 == r0,
+            | (Self::CannotReduce(l0), Self::CannotReduce(r0))
+            | (Self::SelfContradictoryPattern(l0), Self::SelfContradictoryPattern(r0))
+                => l0 == r0,
             (Self::WrongType(l0, l1), Self::WrongType(r0, r1))
             | (Self::WrongCondition(l0, l1), Self::WrongCondition(r0, r1))
             | (Self::WrongNumberOfArguments(l0, l1), Self::WrongNumberOfArguments(r0, r1))
@@ -112,6 +111,8 @@ impl PartialEq for Error {
             | (Self::TupleIndexTooBig(l0, l1, l2), Self::TupleIndexTooBig(r0, r1, r2))
             | (Self::NoField{struct_ident: l0, field_ident: l1, struct_type: l2},
                 Self::NoField{struct_ident: r0, field_ident: r1, struct_type: r2})
+            | (Self::SetPatternNotMatched{pattern: l0, ins: l1, var_type: l2},
+                Self::SetPatternNotMatched{pattern: r0, ins: r1, var_type: r2})
             => {
                 l0 == r0 && l1 == r1 && l2 == r2
             },
@@ -135,10 +136,6 @@ impl PartialEq for Error {
                 Self::WrongArgument{ function: f, param: p, given: g, given_type: gt },
                 Self::WrongArgument{ function: f2, param: p2, given: g2, given_type: gt2 }
             ) => f == f2 && p == p2 && g == g2 && gt == gt2,
-            (
-                Self::WrongLength{ ins, len, idents_len },
-                Self::WrongLength{ ins: ins2, len: len2, idents_len: idents_len2 }
-            ) => ins==ins2 && len == len2 && idents_len == idents_len2,
             (
                 Self::IncorectUnaryOperatorOperand{ins, op, expected, given },
                 Self::IncorectUnaryOperatorOperand{ins:ins2, op: op2, expected: expected2, given: given2 })
@@ -219,9 +216,6 @@ impl fmt::Display for Error {
             Self::ZeroModulo => {
                 write!(f, "Cannot calculate the remainder with a divisor of 0")
             }
-            Self::OverflowShift => {
-                write!(f, "Cannot shift with overflow")
-            }
             Self::MatchNotCovered => {
                 write!(f, "All posible values must be covered in match")
             }
@@ -284,17 +278,7 @@ impl fmt::Display for Error {
             Self::CannotDetermineParams(function) => {
                 write!(f, "Cannot determine params of function {function}")
             }
-            Self::CannotDetermineLength(tuple) => write!(f, "Cannot determine length of {tuple}"),
             Self::CannotReduce(given) => write!(f, "Cannot reduce {given}. It is not an array"),
-            Self::NotATuple(str) => write!(f, "Cannot destruct {str}. It is not a tuple"),
-            Self::WrongLength {
-                ins,
-                len: length,
-                idents_len: expected_length,
-            } => write!(
-                f,
-                "{ins} has {length} elements but {expected_length} idents were given"
-            ),
             Self::WrongCondition(ins, var_type) => write!(
                 f,
                 "Condition must be bool but {ins} which is {var_type} was given"
@@ -317,6 +301,22 @@ impl fmt::Display for Error {
                 f,
                 "Cannot {ins} {op}. Operand need to be {expected} but {ins} which is {given} was given"
             ),
+            Self::SelfContradictoryPattern(pattern) => {
+                write!(f, "Pattern {pattern} is self-contradictory")
+            }
+            Self::ArrayPatternRequiresElse => {
+                write!(f, "Array patterns require an else branch")
+            }
+            Self::SetPatternNotMatched {
+                pattern,
+                ins,
+                var_type,
+            } => {
+                write!(
+                    f,
+                    "{ins} of type {var_type} doesn't match pattern {pattern}"
+                )
+            }
             Self::WrongInitialization {
                 declared,
                 given_type,
@@ -337,7 +337,6 @@ impl From<ExecError> for Error {
             ExecError::NegativeExponent => Self::NegativeExponent,
             ExecError::ZeroDivision => Self::ZeroDivision,
             ExecError::ZeroModulo => Self::ZeroModulo,
-            ExecError::OverflowShift => Self::OverflowShift,
         }
     }
 }

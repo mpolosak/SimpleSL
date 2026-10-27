@@ -1,20 +1,27 @@
 mod array;
+pub mod from_str;
 mod function_type;
 mod multi_type;
 mod r#mut;
+mod operators;
 mod struct_type;
 mod try_from;
 mod r#type;
 mod type_of;
-use crate::{self as simplesl, Error, function::Function, interpreter::VariableMap};
+use crate::{
+    self as simplesl, Interpreter,
+    function::Function,
+    instruction::{BaseInstruction, Exec, ExecResult, Instruction, Recreate},
+    interpreter::VariableMap,
+};
 use derive_more::{Display, From};
 use enum_as_inner::EnumAsInner;
 use itertools::Itertools;
 use match_any::match_any;
-use pest::{Parser, iterators::Pair};
+use pest::Parser;
 use simplesl_macros::var;
-use simplesl_parser::{Rule, SimpleSLParser, unexpected};
-use std::{collections::HashMap, fmt, io, str::FromStr, sync::Arc};
+use simplesl_parser::{Rule, SimpleSLParser};
+use std::{collections::HashMap, fmt, io, sync::Arc};
 pub use r#type::{ReturnType, Type, Typed};
 use typle::typle;
 pub use {
@@ -60,7 +67,7 @@ impl Variable {
             Variable::Mut(value) => value.string(depth+1),
             Variable::Tuple(elements) => format!("({})", elements.iter().map(|v| v.debug(depth+1)).collect::<Box<[_]>>().join(", ")),
             Variable::Struct(vm) => {
-                let elements = vm.iter().map(|(key, value)| format!("{}={}", key, value.debug(depth))).join(", ");
+                let elements = vm.iter().map(|(key, value)| format!("{}:={}", key, value.debug(depth))).join(", ");
                 format!("struct{{{elements}}}")
             },
             Variable::Void => format!("()")
@@ -148,17 +155,6 @@ impl fmt::Debug for Variable {
     }
 }
 
-impl FromStr for Variable {
-    type Err = Error;
-
-    fn from_str(s: &str) -> Result<Self, Error> {
-        let s = s.trim();
-        let parse = SimpleSLParser::parse(Rule::only_var, s)?;
-        let pairs: Box<[Pair<Rule>]> = parse.collect();
-        Self::try_from(pairs[0].clone())
-    }
-}
-
 impl PartialEq for Variable {
     fn eq(&self, other: &Self) -> bool {
         match_any! {(self, other),
@@ -178,96 +174,6 @@ impl PartialEq for Variable {
 }
 
 impl Eq for Variable {}
-
-#[doc(hidden)]
-impl TryFrom<Pair<'_, Rule>> for Variable {
-    type Error = Error;
-
-    fn try_from(pair: Pair<Rule>) -> Result<Self, Error> {
-        fn parse_int(pair: Pair<Rule>) -> Result<i64, Error> {
-            let pair = pair.into_inner().next().unwrap();
-            match pair.as_rule() {
-                Rule::binary_int => parse_int_with_radix(pair, 2),
-                Rule::octal_int => parse_int_with_radix(pair, 8),
-                Rule::decimal_int => parse_int_with_radix(pair, 10),
-                Rule::hexadecimal_int => parse_int_with_radix(pair, 16),
-                rule => unexpected!(rule),
-            }
-        }
-        fn parse_int_with_radix(pair: Pair<Rule>, radix: u32) -> Result<i64, Error> {
-            let str = pair.as_str();
-            let inner = pair
-                .into_inner()
-                .next()
-                .unwrap()
-                .as_str()
-                .replace([' ', '_'], "");
-            i64::from_str_radix(&inner, radix).map_err(|_| Error::IntegerOverflow(str.into()))
-        }
-        match pair.as_rule() {
-            Rule::r#true => Ok(Variable::Bool(true)),
-            Rule::r#false => Ok(Variable::Bool(false)),
-            Rule::minus_int => {
-                parse_int(pair.into_inner().next().unwrap()).map(|value| Variable::Int(-value))
-            }
-            Rule::int => parse_int(pair).map(Self::from),
-            Rule::minus_float => {
-                let Ok(value) = pair.as_str().replace([' ', '_'], "").parse::<f64>() else {
-                    return Err(Error::CannotBeParsed(pair.as_str().into()));
-                };
-                Ok(Variable::Float(value))
-            }
-            Rule::float => {
-                let Ok(value) = pair.as_str().replace([' ', '_'], "").parse::<f64>() else {
-                    return Err(Error::CannotBeParsed(pair.as_str().into()));
-                };
-                Ok(Variable::Float(value))
-            }
-            Rule::string => {
-                let value = pair.into_inner().next().unwrap().as_str();
-                let value = unescaper::unescape(value)?;
-                Ok(value.into())
-            }
-            Rule::array_from_str => {
-                let elements = pair
-                    .into_inner()
-                    .map(Self::try_from)
-                    .collect::<Result<Arc<[Variable]>, Error>>()?;
-                let element_type = elements
-                    .iter()
-                    .map(Typed::as_type)
-                    .reduce(Type::concat)
-                    .unwrap_or(Type::Never);
-                Ok(Array {
-                    element_type,
-                    elements,
-                }
-                .into())
-            }
-            Rule::array_repeat_from_str => {
-                let mut inner = pair.into_inner();
-                let value = Variable::try_from(inner.next().unwrap())?;
-                let len_pair = inner.next().unwrap();
-                let len = parse_int(len_pair)?;
-                Ok(Array::new_repeat(value, len as usize).into())
-            }
-            Rule::struct_from_str => {
-                let vm = pair
-                    .into_inner()
-                    .tuples()
-                    .map(|(ident, value)| {
-                        let ident: Arc<str> = ident.as_str().into();
-                        let value = Variable::try_from(value)?;
-                        Ok((ident, value))
-                    })
-                    .collect::<Result<VariableMap, Error>>()?;
-                Ok(Variable::Struct(vm.into()))
-            }
-            Rule::void => Ok(Variable::Void),
-            _ => Err(Error::CannotBeParsed(pair.as_str().into())),
-        }
-    }
-}
 
 impl From<usize> for Variable {
     fn from(value: usize) -> Self {
@@ -339,12 +245,35 @@ pub fn is_correct_variable_name(name: &str) -> bool {
     parse.as_str() == name
 }
 
+impl BaseInstruction for Variable {}
+
+impl Exec for Variable {
+    fn exec(&self, _interpreter: &mut Interpreter) -> ExecResult {
+        Ok(self.clone())
+    }
+}
+
+impl Recreate for Variable {
+    fn recreate(
+        &self,
+        _local_variables: &mut crate::instruction::local_variable::LocalVariables,
+    ) -> Instruction {
+        self.clone().into()
+    }
+}
+
+impl ReturnType for Variable {
+    fn return_type(&self) -> Type {
+        self.as_type()
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use std::{collections::HashMap, str::FromStr};
-
-    use crate::variable::{Array, Variable};
-    use proptest::prelude::*;
+    use crate as simplesl;
+    use crate::variable::Variable;
+    use proptest::proptest;
+    use simplesl_macros::var;
 
     #[test]
     fn test_send() {
@@ -372,89 +301,67 @@ mod tests {
         assert!(is_correct_variable_name("return5"));
         assert!(is_correct_variable_name("areturn"));
     }
+
     #[test]
-    fn from_str() {
-        use crate::variable::Variable;
-        use std::str::FromStr;
-        assert_eq!(Variable::from_str("true"), Ok(Variable::Bool(true)));
-        assert_eq!(Variable::from_str("false"), Ok(Variable::Bool(false)));
-        assert_eq!(Variable::from_str(" 15"), Ok(Variable::Int(15)));
-        assert_eq!(Variable::from_str(" -7"), Ok(Variable::Int(-7)));
-        assert_eq!(Variable::from_str(" 1__00_5__"), Ok(Variable::Int(1005)));
-        assert_eq!(Variable::from_str(" 0b111 "), Ok(Variable::Int(0b111)));
-        assert_eq!(Variable::from_str(" 0b_1_11_ "), Ok(Variable::Int(0b111)));
-        assert_eq!(Variable::from_str(" 0o176 "), Ok(Variable::Int(0o176)));
-        assert_eq!(Variable::from_str(" 0o_17__6_ "), Ok(Variable::Int(0o176)));
-        assert_eq!(Variable::from_str(" 0xFA6 "), Ok(Variable::Int(0xFA6)));
+    fn display_true() {
+        assert_eq!(format!("{}", Variable::Bool(true)), "true")
+    }
+
+    #[test]
+    fn display_false() {
+        assert_eq!(format!("{}", Variable::Bool(false)), "false")
+    }
+
+    #[test]
+    fn display_void() {
+        assert_eq!(format!("{}", Variable::Void), "()")
+    }
+
+    #[test]
+    fn display_tuple() {
         assert_eq!(
-            Variable::from_str(" 0x__FA___6___ "),
-            Ok(Variable::Int(0xFA6))
-        );
-        assert_eq!(Variable::from_str(" 7.5 "), Ok(Variable::Float(7.5)));
-        assert_eq!(Variable::from_str(" -5.0 "), Ok(Variable::Float(-5.0)));
-        assert_eq!(Variable::from_str(" 5e25 "), Ok(Variable::Float(5e25)));
-        assert_eq!(Variable::from_str(" 6E_25 "), Ok(Variable::Float(6E25)));
-        assert_eq!(Variable::from_str(" 6E-25 "), Ok(Variable::Float(6E-25)));
-        assert_eq!(Variable::from_str(" 6.5e-5 "), Ok(Variable::Float(6.5e-5)));
-        assert_eq!(Variable::from_str("()"), Ok(Variable::Void));
-        assert_eq!(
-            Variable::from_str(r#""print \"""#),
-            Ok(Variable::String("print \"".into()))
-        );
-        assert!(Variable::from_str(r#""print" """#).is_err());
-        assert_eq!(
-            Variable::from_str("[14; 5]"),
-            Ok(Array::new_repeat(Variable::Int(14), 5).into())
-        );
-        assert!(Variable::from_str("[14; 5.5]").is_err());
-        assert_eq!(
-            Variable::from_str("[45, 4, 3.5]"),
-            Ok(Variable::from([
-                Variable::Int(45),
-                Variable::Int(4),
-                Variable::Float(3.5)
-            ]))
-        );
-        assert_eq!(Variable::from_str("[]"), Ok(Variable::from([])));
-        let empty_struct = Variable::from_str("struct{}");
-        assert_eq!(empty_struct, Ok(Variable::Struct(HashMap::from([]).into())));
-        assert_eq!(
-            Variable::from_str("struct{a:=5}"),
-            Ok(Variable::Struct(
-                HashMap::from([("a".into(), Variable::Int(5))]).into()
-            ))
-        );
-        assert_eq!(
-            Variable::from_str(r#"struct{a:="hello", b:=struct{}}"#),
-            Ok(Variable::Struct(
-                HashMap::from([
-                    ("a".into(), Variable::String("hello".into())),
-                    ("b".into(), empty_struct.unwrap())
-                ])
-                .into()
-            ))
+            format!("{}", var!((5, "a", (4.5, false)))),
+            r#"(5, "a", (4.5, false))"#
         )
+    }
+
+    #[test]
+    fn display_array() {
+        assert_eq!(
+            format!("{}", var!([5, "a", 4.5, false])),
+            r#"[5, "a", 4.5, false]"#
+        )
+    }
+
+    #[test]
+    fn display_empty_array() {
+        assert_eq!(format!("{}", var!([])), r#"[]"#)
+    }
+
+    #[test]
+    fn display_empty_struct() {
+        assert_eq!(format!("{}", var!(struct{})), r#"struct{}"#)
+    }
+
+    #[test]
+    fn display_one_field_struct() {
+        assert_eq!(format!("{}", var!(struct{a:=5})), r#"struct{a:=5}"#)
     }
 
     proptest! {
         #[test]
-        fn variable_from_str_doesnt_crash(s in "\\PC*"){
-            let _ = Variable::from_str(&s);
+        fn display_int(int: i64) {
+            assert_eq!(format!("{}", Variable::Int(int)), format!("{int}"))
         }
 
         #[test]
-        fn variable_from_str_int(a: i64){
-            assert_eq!(Variable::from_str(&a.to_string()), Ok(Variable::Int(a)))
+        fn display_float(float: f64) {
+            assert_eq!(format!("{}", Variable::Float(float)), format!("{float}"))
         }
 
         #[test]
-        fn variable_from_str_float(a: f64){
-            assert_eq!(Variable::from_str(&format!("{a:?}")), Ok(Variable::Float(a)))
-        }
-
-        #[test]
-        fn variable_from_str_string(s in "\\PC*"){
-            assert_eq!(Variable::from_str(&format!("{:?}", Variable::String(s.clone().into()))), Ok(Variable::String(s.into())))
+        fn display_string(s in "\\PC*") {
+            assert_eq!(format!("{}", Variable::String(s.clone().into())), format!("{s}"))
         }
     }
 }

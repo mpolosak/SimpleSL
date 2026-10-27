@@ -79,11 +79,11 @@ pub fn export_item_fn(function: &mut ItemFn, mod_ident: Option<&Ident>) -> Token
     quote!(
         simplesl::function::Function::new(
             simplesl::function::Params(std::sync::Arc::new([#params])),
-            |interpreter| {
+            |args| {
                 #args_importing
-                simplesl::ToResult::<_, simplesl::errors::ExecError>::to_result(
+                simplesl::ToResult::<simplesl::variable::Variable, simplesl::errors::ExecError>::to_result(
                     #ident(#args)
-                ).map(|value| value.into())
+                )
             },
             #return_type,
         ).into()
@@ -116,11 +116,10 @@ pub fn args_from_function_params(params: &[(Ident, Vec<Attribute>, Box<Type>)]) 
 pub fn args_import_from_function_params(
     params: &[(Ident, Vec<Attribute>, Box<Type>)],
 ) -> TokenStream {
-    params.iter().fold(quote!(), |acc, (ident, _, _)| {
-        let ident_str = ident.to_string();
+    params.iter().enumerate().fold(quote!(), |acc, (i, (ident, _, _))| {
         quote!(
             #acc
-            let #ident = interpreter.get_variable(#ident_str).unwrap().try_into().unwrap();
+            let #ident = (&args[#i]).try_into().unwrap();
         )
     })
 }

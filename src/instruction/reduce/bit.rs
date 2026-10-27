@@ -1,7 +1,11 @@
 use crate::{
-    self as simplesl, BinOperator, Error,
-    instruction::{Instruction, InstructionWithStr, bin_op::BinOperation, tuple::Tuple},
-    stdlib::operators::{AND, OR},
+    self as simplesl, Error,
+    instruction::{
+        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
+        local_variable::LocalVariables,
+    },
+    interpreter::Interpreter,
+    stdlib::operators::{bitand_reduce, bitor_reduce},
     unary_operator::UnaryOperator,
     variable::{ReturnType, Type, Variable},
 };
@@ -10,6 +14,16 @@ use simplesl_macros::var_type;
 
 lazy_static! {
     pub static ref ACCEPTED_TYPE: Type = var_type!(() -> (bool, int));
+}
+
+#[derive(Debug)]
+pub struct AndReduce {
+    iterator: Instruction,
+}
+
+#[derive(Debug)]
+pub struct OrReduce {
+    iterator: Instruction,
 }
 
 pub fn create(iterator: InstructionWithStr, op: UnaryOperator) -> Result<Instruction, Error> {
@@ -22,21 +36,56 @@ pub fn create(iterator: InstructionWithStr, op: UnaryOperator) -> Result<Instruc
             given: return_type,
         });
     }
-    let lhs = if op == UnaryOperator::BitAnd {
-        Variable::from(AND).into()
+    let iterator = iterator.instruction;
+    if op == UnaryOperator::BitAnd {
+        Ok(AndReduce { iterator }.into())
     } else {
-        Variable::from(OR).into()
-    };
-    let rhs = Tuple {
-        elements: [iterator].into(),
+        Ok(OrReduce { iterator }.into())
     }
-    .into();
-    Ok(BinOperation {
-        lhs,
-        rhs,
-        op: BinOperator::FunctionCall,
+}
+
+impl BaseInstruction for AndReduce {}
+
+impl Exec for AndReduce {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
+        let iterator = self.iterator.exec(interpreter)?.into_function().unwrap();
+        Ok(Variable::from(bitand_reduce(iterator)?))
     }
-    .into())
+}
+
+impl Recreate for AndReduce {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        let iterator = self.iterator.recreate(local_variables);
+        Self { iterator }.into()
+    }
+}
+
+impl ReturnType for AndReduce {
+    fn return_type(&self) -> Type {
+        Type::Int
+    }
+}
+
+impl BaseInstruction for OrReduce {}
+
+impl Exec for OrReduce {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
+        let iterator = self.iterator.exec(interpreter)?.into_function().unwrap();
+        Ok(Variable::from(bitor_reduce(iterator)?))
+    }
+}
+
+impl Recreate for OrReduce {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        let iterator = self.iterator.recreate(local_variables);
+        Self { iterator }.into()
+    }
+}
+
+impl ReturnType for OrReduce {
+    fn return_type(&self) -> Type {
+        Type::Int
+    }
 }
 
 #[cfg(test)]
@@ -186,6 +235,36 @@ mod tests {
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(() -> (bool, int|float))
             })
+        );
+    }
+
+    #[test]
+    fn bitand_reduction_consumes_the_iterator_until_its_end() {
+        assert_eq!(
+            parse_and_exec(
+                "count := mut 0
+                iter := () -> (bool, int) {
+                    count += 1
+                    return (*count < 4, *count)
+                }
+                (iter$&, *count)"
+            ),
+            Ok(var!((0, 4)))
+        );
+    }
+
+    #[test]
+    fn bitor_reduction_consumes_the_iterator_until_its_end() {
+        assert_eq!(
+            parse_and_exec(
+                "count := mut 0
+                iter := () -> (bool, int) {
+                    count += 1
+                    return (*count < 4, -*count)
+                }
+                (iter$|, *count)"
+            ),
+            Ok(var!((-1, 4)))
         );
     }
 

@@ -1,9 +1,10 @@
+pub mod call;
 use crate::{
-    self as simplesl, Error, ExecError,
-    function::{Body, Function, Param, Params},
+    self as simplesl, Error,
+    function::{Body, Function as VarFunc, Param, Params},
     instruction::{
-        Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
-        local_variable::{FunctionInfo, LocalVariableMap, LocalVariables},
+        BaseInstruction, Exec, ExecResult, Instruction, Recreate,
+        local_variable::{FunctionInfo, LocalVariable, LocalVariableMap, LocalVariables},
         recreate_instructions,
     },
     interpreter::Interpreter,
@@ -14,17 +15,21 @@ use simplesl_macros::var_type;
 use simplesl_parser::Rule;
 use std::sync::Arc;
 
-#[derive(Clone, Debug)]
-pub struct AnonymousFunction {
+#[derive(Debug)]
+pub struct Function {
+    ident: Option<Arc<str>>,
     pub params: Params,
-    body: Arc<[InstructionWithStr]>,
+    body: Box<[Instruction]>,
     return_type: Type,
 }
 
-impl AnonymousFunction {
+impl BaseInstruction for Function {}
+
+impl Function {
     pub fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &LocalVariables,
+        ident: Option<Arc<str>>,
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let params_pair = inner.next().unwrap();
@@ -38,8 +43,14 @@ impl AnonymousFunction {
         };
         let mut local_variables = local_variables.function_layer(
             LocalVariableMap::from(params.clone()),
-            FunctionInfo::new(None, return_type.clone()),
+            FunctionInfo::new(ident.clone(), return_type.clone()),
         );
+        if let Some(ident) = &ident {
+            local_variables.insert(
+                ident.clone(),
+                LocalVariable::Function(params.clone(), return_type.clone()),
+            );
+        }
         let body = local_variables.create_instructions(inner)?;
         if !Type::Void.matches(&return_type)
             && !body
@@ -53,6 +64,7 @@ impl AnonymousFunction {
             });
         }
         Ok(Self {
+            ident,
             params,
             body,
             return_type,
@@ -61,12 +73,18 @@ impl AnonymousFunction {
     }
 }
 
-impl Exec for AnonymousFunction {
+impl Exec for Function {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let mut fn_local_variables = LocalVariables::from_params(self.params.clone(), interpreter);
-        let body = recreate_instructions(&self.body, &mut fn_local_variables)?;
-        Ok(Function {
-            ident: None,
+        if let Some(ident) = &self.ident {
+            fn_local_variables.insert(
+                ident.clone(),
+                LocalVariable::Function(self.params.clone(), self.return_type.clone()),
+            );
+        }
+        let body = recreate_instructions(&self.body, &mut fn_local_variables).into();
+        Ok(VarFunc {
+            ident: self.ident.clone(),
             params: self.params.clone(),
             body: Body::Lang(body),
             return_type: self.return_type.clone(),
@@ -75,23 +93,30 @@ impl Exec for AnonymousFunction {
     }
 }
 
-impl Recreate for AnonymousFunction {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
+impl Recreate for Function {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
         let mut local_variables = local_variables.function_layer(
             self.params.clone().into(),
             FunctionInfo::new(None, self.return_type.clone()),
         );
-        let body = recreate_instructions(&self.body, &mut local_variables)?;
-        Ok(Self {
+        if let Some(ident) = &self.ident {
+            local_variables.insert(
+                ident.clone(),
+                LocalVariable::Function(self.params.clone(), self.return_type.clone()),
+            );
+        }
+        let body = recreate_instructions(&self.body, &mut local_variables);
+        Self {
+            ident: self.ident.clone(),
             params: self.params.clone(),
             body,
             return_type: self.return_type.clone(),
         }
-        .into())
+        .into()
     }
 }
 
-impl ReturnType for AnonymousFunction {
+impl ReturnType for Function {
     fn return_type(&self) -> Type {
         let params: Arc<[Type]> = self
             .params

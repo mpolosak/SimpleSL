@@ -1,8 +1,8 @@
 use super::match_arm::MatchArm;
 use crate::{
-    Error, ExecError,
+    Error,
     instruction::{
-        Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
+        BaseInstruction, Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
     },
     interpreter::Interpreter,
     variable::{ReturnType, Type},
@@ -12,8 +12,8 @@ use simplesl_parser::Rule;
 
 #[derive(Debug)]
 pub struct Match {
-    expression: InstructionWithStr,
-    arms: Box<[MatchArm]>,
+    pub expression: Instruction,
+    pub arms: Box<[MatchArm]>,
 }
 
 impl Match {
@@ -23,10 +23,10 @@ impl Match {
     ) -> Result<Instruction, Error> {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
-        let expression = InstructionWithStr::new(pair, local_variables)?;
+        let expression = Instruction::new(pair, local_variables)?;
         let var_type = expression.return_type();
         let arms = inner
-            .map(|pair| MatchArm::new(pair, local_variables))
+            .map(|pair| MatchArm::new(pair, local_variables, &var_type))
             .collect::<Result<Box<[MatchArm]>, Error>>()?;
         let result = Self { expression, arms };
         if !result.is_covering_type(&var_type) {
@@ -45,6 +45,8 @@ impl Match {
     }
 }
 
+impl BaseInstruction for Match {}
+
 impl Exec for Match {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let variable = self.expression.exec(interpreter)?;
@@ -58,14 +60,14 @@ impl Exec for Match {
 }
 
 impl Recreate for Match {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let expression = self.expression.recreate(local_variables)?;
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        let expression = self.expression.recreate(local_variables);
         let arms = self
             .arms
             .iter()
             .map(|arm| arm.recreate(local_variables))
-            .collect::<Result<Box<[MatchArm]>, ExecError>>()?;
-        Ok(Self { expression, arms }.into())
+            .collect();
+        Self { expression, arms }.into()
     }
 }
 

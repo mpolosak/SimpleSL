@@ -1,14 +1,19 @@
-use super::{Instruction, InstructionWithStr, function::AnonymousFunction};
+use super::Instruction;
 use crate::{
     self as simplesl, Error, Interpreter,
     function::{Param, Params},
-    variable::{ReturnType, Type, Typed, Variable},
+    variable::{Type, Typed, Variable},
 };
 use derive_more::From;
 use pest::{Parser, iterators::Pairs};
 use simplesl_macros::var_type;
 use simplesl_parser::{Rule, SimpleSLParser};
-use std::{collections::HashMap, fs, sync::Arc};
+use std::{
+    any::{Any, TypeId},
+    collections::HashMap,
+    fs,
+    sync::Arc,
+};
 
 pub type LocalVariableMap = HashMap<Arc<str>, LocalVariable>;
 pub struct LocalVariables<'a> {
@@ -50,13 +55,6 @@ impl<'a> LocalVariables<'a> {
             .or_else(|| self.lower_layer?.get(name))
     }
     #[must_use]
-    pub fn contains_key(&self, name: &Arc<str>) -> bool {
-        self.variables.contains_key(name)
-            || self
-                .lower_layer
-                .is_some_and(|layer| layer.contains_key(name))
-    }
-    #[must_use]
     pub fn create_layer(&'a self) -> Self {
         Self {
             variables: LocalVariableMap::new(),
@@ -89,12 +87,12 @@ impl<'a> LocalVariables<'a> {
             .or_else(|| self.lower_layer.and_then(LocalVariables::function))
     }
 
-    pub(crate) fn load(&mut self, path: &str) -> Result<Arc<[InstructionWithStr]>, Error> {
+    pub(crate) fn load(&mut self, path: &str) -> Result<Box<[Instruction]>, Error> {
         let contents = fs::read_to_string(path)?;
         self.parse_input(&contents)
     }
 
-    pub(crate) fn parse_input(&mut self, input: &str) -> Result<Arc<[InstructionWithStr]>, Error> {
+    pub(crate) fn parse_input(&mut self, input: &str) -> Result<Box<[Instruction]>, Error> {
         let pairs = SimpleSLParser::parse(Rule::input, input)?;
         self.create_instructions(pairs)
     }
@@ -102,22 +100,14 @@ impl<'a> LocalVariables<'a> {
     pub(crate) fn create_instructions(
         &mut self,
         pairs: Pairs<'_, Rule>,
-    ) -> Result<Arc<[InstructionWithStr]>, Error> {
+    ) -> Result<Box<[Instruction]>, Error> {
         let mut instructions = pairs
-            .map(|pair| InstructionWithStr::new(pair, self))
-            .collect::<Result<Vec<InstructionWithStr>, Error>>()?;
+            .map(|pair| Instruction::new(pair, self))
+            .collect::<Result<Vec<Instruction>, Error>>()?;
         let Some(last) = instructions.pop() else {
-            return Ok(Arc::from([]));
+            return Ok(Box::from([]));
         };
-        instructions.retain(|instruction| {
-            !matches!(
-                instruction,
-                InstructionWithStr {
-                    instruction: Instruction::Variable(..),
-                    ..
-                }
-            )
-        });
+        instructions.retain(|instruction| instruction.0.type_id() != TypeId::of::<Variable>());
         instructions.push(last);
         Ok(instructions.into())
     }
@@ -137,26 +127,7 @@ where
 pub enum LocalVariable {
     Function(Params, Type),
     #[from]
-    Variable(Variable),
-    #[from]
     Other(Type),
-}
-
-impl From<&Instruction> for LocalVariable {
-    fn from(value: &Instruction) -> Self {
-        match value {
-            Instruction::AnonymousFunction(function) => function.into(),
-            Instruction::LocalVariable(_, var) => var.clone(),
-            Instruction::Variable(var) => var.clone().into(),
-            ins => ins.return_type().into(),
-        }
-    }
-}
-
-impl From<&AnonymousFunction> for LocalVariable {
-    fn from(value: &AnonymousFunction) -> Self {
-        Self::Function(value.params.clone(), value.return_type())
-    }
 }
 
 impl Typed for LocalVariable {
@@ -170,7 +141,6 @@ impl Typed for LocalVariable {
                 let return_type = return_type.clone();
                 var_type!(params -> return_type)
             }
-            LocalVariable::Variable(variable) => variable.as_type(),
             LocalVariable::Other(var_type) => var_type.clone(),
         }
     }

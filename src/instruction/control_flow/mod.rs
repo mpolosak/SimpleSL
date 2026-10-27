@@ -1,5 +1,5 @@
-mod if_else;
+mod r#if;
 mod r#match;
 mod match_arm;
-mod set_if_else;
-pub use {if_else::IfElse, r#match::Match, set_if_else::SetIfElse};
+mod match_pattern;
+pub use {r#if::If, r#match::Match};

@@ -8,6 +8,7 @@ pub mod stdlib;
 mod to_result;
 mod unary_operator;
 pub mod variable;
+use itertools::Itertools;
 pub use simplesl_macros::{var, var_type};
 use std::fmt::{Debug, Display};
 pub use {
@@ -20,11 +21,7 @@ where
     T: Display + 'a,
     I: IntoIterator<Item = &'a T>,
 {
-    items
-        .into_iter()
-        .map(ToString::to_string)
-        .collect::<Box<[_]>>()
-        .join(separator)
+    items.into_iter().map(ToString::to_string).join(separator)
 }
 
 pub fn join_debug<'a, T, I>(items: I, separator: &str) -> String
@@ -35,6 +32,5 @@ where
     items
         .into_iter()
         .map(|element| format!("{element:?}"))
-        .collect::<Box<[_]>>()
         .join(separator)
 }

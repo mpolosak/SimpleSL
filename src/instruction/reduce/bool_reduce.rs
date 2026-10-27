@@ -1,6 +1,6 @@
 use crate::{
-    self as simplesl, BinOperator, Error,
-    instruction::{BinOperation, Instruction, InstructionWithStr, tuple::Tuple},
+    self as simplesl, Error,
+    instruction::{Instruction, InstructionWithStr, function::call::FunctionCall, tuple::Tuple},
     stdlib::operators::{ALL, ANY},
     unary_operator::UnaryOperator,
     variable::{ReturnType, Type, Variable},
@@ -22,21 +22,18 @@ pub fn create(iterator: InstructionWithStr, op: UnaryOperator) -> Result<Instruc
             given: return_type,
         });
     }
-    let lhs = if op == UnaryOperator::All {
-        Variable::from(ALL).into()
+    let function = if op == UnaryOperator::All {
+        Variable::from(ALL)
     } else {
-        Variable::from(ANY).into()
-    };
-    let rhs = Tuple {
-        elements: [iterator].into(),
+        Variable::from(ANY)
+    }.into();
+    
+    let args = Tuple {
+        elements: [iterator.instruction].into(),
     }
     .into();
-    Ok(BinOperation {
-        lhs,
-        rhs,
-        op: BinOperator::FunctionCall,
-    }
-    .into())
+
+    Ok(FunctionCall { function, args }.into())
 }
 
 #[cfg(test)]

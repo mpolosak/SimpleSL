@@ -1,8 +1,7 @@
-use super::{
-    Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
-};
+use super::{Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables};
 use crate::{
-    self as simplesl, BinOperator, Code, Error, ExecError,
+    self as simplesl, BinOperator, Code, Error,
+    instruction::BaseInstruction,
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
 };
@@ -12,13 +11,13 @@ use simplesl_parser::Rule;
 
 #[derive(Debug)]
 pub struct TypeFilter {
-    iterator: InstructionWithStr,
+    iterator: Instruction,
     var_type: Type,
 }
 
 impl TypeFilter {
     pub fn create_instruction(
-        iterator: InstructionWithStr,
+        iterator: Instruction,
         var_type: Pair<Rule>,
     ) -> Result<Instruction, Error> {
         let array_type = iterator.return_type();
@@ -29,6 +28,8 @@ impl TypeFilter {
         Ok(Self { iterator, var_type }.into())
     }
 }
+
+impl BaseInstruction for TypeFilter {}
 
 impl Exec for TypeFilter {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
@@ -41,10 +42,7 @@ impl Exec for TypeFilter {
             &interpreter,
             &format!(
                 "() -> (bool, {}) {{
-                    loop {{
-                        res := iterator();
-                        (con, value) := res;
-                        if !con return (false, default);
+                    for value in iterator {{
                         if value:{0} = value return (true, value);
                     }}
                     return (false, default);
@@ -58,10 +56,10 @@ impl Exec for TypeFilter {
 }
 
 impl Recreate for TypeFilter {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let iterator = self.iterator.recreate(local_variables)?;
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        let iterator = self.iterator.recreate(local_variables);
         let var_type = self.var_type.clone();
-        Ok(Self { iterator, var_type }.into())
+        Self { iterator, var_type }.into()
     }
 }
 

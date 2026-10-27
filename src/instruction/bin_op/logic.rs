@@ -1,97 +1,87 @@
-pub mod and {
-    use crate::{
-        BinOperator, ExecError, Interpreter,
-        instruction::{
-            BinOperation, Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
-        },
-        variable::Variable,
-    };
+use crate::{
+    Interpreter,
+    instruction::{
+        BaseInstruction, Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
+    },
+    variable::{ReturnType, Type, Variable},
+};
 
-    pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
-        match (lhs, rhs) {
-            (Instruction::Variable(Variable::Bool(true)), rhs) => rhs,
-            (Instruction::Variable(_), _) => Instruction::Variable(false.into()),
-            (lhs, rhs) => BinOperation {
-                lhs,
-                rhs,
-                op: BinOperator::And,
-            }
-            .into(),
-        }
-    }
+#[derive(Debug)]
+pub struct And {
+    pub lhs: Instruction,
+    pub rhs: Instruction,
+}
 
-    pub fn recreate(
-        lhs: Instruction,
-        rhs: &Instruction,
-        local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, ExecError> {
-        match (lhs, rhs) {
-            (Instruction::Variable(Variable::Bool(true)), rhs) => rhs.recreate(local_variables),
-            (Instruction::Variable(_), _) => Ok(Instruction::Variable(false.into())),
-            (lhs, rhs) => Ok(BinOperation {
-                lhs,
-                rhs: rhs.recreate(local_variables)?,
-                op: BinOperator::And,
-            }
-            .into()),
-        }
-    }
+impl BaseInstruction for And {}
 
-    pub fn exec(lhs: Variable, rhs: &Instruction, interpreter: &mut Interpreter) -> ExecResult {
-        let lhs = lhs.into_bool().unwrap();
-        if !lhs {
+impl Exec for And {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
+        if let Variable::Bool(false) = self.lhs.exec(interpreter)? {
             return Ok(Variable::Bool(false));
         }
-        rhs.exec(interpreter)
+        self.rhs.exec(interpreter)
     }
 }
 
-pub mod or {
-    use crate::{
-        BinOperator, ExecError, Interpreter,
-        instruction::{
-            BinOperation, Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
-        },
-        variable::Variable,
-    };
-
-    pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
-        match (lhs, rhs) {
-            (Instruction::Variable(Variable::Bool(true)), _) => Instruction::Variable(true.into()),
-            (Instruction::Variable(_), rhs) => rhs,
-            (lhs, rhs) => BinOperation {
-                lhs,
-                rhs,
-                op: BinOperator::Or,
+impl Recreate for And {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        let lhs = self.lhs.recreate(local_variables);
+        let Some(lhs) = lhs.downcast_ref::<Variable>() else {
+            let rhs = self.rhs.recreate(local_variables);
+            if let Some(Variable::Bool(true)) = rhs.downcast_ref::<Variable>() {
+                return lhs;
             }
-            .into(),
+            return Self { lhs, rhs }.into();
+        };
+        if let Variable::Bool(true) = lhs {
+            return self.rhs.recreate(local_variables);
         }
+        Variable::Bool(false).into()
     }
+}
 
-    pub fn recreate(
-        lhs: Instruction,
-        rhs: &Instruction,
-        local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, ExecError> {
-        match (lhs, rhs) {
-            (Instruction::Variable(Variable::Bool(true)), _) => {
-                Ok(Instruction::Variable(true.into()))
-            }
-            (Instruction::Variable(_), rhs) => rhs.recreate(local_variables),
-            (lhs, rhs) => Ok(BinOperation {
-                lhs,
-                rhs: rhs.recreate(local_variables)?,
-                op: BinOperator::Or,
-            }
-            .into()),
-        }
+impl ReturnType for And {
+    fn return_type(&self) -> Type {
+        Type::Bool
     }
+}
 
-    pub fn exec(lhs: Variable, rhs: &Instruction, interpreter: &mut Interpreter) -> ExecResult {
-        let lhs = lhs.into_bool().unwrap();
-        if lhs {
+#[derive(Debug)]
+pub struct Or {
+    pub lhs: Instruction,
+    pub rhs: Instruction,
+}
+
+impl BaseInstruction for Or {}
+
+impl Exec for Or {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
+        if let Variable::Bool(true) = self.lhs.exec(interpreter)? {
             return Ok(Variable::Bool(true));
         }
-        rhs.exec(interpreter)
+        self.rhs.exec(interpreter)
+    }
+}
+
+impl Recreate for Or {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        let lhs = self.lhs.recreate(local_variables);
+        let Some(lhs) = lhs.downcast_ref::<Variable>() else {
+            let rhs = self.rhs.recreate(local_variables);
+            if let Some(Variable::Bool(false)) = rhs.downcast_ref::<Variable>() {
+                return lhs;
+            }
+            return Self { lhs, rhs }.into();
+        };
+        if let Variable::Bool(false) = lhs {
+            return self.rhs.recreate(local_variables);
+        }
+        Variable::Bool(true).into()
+    }
+}
+
+impl ReturnType for Or {
+    fn return_type(&self) -> Type {
+        Type::Bool
     }
 }

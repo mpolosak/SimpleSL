@@ -18,12 +18,8 @@ pub enum UnaryOperator {
     Not,
     #[display("-")]
     UnaryMinus,
-    #[display("return")]
-    Return,
     #[display("*")]
     Indirection,
-    #[display("()")]
-    FunctionCall,
     #[display("$]")]
     Collect,
     #[display("~")]
@@ -32,9 +28,6 @@ pub enum UnaryOperator {
 
 impl UnaryOperator {
     pub fn is_prefix(&self) -> bool {
-        matches!(
-            self,
-            Self::Not | Self::UnaryMinus | Self::Return | Self::Indirection
-        )
+        matches!(self, Self::Not | Self::UnaryMinus | Self::Indirection)
     }
 }

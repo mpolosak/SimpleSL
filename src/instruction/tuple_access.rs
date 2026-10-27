@@ -1,61 +1,32 @@
-use super::{
-    Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
-};
+use super::{Instruction, InstructionWithStr};
 use crate::{
-    Error, ExecError, Interpreter,
-    variable::{ReturnType, Variable},
+    instruction::{function::call::FunctionCall, tuple::Tuple}, stdlib::operators::At, variable::{from_str::parse_int, ReturnType, Variable}, Error
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
+use std::sync::Arc;
 
-#[derive(Debug, Clone)]
-pub struct TupleAccess {
-    tuple: InstructionWithStr,
-    index: usize,
-}
+pub fn create_instruction(tuple: InstructionWithStr, op: Pair<Rule>) -> Result<Instruction, Error> {
+    let tuple_type = tuple.return_type();
+    let Some(len) = tuple_type.min_tuple_len() else {
+        return Err(Error::CannotTupleAccess(tuple.str, tuple_type));
+    };
 
-impl TupleAccess {
-    pub fn create_instruction(
-        tuple: InstructionWithStr,
-        op: Pair<Rule>,
-    ) -> Result<Instruction, Error> {
-        let return_type = tuple.return_type();
-        if !return_type.is_tuple() {
-            return Err(Error::CannotTupleAccess(tuple.str, return_type));
-        }
-        let pair = op.into_inner().next().unwrap();
-        let index = Variable::try_from(pair)?.into_int().unwrap() as usize;
-        let len = return_type.min_tuple_len().unwrap();
-        if index >= len {
-            return Err(Error::TupleIndexTooBig(index, tuple.str, len));
-        }
-        Ok(Self { tuple, index }.into())
+    let pair = op.into_inner().next().unwrap();
+    let index = parse_int(pair)? as usize;
+
+    let Some(return_type) = tuple_type.tuple_element_at(index) else {
+        return Err(Error::TupleIndexTooBig(index, tuple.str, len));
+    };
+
+    let mut function = Arc::unwrap_or_clone(Variable::from(At).into_function().unwrap());
+    function.return_type = return_type;
+
+    let function = Variable::from(function).into();
+    let args = Tuple {
+        elements: [tuple.instruction, Variable::from(index).into()].into(),
     }
-}
+    .into();
 
-impl ReturnType for TupleAccess {
-    fn return_type(&self) -> crate::variable::Type {
-        self.tuple
-            .return_type()
-            .tuple_element_at(self.index)
-            .unwrap()
-    }
-}
-
-impl Recreate for TupleAccess {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let tuple = self.tuple.recreate(local_variables)?;
-        Ok(Self {
-            tuple,
-            index: self.index,
-        }
-        .into())
-    }
-}
-
-impl Exec for TupleAccess {
-    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let tuple = self.tuple.exec(interpreter)?.into_tuple().unwrap();
-        Ok(tuple[self.index].clone())
-    }
+    Ok(FunctionCall { function, args }.into())
 }

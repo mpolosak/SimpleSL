@@ -12,8 +12,6 @@ pub enum ExecError {
     ZeroDivision,
     #[display("Cannot calculate the remainder with a divisor of 0")]
     ZeroModulo,
-    #[display("Cannot shift with overflow")]
-    OverflowShift,
 }
 
 impl std::error::Error for ExecError {}

@@ -1,7 +1,10 @@
 use crate::{
     self as simplesl, Error,
-    instruction::{ExecResult, Instruction, InstructionWithStr, unary_operation::UnaryOperation},
-    stdlib::operators::{FLOAT_PRODUCT, INT_PRODUCT},
+    instruction::{
+        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
+        local_variable::LocalVariables,
+    },
+    interpreter::Interpreter,
     unary_operator::UnaryOperator,
     variable::{ReturnType, Type, Typed, Variable},
 };
@@ -12,36 +15,66 @@ lazy_static! {
     pub static ref ACCEPTED_TYPE: Type = var_type!(() -> (bool, int) | () -> (bool, float));
 }
 
-pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
-    let op = UnaryOperator::Product;
-    let return_type = array.return_type();
-    if !return_type.matches(&ACCEPTED_TYPE) {
-        return Err(Error::IncorectUnaryOperatorOperand {
-            ins: array.str,
-            op,
-            expected: ACCEPTED_TYPE.clone(),
-            given: return_type,
-        });
-    }
-    Ok(UnaryOperation {
-        instruction: array.instruction,
-        op,
-    }
-    .into())
+#[derive(Debug)]
+pub struct Product {
+    iterator: Instruction,
 }
 
-pub fn exec(var: Variable) -> ExecResult {
-    let return_type = var.as_type();
-    if return_type.matches(&var_type!(() -> (bool, int))) {
-        return Ok(Variable::from(INT_PRODUCT)
-            .as_function()
-            .unwrap()
-            .exec_with_args(&[var])?);
+impl Product {
+    pub fn create(iterator: InstructionWithStr) -> Result<Instruction, Error> {
+        let return_type = iterator.return_type();
+        if !return_type.matches(&ACCEPTED_TYPE) {
+            return Err(Error::IncorectUnaryOperatorOperand {
+                ins: iterator.str,
+                op: UnaryOperator::Product,
+                expected: ACCEPTED_TYPE.clone(),
+                given: return_type,
+            });
+        }
+        Ok(Self {
+            iterator: iterator.instruction,
+        }
+        .into())
     }
-    Ok(Variable::from(FLOAT_PRODUCT)
-        .as_function()
-        .unwrap()
-        .exec_with_args(&[var])?)
+
+    fn identity(element_type: &Type) -> Variable {
+        if let Type::Int = element_type {
+            return 1.into();
+        }
+        1.0.into()
+    }
+}
+
+impl BaseInstruction for Product {}
+
+impl Exec for Product {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
+        let iterator = self.iterator.exec(interpreter)?;
+        let return_type = iterator.as_type().iter_element().unwrap();
+        let mut result = Self::identity(&return_type);
+        let iterator = iterator.into_function().unwrap();
+        loop {
+            let tuple = iterator.exec(&[])?.into_tuple().unwrap();
+            if let Variable::Bool(false) = tuple[0] {
+                break;
+            }
+            result = result * tuple[1].clone();
+        }
+        Ok(result)
+    }
+}
+
+impl Recreate for Product {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        let iterator = self.iterator.recreate(local_variables);
+        Self { iterator }.into()
+    }
+}
+
+impl ReturnType for Product {
+    fn return_type(&self) -> Type {
+        self.iterator.return_type().iter_element().unwrap()
+    }
 }
 
 #[cfg(test)]
@@ -128,6 +161,31 @@ mod tests {
                 x()$*"
             ),
             Ok(var!(32.4))
+        );
+    }
+
+    #[test]
+    fn product_empty_iterators_preserve_their_element_type() {
+        assert_eq!(
+            parse_and_exec("x:=() -> (bool, int) { return (false, 0) } x$*"),
+            Ok(var!(1))
+        );
+        assert_eq!(
+            parse_and_exec("x:=() -> (bool, float) { return (false, 0.0) } x$*"),
+            Ok(var!(1.0))
+        );
+    }
+
+    #[test]
+    fn product_empty_union_iterator_uses_its_concrete_type() {
+        assert_eq!(
+            parse_and_exec(
+                "x:=() -> ()->(bool, int)|() -> (bool, float) {
+                    return () -> (bool, float) { return (false, 0.0); };
+                }
+                x()$*"
+            ),
+            Ok(var!(1.0))
         );
     }
 

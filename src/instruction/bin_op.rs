@@ -1,43 +1,39 @@
 mod assign;
 mod bitwise;
+mod concat;
 mod filter;
 mod logic;
 mod map;
 mod math;
 mod partition;
-mod shift;
 use super::{
-    Exec, ExecResult, Instruction, InstructionWithStr, Recreate, at, function::call,
-    local_variable::LocalVariables, reduce::Reduce,
+    Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
+    reduce,
 };
 use crate::{
-    self as simplesl, BinOperator, Error, ExecError, Interpreter,
+    self as simplesl, BinOperator, Error, Interpreter,
+    instruction::{
+        BaseInstruction,
+        bin_op::{
+            add::Add,
+            assign::{Assign, add::AssignAdd},
+            logic::{And, Or},
+        },
+    },
     variable::{ReturnType, Type, Variable},
 };
-pub use bitwise::{bitwise_and, bitwise_or, xor};
-use lazy_static::lazy_static;
-pub use logic::{and, or};
 pub use math::{add, multiply, pow, subtract};
-use math::{divide, greater, greater_equal, lower, lower_equal, modulo};
+use math::{divide, modulo};
 use pest::iterators::Pair;
-use shift::{lshift, rshift};
 use simplesl_macros::var_type;
 use simplesl_parser::Rule;
 
-lazy_static! {
-    pub static ref ACCEPTED_INT_TYPE: Type = var_type!((int, int));
+pub fn can_be_used_int(lhs: &Type, rhs: &Type) -> bool {
+    lhs == &Type::Int && rhs == &Type::Int
 }
 
-pub fn can_be_used_int(lhs: Type, rhs: Type) -> bool {
-    var_type!((lhs, rhs)).matches(&ACCEPTED_INT_TYPE)
-}
-
-lazy_static! {
-    pub static ref ACCEPTED_NUM_TYPE: Type = var_type!((int, int) | (float, float));
-}
-
-pub fn can_be_used_num(lhs: Type, rhs: Type) -> bool {
-    var_type!((lhs, rhs)).matches(&ACCEPTED_NUM_TYPE)
+pub fn can_be_used_num(lhs: &Type, rhs: &Type) -> bool {
+    (lhs == &Type::Int || lhs == &Type::Float) && lhs == rhs
 }
 
 #[derive(Debug)]
@@ -47,87 +43,106 @@ pub struct BinOperation {
     pub op: BinOperator,
 }
 
+impl BaseInstruction for BinOperation {}
+
 impl Exec for BinOperation {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let lhs = self.lhs.exec(interpreter)?;
-        if let BinOperator::And = self.op {
-            return and::exec(lhs, &self.rhs, interpreter);
-        }
-        if let BinOperator::Or = self.op {
-            return or::exec(lhs, &self.rhs, interpreter);
-        }
         let rhs = self.rhs.exec(interpreter)?;
         Ok(match self.op {
-            BinOperator::Add => add::exec(lhs, rhs),
-            BinOperator::Subtract => subtract::exec(lhs, rhs),
-            BinOperator::Multiply => multiply::exec(lhs, rhs),
+            BinOperator::Subtract => lhs - rhs,
+            BinOperator::Multiply => lhs * rhs,
             BinOperator::Divide => divide::exec(lhs, rhs)?,
             BinOperator::Modulo => modulo::exec(lhs, rhs)?,
             BinOperator::Pow => pow::exec(lhs, rhs)?,
-            BinOperator::Equal => equal::exec(lhs, rhs),
-            BinOperator::NotEqual => not_equal::exec(lhs, rhs),
-            BinOperator::Greater => greater::exec(lhs, rhs),
-            BinOperator::GreaterOrEqual => greater_equal::exec(lhs, rhs),
-            BinOperator::Lower => lower::exec(lhs, rhs),
-            BinOperator::LowerOrEqual => lower_equal::exec(lhs, rhs),
-            BinOperator::BitwiseAnd => bitwise_and::exec(lhs, rhs),
-            BinOperator::BitwiseOr => bitwise_or::exec(lhs, rhs),
-            BinOperator::Xor => xor::exec(lhs, rhs),
-            BinOperator::LShift => lshift::exec(lhs, rhs)?,
-            BinOperator::RShift => rshift::exec(lhs, rhs)?,
-            BinOperator::Filter => filter::exec(lhs, rhs)?,
-            BinOperator::Map => map::exec(lhs, rhs)?,
-            BinOperator::At => at::exec(lhs, rhs)?,
-            BinOperator::FunctionCall => call::exec(lhs, rhs)?,
-            BinOperator::Assign => assign::exec(lhs, rhs, |_, b| b),
-            BinOperator::AssignAdd => assign::exec(lhs, rhs, add::exec),
-            BinOperator::AssignSubtract => assign::exec(lhs, rhs, subtract::exec),
-            BinOperator::AssignMultiply => assign::exec(lhs, rhs, multiply::exec),
+            BinOperator::Equal => (lhs == rhs).into(),
+            BinOperator::NotEqual => (lhs != rhs).into(),
+            BinOperator::Greater => (lhs > rhs).into(),
+            BinOperator::GreaterOrEqual => (lhs >= rhs).into(),
+            BinOperator::Lower => (lhs < rhs).into(),
+            BinOperator::LowerOrEqual => (lhs <= rhs).into(),
+            BinOperator::BitwiseAnd => lhs & rhs,
+            BinOperator::BitwiseOr => lhs | rhs,
+            BinOperator::Xor => lhs ^ rhs,
+            BinOperator::LShift => lhs << rhs,
+            BinOperator::RShift => lhs >> rhs,
+            BinOperator::AssignSubtract => assign::exec(lhs, rhs, |lhs, rhs| lhs - rhs),
+            BinOperator::AssignMultiply => assign::exec(lhs, rhs, |lhs, rhs| lhs * rhs),
             BinOperator::AssignDivide => assign::try_exec(lhs, rhs, divide::exec)?,
             BinOperator::AssignModulo => assign::try_exec(lhs, rhs, modulo::exec)?,
-            BinOperator::AssignLShift => assign::try_exec(lhs, rhs, lshift::exec)?,
-            BinOperator::AssignRShift => assign::try_exec(lhs, rhs, rshift::exec)?,
-            BinOperator::AssignBitwiseAnd => assign::exec(lhs, rhs, bitwise_and::exec),
-            BinOperator::AssignBitwiseOr => assign::exec(lhs, rhs, bitwise_or::exec),
-            BinOperator::AssignXor => assign::exec(lhs, rhs, xor::exec),
+            BinOperator::AssignLShift => assign::exec(lhs, rhs, |lhs, rhs| lhs << rhs),
+            BinOperator::AssignRShift => assign::exec(lhs, rhs, |lhs, rhs| lhs >> rhs),
+            BinOperator::AssignBitwiseAnd => assign::exec(lhs, rhs, |lhs, rhs| lhs & rhs),
+            BinOperator::AssignBitwiseOr => assign::exec(lhs, rhs, |lhs, rhs| lhs | rhs),
+            BinOperator::AssignXor => assign::exec(lhs, rhs, |lhs, rhs| lhs ^ rhs),
             BinOperator::AssignPow => assign::try_exec(lhs, rhs, pow::exec)?,
-            BinOperator::Partition => partition::exec(lhs, rhs)?,
             _ => unreachable!(),
         })
     }
 }
 
 impl Recreate for BinOperation {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let lhs = self.lhs.recreate(local_variables)?;
-        if let BinOperator::And = self.op {
-            return and::recreate(lhs, &self.rhs, local_variables);
-        }
-        if let BinOperator::Or = self.op {
-            return or::recreate(lhs, &self.rhs, local_variables);
-        }
-        let rhs = self.rhs.recreate(local_variables)?;
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        let lhs = self.lhs.recreate(local_variables);
+        let rhs = self.rhs.recreate(local_variables);
         match self.op {
-            BinOperator::Add => Ok(add::create_from_instructions(lhs, rhs)),
-            BinOperator::Subtract => Ok(subtract::create_from_instructions(lhs, rhs)),
-            BinOperator::Multiply => Ok(multiply::create_from_instructions(lhs, rhs)),
-            BinOperator::Divide => divide::create_from_instructions(lhs, rhs),
-            BinOperator::Modulo => modulo::create_from_instructions(lhs, rhs),
-            BinOperator::Equal => Ok(equal::create_from_instructions(lhs, rhs)),
-            BinOperator::NotEqual => Ok(not_equal::create_from_instructions(lhs, rhs)),
-            BinOperator::Greater => Ok(greater::create_from_instructions(lhs, rhs)),
-            BinOperator::GreaterOrEqual => Ok(greater_equal::create_from_instructions(lhs, rhs)),
-            BinOperator::Lower => Ok(lower::create_from_instructions(lhs, rhs)),
-            BinOperator::LowerOrEqual => Ok(lower_equal::create_from_instructions(lhs, rhs)),
-            BinOperator::And => Ok(and::create_from_instructions(lhs, rhs)),
-            BinOperator::Or => Ok(or::create_from_instructions(lhs, rhs)),
-            BinOperator::BitwiseAnd => Ok(bitwise_and::create_from_instructions(lhs, rhs)),
-            BinOperator::BitwiseOr => Ok(bitwise_or::create_from_instructions(lhs, rhs)),
-            BinOperator::Xor => Ok(xor::create_from_instructions(lhs, rhs)),
-            BinOperator::LShift => lshift::create_from_instructions(lhs, rhs),
-            BinOperator::RShift => rshift::create_from_instructions(lhs, rhs),
-            BinOperator::At => at::create_from_instructions(lhs, rhs),
-            op => Ok(Self { lhs, rhs, op }.into()),
+            BinOperator::Subtract => subtract::create_from_instructions(lhs, rhs),
+            BinOperator::Multiply => multiply::create_from_instructions(lhs, rhs),
+            BinOperator::Equal => create_from_instructions_with_exec(
+                lhs,
+                rhs,
+                BinOperator::Equal,
+                |lhs, rhs| (lhs == rhs).into(),
+            ),
+            BinOperator::NotEqual => create_from_instructions_with_exec(
+                lhs,
+                rhs,
+                BinOperator::NotEqual,
+                |lhs, rhs| (lhs != rhs).into(),
+            ),
+            BinOperator::Greater => create_from_instructions_with_exec(
+                lhs,
+                rhs,
+                BinOperator::Greater,
+                |lhs, rhs| (lhs > rhs).into(),
+            ),
+            BinOperator::GreaterOrEqual => create_from_instructions_with_exec(
+                lhs,
+                rhs,
+                BinOperator::GreaterOrEqual,
+                |lhs, rhs| (lhs >= rhs).into(),
+            ),
+            BinOperator::Lower => create_from_instructions_with_exec(
+                lhs,
+                rhs,
+                BinOperator::Lower,
+                |lhs, rhs| (lhs < rhs).into(),
+            ),
+            BinOperator::LowerOrEqual => create_from_instructions_with_exec(
+                lhs,
+                rhs,
+                BinOperator::LowerOrEqual,
+                |lhs, rhs| (lhs <= rhs).into(),
+            ),
+            BinOperator::BitwiseAnd => create_from_instructions_with_exec(
+                lhs,
+                rhs,
+                BinOperator::BitwiseAnd,
+                |lhs, rhs| lhs & rhs,
+            ),
+            BinOperator::BitwiseOr => create_from_instructions_with_exec(
+                lhs,
+                rhs,
+                BinOperator::BitwiseOr,
+                |lhs, rhs| lhs | rhs,
+            ),
+            BinOperator::Xor => create_from_instructions_with_exec(
+                lhs,
+                rhs,
+                BinOperator::Xor,
+                |lhs, rhs| lhs ^ rhs,
+            ),
+            op => Self { lhs, rhs, op }.into(),
         }
     }
 }
@@ -135,13 +150,9 @@ impl Recreate for BinOperation {
 impl ReturnType for BinOperation {
     fn return_type(&self) -> Type {
         let lhs = self.lhs.return_type();
-        let rhs = self.rhs.return_type();
         match self.op {
-            BinOperator::Add => add::return_type(lhs, rhs),
             BinOperator::Equal
             | BinOperator::NotEqual
-            | BinOperator::And
-            | BinOperator::Or
             | BinOperator::Greater
             | BinOperator::GreaterOrEqual
             | BinOperator::Lower
@@ -150,44 +161,12 @@ impl ReturnType for BinOperation {
             | BinOperator::Multiply
             | BinOperator::Divide
             | BinOperator::Pow
-            | BinOperator::Filter
             | BinOperator::BitwiseAnd
             | BinOperator::BitwiseOr
             | BinOperator::Xor => lhs,
-            BinOperator::Partition => partition::return_type(lhs),
-            BinOperator::Map => map::return_type(rhs),
-            BinOperator::At => lhs.index_result().unwrap(),
-            BinOperator::FunctionCall => lhs.return_type().unwrap(),
-            BinOperator::Assign => rhs,
             BinOperator::LShift | BinOperator::RShift | BinOperator::Modulo => Type::Int,
             _ => lhs.mut_element_type().unwrap(),
         }
-    }
-}
-
-mod equal {
-    use super::{BinOperator, create_from_instructions_with_exec};
-    use crate::{instruction::Instruction, variable::Variable};
-
-    pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
-        (lhs == rhs).into()
-    }
-
-    pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
-        create_from_instructions_with_exec(lhs, rhs, BinOperator::Equal, exec)
-    }
-}
-
-mod not_equal {
-    use super::{BinOperator, create_from_instructions_with_exec};
-    use crate::{instruction::Instruction, variable::Variable};
-
-    pub fn exec(lhs: Variable, rhs: Variable) -> Variable {
-        (lhs != rhs).into()
-    }
-
-    pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instruction {
-        create_from_instructions_with_exec(lhs, rhs, BinOperator::NotEqual, exec)
     }
 }
 
@@ -199,31 +178,62 @@ impl InstructionWithStr {
         local_variables: &LocalVariables<'_>,
     ) -> Result<Self, Error> {
         let str = format!("{} {} {}", lhs.str, op.as_str(), rhs.str).into();
+        let instruction = Instruction::create_infix(op, lhs, rhs, local_variables)?;
+        Ok(Self { instruction, str })
+    }
+}
+
+impl Instruction {
+    fn create_infix(
+        op: Pair<'_, Rule>,
+        lhs: InstructionWithStr,
+        rhs: InstructionWithStr,
+        local_variables: &LocalVariables<'_>,
+    ) -> Result<Self, Error> {
         let rule = op.as_rule();
         if rule == Rule::reduce {
-            return Ok(Self {
-                instruction: Reduce::create_instruction(lhs, op, rhs, local_variables)?,
-                str,
-            });
+            return reduce::create_instruction(lhs, op, rhs, local_variables);
         }
         let op = BinOperator::from(rule);
         let (lhs, rhs) = (lhs.instruction, rhs.instruction);
+
+        match op {
+            BinOperator::Add => {
+                return Add::create_instruction(lhs, rhs);
+            }
+            BinOperator::Assign => {
+                return Assign::create_instruction(lhs, rhs);
+            }
+            BinOperator::AssignAdd => {
+                return AssignAdd::create_instruction(lhs, rhs);
+            }
+            BinOperator::Partition => {
+                return partition::Partition::create_instruction(lhs, rhs);
+            }
+            BinOperator::Filter => {
+                return filter::Filter::create_instruction(lhs, rhs);
+            }
+            BinOperator::Map => {
+                return map::Map::create_instruction(lhs, rhs);
+            }
+            _ => (),
+        }
 
         let lhs_type = lhs.return_type();
         let rhs_type = rhs.return_type();
         if !can_be_used(&lhs_type, &rhs_type, op) {
             return Err(Error::CannotDo2(lhs_type, op, rhs_type));
         }
-
-        let instruction = BinOperation { lhs, rhs, op }.into();
-
-        Ok(Self { instruction, str })
+        Ok(match op {
+            BinOperator::And => And { lhs, rhs }.into(),
+            BinOperator::Or => Or { lhs, rhs }.into(),
+            _ => BinOperation { lhs, rhs, op }.into(),
+        })
     }
 }
 
 fn can_be_used(lhs: &Type, rhs: &Type, op: BinOperator) -> bool {
     match op {
-        BinOperator::Add => add::can_be_used(lhs, rhs),
         BinOperator::Subtract
         | BinOperator::Multiply
         | BinOperator::Divide
@@ -231,48 +241,26 @@ fn can_be_used(lhs: &Type, rhs: &Type, op: BinOperator) -> bool {
         | BinOperator::Lower
         | BinOperator::LowerOrEqual
         | BinOperator::Greater
-        | BinOperator::GreaterOrEqual => can_be_used_num(lhs.clone(), rhs.clone()),
+        | BinOperator::GreaterOrEqual => can_be_used_num(lhs, rhs),
         BinOperator::LShift | BinOperator::RShift | BinOperator::Modulo => {
-            can_be_used_int(lhs.clone(), rhs.clone())
+            can_be_used_int(lhs, rhs)
         }
-        BinOperator::Equal
-        | BinOperator::NotEqual
-        | BinOperator::At
-        | BinOperator::FunctionCall => true,
+        BinOperator::Equal | BinOperator::NotEqual => true,
         BinOperator::And | BinOperator::Or => lhs == &Type::Bool && rhs == &Type::Bool,
         BinOperator::BitwiseAnd | BinOperator::BitwiseOr | BinOperator::Xor => {
-            bitwise::can_be_used(lhs.clone(), rhs.clone())
-        }
-        BinOperator::Filter | BinOperator::Partition => filter::can_be_used(lhs, rhs),
-        BinOperator::Map => map::can_be_used(lhs, rhs),
-        BinOperator::Assign => {
-            assign::can_be_used(lhs.clone(), rhs.clone(), |_, _| true, |_, x| x.clone())
-        }
-        BinOperator::AssignAdd => {
-            assign::can_be_used(lhs.clone(), rhs.clone(), add::can_be_used, |lhs, rhs| {
-                add::return_type(lhs.clone(), rhs.clone())
-            })
+            bitwise::can_be_used(lhs, rhs)
         }
         BinOperator::AssignSubtract
         | BinOperator::AssignMultiply
         | BinOperator::AssignDivide
-        | BinOperator::AssignPow => assign::can_be_used(
-            lhs.clone(),
-            rhs.clone(),
-            assign_can_be_used_num,
-            return_type,
-        ),
+        | BinOperator::AssignPow => assign::can_be_used(lhs, rhs, can_be_used_num, return_type),
         BinOperator::AssignModulo | BinOperator::AssignLShift | BinOperator::AssignRShift => {
-            assign::can_be_used(
-                lhs.clone(),
-                rhs.clone(),
-                assign_can_be_used_int,
-                return_type,
-            )
+            assign::can_be_used(lhs, rhs, can_be_used_int, return_type)
         }
         BinOperator::AssignBitwiseAnd | BinOperator::AssignBitwiseOr | BinOperator::AssignXor => {
-            assign::can_be_used(lhs.clone(), rhs.clone(), bitwise_can_be_used, return_type)
+            assign::can_be_used(lhs, rhs, bitwise::can_be_used, return_type)
         }
+        _ => unreachable!(),
     }
 }
 
@@ -284,25 +272,35 @@ fn return_type(lhs: &Type, rhs: &Type) -> Type {
     }
 }
 
-fn assign_can_be_used_num(a: &Type, b: &Type) -> bool {
-    can_be_used_num(a.clone(), b.clone())
-}
-
-fn assign_can_be_used_int(a: &Type, b: &Type) -> bool {
-    can_be_used_int(a.clone(), b.clone())
-}
-fn bitwise_can_be_used(a: &Type, b: &Type) -> bool {
-    bitwise::can_be_used(a.clone(), b.clone())
-}
-
 pub fn create_from_instructions_with_exec<T: FnOnce(Variable, Variable) -> Variable>(
     lhs: Instruction,
     rhs: Instruction,
     op: BinOperator,
     exec: T,
 ) -> Instruction {
-    match (lhs, rhs) {
-        (Instruction::Variable(lhs), Instruction::Variable(rhs)) => exec(lhs, rhs).into(),
-        (lhs, rhs) => BinOperation { lhs, rhs, op }.into(),
+    let (Some(lhs), Some(rhs)) = (
+        lhs.downcast_ref::<Variable>(),
+        rhs.downcast_ref::<Variable>(),
+    ) else {
+        return BinOperation { lhs, rhs, op }.into();
+    };
+    exec(lhs.clone(), rhs.clone()).into()
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{Code, Interpreter, variable::Variable};
+
+    #[test]
+    fn shifts_wrap_shift_counts() {
+        assert_eq!(parse_and_exec("45 << 64"), Variable::Int(45));
+        assert_eq!(parse_and_exec("45 >> 90"), Variable::Int(45_i64.wrapping_shr(90)));
+    }
+
+    fn parse_and_exec(script: &str) -> Variable {
+        Code::parse(&Interpreter::without_stdlib(), script)
+            .expect("script should parse")
+            .exec()
+            .expect("shift should execute")
     }
 }

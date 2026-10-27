@@ -1,5 +1,5 @@
 use super::{Array, Type, Variable};
-use crate::{self as simplesl, ExecError};
+use crate::{self as simplesl, ExecError, interpreter::VariableMap};
 use duplicate::duplicate_item;
 use simplesl_macros::var_type;
 use std::{io, sync::Arc};
@@ -22,7 +22,7 @@ impl TypeOf for T {
 }
 
 #[duplicate_item(T; [i64]; [usize]; [u32]; [Result<i64, ExecError>];
-    [Result<usize, ExecError>]; [Result<u32, ExecError>])]
+    [Result<usize, ExecError>]; [Result<u32, ExecError>]; [isize])]
 impl TypeOf for T {
     fn type_of() -> Type {
         Type::Int
@@ -37,7 +37,7 @@ impl TypeOf for T {
 }
 
 #[duplicate_item(T; [&str]; [Arc<str>]; [String]; [Result<Arc<&str>, ExecError>];
-    [Result<Arc<str>, ExecError>]; [Result<String, ExecError>];)]
+    [Result<Arc<str>, ExecError>]; [Result<String, ExecError>]; [&Arc<str>];)]
 impl TypeOf for T {
     fn type_of() -> Type {
         Type::String
@@ -46,7 +46,7 @@ impl TypeOf for T {
 
 #[duplicate_item(T; [Arc<Array>]; [Array]; [&Array]; [&[Variable]];
     [Result<Arc<Array>, ExecError>]; [Result<Array, ExecError>]; [Result<&Array, ExecError>];
-    [Result<&[Variable], ExecError>]
+    [Result<&[Variable], ExecError>]; 
 )]
 impl TypeOf for T {
     fn type_of() -> Type {
@@ -84,7 +84,7 @@ impl TypeOf for Option<bool> {
     }
 }
 
-#[duplicate_item(T; [Option<i64>]; [Option<u32>]; [Option<i32>])]
+#[duplicate_item(T; [Option<i64>]; [Option<u32>]; [Option<i32>]; [Option<usize>]; [Option<isize>])]
 impl TypeOf for T {
     fn type_of() -> Type {
         var_type!(int | ())
@@ -100,5 +100,18 @@ impl TypeOf for Option<f64> {
 impl TypeOf for Option<String> {
     fn type_of() -> Type {
         var_type!(string | ())
+    }
+}
+
+impl TypeOf for Option<Variable> {
+    fn type_of() -> Type {
+        var_type!(any)
+    }
+}
+
+#[duplicate_item(T; [VariableMap]; [&VariableMap];)]
+impl TypeOf for T {
+    fn type_of() -> Type {
+        var_type!(struct{})
     }
 }

@@ -1,20 +1,21 @@
 use super::{
     Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
-    recreate_instructions,
 };
 use crate::{
-    Error, ExecError,
+    Error,
+    instruction::{BaseInstruction, recreate_instructions},
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
-use std::sync::Arc;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Tuple {
-    pub elements: Arc<[InstructionWithStr]>,
+    pub elements: Box<[Instruction]>,
 }
+
+impl BaseInstruction for Tuple {}
 
 impl Tuple {
     pub fn create_instruction(
@@ -23,24 +24,20 @@ impl Tuple {
     ) -> Result<Instruction, Error> {
         let elements = pair
             .into_inner()
-            .map(|pair| InstructionWithStr::new_expression(pair, local_variables))
-            .collect::<Result<Arc<[InstructionWithStr]>, Error>>()?;
+            .map(|pair| Ok(InstructionWithStr::new_expression(pair, local_variables)?.instruction))
+            .collect::<Result<Box<[Instruction]>, Error>>()?;
         Ok(Self { elements }.into())
     }
 
-    fn create_from_elements(elements: Arc<[InstructionWithStr]>) -> Instruction {
+    fn create_from_elements(elements: Box<[Instruction]>) -> Instruction {
         let mut array = Vec::new();
         for instruction in &*elements {
-            let InstructionWithStr {
-                instruction: Instruction::Variable(variable),
-                ..
-            } = instruction
-            else {
+            let Some(variable) = instruction.downcast_ref::<Variable>() else {
                 return Self { elements }.into();
             };
             array.push(variable.clone());
         }
-        Instruction::Variable(Variable::Tuple(array.into()))
+        Variable::Tuple(array.into()).into()
     }
 }
 
@@ -52,9 +49,9 @@ impl Exec for Tuple {
 }
 
 impl Recreate for Tuple {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let elements = recreate_instructions(&self.elements, local_variables)?;
-        Ok(Self::create_from_elements(elements))
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        let elements = recreate_instructions(&self.elements, local_variables);
+        Self::create_from_elements(elements)
     }
 }
 

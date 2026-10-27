@@ -1,7 +1,10 @@
 use crate::{
     self as simplesl, Error,
-    instruction::{ExecResult, Instruction, InstructionWithStr, unary_operation::UnaryOperation},
-    stdlib::operators::{FLOAT_SUM, INT_SUM, STRING_SUM},
+    instruction::{
+        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
+        local_variable::LocalVariables,
+    },
+    interpreter::Interpreter,
     unary_operator::UnaryOperator,
     variable::{ReturnType, Type, Typed, Variable},
 };
@@ -13,41 +16,59 @@ lazy_static! {
         var_type!(() -> (bool, int) | () -> (bool, float) | () -> (bool, string));
 }
 
-pub fn create(array: InstructionWithStr) -> Result<Instruction, Error> {
-    let op = UnaryOperator::Sum;
-    let return_type = array.return_type();
-    if !return_type.matches(&ACCEPTED_TYPE) {
-        return Err(Error::IncorectUnaryOperatorOperand {
-            ins: array.str,
-            op,
-            expected: ACCEPTED_TYPE.clone(),
-            given: return_type,
-        });
-    }
-    Ok(UnaryOperation {
-        instruction: array.instruction,
-        op,
-    }
-    .into())
+#[derive(Debug)]
+pub struct Sum {
+    iterator: Instruction,
 }
 
-pub fn exec(var: Variable) -> ExecResult {
-    let return_type = var.as_type();
-    if return_type.matches(&var_type!(() -> (bool, int))) {
-        Ok(Variable::from(INT_SUM)
-            .as_function()
-            .unwrap()
-            .exec_with_args(&[var])?)
-    } else if return_type.matches(&var_type!(() -> (bool, float))) {
-        Ok(Variable::from(FLOAT_SUM)
-            .as_function()
-            .unwrap()
-            .exec_with_args(&[var])?)
-    } else {
-        Ok(Variable::from(STRING_SUM)
-            .as_function()
-            .unwrap()
-            .exec_with_args(&[var])?)
+impl Sum {
+    pub fn create(iterator: InstructionWithStr) -> Result<Instruction, Error> {
+        let return_type = iterator.return_type();
+        if !return_type.matches(&ACCEPTED_TYPE) {
+            return Err(Error::IncorectUnaryOperatorOperand {
+                ins: iterator.str,
+                op: UnaryOperator::Sum,
+                expected: ACCEPTED_TYPE.clone(),
+                given: return_type,
+            });
+        }
+        Ok(Self {
+            iterator: iterator.instruction,
+        }
+        .into())
+    }
+}
+
+impl BaseInstruction for Sum {}
+
+impl Exec for Sum {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
+        let iterator = self.iterator.exec(interpreter)?;
+        let return_type = iterator.as_type().iter_element().unwrap();
+        let mut result = Variable::of_type(&return_type).unwrap();
+        let iterator = iterator.into_function().unwrap();
+        loop {
+            let tuple = iterator.exec(&[])?.into_tuple().unwrap();
+            if let Variable::Bool(false) = tuple[0] {
+                break;
+            }
+            let value = tuple[1].clone();
+            result = result + value;
+        }
+        Ok(result)
+    }
+}
+
+impl Recreate for Sum {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        let iterator = self.iterator.recreate(local_variables);
+        Self { iterator }.into()
+    }
+}
+
+impl ReturnType for Sum {
+    fn return_type(&self) -> Type {
+        self.iterator.return_type().iter_element().unwrap()
     }
 }
 
@@ -127,6 +148,18 @@ mod tests {
                 x()$+"
             ),
             Ok(var!(10.6))
+        );
+    }
+
+    #[test]
+    fn sum_empty_iterators_preserve_their_element_type() {
+        assert_eq!(
+            parse_and_exec("x:=() -> (bool, float) { return (false, 0.0) } x$+"),
+            Ok(var!(0.0))
+        );
+        assert_eq!(
+            parse_and_exec(r#"x:=() -> (bool, string) { return (false, "") } x$+"#),
+            Ok(var!(""))
         );
     }
 

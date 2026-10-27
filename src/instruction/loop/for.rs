@@ -1,107 +1,138 @@
 use crate::{
-    self as simplesl, BinOperator, Error,
+    self as simplesl, Error, Interpreter,
     instruction::{
-        BinOperation, Instruction, InstructionWithStr, Loop, block::Block, control_flow::IfElse,
-        destruct_tuple::DestructTuple, local_variable::LocalVariable,
-        local_variable::LocalVariables, set::Set,
+        BaseInstruction, Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
+        pattern::Pattern,
     },
     variable::{ReturnType, Type, Variable},
 };
-use lazy_static::lazy_static;
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
 use simplesl_parser::Rule;
-use std::sync::Arc;
 
-lazy_static! {
-    static ref ITER: Arc<str> = "$iter".into();
+#[derive(Debug)]
+pub struct For {
+    pattern: Pattern,
+    iter: Instruction,
+    body: Instruction,
 }
 
-lazy_static! {
-    static ref CON: Arc<str> = "$con".into();
+impl For {
+    pub fn create_instruction(
+        pair: Pair<Rule>,
+        local_variables: &mut LocalVariables,
+    ) -> Result<Instruction, Error> {
+        let mut inner = pair.into_inner();
+        let pattern_pair = inner.next().unwrap();
+        let iter = Instruction::new(inner.next().unwrap(), local_variables)?;
+        let Some(iter_element) = iter.return_type().iter_element() else {
+            return Err(Error::WrongType(
+                "iterator".into(),
+                var_type!(() -> (bool, any)),
+            ));
+        };
+        let pattern = if pattern_pair.as_rule() == Rule::ident {
+            Pattern::new_ident_pattern(pattern_pair.as_str().into(), iter_element.clone())
+        } else {
+            Pattern::create_instruction(pattern_pair.clone(), &iter_element)?
+        };
+        if !pattern.is_matched(&iter_element) {
+            return Err(Error::SetPatternNotMatched {
+                ins: "for loop element".into(),
+                var_type: iter_element,
+                pattern: pattern_pair.as_str().into(),
+            });
+        }
+        let mut local_variables = local_variables.create_layer();
+        local_variables.in_loop = true;
+        pattern.insert_local_variables(&mut local_variables);
+        let body = Instruction::new(inner.next().unwrap(), &mut local_variables)?;
+        Ok(Self {
+            pattern,
+            iter,
+            body,
+        }
+        .into())
+    }
 }
 
-pub fn create_instruction(
-    pair: Pair<Rule>,
-    local_variables: &mut LocalVariables,
-) -> Result<Instruction, Error> {
-    let mut inner = pair.into_inner();
-    let ident: Arc<str> = inner.next().unwrap().as_str().into();
-    let iter = InstructionWithStr::new(inner.next().unwrap(), local_variables)?;
-    let Some(iter_element) = iter.return_type().iter_element() else {
-        return Err(Error::WrongType(
-            "iterator".into(),
-            var_type!(() -> (bool, any)),
-        ));
-    };
-    let mut local_variables = local_variables.create_layer();
-    local_variables.in_loop = true;
-    local_variables.insert(ident.clone(), LocalVariable::Other(iter_element));
-    let str = format!("$iter = {}", iter.str).into();
-    let iter = InstructionWithStr {
-        instruction: Set {
-            ident: ITER.clone(),
-            instruction: iter,
+impl BaseInstruction for For {}
+
+impl Exec for For {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
+        let iter = self.iter.exec(interpreter)?.into_function().unwrap();
+        let mut interpreter = interpreter.create_layer();
+        loop {
+            let tuple = iter.exec(&[])?.into_tuple().unwrap();
+            if let Variable::Bool(false) = tuple[0] {
+                break;
+            }
+            let item = tuple[1].clone();
+            if !self.pattern.matches_variable(&item) {
+                continue;
+            }
+            self.pattern.insert_variables(&mut interpreter, item);
+            self.body.exec(&mut interpreter)?;
         }
-        .into(),
-        str,
-    };
-    let iter_call = InstructionWithStr {
-        instruction: BinOperation {
-            lhs: Instruction::LocalVariable(
-                ITER.clone(),
-                LocalVariable::Other(var_type!(()->(bool, any))),
-            ),
-            rhs: Variable::Tuple([].into()).into(),
-            op: BinOperator::FunctionCall,
-        }
-        .into(),
-        str: "$iter()".into(),
-    };
-    let str = format!("($con, {ident}) = {}", iter_call.str).into();
-    let destruct = InstructionWithStr {
-        instruction: DestructTuple {
-            idents: [CON.clone(), ident].into(),
-            instruction: iter_call,
-        }
-        .into(),
-        str,
-    };
-    let instruction = InstructionWithStr::new(inner.next().unwrap(), &mut local_variables)?;
-    let condition = InstructionWithStr {
-        instruction: Instruction::LocalVariable(CON.clone(), LocalVariable::Other(Type::Bool)),
-        str: CON.clone(),
-    };
-    let if_false = InstructionWithStr {
-        instruction: Instruction::Break,
-        str: "break".into(),
-    };
-    let str = format!("if $con {} else break", instruction.str).into();
-    let if_else = InstructionWithStr {
-        instruction: IfElse {
-            condition,
-            if_true: instruction,
-            if_false,
-        }
-        .into(),
-        str,
-    };
-    let str = format!("{{{}\n{}}}", destruct.str, if_else.str).into();
-    let body = Block {
-        instructions: [destruct, if_else].into(),
+        Ok(Variable::Void)
     }
-    .into();
-    let body = InstructionWithStr {
-        instruction: body,
-        str,
-    };
-    let str = format!("loop {}", body.str).into();
-    let l = InstructionWithStr {
-        instruction: Loop(body).into(),
-        str,
-    };
-    Ok(Block {
-        instructions: [iter, l].into(),
+}
+
+impl Recreate for For {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        let iter = self.iter.recreate(local_variables);
+        let mut local_variables = local_variables.create_layer();
+        self.pattern.insert_local_variables(&mut local_variables);
+        let body = self.body.recreate(&mut local_variables);
+        Self {
+            pattern: self.pattern.clone(),
+            iter,
+            body,
+        }
+        .into()
     }
-    .into())
+}
+
+impl ReturnType for For {
+    fn return_type(&self) -> Type {
+        Type::Void
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{Code, Interpreter, variable::Variable};
+
+    #[test]
+    fn for_loop_destructures_tuple_pattern() {
+        let script = "total := mut 0
+                for (left, right) in [(1, 2), (3, 4)]~ {
+                    total = *total + left + right
+                }
+                *total";
+        let code = Code::parse(&Interpreter::without_stdlib(), script).unwrap();
+        assert_eq!(code.exec().unwrap(), Variable::Int(10));
+    }
+
+    #[test]
+    fn for_loop_keeps_identifier_binding() {
+        let script = "total := mut 0
+                for value in [1, 2, 3]~ {
+                    total = *total + value
+                }
+                *total";
+        let code = Code::parse(&Interpreter::without_stdlib(), script).unwrap();
+        assert_eq!(code.exec().unwrap(), Variable::Int(6));
+    }
+
+    #[test]
+    fn for_loop_skips_items_that_do_not_match_pattern() {
+        let script = "total := mut 0
+            for [value] in [[], [2]]~ {
+                total = *total + value
+            }
+            *total";
+        let code = Code::parse(&Interpreter::without_stdlib(), script).unwrap();
+        assert_eq!(code.exec().unwrap(), Variable::Int(2));
+    }
 }

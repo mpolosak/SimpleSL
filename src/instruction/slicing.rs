@@ -1,166 +1,60 @@
-use std::sync::Arc;
-
-use super::{
-    Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
-};
+use super::{Instruction, InstructionWithStr, local_variable::LocalVariables};
+use crate::stdlib::operators::Slice;
 use crate::{
-    Error, ExecError, Interpreter,
+    Error,
+    instruction::{function::call::FunctionCall, tuple::Tuple},
     variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
-use simplesl_parser::Rule;
+use simplesl_parser::{Rule, unexpected};
+use std::sync::Arc;
 
-#[derive(Debug)]
-pub struct Slicing {
+pub fn create(
     lhs: InstructionWithStr,
-    start: Option<InstructionWithStr>,
-    stop: Option<InstructionWithStr>,
-    step: Option<InstructionWithStr>,
-}
-
-impl Slicing {
-    pub fn create(
-        lhs: InstructionWithStr,
-        pair: Pair<Rule>,
-        local_variables: &LocalVariables,
-    ) -> Result<Instruction, Error> {
-        let lhs_type = lhs.return_type();
-        if !lhs_type.can_be_indexed() {
-            return Err(Error::CannotSlice(lhs.str, lhs_type));
+    pair: Pair<Rule>,
+    local_variables: &LocalVariables,
+) -> Result<Instruction, Error> {
+    let lhs_type = lhs.return_type();
+    if !lhs_type.can_be_indexed() {
+        return Err(Error::CannotSlice(lhs.str, lhs_type));
+    }
+    let inner = pair.into_inner();
+    if inner.peek().is_none() {
+        return Ok(lhs.instruction);
+    }
+    let mut start = None;
+    let mut stop = None;
+    let mut step = None;
+    for pair in inner {
+        let rule = pair.as_rule();
+        let instruction = InstructionWithStr::new_expression(pair, local_variables)?;
+        if instruction.return_type() != Type::Int {
+            return Err(Error::CannotIndexWith(instruction.str));
         }
-        let mut inner = pair.into_inner();
-        let (start, stop, step) = match (inner.next(), inner.next(), inner.next()) {
-            (Some(start), Some(stop), Some(step)) => (
-                Some(InstructionWithStr::new_expression(start, local_variables)?),
-                Some(InstructionWithStr::new_expression(stop, local_variables)?),
-                Some(InstructionWithStr::new_expression(step, local_variables)?),
-            ),
-            (Some(start), Some(stop), None)
-                if start.as_rule() == Rule::start && stop.as_rule() == Rule::stop =>
-            {
-                (
-                    Some(InstructionWithStr::new_expression(start, local_variables)?),
-                    Some(InstructionWithStr::new_expression(stop, local_variables)?),
-                    None,
-                )
-            }
-            (Some(start), Some(step), None) if start.as_rule() == Rule::start => (
-                Some(InstructionWithStr::new_expression(start, local_variables)?),
-                None,
-                Some(InstructionWithStr::new_expression(step, local_variables)?),
-            ),
-            (Some(stop), Some(step), None) => (
-                None,
-                Some(InstructionWithStr::new_expression(stop, local_variables)?),
-                Some(InstructionWithStr::new_expression(step, local_variables)?),
-            ),
-            (Some(start), None, None) if start.as_rule() == Rule::start => (
-                Some(InstructionWithStr::new_expression(start, local_variables)?),
-                None,
-                None,
-            ),
-            (Some(stop), None, None) if stop.as_rule() == Rule::stop => (
-                None,
-                Some(InstructionWithStr::new_expression(stop, local_variables)?),
-                None,
-            ),
-            (Some(step), None, None) => (
-                None,
-                None,
-                Some(InstructionWithStr::new_expression(step, local_variables)?),
-            ),
-            _ => return Ok(lhs.instruction),
-        };
-        if let (Some(index), _, _) | (_, Some(index), _) | (_, _, Some(index)) =
-            (&start, &stop, &step)
-            && index.return_type() != Type::Int
-        {
-            return Err(Error::CannotIndexWith(index.str.clone()));
+        match rule {
+            Rule::start => start = Some(instruction.instruction),
+            Rule::step => step = Some(instruction.instruction),
+            Rule::stop => stop = Some(instruction.instruction),
+            rule => unexpected!(rule),
         }
-
-        Ok(Self {
-            lhs,
-            start,
-            stop,
-            step,
-        }
-        .into())
     }
 
-    fn exec_index(
-        index: &Option<InstructionWithStr>,
-        interpreter: &mut Interpreter,
-    ) -> Result<Option<isize>, super::ExecStop> {
-        let exec = |ins: &InstructionWithStr| ins.exec(interpreter);
-        let start = index
-            .as_ref()
-            .map(exec)
-            .transpose()?
-            .map(Variable::into_int)
-            .transpose()
-            .unwrap()
-            .map(|i| i as isize);
-        Ok(start)
+    let start = start.unwrap_or_else(|| Variable::Void.into());
+    let stop = stop.unwrap_or_else(|| Variable::Void.into());
+    let step = step.unwrap_or_else(|| Variable::Void.into());
+
+    let variable_type = lhs.return_type();
+
+    let mut function = Arc::unwrap_or_clone(Variable::from(Slice).into_function().unwrap());
+    function.return_type = variable_type;
+
+    let function = Variable::from(function).into();
+    let args = Tuple {
+        elements: [lhs.instruction, start, stop, step].into(),
     }
-}
+    .into();
 
-impl Exec for Slicing {
-    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        let lhs = self.lhs.exec(interpreter)?;
-
-        let start = Slicing::exec_index(&self.start, interpreter)?.into();
-        let end = Slicing::exec_index(&self.stop, interpreter)?.into();
-        let step = Slicing::exec_index(&self.step, interpreter)?;
-
-        let s = slyce::Slice { start, end, step };
-
-        if let Variable::String(lhs) = lhs {
-            let chars: Box<[char]> = lhs.chars().collect();
-            let result: String = s.apply(&chars).cloned().collect();
-            return Ok(result.into());
-        }
-
-        let array = lhs.into_array().unwrap();
-        let result: Arc<[Variable]> = s.apply(array.as_ref()).cloned().collect();
-        Ok(result.into())
-    }
-}
-
-impl Recreate for Slicing {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let lhs = self.lhs.recreate(local_variables)?;
-        let start = self
-            .start
-            .as_ref()
-            .map(|iws| iws.recreate(local_variables))
-            .transpose()?;
-        let stop = self
-            .stop
-            .as_ref()
-            .map(|iws| iws.recreate(local_variables))
-            .transpose()?;
-        let step = self
-            .step
-            .as_ref()
-            .map(|iws| iws.recreate(local_variables))
-            .transpose()?;
-        Ok(Self {
-            lhs,
-            start,
-            stop,
-            step,
-        }
-        .into())
-    }
-}
-
-impl ReturnType for Slicing {
-    fn return_type(&self) -> Type {
-        self.lhs
-            .return_type()
-            .element_type()
-            .unwrap_or(Type::String)
-    }
+    Ok(FunctionCall { function, args }.into())
 }
 
 #[cfg(test)]

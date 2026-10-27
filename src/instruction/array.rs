@@ -1,20 +1,17 @@
-use super::{
-    Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
-    recreate_instructions,
-};
+use super::{Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables};
 use crate::{
-    self as simplesl, Error, ExecError,
+    self as simplesl, Error,
+    instruction::{BaseInstruction, recreate_instructions},
     interpreter::Interpreter,
-    variable::{ReturnType, Type},
+    variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
 use simplesl_parser::Rule;
-use std::sync::Arc;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Array {
-    pub instructions: Arc<[InstructionWithStr]>,
+    pub instructions: Box<[Instruction]>,
     pub element_type: Type,
 }
 
@@ -24,9 +21,10 @@ impl Array {
         local_variables: &LocalVariables,
     ) -> Result<Instruction, Error> {
         let inner = pair.into_inner();
+        let mut local_variables = local_variables.create_layer();
         let instructions = inner
-            .map(|arg| InstructionWithStr::new_expression(arg, local_variables))
-            .collect::<Result<Arc<_>, Error>>()?;
+            .map(|arg| Instruction::new(arg, &mut local_variables))
+            .collect::<Result<Box<_>, Error>>()?;
         let element_type = instructions
             .iter()
             .map(ReturnType::return_type)
@@ -40,6 +38,8 @@ impl Array {
     }
 }
 
+impl BaseInstruction for Array {}
+
 impl Exec for Array {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let elements = interpreter.exec(&self.instructions)?;
@@ -48,24 +48,20 @@ impl Exec for Array {
 }
 
 impl Recreate for Array {
-    fn recreate(&self, local_variables: &mut LocalVariables) -> Result<Instruction, ExecError> {
-        let instructions = recreate_instructions(&self.instructions, local_variables)?;
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        let instructions = recreate_instructions(&self.instructions, local_variables);
         let mut array = Vec::new();
         for instruction in &*instructions {
-            let InstructionWithStr {
-                instruction: Instruction::Variable(variable),
-                ..
-            } = instruction
-            else {
-                return Ok(Self {
+            let Some(variable) = instruction.downcast_ref::<Variable>() else {
+                return Self {
                     instructions,
                     element_type: self.element_type.clone(),
                 }
-                .into());
+                .into();
             };
             array.push(variable.clone());
         }
-        Ok(Instruction::Variable(array.into()))
+        Variable::from(array).into()
     }
 }
 
