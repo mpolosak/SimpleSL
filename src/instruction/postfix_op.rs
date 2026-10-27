@@ -2,12 +2,12 @@ mod iter;
 use super::{
     InstructionWithStr, at,
     local_variable::LocalVariables,
-    reduce::{self, bool_reduce, collect, product},
+    reduce::{self, bool_reduce, collect},
     tuple_access,
     type_filter::TypeFilter,
 };
 use crate::{
-    instruction::{field_access::FieldAccess, function::call::FunctionCall, postfix_op::iter::Iter, reduce::sum::Sum, slicing}, unary_operator::UnaryOperator, Error
+    instruction::{field_access::FieldAccess, function::call::FunctionCall, postfix_op::iter::Iter, reduce::{product::Product, sum::Sum}, slicing}, unary_operator::UnaryOperator, Error
 };
 use pest::iterators::Pair;
 use simplesl_parser::{Rule, unexpected};
@@ -28,7 +28,7 @@ impl InstructionWithStr {
             Rule::tuple_access => tuple_access::create_instruction(lhs, op),
             Rule::field_access => FieldAccess::create_instruction(lhs, op),
             Rule::sum => Sum::create(lhs),
-            Rule::product => product::create(lhs),
+            Rule::product => Product::create(lhs),
             Rule::all => bool_reduce::create(lhs, UnaryOperator::All),
             Rule::reduce_any => bool_reduce::create(lhs, UnaryOperator::Any),
             Rule::bitand_reduce => reduce::bit::create(lhs, UnaryOperator::BitAnd),

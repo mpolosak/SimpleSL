@@ -1,18 +1,12 @@
-use std::sync::Arc;
 use crate::{
-    self as simplesl,
-    Error,
+    self as simplesl, Error,
     instruction::{
-        Instruction, InstructionWithStr,
-        control_flow::{Match, MatchArm, MatchPattern},
-        function::call::FunctionCall,
-        ident::Ident,
-        pattern::Pattern,
-        tuple::Tuple,
+        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
+        local_variable::LocalVariables,
     },
-    stdlib::operators::{FLOAT_PRODUCT, INT_PRODUCT},
+    interpreter::Interpreter,
     unary_operator::UnaryOperator,
-    variable::{MultiType, ReturnType, Type, Variable},
+    variable::{ReturnType, Type, Typed, Variable},
 };
 use lazy_static::lazy_static;
 use simplesl_macros::var_type;
@@ -21,91 +15,66 @@ lazy_static! {
     pub static ref ACCEPTED_TYPE: Type = var_type!(() -> (bool, int) | () -> (bool, float));
 }
 
-pub fn create(iterator: InstructionWithStr) -> Result<Instruction, Error> {
-    let return_type = iterator.return_type();
-    if !return_type.matches(&ACCEPTED_TYPE) {
-        return Err(Error::IncorectUnaryOperatorOperand {
-            ins: iterator.str,
-            op: UnaryOperator::Product,
-            expected: ACCEPTED_TYPE.clone(),
-            given: return_type,
-        });
-    }
-    let iterator = iterator.instruction;
-    let iter_element = return_type.iter_element().unwrap();
-    if let Type::Multi(types) = iter_element {
-        return Ok(create_match(iterator, types));
-    }
-
-    let function = match return_type.iter_element().unwrap() {
-        Type::Int => Variable::from(INT_PRODUCT),
-        Type::Float => Variable::from(FLOAT_PRODUCT),
-        _ => unreachable!(),
-    }
-    .into();
-    let args = Tuple {
-        elements: [iterator].into(),
-    }
-    .into();
-
-    Ok(FunctionCall { function, args }.into())
+#[derive(Debug)]
+pub struct Product {
+    iterator: Instruction,
 }
 
-fn create_match(iterator: Instruction, types: MultiType) -> Instruction {
-    let iter: Arc<str> = "iter".into();
-    let arms = types
-        .iter()
-        .map(|t| match t {
-            Type::Int => MatchArm {
-                pattern: MatchPattern::Pattern(Pattern::new_ident_pattern(
-                    iter.clone(),
-                    var_type!(() -> (bool, int)),
-                )),
-                guard: None,
-                instruction: {
-                    let function = Variable::from(INT_PRODUCT).into();
-                    let args = Tuple {
-                        elements: [Ident {
-                            ident: iter.clone(),
-                            variable: var_type!(() -> (bool, int)).into(),
-                        }
-                        .into()]
-                        .into(),
-                    }
-                    .into();
-
-                    FunctionCall { function, args }.into()
-                },
-            },
-            Type::Float => MatchArm {
-                pattern: MatchPattern::Pattern(Pattern::new_ident_pattern(
-                    "iter".into(),
-                    var_type!(() -> (bool, float)),
-                )),
-                guard: None,
-                instruction: {
-                    let function = Variable::from(FLOAT_PRODUCT).into();
-                    let args = Tuple {
-                        elements: [Ident {
-                            ident: iter.clone(),
-                            variable: var_type!(() -> (bool, float)).into(),
-                        }
-                        .into()]
-                        .into(),
-                    }
-                    .into();
-
-                    FunctionCall { function, args }.into()
-                },
-            },
-            _ => unreachable!(),
-        })
-        .collect();
-    Match {
-        expression: iterator,
-        arms,
+impl Product {
+    pub fn create(iterator: InstructionWithStr) -> Result<Instruction, Error> {
+        let return_type = iterator.return_type();
+        if !return_type.matches(&ACCEPTED_TYPE) {
+            return Err(Error::IncorectUnaryOperatorOperand {
+                ins: iterator.str,
+                op: UnaryOperator::Product,
+                expected: ACCEPTED_TYPE.clone(),
+                given: return_type,
+            });
+        }
+        Ok(Self {
+            iterator: iterator.instruction,
+        }
+        .into())
     }
-    .into()
+
+    fn identity(element_type: &Type) -> Variable {
+        if let Type::Int = element_type {
+            return 1.into();
+        }
+        1.0.into()
+    }
+}
+
+impl BaseInstruction for Product {}
+
+impl Exec for Product {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
+        let iterator = self.iterator.exec(interpreter)?;
+        let return_type = iterator.as_type().iter_element().unwrap();
+        let mut result = Self::identity(&return_type);
+        let iterator = iterator.into_function().unwrap();
+        loop {
+            let tuple = iterator.exec(&[])?.into_tuple().unwrap();
+            if let Variable::Bool(false) = tuple[0] {
+                break;
+            }
+            result = result * tuple[1].clone();
+        }
+        Ok(result)
+    }
+}
+
+impl Recreate for Product {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        let iterator = self.iterator.recreate(local_variables);
+        Self { iterator }.into()
+    }
+}
+
+impl ReturnType for Product {
+    fn return_type(&self) -> Type {
+        self.iterator.return_type().iter_element().unwrap()
+    }
 }
 
 #[cfg(test)]
@@ -192,6 +161,31 @@ mod tests {
                 x()$*"
             ),
             Ok(var!(32.4))
+        );
+    }
+
+    #[test]
+    fn product_empty_iterators_preserve_their_element_type() {
+        assert_eq!(
+            parse_and_exec("x:=() -> (bool, int) { return (false, 0) } x$*"),
+            Ok(var!(1))
+        );
+        assert_eq!(
+            parse_and_exec("x:=() -> (bool, float) { return (false, 0.0) } x$*"),
+            Ok(var!(1.0))
+        );
+    }
+
+    #[test]
+    fn product_empty_union_iterator_uses_its_concrete_type() {
+        assert_eq!(
+            parse_and_exec(
+                "x:=() -> ()->(bool, int)|() -> (bool, float) {
+                    return () -> (bool, float) { return (false, 0.0); };
+                }
+                x()$*"
+            ),
+            Ok(var!(1.0))
         );
     }
 
