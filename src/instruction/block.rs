@@ -29,11 +29,11 @@ impl Block {
 impl Exec for Block {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let mut interpreter = interpreter.create_layer();
-        Ok(interpreter
-            .exec(&self.instructions)?
-            .last()
-            .cloned()
-            .unwrap_or(Variable::Void))
+        let mut result = Variable::Void;
+        for instruction in &self.instructions {
+            result = instruction.exec(&mut interpreter)?;
+        }
+        Ok(result)
     }
 }
 
