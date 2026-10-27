@@ -1,14 +1,28 @@
 use crate::{
-    self as simplesl,
+    self as simplesl, Error,
     instruction::{
-        function::call::FunctionCall, tuple::Tuple, Instruction, InstructionWithStr
-    }, stdlib::operators::{AND, OR}, unary_operator::UnaryOperator, variable::{ReturnType, Type, Variable}, Error
+        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
+        local_variable::LocalVariables,
+    },
+    interpreter::Interpreter,
+    unary_operator::UnaryOperator,
+    variable::{ReturnType, Type, Variable},
 };
 use lazy_static::lazy_static;
 use simplesl_macros::var_type;
 
 lazy_static! {
     pub static ref ACCEPTED_TYPE: Type = var_type!(() -> (bool, int));
+}
+
+#[derive(Debug)]
+pub struct AndReduce {
+    iterator: Instruction,
+}
+
+#[derive(Debug)]
+pub struct OrReduce {
+    iterator: Instruction,
 }
 
 pub fn create(iterator: InstructionWithStr, op: UnaryOperator) -> Result<Instruction, Error> {
@@ -21,18 +35,78 @@ pub fn create(iterator: InstructionWithStr, op: UnaryOperator) -> Result<Instruc
             given: return_type,
         });
     }
-    let function = if op == UnaryOperator::BitAnd {
-        Variable::from(AND)
+    let iterator = iterator.instruction;
+    if op == UnaryOperator::BitAnd {
+        Ok(AndReduce { iterator }.into())
     } else {
-        Variable::from(OR)
-    }.into();
-    
-    let args = Tuple {
-        elements: [iterator.instruction].into(),
+        Ok(OrReduce { iterator }.into())
     }
-    .into();
+}
 
-    Ok(FunctionCall { function, args }.into())
+impl BaseInstruction for AndReduce {}
+
+impl Exec for AndReduce {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
+        let iterator = self.iterator.exec(interpreter)?.into_function().unwrap();
+        let mut result = -1;
+        loop {
+            let tuple = iterator.exec(&[])?.into_tuple().unwrap();
+            if let Variable::Bool(false) = tuple[0] {
+                break;
+            }
+            let Variable::Int(value) = tuple[1] else {
+                unreachable!("bit reduction iterator must yield integers");
+            };
+            result &= value;
+        }
+        Ok(Variable::Int(result))
+    }
+}
+
+impl Recreate for AndReduce {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        let iterator = self.iterator.recreate(local_variables);
+        Self { iterator }.into()
+    }
+}
+
+impl ReturnType for AndReduce {
+    fn return_type(&self) -> Type {
+        Type::Int
+    }
+}
+
+impl BaseInstruction for OrReduce {}
+
+impl Exec for OrReduce {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
+        let iterator = self.iterator.exec(interpreter)?.into_function().unwrap();
+        let mut result = 0;
+        loop {
+            let tuple = iterator.exec(&[])?.into_tuple().unwrap();
+            if let Variable::Bool(false) = tuple[0] {
+                break;
+            }
+            let Variable::Int(value) = tuple[1] else {
+                unreachable!("bit reduction iterator must yield integers");
+            };
+            result |= value;
+        }
+        Ok(Variable::Int(result))
+    }
+}
+
+impl Recreate for OrReduce {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        let iterator = self.iterator.recreate(local_variables);
+        Self { iterator }.into()
+    }
+}
+
+impl ReturnType for OrReduce {
+    fn return_type(&self) -> Type {
+        Type::Int
+    }
 }
 
 #[cfg(test)]
@@ -182,6 +256,36 @@ mod tests {
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(() -> (bool, int|float))
             })
+        );
+    }
+
+    #[test]
+    fn bitand_reduction_consumes_the_iterator_until_its_end() {
+        assert_eq!(
+            parse_and_exec(
+                "count := mut 0
+                iter := () -> (bool, int) {
+                    count += 1
+                    return (*count < 4, *count)
+                }
+                (iter$&, *count)"
+            ),
+            Ok(var!((0, 4)))
+        );
+    }
+
+    #[test]
+    fn bitor_reduction_consumes_the_iterator_until_its_end() {
+        assert_eq!(
+            parse_and_exec(
+                "count := mut 0
+                iter := () -> (bool, int) {
+                    count += 1
+                    return (*count < 4, -*count)
+                }
+                (iter$|, *count)"
+            ),
+            Ok(var!((-1, 4)))
         );
     }
 
