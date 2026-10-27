@@ -151,7 +151,7 @@ impl Type {
             Type::Tuple(tuple) => Some(tuple),
             Type::Multi(multi) => {
                 let mut iter = multi.iter().cloned();
-                let first = iter.next().unwrap().flatten_tuple()?;
+                let first = iter.next()?.flatten_tuple()?;
                 iter.map(Self::flatten_tuple).try_fold(first, |acc, curr| {
                     let curr = curr?;
                     if acc.len() != curr.len() {
@@ -174,7 +174,7 @@ impl Type {
             Type::Array(element) => Some(element.as_ref().clone()),
             Type::Multi(multi) => {
                 let mut iter = multi.iter();
-                let first = iter.next().unwrap().index_result()?;
+                let first = iter.next()?.index_result()?;
                 iter.map(Self::index_result)
                     .try_fold(first, |acc, curr| Some(acc | curr?))
             }
@@ -188,7 +188,7 @@ impl Type {
             Type::Function(function) => Some(function.params.clone()),
             Type::Multi(multi) => {
                 let mut iter = multi.iter();
-                let first = iter.next().unwrap().params()?;
+                let first = iter.next()?.params()?;
                 iter.map(Self::params).try_fold(first, |acc, curr| {
                     let curr = curr?;
                     if acc.len() != curr.len() {
@@ -211,7 +211,7 @@ impl Type {
             Type::Function(function) => Some(function.return_type()),
             Type::Multi(multi) => {
                 let mut iter = multi.iter();
-                let first = iter.next().unwrap().return_type()?;
+                let first = iter.next()?.return_type()?;
                 iter.map(Self::return_type)
                     .try_fold(first, |acc, curr| Some(acc | curr?))
             }
@@ -225,7 +225,7 @@ impl Type {
             Type::Array(element) => Some(element.as_ref().clone()),
             Type::Multi(multi) => {
                 let mut iter = multi.iter();
-                let first = iter.next().unwrap().element_type()?;
+                let first = iter.next()?.element_type()?;
                 iter.map(Self::element_type)
                     .try_fold(first, |acc, curr| Some(acc | curr?))
             }
@@ -239,7 +239,7 @@ impl Type {
             Type::Mut(element) => Some(element.as_ref().clone()),
             Type::Multi(multi) => {
                 let mut iter = multi.iter();
-                let first = iter.next().unwrap().element_type()?;
+                let first = iter.next()?.element_type()?;
                 iter.map(Self::mut_element_type)
                     .try_fold(first, |acc, curr| Some(acc | curr?))
             }
@@ -292,7 +292,7 @@ impl Type {
             Self::Tuple(types) => Some(types.len()),
             Self::Multi(multi) => {
                 let mut iter = multi.iter();
-                let first = iter.next().unwrap().tuple_len()?;
+                let first = iter.next()?.tuple_len()?;
                 iter.map(Self::tuple_len).try_fold(first, |acc, curr| {
                     if acc == curr? { Some(acc) } else { None }
                 })
@@ -306,7 +306,7 @@ impl Type {
             return self.tuple_len();
         };
         let mut iter = multi.iter();
-        let first = iter.next().unwrap().tuple_len()?;
+        let first = iter.next()?.tuple_len()?;
         iter.map(Self::tuple_len).try_fold(
             first,
             |acc, curr| {
@@ -329,7 +329,7 @@ impl Type {
             }
             Self::Multi(multi) => {
                 let mut iter = multi.iter();
-                let first = iter.next().unwrap().iter_element()?;
+                let first = iter.next()?.iter_element()?;
                 iter.map(Self::iter_element)
                     .try_fold(first, |acc, curr| Some(acc | curr?))
             }
@@ -342,7 +342,7 @@ impl Type {
             Self::Tuple(tuple) => tuple.get(index).cloned(),
             Self::Multi(multi) => {
                 let mut iter = multi.iter();
-                let first = iter.next().unwrap().tuple_element_at(index)?;
+                let first = iter.next()?.tuple_element_at(index)?;
                 iter.map(|t| t.tuple_element_at(index))
                     .try_fold(first, |acc, curr| Some(acc | curr?))
             }
@@ -361,7 +361,7 @@ impl Type {
             Self::Struct(tm) => tm.0.get(ident).cloned(),
             Self::Multi(multi) => {
                 let mut iter = multi.iter();
-                let first = iter.next().unwrap().field_type(ident)?;
+                let first = iter.next()?.field_type(ident)?;
                 iter.map(|t| t.field_type(ident))
                     .try_fold(first, |acc, curr| Some(acc | curr?))
             }
@@ -386,7 +386,7 @@ impl FromStr for Type {
         let Ok(mut pairs) = SimpleSLParser::parse(Rule::r#type, s) else {
             return Err(ParseTypeError);
         };
-        Ok(Type::from(pairs.next().unwrap()))
+        pairs.next().map(Type::from).ok_or(ParseTypeError)
     }
 }
 
@@ -415,8 +415,7 @@ impl From<Pair<'_, Rule>> for Type {
             Rule::multi => pair
                 .into_inner()
                 .map(Type::from)
-                .reduce(Type::concat)
-                .unwrap(),
+                .fold(Type::Never, Type::concat),
             Rule::any => Self::Any,
             Rule::never => Self::Never,
             Rule::mut_type => {
