@@ -89,6 +89,6 @@ mod test {
 
     fn parse_and_exec(script: &str) -> Result<Variable, Error> {
         Code::parse(&Interpreter::without_stdlib(), script)
-            .and_then(|code| code.exec().map_err(Error::from))
+            .map(|code| code.exec().unwrap())
     }
 }

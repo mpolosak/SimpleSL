@@ -26,8 +26,9 @@ pub fn create(iterator: InstructionWithStr, op: UnaryOperator) -> Result<Instruc
         Variable::from(ALL)
     } else {
         Variable::from(ANY)
-    }.into();
-    
+    }
+    .into();
+
     let args = Tuple {
         elements: [iterator.instruction].into(),
     }
@@ -232,7 +233,6 @@ mod tests {
     }
 
     fn parse_and_exec(script: &str) -> Result<Variable, Error> {
-        Code::parse(&Interpreter::without_stdlib(), script)
-            .and_then(|code| code.exec().map_err(Error::from))
+        Code::parse(&Interpreter::without_stdlib(), script).map(|code| code.exec().unwrap())
     }
 }

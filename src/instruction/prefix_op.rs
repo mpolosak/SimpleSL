@@ -48,7 +48,6 @@ impl UnaryMinus {
         }
         Ok(UnaryMinus(instruction.instruction).into())
     }
-
 }
 
 impl BaseInstruction for UnaryMinus {}
@@ -97,7 +96,6 @@ impl Not {
         }
         Ok(Not(instruction.instruction).into())
     }
-
 }
 
 impl BaseInstruction for Not {}
@@ -170,8 +168,7 @@ mod tests {
         );
     }
 
-    fn parse_and_exec(script: &str) -> Result<Variable, crate::Error> {
-        Code::parse(&Interpreter::without_stdlib(), script)
-            .and_then(|code| code.exec().map_err(Error::from))
+    fn parse_and_exec(script: &str) -> Result<Variable, Error> {
+        Code::parse(&Interpreter::without_stdlib(), script).map(|code| code.exec().unwrap())
     }
 }

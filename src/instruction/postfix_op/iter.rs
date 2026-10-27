@@ -60,11 +60,7 @@ impl Exec for Iter {
         let var = self.0.exec(interpreter)?;
         let element_type = var.as_type().element_type().unwrap();
         let default = Variable::of_type(&element_type).unwrap_or(Variable::Void);
-        let result = ITER
-            .exec(&[var, default])
-            .unwrap()
-            .into_function()
-            .unwrap();
+        let result = ITER.exec(&[var, default]).unwrap().into_function().unwrap();
         let mut result = Arc::unwrap_or_clone(result);
         result.return_type = var_type!((bool, element_type));
         Ok(result.into())
@@ -149,7 +145,6 @@ mod tests {
     }
 
     fn parse_and_exec(script: &str) -> Result<Variable, Error> {
-        Code::parse(&Interpreter::without_stdlib(), script)
-            .and_then(|code| code.exec().map_err(Error::from))
+        Code::parse(&Interpreter::without_stdlib(), script).map(|code| code.exec().unwrap())
     }
 }

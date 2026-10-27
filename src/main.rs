@@ -1,5 +1,5 @@
 use rustyline::{DefaultEditor, error::ReadlineError};
-use simplesl::{Code, Error, Interpreter};
+use simplesl::{Code, Interpreter, variable::Variable};
 use std::{env, fs, process::ExitCode};
 
 fn main() -> ExitCode {
@@ -9,13 +9,7 @@ fn main() -> ExitCode {
         return ExitCode::FAILURE;
     }
     if let Some(path) = args.nth(1) {
-        return run_from_file(&path).map_or_else(
-            |error| {
-                eprintln!("{error}");
-                ExitCode::FAILURE
-            },
-            |_| ExitCode::SUCCESS,
-        );
+        return run_from_file(&path);
     }
     run_shell().map_or_else(
         |error| {
@@ -37,18 +31,28 @@ fn run_shell() -> Result<(), ReadlineError> {
             Err(err) => return Err(err),
         };
         rl.add_history_entry(&line)?;
-        match Code::parse(&interpreter, &line)
-            .and_then(|code| code.exec_unscoped(&mut interpreter).map_err(Error::from))
-        {
-            Ok(result) => println!("{result:?}"),
-            Err(error) => eprintln!("{error}"),
+        if let Some(variable) = parse_exec_print_error(&mut interpreter, &line) {
+            println!("{variable:?}")
         }
     }
 }
 
-fn run_from_file(path: &str) -> Result<(), Error> {
-    let script = fs::read_to_string(path)?;
-    let interpreter = Interpreter::with_stdlib();
-    Code::parse(&interpreter, &script)?.exec()?;
-    Ok(())
+fn run_from_file(path: &str) -> ExitCode {
+    let Ok(script) = fs::read_to_string(path).inspect_err(|error| eprintln!("{error}")) else {
+        return ExitCode::FAILURE;
+    };
+    let mut interpreter = Interpreter::with_stdlib();
+    if parse_exec_print_error(&mut interpreter, &script).is_some() {
+        return ExitCode::SUCCESS;
+    }
+    ExitCode::FAILURE
+}
+
+fn parse_exec_print_error(interpreter: &mut Interpreter, script: &str) -> Option<Variable> {
+    let code = Code::parse(interpreter, script)
+        .inspect_err(|error| eprintln!("{error}"))
+        .ok()?;
+    code.exec_unscoped(interpreter)
+        .inspect_err(|error| eprintln!("{error}"))
+        .ok()
 }

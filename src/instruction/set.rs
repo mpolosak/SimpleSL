@@ -274,10 +274,7 @@ mod tests {
                 }
                 sum_pair(4)"
             ),
-            Err(Error::WrongType(
-                "else branch".into(),
-                crate::variable::Type::Never
-            ))
+            Err(Error::WrongType("else branch".into(), Type::Never))
         );
     }
 
@@ -436,11 +433,6 @@ mod tests {
         );
     }
 
-    fn parse_and_exec(script: &str) -> Result<Variable, Error> {
-        Code::parse(&Interpreter::without_stdlib(), script)
-            .and_then(|code| code.exec().map_err(Error::from))
-    }
-
     #[test]
     fn match_guard_can_use_pattern_binding() {
         assert_eq!(
@@ -515,5 +507,9 @@ mod tests {
             .map(|_| ()),
             Err(Error::WrongCondition("value".into(), Type::Int))
         );
+    }
+
+    fn parse_and_exec(script: &str) -> Result<Variable, Error> {
+        Code::parse(&Interpreter::without_stdlib(), script).map(|code| code.exec().unwrap())
     }
 }

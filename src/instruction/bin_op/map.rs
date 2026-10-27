@@ -57,10 +57,7 @@ impl Map {
 
     fn calc(iter: Variable, function: Variable) -> ExecResult {
         let result_type = function.as_type().return_type().unwrap();
-        let result = MAP
-            .exec(&[iter, function])?
-            .into_function()
-            .unwrap();
+        let result = MAP.exec(&[iter, function])?.into_function().unwrap();
         let mut result = Arc::unwrap_or_clone(result);
         result.return_type = var_type!((bool, result_type));
         Ok(result.into())
@@ -103,8 +100,8 @@ impl Map {
 #[cfg(test)]
 mod tests {
     use super::Map;
-    use crate as simplesl;
-    use crate::{Code, Error, Interpreter, variable::Variable};
+    use crate::{self as simplesl, ExecError};
+    use crate::{Code, Interpreter, variable::Variable};
     use simplesl_macros::var_type;
 
     #[test]
@@ -174,8 +171,9 @@ mod tests {
         );
     }
 
-    fn parse_and_exec(script: &str) -> Result<Variable, Error> {
+    fn parse_and_exec(script: &str) -> Result<Variable, ExecError> {
         Code::parse(&Interpreter::without_stdlib(), script)
-            .and_then(|code| code.exec().map_err(Error::from))
+            .unwrap()
+            .exec()
     }
 }

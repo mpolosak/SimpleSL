@@ -1,7 +1,8 @@
 use crate::{
-    self as simplesl,
-    BinOperator, Error, Interpreter,
-    instruction::{BaseInstruction, Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables},
+    self as simplesl, BinOperator, Error, Interpreter,
+    instruction::{
+        BaseInstruction, Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
+    },
     stdlib::operators::FILTER,
     variable::{ReturnType, Type, Typed, Variable},
 };
@@ -75,8 +76,8 @@ impl ReturnType for Filter {
 #[cfg(test)]
 mod tests {
     use super::Filter;
-    use crate as simplesl;
-    use crate::{Code, Error, Interpreter, variable::Variable};
+    use crate::{self as simplesl, ExecError};
+    use crate::{Code, Interpreter, variable::Variable};
     use simplesl_macros::var_type;
 
     #[test]
@@ -130,8 +131,9 @@ mod tests {
         );
     }
 
-    fn parse_and_exec(script: &str) -> Result<Variable, Error> {
+    fn parse_and_exec(script: &str) -> Result<Variable, ExecError> {
         Code::parse(&Interpreter::without_stdlib(), script)
-            .and_then(|code| code.exec().map_err(Error::from))
+            .unwrap()
+            .exec()
     }
 }

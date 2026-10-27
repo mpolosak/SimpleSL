@@ -1,5 +1,5 @@
 use crate::{
-    BinOperator, ExecError, function::Param, unary_operator::UnaryOperator, variable::Type,
+    BinOperator, function::Param, unary_operator::UnaryOperator, variable::Type,
 };
 use derive_more::From;
 use match_any::match_any;
@@ -18,18 +18,13 @@ pub enum Error {
     VariableDoesntExist(Arc<str>),
     WrongType(Arc<str>, Type),
     WrongNumberOfArguments(Arc<str>, usize),
-    IndexOutOfBounds,
     TupleIndexTooBig(usize, Arc<str>, usize),
-    NegativeLength,
-    NegativeExponent,
     CannotBeParsed(Box<str>),
     CannotIndexInto(Type),
     CannotTupleAccess(Arc<str>, Type),
     CannotFieldAccess(Arc<str>, Type),
     CannotIndexWith(Arc<str>),
     CannotSlice(Arc<str>, Type),
-    ZeroDivision,
-    ZeroModulo,
     MatchNotCovered,
     #[from]
     IO(std::io::Error),
@@ -164,15 +159,12 @@ impl fmt::Display for Error {
             Self::WrongNumberOfArguments(name, num) => {
                 write!(f, "{name} requires {num} args")
             }
-            Self::IndexOutOfBounds => write!(f, "index out of bounds"),
             Self::TupleIndexTooBig(index, ins, len) => {
                 write!(
                     f,
                     "Cannot get element {index} of tuple {ins}. Tuple has len of {len}"
                 )
             }
-            Self::NegativeLength => write!(f, "length of an array cannot be negative"),
-            Self::NegativeExponent => write!(f, "int value cannot be rised to a negative power"),
             Self::CannotBeParsed(text) => {
                 write!(f, "{text} cannot be parsed to variable")
             }
@@ -209,12 +201,6 @@ impl fmt::Display for Error {
                     f,
                     "{struct_ident} has no field '{field_ident}'. Type of {struct_ident} is {struct_type}"
                 )
-            }
-            Self::ZeroDivision => {
-                write!(f, "Cannot divide by 0")
-            }
-            Self::ZeroModulo => {
-                write!(f, "Cannot calculate the remainder with a divisor of 0")
             }
             Self::MatchNotCovered => {
                 write!(f, "All posible values must be covered in match")
@@ -325,18 +311,6 @@ impl fmt::Display for Error {
                 f,
                 "mut declared to contain {declared} but initialized with {given} that is {given_type}"
             ),
-        }
-    }
-}
-
-impl From<ExecError> for Error {
-    fn from(value: ExecError) -> Self {
-        match value {
-            ExecError::IndexOutOfBounds => Self::IndexOutOfBounds,
-            ExecError::NegativeLength => Self::NegativeLength,
-            ExecError::NegativeExponent => Self::NegativeExponent,
-            ExecError::ZeroDivision => Self::ZeroDivision,
-            ExecError::ZeroModulo => Self::ZeroModulo,
         }
     }
 }

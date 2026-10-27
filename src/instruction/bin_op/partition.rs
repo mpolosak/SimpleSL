@@ -1,9 +1,8 @@
 use crate::{
-    self as simplesl,
-    BinOperator, Error, Interpreter,
+    self as simplesl, BinOperator, Error, Interpreter,
     instruction::{
-        BaseInstruction, Exec, ExecResult, Instruction, Recreate,
-        bin_op::filter::Filter, local_variable::LocalVariables,
+        BaseInstruction, Exec, ExecResult, Instruction, Recreate, bin_op::filter::Filter,
+        local_variable::LocalVariables,
     },
     variable::{Array, ReturnType, Type, Typed, Variable},
 };
@@ -92,7 +91,7 @@ impl ReturnType for Partition {
 
 #[cfg(test)]
 mod tests {
-    use crate::{self as simplesl, Code, Error, Interpreter, variable::Variable};
+    use crate::{self as simplesl, Code, Interpreter, variable::Variable};
     use simplesl_macros::var;
 
     #[test]
@@ -102,12 +101,14 @@ mod tests {
                 "is_even := (value: int) -> bool { return value % 2 == 0 };
                 [1, 2, 3, 4]~ \\ is_even"
             ),
-            Ok(var!(([2, 4], [1, 3])))
+            var!(([2, 4], [1, 3]))
         );
     }
 
-    fn parse_and_exec(script: &str) -> Result<Variable, Error> {
+    fn parse_and_exec(script: &str) -> Variable {
         Code::parse(&Interpreter::without_stdlib(), script)
-            .and_then(|code| code.exec().map_err(Error::from))
+            .unwrap()
+            .exec()
+            .unwrap()
     }
 }
