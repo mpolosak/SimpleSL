@@ -1,18 +1,12 @@
-use std::sync::Arc;
-
 use crate::{
     self as simplesl, Error,
     instruction::{
-        Instruction, InstructionWithStr,
-        control_flow::{Match, MatchArm, MatchPattern},
-        function::call::FunctionCall,
-        ident::Ident,
-        pattern::Pattern,
-        tuple::Tuple,
+        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
+        local_variable::LocalVariables,
     },
-    stdlib::operators::{FLOAT_SUM, INT_SUM, STRING_SUM},
+    interpreter::Interpreter,
     unary_operator::UnaryOperator,
-    variable::{MultiType, ReturnType, Type, Variable},
+    variable::{ReturnType, Type, Typed, Variable},
 };
 use lazy_static::lazy_static;
 use simplesl_macros::var_type;
@@ -22,113 +16,60 @@ lazy_static! {
         var_type!(() -> (bool, int) | () -> (bool, float) | () -> (bool, string));
 }
 
-pub fn create(iterator: InstructionWithStr) -> Result<Instruction, Error> {
-    let return_type = iterator.return_type();
-    if !return_type.matches(&ACCEPTED_TYPE) {
-        return Err(Error::IncorectUnaryOperatorOperand {
-            ins: iterator.str,
-            op: UnaryOperator::Sum,
-            expected: ACCEPTED_TYPE.clone(),
-            given: return_type,
-        });
-    }
-    let iterator = iterator.instruction;
-    let iter_element = return_type.iter_element().unwrap();
-    if let Type::Multi(types) = iter_element {
-        return Ok(create_match(iterator, types));
-    }
-
-    let function = match return_type.iter_element().unwrap() {
-        Type::Int => Variable::from(INT_SUM),
-        Type::Float => Variable::from(FLOAT_SUM),
-        Type::String => Variable::from(STRING_SUM),
-        _ => unreachable!(),
-    }
-    .into();
-    let args = Tuple {
-        elements: [iterator].into(),
-    }
-    .into();
-
-    Ok(FunctionCall { function, args }.into())
+#[derive(Debug)]
+pub struct Sum {
+    iterator: Instruction,
 }
 
-fn create_match(iterator: Instruction, types: MultiType) -> Instruction {
-    let iter: Arc<str> = "iter".into();
-    let arms = types
-        .iter()
-        .map(|t| match t {
-            Type::Int => MatchArm {
-                pattern: MatchPattern::Pattern(Pattern::new_ident_pattern(
-                    "iter".into(),
-                    var_type!(() -> (bool, int)),
-                )),
-                guard: None,
-                instruction: {
-                    let function = Variable::from(INT_SUM).into();
-                    let args = Tuple {
-                        elements: [Ident {
-                            ident: iter.clone(),
-                            variable: var_type!(() -> (bool, int)).into(),
-                        }
-                        .into()]
-                        .into(),
-                    }
-                    .into();
-
-                    FunctionCall { function, args }.into()
-                },
-            },
-            Type::Float => MatchArm {
-                pattern: MatchPattern::Pattern(Pattern::new_ident_pattern(
-                    "iter".into(),
-                    var_type!(() -> (bool, float)),
-                )),
-                guard: None,
-                instruction: {
-                    let function = Variable::from(FLOAT_SUM).into();
-                    let args = Tuple {
-                        elements: [Ident {
-                            ident: iter.clone(),
-                            variable: var_type!(() -> (bool, float)).into(),
-                        }
-                        .into()]
-                        .into(),
-                    }
-                    .into();
-
-                    FunctionCall { function, args }.into()
-                },
-            },
-            Type::String => MatchArm {
-                pattern: MatchPattern::Pattern(Pattern::new_ident_pattern(
-                    "iter".into(),
-                    var_type!(() -> (bool, string)),
-                )),
-                guard: None,
-                instruction: {
-                    let function = Variable::from(STRING_SUM).into();
-                    let args = Tuple {
-                        elements: [Ident {
-                            ident: iter.clone(),
-                            variable: var_type!(() -> (bool, string)).into(),
-                        }
-                        .into()]
-                        .into(),
-                    }
-                    .into();
-
-                    FunctionCall { function, args }.into()
-                },
-            },
-            _ => unreachable!(),
-        })
-        .collect();
-    Match {
-        expression: iterator,
-        arms,
+impl Sum {
+    pub fn create(iterator: InstructionWithStr) -> Result<Instruction, Error> {
+        let return_type = iterator.return_type();
+        if !return_type.matches(&ACCEPTED_TYPE) {
+            return Err(Error::IncorectUnaryOperatorOperand {
+                ins: iterator.str,
+                op: UnaryOperator::Sum,
+                expected: ACCEPTED_TYPE.clone(),
+                given: return_type,
+            });
+        }
+        Ok(Self {
+            iterator: iterator.instruction,
+        }
+        .into())
     }
-    .into()
+}
+
+impl BaseInstruction for Sum {}
+
+impl Exec for Sum {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
+        let iterator = self.iterator.exec(interpreter)?;
+        let return_type = iterator.as_type().iter_element().unwrap();
+        let mut result = Variable::of_type(&return_type).unwrap();
+        let iterator = iterator.into_function().unwrap();
+        loop {
+            let tuple = iterator.exec(&[])?.into_tuple().unwrap();
+            if let Variable::Bool(false) = tuple[0] {
+                break;
+            }
+            let value = tuple[1].clone();
+            result = result + value;
+        }
+        Ok(result)
+    }
+}
+
+impl Recreate for Sum {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        let iterator = self.iterator.recreate(local_variables);
+        Self { iterator }.into()
+    }
+}
+
+impl ReturnType for Sum {
+    fn return_type(&self) -> Type {
+        self.iterator.return_type().iter_element().unwrap()
+    }
 }
 
 #[cfg(test)]
@@ -207,6 +148,18 @@ mod tests {
                 x()$+"
             ),
             Ok(var!(10.6))
+        );
+    }
+
+    #[test]
+    fn sum_empty_iterators_preserve_their_element_type() {
+        assert_eq!(
+            parse_and_exec("x:=() -> (bool, float) { return (false, 0.0) } x$+"),
+            Ok(var!(0.0))
+        );
+        assert_eq!(
+            parse_and_exec(r#"x:=() -> (bool, string) { return (false, "") } x$+"#),
+            Ok(var!(""))
         );
     }
 
