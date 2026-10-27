@@ -4,7 +4,7 @@ pub(crate) use self::body::Body;
 pub use self::param::{Param, Params};
 use crate::{
     self as simplesl, Code, Error, ExecError, Interpreter,
-    instruction::{ExecStop, function::call::FunctionCall, r#return::Return},
+    instruction::{Exec, ExecStop, function::call::FunctionCall, r#return::Return},
     variable::{FunctionType, ReturnType, Type, Typed, Variable},
 };
 use derive_more::Display;
@@ -76,14 +76,16 @@ impl Function {
         for (arg, Param { var_type: _, name }) in zip(args, self.params.iter()) {
             interpreter.insert(name.clone(), arg.clone());
         }
-        let interpreter: &mut Interpreter = &mut interpreter;
-        match interpreter.exec(body) {
-            Ok(_) => Ok(Variable::Void),
-            Err(ExecStop::Return(var)) => Ok(var),
-            Err(ExecStop::Error(error)) => Err(error),
-            Err(ExecStop::Break) => unreachable!("Break outside of loop"),
-            Err(ExecStop::Continue) => unreachable!("Continue outside of loop"),
+        for instruction in body.iter() {
+            match instruction.exec(&mut interpreter) {
+                Ok(_) => {}
+                Err(ExecStop::Return(var)) => return Ok(var),
+                Err(ExecStop::Error(error)) => return Err(error),
+                Err(ExecStop::Break) => unreachable!("Break outside of loop"),
+                Err(ExecStop::Continue) => unreachable!("Continue outside of loop"),
+            }
         }
+        Ok(Variable::Void)
     }
 }
 
