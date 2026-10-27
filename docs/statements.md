@@ -117,11 +117,11 @@ remaining elements into a new array; without it, the pattern must match the
 array's exact length:
 
 ```simplesl
-[first, second] = values else {
+[first, second] := values else {
     return default_value
 }
 
-[first, ..rest] = values else {
+[first, ..rest] := values else {
     return default_value
 }
 ```

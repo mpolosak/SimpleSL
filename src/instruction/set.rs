@@ -310,7 +310,7 @@ mod tests {
         assert_eq!(
             parse_and_exec(
                 "get_name := (value: struct{name: int} | struct{age: int}) -> int {
-                    struct{name: name} = value else { return -1 }
+                    struct{name: name} := value else { return -1 }
                     return name
                 }
                 get_name(struct{age := 3})"
@@ -324,7 +324,7 @@ mod tests {
         assert_eq!(
             parse_and_exec(
                 "sum_pair := (values: [int]) -> int {
-                    [first, second] = values else { return -1 }
+                    [first, second] := values else { return -1 }
                     return first + second
                 }
                 sum_pair([2, 3])"
@@ -338,7 +338,7 @@ mod tests {
         assert_eq!(
             parse_and_exec(
                 "sum_pair := (values: [int]) -> int {
-                    [first, second] = values else { return -1 }
+                    [first, second] := values else { return -1 }
                     return first + second
                 }
                 sum_pair([2])"
@@ -352,7 +352,7 @@ mod tests {
         assert_eq!(
             parse_and_exec(
                 "tail := (values: [int]) -> [int] {
-                    [first, ..rest] = values else { return [] }
+                    [first, ..rest] := values else { return [] }
                     return rest
                 }
                 tail([1, 2, 3])"
@@ -366,7 +366,7 @@ mod tests {
         assert_eq!(
             parse_and_exec(
                 "tail := (values: [int]) -> [int] {
-                    [first, ..rest] = values else { return [] }
+                    [first, ..rest] := values else { return [] }
                     return rest
                 }
                 tail([1])"
@@ -380,7 +380,7 @@ mod tests {
         assert_eq!(
             parse_and_exec(
                 "tail := (values: [int]) -> [int] {
-                    [first, ..rest] = values else { return [] }
+                    [first, ..rest] := values else { return [] }
                     return rest
                 }
                 tail([])"

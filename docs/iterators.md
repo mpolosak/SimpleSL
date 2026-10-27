@@ -19,7 +19,7 @@ iota := (start: int, end: int) -> () -> (bool, int) {
 ## Usage of iterator
 You can call an iterator as any other function. You can use built in operators to create a new iterator from it (@, ?, ? type), reduce it (\$, \$*, \$&, \$|, \$&&, \$||), collect into array (\$]), partion (\\). You can iterate over it using for loop.
 ```
-is_even = (a: int) {return a%2==0};
+is_even := (a: int) {return a%2==0};
 x := [23, 2, 12, 45, 0,  65, -2]~?is_even; //creates iterator returning only values of an array that are even
 for e in x {
     print(e);
