@@ -5,6 +5,7 @@ use crate::{
         local_variable::LocalVariables,
     },
     interpreter::Interpreter,
+    stdlib::operators::{bitand_reduce, bitor_reduce},
     unary_operator::UnaryOperator,
     variable::{ReturnType, Type, Variable},
 };
@@ -48,18 +49,7 @@ impl BaseInstruction for AndReduce {}
 impl Exec for AndReduce {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let iterator = self.iterator.exec(interpreter)?.into_function().unwrap();
-        let mut result = -1;
-        loop {
-            let tuple = iterator.exec(&[])?.into_tuple().unwrap();
-            if let Variable::Bool(false) = tuple[0] {
-                break;
-            }
-            let Variable::Int(value) = tuple[1] else {
-                unreachable!("bit reduction iterator must yield integers");
-            };
-            result &= value;
-        }
-        Ok(Variable::Int(result))
+        Ok(Variable::from(bitand_reduce(iterator)?))
     }
 }
 
@@ -81,18 +71,7 @@ impl BaseInstruction for OrReduce {}
 impl Exec for OrReduce {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let iterator = self.iterator.exec(interpreter)?.into_function().unwrap();
-        let mut result = 0;
-        loop {
-            let tuple = iterator.exec(&[])?.into_tuple().unwrap();
-            if let Variable::Bool(false) = tuple[0] {
-                break;
-            }
-            let Variable::Int(value) = tuple[1] else {
-                unreachable!("bit reduction iterator must yield integers");
-            };
-            result |= value;
-        }
-        Ok(Variable::Int(result))
+        Ok(Variable::from(bitor_reduce(iterator)?))
     }
 }
 

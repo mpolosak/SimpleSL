@@ -88,17 +88,43 @@ fn deref(variable: Variable) -> Variable {
     variable
 }
 
+#[export(BitAndReduce)]
+pub(crate) fn bitand_reduce(
+    #[var_type(() -> (bool, int))] iter: Arc<Function>,
+) -> Result<i64, ExecError> {
+    let mut result = -1;
+    loop {
+        let tuple = iter.exec(&[])?.into_tuple().unwrap();
+        if let Variable::Bool(false) = tuple[0] {
+            break;
+        }
+        let Variable::Int(value) = tuple[1] else {
+            unreachable!("bit reduction iterator must yield integers");
+        };
+        result &= value;
+    }
+    Ok(result)
+}
+
+#[export(BitOrReduce)]
+pub(crate) fn bitor_reduce(
+    #[var_type(() -> (bool, int))] iter: Arc<Function>,
+) -> Result<i64, ExecError> {
+    let mut result = 0;
+    loop {
+        let tuple = iter.exec(&[])?.into_tuple().unwrap();
+        if let Variable::Bool(false) = tuple[0] {
+            break;
+        }
+        let Variable::Int(value) = tuple[1] else {
+            unreachable!("bit reduction iterator must yield integers");
+        };
+        result |= value;
+    }
+    Ok(result)
+}
+
 decls! {
-    AND:=(iter: () -> (bool, int)) -> int {
-        return iter $!0 (acc: int, curr: int) -> int {
-            return acc & curr;
-        }
-    }
-    OR:=(iter: () -> (bool, int)) -> int {
-        return iter $0 (acc: int, curr: int) -> int {
-            return acc | curr;
-        }
-    }
     ALL:=(iter: () -> (bool, bool)) -> bool {
         for value in iter {
             if !value {
@@ -160,8 +186,8 @@ decls! {
         }
     }
     Operators:=struct{
-        bitand_reduce := AND,
-        bitor_reduce := OR,
+        bitand_reduce := BitAndReduce,
+        bitor_reduce := BitOrReduce,
         all := ALL,
         any := ANY,
         int_product := INT_PRODUCT,
