@@ -70,7 +70,9 @@ fn get_field(variable: &VariableMap, field: &str) -> Option<Variable> {
 }
 
 #[export(Collect)]
-fn collect(#[var_type(() -> (bool, any))] iter: &Arc<Function>) -> Result<Array, ExecError> {
+pub(crate) fn collect(
+    #[var_type(() -> (bool, any))] iter: &Arc<Function>,
+) -> Result<Array, ExecError> {
     let mut vec = Vec::new();
     while let Variable::Tuple(tuple) = iter.exec(&[])?
         && tuple[0] == Variable::Bool(true)

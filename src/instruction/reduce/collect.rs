@@ -1,41 +1,69 @@
 use crate::{
     self as simplesl, Error,
-    instruction::{Instruction, InstructionWithStr, function::call::FunctionCall, tuple::Tuple},
-    stdlib::operators::Collect,
+    instruction::{
+        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
+        local_variable::LocalVariables,
+    },
+    interpreter::Interpreter,
+    stdlib::operators::collect,
     unary_operator::UnaryOperator,
-    variable::{ReturnType, Type, Variable},
+    variable::{ReturnType, Type},
 };
 use lazy_static::lazy_static;
 use simplesl_macros::var_type;
-use std::sync::Arc;
 
 lazy_static! {
     pub static ref ACCEPTED_TYPE: Type = var_type!(() -> (bool, any));
 }
 
+#[derive(Debug)]
+pub struct Collect {
+    iterator: Instruction,
+}
+
 pub(crate) fn create(lhs: InstructionWithStr, errors: &mut Vec<Error>) -> Instruction {
     let op = UnaryOperator::Collect;
     let return_type = lhs.return_type();
-    let element_type = return_type.iter_element().unwrap_or_else(||{
+    let InstructionWithStr {
+        instruction: iterator,
+        str: ins,
+    } = lhs;
+    if return_type.iter_element().is_none() {
         errors.push(Error::IncorectUnaryOperatorOperand {
-            ins: lhs.str,
+            ins,
             op,
             expected: ACCEPTED_TYPE.clone(),
             given: return_type,
         });
-        Type::Never
-    });
-
-    let mut function = Arc::unwrap_or_clone(Variable::from(Collect).into_function().unwrap());
-    function.return_type = var_type!([element_type]);
-
-    let function = Variable::from(function).into();
-    let args = Tuple {
-        elements: [lhs.instruction].into(),
     }
-    .into();
+    Collect { iterator }.into()
+}
 
-    FunctionCall { function, args }.into()
+impl BaseInstruction for Collect {}
+
+impl Exec for Collect {
+    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
+        let iterator = self.iterator.exec(interpreter)?.into_function().unwrap();
+        Ok(collect(&iterator)?.into())
+    }
+}
+
+impl Recreate for Collect {
+    fn recreate(&self, local_variables: &mut LocalVariables) -> Instruction {
+        let iterator = self.iterator.recreate(local_variables);
+        Self { iterator }.into()
+    }
+}
+
+impl ReturnType for Collect {
+    fn return_type(&self) -> Type {
+        let element_type = self
+            .iterator
+            .return_type()
+            .iter_element()
+            .unwrap_or(Type::Never);
+        var_type!([element_type])
+    }
 }
 
 #[cfg(test)]
@@ -73,8 +101,9 @@ mod tests {
                     return (true, 13);
                 }
                 x$]"
-            ).unwrap_err()[0],
-           Error::IncorectUnaryOperatorOperand {
+            )
+            .unwrap_err()[0],
+            Error::IncorectUnaryOperatorOperand {
                 ins: "x".into(),
                 op: OP,
                 expected: ACCEPTED_TYPE.clone(),
@@ -87,7 +116,8 @@ mod tests {
                     return 5;
                 }
                 x$]"
-            ).unwrap_err()[0],
+            )
+            .unwrap_err()[0],
             Error::IncorectUnaryOperatorOperand {
                 ins: "x".into(),
                 op: OP,
