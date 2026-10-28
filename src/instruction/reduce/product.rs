@@ -90,9 +90,9 @@ mod tests {
     const OP: UnaryOperator = UnaryOperator::Product;
 
     #[test]
-    fn product() {
+    fn product_rejects_non_iterators() {
         assert_eq!(
-            parse_and_exec("[45, 76, 15]$*").unwrap_err()[0],
+            parse_unwrap_first_error("[45, 76, 15]$*"),
             Error::IncorectUnaryOperatorOperand {
                 ins: "[45, 76, 15]".into(),
                 op: OP,
@@ -101,7 +101,7 @@ mod tests {
             }
         );
         assert_eq!(
-            parse_and_exec(r#""abc"$*"#).unwrap_err()[0],
+            parse_unwrap_first_error(r#""abc"$*"#),
             Error::IncorectUnaryOperatorOperand {
                 ins: r#""abc""#.into(),
                 op: OP,
@@ -109,8 +109,12 @@ mod tests {
                 given: var_type!(string)
             }
         );
+    }
+
+    #[test]
+    fn product_rejects_invalid_iterator_function_types() {
         assert_eq!(
-            parse_and_exec("x:= () -> int {return 5;} x$*").unwrap_err()[0],
+            parse_unwrap_first_error("x:= () -> int {return 5;} x$*"),
             Error::IncorectUnaryOperatorOperand {
                 ins: "x".into(),
                 op: OP,
@@ -119,7 +123,7 @@ mod tests {
             }
         );
         assert_eq!(
-            parse_and_exec("x:= (a: int) -> (bool, int) {return (true, a);} x$*").unwrap_err()[0],
+            parse_unwrap_first_error("x:= (a: int) -> (bool, int) {return (true, a);} x$*"),
             Error::IncorectUnaryOperatorOperand {
                 ins: "x".into(),
                 op: OP,
@@ -127,10 +131,22 @@ mod tests {
                 given: var_type!((int) -> (bool, int))
             }
         );
-        assert_eq!(parse_and_exec("[45, 16, 3]~$*"), Ok(var!(2160)));
-        assert_eq!(parse_and_exec("[5.5, 6.5, 7.4]~$*"), Ok(var!(264.55)));
+    }
+
+    #[test]
+    fn product_multiplies_integers() {
+        assert_eq!(parse_and_exec("[45, 16, 3]~$*"), var!(2160));
+    }
+
+    #[test]
+    fn product_multiplies_floats() {
+        assert_eq!(parse_and_exec("[5.5, 6.5, 7.4]~$*"), var!(264.55));
+    }
+
+    #[test]
+    fn product_rejects_string_and_mixed_numeric_iterators() {
         assert_eq!(
-            parse_and_exec(r#"["a", "6.5", "$"]~$*"#).unwrap_err()[0],
+            parse_unwrap_first_error(r#"["a", "6.5", "$"]~$*"#),
             Error::IncorectUnaryOperatorOperand {
                 ins: r#"["a", "6.5", "$"] ~"#.into(),
                 op: OP,
@@ -139,7 +155,7 @@ mod tests {
             }
         );
         assert_eq!(
-            parse_and_exec("[45, 16.5, 3]~$*").unwrap_err()[0],
+            parse_unwrap_first_error("[45, 16.5, 3]~$*"),
             Error::IncorectUnaryOperatorOperand {
                 ins: "[45, 16.5, 3] ~".into(),
                 op: OP,
@@ -147,6 +163,10 @@ mod tests {
                 given: var_type!(() -> (bool, int|float))
             }
         );
+    }
+
+    #[test]
+    fn product_uses_integer_type_from_union_iterator() {
         assert_eq!(
             parse_and_exec(
                 "x:=() -> ()->(bool, int)|() -> (bool, float){
@@ -154,8 +174,12 @@ mod tests {
                 }
                 x()$*"
             ),
-            Ok(var!(32400))
+            var!(32400)
         );
+    }
+
+    #[test]
+    fn product_uses_float_type_from_union_iterator() {
         assert_eq!(
             parse_and_exec(
                 "x:=() -> ()->(bool, int)|() -> (bool, float){
@@ -163,7 +187,7 @@ mod tests {
                 }
                 x()$*"
             ),
-            Ok(var!(32.4))
+            var!(32.4)
         );
     }
 
@@ -171,11 +195,11 @@ mod tests {
     fn product_empty_iterators_preserve_their_element_type() {
         assert_eq!(
             parse_and_exec("x:=() -> (bool, int) { return (false, 0) } x$*"),
-            Ok(var!(1))
+            var!(1)
         );
         assert_eq!(
             parse_and_exec("x:=() -> (bool, float) { return (false, 0.0) } x$*"),
-            Ok(var!(1.0))
+            var!(1.0)
         );
     }
 
@@ -188,11 +212,20 @@ mod tests {
                 }
                 x()$*"
             ),
-            Ok(var!(1.0))
+            var!(1.0)
         );
     }
 
-    fn parse_and_exec(script: &str) -> Result<Variable, Vec<Error>> {
-        Code::parse(&Interpreter::without_stdlib(), script).map(|code| code.exec().unwrap())
+    fn parse_and_exec(script: &str) -> Variable {
+        Code::parse(&Interpreter::without_stdlib(), script)
+            .unwrap()
+            .exec()
+            .unwrap()
+    }
+
+    fn parse_unwrap_first_error(script: &str) -> Error {
+        Code::parse(&Interpreter::without_stdlib(), script)
+            .unwrap_err()
+            .swap_remove(0)
     }
 }
