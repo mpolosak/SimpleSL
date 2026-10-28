@@ -36,7 +36,7 @@ impl AssignAdd {
         let Some(element) = lhs.mut_element_type() else {
             return false;
         };
-        Add::can_be_used(&element, rhs)
+        Add::can_be_used(element.clone(), rhs.clone())
     }
 }
 

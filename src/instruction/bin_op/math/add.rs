@@ -1,8 +1,15 @@
 use crate::instruction::bin_op::concat::Concat;
 use crate::instruction::local_variable::LocalVariables;
+use crate::instruction::panic::Panic;
 use crate::instruction::{BaseInstruction, Exec, ExecResult, Instruction, Recreate};
 use crate::variable::{ReturnType, Type, Variable};
-use crate::{BinOperator, Error, Interpreter};
+use crate::{self as simplesl, BinOperator, Error, Interpreter};
+use lazy_static::lazy_static;
+use simplesl_macros::var_type;
+
+lazy_static! {
+    pub static ref ACCEPTED_TYPE: Type = var_type!((int, int) | (float, float) | (string, string));
+}
 
 #[derive(Debug)]
 pub struct Add {
@@ -18,17 +25,18 @@ impl Add {
     ) -> Instruction {
         let lhs_rt = lhs.return_type();
         let rhs_rt = rhs.return_type();
-        if lhs_rt.is_array() && rhs_rt.is_array() {
+        if lhs_rt.is_array() && rhs_rt.is_array() && lhs_rt != Type::Never {
             return Concat { lhs, rhs }.into();
         }
-        if !Self::can_be_used(&lhs_rt, &rhs_rt) {
+        if !Self::can_be_used(lhs_rt.clone(), rhs_rt.clone()) {
             errors.push(Error::CannotDo2(lhs_rt, BinOperator::Add, rhs_rt));
+            return Panic.into()
         }
         Self { lhs, rhs }.into()
     }
 
-    pub fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
-        matches!(lhs, Type::Int | Type::Float | Type::String) && lhs == rhs
+    pub fn can_be_used(lhs: Type, rhs: Type) -> bool {
+        var_type!((lhs, rhs)).matches(&ACCEPTED_TYPE)
     }
 }
 
@@ -64,7 +72,7 @@ impl ReturnType for Add {
 
 #[cfg(test)]
 mod tests {
-    use crate::{self as simplesl, BinOperator, Code, Error, Interpreter, variable::Variable};
+    use crate::{self as simplesl, instruction::bin_op::add::Add, variable::{Type, Variable}, BinOperator, Code, Error, Interpreter};
     use simplesl_macros::{var, var_type};
 
     #[test]
@@ -143,6 +151,79 @@ mod tests {
         )
     }
 
+    #[test]
+    fn test_add_int_float_float() {
+        assert_eq!(
+            parse_unwrap_errors("4+5.5+5.5"),
+            Vec::from([Error::CannotDo2(
+                var_type!(int),
+                BinOperator::Add,
+                var_type!(float)
+            )])
+        )
+    }
+
+    #[test]
+    fn test_add_int_float_float_string() {
+        assert_eq!(
+            parse_unwrap_errors(r#"(4+5.5)+(5.5+"")"#),
+            Vec::from([
+                Error::CannotDo2(var_type!(int), BinOperator::Add, var_type!(float)),
+                Error::CannotDo2(var_type!(float), BinOperator::Add, var_type!(string))
+            ])
+        )
+    }
+    
+    #[test]
+    fn can_be_used_int_int() {
+        assert!(Add::can_be_used(Type::Int, Type::Int))
+    }
+
+    #[test]
+    fn can_be_used_float_float() {
+        assert!(Add::can_be_used(Type::Float, Type::Float))
+    }
+
+    #[test]
+    fn can_be_used_string_string() {
+        assert!(Add::can_be_used(Type::String, Type::String))
+    }
+
+    #[test]
+    fn can_be_used_int_never() {
+        assert!(Add::can_be_used(Type::Int, Type::Never))
+    }
+
+    #[test]
+    fn can_be_used_never() {
+        assert!(Add::can_be_used(Type::Never, Type::Never))
+    }
+
+     #[test]
+    fn can_be_used_int_float() {
+        assert!(!Add::can_be_used(Type::Int, Type::Float))
+    }
+
+    #[test]
+    fn can_be_used_float_string() {
+        assert!(!Add::can_be_used(Type::Float, Type::String))
+    }
+
+    #[test]
+    fn can_be_used_string_int() {
+        assert!(!Add::can_be_used(Type::String, Type::Int))
+    }
+
+    #[test]
+    fn can_be_used_bool_never() {
+        assert!(!Add::can_be_used(Type::Bool, Type::Never))
+    }
+
+    #[test]
+    fn can_be_used_never_void() {
+        assert!(!Add::can_be_used(Type::Never, Type::Void))
+    }
+
     fn parse_and_exec(script: &str) -> Variable {
         Code::parse(&Interpreter::without_stdlib(), script)
             .unwrap()
@@ -151,8 +232,10 @@ mod tests {
     }
 
     fn parse_unwrap_first_error(script: &str) -> Error {
-        Code::parse(&Interpreter::without_stdlib(), script)
-            .unwrap_err()
-            .swap_remove(0)
+        parse_unwrap_errors(script).swap_remove(0)
+    }
+
+    fn parse_unwrap_errors(script: &str) -> Vec<Error> {
+        Code::parse(&Interpreter::without_stdlib(), script).unwrap_err()
     }
 }
