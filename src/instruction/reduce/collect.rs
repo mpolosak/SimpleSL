@@ -76,60 +76,12 @@ mod tests {
     const OP: UnaryOperator = UnaryOperator::Collect;
 
     #[test]
-    fn collect() {
-        assert_eq!(
-            parse_and_exec("[45, 15]$]").unwrap_err()[0],
-            Error::IncorectUnaryOperatorOperand {
-                ins: "[45, 15]".into(),
-                op: OP,
-                expected: ACCEPTED_TYPE.clone(),
-                given: var_type!([int])
-            }
-        );
-        assert_eq!(
-            parse_and_exec(r#""abc"$]"#).unwrap_err()[0],
-            Error::IncorectUnaryOperatorOperand {
-                ins: r#""abc""#.into(),
-                op: OP,
-                expected: ACCEPTED_TYPE.clone(),
-                given: var_type!(string)
-            }
-        );
-        assert_eq!(
-            parse_and_exec(
-                "x := (a:int) -> (bool, int) {
-                    return (true, 13);
-                }
-                x$]"
-            )
-            .unwrap_err()[0],
-            Error::IncorectUnaryOperatorOperand {
-                ins: "x".into(),
-                op: OP,
-                expected: ACCEPTED_TYPE.clone(),
-                given: var_type!((int)->(bool, int))
-            }
-        );
-        assert_eq!(
-            parse_and_exec(
-                "x := () -> int {
-                    return 5;
-                }
-                x$]"
-            )
-            .unwrap_err()[0],
-            Error::IncorectUnaryOperatorOperand {
-                ins: "x".into(),
-                op: OP,
-                expected: ACCEPTED_TYPE.clone(),
-                given: var_type!(()->int)
-            }
-        );
-        assert_eq!(parse_and_exec("[45, 15, 17]~$]"), Ok(var!([45, 15, 17])));
-        assert_eq!(
-            parse_and_exec(r#"["a", 15, 1.7]~$]"#),
-            Ok(var!(["a", 15, 1.7]))
-        );
+    fn collect_int_iterator() {
+        assert_eq!(parse_and_exec("[45, 15, 17]~$]"), var!([45, 15, 17]));
+    }
+
+    #[test]
+    fn collect_float_iterator() {
         assert_eq!(
             parse_and_exec(
                 "i:=mut 45.5;
@@ -143,11 +95,81 @@ mod tests {
                 }
                 x$]"
             ),
-            Ok(var!([45.5, 61.0]))
+            var!([45.5, 61.0])
         );
     }
 
-    fn parse_and_exec(script: &str) -> Result<Variable, Vec<Error>> {
-        Code::parse(&Interpreter::without_stdlib(), script).map(|code| code.exec().unwrap())
+    #[test]
+    fn collect_mixed_iterator() {
+        assert_eq!(
+            parse_and_exec(r#"["a", 15, 1.7]~$]"#),
+            var!(["a", 15, 1.7])
+        );
+    }
+
+    #[test]
+    fn collect_reject_array() {
+        assert_eq!(
+            parse_unwrap_first_error("[45, 15]$]"),
+            Error::IncorectUnaryOperatorOperand {
+                ins: "[45, 15]".into(),
+                op: OP,
+                expected: ACCEPTED_TYPE.clone(),
+                given: var_type!([int])
+            }
+        );
+    }
+
+    #[test]
+    fn collect_reject_string() {
+        assert_eq!(
+            parse_unwrap_first_error(r#""abc"$]"#),
+            Error::IncorectUnaryOperatorOperand {
+                ins: r#""abc""#.into(),
+                op: OP,
+                expected: ACCEPTED_TYPE.clone(),
+                given: var_type!(string)
+            }
+        );
+    }
+
+    #[test]
+    fn collect_reject_noniterator_function() {
+        assert_eq!(
+            parse_unwrap_first_error(
+                "x := (a:int) -> (bool, int) {
+                    return (true, 13);
+                }
+                x$]"
+            ),
+            Error::IncorectUnaryOperatorOperand {
+                ins: "x".into(),
+                op: OP,
+                expected: ACCEPTED_TYPE.clone(),
+                given: var_type!((int)->(bool, int))
+            }
+        );
+        assert_eq!(
+            parse_unwrap_first_error(
+                "x := () -> int {
+                    return 5;
+                }
+                x$]"
+            ),
+            Error::IncorectUnaryOperatorOperand {
+                ins: "x".into(),
+                op: OP,
+                expected: ACCEPTED_TYPE.clone(),
+                given: var_type!(()->int)
+            }
+        );
+    }
+
+    fn parse_and_exec(script: &str) -> Variable {
+        Code::parse(&Interpreter::without_stdlib(), script).unwrap().exec().unwrap()
+    }
+
+    fn parse_unwrap_first_error(script: &str) -> Error {
+        Code::parse(&Interpreter::without_stdlib(), script).unwrap_err().swap_remove(0)
     }
 }
