@@ -21,12 +21,13 @@ impl Tuple {
     pub fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &LocalVariables,
-    ) -> Result<Instruction, Error> {
+        errors: &mut Vec<Error>
+    ) -> Instruction {
         let elements = pair
             .into_inner()
-            .map(|pair| Ok(InstructionWithStr::new_expression(pair, local_variables)?.instruction))
-            .collect::<Result<Box<[Instruction]>, Error>>()?;
-        Ok(Self { elements }.into())
+            .map(|pair| InstructionWithStr::new_expression(pair, local_variables, errors).instruction)
+            .collect();
+        Self { elements }.into()
     }
 
     fn create_from_elements(elements: Box<[Instruction]>) -> Instruction {

@@ -16,13 +16,13 @@ pub struct Filter {
 }
 
 impl Filter {
-    pub fn create_instruction(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
+    pub fn create_instruction(lhs: Instruction, rhs: Instruction, errors: &mut Vec<Error>) -> Instruction {
         let lhs_type = lhs.return_type();
         let rhs_type = rhs.return_type();
         if !Self::can_be_used(&lhs_type, &rhs_type) {
-            return Err(Error::CannotDo2(lhs_type, BinOperator::Filter, rhs_type));
+            errors.push(Error::CannotDo2(lhs_type, BinOperator::Filter, rhs_type));
         }
-        Ok(Self { lhs, rhs }.into())
+        Self { lhs, rhs }.into()
     }
 
     pub fn can_be_used(lhs: &Type, rhs: &Type) -> bool {

@@ -1,14 +1,8 @@
 pub mod call;
 use crate::{
-    self as simplesl, Error,
-    function::{Body, Function as VarFunc, Param, Params},
-    instruction::{
-        BaseInstruction, Exec, ExecResult, Instruction, Recreate,
-        local_variable::{FunctionInfo, LocalVariable, LocalVariableMap, LocalVariables},
-        recreate_instructions,
-    },
-    interpreter::Interpreter,
-    variable::{ReturnType, Type},
+    self as simplesl, function::{Body, Function as VarFunc, Param, Params}, instruction::{
+        local_variable::{FunctionInfo, LocalVariable, LocalVariableMap, LocalVariables}, recreate_instructions, BaseInstruction, Exec, ExecResult, Instruction, Recreate
+    }, interpreter::Interpreter, variable::{ReturnType, Type}, Error
 };
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
@@ -30,7 +24,8 @@ impl Function {
         pair: Pair<Rule>,
         local_variables: &LocalVariables,
         ident: Option<Arc<str>>,
-    ) -> Result<Instruction, Error> {
+        errors: &mut Vec<Error>
+    ) -> Instruction {
         let mut inner = pair.into_inner();
         let params_pair = inner.next().unwrap();
         let params = Params(params_pair.into_inner().map(Param::from).collect());
@@ -51,25 +46,25 @@ impl Function {
                 LocalVariable::Function(params.clone(), return_type.clone()),
             );
         }
-        let body = local_variables.create_instructions(inner)?;
+        let body = local_variables.create_instructions(inner, errors);
         if !Type::Void.matches(&return_type)
             && !body
                 .iter()
                 .map(ReturnType::return_type)
                 .any(|var_type| var_type == Type::Never)
         {
-            return Err(Error::MissingReturn {
+            errors.push( Error::MissingReturn {
                 function_name: None,
-                return_type,
+                return_type: return_type.clone(),
             });
         }
-        Ok(Self {
+        Self {
             ident,
             params,
             body,
             return_type,
         }
-        .into())
+        .into()
     }
 }
 

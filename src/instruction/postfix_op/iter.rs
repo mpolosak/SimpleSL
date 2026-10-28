@@ -38,18 +38,18 @@ lazy_static! {
 pub struct Iter(Instruction);
 
 impl Iter {
-    pub fn create_instruction(lhs: InstructionWithStr) -> Result<Instruction, Error> {
+    pub fn create_instruction(lhs: InstructionWithStr, errors: &mut Vec<Error>) -> Instruction {
         let op = UnaryOperator::Iter;
         let lhs_type = lhs.return_type();
         if !lhs_type.matches(&var_type!([any])) {
-            return Err(Error::IncorectUnaryOperatorOperand {
+            errors.push(Error::IncorectUnaryOperatorOperand {
                 ins: lhs.str,
                 op,
                 expected: var_type!([any]),
                 given: lhs_type,
             });
         }
-        Ok(Self(lhs.instruction).into())
+        Self(lhs.instruction).into()
     }
 }
 
@@ -95,56 +95,60 @@ mod tests {
     #[test]
     fn iter() {
         assert_eq!(
-            parse_and_exec("45~"),
-            Err(Error::IncorectUnaryOperatorOperand {
+            parse_unwrap_first_error("45~"),
+            Error::IncorectUnaryOperatorOperand {
                 ins: "45".into(),
                 op: OP,
                 expected: var_type!([any]),
                 given: var_type!(int)
-            })
+            }
         );
         assert_eq!(
-            parse_and_exec(r#""abc"~"#),
-            Err(Error::IncorectUnaryOperatorOperand {
+            parse_unwrap_first_error(r#""abc"~"#),
+            Error::IncorectUnaryOperatorOperand {
                 ins: r#""abc""#.into(),
                 op: OP,
                 expected: var_type!([any]),
                 given: var_type!(string)
-            })
+            }
         );
         assert_eq!(
-            parse_and_exec(
+            parse_unwrap_first_error(
                 "x := ()->[int]|string {
                     return [45, 15]
                 }
                 x()~"
             ),
-            Err(Error::IncorectUnaryOperatorOperand {
+            Error::IncorectUnaryOperatorOperand {
                 ins: "x ()".into(),
                 op: OP,
                 expected: var_type!([any]),
                 given: var_type!([int] | string)
-            })
+            }
         );
         assert_eq!(
             parse_and_exec(
                 "x:=[45, 5]~;
                 (x(), x(), x())"
             ),
-            Ok(var!(((true, 45), (true, 5), (false, 0))))
+            var!(((true, 45), (true, 5), (false, 0)))
         );
         assert_eq!(
             parse_and_exec(
                 "x:=[45, [5.5], true]~;
                 (x(), x(), x())"
             ),
-            Ok(var!(((true, 45), (true, [5.5]), (true, true))))
+            var!(((true, 45), (true, [5.5]), (true, true)))
         );
-        let result = parse_and_exec(r#"[45, 5.5, "abc"]~"#).unwrap();
+        let result = parse_and_exec(r#"[45, 5.5, "abc"]~"#);
         assert_eq!(result.as_type(), var_type!(()->(bool, int|float|string)))
     }
 
-    fn parse_and_exec(script: &str) -> Result<Variable, Error> {
-        Code::parse(&Interpreter::without_stdlib(), script).map(|code| code.exec().unwrap())
+    fn parse_and_exec(script: &str) -> Variable {
+        Code::parse(&Interpreter::without_stdlib(), script).unwrap().exec().unwrap()
+    }
+
+    fn parse_unwrap_first_error(script: &str) -> Error {
+        Code::parse(&Interpreter::without_stdlib(), script).unwrap_err().swap_remove(0)
     }
 }

@@ -11,16 +11,13 @@ use super::{
     reduce,
 };
 use crate::{
-    self as simplesl, BinOperator, Error, Interpreter,
-    instruction::{
-        BaseInstruction,
+    self as simplesl, instruction::{
         bin_op::{
             add::Add,
-            assign::{Assign, add::AssignAdd},
+            assign::{add::AssignAdd, Assign},
             logic::{And, Or},
-        },
-    },
-    variable::{ReturnType, Type, Variable},
+        }, BaseInstruction
+    }, variable::{ReturnType, Type, Variable}, BinOperator, Error, Interpreter
 };
 pub use math::{add, multiply, pow, subtract};
 use math::{divide, modulo};
@@ -176,10 +173,11 @@ impl InstructionWithStr {
         lhs: Self,
         rhs: Self,
         local_variables: &LocalVariables<'_>,
-    ) -> Result<Self, Error> {
+        errors: &mut Vec<Error>
+    ) -> Self {
         let str = format!("{} {} {}", lhs.str, op.as_str(), rhs.str).into();
-        let instruction = Instruction::create_infix(op, lhs, rhs, local_variables)?;
-        Ok(Self { instruction, str })
+        let instruction = Instruction::create_infix(op, lhs, rhs, local_variables, errors);
+        Self { instruction, str }
     }
 }
 
@@ -189,32 +187,33 @@ impl Instruction {
         lhs: InstructionWithStr,
         rhs: InstructionWithStr,
         local_variables: &LocalVariables<'_>,
-    ) -> Result<Self, Error> {
+        errors: &mut Vec<Error>
+    ) -> Self {
         let rule = op.as_rule();
         if rule == Rule::reduce {
-            return reduce::create_instruction(lhs, op, rhs, local_variables);
+            return reduce::create_instruction(lhs, op, rhs, local_variables, errors);
         }
         let op = BinOperator::from(rule);
         let (lhs, rhs) = (lhs.instruction, rhs.instruction);
 
         match op {
             BinOperator::Add => {
-                return Add::create_instruction(lhs, rhs);
+                return Add::create_instruction(lhs, rhs, errors);
             }
             BinOperator::Assign => {
-                return Assign::create_instruction(lhs, rhs);
+                return Assign::create_instruction(lhs, rhs, errors);
             }
             BinOperator::AssignAdd => {
-                return AssignAdd::create_instruction(lhs, rhs);
+                return AssignAdd::create_instruction(lhs, rhs, errors);
             }
             BinOperator::Partition => {
-                return partition::Partition::create_instruction(lhs, rhs);
+                return partition::Partition::create_instruction(lhs, rhs, errors);
             }
             BinOperator::Filter => {
-                return filter::Filter::create_instruction(lhs, rhs);
+                return filter::Filter::create_instruction(lhs, rhs, errors);
             }
             BinOperator::Map => {
-                return map::Map::create_instruction(lhs, rhs);
+                return map::Map::create_instruction(lhs, rhs, errors);
             }
             _ => (),
         }
@@ -222,13 +221,13 @@ impl Instruction {
         let lhs_type = lhs.return_type();
         let rhs_type = rhs.return_type();
         if !can_be_used(&lhs_type, &rhs_type, op) {
-            return Err(Error::CannotDo2(lhs_type, op, rhs_type));
+            errors.push(Error::CannotDo2(lhs_type, op, rhs_type));
         }
-        Ok(match op {
+        match op {
             BinOperator::And => And { lhs, rhs }.into(),
             BinOperator::Or => Or { lhs, rhs }.into(),
             _ => BinOperation { lhs, rhs, op }.into(),
-        })
+        }
     }
 }
 

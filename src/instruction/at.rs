@@ -14,15 +14,16 @@ pub fn create(
     lhs: Instruction,
     index: Pair<Rule>,
     local_variables: &LocalVariables,
-) -> Result<Instruction, Error> {
+    errors: &mut Vec<Error>
+) -> Instruction {
     let pair = index.into_inner().next().unwrap();
-    let index = InstructionWithStr::new_expression(pair, local_variables)?;
+    let index = InstructionWithStr::new_expression(pair, local_variables, errors);
     let instruction_return_type = lhs.return_type();
     if index.return_type() != Type::Int {
-        return Err(Error::CannotIndexWith(index.str));
+        errors.push(Error::CannotIndexWith(index.str));
     }
     if !instruction_return_type.can_be_indexed() {
-        return Err(Error::CannotIndexInto(instruction_return_type));
+        errors.push(Error::CannotIndexInto(instruction_return_type));
     }
 
     let return_type = lhs.return_type().index_result().unwrap();
@@ -36,5 +37,5 @@ pub fn create(
     }
     .into();
 
-    Ok(FunctionCall { function, args }.into())
+    FunctionCall { function, args }.into()
 }

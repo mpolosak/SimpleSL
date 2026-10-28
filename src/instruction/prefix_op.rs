@@ -13,17 +13,17 @@ use simplesl_macros::var_type;
 use simplesl_parser::{Rule, unexpected};
 
 impl InstructionWithStr {
-    pub fn create_prefix(op: Pair<'_, Rule>, rhs: Self) -> Result<Self, Error> {
+    pub fn create_prefix(op: Pair<'_, Rule>, rhs: Self, errors: &mut Vec<Error>) ->Self {
         let str = rhs.str.clone();
         let str = format!("{} {}", op.as_str(), str).into();
         let instruction = match op.as_rule() {
-            Rule::not => Not::create_instruction(rhs),
-            Rule::unary_minus => UnaryMinus::create_instruction(rhs),
-            Rule::indirection => Deref::create_instruction(rhs),
-            Rule::r#mut => Mut::create_instruction(op, rhs),
+            Rule::not => Not::create_instruction(rhs, errors),
+            Rule::unary_minus => UnaryMinus::create_instruction(rhs, errors),
+            Rule::indirection => Deref::create_instruction(rhs, errors),
+            Rule::r#mut => Mut::create_instruction(op, rhs, errors),
             rule => unexpected!(rule),
-        }?;
-        Ok(Self { instruction, str })
+        };
+        Self { instruction, str }
     }
 }
 
@@ -35,18 +35,18 @@ lazy_static! {
 pub struct UnaryMinus(Instruction);
 
 impl UnaryMinus {
-    pub fn create_instruction(instruction: InstructionWithStr) -> Result<Instruction, Error> {
+    pub fn create_instruction(instruction: InstructionWithStr, errors: &mut Vec<Error>) -> Instruction {
         let op = UnaryOperator::UnaryMinus;
         let return_type = instruction.return_type();
         if !return_type.matches(&ACCEPTED_NUM) {
-            return Err(Error::IncorectUnaryOperatorOperand {
+            errors.push(Error::IncorectUnaryOperatorOperand {
                 ins: instruction.str,
                 op,
                 expected: ACCEPTED_NUM.clone(),
                 given: return_type,
             });
         }
-        Ok(UnaryMinus(instruction.instruction).into())
+        UnaryMinus(instruction.instruction).into()
     }
 }
 
@@ -83,18 +83,18 @@ lazy_static! {
 }
 
 impl Not {
-    pub fn create_instruction(instruction: InstructionWithStr) -> Result<Instruction, Error> {
+    pub fn create_instruction(instruction: InstructionWithStr, errors: &mut Vec<Error>) -> Instruction {
         let op = UnaryOperator::Not;
         let return_type = instruction.return_type();
         if !return_type.matches(&ACCEPTED_NOT) {
-            return Err(Error::IncorectUnaryOperatorOperand {
+            errors.push(Error::IncorectUnaryOperatorOperand {
                 ins: instruction.str,
                 op,
                 expected: ACCEPTED_NOT.clone(),
                 given: return_type,
             });
         }
-        Ok(Not(instruction.instruction).into())
+        Not(instruction.instruction).into()
     }
 }
 
@@ -139,36 +139,36 @@ mod tests {
         assert_eq!(parse_and_exec("!0"), Ok(var!(-1)));
         assert_eq!(
             parse_and_exec("!7.5"),
-            Err(Error::IncorectUnaryOperatorOperand {
+            Err(Vec::from([Error::IncorectUnaryOperatorOperand {
                 ins: "7.5".into(),
                 op: UnaryOperator::Not,
                 expected: var_type!(int | bool),
                 given: var_type!(float)
-            })
+            }]))
         );
         assert_eq!(parse_and_exec("!true"), Ok(var!(false)));
         assert_eq!(parse_and_exec("!false"), Ok(var!(true)));
         assert_eq!(
             parse_and_exec("![7, -4.5, 0]"),
-            Err(Error::IncorectUnaryOperatorOperand {
+            Err(Vec::from([Error::IncorectUnaryOperatorOperand {
                 ins: "[7, -4.5, 0]".into(),
                 op: UnaryOperator::Not,
                 expected: var_type!(int | bool),
                 given: var_type!([int | float])
-            })
+            }]))
         );
         assert_eq!(
             parse_and_exec("-[7, true, 0]"),
-            Err(Error::IncorectUnaryOperatorOperand {
+            Err(Vec::from([Error::IncorectUnaryOperatorOperand {
                 ins: "[7, true, 0]".into(),
                 op: UnaryOperator::UnaryMinus,
                 expected: var_type!(int | float),
                 given: var_type!([int | bool])
-            })
+            }]))
         );
     }
 
-    fn parse_and_exec(script: &str) -> Result<Variable, Error> {
+    fn parse_and_exec(script: &str) -> Result<Variable, Vec<Error>> {
         Code::parse(&Interpreter::without_stdlib(), script).map(|code| code.exec().unwrap())
     }
 }

@@ -39,7 +39,7 @@ use crate::{
         r#loop::{r#for::For, Break, Continue},
         r#return::Return,
         r#struct::Struct,
-    }, interpreter::Interpreter, variable::{ReturnType, Type, Variable}, Error, ExecError
+    }, interpreter::Interpreter, variable::{from_str::variable_from_pair, ReturnType, Type, Variable}, Error, ExecError
 };
 use derive_more::From;
 use r#loop::{Loop, r#while};
@@ -57,38 +57,47 @@ impl InstructionWithStr {
     pub(crate) fn new_expression(
         pair: Pair<Rule>,
         local_variables: &LocalVariables,
-    ) -> Result<Self, Error> {
-        PRATT_PARSER
-            .map_primary(|pair| Self::create_primary(pair, local_variables))
-            .map_prefix(|op, rhs| Self::create_prefix(op, rhs?))
-            .map_infix(|lhs, op, rhs| Self::create_infix(op, lhs?, rhs?, local_variables))
-            .map_postfix(|lhs, op| Self::create_postfix(op, lhs?, local_variables))
-            .parse(pair.into_inner())
+        errors: &mut Vec<Error>
+    ) -> Self {
+        let mut prefix_errors = Vec::new();
+        let mut infix_errors = Vec::new();
+        let mut postfix_errors = Vec::new();
+
+        let result = PRATT_PARSER
+            .map_primary(|pair| Self::create_primary(pair, local_variables, errors))
+            .map_prefix(|op, rhs| Self::create_prefix(op, rhs, &mut prefix_errors))
+            .map_infix(|lhs, op, rhs| Self::create_infix(op, lhs, rhs, local_variables, &mut infix_errors))
+            .map_postfix(|lhs, op| Self::create_postfix(op, lhs, local_variables, &mut postfix_errors))
+            .parse(pair.into_inner());
+        errors.append(&mut prefix_errors);
+        errors.append(&mut infix_errors);
+        errors.append(&mut postfix_errors);
+        result
     }
 
     fn create_primary(
         pair: Pair<'_, Rule>,
         local_variables: &LocalVariables<'_>,
-    ) -> Result<Self, Error> {
+        errors: &mut Vec<Error>
+    ) -> Self {
         let rule = pair.as_rule();
         if rule == Rule::expr {
-            return Self::new_expression(pair, local_variables);
+            return Self::new_expression(pair, local_variables, errors);
         }
         let str: Arc<str> = pair.as_str().into();
-        let instruction = match rule {
-            Rule::ident => Ident::create_instruction(&str, local_variables),
-            Rule::r#true | Rule::r#false | Rule::int | Rule::float | Rule::string | Rule::void => {
-                Variable::try_from(pair).map(Instruction::from)
-            }
-            Rule::tuple => Tuple::create_instruction(pair, local_variables),
-            Rule::array => Array::create_instruction(pair, local_variables),
-            Rule::array_repeat => array_repeat::create_instruction(pair, local_variables),
-            Rule::function => Function::create_instruction(pair, local_variables, None),
-            Rule::r#struct => Struct::create_instruction(pair, local_variables),
-            Rule::r#mod => module::create_instruction(pair, local_variables),
+        let instruction: Instruction = match rule {
+            Rule::ident => Ident::create_instruction(&str, local_variables, errors),
+            Rule::r#true | Rule::r#false | Rule::int| Rule::float |
+            Rule::void | Rule::string=> variable_from_pair(pair, errors).into(),
+            Rule::tuple => Tuple::create_instruction(pair, local_variables, errors),
+            Rule::array => Array::create_instruction(pair, local_variables, errors),
+            Rule::array_repeat => array_repeat::create_instruction(pair, local_variables, errors),
+            Rule::function => Function::create_instruction(pair, local_variables, None, errors),
+            Rule::r#struct => Struct::create_instruction(pair, local_variables, errors),
+            Rule::r#mod => module::create_instruction(pair, local_variables, errors),
             rule => unexpected!(rule),
-        }?;
-        Ok(Self { instruction, str })
+        };
+        Self { instruction, str }
     }
 }
 
@@ -110,25 +119,33 @@ pub trait BaseInstruction: Debug + ReturnType + Recreate + Exec + Sync + Send {}
 pub struct Instruction(Arc<dyn BaseInstruction>);
 
 impl Instruction {
-    pub fn new(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<Self, Error> {
+    pub fn new(pair: Pair<Rule>, local_variables: &mut LocalVariables, errors: &mut Vec<Error>) -> Self {
         match pair.as_rule() {
-            Rule::set | Rule::set_expr => Set::create(pair, local_variables).map(Self::from),
-            Rule::set_else => SetElse::create(pair, local_variables),
-            Rule::block => Block::create_instruction(pair, local_variables),
-            Rule::import => import::create_instruction(pair, local_variables),
-            Rule::r#if => If::create(pair, local_variables).map(Self::from),
-            Rule::r#match => Match::create_instruction(pair, local_variables),
-            Rule::r#return => Return::create_instruction(pair, local_variables),
+            Rule::set | Rule::set_expr => Set::create(pair, local_variables, errors).into(),
+            Rule::set_else => SetElse::create(pair, local_variables, errors),
+            Rule::block => Block::create_instruction(pair, local_variables, errors),
+            Rule::import => import::create_instruction(pair, local_variables, errors),
+            Rule::r#if => If::create(pair, local_variables, errors).into(),
+            Rule::r#match => Match::create_instruction(pair, local_variables, errors),
+            Rule::r#return => Return::create_instruction(pair, local_variables, errors),
             Rule::expr => {
-                InstructionWithStr::new_expression(pair, local_variables).map(|iws| iws.instruction)
+                InstructionWithStr::new_expression(pair, local_variables, errors).instruction
             }
-            Rule::r#loop => Loop::create_instruction(pair, local_variables),
-            Rule::r#while => r#while::create_instruction(pair, local_variables),
-            Rule::r#for => For::create_instruction(pair, local_variables),
-            Rule::r#break if local_variables.in_loop => Ok(Break.into()),
-            Rule::r#break => Err(Error::BreakOutsideLoop),
-            Rule::r#continue if local_variables.in_loop => Ok(Continue.into()),
-            Rule::r#continue => Err(Error::ContinueOutsideLoop),
+            Rule::r#loop => Loop::create_instruction(pair, local_variables, errors),
+            Rule::r#while => r#while::create_instruction(pair, local_variables, errors),
+            Rule::r#for => For::create_instruction(pair, local_variables, errors),
+            Rule::r#break => {
+                if !local_variables.in_loop {
+                    errors.push(Error::BreakOutsideLoop);
+                }
+                Break.into()
+            }
+            Rule::r#continue => {
+                if !local_variables.in_loop {
+                    errors.push(Error::ContinueOutsideLoop);
+                }
+                Continue.into()
+            }
             rule => unexpected!(rule),
         }
     }

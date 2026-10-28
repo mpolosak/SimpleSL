@@ -18,7 +18,7 @@ pub struct If {
 }
 
 impl If {
-    pub fn create(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<Self, Error> {
+    pub fn create(pair: Pair<Rule>, local_variables: &mut LocalVariables, errors: &mut Vec<Error>) -> Self {
         let mut inner = pair.into_inner();
         let (conditions, if_true) = {
             let mut local_variables = local_variables.create_layer();
@@ -27,31 +27,31 @@ impl If {
                 .into_inner()
                 .map(|pair| {
                     if pair.as_rule() == Rule::set_expr {
-                        return Ok(ConditionSet::create(pair, &mut local_variables)?.into());
+                        return ConditionSet::create(pair, &mut local_variables, errors).into();
                     }
                     let condition_str = pair.as_str().into();
-                    let condition = Instruction::new(pair, &mut local_variables)?;
+                    let condition = Instruction::new(pair, &mut local_variables, errors);
                     let return_type = condition.return_type();
                     if return_type != Type::Bool {
-                        return Err(Error::WrongCondition(condition_str, return_type));
+                        errors.push(Error::WrongCondition(condition_str, return_type));
                     }
-                    Ok(condition)
+                    condition
                 })
-                .collect::<Result<_, _>>()?;
+                .collect();
 
             let true_pair = inner.next().unwrap();
-            let if_true = Instruction::new(true_pair, &mut local_variables)?;
+            let if_true = Instruction::new(true_pair, &mut local_variables, errors);
             (conditions, if_true)
         };
         let if_false = inner.next().map_or_else(
-            || Ok(Variable::Void.into()),
-            |pair| Instruction::new(pair, local_variables),
-        )?;
-        Ok(Self {
+            || Variable::Void.into(),
+            |pair| Instruction::new(pair, local_variables, errors),
+        );
+        Self {
             conditions,
             if_true,
             else_instruction: if_false,
-        })
+        }
     }
 }
 

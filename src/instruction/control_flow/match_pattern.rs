@@ -1,12 +1,7 @@
 use crate::{
-    Error, Interpreter,
     instruction::{
-        Exec, ExecStop, Instruction,
-        local_variable::LocalVariables,
-        pattern::{Pattern, destruct_pattern::DestructPattern},
-        recreate_instructions,
-    },
-    variable::{Type, Variable},
+        local_variable::LocalVariables, pattern::{destruct_pattern::DestructPattern, Pattern}, recreate_instructions, Exec, ExecStop, Instruction
+    }, variable::{Type, Variable}, Error, Interpreter
 };
 use pest::iterators::Pair;
 use simplesl_parser::{Rule, unexpected};
@@ -24,20 +19,21 @@ impl MatchPattern {
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
         exp_type: &Type,
-    ) -> Result<MatchPattern, Error> {
+        errors: &mut Vec<Error>
+    ) -> MatchPattern {
         let rule = pair.as_rule();
-        Ok(match rule {
-            Rule::pattern => Pattern::create_instruction(pair, exp_type)?.into(),
+        match rule {
+            Rule::pattern => Pattern::create_instruction(pair, exp_type, errors).into(),
             Rule::values => {
                 let inner_values = pair.into_inner();
                 let values = inner_values
-                    .map(|pair| Instruction::new(pair, local_variables))
-                    .collect::<Result<Arc<[Instruction]>, Error>>()?;
+                    .map(|pair| Instruction::new(pair, local_variables, errors))
+                    .collect();
                 MatchPattern::Values(values)
             }
             Rule::other => MatchPattern::Other,
             _ => unexpected!(rule),
-        })
+        }
     }
 
     pub fn is_covering_type(&self, checked_type: &Type) -> bool {

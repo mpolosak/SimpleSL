@@ -1,10 +1,7 @@
 use crate::{
-    self as simplesl, BinOperator, Error, Interpreter,
-    instruction::{
-        BaseInstruction, Exec, ExecResult, Instruction, Recreate, bin_op::filter::Filter,
-        local_variable::LocalVariables,
-    },
-    variable::{Array, ReturnType, Type, Typed, Variable},
+    self as simplesl, instruction::{
+        bin_op::filter::Filter, local_variable::LocalVariables, BaseInstruction, Exec, ExecResult, Instruction, Recreate
+    }, variable::{Array, ReturnType, Type, Typed, Variable}, BinOperator, Error, Interpreter
 };
 use simplesl_macros::{var, var_type};
 
@@ -15,13 +12,13 @@ pub struct Partition {
 }
 
 impl Partition {
-    pub fn create_instruction(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
+    pub fn create_instruction(lhs: Instruction, rhs: Instruction, errors: &mut Vec<Error>) -> Instruction {
         let lhs_type = lhs.return_type();
         let rhs_type = rhs.return_type();
         if !Filter::can_be_used(&lhs_type, &rhs_type) {
-            return Err(Error::CannotDo2(lhs_type, BinOperator::Partition, rhs_type));
+            errors.push(Error::CannotDo2(lhs_type, BinOperator::Partition, rhs_type));
         }
-        Ok(Self { lhs, rhs }.into())
+        Self { lhs, rhs }.into()
     }
 
     fn calc(iter: Variable, function: Variable) -> ExecResult {

@@ -17,27 +17,28 @@ impl InstructionWithStr {
         op: Pair<'_, Rule>,
         lhs: Self,
         local_variables: &LocalVariables<'_>,
-    ) -> Result<Self, Error> {
+        errors: &mut Vec<Error>
+    ) -> Self {
         let str = format!("{} {}", lhs.str, op.as_str()).into();
         let instruction = match op.as_rule() {
-            Rule::at => at::create(lhs.instruction, op, local_variables),
+            Rule::at => at::create(lhs.instruction, op, local_variables, errors),
             Rule::type_filter => {
-                TypeFilter::create_instruction(lhs.instruction, op.into_inner().next().unwrap())
+                TypeFilter::create_instruction(lhs.instruction, op.into_inner().next().unwrap(), errors)
             }
-            Rule::function_call => FunctionCall::create_instruction(lhs, op, local_variables),
-            Rule::tuple_access => tuple_access::create_instruction(lhs, op),
-            Rule::field_access => FieldAccess::create_instruction(lhs, op),
-            Rule::sum => Sum::create(lhs),
-            Rule::product => Product::create(lhs),
-            Rule::all => bool_reduce::create(lhs, UnaryOperator::All),
-            Rule::reduce_any => bool_reduce::create(lhs, UnaryOperator::Any),
-            Rule::bitand_reduce => reduce::bit::create(lhs, UnaryOperator::BitAnd),
-            Rule::bitor_reduce => reduce::bit::create(lhs, UnaryOperator::BitOr),
-            Rule::collect => collect::create(lhs),
-            Rule::iter => Iter::create_instruction(lhs),
-            Rule::slicing => slicing::create(lhs, op, local_variables),
+            Rule::function_call => FunctionCall::create_instruction(lhs, op, local_variables, errors),
+            Rule::tuple_access => tuple_access::create_instruction(lhs, op, errors),
+            Rule::field_access => FieldAccess::create_instruction(lhs, op, errors),
+            Rule::sum => Sum::create(lhs, errors),
+            Rule::product => Product::create(lhs, errors),
+            Rule::all => bool_reduce::create(lhs, UnaryOperator::All, errors),
+            Rule::reduce_any => bool_reduce::create(lhs, UnaryOperator::Any, errors),
+            Rule::bitand_reduce => reduce::bit::create(lhs, UnaryOperator::BitAnd, errors),
+            Rule::bitor_reduce => reduce::bit::create(lhs, UnaryOperator::BitOr, errors),
+            Rule::collect => collect::create(lhs, errors),
+            Rule::iter => Iter::create_instruction(lhs, errors),
+            Rule::slicing => slicing::create(lhs, op, local_variables, errors),
             rule => unexpected!(rule),
-        }?;
-        Ok(Self { instruction, str })
+        };
+        Self { instruction, str }
     }
 }

@@ -50,7 +50,7 @@ fn run_from_file(path: &str) -> ExitCode {
 
 fn parse_exec_print_error(interpreter: &mut Interpreter, script: &str) -> Option<Variable> {
     let code = Code::parse(interpreter, script)
-        .inspect_err(|error| eprintln!("{error}"))
+        .inspect_err(|errors| errors.iter().for_each(|error| eprintln!("{error}")))
         .ok()?;
     code.exec_unscoped(interpreter)
         .inspect_err(|error| eprintln!("{error}"))

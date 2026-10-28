@@ -13,17 +13,18 @@ lazy_static! {
     pub static ref ACCEPTED_TYPE: Type = var_type!(() -> (bool, any));
 }
 
-pub(crate) fn create(lhs: InstructionWithStr) -> Result<Instruction, Error> {
+pub(crate) fn create(lhs: InstructionWithStr, errors: &mut Vec<Error>) -> Instruction {
     let op = UnaryOperator::Collect;
     let return_type = lhs.return_type();
-    let Some(element_type) = return_type.iter_element() else {
-        return Err(Error::IncorectUnaryOperatorOperand {
+    let element_type = return_type.iter_element().unwrap_or_else(||{
+        errors.push(Error::IncorectUnaryOperatorOperand {
             ins: lhs.str,
             op,
             expected: ACCEPTED_TYPE.clone(),
             given: return_type,
         });
-    };
+        Type::Never
+    });
 
     let mut function = Arc::unwrap_or_clone(Variable::from(Collect).into_function().unwrap());
     function.return_type = var_type!([element_type]);
@@ -34,7 +35,7 @@ pub(crate) fn create(lhs: InstructionWithStr) -> Result<Instruction, Error> {
     }
     .into();
 
-    Ok(FunctionCall { function, args }.into())
+    FunctionCall { function, args }.into()
 }
 
 #[cfg(test)]
@@ -49,22 +50,22 @@ mod tests {
     #[test]
     fn collect() {
         assert_eq!(
-            parse_and_exec("[45, 15]$]"),
-            Err(Error::IncorectUnaryOperatorOperand {
+            parse_and_exec("[45, 15]$]").unwrap_err()[0],
+            Error::IncorectUnaryOperatorOperand {
                 ins: "[45, 15]".into(),
                 op: OP,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!([int])
-            })
+            }
         );
         assert_eq!(
-            parse_and_exec(r#""abc"$]"#),
-            Err(Error::IncorectUnaryOperatorOperand {
+            parse_and_exec(r#""abc"$]"#).unwrap_err()[0],
+            Error::IncorectUnaryOperatorOperand {
                 ins: r#""abc""#.into(),
                 op: OP,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(string)
-            })
+            }
         );
         assert_eq!(
             parse_and_exec(
@@ -72,13 +73,13 @@ mod tests {
                     return (true, 13);
                 }
                 x$]"
-            ),
-            Err(Error::IncorectUnaryOperatorOperand {
+            ).unwrap_err()[0],
+           Error::IncorectUnaryOperatorOperand {
                 ins: "x".into(),
                 op: OP,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!((int)->(bool, int))
-            })
+            }
         );
         assert_eq!(
             parse_and_exec(
@@ -86,13 +87,13 @@ mod tests {
                     return 5;
                 }
                 x$]"
-            ),
-            Err(Error::IncorectUnaryOperatorOperand {
+            ).unwrap_err()[0],
+            Error::IncorectUnaryOperatorOperand {
                 ins: "x".into(),
                 op: OP,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(()->int)
-            })
+            }
         );
         assert_eq!(parse_and_exec("[45, 15, 17]~$]"), Ok(var!([45, 15, 17])));
         assert_eq!(
@@ -116,7 +117,7 @@ mod tests {
         );
     }
 
-    fn parse_and_exec(script: &str) -> Result<Variable, Error> {
+    fn parse_and_exec(script: &str) -> Result<Variable, Vec<Error>> {
         Code::parse(&Interpreter::without_stdlib(), script).map(|code| code.exec().unwrap())
     }
 }

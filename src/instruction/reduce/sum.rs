@@ -22,20 +22,20 @@ pub struct Sum {
 }
 
 impl Sum {
-    pub fn create(iterator: InstructionWithStr) -> Result<Instruction, Error> {
+    pub fn create(iterator: InstructionWithStr, errors: &mut Vec<Error>) -> Instruction {
         let return_type = iterator.return_type();
         if !return_type.matches(&ACCEPTED_TYPE) {
-            return Err(Error::IncorectUnaryOperatorOperand {
+            errors.push(Error::IncorectUnaryOperatorOperand {
                 ins: iterator.str,
                 op: UnaryOperator::Sum,
                 expected: ACCEPTED_TYPE.clone(),
                 given: return_type,
             });
         }
-        Ok(Self {
+        Self {
             iterator: iterator.instruction,
         }
-        .into())
+        .into()
     }
 }
 
@@ -84,52 +84,52 @@ mod tests {
     #[test]
     fn sum() {
         assert_eq!(
-            parse_and_exec("[45, 76, 15]$+"),
-            Err(Error::IncorectUnaryOperatorOperand {
+            parse_and_exec("[45, 76, 15]$+").unwrap_err()[0],
+            Error::IncorectUnaryOperatorOperand {
                 ins: "[45, 76, 15]".into(),
                 op: OP,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!([int])
-            })
+            }
         );
         assert_eq!(
-            parse_and_exec(r#""abc"$+"#),
-            Err(Error::IncorectUnaryOperatorOperand {
+            parse_and_exec(r#""abc"$+"#).unwrap_err()[0],
+            Error::IncorectUnaryOperatorOperand {
                 ins: r#""abc""#.into(),
                 op: OP,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(string)
-            })
+            }
         );
         assert_eq!(
-            parse_and_exec("x:= () -> int {return 5;} x$+"),
-            Err(Error::IncorectUnaryOperatorOperand {
+            parse_and_exec("x:= () -> int {return 5;} x$+").unwrap_err()[0],
+            Error::IncorectUnaryOperatorOperand {
                 ins: "x".into(),
                 op: OP,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(() -> int)
-            })
+            }
         );
         assert_eq!(
-            parse_and_exec("x:= (a: int) -> (bool, int) {return (true, a);} x$+"),
-            Err(Error::IncorectUnaryOperatorOperand {
+            parse_and_exec("x:= (a: int) -> (bool, int) {return (true, a);} x$+").unwrap_err()[0],
+            Error::IncorectUnaryOperatorOperand {
                 ins: "x".into(),
                 op: OP,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!((int) -> (bool, int))
-            })
+            }
         );
         assert_eq!(parse_and_exec("[45, 16, 3]~$+"), Ok(var!(64)));
         assert_eq!(parse_and_exec("[5.5, 6.5, 7.4]~$+"), Ok(var!(19.4)));
         assert_eq!(parse_and_exec(r#"["a", "6.5", "$"]~$+"#), Ok(var!("a6.5$")));
         assert_eq!(
-            parse_and_exec("[45, 16.5, 3]~$+"),
-            Err(Error::IncorectUnaryOperatorOperand {
+            parse_and_exec("[45, 16.5, 3]~$+").unwrap_err()[0],
+            Error::IncorectUnaryOperatorOperand {
                 ins: "[45, 16.5, 3] ~".into(),
                 op: OP,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(() -> (bool, int|float))
-            })
+            }
         );
         assert_eq!(
             parse_and_exec(
@@ -163,7 +163,7 @@ mod tests {
         );
     }
 
-    fn parse_and_exec(script: &str) -> Result<Variable, Error> {
+    fn parse_and_exec(script: &str) -> Result<Variable, Vec<Error>> {
         Code::parse(&Interpreter::without_stdlib(), script).map(|code| code.exec().unwrap())
     }
 }

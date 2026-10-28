@@ -21,29 +21,30 @@ impl Mut {
     pub fn create_instruction(
         op: Pair<Rule>,
         rhs: InstructionWithStr,
-    ) -> Result<Instruction, Error> {
+        errors: &mut Vec<Error>
+    ) -> Instruction {
         let mut inner = op.into_inner();
         let Some(type_pair) = inner.next() else {
-            return Ok(Mut {
+            return Mut {
                 var_type: rhs.return_type(),
                 instruction: rhs.instruction,
             }
-            .into());
+            .into();
         };
         let var_type = Type::from(type_pair);
         let instruction_return_type = rhs.return_type();
         if !instruction_return_type.matches(&var_type) {
-            return Err(Error::WrongInitialization {
-                declared: var_type,
+            errors.push(Error::WrongInitialization {
+                declared: var_type.clone(),
                 given: rhs.str,
                 given_type: instruction_return_type,
             });
         }
-        Ok(Mut {
+        Mut {
             var_type,
             instruction: rhs.instruction,
         }
-        .into())
+        .into()
     }
 }
 

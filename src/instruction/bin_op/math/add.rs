@@ -11,16 +11,16 @@ pub struct Add {
 }
 
 impl Add {
-    pub fn create_instruction(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
+    pub fn create_instruction(lhs: Instruction, rhs: Instruction, errors: &mut Vec<Error>) -> Instruction {
         let lhs_rt = lhs.return_type();
         let rhs_rt = rhs.return_type();
         if lhs_rt.is_array() && rhs_rt.is_array() {
-            return Ok(Concat { lhs, rhs }.into());
+            return Concat { lhs, rhs }.into();
         }
         if !Self::can_be_used(&lhs_rt, &rhs_rt) {
-            return Err(Error::CannotDo2(lhs_rt, BinOperator::Add, rhs_rt));
+            errors.push(Error::CannotDo2(lhs_rt, BinOperator::Add, rhs_rt));
         }
-        Ok(Self { lhs, rhs }.into())
+        Self { lhs, rhs }.into()
     }
 
     pub fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
@@ -70,80 +70,80 @@ mod tests {
         assert_eq!(parse_and_exec(r#""aa" + "B""#), Ok(var!("aaB")));
         assert_eq!(parse_and_exec("[5, 5, 6] + [5]"), Ok(var!([5, 5, 6, 5])));
         assert_eq!(
-            parse_and_exec(r#"[4, 5, 6] + 5"#),
-            Err(Error::CannotDo2(
+            parse_and_exec(r#"[4, 5, 6] + 5"#).unwrap_err()[0],
+            Error::CannotDo2(
                 var_type!([int]),
                 BinOperator::Add,
                 var_type!(int)
-            ))
+            )
         );
         assert_eq!(
-            parse_and_exec(r#"[4.5, 5.7, 6.0] + 3.3"#),
-            Err(Error::CannotDo2(
+            parse_and_exec(r#"[4.5, 5.7, 6.0] + 3.3"#).unwrap_err()[0],
+            Error::CannotDo2(
                 var_type!([float]),
                 BinOperator::Add,
                 var_type!(float)
-            ))
+            )
         );
         assert_eq!(
-            parse_and_exec(r#""7" + ["a", "aaa"]"#),
-            Err(Error::CannotDo2(
+            parse_and_exec(r#""7" + ["a", "aaa"]"#).unwrap_err()[0],
+            Error::CannotDo2(
                 var_type!(string),
                 BinOperator::Add,
                 var_type!([string])
-            ))
+            )
         );
         assert_eq!(
-            parse_and_exec(r#"["a", "aaa"]+"3""#),
-            Err(Error::CannotDo2(
+            parse_and_exec(r#"["a", "aaa"]+"3""#).unwrap_err()[0],
+            Error::CannotDo2(
                 var_type!([string]),
                 BinOperator::Add,
                 var_type!(string)
-            ))
+            )
         );
         assert_eq!(
-            parse_and_exec("4+4.5"),
-            Err(Error::CannotDo2(
+            parse_and_exec("4+4.5").unwrap_err()[0],
+            Error::CannotDo2(
                 var_type!(int),
                 BinOperator::Add,
                 var_type!(float)
-            ))
+            )
         );
         assert_eq!(
-            parse_and_exec(r#""4"+4.5"#),
-            Err(Error::CannotDo2(
+            parse_and_exec(r#""4"+4.5"#).unwrap_err()[0],
+            Error::CannotDo2(
                 var_type!(string),
                 BinOperator::Add,
                 var_type!(float)
-            ))
+            )
         );
         assert_eq!(
-            parse_and_exec(r#""4"+4"#),
-            Err(Error::CannotDo2(
+            parse_and_exec(r#""4"+4"#).unwrap_err()[0],
+            Error::CannotDo2(
                 var_type!(string),
                 BinOperator::Add,
                 var_type!(int)
-            ))
+            )
         );
         assert_eq!(
-            parse_and_exec(r#"[4]+4.5"#),
-            Err(Error::CannotDo2(
+            parse_and_exec(r#"[4]+4.5"#).unwrap_err()[0],
+            Error::CannotDo2(
                 var_type!([int]),
                 BinOperator::Add,
                 var_type!(float)
-            ))
+            )
         );
         assert_eq!(
-            parse_and_exec(r#"[4, 5.5]+4.5"#),
-            Err(Error::CannotDo2(
+            parse_and_exec(r#"[4, 5.5]+4.5"#).unwrap_err()[0],
+            Error::CannotDo2(
                 var_type!([int | float]),
                 BinOperator::Add,
                 var_type!(float)
-            ))
+            )
         )
     }
 
-    fn parse_and_exec(script: &str) -> Result<Variable, Error> {
+    fn parse_and_exec(script: &str) -> Result<Variable, Vec<Error>> {
         Code::parse(&Interpreter::without_stdlib(), script).map(|code| code.exec().unwrap())
     }
 }

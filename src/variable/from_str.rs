@@ -10,95 +10,115 @@ use simplesl_parser::{Rule, SimpleSLParser, unexpected};
 use std::{str::FromStr, sync::Arc};
 
 impl FromStr for Variable {
-    type Err = Error;
+    type Err = Vec<Error>;
 
-    fn from_str(s: &str) -> Result<Self, Error> {
+    fn from_str(s: &str) -> Result<Self, Vec<Error>> {
         let s = s.trim();
-        let mut parse = SimpleSLParser::parse(Rule::only_var, s)?;
+        let mut parse = match SimpleSLParser::parse(Rule::only_var, s)  {
+            Ok(parse) => parse,
+            Err(error) => {return Err(Vec::from([error.into()]))},
+        };
         let pair = parse.next().unwrap();
-        Self::try_from(pair)
-    }
-}
-
-#[doc(hidden)]
-impl TryFrom<Pair<'_, Rule>> for Variable {
-    type Error = Error;
-
-    fn try_from(pair: Pair<Rule>) -> Result<Self, Error> {
-        match pair.as_rule() {
-            Rule::r#true => Ok(Variable::Bool(true)),
-            Rule::r#false => Ok(Variable::Bool(false)),
-            Rule::minus_int => {
-                parse_int(pair.into_inner().next().unwrap()).map(|value| Variable::Int(-value))
-            }
-            Rule::int => parse_int(pair).map(Self::from),
-            Rule::minus_float => {
-                let Ok(value) = pair.as_str().replace([' ', '_'], "").parse::<f64>() else {
-                    return Err(Error::CannotBeParsed(pair.as_str().into()));
-                };
-                Ok(Variable::Float(value))
-            }
-            Rule::float => {
-                let Ok(value) = pair.as_str().replace([' ', '_'], "").parse::<f64>() else {
-                    return Err(Error::CannotBeParsed(pair.as_str().into()));
-                };
-                Ok(Variable::Float(value))
-            }
-            Rule::string => Ok(string_from_pair(pair)?.into()),
-            Rule::array_from_str => {
-                let elements = pair
-                    .into_inner()
-                    .map(Self::try_from)
-                    .collect::<Result<Arc<[Variable]>, Error>>()?;
-                let element_type = elements
-                    .iter()
-                    .map(Typed::as_type)
-                    .reduce(Type::concat)
-                    .unwrap_or(Type::Never);
-                Ok(Array {
-                    element_type,
-                    elements,
-                }
-                .into())
-            }
-            Rule::array_repeat_from_str => {
-                let mut inner = pair.into_inner();
-                let value = Variable::try_from(inner.next().unwrap())?;
-                let len_pair = inner.next().unwrap();
-                let len = parse_int(len_pair)?;
-                Ok(Array::new_repeat(value, len as usize).into())
-            }
-            Rule::tuple_from_str => {
-                let elements = pair
-                    .into_inner()
-                    .map(Self::try_from)
-                    .collect::<Result<Arc<[Variable]>, Error>>()?;
-                Ok(Self::Tuple(elements))
-            }
-            Rule::struct_from_str => {
-                let mut vm = VariableMap::new();
-                for (pattern, value) in pair.into_inner().tuples() {
-                    let value_str = value.as_str().into();
-                    let value = Self::try_from(value)?;
-                    let var_type = value.as_type();
-                    let pattern_str = pattern.as_str().into();
-                    let pattern = Pattern::create_instruction(pattern, &var_type)?;
-                    if !pattern.matches_variable(&value) {
-                        return Err(Error::SetPatternNotMatched {
-                            ins: value_str,
-                            var_type,
-                            pattern: pattern_str,
-                        });
-                    }
-                    pattern.insert_variables_into_vm(&mut vm, value);
-                }
-                Ok(Variable::Struct(vm.into()))
-            }
-            Rule::void => Ok(Variable::Void),
-            _ => Err(Error::CannotBeParsed(pair.as_str().into())),
+        let mut errors = Vec::new();
+        let variable = variable_from_pair(pair, &mut errors);
+        if errors.is_empty(){
+            return Ok(variable)
         }
+        Err(errors)
     }
 }
+
+
+pub(crate) fn variable_from_pair(pair: Pair<Rule>, errors: &mut Vec<Error>) -> Variable{
+    match pair.as_rule() {
+        Rule::r#true => Variable::Bool(true),
+        Rule::r#false => Variable::Bool(false),
+        Rule::minus_int => {
+            parse_int(pair.into_inner().next().unwrap()).map(|value| Variable::Int(-value)).unwrap_or_else(|error| {
+                errors.push(error);
+                Variable::Int(-1)
+            })
+        }
+        Rule::int => parse_int(pair).map(Variable::from).unwrap_or_else(|error| {
+                errors.push(error);
+                Variable::Int(0)
+            }),
+        Rule::minus_float => {
+            let value = pair.as_str().replace([' ', '_'], "").parse::<f64>().unwrap_or_else(|_| {
+                errors.push(Error::CannotBeParsed(pair.as_str().into()));
+                -1.0
+            });
+            Variable::Float(value)
+        }
+        Rule::float => {
+            let value = pair.as_str().replace([' ', '_'], "").parse::<f64>().unwrap_or_else(|_| {
+                errors.push(Error::CannotBeParsed(pair.as_str().into()));
+                0.0
+            });
+            Variable::Float(value)
+        }
+        Rule::string => {
+            string_from_pair(pair).unwrap_or_else(|error| {
+                errors.push(error);
+                String::new()
+            }).into()},
+        Rule::array_from_str => {
+            let elements: Arc<[Variable]> = pair
+                .into_inner()
+                .map(|pair| variable_from_pair(pair, errors))
+                .collect();
+            let element_type = elements
+                .iter()
+                .map(Typed::as_type)
+                .reduce(Type::concat)
+                .unwrap_or(Type::Never);
+            Array {
+                element_type,
+                elements,
+            }
+            .into()
+        }
+        Rule::array_repeat_from_str => {
+            let mut inner = pair.into_inner();
+            let value = variable_from_pair(inner.next().unwrap(), errors);
+            let len_pair = inner.next().unwrap();
+            let len = parse_int(len_pair).unwrap_or_else(|error| {
+                errors.push(error);
+                0
+            });
+            Array::new_repeat(value, len as usize).into()
+        }
+        Rule::tuple_from_str => {
+            let elements = pair
+                .into_inner()
+                .map(|pair|variable_from_pair(pair, errors))
+                .collect();
+            Variable::Tuple(elements)
+        }
+        Rule::struct_from_str => {
+            let mut vm = VariableMap::new();
+            for (pattern, value) in pair.into_inner().tuples() {
+                let value_str = value.as_str().into();
+                let value = variable_from_pair(value, errors);
+                let var_type = value.as_type();
+                let pattern_str = pattern.as_str().into();
+                let pattern = Pattern::create_instruction(pattern, &var_type, errors);
+                if !pattern.matches_variable(&value) {
+                    errors.push(Error::SetPatternNotMatched {
+                        ins: value_str,
+                        var_type,
+                        pattern: pattern_str,
+                    });
+                }
+                pattern.insert_variables_into_vm(&mut vm, value);
+            }
+            Variable::Struct(vm.into())
+        }
+        Rule::void => Variable::Void,
+        _ => {errors.push(Error::CannotBeParsed(pair.as_str().into())); Variable::Void},
+    }
+}
+
 
 pub(crate) fn string_from_pair(pair: Pair<Rule>) -> Result<String, Error> {
     let value = pair.into_inner().next().unwrap().as_str();
@@ -234,28 +254,28 @@ mod tests {
     #[test]
     fn struct_from_str_pattern_not_matched() {
         assert_eq!(
-            Variable::from_str("struct{a:float=5}"),
-            Err(Error::SetPatternNotMatched {
+            Variable::from_str("struct{a:float=5}").unwrap_err()[0],
+            Error::SetPatternNotMatched {
                 ins: "5".into(),
                 var_type: Type::Int,
                 pattern: "a:float".into()
-            })
+            }
         );
         assert_eq!(
-            Variable::from_str(r#"struct{(a, b, c):(int, float, int)=(5, 5.5, "")}"#),
-            Err(Error::SetPatternNotMatched {
+            Variable::from_str(r#"struct{(a, b, c):(int, float, int)=(5, 5.5, "")}"#).unwrap_err()[0],
+            Error::SetPatternNotMatched {
                 ins: r#"(5, 5.5, "")"#.into(),
                 var_type: var_type!((int, float, string)),
                 pattern: "(a, b, c):(int, float, int)".into()
-            })
+            }
         );
         assert_eq!(
-            Variable::from_str(r#"struct{(a, b, c):=(5, 5.5)}"#),
-            Err(Error::SetPatternNotMatched {
+            Variable::from_str(r#"struct{(a, b, c):=(5, 5.5)}"#).unwrap_err()[0],
+            Error::SetPatternNotMatched {
                 ins: r#"(5, 5.5)"#.into(),
                 var_type: var_type!((int, float)),
                 pattern: "(a, b, c):".into()
-            })
+            }
         );
     }
 
@@ -270,14 +290,14 @@ mod tests {
     #[test]
     fn struct_from_str_self_contradictory_pattern() {
         assert_eq!(
-            Variable::from_str("struct{(a, b):float=5}"),
-            Err(Error::SelfContradictoryPattern("(a, b):float".into()))
+            Variable::from_str("struct{(a, b):float=5}").unwrap_err()[0],
+            Error::SelfContradictoryPattern("(a, b):float".into())
         );
         assert_eq!(
-            Variable::from_str(r#"struct{(a, b, c):(int, float)=(5, 5.5, "")}"#),
-            Err(Error::SelfContradictoryPattern(
+            Variable::from_str(r#"struct{(a, b, c):(int, float)=(5, 5.5, "")}"#).unwrap_err()[0],
+            Error::SelfContradictoryPattern(
                 "(a, b, c):(int, float)".into()
-            ))
+            )
         );
     }
     proptest! {

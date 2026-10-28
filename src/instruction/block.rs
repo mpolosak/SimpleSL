@@ -19,10 +19,11 @@ impl Block {
     pub fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &LocalVariables,
-    ) -> Result<Instruction, Error> {
+        errors: &mut Vec<Error>
+    ) -> Instruction {
         let mut local_variables = local_variables.create_layer();
-        let instructions = local_variables.create_instructions(pair.into_inner())?;
-        Ok(Self { instructions }.into())
+        let instructions = local_variables.create_instructions(pair.into_inner(), errors);
+        Self { instructions }.into()
     }
 }
 

@@ -19,22 +19,23 @@ impl Array {
     pub fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &LocalVariables,
-    ) -> Result<Instruction, Error> {
+        errors: &mut Vec<Error>
+    ) -> Instruction {
         let inner = pair.into_inner();
         let mut local_variables = local_variables.create_layer();
-        let instructions = inner
-            .map(|arg| Instruction::new(arg, &mut local_variables))
-            .collect::<Result<Box<_>, Error>>()?;
+        let instructions: Box<[Instruction]> = inner
+            .map(|arg| Instruction::new(arg, &mut local_variables, errors))
+            .collect();
         let element_type = instructions
             .iter()
             .map(ReturnType::return_type)
             .reduce(Type::concat)
             .unwrap_or(Type::Never);
-        Ok(Self {
+        Self {
             instructions,
             element_type,
         }
-        .into())
+        .into()
     }
 }
 

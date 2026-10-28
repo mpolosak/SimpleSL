@@ -13,13 +13,14 @@ use std::sync::Arc;
 pub fn create_instruction(
     pair: Pair<Rule>,
     local_variables: &LocalVariables,
-) -> Result<Instruction, Error> {
+    errors: &mut Vec<Error>
+) -> Instruction {
     let mut inner = pair.into_inner();
     let value =
-        InstructionWithStr::new_expression(inner.next().unwrap(), local_variables)?.instruction;
-    let len = InstructionWithStr::new_expression(inner.next().unwrap(), local_variables)?;
+        InstructionWithStr::new_expression(inner.next().unwrap(), local_variables, errors).instruction;
+    let len = InstructionWithStr::new_expression(inner.next().unwrap(), local_variables, errors);
     if !len.return_type().matches(&Type::Int) {
-        return Err(Error::WrongLengthType(len.str));
+        errors.push(Error::WrongLengthType(len.str));
     }
 
     let value_type = value.return_type();
@@ -32,5 +33,5 @@ pub fn create_instruction(
     }
     .into();
 
-    Ok(FunctionCall { function, args }.into())
+    FunctionCall { function, args }.into()
 }

@@ -11,22 +11,23 @@ use simplesl_parser::Rule;
 pub fn create_instruction(
     pair: Pair<Rule>,
     local_variables: &LocalVariables,
-) -> Result<Instruction, Error> {
+    errors: &mut Vec<Error>
+) -> Instruction {
     let mut local_variables = local_variables.create_layer();
     let instructions =
-        local_variables.create_instructions(pair.into_inner().next().unwrap().into_inner())?;
+        local_variables.create_instructions(pair.into_inner().next().unwrap().into_inner(), errors);
     new(instructions, local_variables.drop_layer())
 }
 
 pub fn new(
     instructions: Box<[Instruction]>,
-    lv_layer: LocalVariableMap,
-) -> Result<Instruction, Error> {
+    lv_layer: LocalVariableMap
+) -> Instruction {
     let sets = lv_layer
         .into_iter()
         .map(|(ident, variable)| Set::new_ident(ident.clone(), Ident { ident, variable }.into()))
         .collect();
     let struct_ins = Struct { sets }.into();
     let instructions = [instructions, [struct_ins].into()].concat().into();
-    Ok(Block { instructions }.into())
+    Block { instructions }.into()
 }

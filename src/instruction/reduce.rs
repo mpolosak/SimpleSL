@@ -4,13 +4,9 @@ pub mod collect;
 pub mod product;
 pub mod sum;
 use crate::{
-    self as simplesl, Error,
-    instruction::{
-        Instruction, InstructionWithStr, function::call::FunctionCall,
-        local_variable::LocalVariables, tuple::Tuple,
-    },
-    stdlib::operators::REDUCE,
-    variable::{ReturnType, Variable},
+    self as simplesl, instruction::{
+        function::call::FunctionCall, local_variable::LocalVariables, tuple::Tuple, Instruction, InstructionWithStr
+    }, stdlib::operators::REDUCE, variable::{ReturnType, Type, Variable}, Error
 };
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
@@ -22,27 +18,31 @@ pub fn create_instruction(
     initial_value: Pair<Rule>,
     function: InstructionWithStr,
     local_variables: &LocalVariables,
-) -> Result<Instruction, Error> {
-    let initial_value = InstructionWithStr::new_expression(initial_value, local_variables)?;
+    errors: &mut Vec<Error>
+) -> Instruction {
+    let initial_value = InstructionWithStr::new_expression(initial_value, local_variables, errors);
     let iter_type = iter.return_type();
-    let Some(element_type) = iter_type.iter_element() else {
-        return Err(Error::CannotReduce(iter.str));
-    };
+    let element_type = iter_type.iter_element().unwrap_or_else(|| {
+        errors.push(Error::CannotReduce(iter.str));
+        Type::Never
+    });
     let function_return_type = function.return_type();
-    let Some(return_type) = function_return_type.return_type() else {
-        return Err(Error::WrongType(
+    let return_type = function_return_type.return_type().unwrap_or_else(|| {
+        let element_type = element_type.clone();
+        errors.push(Error::WrongType(
             "function".into(),
             var_type!((any, element_type)->any),
         ));
-    };
+        Type::Never
+    });
     let acc_type = initial_value.return_type() | element_type.clone() | return_type.clone();
     let expected_function = var_type!((acc_type, element_type)->return_type);
     if !function.return_type().matches(&expected_function) {
-        return Err(Error::WrongType("function".into(), expected_function));
+        errors.push(Error::WrongType("function".into(), expected_function));
     }
 
     let mut reduce = Arc::unwrap_or_clone(Variable::from(REDUCE).into_function().unwrap());
-    reduce.return_type = function_return_type.return_type().unwrap();
+    reduce.return_type = function_return_type.return_type().unwrap_or(Type::Never);
 
     let args = Tuple {
         elements: [
@@ -55,7 +55,7 @@ pub fn create_instruction(
     .into();
     let function = Variable::from(reduce).into();
 
-    Ok(FunctionCall { function, args }.into())
+    FunctionCall { function, args }.into()
 }
 
 #[cfg(test)]
@@ -67,31 +67,31 @@ mod tests {
     fn reduce() {
         let interpreter = Interpreter::without_stdlib();
         assert_eq!(
-            Code::parse(&interpreter, "[45, 67, 13] $0 5").unwrap_err(),
+            Code::parse(&interpreter, "[45, 67, 13] $0 5").unwrap_err()[0],
             Error::CannotReduce("[45, 67, 13]".into())
         );
         assert_eq!(
-            Code::parse(&interpreter, r#""abc" $0 5"#).unwrap_err(),
+            Code::parse(&interpreter, r#""abc" $0 5"#).unwrap_err()[0],
             Error::CannotReduce(r#""abc""#.into())
         );
         assert_eq!(
-            Code::parse(&interpreter, "() {} $0 5").unwrap_err(),
+            Code::parse(&interpreter, "() {} $0 5").unwrap_err()[0],
             Error::CannotReduce("() {}".into())
         );
         assert_eq!(
-            Code::parse(&interpreter, "() -> int {return 0} $0 5").unwrap_err(),
+            Code::parse(&interpreter, "() -> int {return 0} $0 5").unwrap_err()[0],
             Error::CannotReduce("() -> int {return 0}".into())
         );
         assert_eq!(
-            Code::parse(&interpreter, "() -> (any, any) {return (true, 0)} $0 5").unwrap_err(),
+            Code::parse(&interpreter, "() -> (any, any) {return (true, 0)} $0 5").unwrap_err()[0],
             Error::CannotReduce("() -> (any, any) {return (true, 0)}".into())
         );
         assert_eq!(
-            Code::parse(&interpreter, "() -> (bool, any) {return (true, 0)} $0 5").unwrap_err(),
+            Code::parse(&interpreter, "() -> (bool, any) {return (true, 0)} $0 5").unwrap_err()[0],
             Error::WrongType("function".into(), var_type!((any, any)->any))
         );
         assert_eq!(
-            Code::parse(&interpreter, "() -> (bool, int) {return (true, 0)} $0 5").unwrap_err(),
+            Code::parse(&interpreter, "() -> (bool, int) {return (true, 0)} $0 5").unwrap_err()[0],
             Error::WrongType("function".into(), var_type!((any, int)->any))
         );
         assert_eq!(
@@ -99,7 +99,7 @@ mod tests {
                 &interpreter,
                 "() -> (bool, int) {return (true, 0)} $0 (a: any, b:float) -> any {}"
             )
-            .unwrap_err(),
+            .unwrap_err()[0],
             Error::WrongType("function".into(), var_type!((any, int)->any))
         );
         assert_eq!(
@@ -107,7 +107,7 @@ mod tests {
                 &interpreter,
                 "() -> (bool, int) {return (true, 0)} $0 (a: int, b: int) -> any {}"
             )
-            .unwrap_err(),
+            .unwrap_err()[0],
             Error::WrongType("function".into(), var_type!((any, int)->any))
         );
         assert_eq!(
@@ -115,7 +115,7 @@ mod tests {
                 &interpreter,
                 "() -> (bool, int) {return (true, 0)} $0 (a: int, b:int) -> float { return 0.5 }"
             )
-            .unwrap_err(),
+            .unwrap_err()[0],
             Error::WrongType("function".into(), var_type!((int | float, int)->float))
         );
         assert_eq!(

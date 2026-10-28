@@ -13,23 +13,24 @@ pub fn create(
     lhs: InstructionWithStr,
     pair: Pair<Rule>,
     local_variables: &LocalVariables,
-) -> Result<Instruction, Error> {
+    errors: &mut Vec<Error>
+) -> Instruction {
     let lhs_type = lhs.return_type();
     if !lhs_type.can_be_indexed() {
-        return Err(Error::CannotSlice(lhs.str, lhs_type));
+        errors.push(Error::CannotSlice(lhs.str.clone(), lhs_type));
     }
     let inner = pair.into_inner();
     if inner.peek().is_none() {
-        return Ok(lhs.instruction);
+        return lhs.instruction;
     }
     let mut start = None;
     let mut stop = None;
     let mut step = None;
     for pair in inner {
         let rule = pair.as_rule();
-        let instruction = InstructionWithStr::new_expression(pair, local_variables)?;
+        let instruction = InstructionWithStr::new_expression(pair, local_variables, errors);
         if instruction.return_type() != Type::Int {
-            return Err(Error::CannotIndexWith(instruction.str));
+            errors.push(Error::CannotIndexWith(instruction.str));
         }
         match rule {
             Rule::start => start = Some(instruction.instruction),
@@ -54,41 +55,40 @@ pub fn create(
     }
     .into();
 
-    Ok(FunctionCall { function, args }.into())
+    FunctionCall { function, args }.into()
 }
 
 #[cfg(test)]
 mod test {
-    use crate::{self as simplesl, Code, Error, Interpreter, variable::Variable};
+    use crate::{self as simplesl, Code, Interpreter, variable::Variable};
     use simplesl_macros::var;
 
     #[test]
     fn slicing() {
-        assert_eq!(parse_and_exec("[15, 45, 16][::]"), Ok(var!([15, 45, 16])));
-        assert_eq!(parse_and_exec("[15, 45, 16][::1]"), Ok(var!([15, 45, 16])));
-        assert_eq!(parse_and_exec("[15, 45, 16][:]"), Ok(var!([15, 45, 16])));
-        assert_eq!(parse_and_exec("[15, 45, 16][1:]"), Ok(var!([45, 16])));
-        assert_eq!(parse_and_exec("[15, 45, 16][1::]"), Ok(var!([45, 16])));
-        assert_eq!(parse_and_exec("[15, 45, 16][1::1]"), Ok(var!([45, 16])));
-        assert_eq!(parse_and_exec("[15, 45, 16][1:-1:]"), Ok(var!([45])));
-        assert_eq!(parse_and_exec("[15, 45, 16][1:-1:1]"), Ok(var!([45])));
-        assert_eq!(parse_and_exec("[15, 45, 16][1:-1]"), Ok(var!([45])));
-        assert_eq!(parse_and_exec("[15, 45, 16, 0][::2]"), Ok(var!([15, 16])));
-        assert_eq!(parse_and_exec("[15, 45, 16, 0][1::2]"), Ok(var!([45, 0])));
-        assert_eq!(parse_and_exec("[15, 45, 16, 0][1:-1:2]"), Ok(var!([45])));
-        assert_eq!(parse_and_exec("[15, 45, 16, 0][1:2:2]"), Ok(var!([45])));
-        assert_eq!(parse_and_exec("[15, 45, 16][::-1]"), Ok(var!([16, 45, 15])));
-        assert_eq!(parse_and_exec("[15, 45, 16][1::-1]"), Ok(var!([45, 15])));
-        assert_eq!(parse_and_exec("[15, 45, 16][1:-1:-1]"), Ok(var!([])));
-        assert_eq!(parse_and_exec("[15, 45, 16, 0][::-2]"), Ok(var!([0, 45])));
-        assert_eq!(parse_and_exec("[15, 45, 16, 0][1::-2]"), Ok(var!([45])));
-        assert_eq!(parse_and_exec("[15, 45, 16, 0][1::-6]"), Ok(var!([45])));
-        assert_eq!(parse_and_exec("[15, 45, 16, 0][1:-1:-2]"), Ok(var!([])));
-        assert_eq!(parse_and_exec("[15, 45, 16, 0][1:2:-2]"), Ok(var!([])));
+        assert_eq!(parse_and_exec("[15, 45, 16][::]"), var!([15, 45, 16]));
+        assert_eq!(parse_and_exec("[15, 45, 16][::1]"), var!([15, 45, 16]));
+        assert_eq!(parse_and_exec("[15, 45, 16][:]"), var!([15, 45, 16]));
+        assert_eq!(parse_and_exec("[15, 45, 16][1:]"), var!([45, 16]));
+        assert_eq!(parse_and_exec("[15, 45, 16][1::]"), var!([45, 16]));
+        assert_eq!(parse_and_exec("[15, 45, 16][1::1]"), var!([45, 16]));
+        assert_eq!(parse_and_exec("[15, 45, 16][1:-1:]"), var!([45]));
+        assert_eq!(parse_and_exec("[15, 45, 16][1:-1:1]"), var!([45]));
+        assert_eq!(parse_and_exec("[15, 45, 16][1:-1]"), var!([45]));
+        assert_eq!(parse_and_exec("[15, 45, 16, 0][::2]"), var!([15, 16]));
+        assert_eq!(parse_and_exec("[15, 45, 16, 0][1::2]"), var!([45, 0]));
+        assert_eq!(parse_and_exec("[15, 45, 16, 0][1:-1:2]"), var!([45]));
+        assert_eq!(parse_and_exec("[15, 45, 16, 0][1:2:2]"), var!([45]));
+        assert_eq!(parse_and_exec("[15, 45, 16][::-1]"), var!([16, 45, 15]));
+        assert_eq!(parse_and_exec("[15, 45, 16][1::-1]"), var!([45, 15]));
+        assert_eq!(parse_and_exec("[15, 45, 16][1:-1:-1]"), var!([]));
+        assert_eq!(parse_and_exec("[15, 45, 16, 0][::-2]"), var!([0, 45]));
+        assert_eq!(parse_and_exec("[15, 45, 16, 0][1::-2]"), var!([45]));
+        assert_eq!(parse_and_exec("[15, 45, 16, 0][1::-6]"), var!([45]));
+        assert_eq!(parse_and_exec("[15, 45, 16, 0][1:-1:-2]"), var!([]));
+        assert_eq!(parse_and_exec("[15, 45, 16, 0][1:2:-2]"), var!([]));
     }
 
-    fn parse_and_exec(script: &str) -> Result<Variable, Error> {
-        Code::parse(&Interpreter::without_stdlib(), script)
-            .map(|code| code.exec().unwrap())
+    fn parse_and_exec(script: &str) -> Variable {
+        Code::parse(&Interpreter::without_stdlib(), script).unwrap().exec().unwrap()
     }
 }

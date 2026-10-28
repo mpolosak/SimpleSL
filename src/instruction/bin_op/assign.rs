@@ -18,16 +18,17 @@ pub struct Assign {
 }
 
 impl Assign {
-    pub fn create_instruction(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
+    pub fn create_instruction(lhs: Instruction, rhs: Instruction, errors: &mut Vec<Error>) -> Instruction {
         let lhs_rt = lhs.return_type();
         let rhs_rt = rhs.return_type();
         if let Some(element_type) = lhs_rt.mut_element_type()
             && rhs_rt.matches(&element_type)
         {
-            Ok(Assign { lhs, rhs }.into())
+            
         } else {
-            Err(Error::CannotDo2(lhs_rt, BinOperator::Assign, rhs_rt))
+            errors.push(Error::CannotDo2(lhs_rt, BinOperator::Assign, rhs_rt))
         }
+        Assign { lhs, rhs }.into()
     }
 }
 

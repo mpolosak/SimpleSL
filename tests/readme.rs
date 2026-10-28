@@ -12,9 +12,7 @@ fn test_code_samples_in_readme() {
             continue;
         };
         if lang == "SimpleSL" {
-            let code =
-                Code::parse(&interpreter, &content).unwrap_or_else(|error| panic!("{error}"));
-            code.exec().unwrap_or_else(|error| panic!("{error}"));
+            Code::parse(&interpreter, &content).unwrap().exec().unwrap();
         }
     }
 }

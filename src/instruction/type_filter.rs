@@ -19,13 +19,14 @@ impl TypeFilter {
     pub fn create_instruction(
         iterator: Instruction,
         var_type: Pair<Rule>,
-    ) -> Result<Instruction, Error> {
+        errors: &mut Vec<Error>
+    ) -> Instruction {
         let array_type = iterator.return_type();
         let var_type = Type::from(var_type);
         if !array_type.is_iterator() {
-            return Err(Error::CannotDo2(array_type, BinOperator::Filter, var_type));
+            errors.push(Error::CannotDo2(array_type, BinOperator::Filter, var_type.clone()));
         }
-        Ok(Self { iterator, var_type }.into())
+        Self { iterator, var_type }.into()
     }
 }
 

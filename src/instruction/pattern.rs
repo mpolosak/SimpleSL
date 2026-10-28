@@ -1,12 +1,8 @@
 use crate::{
-    Error, Interpreter,
-    function::Param,
-    instruction::{
+    function::Param, instruction::{
         local_variable::{LocalVariable, LocalVariables},
         pattern::destruct_pattern::DestructPattern,
-    },
-    interpreter::VariableMap,
-    variable::{Array, Type, Typed, Variable},
+    }, interpreter::VariableMap, variable::{Array, Type, Typed, Variable}, Error, Interpreter
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
@@ -27,7 +23,7 @@ impl Pattern {
         }
     }
 
-    pub fn create_instruction(pair: Pair<Rule>, ex_type: &Type) -> Result<Self, Error> {
+    pub fn create_instruction(pair: Pair<Rule>, ex_type: &Type, errors: &mut Vec<Error>) -> Self {
         let str = pair.as_str().into();
         let mut inner = pair.into_inner();
         let destruct_pattern_pair = inner.next().unwrap();
@@ -41,19 +37,19 @@ impl Pattern {
             } else {
                 destruct_pattern_type
             };
-            return Ok(Self {
+            return Self {
                 destruct_pattern,
                 var_type,
-            });
+            };
         };
         if !var_type.matches(&destruct_pattern_type) {
-            return Err(Error::SelfContradictoryPattern(str));
+            errors.push(Error::SelfContradictoryPattern(str));
         }
 
-        Ok(Self {
+        Self {
             destruct_pattern,
             var_type,
-        })
+        }
     }
 
     pub fn is_matched(&self, var_type: &Type) -> bool {
@@ -155,7 +151,7 @@ impl Pattern {
                 vm.insert(ident.clone(), variable);
             }
             DestructPattern::Tuple(idents) => {
-                let tuple = variable.into_tuple().unwrap();
+                let tuple = variable.into_tuple().unwrap_or_else(|_| Arc::from([]));
                 for (ident, var) in idents.iter().cloned().zip(tuple.iter().cloned()) {
                     vm.insert(ident, var);
                 }

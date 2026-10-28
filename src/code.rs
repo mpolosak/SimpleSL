@@ -1,6 +1,8 @@
 use crate::{
     Error, ExecError, Interpreter,
-    instruction::{Exec, ExecStop, Instruction, Recreate, local_variable::LocalVariables},
+    instruction::{
+        Exec, ExecStop, Instruction, local_variable::LocalVariables, recreate_instructions,
+    },
     variable::{ReturnType, Type, Variable},
 };
 use pest::Parser;
@@ -13,15 +15,21 @@ pub struct Code {
 }
 
 impl Code {
-    pub fn parse(interpreter: &Interpreter, script: &str) -> Result<Self, Error> {
-        let parse = SimpleSLParser::parse(Rule::input, script)?;
+    pub fn parse(interpreter: &Interpreter, script: &str) -> Result<Self, Vec<Error>> {
+        let parse = match SimpleSLParser::parse(Rule::input, script) {
+            Ok(parse) => parse,
+            Err(error) => return Err([error.into()].into()),
+        };
         let mut local_variables = LocalVariables::new(interpreter);
-        let instructions = parse
-            .map(|pair| {
-                Instruction::new(pair, &mut local_variables)
-                    .map(|i| i.recreate(&mut local_variables))
-            })
-            .collect::<Result<_, Error>>()?;
+        let mut errors = Vec::new();
+        let instructions: Box<[Instruction]> = parse
+            .map(|pair| Instruction::new(pair, &mut local_variables, &mut errors))
+            .collect();
+        if !errors.is_empty() {
+            return Err(errors);
+        }
+        let mut local_variables = LocalVariables::new(interpreter);
+        let instructions = recreate_instructions(&instructions, &mut local_variables).into();
         Ok(Self { instructions })
     }
     pub fn exec(&self) -> Result<Variable, ExecError> {

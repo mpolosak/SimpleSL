@@ -1,13 +1,8 @@
 use super::{Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables};
 use crate::{
-    Error,
     instruction::{
-        BaseInstruction,
-        function::Function,
-        pattern::{Pattern, destruct_pattern::DestructPattern},
-    },
-    interpreter::Interpreter,
-    variable::{ReturnType, Type},
+        function::Function, pattern::{destruct_pattern::DestructPattern, Pattern}, BaseInstruction
+    }, interpreter::Interpreter, variable::{ReturnType, Type}, Error
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
@@ -20,33 +15,33 @@ pub struct Set {
 }
 
 impl Set {
-    pub fn create(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<Self, Error> {
+    pub fn create(pair: Pair<Rule>, local_variables: &mut LocalVariables, errors: &mut Vec<Error>) -> Self {
         let is_declaration = pair.as_rule() == Rule::set;
-        let (set, error) = Self::new(pair, local_variables)?;
+        let (set, error) = Self::new(pair, local_variables, errors);
         if is_declaration && matches!(&set.pattern.destruct_pattern, DestructPattern::Array { .. })
         {
-            return Err(Error::ArrayPatternRequiresElse);
+            errors.push(Error::ArrayPatternRequiresElse);
         }
         if !set.pattern.is_matched(&set.instruction.return_type()) {
-            return Err(error);
+            errors.push(error);
         }
-        Ok(set)
+        set
     }
 
-    fn new(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<(Self, Error), Error> {
+    fn new(pair: Pair<Rule>, local_variables: &mut LocalVariables, errors: &mut Vec<Error>) -> (Self, Error) {
         let mut inner = pair.into_inner();
         let pattern_pair = inner.next().unwrap();
         let pair = inner.next().unwrap();
         let ins = pair.as_str().into();
         if pair.as_rule() == Rule::function {
-            return Self::create_function_declaration(pattern_pair, pair, local_variables);
+            return Self::create_function_declaration(pattern_pair, pair, local_variables, errors);
         }
-        let instruction = Instruction::new(pair, local_variables)?;
+        let instruction = Instruction::new(pair, local_variables, errors);
         let var_type = instruction.return_type();
         let pattern_str = pattern_pair.as_str().into();
-        let pattern = Pattern::create_instruction(pattern_pair, &var_type)?;
+        let pattern = Pattern::create_instruction(pattern_pair, &var_type, errors);
         pattern.insert_local_variables(local_variables);
-        Ok((
+        (
             Self {
                 pattern,
                 instruction,
@@ -56,16 +51,17 @@ impl Set {
                 var_type,
                 pattern: pattern_str,
             },
-        ))
+        )
     }
 
     fn create_function_declaration(
         pattern_pair: Pair<Rule>,
         function_pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
-    ) -> Result<(Self, Error), Error> {
+        errors: &mut Vec<Error>
+    ) -> (Self, Error) {
         let pattern_str = pattern_pair.as_str().into();
-        let mut pattern = Pattern::create_instruction(pattern_pair, &Type::Any)?;
+        let mut pattern = Pattern::create_instruction(pattern_pair, &Type::Any, errors);
         let ident = if let DestructPattern::Ident(ident) = &pattern.destruct_pattern {
             Some(ident)
         } else {
@@ -73,11 +69,11 @@ impl Set {
         };
         let ins: Arc<str> = function_pair.as_str().into();
         let instruction =
-            Function::create_instruction(function_pair, local_variables, ident.cloned())?;
+            Function::create_instruction(function_pair, local_variables, ident.cloned(), errors);
         let var_type = instruction.return_type();
         pattern.var_type = pattern.var_type.conjoin(&instruction.return_type());
         pattern.insert_local_variables(local_variables);
-        Ok((
+        (
             Self {
                 pattern,
                 instruction,
@@ -87,7 +83,7 @@ impl Set {
                 var_type,
                 pattern: pattern_str,
             },
-        ))
+        )
     }
 
     pub fn inner_recreate(&self, local_variables: &mut LocalVariables) -> Self {
@@ -140,22 +136,23 @@ impl SetElse {
     pub fn create(
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, Error> {
+        errors: &mut Vec<Error>
+    ) -> Instruction {
         let mut inner = pair.into_inner();
         let pattern_pair = inner.next().unwrap();
-        let instruction = Instruction::new(inner.next().unwrap(), local_variables)?;
-        let pattern = Pattern::create_instruction(pattern_pair, &instruction.return_type())?;
-        let else_instruction = Instruction::new(inner.next().unwrap(), local_variables)?;
+        let instruction = Instruction::new(inner.next().unwrap(), local_variables, errors);
+        let pattern = Pattern::create_instruction(pattern_pair, &instruction.return_type(), errors);
+        let else_instruction = Instruction::new(inner.next().unwrap(), local_variables, errors);
         if else_instruction.return_type() != Type::Never {
-            return Err(Error::WrongType("else branch".into(), Type::Never));
+            errors.push(Error::WrongType("else branch".into(), Type::Never));
         }
         pattern.insert_local_variables(local_variables);
-        Ok(Self {
+        Self {
             pattern,
             instruction,
             else_instruction,
         }
-        .into())
+        .into()
     }
 }
 
@@ -199,8 +196,8 @@ impl ReturnType for SetElse {
 pub struct ConditionSet(Set);
 
 impl ConditionSet {
-    pub fn create(pair: Pair<Rule>, local_variables: &mut LocalVariables) -> Result<Self, Error> {
-        Ok(ConditionSet(Set::new(pair, local_variables).map(|t| t.0)?))
+    pub fn create(pair: Pair<Rule>, local_variables: &mut LocalVariables, errors: &mut Vec<Error>) -> Self {
+        ConditionSet(Set::new(pair, local_variables, errors).0)
     }
 }
 
@@ -246,7 +243,7 @@ mod tests {
                 }
                 sum_pair((2, 3))"
             ),
-            Ok(Variable::Int(5))
+            Variable::Int(5)
         );
     }
 
@@ -260,21 +257,21 @@ mod tests {
                 }
                 sum_pair(4)"
             ),
-            Ok(Variable::Int(-1))
+            Variable::Int(-1)
         );
     }
 
     #[test]
     fn rejects_non_diverging_else() {
         assert_eq!(
-            parse_and_exec(
+            parse_unwrap_first_error(
                 "sum_pair := (value: int | (int, int)) -> int {
                     (left, right): (int, int) = value else { 0 }
                     return left + right
                 }
                 sum_pair(4)"
             ),
-            Err(Error::WrongType("else branch".into(), Type::Never))
+            Error::WrongType("else branch".into(), Type::Never)
         );
     }
 
@@ -287,7 +284,7 @@ mod tests {
                     break
                 }"
             ),
-            Ok(Variable::Void)
+            Variable::Void
         );
     }
 
@@ -302,7 +299,7 @@ mod tests {
                     => \"unknown\",
                 }"
             ),
-            Ok(Variable::String("Ada".into()))
+            Variable::String("Ada".into())
         );
         assert_eq!(
             parse_and_exec(
@@ -312,7 +309,7 @@ mod tests {
                 }
                 get_name(struct{age := 3})"
             ),
-            Ok(Variable::Int(-1))
+            Variable::Int(-1)
         );
     }
 
@@ -326,7 +323,7 @@ mod tests {
                 }
                 sum_pair([2, 3])"
             ),
-            Ok(Variable::Int(5))
+            Variable::Int(5)
         );
     }
 
@@ -340,7 +337,7 @@ mod tests {
                 }
                 sum_pair([2])"
             ),
-            Ok(Variable::Int(-1))
+            Variable::Int(-1)
         );
     }
 
@@ -354,7 +351,7 @@ mod tests {
                 }
                 tail([1, 2, 3])"
             ),
-            Ok(Variable::from([2.into(), 3.into()]))
+            Variable::from([2.into(), 3.into()])
         );
     }
 
@@ -368,7 +365,7 @@ mod tests {
                 }
                 tail([1])"
             ),
-            Ok(Array::new_with_type(Type::Int, Vec::<Variable>::new().into()).into())
+            Array::new_with_type(Type::Int, Vec::<Variable>::new().into()).into()
         );
     }
 
@@ -382,27 +379,25 @@ mod tests {
                 }
                 tail([])"
             ),
-            Ok(Variable::from([]))
+            Variable::from([])
         );
     }
 
     #[test]
     fn rejects_array_destructuring_without_else_branch() {
         assert_eq!(
-            Code::parse(&Interpreter::without_stdlib(), "[first, second] := [2, 3]").map(|_| ()),
-            Err(Error::ArrayPatternRequiresElse)
+            parse_unwrap_first_error("[first, second] := [2, 3]"),
+            Error::ArrayPatternRequiresElse
         );
     }
 
     #[test]
     fn array_pattern_in_match_checks_length() {
         assert_eq!(
-            Code::parse(
-                &Interpreter::without_stdlib(),
+            parse_unwrap_first_error(
                 "match [2] { [item] => item, }"
-            )
-            .map(|_| ()),
-            Err(Error::MatchNotCovered)
+            ),
+            Error::MatchNotCovered
         );
         assert_eq!(
             parse_and_exec(
@@ -411,7 +406,7 @@ mod tests {
                     => -1,
                 }"
             ),
-            Ok(Variable::Int(-1))
+            Variable::Int(-1)
         );
         assert_eq!(
             parse_and_exec(
@@ -420,7 +415,7 @@ mod tests {
                     => -1,
                 }"
             ),
-            Ok(Variable::Int(5))
+            Variable::Int(5)
         );
         assert_eq!(
             parse_and_exec(
@@ -429,7 +424,7 @@ mod tests {
                     => [],
                 }"
             ),
-            Ok(Variable::from([2.into(), 3.into()]))
+            Variable::from([2.into(), 3.into()])
         );
     }
 
@@ -442,7 +437,7 @@ mod tests {
                     => -1,
                 }"
             ),
-            Ok(Variable::Int(7))
+            Variable::Int(7)
         );
     }
 
@@ -455,7 +450,7 @@ mod tests {
                     => -1,
                 }"
             ),
-            Ok(Variable::Int(-1))
+            Variable::Int(-1)
         );
     }
 
@@ -468,7 +463,7 @@ mod tests {
                     => -1,
                 }"
             ),
-            Ok(Variable::Int(7))
+            Variable::Int(7)
         );
     }
 
@@ -481,35 +476,35 @@ mod tests {
                     => -1,
                 }"
             ),
-            Ok(Variable::Int(-1))
+            Variable::Int(-1)
         );
     }
 
     #[test]
     fn guarded_match_arm_does_not_cover_type() {
         assert_eq!(
-            Code::parse(
-                &Interpreter::without_stdlib(),
+            parse_unwrap_first_error(
                 "match 1 { value: int if true => value, }"
-            )
-            .map(|_| ()),
-            Err(Error::MatchNotCovered)
+            ),
+            Error::MatchNotCovered
         );
     }
 
     #[test]
     fn match_guard_must_be_boolean() {
         assert_eq!(
-            Code::parse(
-                &Interpreter::without_stdlib(),
+            parse_unwrap_first_error(
                 "match 1 { value: int if value => value, => 0, }"
-            )
-            .map(|_| ()),
-            Err(Error::WrongCondition("value".into(), Type::Int))
+            ),
+            Error::WrongCondition("value".into(), Type::Int)
         );
     }
 
-    fn parse_and_exec(script: &str) -> Result<Variable, Error> {
-        Code::parse(&Interpreter::without_stdlib(), script).map(|code| code.exec().unwrap())
+    fn parse_and_exec(script: &str) -> Variable {
+        Code::parse(&Interpreter::without_stdlib(), script).unwrap().exec().unwrap()
+    }
+
+    fn parse_unwrap_first_error(script: &str) -> Error {
+        Code::parse(&Interpreter::without_stdlib(), script).unwrap_err().swap_remove(0)
     }
 }

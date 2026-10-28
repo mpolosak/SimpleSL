@@ -21,23 +21,25 @@ impl For {
     pub fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, Error> {
+        errors: &mut Vec<Error>
+    ) -> Instruction {
         let mut inner = pair.into_inner();
         let pattern_pair = inner.next().unwrap();
-        let iter = Instruction::new(inner.next().unwrap(), local_variables)?;
-        let Some(iter_element) = iter.return_type().iter_element() else {
-            return Err(Error::WrongType(
+        let iter = Instruction::new(inner.next().unwrap(), local_variables, errors);
+        let iter_element = iter.return_type().iter_element().unwrap_or_else(|| {
+            errors.push(Error::WrongType(
                 "iterator".into(),
                 var_type!(() -> (bool, any)),
             ));
-        };
+            Type::Never
+        });
         let pattern = if pattern_pair.as_rule() == Rule::ident {
             Pattern::new_ident_pattern(pattern_pair.as_str().into(), iter_element.clone())
         } else {
-            Pattern::create_instruction(pattern_pair.clone(), &iter_element)?
+            Pattern::create_instruction(pattern_pair.clone(), &iter_element, errors)
         };
         if !pattern.is_matched(&iter_element) {
-            return Err(Error::SetPatternNotMatched {
+            errors.push(Error::SetPatternNotMatched {
                 ins: "for loop element".into(),
                 var_type: iter_element,
                 pattern: pattern_pair.as_str().into(),
@@ -46,13 +48,13 @@ impl For {
         let mut local_variables = local_variables.create_layer();
         local_variables.in_loop = true;
         pattern.insert_local_variables(&mut local_variables);
-        let body = Instruction::new(inner.next().unwrap(), &mut local_variables)?;
-        Ok(Self {
+        let body = Instruction::new(inner.next().unwrap(), &mut local_variables, errors);
+        Self {
             pattern,
             iter,
             body,
         }
-        .into())
+        .into()
     }
 }
 

@@ -22,22 +22,29 @@ impl FunctionCall {
         function: InstructionWithStr,
         args: Pair<Rule>,
         local_variables: &LocalVariables,
-    ) -> Result<Instruction, Error> {
+        errors: &mut Vec<Error>
+    ) -> Instruction {
         let args = args
             .into_inner()
-            .map(|pair| InstructionWithStr::new_expression(pair, local_variables))
-            .collect::<Result<Box<_>, Error>>()?;
+            .map(|pair| InstructionWithStr::new_expression(pair, local_variables, errors))
+            .collect::<Box<_>>();
 
         if let Some(Variable::Function(function2)) = function.instruction.downcast_ref::<Variable>()
         {
-            check_args_with_params(&function.str, &function2.params, &args)?;
+            check_args_with_params(&function.str, &function2.params, &args, errors);
         } else {
             let f_type = function.return_type();
             if !f_type.is_function() {
-                return Err(Error::NotAFunction(function.str));
+                errors.push(Error::NotAFunction(function.str.clone()));
             }
             let Some(params) = f_type.params() else {
-                return Err(Error::CannotDetermineParams(function.str));
+                errors.push(Error::CannotDetermineParams(function.str));
+                let args = Tuple { elements: [].into() }.into();
+                return Self {
+                    function: function.instruction,
+                    args,
+                }
+                .into()
             };
             let params = params
                 .iter()
@@ -47,15 +54,15 @@ impl FunctionCall {
                     var_type: var_type.clone(),
                 })
                 .collect();
-            check_args_with_params(&function.str, &Params(params), &args)?;
+            check_args_with_params(&function.str, &Params(params), &args, errors);
         }
         let args = args.into_iter().map(|arg| arg.instruction).collect();
         let args = Tuple { elements: args }.into();
-        Ok(Self {
+        Self {
             function: function.instruction,
             args,
         }
-        .into())
+        .into()
     }
     pub fn create_from_variables(
         function: Arc<VarFunc>,
@@ -118,14 +125,15 @@ fn check_args_with_params(
     ident: &Arc<str>,
     params: &Params,
     args: &[InstructionWithStr],
-) -> Result<(), Error> {
+    errors: &mut Vec<Error>
+) {
     if params.len() != args.len() {
-        return Err(Error::WrongNumberOfArguments(ident.clone(), params.len()));
+        errors.push(Error::WrongNumberOfArguments(ident.clone(), params.len()));
     }
     for (arg, param) in zip(args, params.iter()) {
         let arg_type = arg.return_type();
         if !arg_type.matches(&param.var_type) {
-            return Err(Error::WrongArgument {
+            errors.push(Error::WrongArgument {
                 function: ident.clone(),
                 param: param.clone(),
                 given: arg.str.clone(),
@@ -133,5 +141,4 @@ fn check_args_with_params(
             });
         }
     }
-    Ok(())
 }

@@ -20,16 +20,16 @@ pub struct AssignAdd {
 impl BaseInstruction for AssignAdd {}
 
 impl AssignAdd {
-    pub fn create_instruction(lhs: Instruction, rhs: Instruction) -> Result<Instruction, Error> {
+    pub fn create_instruction(lhs: Instruction, rhs: Instruction, errors: &mut Vec<Error>) -> Instruction {
         let lhs_rt = lhs.return_type();
         let rhs_rt = rhs.return_type();
         if rhs_rt.is_array() {
-            return AssignConcat::create_instruction(lhs, rhs);
+            return AssignConcat::create_instruction(lhs, rhs, errors);
         }
         if !Self::can_be_used(&lhs_rt, &rhs_rt) {
-            return Err(Error::CannotDo2(lhs_rt, BinOperator::AssignAdd, rhs_rt));
+            errors.push(Error::CannotDo2(lhs_rt, BinOperator::AssignAdd, rhs_rt));
         }
-        Ok(Self { lhs, rhs }.into())
+        Self { lhs, rhs }.into()
     }
 
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool {

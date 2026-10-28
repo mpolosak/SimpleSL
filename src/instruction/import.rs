@@ -6,9 +6,16 @@ use simplesl_parser::Rule;
 pub fn create_instruction(
     pair: Pair<Rule>,
     local_variables: &LocalVariables,
-) -> Result<Instruction, Error> {
+    errors: &mut Vec<Error>
+) -> Instruction {
     let mut local_variables = local_variables.create_layer();
-    let path = string_from_pair(pair.into_inner().next().unwrap())?;
-    let instructions = local_variables.load(&path)?;
+    let path = match string_from_pair(pair.into_inner().next().unwrap()){
+        Ok(path) => path,
+        Err(error) => {
+            errors.push(error);
+            todo!();
+        },
+    };
+    let instructions = local_variables.load(&path, errors);
     module::new(instructions, local_variables.drop_layer())
 }

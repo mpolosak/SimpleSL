@@ -1,8 +1,6 @@
 use super::Instruction;
 use crate::{
-    self as simplesl, Error, Interpreter,
-    function::{Param, Params},
-    variable::{Type, Typed, Variable},
+    self as simplesl, function::{Param, Params}, variable::{Type, Typed, Variable}, Error, Interpreter
 };
 use derive_more::From;
 use pest::{Parser, iterators::Pairs};
@@ -87,29 +85,39 @@ impl<'a> LocalVariables<'a> {
             .or_else(|| self.lower_layer.and_then(LocalVariables::function))
     }
 
-    pub(crate) fn load(&mut self, path: &str) -> Result<Box<[Instruction]>, Error> {
-        let contents = fs::read_to_string(path)?;
-        self.parse_input(&contents)
+    pub(crate) fn load(&mut self, path: &str, errors: &mut Vec<Error>) -> Box<[Instruction]> {
+        let contents = match fs::read_to_string(path){
+            Ok(contents) => contents,
+            Err(error) => {errors.push(error.into()); return [].into()},
+        };
+        self.parse_input(&contents, errors)
     }
 
-    pub(crate) fn parse_input(&mut self, input: &str) -> Result<Box<[Instruction]>, Error> {
-        let pairs = SimpleSLParser::parse(Rule::input, input)?;
-        self.create_instructions(pairs)
+    pub(crate) fn parse_input(&mut self, input: &str, errors: &mut Vec<Error>) -> Box<[Instruction]> {
+        let pairs = match SimpleSLParser::parse(Rule::input, input){
+            Ok(pairs) => pairs,
+            Err(error) => {
+                errors.push(error.into());
+                return [].into()
+            },
+        };
+        self.create_instructions(pairs, errors)
     }
 
     pub(crate) fn create_instructions(
         &mut self,
         pairs: Pairs<'_, Rule>,
-    ) -> Result<Box<[Instruction]>, Error> {
+        errors: &mut Vec<Error>
+    ) -> Box<[Instruction]> {
         let mut instructions = pairs
-            .map(|pair| Instruction::new(pair, self))
-            .collect::<Result<Vec<Instruction>, Error>>()?;
+            .map(|pair| Instruction::new(pair, self, errors))
+            .collect::<Vec<Instruction>>();
         let Some(last) = instructions.pop() else {
-            return Ok(Box::from([]));
+            return Box::from([]);
         };
         instructions.retain(|instruction| instruction.0.type_id() != TypeId::of::<Variable>());
         instructions.push(last);
-        Ok(instructions.into())
+        instructions.into()
     }
 }
 

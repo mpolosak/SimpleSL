@@ -20,19 +20,20 @@ impl Match {
     pub fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, Error> {
+        errors: &mut Vec<Error>
+    ) -> Instruction {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
-        let expression = Instruction::new(pair, local_variables)?;
+        let expression = Instruction::new(pair, local_variables, errors);
         let var_type = expression.return_type();
         let arms = inner
-            .map(|pair| MatchArm::new(pair, local_variables, &var_type))
-            .collect::<Result<Box<[MatchArm]>, Error>>()?;
+            .map(|pair| MatchArm::new(pair, local_variables, &var_type, errors))
+            .collect::<Box<[MatchArm]>>();
         let result = Self { expression, arms };
         if !result.is_covering_type(&var_type) {
-            return Err(Error::MatchNotCovered);
+            errors.push(Error::MatchNotCovered);
         }
-        Ok(result.into())
+        result.into()
     }
 
     fn is_covering_type(&self, checked_type: &Type) -> bool {

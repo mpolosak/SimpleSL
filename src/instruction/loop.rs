@@ -16,13 +16,14 @@ impl Loop {
     pub fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
-    ) -> Result<Instruction, Error> {
+        errors: &mut Vec<Error>
+    ) -> Instruction {
         let mut inner = pair.into_inner();
         let in_loop = local_variables.in_loop;
         local_variables.in_loop = true;
-        let instruction = Instruction::new(inner.next().unwrap(), local_variables)?;
+        let instruction = Instruction::new(inner.next().unwrap(), local_variables, errors);
         local_variables.in_loop = in_loop;
-        Ok(Self(instruction).into())
+        Self(instruction).into()
     }
 }
 
