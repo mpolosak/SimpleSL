@@ -85,9 +85,9 @@ mod tests {
     const OP: UnaryOperator = UnaryOperator::Sum;
 
     #[test]
-    fn sum() {
+    fn sum_rejects_arrays() {
         assert_eq!(
-            parse_and_exec("[45, 76, 15]$+").unwrap_err()[0],
+            parse_unwrap_first_error("[45, 76, 15]$+"),
             Error::IncorectUnaryOperatorOperand {
                 ins: "[45, 76, 15]".into(),
                 op: OP,
@@ -95,8 +95,12 @@ mod tests {
                 given: var_type!([int])
             }
         );
+    }
+
+    #[test]
+    fn sum_rejects_strings() {
         assert_eq!(
-            parse_and_exec(r#""abc"$+"#).unwrap_err()[0],
+            parse_unwrap_first_error(r#""abc"$+"#),
             Error::IncorectUnaryOperatorOperand {
                 ins: r#""abc""#.into(),
                 op: OP,
@@ -104,8 +108,12 @@ mod tests {
                 given: var_type!(string)
             }
         );
+    }
+
+    #[test]
+    fn sum_rejects_functions_with_invalid_return_types() {
         assert_eq!(
-            parse_and_exec("x:= () -> int {return 5;} x$+").unwrap_err()[0],
+            parse_unwrap_first_error("x:= () -> int {return 5;} x$+"),
             Error::IncorectUnaryOperatorOperand {
                 ins: "x".into(),
                 op: OP,
@@ -114,7 +122,7 @@ mod tests {
             }
         );
         assert_eq!(
-            parse_and_exec("x:= (a: int) -> (bool, int) {return (true, a);} x$+").unwrap_err()[0],
+            parse_unwrap_first_error("x:= (a: int) -> (bool, int) {return (true, a);} x$+"),
             Error::IncorectUnaryOperatorOperand {
                 ins: "x".into(),
                 op: OP,
@@ -122,11 +130,19 @@ mod tests {
                 given: var_type!((int) -> (bool, int))
             }
         );
-        assert_eq!(parse_and_exec("[45, 16, 3]~$+"), Ok(var!(64)));
-        assert_eq!(parse_and_exec("[5.5, 6.5, 7.4]~$+"), Ok(var!(19.4)));
-        assert_eq!(parse_and_exec(r#"["a", "6.5", "$"]~$+"#), Ok(var!("a6.5$")));
+    }
+
+    #[test]
+    fn sum_adds_values_of_supported_types() {
+        assert_eq!(parse_and_exec("[45, 16, 3]~$+"), var!(64));
+        assert_eq!(parse_and_exec("[5.5, 6.5, 7.4]~$+"), var!(19.4));
+        assert_eq!(parse_and_exec(r#"["a", "6.5", "$"]~$+"#), var!("a6.5$"));
+    }
+
+    #[test]
+    fn sum_rejects_mixed_numeric_iterator_types() {
         assert_eq!(
-            parse_and_exec("[45, 16.5, 3]~$+").unwrap_err()[0],
+            parse_unwrap_first_error("[45, 16.5, 3]~$+"),
             Error::IncorectUnaryOperatorOperand {
                 ins: "[45, 16.5, 3] ~".into(),
                 op: OP,
@@ -134,6 +150,10 @@ mod tests {
                 given: var_type!(() -> (bool, int|float))
             }
         );
+    }
+
+    #[test]
+    fn sum_accepts_functions_returning_union_iterators() {
         assert_eq!(
             parse_and_exec(
                 "x:=() -> ()->(bool, int)|() -> (bool, float){
@@ -141,7 +161,7 @@ mod tests {
                 }
                 x()$+"
             ),
-            Ok(var!(106))
+            var!(106)
         );
         assert_eq!(
             parse_and_exec(
@@ -150,7 +170,7 @@ mod tests {
                 }
                 x()$+"
             ),
-            Ok(var!(10.6))
+            var!(10.6)
         );
     }
 
@@ -158,15 +178,24 @@ mod tests {
     fn sum_empty_iterators_preserve_their_element_type() {
         assert_eq!(
             parse_and_exec("x:=() -> (bool, float) { return (false, 0.0) } x$+"),
-            Ok(var!(0.0))
+            var!(0.0)
         );
         assert_eq!(
             parse_and_exec(r#"x:=() -> (bool, string) { return (false, "") } x$+"#),
-            Ok(var!(""))
+            var!("")
         );
     }
 
-    fn parse_and_exec(script: &str) -> Result<Variable, Vec<Error>> {
-        Code::parse(&Interpreter::without_stdlib(), script).map(|code| code.exec().unwrap())
+    fn parse_and_exec(script: &str) -> Variable {
+        Code::parse(&Interpreter::without_stdlib(), script)
+            .unwrap()
+            .exec()
+            .unwrap()
+    }
+
+    fn parse_unwrap_first_error(script: &str) -> Error {
+        Code::parse(&Interpreter::without_stdlib(), script)
+            .unwrap_err()
+            .swap_remove(0)
     }
 }
