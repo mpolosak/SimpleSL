@@ -11,7 +11,11 @@ pub struct Add {
 }
 
 impl Add {
-    pub fn create_instruction(lhs: Instruction, rhs: Instruction, errors: &mut Vec<Error>) -> Instruction {
+    pub fn create_instruction(
+        lhs: Instruction,
+        rhs: Instruction,
+        errors: &mut Vec<Error>,
+    ) -> Instruction {
         let lhs_rt = lhs.return_type();
         let rhs_rt = rhs.return_type();
         if lhs_rt.is_array() && rhs_rt.is_array() {
@@ -64,86 +68,91 @@ mod tests {
     use simplesl_macros::{var, var_type};
 
     #[test]
-    fn test_add_operator() {
-        assert_eq!(parse_and_exec("4+4"), Ok(Variable::Int(8)));
-        assert_eq!(parse_and_exec("4.5+0.5"), Ok(Variable::Float(5.0)));
-        assert_eq!(parse_and_exec(r#""aa" + "B""#), Ok(var!("aaB")));
-        assert_eq!(parse_and_exec("[5, 5, 6] + [5]"), Ok(var!([5, 5, 6, 5])));
+    fn test_add_integers() {
+        assert_eq!(parse_and_exec("4+4"), Variable::Int(8));
+    }
+
+    #[test]
+    fn test_add_floats() {
+        assert_eq!(parse_and_exec("4.5+0.5"), Variable::Float(5.0));
+    }
+
+    #[test]
+    fn test_add_strings() {
+        assert_eq!(parse_and_exec(r#""aa" + "B""#), var!("aaB"));
+    }
+
+    #[test]
+    fn test_add_arrays() {
+        assert_eq!(parse_and_exec("[5, 5, 6] + [5]"), var!([5, 5, 6, 5]));
+    }
+
+    #[test]
+    fn test_add_array_to_scalar_fails() {
         assert_eq!(
-            parse_and_exec(r#"[4, 5, 6] + 5"#).unwrap_err()[0],
-            Error::CannotDo2(
-                var_type!([int]),
-                BinOperator::Add,
-                var_type!(int)
-            )
+            parse_unwrap_first_error(r#"[4, 5, 6] + 5"#),
+            Error::CannotDo2(var_type!([int]), BinOperator::Add, var_type!(int))
         );
         assert_eq!(
-            parse_and_exec(r#"[4.5, 5.7, 6.0] + 3.3"#).unwrap_err()[0],
-            Error::CannotDo2(
-                var_type!([float]),
-                BinOperator::Add,
-                var_type!(float)
-            )
+            parse_unwrap_first_error(r#"[4.5, 5.7, 6.0] + 3.3"#),
+            Error::CannotDo2(var_type!([float]), BinOperator::Add, var_type!(float))
+        );
+    }
+
+    #[test]
+    fn test_add_string_and_array_fails() {
+        assert_eq!(
+            parse_unwrap_first_error(r#""7" + ["a", "aaa"]"#),
+            Error::CannotDo2(var_type!(string), BinOperator::Add, var_type!([string]))
         );
         assert_eq!(
-            parse_and_exec(r#""7" + ["a", "aaa"]"#).unwrap_err()[0],
-            Error::CannotDo2(
-                var_type!(string),
-                BinOperator::Add,
-                var_type!([string])
-            )
+            parse_unwrap_first_error(r#"["a", "aaa"]+"3""#),
+            Error::CannotDo2(var_type!([string]), BinOperator::Add, var_type!(string))
+        );
+    }
+
+    #[test]
+    fn test_add_different_numeric_types_fails() {
+        assert_eq!(
+            parse_unwrap_first_error("4+4.5"),
+            Error::CannotDo2(var_type!(int), BinOperator::Add, var_type!(float))
+        );
+    }
+
+    #[test]
+    fn test_add_strings_and_numbers_fails() {
+        assert_eq!(
+            parse_unwrap_first_error(r#""4"+4.5"#),
+            Error::CannotDo2(var_type!(string), BinOperator::Add, var_type!(float))
         );
         assert_eq!(
-            parse_and_exec(r#"["a", "aaa"]+"3""#).unwrap_err()[0],
-            Error::CannotDo2(
-                var_type!([string]),
-                BinOperator::Add,
-                var_type!(string)
-            )
+            parse_unwrap_first_error(r#""4"+4"#),
+            Error::CannotDo2(var_type!(string), BinOperator::Add, var_type!(int))
+        );
+    }
+
+    #[test]
+    fn test_add_array_and_float_fails() {
+        assert_eq!(
+            parse_unwrap_first_error(r#"[4]+4.5"#),
+            Error::CannotDo2(var_type!([int]), BinOperator::Add, var_type!(float))
         );
         assert_eq!(
-            parse_and_exec("4+4.5").unwrap_err()[0],
-            Error::CannotDo2(
-                var_type!(int),
-                BinOperator::Add,
-                var_type!(float)
-            )
-        );
-        assert_eq!(
-            parse_and_exec(r#""4"+4.5"#).unwrap_err()[0],
-            Error::CannotDo2(
-                var_type!(string),
-                BinOperator::Add,
-                var_type!(float)
-            )
-        );
-        assert_eq!(
-            parse_and_exec(r#""4"+4"#).unwrap_err()[0],
-            Error::CannotDo2(
-                var_type!(string),
-                BinOperator::Add,
-                var_type!(int)
-            )
-        );
-        assert_eq!(
-            parse_and_exec(r#"[4]+4.5"#).unwrap_err()[0],
-            Error::CannotDo2(
-                var_type!([int]),
-                BinOperator::Add,
-                var_type!(float)
-            )
-        );
-        assert_eq!(
-            parse_and_exec(r#"[4, 5.5]+4.5"#).unwrap_err()[0],
-            Error::CannotDo2(
-                var_type!([int | float]),
-                BinOperator::Add,
-                var_type!(float)
-            )
+            parse_unwrap_first_error(r#"[4, 5.5]+4.5"#),
+            Error::CannotDo2(var_type!([int | float]), BinOperator::Add, var_type!(float))
         )
     }
 
-    fn parse_and_exec(script: &str) -> Result<Variable, Vec<Error>> {
-        Code::parse(&Interpreter::without_stdlib(), script).map(|code| code.exec().unwrap())
+    fn parse_and_exec(script: &str) -> Variable {
+        Code::parse(&Interpreter::without_stdlib(), script)
+            .unwrap()
+            .exec()
+            .unwrap()
+    }
+
+    fn parse_unwrap_first_error(script: &str) -> Error {
+        Code::parse(&Interpreter::without_stdlib(), script)
+            .unwrap_err()
+            .swap_remove(0)
     }
 }
