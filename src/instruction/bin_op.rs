@@ -162,7 +162,7 @@ impl ReturnType for BinOperation {
             | BinOperator::BitwiseOr
             | BinOperator::Xor => lhs,
             BinOperator::LShift | BinOperator::RShift | BinOperator::Modulo => Type::Int,
-            _ => lhs.mut_element_type().unwrap(),
+            _ => lhs.mut_element_type().unwrap_or(Type::Never),
         }
     }
 }

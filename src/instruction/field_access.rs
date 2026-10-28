@@ -71,6 +71,6 @@ impl ReturnType for FieldAccess {
         self.instruction
             .return_type()
             .field_type(&self.ident)
-            .unwrap()
+            .unwrap_or(Type::Never)
     }
 }

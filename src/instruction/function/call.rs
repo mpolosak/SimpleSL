@@ -117,7 +117,10 @@ impl Recreate for FunctionCall {
 
 impl ReturnType for FunctionCall {
     fn return_type(&self) -> Type {
-        self.function.return_type().return_type().unwrap()
+        self.function
+            .return_type()
+            .return_type()
+            .unwrap_or(Type::Never)
     }
 }
 

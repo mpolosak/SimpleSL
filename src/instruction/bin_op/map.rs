@@ -92,7 +92,9 @@ impl ReturnType for Map {
 
 impl Map {
     fn return_type(rhs: Type) -> Type {
-        let element_type = rhs.return_type().unwrap();
+        let Some(element_type) = rhs.return_type() else {
+            return Type::Never;
+        };
         var_type!(()->(bool, element_type))
     }
 }

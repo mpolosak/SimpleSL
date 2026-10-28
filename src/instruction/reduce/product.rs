@@ -73,7 +73,10 @@ impl Recreate for Product {
 
 impl ReturnType for Product {
     fn return_type(&self) -> Type {
-        self.iterator.return_type().iter_element().unwrap()
+        self.iterator
+            .return_type()
+            .iter_element()
+            .unwrap_or(Type::Never)
     }
 }
 

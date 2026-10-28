@@ -44,6 +44,9 @@ impl Recreate for Deref {
 
 impl ReturnType for Deref {
     fn return_type(&self) -> crate::variable::Type {
-        self.0.return_type().mut_element_type().unwrap()
+        self.0
+            .return_type()
+            .mut_element_type()
+            .unwrap_or(Type::Never)
     }
 }

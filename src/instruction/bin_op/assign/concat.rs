@@ -41,6 +41,9 @@ impl Exec for AssignConcat {
 
 impl ReturnType for AssignConcat {
     fn return_type(&self) -> Type {
-        self.lhs.return_type().mut_element_type().unwrap()
+        self.lhs
+            .return_type()
+            .mut_element_type()
+            .unwrap_or(Type::Never)
     }
 }

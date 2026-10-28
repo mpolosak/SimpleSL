@@ -77,7 +77,9 @@ impl Recreate for Iter {
 impl ReturnType for Iter {
     fn return_type(&self) -> Type {
         let instruction_return_type = self.0.return_type();
-        let element_type = instruction_return_type.element_type().unwrap();
+        let Some(element_type) = instruction_return_type.element_type() else {
+            return Type::Never;
+        };
         var_type!(() -> (bool, element_type))
     }
 }
