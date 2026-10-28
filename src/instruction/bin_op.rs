@@ -11,26 +11,37 @@ use super::{
     reduce,
 };
 use crate::{
-    self as simplesl, instruction::{
+    self as simplesl, BinOperator, Error, Interpreter,
+    instruction::{
+        BaseInstruction,
         bin_op::{
             add::Add,
-            assign::{add::AssignAdd, Assign},
+            assign::{Assign, add::AssignAdd},
             logic::{And, Or},
-        }, BaseInstruction
-    }, variable::{ReturnType, Type, Variable}, BinOperator, Error, Interpreter
+        },
+        panic::Panic,
+    },
+    variable::{ReturnType, Type, Variable},
 };
+use lazy_static::lazy_static;
 pub use math::{add, multiply, pow, subtract};
 use math::{divide, modulo};
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
 use simplesl_parser::Rule;
 
+lazy_static! {
+    pub static ref ACCEPTED_NUM_TYPE: Type = var_type!((int, int) | (float, float));
+}
+
 pub fn can_be_used_int(lhs: &Type, rhs: &Type) -> bool {
-    lhs == &Type::Int && rhs == &Type::Int
+    lhs.matches(&Type::Int) && rhs.matches(&Type::Int)
 }
 
 pub fn can_be_used_num(lhs: &Type, rhs: &Type) -> bool {
-    (lhs == &Type::Int || lhs == &Type::Float) && lhs == rhs
+    let lhs = lhs.clone();
+    let rhs = rhs.clone();
+    var_type!((lhs, rhs)).matches(&ACCEPTED_NUM_TYPE)
 }
 
 #[derive(Debug)]
@@ -85,60 +96,51 @@ impl Recreate for BinOperation {
         match self.op {
             BinOperator::Subtract => subtract::create_from_instructions(lhs, rhs),
             BinOperator::Multiply => multiply::create_from_instructions(lhs, rhs),
-            BinOperator::Equal => create_from_instructions_with_exec(
-                lhs,
-                rhs,
-                BinOperator::Equal,
-                |lhs, rhs| (lhs == rhs).into(),
-            ),
-            BinOperator::NotEqual => create_from_instructions_with_exec(
-                lhs,
-                rhs,
-                BinOperator::NotEqual,
-                |lhs, rhs| (lhs != rhs).into(),
-            ),
-            BinOperator::Greater => create_from_instructions_with_exec(
-                lhs,
-                rhs,
-                BinOperator::Greater,
-                |lhs, rhs| (lhs > rhs).into(),
-            ),
+            BinOperator::Equal => {
+                create_from_instructions_with_exec(lhs, rhs, BinOperator::Equal, |lhs, rhs| {
+                    (lhs == rhs).into()
+                })
+            }
+            BinOperator::NotEqual => {
+                create_from_instructions_with_exec(lhs, rhs, BinOperator::NotEqual, |lhs, rhs| {
+                    (lhs != rhs).into()
+                })
+            }
+            BinOperator::Greater => {
+                create_from_instructions_with_exec(lhs, rhs, BinOperator::Greater, |lhs, rhs| {
+                    (lhs > rhs).into()
+                })
+            }
             BinOperator::GreaterOrEqual => create_from_instructions_with_exec(
                 lhs,
                 rhs,
                 BinOperator::GreaterOrEqual,
                 |lhs, rhs| (lhs >= rhs).into(),
             ),
-            BinOperator::Lower => create_from_instructions_with_exec(
-                lhs,
-                rhs,
-                BinOperator::Lower,
-                |lhs, rhs| (lhs < rhs).into(),
-            ),
+            BinOperator::Lower => {
+                create_from_instructions_with_exec(lhs, rhs, BinOperator::Lower, |lhs, rhs| {
+                    (lhs < rhs).into()
+                })
+            }
             BinOperator::LowerOrEqual => create_from_instructions_with_exec(
                 lhs,
                 rhs,
                 BinOperator::LowerOrEqual,
                 |lhs, rhs| (lhs <= rhs).into(),
             ),
-            BinOperator::BitwiseAnd => create_from_instructions_with_exec(
-                lhs,
-                rhs,
-                BinOperator::BitwiseAnd,
-                |lhs, rhs| lhs & rhs,
-            ),
-            BinOperator::BitwiseOr => create_from_instructions_with_exec(
-                lhs,
-                rhs,
-                BinOperator::BitwiseOr,
-                |lhs, rhs| lhs | rhs,
-            ),
-            BinOperator::Xor => create_from_instructions_with_exec(
-                lhs,
-                rhs,
-                BinOperator::Xor,
-                |lhs, rhs| lhs ^ rhs,
-            ),
+            BinOperator::BitwiseAnd => {
+                create_from_instructions_with_exec(lhs, rhs, BinOperator::BitwiseAnd, |lhs, rhs| {
+                    lhs & rhs
+                })
+            }
+            BinOperator::BitwiseOr => {
+                create_from_instructions_with_exec(lhs, rhs, BinOperator::BitwiseOr, |lhs, rhs| {
+                    lhs | rhs
+                })
+            }
+            BinOperator::Xor => {
+                create_from_instructions_with_exec(lhs, rhs, BinOperator::Xor, |lhs, rhs| lhs ^ rhs)
+            }
             op => Self { lhs, rhs, op }.into(),
         }
     }
@@ -173,7 +175,7 @@ impl InstructionWithStr {
         lhs: Self,
         rhs: Self,
         local_variables: &LocalVariables<'_>,
-        errors: &mut Vec<Error>
+        errors: &mut Vec<Error>,
     ) -> Self {
         let str = format!("{} {} {}", lhs.str, op.as_str(), rhs.str).into();
         let instruction = Instruction::create_infix(op, lhs, rhs, local_variables, errors);
@@ -187,7 +189,7 @@ impl Instruction {
         lhs: InstructionWithStr,
         rhs: InstructionWithStr,
         local_variables: &LocalVariables<'_>,
-        errors: &mut Vec<Error>
+        errors: &mut Vec<Error>,
     ) -> Self {
         let rule = op.as_rule();
         if rule == Rule::reduce {
@@ -222,6 +224,7 @@ impl Instruction {
         let rhs_type = rhs.return_type();
         if !can_be_used(&lhs_type, &rhs_type, op) {
             errors.push(Error::CannotDo2(lhs_type, op, rhs_type));
+            return Panic.into();
         }
         match op {
             BinOperator::And => And { lhs, rhs }.into(),
@@ -293,7 +296,10 @@ mod tests {
     #[test]
     fn shifts_wrap_shift_counts() {
         assert_eq!(parse_and_exec("45 << 64"), Variable::Int(45));
-        assert_eq!(parse_and_exec("45 >> 90"), Variable::Int(45_i64.wrapping_shr(90)));
+        assert_eq!(
+            parse_and_exec("45 >> 90"),
+            Variable::Int(45_i64.wrapping_shr(90))
+        );
     }
 
     fn parse_and_exec(script: &str) -> Variable {
