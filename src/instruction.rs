@@ -12,6 +12,7 @@ pub mod local_variable;
 mod r#loop;
 mod module;
 mod r#mut;
+pub mod panic;
 pub mod pattern;
 pub mod postfix_op;
 mod prefix_op;
@@ -34,12 +35,15 @@ use self::{
     tuple::Tuple,
 };
 use crate::{
+    Error, ExecError,
     instruction::{
         ident::Ident,
-        r#loop::{r#for::For, Break, Continue},
+        r#loop::{Break, Continue, r#for::For},
         r#return::Return,
         r#struct::Struct,
-    }, interpreter::Interpreter, variable::{from_str::variable_from_pair, ReturnType, Type, Variable}, Error, ExecError
+    },
+    interpreter::Interpreter,
+    variable::{ReturnType, Type, Variable, from_str::variable_from_pair},
 };
 use derive_more::From;
 use r#loop::{Loop, r#while};
@@ -57,7 +61,7 @@ impl InstructionWithStr {
     pub(crate) fn new_expression(
         pair: Pair<Rule>,
         local_variables: &LocalVariables,
-        errors: &mut Vec<Error>
+        errors: &mut Vec<Error>,
     ) -> Self {
         let mut prefix_errors = Vec::new();
         let mut infix_errors = Vec::new();
@@ -66,8 +70,12 @@ impl InstructionWithStr {
         let result = PRATT_PARSER
             .map_primary(|pair| Self::create_primary(pair, local_variables, errors))
             .map_prefix(|op, rhs| Self::create_prefix(op, rhs, &mut prefix_errors))
-            .map_infix(|lhs, op, rhs| Self::create_infix(op, lhs, rhs, local_variables, &mut infix_errors))
-            .map_postfix(|lhs, op| Self::create_postfix(op, lhs, local_variables, &mut postfix_errors))
+            .map_infix(|lhs, op, rhs| {
+                Self::create_infix(op, lhs, rhs, local_variables, &mut infix_errors)
+            })
+            .map_postfix(|lhs, op| {
+                Self::create_postfix(op, lhs, local_variables, &mut postfix_errors)
+            })
             .parse(pair.into_inner());
         errors.append(&mut prefix_errors);
         errors.append(&mut infix_errors);
@@ -78,7 +86,7 @@ impl InstructionWithStr {
     fn create_primary(
         pair: Pair<'_, Rule>,
         local_variables: &LocalVariables<'_>,
-        errors: &mut Vec<Error>
+        errors: &mut Vec<Error>,
     ) -> Self {
         let rule = pair.as_rule();
         if rule == Rule::expr {
@@ -87,8 +95,9 @@ impl InstructionWithStr {
         let str: Arc<str> = pair.as_str().into();
         let instruction: Instruction = match rule {
             Rule::ident => Ident::create_instruction(&str, local_variables, errors),
-            Rule::r#true | Rule::r#false | Rule::int| Rule::float |
-            Rule::void | Rule::string=> variable_from_pair(pair, errors).into(),
+            Rule::r#true | Rule::r#false | Rule::int | Rule::float | Rule::void | Rule::string => {
+                variable_from_pair(pair, errors).into()
+            }
             Rule::tuple => Tuple::create_instruction(pair, local_variables, errors),
             Rule::array => Array::create_instruction(pair, local_variables, errors),
             Rule::array_repeat => array_repeat::create_instruction(pair, local_variables, errors),
@@ -119,7 +128,11 @@ pub trait BaseInstruction: Debug + ReturnType + Recreate + Exec + Sync + Send {}
 pub struct Instruction(Arc<dyn BaseInstruction>);
 
 impl Instruction {
-    pub fn new(pair: Pair<Rule>, local_variables: &mut LocalVariables, errors: &mut Vec<Error>) -> Self {
+    pub fn new(
+        pair: Pair<Rule>,
+        local_variables: &mut LocalVariables,
+        errors: &mut Vec<Error>,
+    ) -> Self {
         match pair.as_rule() {
             Rule::set | Rule::set_expr => Set::create(pair, local_variables, errors).into(),
             Rule::set_else => SetElse::create(pair, local_variables, errors),
