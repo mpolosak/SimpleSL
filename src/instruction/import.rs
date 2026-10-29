@@ -1,5 +1,5 @@
 use super::{Instruction, local_variable::LocalVariables};
-use crate::{Error, instruction::module, variable::from_str::string_from_pair};
+use crate::{instruction::{module, panic::Panic}, variable::from_str::string_from_pair, Error};
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
 
@@ -13,7 +13,7 @@ pub fn create_instruction(
         Ok(path) => path,
         Err(error) => {
             errors.push(error);
-            todo!();
+            return Panic.into();
         },
     };
     let instructions = local_variables.load(&path, errors);

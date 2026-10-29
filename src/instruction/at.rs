@@ -1,9 +1,7 @@
 use super::{ExecResult, Instruction, InstructionWithStr, local_variable::LocalVariables};
 use crate::{
     Error, Interpreter,
-    instruction::{
-        BaseInstruction, Exec, Recreate, panic::Panic,
-    },
+    instruction::{BaseInstruction, Exec, Recreate},
     stdlib::operators::at,
     variable::{ReturnType, Type},
 };
