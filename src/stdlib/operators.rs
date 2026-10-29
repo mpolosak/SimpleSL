@@ -42,7 +42,7 @@ fn array_repeat(value: Variable, len: i64) -> Result<Variable, ExecError> {
 }
 
 #[export(At)]
-fn at(#[var_type([any]|string)] variable: &Variable, index: i64) -> Result<Variable, ExecError> {
+pub(crate) fn at(#[var_type([any]|string)] variable: &Variable, index: i64) -> Result<Variable, ExecError> {
     let index = if index >= 0 {
         index as usize
     } else {
