@@ -1,8 +1,13 @@
 use super::{Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables};
 use crate::{
+    Error,
     instruction::{
-        function::Function, pattern::{destruct_pattern::DestructPattern, Pattern}, BaseInstruction
-    }, interpreter::Interpreter, variable::{ReturnType, Type}, Error
+        BaseInstruction,
+        function::Function,
+        pattern::{Pattern, destruct_pattern::DestructPattern},
+    },
+    interpreter::Interpreter,
+    variable::{ReturnType, Type},
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
@@ -15,7 +20,11 @@ pub struct Set {
 }
 
 impl Set {
-    pub fn create(pair: Pair<Rule>, local_variables: &mut LocalVariables, errors: &mut Vec<Error>) -> Self {
+    pub fn create(
+        pair: Pair<Rule>,
+        local_variables: &mut LocalVariables,
+        errors: &mut Vec<Error>,
+    ) -> Self {
         let is_declaration = pair.as_rule() == Rule::set;
         let (set, error) = Self::new(pair, local_variables, errors);
         if is_declaration && matches!(&set.pattern.destruct_pattern, DestructPattern::Array { .. })
@@ -28,7 +37,11 @@ impl Set {
         set
     }
 
-    fn new(pair: Pair<Rule>, local_variables: &mut LocalVariables, errors: &mut Vec<Error>) -> (Self, Error) {
+    fn new(
+        pair: Pair<Rule>,
+        local_variables: &mut LocalVariables,
+        errors: &mut Vec<Error>,
+    ) -> (Self, Error) {
         let mut inner = pair.into_inner();
         let pattern_pair = inner.next().unwrap();
         let pair = inner.next().unwrap();
@@ -58,7 +71,7 @@ impl Set {
         pattern_pair: Pair<Rule>,
         function_pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
-        errors: &mut Vec<Error>
+        errors: &mut Vec<Error>,
     ) -> (Self, Error) {
         let pattern_str = pattern_pair.as_str().into();
         let mut pattern = Pattern::create_instruction(pattern_pair, &Type::Any, errors);
@@ -136,7 +149,7 @@ impl SetElse {
     pub fn create(
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
-        errors: &mut Vec<Error>
+        errors: &mut Vec<Error>,
     ) -> Instruction {
         let mut inner = pair.into_inner();
         let pattern_pair = inner.next().unwrap();
@@ -196,7 +209,11 @@ impl ReturnType for SetElse {
 pub struct ConditionSet(Set);
 
 impl ConditionSet {
-    pub fn create(pair: Pair<Rule>, local_variables: &mut LocalVariables, errors: &mut Vec<Error>) -> Self {
+    pub fn create(
+        pair: Pair<Rule>,
+        local_variables: &mut LocalVariables,
+        errors: &mut Vec<Error>,
+    ) -> Self {
         ConditionSet(Set::new(pair, local_variables, errors).0)
     }
 }
@@ -394,9 +411,7 @@ mod tests {
     #[test]
     fn array_pattern_in_match_checks_length() {
         assert_eq!(
-            parse_unwrap_first_error(
-                "match [2] { [item] => item, }"
-            ),
+            parse_unwrap_first_error("match [2] { [item] => item, }"),
             Error::MatchNotCovered
         );
         assert_eq!(
@@ -426,6 +441,14 @@ mod tests {
             ),
             Variable::from([2.into(), 3.into()])
         );
+    }
+
+    #[test]
+    fn reject_self_contradictory_pattern() {
+        assert_eq!(
+            parse_unwrap_first_error("(a, b): any = (1, 2)"),
+            Error::SelfContradictoryPattern("(a, b): any".into())
+        )
     }
 
     #[test]
@@ -483,9 +506,7 @@ mod tests {
     #[test]
     fn guarded_match_arm_does_not_cover_type() {
         assert_eq!(
-            parse_unwrap_first_error(
-                "match 1 { value: int if true => value, }"
-            ),
+            parse_unwrap_first_error("match 1 { value: int if true => value, }"),
             Error::MatchNotCovered
         );
     }
@@ -493,18 +514,21 @@ mod tests {
     #[test]
     fn match_guard_must_be_boolean() {
         assert_eq!(
-            parse_unwrap_first_error(
-                "match 1 { value: int if value => value, => 0, }"
-            ),
+            parse_unwrap_first_error("match 1 { value: int if value => value, => 0, }"),
             Error::WrongCondition("value".into(), Type::Int)
         );
     }
 
     fn parse_and_exec(script: &str) -> Variable {
-        Code::parse(&Interpreter::without_stdlib(), script).unwrap().exec().unwrap()
+        Code::parse(&Interpreter::without_stdlib(), script)
+            .unwrap()
+            .exec()
+            .unwrap()
     }
 
     fn parse_unwrap_first_error(script: &str) -> Error {
-        Code::parse(&Interpreter::without_stdlib(), script).unwrap_err().swap_remove(0)
+        Code::parse(&Interpreter::without_stdlib(), script)
+            .unwrap_err()
+            .swap_remove(0)
     }
 }

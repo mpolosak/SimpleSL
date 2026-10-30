@@ -1,8 +1,12 @@
 use crate::{
-    function::Param, instruction::{
+    Error, Interpreter,
+    function::Param,
+    instruction::{
         local_variable::{LocalVariable, LocalVariables},
         pattern::destruct_pattern::DestructPattern,
-    }, interpreter::VariableMap, variable::{Array, Type, Typed, Variable}, Error, Interpreter
+    },
+    interpreter::VariableMap,
+    variable::{Array, Type, Typed, Variable},
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
@@ -83,9 +87,14 @@ impl Pattern {
                 local_variables.insert(ident.clone(), LocalVariable::Other(self.var_type.clone()))
             }
             DestructPattern::Tuple(idents) => {
-                let tuple = self.var_type.clone().flatten_tuple().unwrap();
-                for (ident, var_type) in idents.iter().cloned().zip(tuple.iter().cloned()) {
-                    local_variables.insert(ident, LocalVariable::Other(var_type));
+                if let Some(tuple) = self.var_type.clone().flatten_tuple() {
+                    for (ident, var_type) in idents.iter().cloned().zip(tuple.iter().cloned()) {
+                        local_variables.insert(ident, LocalVariable::Other(var_type));
+                    }
+                } else {
+                    for ident in idents.iter().cloned() {
+                        local_variables.insert(ident, LocalVariable::Other(Type::Never));
+                    }
                 }
             }
             DestructPattern::Array { items, rest } => {
@@ -104,7 +113,9 @@ impl Pattern {
                 for (field, ident) in fields.iter() {
                     local_variables.insert(
                         ident.clone(),
-                        LocalVariable::Other(self.var_type.field_type(field).unwrap()),
+                        LocalVariable::Other(
+                            self.var_type.field_type(field).unwrap_or(Type::Never),
+                        ),
                     );
                 }
             }
