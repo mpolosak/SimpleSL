@@ -57,13 +57,7 @@ impl Pattern {
     }
 
     pub fn is_matched(&self, var_type: &Type) -> bool {
-        match &self.destruct_pattern {
-            DestructPattern::Struct(fields) => {
-                struct_pattern_matches(fields, &self.var_type, var_type)
-            }
-            DestructPattern::Array { .. } => array_pattern_matches(&self.var_type, var_type),
-            _ => var_type.matches(&self.var_type),
-        }
+        var_type.matches(&self.var_type)
     }
 
     pub fn matches_variable(&self, variable: &Variable) -> bool {
@@ -218,38 +212,6 @@ impl Pattern {
                 }
             }
         }
-    }
-}
-
-fn array_pattern_matches(pattern_type: &Type, value_type: &Type) -> bool {
-    match value_type {
-        Type::Multi(types) => types
-            .iter()
-            .any(|type_| array_pattern_matches(pattern_type, type_)),
-        Type::Array(_) => value_type.matches(pattern_type),
-        _ => false,
-    }
-}
-
-fn struct_pattern_matches(
-    fields: &[(Arc<str>, Arc<str>)],
-    pattern_type: &Type,
-    value_type: &Type,
-) -> bool {
-    match value_type {
-        Type::Multi(types) => types
-            .iter()
-            .any(|type_| struct_pattern_matches(fields, pattern_type, type_)),
-        Type::Struct(value_struct) => fields.iter().all(|(field, _)| {
-            pattern_type
-                .field_type(field)
-                .is_some_and(|pattern_field_type| {
-                    value_struct.0.get(field).is_some_and(|value_field_type| {
-                        pattern_field_type.matches(value_field_type)
-                    })
-                })
-        }),
-        _ => false,
     }
 }
 

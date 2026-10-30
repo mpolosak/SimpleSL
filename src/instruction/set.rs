@@ -246,9 +246,10 @@ impl ReturnType for ConditionSet {
 #[cfg(test)]
 mod tests {
     use crate::{
-        Code, Error, Interpreter,
+        self as simplesl, Code, Error, Interpreter,
         variable::{Array, Type, Variable},
     };
+    use simplesl_macros::var_type;
 
     #[test]
     fn destructures_when_pattern_matches() {
@@ -448,6 +449,23 @@ mod tests {
         assert_eq!(
             parse_unwrap_first_error("(a, b): any = (1, 2)"),
             Error::SelfContradictoryPattern("(a, b): any".into())
+        )
+    }
+
+    #[test]
+    fn struct_destructing_rejects_multi_type_if_only_one_variant_has_the_requested_field() {
+        assert_eq!(
+            parse_unwrap_first_error(
+                "f := (x: bool) -> struct{a: int} | struct{b: int} {
+                if x { return struct{a := 1} } else { return struct{b := 2} }
+            }
+            struct{a}: struct{a: int} = f(false)"
+            ),
+            Error::SetPatternNotMatched {
+                ins: "f(false)".into(),
+                var_type: var_type!(struct{a: int} | struct{b: int}),
+                pattern: "struct{a}: struct{a: int}".into()
+            }
         )
     }
 
