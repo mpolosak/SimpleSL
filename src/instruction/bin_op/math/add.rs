@@ -25,7 +25,7 @@ impl Add {
     ) -> Instruction {
         let lhs_rt = lhs.return_type();
         let rhs_rt = rhs.return_type();
-        if lhs_rt.is_array() && rhs_rt.is_array() && lhs_rt != Type::Never {
+        if lhs_rt.is_array() && rhs_rt.is_array() && (lhs_rt != Type::Never || rhs_rt != Type::Never) {
             return Concat { lhs, rhs }.into();
         }
         if !Self::can_be_used(lhs_rt.clone(), rhs_rt.clone()) {
@@ -72,6 +72,8 @@ impl ReturnType for Add {
 
 #[cfg(test)]
 mod tests {
+    use std::vec;
+
     use crate::{self as simplesl, instruction::bin_op::add::Add, variable::{Type, Variable}, BinOperator, Code, Error, Interpreter};
     use simplesl_macros::{var, var_type};
 
@@ -171,6 +173,29 @@ mod tests {
                 Error::CannotDo2(var_type!(int), BinOperator::Add, var_type!(float)),
                 Error::CannotDo2(var_type!(float), BinOperator::Add, var_type!(string))
             ])
+        )
+    }
+
+    #[test]
+    fn test_multiple_add() {
+        assert_eq!(
+            parse_unwrap_errors("[1] + (2 + 3.0) + [4]"),
+            vec![
+                Error::CannotDo2(var_type!(int), BinOperator::Add, var_type!(float))
+            ]
+        );
+        assert_eq!(
+            parse_unwrap_errors("1 + (2 + 3.0) + 4"),
+            vec![
+                Error::CannotDo2(var_type!(int), BinOperator::Add, var_type!(float))
+            ]
+        );
+        assert_eq!(
+            parse_unwrap_errors("(2 + 3.0) + [4] + 5"),
+            vec![
+                Error::CannotDo2(var_type!(int), BinOperator::Add, var_type!(float)),
+                Error::CannotDo2(var_type!([int]), BinOperator::Add, var_type!(int))
+            ]
         )
     }
     

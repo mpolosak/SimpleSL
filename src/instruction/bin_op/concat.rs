@@ -22,8 +22,8 @@ impl Concat {
     }
 
     pub fn return_type(lhs: Type, rhs: Type) -> Type {
-        let lhs_element = lhs.element_type().unwrap();
-        let rhs_element = rhs.element_type().unwrap();
+        let lhs_element = lhs.element_type().unwrap_or(Type::Never);
+        let rhs_element = rhs.element_type().unwrap_or(Type::Never);
         var_type!([lhs_element | rhs_element])
     }
 }
