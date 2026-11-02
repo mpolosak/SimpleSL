@@ -46,7 +46,7 @@ pub enum Type {
 }
 
 lazy_static! {
-    static ref ITERATOR_TYPE: Type = var_type!(() -> (bool, any));
+    static ref ITERATOR_TYPE: Type = var_type!(() -> (#Some(any) | #None));
 }
 
 lazy_static! {
@@ -336,24 +336,37 @@ impl Type {
     }
 
     pub fn iter_element(&self) -> Option<Type> {
+        if self.is_iterator() && self != &Type::Never {
+            return Some(self.inner_iter_element());
+        }
+        None
+    }
+
+    fn inner_iter_element(&self) -> Type {
         match self {
             Self::Function(function) => {
-                if !function.params.is_empty() {
-                    return None;
+                let Type::Multi(types) = &function.return_type else {
+                    let Type::Tagged(tagged_type) = &function.return_type else {
+                        return Type::Never;
+                    };
+                    return tagged_type.payload.clone().unwrap_or(Type::Never);
+                };
+                for r_type in types.iter() {
+                    if let Type::Tagged(tagged_type) = r_type
+                        && tagged_type.tag.as_ref() == "Some"
+                    {
+                        return tagged_type.payload.clone().unwrap_or(Type::Never);
+                    }
                 }
-                let return_tuple = function.return_type.clone().flatten_tuple()?;
-                if return_tuple.len() != 2 || return_tuple[0] != Type::Bool {
-                    return None;
-                }
-                Some(return_tuple[1].clone())
+                Type::Never
             }
             Self::Multi(multi) => {
                 let mut iter = multi.iter();
-                let first = iter.next()?.iter_element()?;
-                iter.map(Self::iter_element)
-                    .try_fold(first, |acc, curr| Some(acc | curr?))
+                let first = iter.next().unwrap().inner_iter_element();
+                iter.map(Self::inner_iter_element)
+                    .fold(first, |acc, curr| acc | curr)
             }
-            _ => None,
+            _ => unreachable!(),
         }
     }
 

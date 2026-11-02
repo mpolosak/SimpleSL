@@ -13,14 +13,12 @@ use std::sync::Arc;
 lazy_static! {
     static ref MAP: Arc<Function> = Code::parse(
         &Interpreter::without_stdlib(),
-        "(func: () -> (bool, int), mapper: (int) -> int) -> () -> (bool, int) {
-            return () -> (bool, int) {
-                res := func();
-                (con, value) := res;
-                if !con {
-                    return res;
+        "(func: () -> (#Some(any)|#None), mapper: (any) -> any) -> () -> (#Some(any)|#None) {
+            return () -> #Some(any)|#None {
+                if #Some(value) := func() {
+                    return #Some(mapper(value));
                 }
-                return (true, mapper(value));
+                return #None;
             }
         }"
     )
@@ -63,8 +61,15 @@ impl Map {
         let result_type = function.as_type().return_type().unwrap();
         let result = MAP.exec(&[iter, function])?.into_function().unwrap();
         let mut result = Arc::unwrap_or_clone(result);
-        result.return_type = var_type!((bool, result_type));
+        result.return_type = var_type!(#Some(result_type)|#None);
         Ok(result.into())
+    }
+
+    fn return_type(rhs: Type) -> Type {
+        let Some(element_type) = rhs.return_type() else {
+            return Type::Never;
+        };
+        var_type!(()->(#Some(element_type)|#None))
     }
 }
 
@@ -94,15 +99,6 @@ impl ReturnType for Map {
     }
 }
 
-impl Map {
-    fn return_type(rhs: Type) -> Type {
-        let Some(element_type) = rhs.return_type() else {
-            return Type::Never;
-        };
-        var_type!(()->(bool, element_type))
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::Map;
@@ -113,43 +109,43 @@ mod tests {
     #[test]
     fn can_be_used() {
         assert!(Map::can_be_used(
-            &var_type!(() -> (bool, int)),
+            &var_type!(() -> (#Some(int)|#None)),
             &var_type!((int)->int)
         ));
         assert!(Map::can_be_used(
-            &var_type!(() -> (bool, int)),
+            &var_type!(() -> (#Some(int)|#None)),
             &var_type!((int|float)->any)
         ));
         assert!(Map::can_be_used(
-            &var_type!(() -> (bool, int)),
+            &var_type!(() -> (#Some(int)|#None)),
             &var_type!((any)->int)
         ));
         assert!(Map::can_be_used(
-            &var_type!(() -> (bool, int)),
+            &var_type!(() -> (#Some(int)|#None)),
             &var_type!((any)->float)
         ));
         assert!(Map::can_be_used(
-            &var_type!(() -> (bool, int) | () -> (bool, float)),
+            &var_type!(() -> (#Some(int)|#None) | () -> (#Some(float)|#None)),
             &var_type!((int | float)->int)
         ));
         assert!(Map::can_be_used(
-            &var_type!(() -> (bool, int)),
+            &var_type!(() -> (#Some(int)|#None)),
             &var_type!((int)->int | (any)->any)
         ));
         assert!(Map::can_be_used(
-            &var_type!(() -> (bool, int)),
+            &var_type!(() -> (#Some(int)|#None)),
             &var_type!((any)->float | (int | float)->int)
         ));
         assert!(Map::can_be_used(
-            &var_type!(() -> (bool, int) | () -> (bool, float)),
+            &var_type!(() -> (#Some(int)|#None) | () -> (#Some(float)|#None)),
             &var_type!((int | float)->int | (int | float)->float)
         ));
         assert!(!Map::can_be_used(
-            &var_type!(() -> (bool, int) | [float]),
+            &var_type!(() -> (#Some(int)|#None) | [float]),
             &var_type!((int)->int)
         ));
         assert!(!Map::can_be_used(
-            &var_type!(() -> (bool, int) | () -> (bool, float)),
+            &var_type!(() -> (#Some(int)|#None) | () -> (bool, float)),
             &var_type!((float)->int)
         ));
         assert!(!Map::can_be_used(
@@ -157,11 +153,11 @@ mod tests {
             &var_type!((float)->int)
         ));
         assert!(!Map::can_be_used(
-            &var_type!(() -> (bool, int)),
+            &var_type!(() -> (#Some(bool)|#None)),
             &var_type!((int)->int | int)
         ));
         assert!(!Map::can_be_used(
-            &var_type!(() -> (bool, int) | float),
+            &var_type!(() -> (#Some(int)|#None) | float),
             &var_type!(( any)->int | (any)->any)
         ));
     }

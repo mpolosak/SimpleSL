@@ -34,11 +34,11 @@ impl Partition {
         };
         let mut left = Vec::new();
         let mut right = Vec::new();
-        while let Variable::Tuple(tuple) = iter.exec(&[])? {
-            if tuple[0] == Variable::Bool(false) {
+        while let Variable::Tagged(tagged) = iter.exec(&[])? {
+            if tagged.tag.as_ref() == "None" {
                 break;
             }
-            let element = tuple[1].clone();
+            let element = tagged.payload.clone().unwrap();
             if let Variable::Bool(true) = function.exec(std::slice::from_ref(&element))? {
                 left.push(element)
             } else {

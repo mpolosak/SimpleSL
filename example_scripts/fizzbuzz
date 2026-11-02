@@ -14,15 +14,15 @@ fizzbuzz := (number: int) -> string|int {
 /*
 Returns iterator of values from start to end
 */
-iota := (start: int, end: int) -> () -> (bool, int) {
+iota := (start: int, end: int) -> () -> (#Some(int)|#None) {
     i:=mut start;
-    return () -> (bool, int) {
+    return () -> #Some(int)|#None {
         result := *i;
         if(result > end) {
-            return (false, 0);
+            return #None;
         }
         i+=1;
-        return (true, result);
+        return #Some(result);
     }
 };
 

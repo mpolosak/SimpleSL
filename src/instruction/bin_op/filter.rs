@@ -87,39 +87,39 @@ mod tests {
     #[test]
     fn can_be_used() {
         assert!(Filter::can_be_used(
-            &var_type!(() -> (bool, int)),
+            &var_type!(() -> (#Some(int)|#None)),
             &var_type!((int)->bool)
         ));
         assert!(Filter::can_be_used(
-            &var_type!(() -> (bool, int) | () -> (bool, float)),
+            &var_type!(() -> (#Some(int)|#None) | () -> (#Some(float)|#None)),
             &var_type!((int|float)->bool)
         ));
         assert!(Filter::can_be_used(
-            &var_type!(() -> (bool, int) | () -> (bool, float)),
+            &var_type!(() -> (#Some(int)|#None) | () -> (#Some(float)|#None)),
             &var_type!((any)->bool)
         ));
         assert!(Filter::can_be_used(
-            &var_type!(() -> (bool, int) | () -> (bool, float|string)),
+            &var_type!(() -> (#Some(int)|#None) | () -> (#Some(float|string)|#None)),
             &var_type!((int|float|string)->bool)
         ));
         assert!(!Filter::can_be_used(
-            &var_type!(() -> (bool, int)),
+            &var_type!(() -> (#Some(bool)|#None)),
             &var_type!((any, int)->bool)
         ));
         assert!(!Filter::can_be_used(
-            &var_type!([int] | () -> (bool, float)),
+            &var_type!([int] | () -> (#Some(float)|#None)),
             &var_type!((any)->bool)
         ));
         assert!(!Filter::can_be_used(
-            &var_type!(() -> (bool, int) | () -> (bool, float)),
+            &var_type!(() -> (#Some(int)|#None) | () -> (#Some(float)|#None)),
             &var_type!((int)->bool)
         ));
         assert!(!Filter::can_be_used(
-            &var_type!(() -> (bool, int)| () -> (bool, float)),
+            &var_type!(() -> (#Some(int)|#None)| () -> ((#Some(float)|#None))),
             &var_type!((float, any)->bool)
         ));
         assert!(!Filter::can_be_used(
-            &var_type!(() -> (bool, int) | () -> (bool, float)),
+            &var_type!(() -> (#Some(int)|#None) | () -> (#Some(float)|#None)),
             &var_type!(string)
         ));
     }

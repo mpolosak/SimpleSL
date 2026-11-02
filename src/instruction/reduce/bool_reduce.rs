@@ -9,7 +9,7 @@ use lazy_static::lazy_static;
 use simplesl_macros::var_type;
 
 lazy_static! {
-    pub static ref ACCEPTED_TYPE: Type = var_type!(() -> (bool, bool));
+    pub static ref ACCEPTED_TYPE: Type = var_type!(() -> (#Some(bool)|#None));
 }
 
 pub fn create(
@@ -82,12 +82,12 @@ mod tests {
             }
         );
         assert_eq!(
-            parse_unwrap_first_error("x:= (a: bool) -> (bool, bool) {return (true, a);} x$&&"),
+            parse_unwrap_first_error("x:= (a: bool) -> #Some(bool) {return #Some(a);} x$&&"),
             Error::IncorectUnaryOperatorOperand {
                 ins: "x".into(),
                 op: ALL,
                 expected: ACCEPTED_TYPE.clone(),
-                given: var_type!((bool) -> (bool, bool))
+                given: var_type!((bool) -> #Some(bool))
             }
         );
         assert_eq!(parse_and_exec("[true, false, true]~$&&"), Ok(var!(false)));
@@ -99,7 +99,7 @@ mod tests {
                 ins: "[6.5, 6.5, 3.4] ~".into(),
                 op: ALL,
                 expected: ACCEPTED_TYPE.clone(),
-                given: var_type!(() -> (bool, float))
+                given: var_type!(() -> (#Some(float)|#None))
             }
         );
         assert_eq!(
@@ -108,7 +108,7 @@ mod tests {
                 ins: r#"["a", "6.5", "$"] ~"#.into(),
                 op: ALL,
                 expected: ACCEPTED_TYPE.clone(),
-                given: var_type!(() -> (bool, string))
+                given: var_type!(() -> (#Some(string)|#None))
             }
         );
         assert_eq!(
@@ -117,15 +117,18 @@ mod tests {
                 ins: "[45, 16, 3] ~".into(),
                 op: ALL,
                 expected: ACCEPTED_TYPE.clone(),
-                given: var_type!(() -> (bool, int))
+                given: var_type!(() -> (#Some(int)|#None))
             }
         );
         assert_eq!(
             parse_and_exec(
                 "i:=mut 0;
-                x:=()->(bool, bool){
+                x:=()->#Some(bool)|#None{
                     i+=1;
-                    return (*i<20, *i<4);
+                    if *i<20 {
+                        return #Some(*i<4);
+                    } 
+                    return #None;
                 }
                 (x$&&, *i)"
             ),
@@ -134,9 +137,12 @@ mod tests {
         assert_eq!(
             parse_and_exec(
                 "i:=mut 0;
-                x:=()->(bool, bool){
+                x:=()->#Some(bool)|#None{
                     i+=1;
-                    return (*i<4, *i<4);
+                    if *i<4 {
+                        return #Some(*i<4);
+                    }
+                    return #None;
                 }
                 (x$&&, *i)"
             ),
@@ -174,12 +180,12 @@ mod tests {
             }
         );
         assert_eq!(
-            parse_unwrap_first_error("x:= (a: bool) -> (bool, bool) {return (true, a);} x$||"),
+            parse_unwrap_first_error("x:= (a: bool) -> #Some(bool) {return #Some(a);} x$||"),
             Error::IncorectUnaryOperatorOperand {
                 ins: "x".into(),
                 op: ANY,
                 expected: ACCEPTED_TYPE.clone(),
-                given: var_type!((bool) -> (bool, bool))
+                given: var_type!((bool) -> #Some(bool))
             }
         );
         assert_eq!(parse_and_exec("[true, false, true]~$||"), Ok(var!(true)));
@@ -191,7 +197,7 @@ mod tests {
                 ins: "[6.5, 6.5, 3.4] ~".into(),
                 op: ANY,
                 expected: ACCEPTED_TYPE.clone(),
-                given: var_type!(() -> (bool, float))
+                given: var_type!(() -> (#Some(float)|#None))
             }
         );
         assert_eq!(
@@ -200,7 +206,7 @@ mod tests {
                 ins: r#"["a", "6.5", "$"] ~"#.into(),
                 op: ANY,
                 expected: ACCEPTED_TYPE.clone(),
-                given: var_type!(() -> (bool, string))
+                given: var_type!(() -> (#None | #Some(string)))
             }
         );
         assert_eq!(
@@ -209,15 +215,18 @@ mod tests {
                 ins: "[45, 16, 3] ~".into(),
                 op: ANY,
                 expected: ACCEPTED_TYPE.clone(),
-                given: var_type!(() -> (bool, int))
+                given: var_type!(() -> (#None | #Some(int)))
             }
         );
         assert_eq!(
             parse_and_exec(
                 "i:=mut 0;
-                x:=()->(bool, bool){
+                x:=()->#Some(bool) | #None {
                     i+=1;
-                    return (*i<20, *i>4);
+                    if *i<20 {
+                        return #Some(*i>4);
+                    }
+                    return #None;
                 }
                 (x$||, *i)"
             ),
@@ -226,9 +235,12 @@ mod tests {
         assert_eq!(
             parse_and_exec(
                 "i:=mut 0;
-                x:=()->(bool, bool){
+                x:=()->#Some(bool)|#None{
                     i+=1;
-                    return (*i<4, *i>4);
+                    if *i<4 {
+                        return #Some(*i>4);
+                    }
+                    return #None;
                 }
                 (x$||, *i)"
             ),

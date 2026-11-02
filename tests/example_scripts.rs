@@ -92,7 +92,10 @@ fn test_fizzbuzz() {
     );
 
     let iota = interpreter.get_variable("iota").unwrap();
-    assert_eq!(iota.as_type(), var_type!((int,int) -> () -> (bool, int)));
+    assert_eq!(
+        iota.as_type(),
+        var_type!((int,int) -> () -> (#Some(int)|#None))
+    );
     let iota = iota.clone().into_function().unwrap();
     assert_eq!(
         iota.create_call([var!(3), var!(3)].into())
@@ -100,7 +103,7 @@ fn test_fizzbuzz() {
             .exec()
             .unwrap()
             .as_type(),
-        var_type!(() -> (bool, int))
+        var_type!(() -> (#None|#Some(int)))
     );
 }
 

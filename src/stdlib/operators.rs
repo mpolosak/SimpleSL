@@ -42,7 +42,10 @@ fn array_repeat(value: Variable, len: i64) -> Result<Variable, ExecError> {
 }
 
 #[export(At)]
-pub(crate) fn at(#[var_type([any]|string)] variable: &Variable, index: i64) -> Result<Variable, ExecError> {
+pub(crate) fn at(
+    #[var_type([any]|string)] variable: &Variable,
+    index: i64,
+) -> Result<Variable, ExecError> {
     let index = if index >= 0 {
         index as usize
     } else {
@@ -71,13 +74,13 @@ fn get_field(variable: &VariableMap, field: &str) -> Option<Variable> {
 
 #[export(Collect)]
 pub(crate) fn collect(
-    #[var_type(() -> (bool, any))] iter: &Arc<Function>,
+    #[var_type(() -> (#Some(any)|#None))] iter: &Arc<Function>,
 ) -> Result<Array, ExecError> {
     let mut vec = Vec::new();
-    while let Variable::Tuple(tuple) = iter.exec(&[])?
-        && tuple[0] == Variable::Bool(true)
+    while let Variable::Tagged(tagged) = iter.exec(&[])?
+        && tagged.tag.as_ref() == "Some"
     {
-        vec.push(tuple[1].clone());
+        vec.push(tagged.payload.clone().unwrap());
     }
     Ok(vec.into())
 }
@@ -92,15 +95,15 @@ fn deref(variable: Variable) -> Variable {
 
 #[export(BitAndReduce)]
 pub(crate) fn bitand_reduce(
-    #[var_type(() -> (bool, int))] iter: Arc<Function>,
+    #[var_type(() -> (#Some(int)|#None))] iter: Arc<Function>,
 ) -> Result<i64, ExecError> {
     let mut result = -1;
     loop {
-        let tuple = iter.exec(&[])?.into_tuple().unwrap();
-        if let Variable::Bool(false) = tuple[0] {
+        let tagged = iter.exec(&[])?.into_tagged().unwrap();
+        if tagged.tag.as_ref() == "None" {
             break;
         }
-        let Variable::Int(value) = tuple[1] else {
+        let Variable::Int(value) = tagged.payload.clone().unwrap() else {
             unreachable!("bit reduction iterator must yield integers");
         };
         result &= value;
@@ -114,11 +117,11 @@ pub(crate) fn bitor_reduce(
 ) -> Result<i64, ExecError> {
     let mut result = 0;
     loop {
-        let tuple = iter.exec(&[])?.into_tuple().unwrap();
-        if let Variable::Bool(false) = tuple[0] {
+        let tagged = iter.exec(&[])?.into_tagged().unwrap();
+        if tagged.tag.as_ref() == "None" {
             break;
         }
-        let Variable::Int(value) = tuple[1] else {
+        let Variable::Int(value) = tagged.payload.clone().unwrap() else {
             unreachable!("bit reduction iterator must yield integers");
         };
         result |= value;
@@ -127,7 +130,7 @@ pub(crate) fn bitor_reduce(
 }
 
 decls! {
-    ALL:=(iter: () -> (bool, bool)) -> bool {
+    ALL:=(iter: () -> (#Some(bool)|#None)) -> bool {
         for value in iter {
             if !value {
                 return false;
@@ -135,7 +138,7 @@ decls! {
         }
         return true;
     }
-    ANY:=(iter: () -> (bool, bool)) -> bool {
+    ANY:=(iter: () -> (#Some(bool)|#None)) -> bool {
         for value in iter {
             if value {
                 return true;
@@ -143,48 +146,49 @@ decls! {
         }
         return false;
     }
-    INT_PRODUCT:=(iter: () -> (bool, int)) -> int {
+    INT_PRODUCT:=(iter: () -> (#Some(int)|#None)) -> int {
         return iter $1 (acc: int, curr: int) -> int {
             return acc * curr;
         }
     }
-    FLOAT_PRODUCT:=(iter: () -> (bool, float)) -> float {
+    FLOAT_PRODUCT:=(iter: () -> (#Some(float)|#None)) -> float {
         return iter $1.0 (acc: float, curr: float) -> float {
             return acc * curr;
         }
     }
-    INT_SUM:=(iter: () -> (bool, int)) -> int {
+    INT_SUM:=(iter: () -> (#Some(int)|#None)) -> int {
         return iter $0 (acc: int, curr: int) -> int {
             return acc + curr;
         }
     }
-    FLOAT_SUM:=(iter: () -> (bool, float)) -> float {
+    FLOAT_SUM:=(iter: () -> (#Some(float)|#None)) -> float {
         return iter $0.0 (acc: float, curr: float) -> float {
             return acc + curr;
         }
     }
-    STRING_SUM:=(iter: () -> (bool, string)) -> string {
+    STRING_SUM:=(iter: () -> (#Some(string)|#None)) -> string {
         return iter $"" (acc: string, curr: string) -> string {
             return acc + curr;
         }
     }
-    REDUCE:=(iter: () -> (bool, any), initial_value: any, function: (any, any) -> any) -> any {
+    REDUCE:=(iter: () -> (#Some(any)|#None), initial_value: any, function: (any, any) -> any) -> any {
         result:=mut initial_value;
         for element in iter {
             result=function(*result, element)
         }
         return *result
     }
-    FILTER:=(iter: () -> (bool, any), predicate: (any) -> bool) -> () -> (bool, any) {
-        return () -> (bool, any) {
+    FILTER:=(iter: () -> (#Some(any)|#None), predicate: (any) -> bool) -> () -> (#Some(any)|#None){
+        return () -> #Some(any)|#None {
             loop {
-                res := iter();
-                (con, value) := res;
-                if !con || predicate(value) {
-                    return res;
+                #Some(value) := iter() else {
+                    break;
+                }
+                if predicate(value) {
+                    return #Some(value)
                 }
             }
-            return (false, 0);
+            return #None;
         }
     }
     Operators:=struct{

@@ -85,13 +85,13 @@ mod tests {
         assert_eq!(
             parse_and_exec(
                 "i:=mut 45.5;
-                x:=() -> (bool, float) {
+                x:=() -> #Some(float)|#None {
                     val:=*i;
                     if val>70.0 {
-                        return (false, val)
+                        return #None
                     }
                     i+=15.5;
-                    return (true, val); 
+                    return #Some(val); 
                 }
                 x$]"
             ),
@@ -134,8 +134,8 @@ mod tests {
     fn collect_reject_noniterator_function() {
         assert_eq!(
             parse_unwrap_first_error(
-                "x := (a:int) -> (bool, int) {
-                    return (true, 13);
+                "x := (a:int) -> #Some(int) {
+                    return #Some(13);
                 }
                 x$]"
             ),
@@ -143,7 +143,7 @@ mod tests {
                 ins: "x".into(),
                 op: OP,
                 expected: ACCEPTED_TYPE.clone(),
-                given: var_type!((int)->(bool, int))
+                given: var_type!((int)-> #Some(int))
             }
         );
         assert_eq!(

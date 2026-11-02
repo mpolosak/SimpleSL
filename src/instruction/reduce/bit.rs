@@ -13,7 +13,7 @@ use lazy_static::lazy_static;
 use simplesl_macros::var_type;
 
 lazy_static! {
-    pub static ref ACCEPTED_TYPE: Type = var_type!(() -> (bool, int));
+    pub static ref ACCEPTED_TYPE: Type = var_type!(() -> (#Some(int)|#None));
 }
 
 #[derive(Debug)]
@@ -149,7 +149,7 @@ mod tests {
                 ins: "[6.5, 6.5, 3.4] ~".into(),
                 op: AND,
                 expected: ACCEPTED_TYPE.clone(),
-                given: var_type!(() -> (bool, float))
+                given: var_type!(() -> (#Some(float)|#None))
             }
         );
         assert_eq!(
@@ -158,7 +158,7 @@ mod tests {
                 ins: r#"["a", "6.5", "$"] ~"#.into(),
                 op: AND,
                 expected: ACCEPTED_TYPE.clone(),
-                given: var_type!(() -> (bool, string))
+                given: var_type!(() -> (#Some(string)|#None))
             }
         );
         assert_eq!(
@@ -167,7 +167,7 @@ mod tests {
                 ins: "[45, 16.5, 3] ~".into(),
                 op: AND,
                 expected: ACCEPTED_TYPE.clone(),
-                given: var_type!(() -> (bool, int|float))
+                given: var_type!(() -> (#Some(int|float)|#None))
             }
         );
     }
@@ -219,7 +219,7 @@ mod tests {
                 ins: "[6.5, 6.5, 3.4] ~".into(),
                 op: OR,
                 expected: ACCEPTED_TYPE.clone(),
-                given: var_type!(() -> (bool, float))
+                given: var_type!(() -> (#Some(float)|#None))
             }
         );
         assert_eq!(
@@ -228,7 +228,7 @@ mod tests {
                 ins: r#"["a", "6.5", "$"] ~"#.into(),
                 op: OR,
                 expected: ACCEPTED_TYPE.clone(),
-                given: var_type!(() -> (bool, string))
+                given: var_type!(() -> (#Some(string)|#None))
             }
         );
         assert_eq!(
@@ -237,7 +237,7 @@ mod tests {
                 ins: "[45, 16.5, 3] ~".into(),
                 op: OR,
                 expected: ACCEPTED_TYPE.clone(),
-                given: var_type!(() -> (bool, int|float))
+                given: var_type!(() -> (#Some(int|float)|#None))
             }
         );
     }
@@ -247,9 +247,12 @@ mod tests {
         assert_eq!(
             parse_and_exec(
                 "count := mut 0
-                iter := () -> (bool, int) {
+                iter := () -> #Some(int) | #None  {
                     count += 1
-                    return (*count < 4, *count)
+                    if *count < 4 {
+                        return #Some(*count)
+                    }
+                    return #None
                 }
                 (iter$&, *count)"
             ),
@@ -262,9 +265,12 @@ mod tests {
         assert_eq!(
             parse_and_exec(
                 "count := mut 0
-                iter := () -> (bool, int) {
+                iter := () -> #Some(int) | #None {
                     count += 1
-                    return (*count < 4, -*count)
+                    if *count < 4 {
+                        return #Some(-*count)
+                    }
+                    return #None
                 }
                 (iter$|, *count)"
             ),

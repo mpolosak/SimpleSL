@@ -29,7 +29,7 @@ impl For {
         let iter_element = iter.return_type().iter_element().unwrap_or_else(|| {
             errors.push(Error::WrongType(
                 "iterator".into(),
-                var_type!(() -> (bool, any)),
+                var_type!(() -> (#Some(any)|#None)),
             ));
             Type::Never
         });
@@ -65,11 +65,11 @@ impl Exec for For {
         let iter = self.iter.exec(interpreter)?.into_function().unwrap();
         let mut interpreter = interpreter.create_layer();
         loop {
-            let tuple = iter.exec(&[])?.into_tuple().unwrap();
-            if let Variable::Bool(false) = tuple[0] {
+            let tagged = iter.exec(&[])?.into_tagged().unwrap();
+            if tagged.tag.as_ref() == "None" {
                 break;
             }
-            let item = tuple[1].clone();
+            let item = tagged.payload.clone().unwrap();
             if !self.pattern.matches_variable(&item) {
                 continue;
             }

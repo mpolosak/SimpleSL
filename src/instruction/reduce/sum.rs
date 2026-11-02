@@ -12,8 +12,7 @@ use lazy_static::lazy_static;
 use simplesl_macros::var_type;
 
 lazy_static! {
-    pub static ref ACCEPTED_TYPE: Type =
-        var_type!(() -> (bool, int) | () -> (bool, float) | () -> (bool, string));
+    pub static ref ACCEPTED_TYPE: Type = var_type!(() -> (#Some(int)|#None) | () -> (#Some(float)|#None) | () -> (#Some(string)|#None));
 }
 
 #[derive(Debug)]
@@ -48,11 +47,11 @@ impl Exec for Sum {
         let mut result = Variable::of_type(&return_type).unwrap();
         let iterator = iterator.into_function().unwrap();
         loop {
-            let tuple = iterator.exec(&[])?.into_tuple().unwrap();
-            if let Variable::Bool(false) = tuple[0] {
+            let tagged = iterator.exec(&[])?.into_tagged().unwrap();
+            if tagged.tag.as_ref() == "None" {
                 break;
             }
-            let value = tuple[1].clone();
+            let value = tagged.payload.clone().unwrap();
             result = result + value;
         }
         Ok(result)
@@ -147,7 +146,7 @@ mod tests {
                 ins: "[45, 16.5, 3] ~".into(),
                 op: OP,
                 expected: ACCEPTED_TYPE.clone(),
-                given: var_type!(() -> (bool, int|float))
+                given: var_type!(() -> (#Some(int|float)|#None))
             }
         );
     }
@@ -156,7 +155,7 @@ mod tests {
     fn sum_accepts_functions_returning_union_iterators() {
         assert_eq!(
             parse_and_exec(
-                "x:=() -> ()->(bool, int)|() -> (bool, float){
+                "x:=() -> ()->(#Some(int)|#None)|() -> (#Some(float)|#None){
                     return [45, 16, 45]~;
                 }
                 x()$+"
@@ -165,7 +164,7 @@ mod tests {
         );
         assert_eq!(
             parse_and_exec(
-                "x:=() -> ()->(bool, int)|() -> (bool, float){
+                "x:=() -> ()->(#Some(int)|#None)|() -> (#Some(float)|#None){
                     return [4.5, 1.6, 4.5]~;
                 }
                 x()$+"
@@ -177,11 +176,11 @@ mod tests {
     #[test]
     fn sum_empty_iterators_preserve_their_element_type() {
         assert_eq!(
-            parse_and_exec("x:=() -> (bool, float) { return (false, 0.0) } x$+"),
+            parse_and_exec("x:=() -> #Some(float)|#None { return #None } x$+"),
             var!(0.0)
         );
         assert_eq!(
-            parse_and_exec(r#"x:=() -> (bool, string) { return (false, "") } x$+"#),
+            parse_and_exec(r#"x:=() -> #Some(string)|#None { return #None } x$+"#),
             var!("")
         );
     }

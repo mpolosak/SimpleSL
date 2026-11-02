@@ -12,7 +12,8 @@ use lazy_static::lazy_static;
 use simplesl_macros::var_type;
 
 lazy_static! {
-    pub static ref ACCEPTED_TYPE: Type = var_type!(() -> (bool, int) | () -> (bool, float));
+    pub static ref ACCEPTED_TYPE: Type =
+        var_type!(() -> (#Some(int)|#None) | () -> (#Some(float)|#None));
 }
 
 #[derive(Debug)]
@@ -54,11 +55,11 @@ impl Exec for Product {
         let mut result = Self::identity(&return_type);
         let iterator = iterator.into_function().unwrap();
         loop {
-            let tuple = iterator.exec(&[])?.into_tuple().unwrap();
-            if let Variable::Bool(false) = tuple[0] {
+            let tagged = iterator.exec(&[])?.into_tagged().unwrap();
+            if tagged.tag.as_ref() == "None" {
                 break;
             }
-            result = result * tuple[1].clone();
+            result = result * tagged.payload.clone().unwrap();
         }
         Ok(result)
     }
@@ -123,12 +124,12 @@ mod tests {
             }
         );
         assert_eq!(
-            parse_unwrap_first_error("x:= (a: int) -> (bool, int) {return (true, a);} x$*"),
+            parse_unwrap_first_error("x:= (a: int) -> #Some(int) {return #Some(a);} x$*"),
             Error::IncorectUnaryOperatorOperand {
                 ins: "x".into(),
                 op: OP,
                 expected: ACCEPTED_TYPE.clone(),
-                given: var_type!((int) -> (bool, int))
+                given: var_type!((int) -> #Some(int))
             }
         );
     }
@@ -151,7 +152,7 @@ mod tests {
                 ins: r#"["a", "6.5", "$"] ~"#.into(),
                 op: OP,
                 expected: ACCEPTED_TYPE.clone(),
-                given: var_type!(() -> (bool, string))
+                given: var_type!(() -> (#Some(string)|#None))
             }
         );
         assert_eq!(
@@ -160,7 +161,7 @@ mod tests {
                 ins: "[45, 16.5, 3] ~".into(),
                 op: OP,
                 expected: ACCEPTED_TYPE.clone(),
-                given: var_type!(() -> (bool, int|float))
+                given: var_type!(() -> (#Some(int|float)|#None))
             }
         );
     }
@@ -169,7 +170,7 @@ mod tests {
     fn product_uses_integer_type_from_union_iterator() {
         assert_eq!(
             parse_and_exec(
-                "x:=() -> ()->(bool, int)|() -> (bool, float){
+                "x:=() -> ()->(#Some(int)|#None)|() -> (#Some(float)|#None){
                     return [45, 16, 45]~;
                 }
                 x()$*"
@@ -182,7 +183,7 @@ mod tests {
     fn product_uses_float_type_from_union_iterator() {
         assert_eq!(
             parse_and_exec(
-                "x:=() -> ()->(bool, int)|() -> (bool, float){
+                "x:=() -> ()->(#Some(int)|#None)|() -> (#Some(float)|#None){
                     return [4.5, 1.6, 4.5]~;
                 }
                 x()$*"
@@ -194,11 +195,11 @@ mod tests {
     #[test]
     fn product_empty_iterators_preserve_their_element_type() {
         assert_eq!(
-            parse_and_exec("x:=() -> (bool, int) { return (false, 0) } x$*"),
+            parse_and_exec("x:=() -> #Some(int)|#None { return #None } x$*"),
             var!(1)
         );
         assert_eq!(
-            parse_and_exec("x:=() -> (bool, float) { return (false, 0.0) } x$*"),
+            parse_and_exec("x:=() -> #Some(float)|#None { return #None} x$*"),
             var!(1.0)
         );
     }
@@ -207,8 +208,8 @@ mod tests {
     fn product_empty_union_iterator_uses_its_concrete_type() {
         assert_eq!(
             parse_and_exec(
-                "x:=() -> ()->(bool, int)|() -> (bool, float) {
-                    return () -> (bool, float) { return (false, 0.0); };
+                "x:=() -> ()->(#Some(int)|#None)|() -> (#Some(float)|#None) {
+                    return () -> #Some(float)|#None { return #None; };
                 }
                 x()$*"
             ),

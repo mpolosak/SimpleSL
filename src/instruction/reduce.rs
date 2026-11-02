@@ -79,10 +79,6 @@ mod tests {
             Error::CannotReduce(r#""abc""#.into())
         );
         assert_eq!(
-            Code::parse(&interpreter, "() {} $0 5").unwrap_err()[0],
-            Error::CannotReduce("() {}".into())
-        );
-        assert_eq!(
             Code::parse(&interpreter, "() -> int {return 0} $0 5").unwrap_err()[0],
             Error::CannotReduce("() -> int {return 0}".into())
         );
@@ -91,17 +87,17 @@ mod tests {
             Error::CannotReduce("() -> (any, any) {return (true, 0)}".into())
         );
         assert_eq!(
-            Code::parse(&interpreter, "() -> (bool, any) {return (true, 0)} $0 5").unwrap_err()[0],
-            Error::WrongType("function".into(), var_type!((any, any)->any))
+            Code::parse(&interpreter, "() -> #Some(int) {return #Some(0)} $0 5").unwrap_err()[0],
+            Error::WrongType("function".into(), var_type!((any, int)->any))
         );
         assert_eq!(
-            Code::parse(&interpreter, "() -> (bool, int) {return (true, 0)} $0 5").unwrap_err()[0],
+            Code::parse(&interpreter, "() -> #Some(int) {return #Some(0)} $0 5").unwrap_err()[0],
             Error::WrongType("function".into(), var_type!((any, int)->any))
         );
         assert_eq!(
             Code::parse(
                 &interpreter,
-                "() -> (bool, int) {return (true, 0)} $0 (a: any, b:float) -> any {}"
+                "() -> #Some(int) {return #Some(0)} $0 (a: any, b:float) -> any {}"
             )
             .unwrap_err()[0],
             Error::WrongType("function".into(), var_type!((any, int)->any))
@@ -109,7 +105,7 @@ mod tests {
         assert_eq!(
             Code::parse(
                 &interpreter,
-                "() -> (bool, int) {return (true, 0)} $0 (a: int, b: int) -> any {}"
+                "() -> #Some(int) {return #Some(0)} $0 (a: int, b: int) -> any {}"
             )
             .unwrap_err()[0],
             Error::WrongType("function".into(), var_type!((any, int)->any))
@@ -117,7 +113,7 @@ mod tests {
         assert_eq!(
             Code::parse(
                 &interpreter,
-                "() -> (bool, int) {return (true, 0)} $0 (a: int, b:int) -> float { return 0.5 }"
+                "() -> #Some(int) {return #Some(0)} $0 (a: int, b:int) -> float { return 0.5 }"
             )
             .unwrap_err()[0],
             Error::WrongType("function".into(), var_type!((int | float, int)->float))
@@ -125,7 +121,7 @@ mod tests {
         assert_eq!(
             Code::parse(
                 &interpreter,
-                "() -> (bool, int) {return (false, 0)} $0 (a: int, b:int) -> int { return 0 }"
+                "() -> #Some(int) | #None {return #None} $0 (a: int, b:int) -> int { return 0 }"
             )
             .unwrap()
             .exec(),

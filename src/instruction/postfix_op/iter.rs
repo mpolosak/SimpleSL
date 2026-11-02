@@ -6,7 +6,7 @@ use crate::{
         local_variable::LocalVariables,
     },
     unary_operator::UnaryOperator,
-    variable::{ReturnType, Type, Typed, Variable},
+    variable::{ReturnType, Type, Typed},
 };
 use lazy_static::lazy_static;
 use simplesl_macros::var_type;
@@ -15,15 +15,15 @@ use std::sync::Arc;
 lazy_static! {
     static ref ITER: Arc<Function> = Code::parse(
         &Interpreter::with_stdlib(),
-        "(array: [int], default: int) -> () -> (bool, int) {
+        "(array: [int]) -> () -> (#Some(int) | #None) {
             i := mut -1;
             len := std.len(array)
-            return () -> (bool, int) {
+            return () -> #Some(int) | #None {
                 i+=1;
                 if *i < len {
-                    return (true, array[*i])
+                    return #Some(array[*i])
                 }
-                return (false, default)
+                return #None
             }
         } "
     )
@@ -58,11 +58,11 @@ impl BaseInstruction for Iter {}
 impl Exec for Iter {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let var = self.0.exec(interpreter)?;
-        let element_type = var.as_type().element_type().unwrap();
-        let default = Variable::of_type(&element_type).unwrap_or_else(Variable::none);
-        let result = ITER.exec(&[var, default]).unwrap().into_function().unwrap();
+        let element_type = var.as_type().element_type();
+        let result = ITER.exec(&[var]).unwrap().into_function().unwrap();
         let mut result = Arc::unwrap_or_clone(result);
-        result.return_type = var_type!((bool, element_type));
+        result.return_type =
+            element_type.map_or_else(Type::none, |e_type| var_type!(#Some(e_type) | #None));
         Ok(result.into())
     }
 }
@@ -80,7 +80,7 @@ impl ReturnType for Iter {
         let Some(element_type) = instruction_return_type.element_type() else {
             return Type::Never;
         };
-        var_type!(() -> (bool, element_type))
+        var_type!(()->(#Some(element_type)|#None))
     }
 }
 
@@ -133,17 +133,20 @@ mod tests {
                 "x:=[45, 5]~;
                 (x(), x(), x())"
             ),
-            var!(((true, 45), (true, 5), (false, 0)))
+            var!((#Some(45), #Some(5), #None))
         );
         assert_eq!(
             parse_and_exec(
                 "x:=[45, [5.5], true]~;
                 (x(), x(), x())"
             ),
-            var!(((true, 45), (true, [5.5]), (true, true)))
+            var!((#Some(45), #Some([5.5]), #Some(true)))
         );
         let result = parse_and_exec(r#"[45, 5.5, "abc"]~"#);
-        assert_eq!(result.as_type(), var_type!(()->(bool, int|float|string)))
+        assert_eq!(
+            result.as_type(),
+            var_type!(()->(#Some(int|float|string)|#None))
+        )
     }
 
     fn parse_and_exec(script: &str) -> Variable {
