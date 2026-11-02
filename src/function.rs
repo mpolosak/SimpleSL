@@ -61,10 +61,7 @@ impl Function {
         })
     }
 
-    pub(crate) fn exec(
-        self: &Arc<Self>,
-        args: &[Variable],
-    ) -> Result<Variable, ExecError> {
+    pub(crate) fn exec(self: &Arc<Self>, args: &[Variable]) -> Result<Variable, ExecError> {
         let body = match &self.body {
             Body::Lang(body) => body,
             Body::Native(body) => return (body)(args),
@@ -85,7 +82,7 @@ impl Function {
                 Err(ExecStop::Continue) => unreachable!("Continue outside of loop"),
             }
         }
-        Ok(Variable::Void)
+        Ok(Variable::none())
     }
 }
 

@@ -1,6 +1,9 @@
 use super::{Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables};
 use crate::{
-    instruction::{ident::Ident, set::Set, BaseInstruction}, interpreter::{Interpreter, VariableMap}, variable::{ReturnType, Type, Variable}, Error
+    Error,
+    instruction::{BaseInstruction, ident::Ident, set::Set},
+    interpreter::{Interpreter, VariableMap},
+    variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
@@ -17,7 +20,7 @@ impl Struct {
     pub fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &LocalVariables,
-        errors: &mut Vec<Error>
+        errors: &mut Vec<Error>,
     ) -> Instruction {
         let sets = pair
             .into_inner()

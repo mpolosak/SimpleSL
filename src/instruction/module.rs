@@ -11,7 +11,7 @@ use simplesl_parser::Rule;
 pub fn create_instruction(
     pair: Pair<Rule>,
     local_variables: &LocalVariables,
-    errors: &mut Vec<Error>
+    errors: &mut Vec<Error>,
 ) -> Instruction {
     let mut local_variables = local_variables.create_layer();
     let instructions =
@@ -19,10 +19,7 @@ pub fn create_instruction(
     new(instructions, local_variables.drop_layer())
 }
 
-pub fn new(
-    instructions: Box<[Instruction]>,
-    lv_layer: LocalVariableMap
-) -> Instruction {
+pub fn new(instructions: Box<[Instruction]>, lv_layer: LocalVariableMap) -> Instruction {
     let sets = lv_layer
         .into_iter()
         .map(|(ident, variable)| Set::new_ident(ident.clone(), Ident { ident, variable }.into()))

@@ -20,7 +20,7 @@ return
 return expression
 ```
 
-Return from the current function. A bare `return` returns `()`.
+Return from the current function. A bare `return` returns `#None`.
 
 ## For
 
@@ -89,6 +89,25 @@ conditions. The final empty pattern (`=>`) matches any value. The arms must
 cover every possible type of the expression; guarded arms do not count toward
 coverage, so use a final empty pattern when needed. Each body can be a block, a
 `return`, or an expression.
+
+Tagged values use `#Tag(value)` for a value with one payload. A tag without an
+explicit payload uses `#None` as its payload; `#None` itself has no payload:
+
+```simplesl
+result := #Ok(42)
+empty := #None
+
+match result {
+    #Ok(value) => value,
+    #Err(message) => 0,
+    => 0,
+}
+```
+
+Tagged patterns can bind the single payload using `#Tag(name)`. Tagged types can
+be used in annotations and function signatures, for example
+`#Ok(int) | #Err(string)`. A catch-all arm is still required when a tagged
+value's possible tags are not all known statically.
 
 ## Variable declaration
 

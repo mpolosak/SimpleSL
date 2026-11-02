@@ -1,8 +1,8 @@
 use super::{ExecResult, Instruction, InstructionWithStr, local_variable::LocalVariables};
 use crate::{
-    instruction::{
-        BaseInstruction, Exec, Recreate,
-    }, variable::{ReturnType, Type, Variable}, Error, Interpreter
+    Error, Interpreter,
+    instruction::{BaseInstruction, Exec, Recreate},
+    variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
@@ -18,11 +18,14 @@ impl FieldAccess {
     pub fn create_instruction(
         instruction: InstructionWithStr,
         op: Pair<Rule>,
-        errors: &mut Vec<Error>
+        errors: &mut Vec<Error>,
     ) -> Instruction {
         let return_type = instruction.return_type();
         if !return_type.is_struct() {
-            errors.push(Error::CannotFieldAccess(instruction.str.clone(), return_type.clone()));
+            errors.push(Error::CannotFieldAccess(
+                instruction.str.clone(),
+                return_type.clone(),
+            ));
         }
         let pair = op.into_inner().next().unwrap();
         let ident = Arc::from(pair.as_str());

@@ -1,5 +1,9 @@
 use crate::{
-    self as simplesl, instruction::{function::call::FunctionCall, tuple::Tuple, Instruction, InstructionWithStr}, stdlib::operators::{ALL, ANY}, unary_operator::UnaryOperator, variable::{ReturnType, Type, Variable}, Error
+    self as simplesl, Error,
+    instruction::{Instruction, InstructionWithStr, function::call::FunctionCall, tuple::Tuple},
+    stdlib::operators::{ALL, ANY},
+    unary_operator::UnaryOperator,
+    variable::{ReturnType, Type, Variable},
 };
 use lazy_static::lazy_static;
 use simplesl_macros::var_type;
@@ -8,7 +12,11 @@ lazy_static! {
     pub static ref ACCEPTED_TYPE: Type = var_type!(() -> (bool, bool));
 }
 
-pub fn create(iterator: InstructionWithStr, op: UnaryOperator, errors: &mut Vec<Error>) -> Instruction {
+pub fn create(
+    iterator: InstructionWithStr,
+    op: UnaryOperator,
+    errors: &mut Vec<Error>,
+) -> Instruction {
     let return_type = iterator.return_type();
     if !return_type.matches(&ACCEPTED_TYPE) {
         errors.push(Error::IncorectUnaryOperatorOperand {
@@ -232,6 +240,8 @@ mod tests {
         Code::parse(&Interpreter::without_stdlib(), script).map(|code| code.exec().unwrap())
     }
     fn parse_unwrap_first_error(script: &str) -> Error {
-        Code::parse(&Interpreter::without_stdlib(), script).unwrap_err().swap_remove(0)
+        Code::parse(&Interpreter::without_stdlib(), script)
+            .unwrap_err()
+            .swap_remove(0)
     }
 }

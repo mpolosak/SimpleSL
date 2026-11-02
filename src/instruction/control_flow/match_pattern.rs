@@ -1,7 +1,12 @@
 use crate::{
+    Error, Interpreter,
     instruction::{
-        local_variable::LocalVariables, pattern::{destruct_pattern::DestructPattern, Pattern}, recreate_instructions, Exec, ExecStop, Instruction
-    }, variable::{Type, Variable}, Error, Interpreter
+        Exec, ExecStop, Instruction,
+        local_variable::LocalVariables,
+        pattern::{Pattern, destruct_pattern::DestructPattern},
+        recreate_instructions,
+    },
+    variable::{Type, Variable},
 };
 use pest::iterators::Pair;
 use simplesl_parser::{Rule, unexpected};
@@ -19,7 +24,7 @@ impl MatchPattern {
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
         exp_type: &Type,
-        errors: &mut Vec<Error>
+        errors: &mut Vec<Error>,
     ) -> MatchPattern {
         let rule = pair.as_rule();
         match rule {

@@ -5,6 +5,7 @@ mod multi_type;
 mod r#mut;
 mod operators;
 mod struct_type;
+mod tagged_type;
 mod try_from;
 mod r#type;
 mod type_of;
@@ -26,8 +27,35 @@ pub use r#type::{ReturnType, Type, Typed};
 use typle::typle;
 pub use {
     array::Array, function_type::FunctionType, multi_type::MultiType, r#mut::Mut,
-    struct_type::StructType, type_of::TypeOf,
+    struct_type::StructType, tagged_type::TaggedType, type_of::TypeOf,
 };
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TaggedValue {
+    pub tag: Arc<str>,
+    pub payload: Option<Variable>,
+}
+
+impl TaggedValue {
+    pub fn none() -> Self {
+        Self::without_payload("None")
+    }
+
+    pub fn new(tag: impl Into<Arc<str>>, payload: Option<Variable>) -> Self {
+        Self {
+            tag: tag.into(),
+            payload,
+        }
+    }
+
+    pub fn with_payload(tag: impl Into<Arc<str>>, payload: impl Into<Variable>) -> Self {
+        Self::new(tag, Some(payload.into()))
+    }
+
+    pub fn without_payload(tag: impl Into<Arc<str>>) -> Self {
+        Self::new(tag.into(), None)
+    }
+}
 
 #[derive(Clone, Display, EnumAsInner, From)]
 #[display("{}", self.string(0))]
@@ -45,14 +73,18 @@ pub enum Variable {
     #[from(Array, Arc<Array>)]
     Array(Arc<Array>),
     Tuple(Arc<[Variable]>),
+    #[from(TaggedValue, Arc<TaggedValue>)]
+    Tagged(Arc<TaggedValue>),
     #[from(Mut, Arc<Mut>)]
     Mut(Arc<Mut>),
     Struct(Arc<VariableMap>),
-    #[from]
-    Void,
 }
 
 impl Variable {
+    pub fn none() -> Self {
+        TaggedValue::none().into()
+    }
+
     fn string(&self, depth: u8) -> String {
         if depth > 5 {
             return "..".into();
@@ -70,7 +102,16 @@ impl Variable {
                 let elements = vm.iter().map(|(key, value)| format!("{}:={}", key, value.debug(depth))).join(", ");
                 format!("struct{{{elements}}}")
             },
-            Variable::Void => format!("()")
+            Variable::Tagged(value) => {
+                if value.tag.as_ref() == "None" && value.payload.is_none() {
+                    "#None".into()
+                } else {
+                    match &value.payload {
+                        Some(payload) => format!("#{}({})", value.tag, payload.debug(depth + 1)),
+                        None => format!("#{}", value.tag),
+                    }
+                }
+            }
         }
     }
 
@@ -104,7 +145,9 @@ impl Variable {
                     .collect::<Option<Arc<[Variable]>>>()?;
                 Some(Self::Tuple(elements))
             }
-            Type::Void => Some(Variable::Void),
+            Type::Tagged(tagged) if tagged.tag.as_ref() == "None" && tagged.payload.is_none() => {
+                Some(Variable::none())
+            }
             Type::Multi(multi_type) => multi_type.iter().next().and_then(Self::of_type),
             Type::Mut(arc) => Some(
                 Mut {
@@ -120,7 +163,14 @@ impl Variable {
                         .collect();
                 Some(Variable::Struct(vm?.into()))
             }
-            Type::Any => Some(Variable::Void),
+            Type::Tagged(tagged_type) => Some({
+                let payload = match &tagged_type.payload {
+                    Some(payload) => Some(Self::of_type(payload)?),
+                    None => None,
+                };
+                TaggedValue::with_payload(tagged_type.tag.clone(), payload).into()
+            }),
+            Type::Any => Some(Variable::none()),
             Type::Never => None,
         }
     }
@@ -144,7 +194,11 @@ impl Typed for Variable {
                 }).collect();
                 StructType(Arc::from(tm)).into()
             },
-            Variable::Void => Type::Void
+            Variable::Tagged(value) => TaggedType::new(
+                value.tag.clone(),
+                value.payload.as_ref().map(Typed::as_type),
+            )
+            .into()
         }
     }
 }
@@ -164,10 +218,10 @@ impl PartialEq for Variable {
             | (Variable::Float(value1), Variable::Float(value2))
             | (Variable::String(value1), Variable::String(value2))
             | (Variable::Tuple(value1), Variable::Tuple(value2))
-            | (Variable::Struct(value1), Variable::Struct(value2)) => value1 == value2,
+            | (Variable::Struct(value1), Variable::Struct(value2))
+            | (Variable::Tagged(value1), Variable::Tagged(value2)) => value1 == value2,
             (Variable::Function(value1), Variable::Function(value2))
             | (Variable::Mut(value1), Variable::Mut(value2)) => Arc::ptr_eq(value1, value2),
-            (Variable::Void, Variable::Void) => true,
             _ => false
         }
     }
@@ -181,9 +235,15 @@ impl From<usize> for Variable {
     }
 }
 
+impl From<()> for Variable {
+    fn from((): ()) -> Self {
+        Self::none()
+    }
+}
+
 impl<T: Into<Variable>> From<Option<T>> for Variable {
     fn from(value: Option<T>) -> Self {
-        value.map_or(Variable::Void, Into::into)
+        value.map_or_else(Variable::none, Into::into)
     }
 }
 
@@ -313,8 +373,8 @@ mod tests {
     }
 
     #[test]
-    fn display_void() {
-        assert_eq!(format!("{}", Variable::Void), "()")
+    fn display_none() {
+        assert_eq!(format!("{}", Variable::none()), "#None")
     }
 
     #[test]

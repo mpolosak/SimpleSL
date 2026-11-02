@@ -13,7 +13,7 @@ use simplesl_macros::var_type;
 use simplesl_parser::{Rule, unexpected};
 
 impl InstructionWithStr {
-    pub fn create_prefix(op: Pair<'_, Rule>, rhs: Self, errors: &mut Vec<Error>) ->Self {
+    pub fn create_prefix(op: Pair<'_, Rule>, rhs: Self, errors: &mut Vec<Error>) -> Self {
         let str = rhs.str.clone();
         let str = format!("{} {}", op.as_str(), str).into();
         let instruction = match op.as_rule() {
@@ -35,7 +35,10 @@ lazy_static! {
 pub struct UnaryMinus(Instruction);
 
 impl UnaryMinus {
-    pub fn create_instruction(instruction: InstructionWithStr, errors: &mut Vec<Error>) -> Instruction {
+    pub fn create_instruction(
+        instruction: InstructionWithStr,
+        errors: &mut Vec<Error>,
+    ) -> Instruction {
         let op = UnaryOperator::UnaryMinus;
         let return_type = instruction.return_type();
         if !return_type.matches(&ACCEPTED_NUM) {
@@ -83,7 +86,10 @@ lazy_static! {
 }
 
 impl Not {
-    pub fn create_instruction(instruction: InstructionWithStr, errors: &mut Vec<Error>) -> Instruction {
+    pub fn create_instruction(
+        instruction: InstructionWithStr,
+        errors: &mut Vec<Error>,
+    ) -> Instruction {
         let op = UnaryOperator::Not;
         let return_type = instruction.return_type();
         if !return_type.matches(&ACCEPTED_NOT) {

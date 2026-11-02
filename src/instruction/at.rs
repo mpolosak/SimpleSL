@@ -149,12 +149,12 @@ mod tests {
     }
 
     #[test]
-    fn at_rejects_indexing_into_bool_with_void() {
+    fn at_rejects_indexing_into_bool_with_none() {
         assert_eq!(
-            parse_unwrap_errors("true[()]"),
+            parse_unwrap_errors("true[#None]"),
             vec![
                 Error::CannotIndexInto(var_type!(bool)),
-                Error::CannotIndexWith("()".into())
+                Error::CannotIndexWith("#None".into())
             ]
         )
     }

@@ -71,6 +71,10 @@ impl Pattern {
                     }
                 }
                 (DestructPattern::Array { .. }, _) => false,
+                (DestructPattern::Tagged { tag, binding }, Variable::Tagged(value)) => {
+                    tag == &value.tag && binding.is_some() == value.payload.is_some()
+                }
+                (DestructPattern::Tagged { .. }, _) => false,
                 _ => true,
             }
     }
@@ -113,6 +117,17 @@ impl Pattern {
                     );
                 }
             }
+            DestructPattern::Tagged {
+                binding: Some(binding),
+                ..
+            } => {
+                let payload = match &self.var_type {
+                    Type::Tagged(tagged) => tagged.payload.clone().unwrap_or(Type::Never),
+                    _ => Type::Never,
+                };
+                local_variables.insert(binding.clone(), LocalVariable::Other(payload));
+            }
+            DestructPattern::Tagged { binding: None, .. } => {}
         }
     }
 
@@ -147,6 +162,16 @@ impl Pattern {
                     interpreter.insert(ident.clone(), struct_fields[field].clone());
                 }
             }
+            DestructPattern::Tagged {
+                binding: Some(binding),
+                ..
+            } => {
+                let value = variable.into_tagged().unwrap();
+                if let Some(payload) = &value.payload {
+                    interpreter.insert(binding.clone(), payload.clone());
+                }
+            }
+            DestructPattern::Tagged { binding: None, .. } => {}
         }
     }
 
@@ -183,6 +208,16 @@ impl Pattern {
                     vm.insert(ident.clone(), struct_fields[field].clone());
                 }
             }
+            DestructPattern::Tagged {
+                binding: Some(binding),
+                ..
+            } => {
+                let value = variable.into_tagged().unwrap();
+                if let Some(payload) = &value.payload {
+                    vm.insert(binding.clone(), payload.clone());
+                }
+            }
+            DestructPattern::Tagged { binding: None, .. } => {}
         }
     }
 
@@ -211,6 +246,17 @@ impl Pattern {
                     tm.insert(ident.clone(), self.var_type.field_type(field).unwrap());
                 }
             }
+            DestructPattern::Tagged {
+                binding: Some(binding),
+                ..
+            } => {
+                let payload = match &self.var_type {
+                    Type::Tagged(tagged) => tagged.payload.clone().unwrap_or(Type::Never),
+                    _ => Type::Never,
+                };
+                tm.insert(binding.clone(), payload);
+            }
+            DestructPattern::Tagged { binding: None, .. } => {}
         }
     }
 }

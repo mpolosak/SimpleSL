@@ -25,12 +25,15 @@ impl Add {
     ) -> Instruction {
         let lhs_rt = lhs.return_type();
         let rhs_rt = rhs.return_type();
-        if lhs_rt.is_array() && rhs_rt.is_array() && (lhs_rt != Type::Never || rhs_rt != Type::Never) {
+        if lhs_rt.is_array()
+            && rhs_rt.is_array()
+            && (lhs_rt != Type::Never || rhs_rt != Type::Never)
+        {
             return Concat { lhs, rhs }.into();
         }
         if !Self::can_be_used(lhs_rt.clone(), rhs_rt.clone()) {
             errors.push(Error::CannotDo2(lhs_rt, BinOperator::Add, rhs_rt));
-            return Panic.into()
+            return Panic.into();
         }
         Self { lhs, rhs }.into()
     }
@@ -74,7 +77,11 @@ impl ReturnType for Add {
 mod tests {
     use std::vec;
 
-    use crate::{self as simplesl, instruction::bin_op::add::Add, variable::{Type, Variable}, BinOperator, Code, Error, Interpreter};
+    use crate::{
+        self as simplesl, BinOperator, Code, Error, Interpreter,
+        instruction::bin_op::add::Add,
+        variable::{Type, Variable},
+    };
     use simplesl_macros::{var, var_type};
 
     #[test]
@@ -180,15 +187,19 @@ mod tests {
     fn test_multiple_add() {
         assert_eq!(
             parse_unwrap_errors("[1] + (2 + 3.0) + [4]"),
-            vec![
-                Error::CannotDo2(var_type!(int), BinOperator::Add, var_type!(float))
-            ]
+            vec![Error::CannotDo2(
+                var_type!(int),
+                BinOperator::Add,
+                var_type!(float)
+            )]
         );
         assert_eq!(
             parse_unwrap_errors("1 + (2 + 3.0) + 4"),
-            vec![
-                Error::CannotDo2(var_type!(int), BinOperator::Add, var_type!(float))
-            ]
+            vec![Error::CannotDo2(
+                var_type!(int),
+                BinOperator::Add,
+                var_type!(float)
+            )]
         );
         assert_eq!(
             parse_unwrap_errors("(2 + 3.0) + [4] + 5"),
@@ -198,7 +209,7 @@ mod tests {
             ]
         )
     }
-    
+
     #[test]
     fn can_be_used_int_int() {
         assert!(Add::can_be_used(Type::Int, Type::Int))
@@ -224,7 +235,7 @@ mod tests {
         assert!(Add::can_be_used(Type::Never, Type::Never))
     }
 
-     #[test]
+    #[test]
     fn can_be_used_int_float() {
         assert!(!Add::can_be_used(Type::Int, Type::Float))
     }
@@ -246,7 +257,7 @@ mod tests {
 
     #[test]
     fn can_be_used_never_void() {
-        assert!(!Add::can_be_used(Type::Never, Type::Void))
+        assert!(!Add::can_be_used(Type::Never, Type::none()))
     }
 
     fn parse_and_exec(script: &str) -> Variable {

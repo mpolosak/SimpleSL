@@ -26,7 +26,11 @@ pub struct OrReduce {
     iterator: Instruction,
 }
 
-pub fn create(iterator: InstructionWithStr, op: UnaryOperator, errors: &mut Vec<Error>) -> Instruction {
+pub fn create(
+    iterator: InstructionWithStr,
+    op: UnaryOperator,
+    errors: &mut Vec<Error>,
+) -> Instruction {
     let return_type = iterator.return_type();
     if !return_type.matches(&ACCEPTED_TYPE) {
         errors.push(Error::IncorectUnaryOperatorOperand {
@@ -269,10 +273,15 @@ mod tests {
     }
 
     fn parse_and_exec(script: &str) -> Variable {
-        Code::parse(&Interpreter::without_stdlib(), script).unwrap().exec().unwrap()
+        Code::parse(&Interpreter::without_stdlib(), script)
+            .unwrap()
+            .exec()
+            .unwrap()
     }
 
     fn parse_unwrap_first_error(script: &str) -> Error {
-        Code::parse(&Interpreter::without_stdlib(), script).unwrap_err().swap_remove(0)
+        Code::parse(&Interpreter::without_stdlib(), script)
+            .unwrap_err()
+            .swap_remove(0)
     }
 }

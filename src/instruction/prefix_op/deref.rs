@@ -12,7 +12,10 @@ use crate::{
 pub struct Deref(Instruction);
 
 impl Deref {
-    pub fn create_instruction(instruction: InstructionWithStr, errors: &mut Vec<Error>) -> Instruction {
+    pub fn create_instruction(
+        instruction: InstructionWithStr,
+        errors: &mut Vec<Error>,
+    ) -> Instruction {
         let return_type = instruction.return_type();
         if return_type.mut_element_type().is_none() {
             errors.push(Error::IncorectUnaryOperatorOperand {

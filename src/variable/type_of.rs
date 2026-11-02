@@ -10,7 +10,7 @@ pub trait TypeOf {
 
 impl TypeOf for () {
     fn type_of() -> Type {
-        Type::Void
+        Type::none()
     }
 }
 
@@ -80,26 +80,26 @@ impl TypeOf for io::Error {
 
 impl TypeOf for Option<bool> {
     fn type_of() -> Type {
-        var_type!(bool | ())
+        var_type!(bool | #None)
     }
 }
 
 #[duplicate_item(T; [Option<i64>]; [Option<u32>]; [Option<i32>]; [Option<usize>]; [Option<isize>])]
 impl TypeOf for T {
     fn type_of() -> Type {
-        var_type!(int | ())
+        var_type!(int | #None)
     }
 }
 
 impl TypeOf for Option<f64> {
     fn type_of() -> Type {
-        var_type!(float | ())
+        var_type!(float | #None)
     }
 }
 
 impl TypeOf for Option<String> {
     fn type_of() -> Type {
-        var_type!(string | ())
+        var_type!(string | #None)
     }
 }
 

@@ -116,12 +116,15 @@ pub fn args_from_function_params(params: &[(Ident, Vec<Attribute>, Box<Type>)]) 
 pub fn args_import_from_function_params(
     params: &[(Ident, Vec<Attribute>, Box<Type>)],
 ) -> TokenStream {
-    params.iter().enumerate().fold(quote!(), |acc, (i, (ident, _, _))| {
-        quote!(
-            #acc
-            let #ident = (&args[#i]).try_into().unwrap();
-        )
-    })
+    params
+        .iter()
+        .enumerate()
+        .fold(quote!(), |acc, (i, (ident, _, _))| {
+            quote!(
+                #acc
+                let #ident = (&args[#i]).try_into().unwrap();
+            )
+        })
 }
 
 pub fn params_from_function_params(params: &[(Ident, Vec<Attribute>, Box<Type>)]) -> TokenStream {
@@ -158,7 +161,7 @@ fn get_type_from_attrs(attrs: &[Attribute]) -> Option<TokenStream> {
 
 pub fn get_return_type(function: &ItemFn, return_type: Option<TokenStream>) -> TokenStream {
     let ReturnType::Type(_, syn_type) = &function.sig.output else {
-        return type_from_str("()");
+        return type_from_str("#None");
     };
     return_type.unwrap_or_else(|| quote!(<#syn_type as simplesl::variable::TypeOf>::type_of()))
 }

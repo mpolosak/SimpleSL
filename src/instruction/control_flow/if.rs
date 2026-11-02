@@ -18,7 +18,11 @@ pub struct If {
 }
 
 impl If {
-    pub fn create(pair: Pair<Rule>, local_variables: &mut LocalVariables, errors: &mut Vec<Error>) -> Self {
+    pub fn create(
+        pair: Pair<Rule>,
+        local_variables: &mut LocalVariables,
+        errors: &mut Vec<Error>,
+    ) -> Self {
         let mut inner = pair.into_inner();
         let (conditions, if_true) = {
             let mut local_variables = local_variables.create_layer();
@@ -44,7 +48,7 @@ impl If {
             (conditions, if_true)
         };
         let if_false = inner.next().map_or_else(
-            || Variable::Void.into(),
+            || Variable::none().into(),
             |pair| Instruction::new(pair, local_variables, errors),
         );
         Self {

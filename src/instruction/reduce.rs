@@ -4,9 +4,13 @@ pub mod collect;
 pub mod product;
 pub mod sum;
 use crate::{
-    self as simplesl, instruction::{
-        function::call::FunctionCall, local_variable::LocalVariables, tuple::Tuple, Instruction, InstructionWithStr
-    }, stdlib::operators::REDUCE, variable::{ReturnType, Type, Variable}, Error
+    self as simplesl, Error,
+    instruction::{
+        Instruction, InstructionWithStr, function::call::FunctionCall,
+        local_variable::LocalVariables, tuple::Tuple,
+    },
+    stdlib::operators::REDUCE,
+    variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
@@ -18,7 +22,7 @@ pub fn create_instruction(
     initial_value: Pair<Rule>,
     function: InstructionWithStr,
     local_variables: &LocalVariables,
-    errors: &mut Vec<Error>
+    errors: &mut Vec<Error>,
 ) -> Instruction {
     let initial_value = InstructionWithStr::new_expression(initial_value, local_variables, errors);
     let iter_type = iter.return_type();

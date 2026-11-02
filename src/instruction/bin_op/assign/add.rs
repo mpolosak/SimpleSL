@@ -20,7 +20,11 @@ pub struct AssignAdd {
 impl BaseInstruction for AssignAdd {}
 
 impl AssignAdd {
-    pub fn create_instruction(lhs: Instruction, rhs: Instruction, errors: &mut Vec<Error>) -> Instruction {
+    pub fn create_instruction(
+        lhs: Instruction,
+        rhs: Instruction,
+        errors: &mut Vec<Error>,
+    ) -> Instruction {
         let lhs_rt = lhs.return_type();
         let rhs_rt = rhs.return_type();
         if rhs_rt.is_array() {

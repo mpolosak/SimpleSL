@@ -69,11 +69,11 @@ x() // still prints "Hello Tom"
 print := (vars: any) {
 } // function are availible after they are created and can be overwritten
 x() // but this still works as before
-y := (f: ()->()){
+y := (f: ()->#None){
     f()
 } // function y takes function as argument and exec it
 y(
-    ()->(){print("Function")} // anonymous function
+    ()->#None{print("Function")} // anonymous function
 )
 rec := (n: int){
     if n>0 {

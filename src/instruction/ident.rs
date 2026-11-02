@@ -1,7 +1,10 @@
 use crate::{
+    Error,
     instruction::{
-        local_variable::{LocalVariable, LocalVariables}, BaseInstruction, Exec, Instruction, Recreate
-    }, variable::{ReturnType, Type, Typed}, Error
+        BaseInstruction, Exec, Instruction, Recreate,
+        local_variable::{LocalVariable, LocalVariables},
+    },
+    variable::{ReturnType, Type, Typed},
 };
 use std::sync::Arc;
 
@@ -15,7 +18,7 @@ impl Ident {
     pub fn create_instruction(
         str: &Arc<str>,
         local_variables: &LocalVariables<'_>,
-        errors: &mut Vec<Error>
+        errors: &mut Vec<Error>,
     ) -> Instruction {
         local_variables.get(str).map_or_else(
             || {
@@ -24,11 +27,14 @@ impl Ident {
                     .get_variable(str)
                     .cloned()
                     .map(Instruction::from)
-                    .unwrap_or_else(|| {errors.push(Error::VariableDoesntExist(str.clone())); Self {
-                    ident: str.clone(),
-                    variable: LocalVariable::Other(Type::Never),
-                }
-                .into()})
+                    .unwrap_or_else(|| {
+                        errors.push(Error::VariableDoesntExist(str.clone()));
+                        Self {
+                            ident: str.clone(),
+                            variable: LocalVariable::Other(Type::Never),
+                        }
+                        .into()
+                    })
             },
             |var| {
                 Self {

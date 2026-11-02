@@ -29,13 +29,13 @@ Converts an integer to a float; a float is returned unchanged.
 Converts a float to an integer by truncating toward zero; an integer is returned
 unchanged.
 
-### `parse_int(string: string) -> int | ()`
+### `parse_int(string: string) -> int | #None`
 
-Parses a string as a signed integer. Returns `()` if parsing fails.
+Parses a string as a signed integer. Returns `#None` if parsing fails.
 
-### `parse_float(string: string) -> float | ()`
+### `parse_float(string: string) -> float | #None`
 
-Parses a string as a float. Returns `()` if parsing fails.
+Parses a string as a float. Returns `#None` if parsing fails.
 
 ### `to_string(variable: any) -> string`
 
@@ -43,52 +43,52 @@ Returns the display representation of a value as a string.
 
 ## `std.fs`
 
-Filesystem functions return `()` on success. On failure, they return an error
+Filesystem functions return `#None` on success. On failure, they return an error
 struct with `error_code` and `msg` fields.
 
 ### `file_read_to_string(path: string) -> string | struct{error_code: int, msg: string}`
 
 Reads a UTF-8 text file and returns its contents.
 
-### `write_to_file(path: string, contents: string) -> () | struct{error_code: int, msg: string}`
+### `write_to_file(path: string, contents: string) -> #None | struct{error_code: int, msg: string}`
 
 Writes `contents` to the file at `path`, creating or replacing the file.
 
-### `copy_file(from: string, to: string) -> () | struct{error_code: int, msg: string}`
+### `copy_file(from: string, to: string) -> #None | struct{error_code: int, msg: string}`
 
 Copies a file from `from` to `to`.
 
-### `remove_file(path: string) -> () | struct{error_code: int, msg: string}`
+### `remove_file(path: string) -> #None | struct{error_code: int, msg: string}`
 
 Removes a file.
 
-### `remove_dir(path: string) -> () | struct{error_code: int, msg: string}`
+### `remove_dir(path: string) -> #None | struct{error_code: int, msg: string}`
 
 Removes an empty directory.
 
-### `remove_dir_all(path: string) -> () | struct{error_code: int, msg: string}`
+### `remove_dir_all(path: string) -> #None | struct{error_code: int, msg: string}`
 
 Removes a directory and its contents recursively.
 
-### `create_dir(path: string) -> () | struct{error_code: int, msg: string}`
+### `create_dir(path: string) -> #None | struct{error_code: int, msg: string}`
 
 Creates a single directory. Its parent directory must already exist.
 
-### `create_dir_all(path: string) -> () | struct{error_code: int, msg: string}`
+### `create_dir_all(path: string) -> #None | struct{error_code: int, msg: string}`
 
 Creates a directory and any missing parent directories.
 
-### `rename(from: string, to: string) -> () | struct{error_code: int, msg: string}`
+### `rename(from: string, to: string) -> #None | struct{error_code: int, msg: string}`
 
 Renames or moves a file or directory from `from` to `to`.
 
 ## `std.io`
 
-### `print(var: any) -> ()`
+### `print(var: any) -> #None`
 
 Prints a value to standard output followed by a newline.
 
-### `print_array(array: [any], sep: string) -> ()`
+### `print_array(array: [any], sep: string) -> #None`
 
 Prints the array elements joined by `sep`, followed by a newline.
 
@@ -127,9 +127,9 @@ Returns an array containing one string per Unicode character.
 
 Returns the UTF-8 encoding of `string` as an array of byte values.
 
-### `str_from_utf8(array: [int]) -> string | ()`
+### `str_from_utf8(array: [int]) -> string | #None`
 
-Converts byte values to a string. Returns `()` if the bytes are not valid
+Converts byte values to a string. Returns `#None` if the bytes are not valid
 UTF-8.
 
 ### `str_from_utf8_lossy(array: [int]) -> string`
@@ -178,12 +178,12 @@ All integer arguments and results below are SimpleSL `int` values.
 * `trailing_ones(int: int) -> int` — counts trailing one bits.
 * `swap_bytes(int: int) -> int` — reverses the integer's byte order.
 * `reverse_bits(int: int) -> int` — reverses all bits in the integer.
-* `ilog(num: int, base: int) -> int | ()` — returns the integer logarithm of
-  `num` to `base`, rounded down; returns `()` when the operation is undefined.
-* `ilog2(num: int) -> int | ()` — returns the base-2 integer logarithm, rounded
-  down, or `()` when undefined.
-* `ilog10(num: int) -> int | ()` — returns the base-10 integer logarithm,
-  rounded down, or `()` when undefined.
+* `ilog(num: int, base: int) -> int | #None` — returns the integer logarithm of
+  `num` to `base`, rounded down; returns `#None` when the operation is undefined.
+* `ilog2(num: int) -> int | #None` — returns the base-2 integer logarithm, rounded
+  down, or `#None` when undefined.
+* `ilog10(num: int) -> int | #None` — returns the base-10 integer logarithm,
+  rounded down, or `#None` when undefined.
 
 ### Floating-point functions
 
@@ -266,7 +266,7 @@ collection operations.
 
 ### Array, string, and value helpers
 
-* `slice(variable: [any] | string, start: int | (), end: int | (), step: int | ()) -> [any] | string`
+* `slice(variable: [any] | string, start: int | #None, end: int | #None, step: int | #None) -> [any] | string`
   — slices an array or string. Bounds and step are optional; strings are sliced
   by Unicode character.
 * `array_repeat(value: any, len: int) -> [any]` — creates an array containing
@@ -274,7 +274,7 @@ collection operations.
 * `at(variable: [any] | string, index: int) -> any` — gets an array element or
   Unicode character at `index`. Negative indices count from the end; an invalid
   index is an execution error.
-* `get_field(variable: struct, field: string) -> any | ()` — gets a struct
-  field, or returns `()` if the field does not exist.
+* `get_field(variable: struct, field: string) -> any | #None` — gets a struct
+  field, or returns `#None` if the field does not exist.
 * `deref(variable: any) -> any` — returns the value inside a `mut`; other values
   are returned unchanged.

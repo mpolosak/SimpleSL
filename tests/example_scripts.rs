@@ -10,7 +10,7 @@ fn test_example1() -> Result<(), Error> {
         .unwrap()
         .exec()
         .unwrap();
-    assert_eq!(result, var!(()));
+    assert_eq!(result, var!(#None));
     Ok(())
 }
 
@@ -77,7 +77,7 @@ fn test_fizzbuzz() {
         .unwrap()
         .exec_unscoped(&mut interpreter)
         .unwrap();
-    assert_eq!(result.as_type(), var_type!([()]));
+    assert_eq!(result.as_type(), var_type!([#None]));
     let fizzbuzz = interpreter.get_variable("fizzbuzz").unwrap();
     assert_eq!(fizzbuzz.as_type(), var_type!((int)->(int|string)));
     let fizzbuzz = fizzbuzz.clone().into_function().unwrap();

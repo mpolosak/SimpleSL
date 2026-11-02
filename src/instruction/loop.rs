@@ -16,7 +16,7 @@ impl Loop {
     pub fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
-        errors: &mut Vec<Error>
+        errors: &mut Vec<Error>,
     ) -> Instruction {
         let mut inner = pair.into_inner();
         let in_loop = local_variables.in_loop;
@@ -38,7 +38,7 @@ impl Exec for Loop {
                 e => return e,
             }
         }
-        Ok(Variable::Void)
+        Ok(Variable::none())
     }
 }
 
@@ -51,7 +51,7 @@ impl Recreate for Loop {
 
 impl ReturnType for Loop {
     fn return_type(&self) -> Type {
-        Type::Void
+        Type::none()
     }
 }
 

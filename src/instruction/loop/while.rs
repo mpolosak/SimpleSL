@@ -10,7 +10,7 @@ use simplesl_parser::Rule;
 pub fn create_instruction(
     pair: Pair<Rule>,
     local_variables: &mut LocalVariables,
-    errors: &mut Vec<Error>
+    errors: &mut Vec<Error>,
 ) -> Instruction {
     let in_loop = local_variables.in_loop;
     local_variables.in_loop = true;

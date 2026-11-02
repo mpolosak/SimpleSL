@@ -63,7 +63,7 @@ mod tests {
 
     #[test]
     fn can_be_used_never_void() {
-        assert!(!can_be_used(&Type::Never, &Type::Void))
+        assert!(!can_be_used(&Type::Never, &Type::none()))
     }
 
     #[test]

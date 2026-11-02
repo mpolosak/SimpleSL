@@ -1,7 +1,12 @@
 use crate::{
+    Error,
     instruction::{
-        control_flow::match_pattern::MatchPattern, local_variable::LocalVariables, recreate_instructions, set::ConditionSet, Exec, ExecResult, ExecStop, Instruction, Recreate
-    }, interpreter::Interpreter, variable::{ReturnType, Type, Variable}, Error
+        Exec, ExecResult, ExecStop, Instruction, Recreate,
+        control_flow::match_pattern::MatchPattern, local_variable::LocalVariables,
+        recreate_instructions, set::ConditionSet,
+    },
+    interpreter::Interpreter,
+    variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
@@ -18,7 +23,7 @@ impl MatchArm {
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
         exp_type: &Type,
-        errors: &mut Vec<Error>
+        errors: &mut Vec<Error>,
     ) -> Self {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
@@ -30,8 +35,7 @@ impl MatchArm {
             (None, pair)
         };
         let MatchPattern::Pattern(p) = &pattern else {
-            let guard = guard_pair
-                .map(|pair| create_guard(pair, local_variables, errors));
+            let guard = guard_pair.map(|pair| create_guard(pair, local_variables, errors));
             let instruction = Instruction::new(body_pair, local_variables, errors);
             return MatchArm {
                 pattern,
@@ -41,8 +45,7 @@ impl MatchArm {
         };
         let mut local_variables = local_variables.create_layer();
         p.insert_local_variables(&mut local_variables);
-        let guard = guard_pair
-            .map(|pair| create_guard(pair, &mut local_variables, errors));
+        let guard = guard_pair.map(|pair| create_guard(pair, &mut local_variables, errors));
         let instruction = Instruction::new(body_pair, &mut local_variables, errors);
         MatchArm {
             pattern,
@@ -115,7 +118,7 @@ impl MatchArm {
 fn create_guard(
     pair: pest::iterators::Pair<Rule>,
     local_variables: &mut LocalVariables,
-    errors: &mut Vec<Error>
+    errors: &mut Vec<Error>,
 ) -> Box<[Instruction]> {
     let conditions_pair = pair.into_inner().next().unwrap();
     conditions_pair

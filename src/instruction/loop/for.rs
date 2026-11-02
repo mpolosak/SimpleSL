@@ -21,7 +21,7 @@ impl For {
     pub fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
-        errors: &mut Vec<Error>
+        errors: &mut Vec<Error>,
     ) -> Instruction {
         let mut inner = pair.into_inner();
         let pattern_pair = inner.next().unwrap();
@@ -76,7 +76,7 @@ impl Exec for For {
             self.pattern.insert_variables(&mut interpreter, item);
             self.body.exec(&mut interpreter)?;
         }
-        Ok(Variable::Void)
+        Ok(Variable::none())
     }
 }
 
@@ -97,7 +97,7 @@ impl Recreate for For {
 
 impl ReturnType for For {
     fn return_type(&self) -> Type {
-        Type::Void
+        Type::none()
     }
 }
 

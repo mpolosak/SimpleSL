@@ -1,6 +1,8 @@
 use super::Instruction;
 use crate::{
-    self as simplesl, function::{Param, Params}, variable::{Type, Typed, Variable}, Error, Interpreter
+    self as simplesl, Error, Interpreter,
+    function::{Param, Params},
+    variable::{Type, Typed, Variable},
 };
 use derive_more::From;
 use pest::{Parser, iterators::Pairs};
@@ -86,20 +88,27 @@ impl<'a> LocalVariables<'a> {
     }
 
     pub(crate) fn load(&mut self, path: &str, errors: &mut Vec<Error>) -> Box<[Instruction]> {
-        let contents = match fs::read_to_string(path){
+        let contents = match fs::read_to_string(path) {
             Ok(contents) => contents,
-            Err(error) => {errors.push(error.into()); return [].into()},
+            Err(error) => {
+                errors.push(error.into());
+                return [].into();
+            }
         };
         self.parse_input(&contents, errors)
     }
 
-    pub(crate) fn parse_input(&mut self, input: &str, errors: &mut Vec<Error>) -> Box<[Instruction]> {
-        let pairs = match SimpleSLParser::parse(Rule::input, input){
+    pub(crate) fn parse_input(
+        &mut self,
+        input: &str,
+        errors: &mut Vec<Error>,
+    ) -> Box<[Instruction]> {
+        let pairs = match SimpleSLParser::parse(Rule::input, input) {
             Ok(pairs) => pairs,
             Err(error) => {
                 errors.push(error.into());
-                return [].into()
-            },
+                return [].into();
+            }
         };
         self.create_instructions(pairs, errors)
     }
@@ -107,7 +116,7 @@ impl<'a> LocalVariables<'a> {
     pub(crate) fn create_instructions(
         &mut self,
         pairs: Pairs<'_, Rule>,
-        errors: &mut Vec<Error>
+        errors: &mut Vec<Error>,
     ) -> Box<[Instruction]> {
         let mut instructions = pairs
             .map(|pair| Instruction::new(pair, self, errors))

@@ -20,7 +20,7 @@ impl Match {
     pub fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
-        errors: &mut Vec<Error>
+        errors: &mut Vec<Error>,
     ) -> Instruction {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();

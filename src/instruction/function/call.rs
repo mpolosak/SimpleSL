@@ -22,7 +22,7 @@ impl FunctionCall {
         function: InstructionWithStr,
         args: Pair<Rule>,
         local_variables: &LocalVariables,
-        errors: &mut Vec<Error>
+        errors: &mut Vec<Error>,
     ) -> Instruction {
         let args = args
             .into_inner()
@@ -39,12 +39,15 @@ impl FunctionCall {
             }
             let Some(params) = f_type.params() else {
                 errors.push(Error::CannotDetermineParams(function.str));
-                let args = Tuple { elements: [].into() }.into();
+                let args = Tuple {
+                    elements: [].into(),
+                }
+                .into();
                 return Self {
                     function: function.instruction,
                     args,
                 }
-                .into()
+                .into();
             };
             let params = params
                 .iter()
@@ -128,7 +131,7 @@ fn check_args_with_params(
     ident: &Arc<str>,
     params: &Params,
     args: &[InstructionWithStr],
-    errors: &mut Vec<Error>
+    errors: &mut Vec<Error>,
 ) {
     if params.len() != args.len() {
         errors.push(Error::WrongNumberOfArguments(ident.clone(), params.len()));

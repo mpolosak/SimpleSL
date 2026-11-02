@@ -30,7 +30,6 @@ pub fn var_token_from_pair(pair: Pair<Rule>) -> quote::__private::TokenStream {
             let value = unescaper::unescape(value).unwrap();
             quote!(simplesl::variable::Variable::String(#value.into()))
         }
-        Rule::void => quote!(simplesl::variable::Variable::Void),
         Rule::array_ident => {
             let element_type = pair
                 .clone()
@@ -81,6 +80,19 @@ pub fn var_token_from_pair(pair: Pair<Rule>) -> quote::__private::TokenStream {
                 .reduce(|acc, curr| quote!(#acc, #curr));
             quote!(simplesl::variable::Variable::Struct(
                 std::collections::HashMap::from([#fields]).into()
+            ))
+        }
+        Rule::tagged_ident => {
+            let mut inner = pair.into_inner();
+            let tag = inner.next().unwrap().as_str();
+            let Some(payload) = inner.next() else {
+                return quote!(simplesl::variable::Variable::from(
+                    simplesl::variable::TaggedValue::without_payload(#tag)
+                ));
+            };
+            let payload = var_token_from_pair(payload);
+            quote!(simplesl::variable::Variable::from(
+                simplesl::variable::TaggedValue::with_payload(#tag, #payload)
             ))
         }
         Rule::array_ident_repeat => {
@@ -164,7 +176,6 @@ fn var_type_from_var_pair(pair: Pair<Rule>) -> Option<quote::__private::TokenStr
         Rule::int | Rule::minus_int => Some(type_from_str("int")),
         Rule::float | Rule::minus_float => Some(type_from_str("float")),
         Rule::string => Some(type_from_str("string")),
-        Rule::void => Some(type_from_str("()")),
         Rule::array_ident => {
             let element_type = pair
                 .into_inner()
@@ -201,8 +212,21 @@ fn var_type_from_var_pair(pair: Pair<Rule>) -> Option<quote::__private::TokenStr
                     Some(quote!((#ident.into(), #value)))
                 })
                 .reduce(|acc, curr| Some(quote!(#acc, #curr)));
-            Some(quote!(simplesl::variable::Variable::Struct(
-                std::collections::HashMap::from([#fields]).into()
+            Some(quote!(simplesl::variable::Type::Struct(
+                simplesl::variable::StructType::from([#fields])
+            )))
+        }
+        Rule::tagged_ident => {
+            let mut inner = pair.into_inner();
+            let tag = inner.next().unwrap().as_str();
+            let Some(payload) = inner.next() else {
+                return Some(quote!(simplesl::variable::Type::from(
+                    simplesl::variable::TaggedType::without_payload(#tag)
+                )));
+            };
+            let payload = var_type_from_var_pair(payload)?;
+            Some(quote!(simplesl::variable::Type::from(
+                simplesl::variable::TaggedType::with_payload(#tag, #payload)
             )))
         }
         Rule::array_ident_repeat => {

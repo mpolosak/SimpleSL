@@ -101,10 +101,7 @@ mod tests {
 
     #[test]
     fn collect_mixed_iterator() {
-        assert_eq!(
-            parse_and_exec(r#"["a", 15, 1.7]~$]"#),
-            var!(["a", 15, 1.7])
-        );
+        assert_eq!(parse_and_exec(r#"["a", 15, 1.7]~$]"#), var!(["a", 15, 1.7]));
     }
 
     #[test]
@@ -166,10 +163,15 @@ mod tests {
     }
 
     fn parse_and_exec(script: &str) -> Variable {
-        Code::parse(&Interpreter::without_stdlib(), script).unwrap().exec().unwrap()
+        Code::parse(&Interpreter::without_stdlib(), script)
+            .unwrap()
+            .exec()
+            .unwrap()
     }
 
     fn parse_unwrap_first_error(script: &str) -> Error {
-        Code::parse(&Interpreter::without_stdlib(), script).unwrap_err().swap_remove(0)
+        Code::parse(&Interpreter::without_stdlib(), script)
+            .unwrap_err()
+            .swap_remove(0)
     }
 }

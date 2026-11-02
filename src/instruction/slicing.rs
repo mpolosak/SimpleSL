@@ -13,7 +13,7 @@ pub fn create(
     lhs: InstructionWithStr,
     pair: Pair<Rule>,
     local_variables: &LocalVariables,
-    errors: &mut Vec<Error>
+    errors: &mut Vec<Error>,
 ) -> Instruction {
     let lhs_type = lhs.return_type();
     if !lhs_type.can_be_indexed() {
@@ -40,9 +40,9 @@ pub fn create(
         }
     }
 
-    let start = start.unwrap_or_else(|| Variable::Void.into());
-    let stop = stop.unwrap_or_else(|| Variable::Void.into());
-    let step = step.unwrap_or_else(|| Variable::Void.into());
+    let start = start.unwrap_or_else(|| Variable::none().into());
+    let stop = stop.unwrap_or_else(|| Variable::none().into());
+    let step = step.unwrap_or_else(|| Variable::none().into());
 
     let variable_type = lhs.return_type();
 
@@ -89,6 +89,9 @@ mod test {
     }
 
     fn parse_and_exec(script: &str) -> Variable {
-        Code::parse(&Interpreter::without_stdlib(), script).unwrap().exec().unwrap()
+        Code::parse(&Interpreter::without_stdlib(), script)
+            .unwrap()
+            .exec()
+            .unwrap()
     }
 }

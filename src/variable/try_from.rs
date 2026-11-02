@@ -147,7 +147,9 @@ impl TryFrom<Variable> for Option<i64> {
     fn try_from(value: Variable) -> Result<Self, Self::Error> {
         match value {
             Variable::Int(value) => Ok(Some(value)),
-            Variable::Void => Ok(None),
+            Variable::Tagged(value) if value.tag.as_ref() == "None" && value.payload.is_none() => {
+                Ok(None)
+            }
             _ => Err(value),
         }
     }
@@ -159,7 +161,9 @@ impl<'a> TryFrom<&'a Variable> for Option<i64> {
     fn try_from(value: &'a Variable) -> Result<Self, Self::Error> {
         match value {
             Variable::Int(value) => Ok(Some(*value)),
-            Variable::Void => Ok(None),
+            Variable::Tagged(value) if value.tag.as_ref() == "None" && value.payload.is_none() => {
+                Ok(None)
+            }
             _ => Err(value),
         }
     }
@@ -171,7 +175,9 @@ impl TryFrom<Variable> for Option<isize> {
     fn try_from(value: Variable) -> Result<Self, Self::Error> {
         match value {
             Variable::Int(value) => Ok(Some(value as isize)),
-            Variable::Void => Ok(None),
+            Variable::Tagged(value) if value.tag.as_ref() == "None" && value.payload.is_none() => {
+                Ok(None)
+            }
             _ => Err(value),
         }
     }
@@ -183,7 +189,9 @@ impl<'a> TryFrom<&'a Variable> for Option<isize> {
     fn try_from(value: &'a Variable) -> Result<Self, Self::Error> {
         match value {
             Variable::Int(value) => Ok(Some(*value as isize)),
-            Variable::Void => Ok(None),
+            Variable::Tagged(value) if value.tag.as_ref() == "None" && value.payload.is_none() => {
+                Ok(None)
+            }
             _ => Err(value),
         }
     }

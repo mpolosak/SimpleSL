@@ -1,16 +1,23 @@
 use super::{Instruction, InstructionWithStr};
 use crate::{
-    instruction::{function::call::FunctionCall, tuple::Tuple}, stdlib::operators::At, variable::{from_str::parse_int, ReturnType, Type, Variable}, Error
+    Error,
+    instruction::{function::call::FunctionCall, panic::Panic, tuple::Tuple},
+    stdlib::operators::At,
+    variable::{ReturnType, Type, Variable, from_str::parse_int},
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
 use std::sync::Arc;
 
-pub fn create_instruction(tuple: InstructionWithStr, op: Pair<Rule>, errors: &mut Vec<Error>) -> Instruction {
+pub fn create_instruction(
+    tuple: InstructionWithStr,
+    op: Pair<Rule>,
+    errors: &mut Vec<Error>,
+) -> Instruction {
     let tuple_type = tuple.return_type();
     let Some(len) = tuple_type.min_tuple_len() else {
         errors.push(Error::CannotTupleAccess(tuple.str, tuple_type));
-        return Variable::Void.into()
+        return Panic.into();
     };
 
     let pair = op.into_inner().next().unwrap();
@@ -19,10 +26,10 @@ pub fn create_instruction(tuple: InstructionWithStr, op: Pair<Rule>, errors: &mu
         Err(error) => {
             errors.push(error);
             0
-        },
+        }
     };
 
-    let return_type= tuple_type.tuple_element_at(index).unwrap_or_else(|| {
+    let return_type = tuple_type.tuple_element_at(index).unwrap_or_else(|| {
         errors.push(Error::TupleIndexTooBig(index, tuple.str, len));
         Type::Never
     });

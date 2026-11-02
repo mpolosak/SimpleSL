@@ -21,6 +21,7 @@ pub mod r#return;
 mod set;
 mod slicing;
 mod r#struct;
+mod tagged;
 mod tuple;
 pub mod tuple_access;
 mod type_filter;
@@ -95,7 +96,7 @@ impl InstructionWithStr {
         let str: Arc<str> = pair.as_str().into();
         let instruction: Instruction = match rule {
             Rule::ident => Ident::create_instruction(&str, local_variables, errors),
-            Rule::r#true | Rule::r#false | Rule::int | Rule::float | Rule::void | Rule::string => {
+            Rule::r#true | Rule::r#false | Rule::int | Rule::float | Rule::string => {
                 variable_from_pair(pair, errors).into()
             }
             Rule::tuple => Tuple::create_instruction(pair, local_variables, errors),
@@ -103,6 +104,7 @@ impl InstructionWithStr {
             Rule::array_repeat => array_repeat::create_instruction(pair, local_variables, errors),
             Rule::function => Function::create_instruction(pair, local_variables, None, errors),
             Rule::r#struct => Struct::create_instruction(pair, local_variables, errors),
+            Rule::tagged => tagged::Tagged::create_instruction(pair, local_variables, errors),
             Rule::r#mod => module::create_instruction(pair, local_variables, errors),
             rule => unexpected!(rule),
         };

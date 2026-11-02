@@ -19,7 +19,7 @@ impl Block {
     pub fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &LocalVariables,
-        errors: &mut Vec<Error>
+        errors: &mut Vec<Error>,
     ) -> Instruction {
         let mut local_variables = local_variables.create_layer();
         let instructions = local_variables.create_instructions(pair.into_inner(), errors);
@@ -30,7 +30,7 @@ impl Block {
 impl Exec for Block {
     fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
         let mut interpreter = interpreter.create_layer();
-        let mut result = Variable::Void;
+        let mut result = Variable::none();
         for instruction in &self.instructions {
             result = instruction.exec(&mut interpreter)?;
         }
@@ -50,6 +50,6 @@ impl ReturnType for Block {
     fn return_type(&self) -> Type {
         self.instructions
             .last()
-            .map_or(Type::Void, ReturnType::return_type)
+            .map_or_else(Type::none, ReturnType::return_type)
     }
 }

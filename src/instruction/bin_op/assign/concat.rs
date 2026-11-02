@@ -1,5 +1,7 @@
 use crate::{
-    instruction::{bin_op::concat::Concat, BaseInstruction, Exec, Instruction}, variable::{ReturnType, Type}, BinOperator, Error
+    BinOperator, Error,
+    instruction::{BaseInstruction, Exec, Instruction, bin_op::concat::Concat},
+    variable::{ReturnType, Type},
 };
 
 #[derive(Debug)]
@@ -11,7 +13,11 @@ pub struct AssignConcat {
 impl BaseInstruction for AssignConcat {}
 
 impl AssignConcat {
-    pub fn create_instruction(lhs: Instruction, rhs: Instruction, errors: &mut Vec<Error>) -> Instruction {
+    pub fn create_instruction(
+        lhs: Instruction,
+        rhs: Instruction,
+        errors: &mut Vec<Error>,
+    ) -> Instruction {
         let lhs_rt = lhs.return_type();
         let rhs_rt = rhs.return_type();
         if !Self::can_be_used(&lhs_rt, &rhs_rt) {

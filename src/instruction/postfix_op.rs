@@ -7,7 +7,15 @@ use super::{
     type_filter::TypeFilter,
 };
 use crate::{
-    instruction::{field_access::FieldAccess, function::call::FunctionCall, postfix_op::iter::Iter, reduce::{product::Product, sum::Sum}, slicing}, unary_operator::UnaryOperator, Error
+    Error,
+    instruction::{
+        field_access::FieldAccess,
+        function::call::FunctionCall,
+        postfix_op::iter::Iter,
+        reduce::{product::Product, sum::Sum},
+        slicing,
+    },
+    unary_operator::UnaryOperator,
 };
 use pest::iterators::Pair;
 use simplesl_parser::{Rule, unexpected};
@@ -17,15 +25,19 @@ impl InstructionWithStr {
         op: Pair<'_, Rule>,
         lhs: Self,
         local_variables: &LocalVariables<'_>,
-        errors: &mut Vec<Error>
+        errors: &mut Vec<Error>,
     ) -> Self {
         let str = format!("{} {}", lhs.str, op.as_str()).into();
         let instruction = match op.as_rule() {
             Rule::at => at::create(lhs.instruction, op, local_variables, errors),
-            Rule::type_filter => {
-                TypeFilter::create_instruction(lhs.instruction, op.into_inner().next().unwrap(), errors)
+            Rule::type_filter => TypeFilter::create_instruction(
+                lhs.instruction,
+                op.into_inner().next().unwrap(),
+                errors,
+            ),
+            Rule::function_call => {
+                FunctionCall::create_instruction(lhs, op, local_variables, errors)
             }
-            Rule::function_call => FunctionCall::create_instruction(lhs, op, local_variables, errors),
             Rule::tuple_access => tuple_access::create_instruction(lhs, op, errors),
             Rule::field_access => FieldAccess::create_instruction(lhs, op, errors),
             Rule::sum => Sum::create(lhs, errors),

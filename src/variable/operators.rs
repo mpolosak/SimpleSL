@@ -1,5 +1,5 @@
-use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Not, Rem, Shl, Shr, Sub};
 use crate::variable::{Array, Variable};
+use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Not, Rem, Shl, Shr, Sub};
 
 impl PartialOrd for Variable {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
@@ -11,7 +11,7 @@ impl PartialOrd for Variable {
     }
 }
 
-impl Add for Variable{
+impl Add for Variable {
     type Output = Variable;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -21,7 +21,7 @@ impl Add for Variable{
             (Variable::String(value1), Variable::String(value2)) => {
                 format!("{value1}{value2}").into()
             }
-            (Variable::Array(lhs), Variable::Array(rhs)) => {Array::concat(lhs, rhs).into()}
+            (Variable::Array(lhs), Variable::Array(rhs)) => Array::concat(lhs, rhs).into(),
             (lhs, rhs) => panic!("Tried to do {lhs} + {rhs} which is imposible"),
         }
     }
@@ -156,13 +156,11 @@ impl Shr for Variable {
     }
 }
 
-
-
 #[cfg(test)]
 mod tests {
-    use simplesl_macros::var;
     use crate as simplesl;
     use crate::variable::Variable;
+    use simplesl_macros::var;
     use std::cmp::Ordering;
 
     #[test]
@@ -182,28 +180,43 @@ mod tests {
 
     #[test]
     fn compare_ints() {
-        assert_eq!(Variable::Int(4).partial_cmp(&Variable::Int(5)), Some(Ordering::Less));
+        assert_eq!(
+            Variable::Int(4).partial_cmp(&Variable::Int(5)),
+            Some(Ordering::Less)
+        );
     }
 
     #[test]
     fn compare_floats() {
-        assert_eq!(Variable::Float(4.5).partial_cmp(&Variable::Float(4.5)), Some(Ordering::Equal));
+        assert_eq!(
+            Variable::Float(4.5).partial_cmp(&Variable::Float(4.5)),
+            Some(Ordering::Equal)
+        );
     }
 
     #[test]
     fn incomparable_variables() {
         assert_eq!(Variable::Int(4).partial_cmp(&Variable::Float(4.0)), None);
-        assert_eq!(Variable::Bool(false).partial_cmp(&Variable::Bool(true)), None);
+        assert_eq!(
+            Variable::Bool(false).partial_cmp(&Variable::Bool(true)),
+            None
+        );
     }
 
     #[test]
     fn add_float_to_float() {
-        assert_eq!(Variable::Float(4.5) + Variable::Float(5.0), Variable::Float(9.5))
+        assert_eq!(
+            Variable::Float(4.5) + Variable::Float(5.0),
+            Variable::Float(9.5)
+        )
     }
 
     #[test]
     fn add_string_to_string() {
-        assert_eq!(Variable::String("Hello".into()) + Variable::String(" World!".into()), Variable::String("Hello World!".into()))
+        assert_eq!(
+            Variable::String("Hello".into()) + Variable::String(" World!".into()),
+            Variable::String("Hello World!".into())
+        )
     }
 
     #[test]
@@ -224,7 +237,10 @@ mod tests {
 
     #[test]
     fn subtract_float_from_float() {
-        assert_eq!(Variable::Float(9.5) - Variable::Float(5.0), Variable::Float(4.5))
+        assert_eq!(
+            Variable::Float(9.5) - Variable::Float(5.0),
+            Variable::Float(4.5)
+        )
     }
 
     #[test]
@@ -353,12 +369,18 @@ mod tests {
 
     #[test]
     fn bitwise_and_int_with_int() {
-        assert_eq!(Variable::Int(0b1100) & Variable::Int(0b1010), Variable::Int(0b1000))
+        assert_eq!(
+            Variable::Int(0b1100) & Variable::Int(0b1010),
+            Variable::Int(0b1000)
+        )
     }
 
     #[test]
     fn bitwise_and_bool_with_bool() {
-        assert_eq!(Variable::Bool(true) & Variable::Bool(false), Variable::Bool(false))
+        assert_eq!(
+            Variable::Bool(true) & Variable::Bool(false),
+            Variable::Bool(false)
+        )
     }
 
     #[test]
@@ -369,12 +391,18 @@ mod tests {
 
     #[test]
     fn bitwise_or_int_with_int() {
-        assert_eq!(Variable::Int(0b1100) | Variable::Int(0b1010), Variable::Int(0b1110))
+        assert_eq!(
+            Variable::Int(0b1100) | Variable::Int(0b1010),
+            Variable::Int(0b1110)
+        )
     }
 
     #[test]
     fn bitwise_or_bool_with_bool() {
-        assert_eq!(Variable::Bool(true) | Variable::Bool(false), Variable::Bool(true))
+        assert_eq!(
+            Variable::Bool(true) | Variable::Bool(false),
+            Variable::Bool(true)
+        )
     }
 
     #[test]
@@ -385,12 +413,18 @@ mod tests {
 
     #[test]
     fn bitwise_xor_int_with_int() {
-        assert_eq!(Variable::Int(0b1100) ^ Variable::Int(0b1010), Variable::Int(0b0110))
+        assert_eq!(
+            Variable::Int(0b1100) ^ Variable::Int(0b1010),
+            Variable::Int(0b0110)
+        )
     }
 
     #[test]
     fn bitwise_xor_bool_with_bool() {
-        assert_eq!(Variable::Bool(true) ^ Variable::Bool(false), Variable::Bool(true))
+        assert_eq!(
+            Variable::Bool(true) ^ Variable::Bool(false),
+            Variable::Bool(true)
+        )
     }
 
     #[test]

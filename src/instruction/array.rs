@@ -19,7 +19,7 @@ impl Array {
     pub fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &LocalVariables,
-        errors: &mut Vec<Error>
+        errors: &mut Vec<Error>,
     ) -> Instruction {
         let inner = pair.into_inner();
         let mut local_variables = local_variables.create_layer();

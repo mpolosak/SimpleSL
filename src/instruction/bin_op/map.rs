@@ -38,7 +38,11 @@ pub struct Map {
 }
 
 impl Map {
-    pub fn create_instruction(lhs: Instruction, rhs: Instruction, errors: &mut Vec<Error>) -> Instruction {
+    pub fn create_instruction(
+        lhs: Instruction,
+        rhs: Instruction,
+        errors: &mut Vec<Error>,
+    ) -> Instruction {
         let lhs_type = lhs.return_type();
         let rhs_type = rhs.return_type();
         if !Self::can_be_used(&lhs_type, &rhs_type) {

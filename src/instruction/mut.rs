@@ -21,7 +21,7 @@ impl Mut {
     pub fn create_instruction(
         op: Pair<Rule>,
         rhs: InstructionWithStr,
-        errors: &mut Vec<Error>
+        errors: &mut Vec<Error>,
     ) -> Instruction {
         let mut inner = op.into_inner();
         let Some(type_pair) = inner.next() else {

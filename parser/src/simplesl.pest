@@ -10,7 +10,7 @@ restricted_keywords  = _{ bool | mutkw | returnkw | loopkw | whilekw | forkw | s
   elsekw = _{ "else" }
   importkw = _{ "import" }
 ident                = @{ !(restricted_keywords ~ !(ASCII_ALPHANUMERIC | "_")) ~ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
-var                  = _{ bool | float | int | array | array_repeat | string | function | void | tuple | struct | mod }
+var                  = _{ bool | float | int | array | array_repeat | string | function | tuple | struct | mod | tagged }
 bool                 = _{ true | false }
 true                 =  { "true" }
 false                =  { "false" }
@@ -30,7 +30,6 @@ decimal              = @{ ASCII_DIGIT ~ (ASCII_DIGIT | "_")* }
 hexadecimal_int      = ${ "0x" ~ hexadecimal }
 hexadecimal          = @{ "_"* ~ ASCII_HEX_DIGIT ~ (ASCII_HEX_DIGIT | "_")* }
 float                = @{ (decimal ~ ("." ~ decimal)? ~ ("e" | "E") ~ ("+" | "-")? ~ "_"* ~ decimal) | (decimal ~ "." ~ decimal) }
-void                 =  { "()" }
 array                =  { "[" ~ expression_list? ~ "]" }
 array_repeat         =  { "[" ~ expr ~ ";" ~ expr ~ "]" }
 string               = ${ quotation_mark ~ inner ~ quotation_mark }
@@ -42,6 +41,7 @@ char                 =  {
 }
 struct               =  { structkw ~ "{" ~ (field ~ ("," ~ field)*)? ~ "}" }
   field              = _{ set | ident }
+tagged               =  { "#" ~ ident ~ ("(" ~ expr ~ ")")? }
 primary              = _{ ident | var | expr_in_brackets }
 expr_in_brackets     = _{ "(" ~ expr ~ ")" }
 atom                 = _{ prefix_op* ~ primary ~ postfix_op* }
@@ -170,8 +170,9 @@ stm                  = _{
   | expr
 }
 pattern              =  { destruct_pattern ~ (":" ~ type?)? }
-  destruct_pattern   = _{ (ident ~ &":") | ((destruct_tuple | destruct_struct | destruct_array)
+  destruct_pattern   = _{ (ident ~ &":") | ((destruct_tagged | destruct_tuple | destruct_struct | destruct_array)
                                           ~ (&":" | &"=>" | &"in")) }
+  destruct_tagged    =  { "#" ~ ident ~ ("(" ~ ident ~ ")")? }
   destruct_tuple     =  { "(" ~ ident ~ ("," ~ ident)+ ~ ")" }
   destruct_struct    =  { structkw ~ "{" ~ (destruct_struct_field ~ ("," ~ destruct_struct_field)*)? ~ "}" }
   destruct_struct_field = { ident ~ (":" ~ ident)? }
@@ -221,14 +222,15 @@ standard_types       = _{
   | float_type
   | string_type
   | function_type
-  | void
   | array_type
   | tuple_type
   | any
   | never
   | mut_type
   | struct_type
+  | tagged_type
 }
+tagged_type          =  { "#" ~ ident ~ ("(" ~ type ~ ")")? }
 multi                =  { (standard_types) ~ ("|" ~ standard_types)+ }
 any                  =  { "any" }
 never                =  { "!" }
@@ -246,15 +248,16 @@ standard_types_ident       = _{
   | float_type
   | string_type
   | function_type_ident
-  | void
   | array_type_ident
   | tuple_type_ident
   | any
   | never
   | mut_type_ident
   | struct_type_ident
+  | tagged_type_ident
   | ident
 }
+tagged_type_ident          =  { "#" ~ ident ~ ("(" ~ type_ident ~ ")")? }
 multi_ident                =  { (standard_types_ident) ~ ("|" ~ standard_types_ident)+ }
 mut_type_ident             =  { mutkw ~ return_type_ident }
 struct_type_ident          =  { structkw ~ "{" ~ (ident ~ ":" ~ type_ident ~ ("," ~ ident ~ ":" ~ type_ident)*)? ~ "}" }
@@ -272,9 +275,9 @@ var_from_str          = _{
   | array_from_str
   | array_repeat_from_str
   | string
-  | void
   | tuple_from_str
   | struct_from_str
+  | tagged_from_str
 }
 minus_float           =  { "-" ~ float }
 minus_int             =  { "-" ~ int }
@@ -283,6 +286,7 @@ array_repeat_from_str =  { "[" ~ var_from_str ~ ";" ~ int ~ "]" }
 tuple_from_str        =  { "(" ~ var_from_str ~ "," ~ var_list ~ ")" }
 struct_from_str       =  { structkw ~ "{" ~ (field_from_str ~ ("," ~ field_from_str)*)? ~ "}" }
 field_from_str        = _{ pattern ~ "=" ~ var_from_str }
+tagged_from_str       =  { "#" ~ ident ~ ("(" ~ var_from_str ~ ")")? }
 var_list              = _{ (var_from_str ~ ("," ~ var_from_str)*) }
 // rule for var! macro
 var_macro          = _{ var_ident ~ &EOI }
@@ -295,9 +299,9 @@ var_ident          = _{
   | array_ident
   | array_ident_repeat
   | string
-  | void
   | tuple_ident
   | struct_ident
+  | tagged_ident
   | minus_ident
   | ident
 }
@@ -307,6 +311,7 @@ array_ident_repeat =  { "[" ~ var_ident ~ ";" ~ (int | ident) ~ "]" }
 tuple_ident        =  { "(" ~ var_ident ~ "," ~ var_ident_list ~ ")" }
 struct_ident       =  { structkw ~ "{" ~ ((field_ident | ident) ~ ("," ~ (field_ident | ident))*)? ~ "}" }
 field_ident        =  { ident ~ ":=" ~ var_ident }
+tagged_ident       =  { "#" ~ ident ~ ("(" ~ var_ident ~ ")")? }
 var_ident_list     = _{ (var_ident ~ ("," ~ var_ident)*) }
 //decls macro
 decl               =  { ident ~ ":=" ~ (function | var_ident) }

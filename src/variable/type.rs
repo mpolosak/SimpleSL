@@ -1,4 +1,4 @@
-use super::{function_type::FunctionType, multi_type::MultiType};
+use super::{function_type::FunctionType, multi_type::MultiType, tagged_type::TaggedType};
 use crate::{self as simplesl, errors::ParseTypeError, join, variable::struct_type::StructType};
 use derive_more::{Display, From};
 use lazy_static::lazy_static;
@@ -31,13 +31,14 @@ pub enum Type {
     Array(Arc<Type>),
     #[display("({})", join(_0.as_ref(), ", "))]
     Tuple(Arc<[Type]>),
-    #[display("()")]
-    Void,
     Multi(MultiType),
     #[display("mut {}", if let Type::Multi(_)=_0.as_ref(){format!("({_0})")}else{format!("{_0}")})]
     Mut(Arc<Type>),
     #[from]
     Struct(StructType),
+    #[display("{}", _0)]
+    #[from]
+    Tagged(Arc<TaggedType>),
     #[display("any")]
     Any,
     #[display("!")]
@@ -57,6 +58,10 @@ lazy_static! {
 }
 
 impl Type {
+    pub fn none() -> Self {
+        Self::Tagged(Arc::new(TaggedType::none()))
+    }
+
     #[must_use]
     pub fn matches(&self, other: &Self) -> bool {
         match_any! { (self, other),
@@ -64,6 +69,9 @@ impl Type {
             (Self::Function(var_type), Self::Function(var_type2))
             | (Self::Array(var_type), Self::Array(var_type2))
             | (Self::Struct(var_type), Self::Struct(var_type2)) => {
+                var_type.matches(var_type2)
+            },
+            (Self::Tagged(var_type), Self::Tagged(var_type2)) => {
                 var_type.matches(var_type2)
             },
             (Self::Multi(types), other) => types.iter().all(|var_type| var_type.matches(other)),
@@ -91,6 +99,14 @@ impl Type {
                 Arc::make_mut(&mut types.0).insert(var_type);
                 Type::Multi(types)
             }
+            (Type::Tagged(first), Type::Tagged(second)) => first
+                .as_ref()
+                .clone()
+                .concat(second.as_ref().clone())
+                .map_or_else(
+                    || Type::Multi(MultiType::from([Type::Tagged(first), Type::Tagged(second)])),
+                    Type::from,
+                ),
             (first, second) => Type::Multi(MultiType::from([first, second])),
         }
     }
@@ -123,6 +139,10 @@ impl Type {
                 }
                 Type::Struct(StructType::from(types))
             }
+            (Type::Tagged(tagged1), Type::Tagged(tagged2)) => tagged1
+                .conjoin(tagged2)
+                .map(Type::from)
+                .unwrap_or(Type::Never),
             (Type::Multi(multi), other) | (other, Type::Multi(multi)) => multi
                 .iter()
                 .map(|var_type| var_type.conjoin(other))
@@ -398,7 +418,6 @@ impl From<Pair<'_, Rule>> for Type {
             Rule::int_type => Self::Int,
             Rule::float_type => Self::Float,
             Rule::string_type => Self::String,
-            Rule::void => Self::Void,
             Rule::function_type => FunctionType::from(pair).into(),
             Rule::array_type => {
                 let element_type = pair
@@ -423,6 +442,12 @@ impl From<Pair<'_, Rule>> for Type {
                 Self::Mut(element_type.into())
             }
             Rule::struct_type => StructType::from(pair).into(),
+            Rule::tagged_type => {
+                let mut inner = pair.into_inner();
+                let tag = inner.next().unwrap().as_str();
+                let payload = inner.next().map(Type::from);
+                TaggedType::new(tag, payload).into()
+            }
             rule => panic!("Type cannot be built from rule: {rule:?}"),
         }
     }
@@ -433,6 +458,12 @@ impl<T: Into<Type>> BitOr<T> for Type {
 
     fn bitor(self, rhs: T) -> Self::Output {
         self.concat(rhs.into())
+    }
+}
+
+impl From<TaggedType> for Type {
+    fn from(value: TaggedType) -> Self {
+        Self::Tagged(Arc::new(value))
     }
 }
 
@@ -481,11 +512,11 @@ mod tests {
         assert_eq!("string", Type::String.to_string());
         assert_eq!("any", Type::Any.to_string());
         assert_eq!("bool", Type::Bool.to_string());
-        assert_eq!("()", Type::Void.to_string());
+        assert_eq!("#None", Type::none().to_string());
         assert_eq!("!", Type::Never.to_string());
         let f = FunctionType {
             params: [].into(),
-            return_type: Type::Void,
+            return_type: Type::none(),
         };
         assert_eq!(f.to_string(), Type::Function(f.into()).to_string());
         let f = Type::Function(
@@ -504,7 +535,7 @@ mod tests {
         assert!(r == "[float|string]" || r == "[string|float]");
         assert_eq!("[any]", Type::Array(Type::Any.into()).to_string());
         assert_eq!("[int]", Type::Array(Type::Int.into()).to_string());
-        assert_eq!("[()]", Type::Array(Type::Void.into()).to_string());
+        assert_eq!("[#None]", Type::Array(Type::none().into()).to_string());
         assert_eq!(
             "(int, string)",
             Type::Tuple([Type::Int, Type::String].into()).to_string()
@@ -532,12 +563,12 @@ mod tests {
         assert_eq!(Type::from_str("string"), Ok(Type::String));
         assert_eq!(Type::from_str("any"), Ok(Type::Any));
         assert_eq!(Type::from_str("int"), Ok(Type::Int));
-        assert_eq!(Type::from_str("()"), Ok(Type::Void));
+        assert_eq!(Type::from_str("#None"), Ok(Type::none()));
         assert_eq!(
-            Type::from_str("()->()"),
+            Type::from_str("()->#None"),
             Ok(FunctionType {
                 params: [].into(),
-                return_type: Type::Void
+                return_type: Type::none()
             }
             .into())
         );
@@ -560,7 +591,10 @@ mod tests {
         );
         assert_eq!(Type::from_str("[any]"), Ok(Type::Array(Type::Any.into())));
         assert_eq!(Type::from_str("[int]"), Ok(Type::Array(Type::Int.into())));
-        assert_eq!(Type::from_str("[()]"), Ok(Type::Array(Type::Void.into())));
+        assert_eq!(
+            Type::from_str("[#None]"),
+            Ok(Type::Array(Type::none().into()))
+        );
         assert_eq!(
             Type::from_str("[int | float]"),
             Ok(Type::Array((Type::Int | Type::Float).into()))
@@ -599,7 +633,7 @@ mod tests {
             var_type!(int | string),
             var_type!([any]),
             var_type!((float, int, int | float)),
-            Type::Void,
+            Type::none(),
         ];
         for var_type in types {
             assert!(Type::Never.matches(&var_type));
@@ -758,11 +792,11 @@ mod tests {
             Some([var_type!(int)].into())
         );
         assert_eq!(
-            var_type!((int)->int | (int|float)->() | (string) -> any).params(),
+            var_type!((int)->int | (int|float)->#None | (string) -> any).params(),
             Some([var_type!(!)].into())
         );
         assert_eq!(
-            var_type!((int, float)->int | (int|float, float | string)->()).params(),
+            var_type!((int, float)->int | (int|float, float | string)->#None).params(),
             Some([var_type!(int), var_type!(float)].into())
         );
         assert_eq!(
@@ -770,10 +804,13 @@ mod tests {
             None
         );
         assert_eq!(
-            var_type!((int)->int | (int|float)->() | () -> any).params(),
+            var_type!((int)->int | (int|float)->#None | () -> any).params(),
             None
         );
-        assert_eq!(var_type!((int)->int | (int|float)->() | any).params(), None);
+        assert_eq!(
+            var_type!((int)->int | (int|float)->#None | any).params(),
+            None
+        );
         assert_eq!(var_type!(int).params(), None);
         assert_eq!(var_type!(float).params(), None);
     }
@@ -826,15 +863,15 @@ mod tests {
         assert_eq!(l1.tuple_element_at(0), Some(var_type!(int)));
         assert_eq!(l1.tuple_element_at(1), Some(var_type!(float)));
         assert_eq!(l1.tuple_element_at(2), None);
-        let l2 = var_type!((string, (), struct{}));
+        let l2 = var_type!((string, #None, struct{}));
         assert_eq!(l2.tuple_element_at(0), Some(var_type!(string)));
-        assert_eq!(l2.tuple_element_at(1), Some(var_type!(())));
+        assert_eq!(l2.tuple_element_at(1), Some(var_type!(#None)));
         assert_eq!(l2.tuple_element_at(2), Some(var_type!(struct{})));
         let l3 = l1 | l2;
         assert_eq!(l3.tuple_element_at(0), Some(var_type!(int | string)));
-        assert_eq!(l3.tuple_element_at(1), Some(var_type!(float | ())));
+        assert_eq!(l3.tuple_element_at(1), Some(var_type!(float | #None)));
         assert_eq!(l3.tuple_element_at(2), None);
-        let l4 = var_type!(l3 | ());
+        let l4 = var_type!(l3 | #None);
         assert_eq!(l4.tuple_element_at(0), None);
         assert_eq!(Type::Int.tuple_element_at(0), None);
     }
@@ -847,13 +884,13 @@ mod tests {
         assert_eq!(s1.field_type("c"), None);
         let c = s1.clone();
         let c2 = s1.clone();
-        let s2 = var_type!(struct{b: string | (), c: c});
+        let s2 = var_type!(struct{b: string | #None, c: c});
         assert_eq!(s2.field_type("a"), None);
-        assert_eq!(s2.field_type("b"), Some(var_type!(string | ())));
+        assert_eq!(s2.field_type("b"), Some(var_type!(string | #None)));
         assert_eq!(s2.field_type("c"), Some(c2));
         let s3 = s1 | s2;
         assert_eq!(s3.field_type("a"), None);
-        assert_eq!(s3.field_type("b"), Some(var_type!(float | string | ())));
+        assert_eq!(s3.field_type("b"), Some(var_type!(float | string | #None)));
         assert_eq!(s3.field_type("c"), None);
         let s3 = var_type!(s3 | int);
         assert_eq!(s3.field_type("a"), None);
@@ -867,7 +904,7 @@ mod tests {
         assert!(s1.has_field("a"));
         assert!(s1.has_field("b"));
         assert!(!s1.has_field("c"));
-        let s2 = var_type!(struct{b: string | (), c: string});
+        let s2 = var_type!(struct{b: string | #None, c: string});
         assert!(!s2.has_field("a"));
         assert!(s2.has_field("b"));
         assert!(s2.has_field("c"));

@@ -1,8 +1,14 @@
 pub mod call;
 use crate::{
-    self as simplesl, function::{Body, Function as VarFunc, Param, Params}, instruction::{
-        local_variable::{FunctionInfo, LocalVariable, LocalVariableMap, LocalVariables}, recreate_instructions, BaseInstruction, Exec, ExecResult, Instruction, Recreate
-    }, interpreter::Interpreter, variable::{ReturnType, Type}, Error
+    self as simplesl, Error,
+    function::{Body, Function as VarFunc, Param, Params},
+    instruction::{
+        BaseInstruction, Exec, ExecResult, Instruction, Recreate,
+        local_variable::{FunctionInfo, LocalVariable, LocalVariableMap, LocalVariables},
+        recreate_instructions,
+    },
+    interpreter::Interpreter,
+    variable::{ReturnType, Type},
 };
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
@@ -24,7 +30,7 @@ impl Function {
         pair: Pair<Rule>,
         local_variables: &LocalVariables,
         ident: Option<Arc<str>>,
-        errors: &mut Vec<Error>
+        errors: &mut Vec<Error>,
     ) -> Instruction {
         let mut inner = pair.into_inner();
         let params_pair = inner.next().unwrap();
@@ -34,7 +40,7 @@ impl Function {
         {
             Type::from(inner.next().unwrap().into_inner().next().unwrap())
         } else {
-            Type::Void
+            Type::none()
         };
         let mut local_variables = local_variables.function_layer(
             LocalVariableMap::from(params.clone()),
@@ -47,13 +53,13 @@ impl Function {
             );
         }
         let body = local_variables.create_instructions(inner, errors);
-        if !Type::Void.matches(&return_type)
+        if !Type::none().matches(&return_type)
             && !body
                 .iter()
                 .map(ReturnType::return_type)
                 .any(|var_type| var_type == Type::Never)
         {
-            errors.push( Error::MissingReturn {
+            errors.push(Error::MissingReturn {
                 function_name: None,
                 return_type: return_type.clone(),
             });

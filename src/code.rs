@@ -42,7 +42,7 @@ impl Code {
             .iter()
             .map(|instruction| instruction.exec(interpreter))
             .last()
-            .unwrap_or(Ok(Variable::Void))
+            .unwrap_or_else(|| Ok(Variable::none()))
         {
             Ok(var) => Ok(var),
             Err(ExecStop::Error(err)) => Err(err),
@@ -55,7 +55,7 @@ impl ReturnType for Code {
     fn return_type(&self) -> Type {
         self.instructions
             .last()
-            .map_or(Type::Void, ReturnType::return_type)
+            .map_or_else(Type::none, ReturnType::return_type)
     }
 }
 

@@ -302,7 +302,7 @@ mod tests {
                     break
                 }"
             ),
-            Variable::Void
+            Variable::none()
         );
     }
 

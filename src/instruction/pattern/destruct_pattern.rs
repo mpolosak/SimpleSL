@@ -1,4 +1,4 @@
-use crate::variable::{StructType, Type, Typed};
+use crate::variable::{StructType, TaggedType, Type, Typed};
 use pest::iterators::Pair;
 use simplesl_parser::{Rule, unexpected};
 use std::{collections::HashMap, iter::repeat_n, sync::Arc};
@@ -8,6 +8,10 @@ pub enum DestructPattern {
     Ident(Arc<str>),
     Tuple(Arc<[Arc<str>]>),
     Struct(Arc<[(Arc<str>, Arc<str>)]>),
+    Tagged {
+        tag: Arc<str>,
+        binding: Option<Arc<str>>,
+    },
     Array {
         items: Arc<[Arc<str>]>,
         rest: Option<Arc<str>>,
@@ -63,6 +67,12 @@ impl DestructPattern {
                     .collect();
                 Self::Struct(fields)
             }
+            Rule::destruct_tagged => {
+                let mut inner = pair.into_inner();
+                let tag = inner.next().unwrap().as_str().into();
+                let binding = inner.next().map(|pair| Arc::<str>::from(pair.as_str()));
+                Self::Tagged { tag, binding }
+            }
             rule => unexpected!(rule),
         }
     }
@@ -82,6 +92,10 @@ impl Typed for DestructPattern {
                     .map(|(field, _)| (field.clone(), Type::Any))
                     .collect::<HashMap<_, _>>(),
             )),
+            DestructPattern::Tagged { tag, binding } => {
+                let payload = binding.as_ref().map(|_| Type::Any);
+                TaggedType::new(tag.clone(), payload).into()
+            }
         }
     }
 }

@@ -24,7 +24,6 @@ fn type_token_from_pair(pair: Pair<Rule>) -> TokenStream2 {
         Rule::int_type => quote!(simplesl::variable::Type::Int),
         Rule::float_type => quote!(simplesl::variable::Type::Float),
         Rule::string_type => quote!(simplesl::variable::Type::String),
-        Rule::void => quote!(simplesl::variable::Type::Void),
         Rule::any => quote!(simplesl::variable::Type::Any),
         Rule::never => quote!(simplesl::variable::Type::Never),
         Rule::multi_ident => pair
@@ -84,6 +83,19 @@ fn type_token_from_pair(pair: Pair<Rule>) -> TokenStream2 {
                 .reduce(|acc, curr| quote!(#acc, # curr));
             quote!(simplesl::variable::Type::Struct(
                 simplesl::variable::StructType::from([#fields])
+            ))
+        }
+        Rule::tagged_type_ident => {
+            let mut inner = pair.into_inner();
+            let tag = inner.next().unwrap().as_str();
+            let Some(payload) = inner.next() else {
+                return quote!(simplesl::variable::Type::from(
+                    simplesl::variable::TaggedType::without_payload(#tag)
+                ));
+            };
+            let payload = type_token_from_pair(payload);
+            quote!(simplesl::variable::Type::from(
+                simplesl::variable::TaggedType::with_payload(#tag, #payload)
             ))
         }
         rule => unexpected!(rule),

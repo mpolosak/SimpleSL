@@ -1,6 +1,8 @@
 use super::{ExecStop, Instruction, local_variable::LocalVariables};
 use crate::{
-    instruction::{panic::Panic, BaseInstruction, Exec, Recreate}, variable::{ReturnType, Type, Variable}, Error
+    Error,
+    instruction::{BaseInstruction, Exec, Recreate, panic::Panic},
+    variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
@@ -12,7 +14,7 @@ impl Return {
     pub fn create_instruction(
         pair: Pair<Rule>,
         local_variables: &mut LocalVariables,
-        errors: &mut Vec<Error>
+        errors: &mut Vec<Error>,
     ) -> Instruction {
         let Some(function) = local_variables.function().cloned() else {
             errors.push(Error::ReturnOutsideFunction);
@@ -21,7 +23,7 @@ impl Return {
         let instruction = if let Some(pair) = pair.into_inner().next() {
             Instruction::new(pair, local_variables, errors)
         } else {
-            Variable::Void.into()
+            Variable::none().into()
         };
         let returned = instruction.return_type();
         if !returned.matches(function.return_type()) {
