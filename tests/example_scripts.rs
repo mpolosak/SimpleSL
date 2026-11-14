@@ -130,3 +130,15 @@ fn test_quick_sort() {
         var!([3, 6, 9])
     );
 }
+
+#[test]
+fn test_leibniz() -> Result<(), Error> {
+    let interpreter = Interpreter::with_stdlib();
+    let leibniz = fs::read_to_string("example_scripts/leibniz").unwrap();
+    let result = Code::parse(&interpreter, &leibniz)
+        .unwrap()
+        .exec()
+        .unwrap();
+    assert_eq!(result, var!(#None));
+    Ok(())
+}
