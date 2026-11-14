@@ -90,8 +90,9 @@ cover every possible type of the expression; guarded arms do not count toward
 coverage, so use a final empty pattern when needed. Each body can be a block, a
 `return`, or an expression.
 
-Tagged values use `#Tag(value)` for a value with one payload. A tag without an
-explicit payload uses `#None` as its payload; `#None` itself has no payload:
+Tagged values are constructed with `#Tag(value)` when they have a payload, or
+`#Tag` when they do not. `#None` is a conventional tag with no payload; it is
+not used as the implicit payload of other tags:
 
 ```simplesl
 result := #Ok(42)
@@ -102,12 +103,19 @@ match result {
     #Err(message) => 0,
     => 0,
 }
+
+match empty {
+    #None => 0,
+    => 1,
+}
 ```
 
-Tagged patterns can bind the single payload using `#Tag(name)`. Tagged types can
-be used in annotations and function signatures, for example
-`#Ok(int) | #Err(string)`. A catch-all arm is still required when a tagged
-value's possible tags are not all known statically.
+The pattern `#Tag(name)` matches a value with that tag and binds its payload;
+`#Tag` matches the payload-free form of that tag. Tagged types distinguish
+these forms: `#Tag` has no payload, while `#Tag(type)` has one payload of the
+given type. They can be used in annotations and function signatures, for
+example `#Ok(int) | #Err(string)`. A match must cover every possible type;
+use a catch-all arm when the possible tags are not all known statically.
 
 ## Variable declaration
 

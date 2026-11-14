@@ -51,12 +51,12 @@ Reads a tuple element by its numeric index or a struct field by its name.
 
 ### Iterator postfix operators
 
-Postfix iterator operators take an iterator, which has type
-`() -> (bool, T)`. Each call returns `(true, value)` while an element remains
-and `(false, value)` when it is exhausted.
+An iterator has type `() -> (#Some(T) | #None)`. Each call returns
+`#Some(value)` while an element remains and `#None` when it is exhausted.
+Postfix reductions and collection consume the iterator.
 
-* `iterator ~` — creates an iterator from an array.
-* `iterator $]` — collects iterator elements into an array.
+* `array ~` — creates an iterator from an array.
+* `iterator $]` — collects the remaining iterator elements into an array.
 * `iterator $+` — sums integer or float elements, or concatenates string
   elements.
 * `iterator $*` — multiplies integer or float elements.
@@ -67,6 +67,9 @@ and `(false, value)` when it is exhausted.
 
 The reductions require an iterator with the element type indicated above.
 `$+` and `$*` require a single supported element type, not a union of types.
+On an empty iterator, `$+` returns `0`, `0.0`, or `""` for integer, float, or
+string elements; `$*` returns `1` or `1.0`; `$&&` returns `true`; `$||` returns
+`false`; `$&` returns `-1`; and `$|` returns `0`.
 
 ## Prefix operators
 
@@ -92,7 +95,7 @@ Reads and returns the value held by a `mut T`, producing a value of type `T`.
 
 | Left operand | Right operand | Result |
 | ------------ | ------------- | ------ |
-| `() -> (bool, T)` | `(T) -> S` | `() -> (bool, S)` |
+| `() -> (#Some(T) \| #None)` | `(T) -> S` | `() -> (#Some(S) \| #None)` |
 
 Creates a lazy iterator that applies `mapper` to each yielded value.
 
@@ -100,7 +103,7 @@ Creates a lazy iterator that applies `mapper` to each yielded value.
 
 | Left operand | Right operand | Result |
 | ------------ | ------------- | ------ |
-| `() -> (bool, T)` | `(T) -> bool` | `() -> (bool, T)` |
+| `() -> (#Some(T) \| #None)` | `(T) -> bool` | `() -> (#Some(T) \| #None)` |
 
 Creates a lazy iterator that yields only values for which `predicate` returns
 `true`.
@@ -109,7 +112,7 @@ Creates a lazy iterator that yields only values for which `predicate` returns
 
 | Left operand | Right operand | Result |
 | ------------ | ------------- | ------ |
-| `() -> (bool, T)` | `(T) -> bool` | `([T], [T])` |
+| `() -> (#Some(T) \| #None)` | `(T) -> bool` | `([T], [T])` |
 
 Consumes the iterator and returns a tuple of arrays: the first contains values
 for which `predicate` is true; the second contains all other values.
@@ -118,7 +121,7 @@ for which `predicate` is true; the second contains all other values.
 
 | Iterator | Initial value | Reducer | Result |
 | -------- | ------------- | ------- | ------ |
-| `() -> (bool, T)` | `S` | `(A, T) -> B` | `A \| T \| B` |
+| `() -> (#Some(T) \| #None)` | `S` | `(A, T) -> B` | `A \| T \| B` |
 
 Reduces the iterator by applying `function(accumulator, current_value)` to each
 element, starting with `initial_value`. The reducer must accept the possible
