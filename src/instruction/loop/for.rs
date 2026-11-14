@@ -1,8 +1,8 @@
 use crate::{
     self as simplesl, Error, Interpreter,
     instruction::{
-        BaseInstruction, Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
-        pattern::Pattern,
+        BaseInstruction, Exec, ExecResult, ExecStop, Instruction, Recreate,
+        local_variable::LocalVariables, pattern::Pattern,
     },
     variable::{ReturnType, Type, Variable},
 };
@@ -74,7 +74,11 @@ impl Exec for For {
                 continue;
             }
             self.pattern.insert_variables(&mut interpreter, item);
-            self.body.exec(&mut interpreter)?;
+            match self.body.exec(&mut interpreter) {
+                Ok(_) | Err(ExecStop::Continue) => (),
+                Err(ExecStop::Break) => break,
+                stop => return stop,
+            }
         }
         Ok(Variable::none())
     }
@@ -136,5 +140,49 @@ mod tests {
             *total";
         let code = Code::parse(&Interpreter::without_stdlib(), script).unwrap();
         assert_eq!(code.exec().unwrap(), Variable::Int(2));
+    }
+
+    #[test]
+    fn for_loop_break_exits_current_loop() {
+        let script = "total := mut 0
+            for value in [1, 2, 3]~ {
+                if value == 2 {
+                    break
+                }
+                total = *total + value
+            }
+            *total";
+        let code = Code::parse(&Interpreter::without_stdlib(), script).unwrap();
+        assert_eq!(code.exec().unwrap(), Variable::Int(1));
+    }
+
+    #[test]
+    fn for_loop_continue_skips_to_next_item() {
+        let script = "total := mut 0
+            for value in [1, 2, 3]~ {
+                if value == 2 {
+                    continue
+                }
+                total = *total + value
+            }
+            *total";
+        let code = Code::parse(&Interpreter::without_stdlib(), script).unwrap();
+        assert_eq!(code.exec().unwrap(), Variable::Int(4));
+    }
+
+    #[test]
+    fn nested_for_loop_break_only_exits_inner_loop() {
+        let script = "total := mut 0
+            for outer in [1, 2]~ {
+                for inner in [1, 2, 3]~ {
+                    if inner == 2 {
+                        break
+                    }
+                    total = *total + outer
+                }
+            }
+            *total";
+        let code = Code::parse(&Interpreter::without_stdlib(), script).unwrap();
+        assert_eq!(code.exec().unwrap(), Variable::Int(3));
     }
 }
