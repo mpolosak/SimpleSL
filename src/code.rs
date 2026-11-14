@@ -37,17 +37,15 @@ impl Code {
         self.exec_unscoped(&mut interpreter)
     }
     pub fn exec_unscoped(&self, interpreter: &mut Interpreter) -> Result<Variable, ExecError> {
-        match self
-            .instructions
-            .iter()
-            .map(|instruction| instruction.exec(interpreter))
-            .last()
-            .unwrap_or_else(|| Ok(Variable::none()))
-        {
-            Ok(var) => Ok(var),
-            Err(ExecStop::Error(err)) => Err(err),
-            Err(_) => unreachable!("Return statement outside of function body"),
+        let mut result = Variable::none();
+        for instruction in self.instructions.iter() {
+            match instruction.exec(interpreter) {
+                Ok(var) => result = var,
+                Err(ExecStop::Error(err)) => return Err(err),
+                Err(_) => unreachable!("Return statement outside of function body"),
+            }
         }
+        Ok(result)
     }
 }
 
@@ -61,8 +59,23 @@ impl ReturnType for Code {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Code, Interpreter};
+    use crate::{Code, ExecError, Interpreter, variable::Variable};
     use proptest::prelude::*;
+
+    #[test]
+    fn execution_stops_after_runtime_error() {
+        let mut interpreter = Interpreter::without_stdlib();
+        let code = Code::parse(&interpreter, "x := mut 0\n1 / 0\nx = 1").unwrap();
+
+        assert!(matches!(
+            code.exec_unscoped(&mut interpreter),
+            Err(ExecError::ZeroDivision)
+        ));
+        let Variable::Mut(value) = interpreter.get_variable("x").unwrap() else {
+            panic!("x should remain mutable");
+        };
+        assert_eq!(*value.variable.read().unwrap(), Variable::Int(0));
+    }
 
     #[test]
     fn test_send() {
