@@ -4,12 +4,11 @@ use crate::instruction::panic::Panic;
 use crate::instruction::{BaseInstruction, Exec, ExecResult, Instruction, Recreate};
 use crate::variable::{ReturnType, Type, Variable};
 use crate::{self as simplesl, BinOperator, Error, Interpreter};
-use lazy_static::lazy_static;
 use simplesl_macros::var_type;
+use std::sync::LazyLock;
 
-lazy_static! {
-    pub static ref ACCEPTED_TYPE: Type = var_type!((int, int) | (float, float) | (string, string));
-}
+pub static ACCEPTED_TYPE: LazyLock<Type> =
+    LazyLock::new(|| var_type!((int, int) | (float, float) | (string, string)));
 
 #[derive(Debug)]
 pub struct Add {

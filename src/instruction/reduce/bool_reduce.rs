@@ -1,3 +1,5 @@
+use std::sync::LazyLock;
+
 use crate::{
     self as simplesl, Error,
     instruction::{Instruction, InstructionWithStr, function::call::FunctionCall, tuple::Tuple},
@@ -5,12 +7,9 @@ use crate::{
     unary_operator::UnaryOperator,
     variable::{ReturnType, Type, Variable},
 };
-use lazy_static::lazy_static;
 use simplesl_macros::var_type;
 
-lazy_static! {
-    pub static ref ACCEPTED_TYPE: Type = var_type!(() -> (#Some(bool)|#None));
-}
+pub static ACCEPTED_TYPE: LazyLock<Type> = LazyLock::new(|| var_type!(() -> (#Some(bool)|#None)));
 
 pub fn create(
     iterator: InstructionWithStr,

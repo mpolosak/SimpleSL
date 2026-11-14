@@ -6,6 +6,8 @@ mod logic;
 mod map;
 mod math;
 mod partition;
+use std::sync::LazyLock;
+
 use super::{
     Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
     reduce,
@@ -23,16 +25,14 @@ use crate::{
     },
     variable::{ReturnType, Type, Variable},
 };
-use lazy_static::lazy_static;
 pub use math::{add, multiply, pow, subtract};
 use math::{divide, modulo};
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
 use simplesl_parser::Rule;
 
-lazy_static! {
-    pub static ref ACCEPTED_NUM_TYPE: Type = var_type!((int, int) | (float, float));
-}
+pub static ACCEPTED_NUM_TYPE: LazyLock<Type> =
+    LazyLock::new(|| var_type!((int, int) | (float, float)));
 
 pub fn can_be_used_int(lhs: &Type, rhs: &Type) -> bool {
     lhs.matches(&Type::Int) && rhs.matches(&Type::Int)

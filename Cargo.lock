@@ -587,7 +587,6 @@ dependencies = [
  "duplicate",
  "enum-as-inner",
  "itertools",
- "lazy_static",
  "markdown",
  "match_any",
  "pest",
@@ -617,7 +616,6 @@ dependencies = [
 name = "simplesl_parser"
 version = "0.1.0"
 dependencies = [
- "lazy_static",
  "pest",
  "pest_derive",
 ]

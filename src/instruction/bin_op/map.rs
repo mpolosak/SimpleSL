@@ -6,12 +6,11 @@ use crate::{
     },
     variable::{ReturnType, Type, Typed, Variable},
 };
-use lazy_static::lazy_static;
 use simplesl_macros::var_type;
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 
-lazy_static! {
-    static ref MAP: Arc<Function> = Code::parse(
+static MAP: LazyLock<Arc<Function>> = LazyLock::new(|| {
+    Code::parse(
         &Interpreter::without_stdlib(),
         "(func: () -> (#Some(any)|#None), mapper: (any) -> any) -> () -> (#Some(any)|#None) {
             return () -> #Some(any)|#None {
@@ -20,14 +19,14 @@ lazy_static! {
                 }
                 return #None;
             }
-        }"
+        }",
     )
     .unwrap()
     .exec()
     .unwrap()
     .into_function()
-    .unwrap();
-}
+    .unwrap()
+});
 
 #[derive(Debug)]
 pub struct Map {

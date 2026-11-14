@@ -10,4 +10,3 @@ repository = "https://github.com/mpolosak/SimpleSL"
 [dependencies]
 pest.workspace = true
 pest_derive = "2.0"
-lazy_static.workspace = true

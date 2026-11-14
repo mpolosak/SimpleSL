@@ -1,7 +1,6 @@
 use super::{function_type::FunctionType, multi_type::MultiType, tagged_type::TaggedType};
 use crate::{self as simplesl, errors::ParseTypeError, join, variable::struct_type::StructType};
 use derive_more::{Display, From};
-use lazy_static::lazy_static;
 use match_any::match_any;
 use pest::{Parser, iterators::Pair};
 use simplesl_macros::var_type;
@@ -12,7 +11,7 @@ use std::{
     iter::zip,
     ops::{BitOr, BitOrAssign},
     str::FromStr,
-    sync::Arc,
+    sync::{Arc, LazyLock},
 };
 
 #[derive(Clone, Debug, Display, Hash, Eq, From, PartialEq)]
@@ -45,17 +44,11 @@ pub enum Type {
     Never,
 }
 
-lazy_static! {
-    static ref ITERATOR_TYPE: Type = var_type!(() -> (#Some(any) | #None));
-}
+static ITERATOR_TYPE: LazyLock<Type> = LazyLock::new(|| var_type!(() -> (#Some(any) | #None)));
 
-lazy_static! {
-    static ref EMPTY_STRUCT_TYPE: Type = var_type!(struct{});
-}
+static EMPTY_STRUCT_TYPE: LazyLock<Type> = LazyLock::new(|| var_type!(struct{}));
 
-lazy_static! {
-    static ref ARRAY_TYPE: Type = var_type!([any]);
-}
+static ARRAY_TYPE: LazyLock<Type> = LazyLock::new(|| var_type!([any]));
 
 impl Type {
     pub fn none() -> Self {

@@ -1,11 +1,9 @@
 use crate as simplesl;
 use crate::variable::Type;
-use lazy_static::lazy_static;
 use simplesl_macros::var_type;
+use std::sync::LazyLock;
 
-lazy_static! {
-    pub static ref ACCEPTED_TYPE: Type = var_type!((int, int) | (bool, bool));
-}
+pub static ACCEPTED_TYPE: LazyLock<Type> = LazyLock::new(|| var_type!((int, int) | (bool, bool)));
 
 pub fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
     let lhs = lhs.clone();

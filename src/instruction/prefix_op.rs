@@ -7,10 +7,10 @@ use crate::unary_operator::UnaryOperator;
 use crate::variable::{ReturnType, Type, Variable};
 use crate::{self as simplesl, instruction::r#mut::Mut};
 use crate::{Error, Interpreter};
-use lazy_static::lazy_static;
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
 use simplesl_parser::{Rule, unexpected};
+use std::sync::LazyLock;
 
 impl InstructionWithStr {
     pub fn create_prefix(op: Pair<'_, Rule>, rhs: Self, errors: &mut Vec<Error>) -> Self {
@@ -27,9 +27,7 @@ impl InstructionWithStr {
     }
 }
 
-lazy_static! {
-    pub static ref ACCEPTED_NUM: Type = var_type!(int | float);
-}
+pub static ACCEPTED_NUM: LazyLock<Type> = LazyLock::new(|| var_type!(int | float));
 
 #[derive(Debug)]
 pub struct UnaryMinus(Instruction);
@@ -81,9 +79,7 @@ impl ReturnType for UnaryMinus {
 #[derive(Debug)]
 pub struct Not(Instruction);
 
-lazy_static! {
-    pub static ref ACCEPTED_NOT: Type = var_type!(int | bool);
-}
+pub static ACCEPTED_NOT: LazyLock<Type> = LazyLock::new(|| var_type!(int | bool));
 
 impl Not {
     pub fn create_instruction(

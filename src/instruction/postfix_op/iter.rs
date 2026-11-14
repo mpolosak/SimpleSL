@@ -8,12 +8,11 @@ use crate::{
     unary_operator::UnaryOperator,
     variable::{ReturnType, Type, Typed},
 };
-use lazy_static::lazy_static;
 use simplesl_macros::var_type;
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 
-lazy_static! {
-    static ref ITER: Arc<Function> = Code::parse(
+static ITER: LazyLock<Arc<Function>> = LazyLock::new(|| {
+    Code::parse(
         &Interpreter::with_stdlib(),
         "(array: [int]) -> () -> (#Some(int) | #None) {
             i := mut -1;
@@ -25,14 +24,14 @@ lazy_static! {
                 }
                 return #None
             }
-        } "
+        } ",
     )
     .unwrap()
     .exec()
     .unwrap()
     .into_function()
-    .unwrap();
-}
+    .unwrap()
+});
 
 #[derive(Debug)]
 pub struct Iter(Instruction);

@@ -5,18 +5,17 @@ use simplesl_parser::Rule;
 
 use crate::var_token_from_pair;
 
-pub fn lazy_decl(ident: &Ident, ident_hidden: &Ident, var: &TokenStream) -> TokenStream {
+pub fn lazy_decl(ident: &Ident, var: &TokenStream) -> TokenStream {
     quote!(
-        lazy_static::lazy_static! {
-            static ref #ident_hidden: simplesl::variable::Variable = {
-                #var
-            };
-        }
         pub struct #ident;
+
+        impl #ident {
+            const simplesl_hidden: std::sync::LazyLock<simplesl::variable::Variable> = std::sync::LazyLock::new(||{#var});
+        }
 
         impl From<#ident> for simplesl::variable::Variable{
             fn from(_: #ident) -> simplesl::variable::Variable {
-                #ident_hidden.clone()
+                #ident::simplesl_hidden.clone()
             }
         }
     )
@@ -26,7 +25,6 @@ pub fn decl(pair: Pair<'_, Rule>) -> TokenStream {
     let mut inner = pair.into_inner();
     let ident_str = inner.next().unwrap().as_str();
     let ident = format_ident!("{ident_str}");
-    let ident_hidden = format_ident!("{}_var", ident_str.to_lowercase());
     let pair = inner.next().unwrap();
 
     let var = match pair.as_rule() {
@@ -41,5 +39,5 @@ pub fn decl(pair: Pair<'_, Rule>) -> TokenStream {
         }
         _ => var_token_from_pair(pair),
     };
-    lazy_decl(&ident, &ident_hidden, &var)
+    lazy_decl(&ident, &var)
 }

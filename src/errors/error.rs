@@ -1,6 +1,4 @@
-use crate::{
-    BinOperator, function::Param, unary_operator::UnaryOperator, variable::Type,
-};
+use crate::{BinOperator, function::Param, unary_operator::UnaryOperator, variable::Type};
 use derive_more::From;
 use match_any::match_any;
 use simplesl_parser::Rule;

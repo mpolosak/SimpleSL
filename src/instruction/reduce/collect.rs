@@ -1,3 +1,5 @@
+use std::sync::LazyLock;
+
 use crate::{
     self as simplesl, Error,
     instruction::{
@@ -9,12 +11,9 @@ use crate::{
     unary_operator::UnaryOperator,
     variable::{ReturnType, Type},
 };
-use lazy_static::lazy_static;
 use simplesl_macros::var_type;
 
-lazy_static! {
-    pub static ref ACCEPTED_TYPE: Type = var_type!(() -> (bool, any));
-}
+pub static ACCEPTED_TYPE: LazyLock<Type> = LazyLock::new(|| var_type!(() -> (bool, any)));
 
 #[derive(Debug)]
 pub struct Collect {

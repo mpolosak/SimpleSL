@@ -9,7 +9,7 @@ use decl::decl;
 use export::export_item_fn;
 use pest::Parser;
 use proc_macro::TokenStream;
-use quote::{format_ident, quote};
+use quote::quote;
 use simplesl_parser::{Rule, SimpleSLParser};
 use syn::{Ident, ItemFn, ItemMod, parse, parse_macro_input};
 use var::quote;
@@ -34,17 +34,16 @@ pub fn decls(item: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn export(attr: TokenStream, module: TokenStream) -> TokenStream {
     let ident = parse_macro_input!(attr as Ident);
-    let (module, mod_ident, val) = if let Ok(mut function) = parse::<ItemFn>(module.clone()) {
+    let (module, val) = if let Ok(mut function) = parse::<ItemFn>(module.clone()) {
         let export = export_item_fn(&mut function, None);
-        (quote!(#function), function.sig.ident.clone(), export)
+        (quote!(#function), export)
     } else {
         let mut module = parse_macro_input!(module as ItemMod);
         let items = export_module(&mut module);
-        (quote!(#module), module.ident, items)
+        (quote!(#module), items)
     };
 
-    let var_ident = format_ident!("{}_var", mod_ident);
-    let decl = lazy_decl(&ident, &var_ident, &val);
+    let decl = lazy_decl(&ident, &val);
     quote!(
         #module
         #decl
