@@ -1,6 +1,7 @@
 use super::{Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables};
 use crate::{
     self as simplesl, BinOperator, Code, Error,
+    errors::CannotDo2,
     instruction::BaseInstruction,
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
@@ -24,11 +25,14 @@ impl TypeFilter {
         let array_type = iterator.return_type();
         let var_type = Type::from(var_type);
         if !array_type.is_iterator() {
-            errors.push(Error::CannotDo2(
-                array_type,
-                BinOperator::Filter,
-                var_type.clone(),
-            ));
+            errors.push(
+                CannotDo2 {
+                    lhs: array_type,
+                    op: BinOperator::Filter,
+                    rhs: var_type.clone(),
+                }
+                .into(),
+            );
         }
         Self { iterator, var_type }.into()
     }

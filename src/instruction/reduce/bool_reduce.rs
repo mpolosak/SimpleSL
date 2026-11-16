@@ -1,5 +1,6 @@
 use crate::{
     self as simplesl, Error,
+    errors::IncorrectUnaryOperatorOperand,
     instruction::{Instruction, InstructionWithSpan, function::call::FunctionCall, tuple::Tuple},
     stdlib::operators::{ALL, ANY},
     unary_operator::UnaryOperator,
@@ -18,12 +19,15 @@ pub fn create(
     let return_type = iterator.return_type();
     if !return_type.matches(&ACCEPTED_TYPE) {
         let ins = iterator.span.as_str().into();
-        errors.push(Error::IncorectUnaryOperatorOperand {
-            ins,
-            op,
-            expected: ACCEPTED_TYPE.clone(),
-            given: return_type,
-        });
+        errors.push(
+            IncorrectUnaryOperatorOperand {
+                ins,
+                op,
+                expected: ACCEPTED_TYPE.clone(),
+                given: return_type,
+            }
+            .into(),
+        );
     }
     let function = if op == UnaryOperator::All {
         Variable::from(ALL)
@@ -43,7 +47,7 @@ pub fn create(
 #[cfg(test)]
 mod tests {
     use crate::{
-        self as simplesl, Code, Error, Interpreter,
+        self as simplesl, Code, Error, Interpreter, errors::IncorrectUnaryOperatorOperand,
         instruction::reduce::bool_reduce::ACCEPTED_TYPE, unary_operator::UnaryOperator,
         variable::Variable,
     };
@@ -55,69 +59,76 @@ mod tests {
     fn all() {
         assert_eq!(
             parse_unwrap_first_error("[45, 76, 15]$&&"),
-            Error::IncorectUnaryOperatorOperand {
+            IncorrectUnaryOperatorOperand {
                 ins: "[45, 76, 15]".into(),
                 op: ALL,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!([int])
             }
+            .into()
         );
         assert_eq!(
             parse_unwrap_first_error(r#""abc"$&&"#),
-            Error::IncorectUnaryOperatorOperand {
+            IncorrectUnaryOperatorOperand {
                 ins: r#""abc""#.into(),
                 op: ALL,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(string)
             }
+            .into()
         );
         assert_eq!(
             parse_unwrap_first_error("x:= () -> bool {return true;} x$&&"),
-            Error::IncorectUnaryOperatorOperand {
+            IncorrectUnaryOperatorOperand {
                 ins: "x".into(),
                 op: ALL,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(() -> bool)
             }
+            .into()
         );
         assert_eq!(
             parse_unwrap_first_error("x:= (a: bool) -> #Some(bool) {return #Some(a);} x$&&"),
-            Error::IncorectUnaryOperatorOperand {
+            IncorrectUnaryOperatorOperand {
                 ins: "x".into(),
                 op: ALL,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!((bool) -> #Some(bool))
             }
+            .into()
         );
         assert_eq!(parse_and_exec("[true, false, true]~$&&"), Ok(var!(false)));
         assert_eq!(parse_and_exec("[true, true]~$&&"), Ok(var!(true)));
         assert_eq!(parse_and_exec("[]~$&&"), Ok(var!(true)));
         assert_eq!(
             parse_and_exec("[6.5, 6.5, 3.4]~$&&").unwrap_err()[0],
-            Error::IncorectUnaryOperatorOperand {
+            IncorrectUnaryOperatorOperand {
                 ins: "[6.5, 6.5, 3.4]~".into(),
                 op: ALL,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(() -> (#Some(float)|#None))
             }
+            .into()
         );
         assert_eq!(
             parse_unwrap_first_error(r#"["a", "6.5", "$"]~$&&"#),
-            Error::IncorectUnaryOperatorOperand {
+            IncorrectUnaryOperatorOperand {
                 ins: r#"["a", "6.5", "$"]~"#.into(),
                 op: ALL,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(() -> (#Some(string)|#None))
             }
+            .into()
         );
         assert_eq!(
             parse_unwrap_first_error("[45, 16, 3]~$&&"),
-            Error::IncorectUnaryOperatorOperand {
+            IncorrectUnaryOperatorOperand {
                 ins: "[45, 16, 3]~".into(),
                 op: ALL,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(() -> (#Some(int)|#None))
             }
+            .into()
         );
         assert_eq!(
             parse_and_exec(
@@ -153,69 +164,76 @@ mod tests {
     fn any() {
         assert_eq!(
             parse_unwrap_first_error("[45, 76, 15]$||"),
-            Error::IncorectUnaryOperatorOperand {
+            IncorrectUnaryOperatorOperand {
                 ins: "[45, 76, 15]".into(),
                 op: ANY,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!([int])
             }
+            .into()
         );
         assert_eq!(
             parse_unwrap_first_error(r#""abc"$||"#),
-            Error::IncorectUnaryOperatorOperand {
+            IncorrectUnaryOperatorOperand {
                 ins: r#""abc""#.into(),
                 op: ANY,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(string)
             }
+            .into()
         );
         assert_eq!(
             parse_unwrap_first_error("x:= () -> bool {return true;} x$||"),
-            Error::IncorectUnaryOperatorOperand {
+            IncorrectUnaryOperatorOperand {
                 ins: "x".into(),
                 op: ANY,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(() -> bool)
             }
+            .into()
         );
         assert_eq!(
             parse_unwrap_first_error("x:= (a: bool) -> #Some(bool) {return #Some(a);} x$||"),
-            Error::IncorectUnaryOperatorOperand {
+            IncorrectUnaryOperatorOperand {
                 ins: "x".into(),
                 op: ANY,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!((bool) -> #Some(bool))
             }
+            .into()
         );
         assert_eq!(parse_and_exec("[true, false, true]~$||"), Ok(var!(true)));
         assert_eq!(parse_and_exec("[false, false]~$||"), Ok(var!(false)));
         assert_eq!(parse_and_exec("[]~$||"), Ok(var!(false)));
         assert_eq!(
             parse_unwrap_first_error("[6.5, 6.5, 3.4]~$||"),
-            Error::IncorectUnaryOperatorOperand {
+            IncorrectUnaryOperatorOperand {
                 ins: "[6.5, 6.5, 3.4]~".into(),
                 op: ANY,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(() -> (#Some(float)|#None))
             }
+            .into()
         );
         assert_eq!(
             parse_unwrap_first_error(r#"["a", "6.5", "$"]~$||"#),
-            Error::IncorectUnaryOperatorOperand {
+            IncorrectUnaryOperatorOperand {
                 ins: r#"["a", "6.5", "$"]~"#.into(),
                 op: ANY,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(() -> (#None | #Some(string)))
             }
+            .into()
         );
         assert_eq!(
             parse_unwrap_first_error("[45, 16, 3]~$||"),
-            Error::IncorectUnaryOperatorOperand {
+            IncorrectUnaryOperatorOperand {
                 ins: "[45, 16, 3]~".into(),
                 op: ANY,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(() -> (#None | #Some(int)))
             }
+            .into()
         );
         assert_eq!(
             parse_and_exec(

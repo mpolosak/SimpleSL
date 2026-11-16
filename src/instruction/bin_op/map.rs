@@ -1,5 +1,6 @@
 use crate::{
     self as simplesl, BinOperator, Code, Error, Interpreter,
+    errors::CannotDo2,
     function::Function,
     instruction::{
         BaseInstruction, Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
@@ -43,7 +44,14 @@ impl Map {
         let lhs_type = lhs.return_type();
         let rhs_type = rhs.return_type();
         if !Self::can_be_used(&lhs_type, &rhs_type) {
-            errors.push(Error::CannotDo2(lhs_type, BinOperator::Map, rhs_type));
+            errors.push(
+                CannotDo2 {
+                    lhs: lhs_type,
+                    op: BinOperator::Map,
+                    rhs: rhs_type,
+                }
+                .into(),
+            );
         }
         Self { lhs, rhs }.into()
     }

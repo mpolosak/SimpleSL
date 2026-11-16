@@ -2,6 +2,7 @@ use pest::Span;
 
 use crate::{
     Error,
+    errors::VariableDoesntExist,
     instruction::{
         BaseInstruction, Exec, Instruction, Recreate,
         local_variable::{LocalVariable, LocalVariables},
@@ -22,18 +23,23 @@ impl Ident {
         local_variables: &LocalVariables<'_>,
         errors: &mut Vec<Error>,
     ) -> Instruction {
-        let str = Arc::from(span.as_str());
-        local_variables.get(&str).map_or_else(
+        let ident = Arc::from(span.as_str());
+        local_variables.get(&ident).map_or_else(
             || {
                 local_variables
                     .interpreter
-                    .get_variable(&str)
+                    .get_variable(&ident)
                     .cloned()
                     .map(Instruction::from)
                     .unwrap_or_else(|| {
-                        errors.push(Error::VariableDoesntExist(str.clone()));
+                        errors.push(
+                            VariableDoesntExist {
+                                ident: ident.clone(),
+                            }
+                            .into(),
+                        );
                         Self {
-                            ident: str.clone(),
+                            ident: ident.clone(),
                             variable: LocalVariable::Other(Type::Never),
                         }
                         .into()
@@ -41,7 +47,7 @@ impl Ident {
             },
             |var| {
                 Self {
-                    ident: str.clone(),
+                    ident: ident.clone(),
                     variable: var.clone(),
                 }
                 .into()

@@ -1,5 +1,6 @@
 use crate::{
     BinOperator, Error,
+    errors::CannotDo2,
     instruction::{BaseInstruction, Exec, Instruction, bin_op::concat::Concat},
     variable::{ReturnType, Type},
 };
@@ -21,7 +22,14 @@ impl AssignConcat {
         let lhs_rt = lhs.return_type();
         let rhs_rt = rhs.return_type();
         if !Self::can_be_used(&lhs_rt, &rhs_rt) {
-            errors.push(Error::CannotDo2(lhs_rt, BinOperator::AssignAdd, rhs_rt));
+            errors.push(
+                CannotDo2 {
+                    lhs: lhs_rt,
+                    op: BinOperator::AssignAdd,
+                    rhs: rhs_rt,
+                }
+                .into(),
+            );
         }
         Self { lhs, rhs }.into()
     }

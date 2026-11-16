@@ -421,7 +421,7 @@ mod tests {
 
         #[test]
         fn display_string(s in "\\PC*") {
-            assert_eq!(format!("{}", Variable::String(s.clone().into())), format!("{s}"))
+            assert_eq!(format!("{}", Variable::String(s.clone().into())), s)
         }
     }
 }

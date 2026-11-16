@@ -1,5 +1,6 @@
 use crate::{
     self as simplesl, Error, Interpreter,
+    errors::{SetPatternNotMatched, WrongType},
     instruction::{
         BaseInstruction, Exec, ExecResult, ExecStop, Instruction, Recreate,
         local_variable::LocalVariables, pattern::Pattern,
@@ -27,10 +28,13 @@ impl For {
         let pattern_pair = inner.next().unwrap();
         let iter = Instruction::new(inner.next().unwrap(), local_variables, errors);
         let iter_element = iter.return_type().iter_element().unwrap_or_else(|| {
-            errors.push(Error::WrongType(
-                "iterator".into(),
-                var_type!(() -> (#Some(any)|#None)),
-            ));
+            errors.push(
+                WrongType {
+                    ident: "iterator".into(),
+                    expected_type: var_type!(() -> (#Some(any)|#None)),
+                }
+                .into(),
+            );
             Type::Never
         });
         let pattern = if pattern_pair.as_rule() == Rule::ident {
@@ -39,11 +43,14 @@ impl For {
             Pattern::create_instruction(pattern_pair.clone(), &iter_element, errors)
         };
         if !pattern.is_matched(&iter_element) {
-            errors.push(Error::SetPatternNotMatched {
-                ins: "for loop element".into(),
-                var_type: iter_element,
-                pattern: pattern_pair.as_str().into(),
-            });
+            errors.push(
+                SetPatternNotMatched {
+                    ins: "for loop element".into(),
+                    var_type: iter_element,
+                    pattern: pattern_pair.as_str().into(),
+                }
+                .into(),
+            );
         }
         let mut local_variables = local_variables.create_layer();
         local_variables.in_loop = true;

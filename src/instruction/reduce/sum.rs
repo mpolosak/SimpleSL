@@ -2,6 +2,7 @@ use std::sync::LazyLock;
 
 use crate::{
     self as simplesl, Error,
+    errors::IncorrectUnaryOperatorOperand,
     instruction::{
         BaseInstruction, Exec, ExecResult, Instruction, InstructionWithSpan, Recreate,
         local_variable::LocalVariables,
@@ -26,12 +27,15 @@ impl Sum {
         let return_type = iterator.return_type();
         if !return_type.matches(&ACCEPTED_TYPE) {
             let ins = iterator.span.as_str().into();
-            errors.push(Error::IncorectUnaryOperatorOperand {
-                ins,
-                op: UnaryOperator::Sum,
-                expected: ACCEPTED_TYPE.clone(),
-                given: return_type,
-            });
+            errors.push(
+                IncorrectUnaryOperatorOperand {
+                    ins,
+                    op: UnaryOperator::Sum,
+                    expected: ACCEPTED_TYPE.clone(),
+                    given: return_type,
+                }
+                .into(),
+            );
         }
         Self {
             iterator: iterator.instruction,
@@ -79,8 +83,8 @@ impl ReturnType for Sum {
 #[cfg(test)]
 mod tests {
     use crate::{
-        self as simplesl, Code, Error, Interpreter, instruction::reduce::sum::ACCEPTED_TYPE,
-        unary_operator::UnaryOperator, variable::Variable,
+        self as simplesl, Code, Error, Interpreter, errors::IncorrectUnaryOperatorOperand,
+        instruction::reduce::sum::ACCEPTED_TYPE, unary_operator::UnaryOperator, variable::Variable,
     };
     use simplesl_macros::{var, var_type};
     const OP: UnaryOperator = UnaryOperator::Sum;
@@ -89,12 +93,13 @@ mod tests {
     fn sum_rejects_arrays() {
         assert_eq!(
             parse_unwrap_first_error("[45, 76, 15]$+"),
-            Error::IncorectUnaryOperatorOperand {
+            IncorrectUnaryOperatorOperand {
                 ins: "[45, 76, 15]".into(),
                 op: OP,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!([int])
             }
+            .into()
         );
     }
 
@@ -102,12 +107,13 @@ mod tests {
     fn sum_rejects_strings() {
         assert_eq!(
             parse_unwrap_first_error(r#""abc"$+"#),
-            Error::IncorectUnaryOperatorOperand {
+            IncorrectUnaryOperatorOperand {
                 ins: r#""abc""#.into(),
                 op: OP,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(string)
             }
+            .into()
         );
     }
 
@@ -115,21 +121,23 @@ mod tests {
     fn sum_rejects_functions_with_invalid_return_types() {
         assert_eq!(
             parse_unwrap_first_error("x:= () -> int {return 5;} x$+"),
-            Error::IncorectUnaryOperatorOperand {
+            IncorrectUnaryOperatorOperand {
                 ins: "x".into(),
                 op: OP,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(() -> int)
             }
+            .into()
         );
         assert_eq!(
             parse_unwrap_first_error("x:= (a: int) -> (bool, int) {return (true, a);} x$+"),
-            Error::IncorectUnaryOperatorOperand {
+            IncorrectUnaryOperatorOperand {
                 ins: "x".into(),
                 op: OP,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!((int) -> (bool, int))
             }
+            .into()
         );
     }
 
@@ -144,12 +152,13 @@ mod tests {
     fn sum_rejects_mixed_numeric_iterator_types() {
         assert_eq!(
             parse_unwrap_first_error("[45, 16.5, 3]~$+"),
-            Error::IncorectUnaryOperatorOperand {
+            IncorrectUnaryOperatorOperand {
                 ins: "[45, 16.5, 3]~".into(),
                 op: OP,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(() -> (#Some(int|float)|#None))
             }
+            .into()
         );
     }
 

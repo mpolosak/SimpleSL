@@ -1,5 +1,6 @@
 use crate::{
     Error,
+    errors::{CannotBeParsed, IntegerOverflow, SetPatternNotMatched},
     instruction::pattern::Pattern,
     interpreter::VariableMap,
     variable::{Array, TaggedValue, Type, Typed, Variable},
@@ -48,7 +49,12 @@ pub(crate) fn variable_from_pair(pair: Pair<Rule>, errors: &mut Vec<Error>) -> V
                 .replace([' ', '_'], "")
                 .parse::<f64>()
                 .unwrap_or_else(|_| {
-                    errors.push(Error::CannotBeParsed(pair.as_str().into()));
+                    errors.push(
+                        CannotBeParsed {
+                            input: pair.as_str().into(),
+                        }
+                        .into(),
+                    );
                     -1.0
                 });
             Variable::Float(value)
@@ -59,7 +65,12 @@ pub(crate) fn variable_from_pair(pair: Pair<Rule>, errors: &mut Vec<Error>) -> V
                 .replace([' ', '_'], "")
                 .parse::<f64>()
                 .unwrap_or_else(|_| {
-                    errors.push(Error::CannotBeParsed(pair.as_str().into()));
+                    errors.push(
+                        CannotBeParsed {
+                            input: pair.as_str().into(),
+                        }
+                        .into(),
+                    );
                     0.0
                 });
             Variable::Float(value)
@@ -118,18 +129,26 @@ pub(crate) fn variable_from_pair(pair: Pair<Rule>, errors: &mut Vec<Error>) -> V
                 let pattern_str = pattern.as_str().into();
                 let pattern = Pattern::create_instruction(pattern, &var_type, errors);
                 if !pattern.matches_variable(&value) {
-                    errors.push(Error::SetPatternNotMatched {
-                        ins: value_str,
-                        var_type,
-                        pattern: pattern_str,
-                    });
+                    errors.push(
+                        SetPatternNotMatched {
+                            ins: value_str,
+                            var_type,
+                            pattern: pattern_str,
+                        }
+                        .into(),
+                    );
                 }
                 pattern.insert_variables_into_vm(&mut vm, value);
             }
             Variable::Struct(vm.into())
         }
         _ => {
-            errors.push(Error::CannotBeParsed(pair.as_str().into()));
+            errors.push(
+                CannotBeParsed {
+                    input: pair.as_str().into(),
+                }
+                .into(),
+            );
             Variable::none()
         }
     }
@@ -159,17 +178,20 @@ fn parse_int_with_radix(pair: Pair<Rule>, radix: u32) -> Result<i64, Error> {
         .unwrap()
         .as_str()
         .replace([' ', '_'], "");
-    i64::from_str_radix(&inner, radix).map_err(|_| Error::IntegerOverflow(str.into()))
+    i64::from_str_radix(&inner, radix).map_err(|_| {
+        IntegerOverflow {
+            literal: str.into(),
+        }
+        .into()
+    })
 }
 
 #[cfg(test)]
 mod tests {
     use crate as simplesl;
+    use crate::errors::{SelfContradictoryPattern, SetPatternNotMatched};
     use crate::variable::TaggedValue;
-    use crate::{
-        Error,
-        variable::{Array, Type, Variable},
-    };
+    use crate::variable::{Array, Type, Variable};
     use proptest::prelude::*;
     use simplesl_macros::var_type;
     use std::{collections::HashMap, str::FromStr};
@@ -279,28 +301,31 @@ mod tests {
     fn struct_from_str_pattern_not_matched() {
         assert_eq!(
             Variable::from_str("struct{a:float=5}").unwrap_err()[0],
-            Error::SetPatternNotMatched {
+            SetPatternNotMatched {
                 ins: "5".into(),
                 var_type: Type::Int,
                 pattern: "a:float".into()
             }
+            .into()
         );
         assert_eq!(
             Variable::from_str(r#"struct{(a, b, c):(int, float, int)=(5, 5.5, "")}"#).unwrap_err()
                 [0],
-            Error::SetPatternNotMatched {
+            SetPatternNotMatched {
                 ins: r#"(5, 5.5, "")"#.into(),
                 var_type: var_type!((int, float, string)),
                 pattern: "(a, b, c):(int, float, int)".into()
             }
+            .into()
         );
         assert_eq!(
             Variable::from_str(r#"struct{(a, b, c):=(5, 5.5)}"#).unwrap_err()[0],
-            Error::SetPatternNotMatched {
+            SetPatternNotMatched {
                 ins: r#"(5, 5.5)"#.into(),
                 var_type: var_type!((int, float)),
                 pattern: "(a, b, c):".into()
             }
+            .into()
         );
     }
 
@@ -316,11 +341,17 @@ mod tests {
     fn struct_from_str_self_contradictory_pattern() {
         assert_eq!(
             Variable::from_str("struct{(a, b):float=5}").unwrap_err()[0],
-            Error::SelfContradictoryPattern("(a, b):float".into())
+            SelfContradictoryPattern {
+                pattern: "(a, b):float".into()
+            }
+            .into()
         );
         assert_eq!(
             Variable::from_str(r#"struct{(a, b, c):(int, float)=(5, 5.5, "")}"#).unwrap_err()[0],
-            Error::SelfContradictoryPattern("(a, b, c):(int, float)".into())
+            SelfContradictoryPattern {
+                pattern: "(a, b, c):(int, float)".into()
+            }
+            .into()
         );
     }
     proptest! {

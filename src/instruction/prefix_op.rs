@@ -1,6 +1,7 @@
 mod deref;
 use super::InstructionWithSpan;
 use super::local_variable::LocalVariables;
+use crate::errors::IncorrectUnaryOperatorOperand;
 use crate::instruction::prefix_op::deref::Deref;
 use crate::instruction::{BaseInstruction, Exec, Instruction, Recreate};
 use crate::unary_operator::UnaryOperator;
@@ -41,12 +42,15 @@ impl UnaryMinus {
         let return_type = instruction.return_type();
         if !return_type.matches(&ACCEPTED_NUM) {
             let ins = instruction.span.as_str().into();
-            errors.push(Error::IncorectUnaryOperatorOperand {
-                ins,
-                op,
-                expected: ACCEPTED_NUM.clone(),
-                given: return_type,
-            });
+            errors.push(
+                IncorrectUnaryOperatorOperand {
+                    ins,
+                    op,
+                    expected: ACCEPTED_NUM.clone(),
+                    given: return_type,
+                }
+                .into(),
+            );
         }
         UnaryMinus(instruction.instruction).into()
     }
@@ -91,12 +95,15 @@ impl Not {
         let return_type = instruction.return_type();
         if !return_type.matches(&ACCEPTED_NOT) {
             let ins = instruction.span.as_str().into();
-            errors.push(Error::IncorectUnaryOperatorOperand {
-                ins,
-                op,
-                expected: ACCEPTED_NOT.clone(),
-                given: return_type,
-            });
+            errors.push(
+                IncorrectUnaryOperatorOperand {
+                    ins,
+                    op,
+                    expected: ACCEPTED_NOT.clone(),
+                    given: return_type,
+                }
+                .into(),
+            );
         }
         Not(instruction.instruction).into()
     }
@@ -130,8 +137,8 @@ impl ReturnType for Not {
 #[cfg(test)]
 mod tests {
     use crate::{
-        self as simplesl, Code, Error, Interpreter, unary_operator::UnaryOperator,
-        variable::Variable,
+        self as simplesl, Code, Error, Interpreter, errors::IncorrectUnaryOperatorOperand,
+        unary_operator::UnaryOperator, variable::Variable,
     };
     use simplesl_macros::{var, var_type};
 
@@ -143,32 +150,35 @@ mod tests {
         assert_eq!(parse_and_exec("!0"), Ok(var!(-1)));
         assert_eq!(
             parse_and_exec("!7.5"),
-            Err(Vec::from([Error::IncorectUnaryOperatorOperand {
+            Err(Vec::from([IncorrectUnaryOperatorOperand {
                 ins: "7.5".into(),
                 op: UnaryOperator::Not,
                 expected: var_type!(int | bool),
                 given: var_type!(float)
-            }]))
+            }
+            .into()]))
         );
         assert_eq!(parse_and_exec("!true"), Ok(var!(false)));
         assert_eq!(parse_and_exec("!false"), Ok(var!(true)));
         assert_eq!(
             parse_and_exec("![7, -4.5, 0]"),
-            Err(Vec::from([Error::IncorectUnaryOperatorOperand {
+            Err(Vec::from([IncorrectUnaryOperatorOperand {
                 ins: "[7, -4.5, 0]".into(),
                 op: UnaryOperator::Not,
                 expected: var_type!(int | bool),
                 given: var_type!([int | float])
-            }]))
+            }
+            .into()]))
         );
         assert_eq!(
             parse_and_exec("-[7, true, 0]"),
-            Err(Vec::from([Error::IncorectUnaryOperatorOperand {
+            Err(Vec::from([IncorrectUnaryOperatorOperand {
                 ins: "[7, true, 0]".into(),
                 op: UnaryOperator::UnaryMinus,
                 expected: var_type!(int | float),
                 given: var_type!([int | bool])
-            }]))
+            }
+            .into()]))
         );
     }
 

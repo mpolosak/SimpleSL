@@ -1,6 +1,7 @@
 use super::{Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables};
 use crate::{
     Error,
+    errors::{SetPatternNotMatched, WrongType},
     instruction::{
         BaseInstruction,
         function::Function,
@@ -59,11 +60,12 @@ impl Set {
                 pattern,
                 instruction,
             },
-            Error::SetPatternNotMatched {
+            SetPatternNotMatched {
                 ins,
                 var_type,
                 pattern: pattern_str,
-            },
+            }
+            .into(),
         )
     }
 
@@ -91,11 +93,12 @@ impl Set {
                 pattern,
                 instruction,
             },
-            Error::SetPatternNotMatched {
+            SetPatternNotMatched {
                 ins,
                 var_type,
                 pattern: pattern_str,
-            },
+            }
+            .into(),
         )
     }
 
@@ -157,7 +160,13 @@ impl SetElse {
         let pattern = Pattern::create_instruction(pattern_pair, &instruction.return_type(), errors);
         let else_instruction = Instruction::new(inner.next().unwrap(), local_variables, errors);
         if else_instruction.return_type() != Type::Never {
-            errors.push(Error::WrongType("else branch".into(), Type::Never));
+            errors.push(
+                WrongType {
+                    ident: "else branch".into(),
+                    expected_type: Type::Never,
+                }
+                .into(),
+            );
         }
         pattern.insert_local_variables(local_variables);
         Self {
@@ -247,6 +256,7 @@ impl ReturnType for ConditionSet {
 mod tests {
     use crate::{
         self as simplesl, Code, Error, Interpreter,
+        errors::{SelfContradictoryPattern, SetPatternNotMatched, WrongCondition, WrongType},
         variable::{Array, Type, Variable},
     };
     use simplesl_macros::var_type;
@@ -289,7 +299,11 @@ mod tests {
                 }
                 sum_pair(4)"
             ),
-            Error::WrongType("else branch".into(), Type::Never)
+            WrongType {
+                ident: "else branch".into(),
+                expected_type: Type::Never
+            }
+            .into()
         );
     }
 
@@ -448,7 +462,10 @@ mod tests {
     fn reject_self_contradictory_pattern() {
         assert_eq!(
             parse_unwrap_first_error("(a, b): any = (1, 2)"),
-            Error::SelfContradictoryPattern("(a, b): any".into())
+            SelfContradictoryPattern {
+                pattern: "(a, b): any".into()
+            }
+            .into()
         )
     }
 
@@ -461,11 +478,12 @@ mod tests {
             }
             struct{a}: struct{a: int} = f(false)"
             ),
-            Error::SetPatternNotMatched {
+            SetPatternNotMatched {
                 ins: "f(false)".into(),
                 var_type: var_type!(struct{a: int} | struct{b: int}),
                 pattern: "struct{a}: struct{a: int}".into()
             }
+            .into()
         )
     }
 
@@ -533,7 +551,11 @@ mod tests {
     fn match_guard_must_be_boolean() {
         assert_eq!(
             parse_unwrap_first_error("match 1 { value: int if value => value, => 0, }"),
-            Error::WrongCondition("value".into(), Type::Int)
+            WrongCondition {
+                ins: "value".into(),
+                var_type: Type::Int
+            }
+            .into()
         );
     }
 

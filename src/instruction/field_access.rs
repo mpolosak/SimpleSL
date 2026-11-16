@@ -1,6 +1,7 @@
 use super::{ExecResult, Instruction, InstructionWithSpan, local_variable::LocalVariables};
 use crate::{
     Error, Interpreter,
+    errors::{CannotFieldAccess, NoField},
     instruction::{BaseInstruction, Exec, Recreate},
     variable::{ReturnType, Type, Variable},
 };
@@ -22,19 +23,28 @@ impl FieldAccess {
     ) -> Instruction {
         let return_type = instruction.return_type();
         if !return_type.is_struct() {
-            let ident = instruction.span.as_str().into();
-            errors.push(Error::CannotFieldAccess(ident, return_type.clone()));
+            let ins = instruction.span.as_str().into();
+            errors.push(
+                CannotFieldAccess {
+                    ins,
+                    var_type: return_type.clone(),
+                }
+                .into(),
+            );
         }
         let pair = op.into_inner().next().unwrap();
         let ident = Arc::from(pair.as_str());
 
         if !return_type.has_field(&ident) {
             let struct_ident = instruction.span.as_str().into();
-            errors.push(Error::NoField {
-                struct_ident,
-                field_ident: ident.clone(),
-                struct_type: return_type,
-            });
+            errors.push(
+                NoField {
+                    struct_ident,
+                    field_ident: ident.clone(),
+                    struct_type: return_type,
+                }
+                .into(),
+            );
         }
         Self {
             instruction: instruction.instruction,

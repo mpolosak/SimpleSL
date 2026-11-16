@@ -14,6 +14,7 @@ use super::{
 };
 use crate::{
     self as simplesl, BinOperator, Error, Interpreter,
+    errors::CannotDo2,
     instruction::{
         BaseInstruction,
         bin_op::{
@@ -223,7 +224,14 @@ impl Instruction {
         let lhs_type = lhs.return_type();
         let rhs_type = rhs.return_type();
         if !can_be_used(&lhs_type, &rhs_type, op) {
-            errors.push(Error::CannotDo2(lhs_type, op, rhs_type));
+            errors.push(
+                CannotDo2 {
+                    lhs: lhs_type,
+                    op,
+                    rhs: rhs_type,
+                }
+                .into(),
+            );
             return Panic.into();
         }
         match op {

@@ -1,5 +1,6 @@
 use crate::{
     Error, Interpreter,
+    errors::{CannotDetermineParams, NotAFunction, WrongArgument, WrongNumberOfArguments},
     function::{Function as VarFunc, Param, Params},
     instruction::{
         BaseInstruction, Exec, ExecResult, Instruction, InstructionWithSpan, Recreate,
@@ -36,10 +37,10 @@ impl FunctionCall {
         } else {
             let f_type = function.return_type();
             if !f_type.is_function() {
-                errors.push(Error::NotAFunction(ident.clone()));
+                errors.push(NotAFunction { ins: ident.clone() }.into());
             }
             let Some(params) = f_type.params() else {
-                errors.push(Error::CannotDetermineParams(ident));
+                errors.push(CannotDetermineParams { ident }.into());
                 let args = Tuple {
                     elements: [].into(),
                 }
@@ -73,18 +74,19 @@ impl FunctionCall {
         args: Arc<[Variable]>,
     ) -> Result<Instruction, Error> {
         if function.params.len() != args.len() {
-            return Err(Error::WrongNumberOfArguments(
-                function
+            return Err(WrongNumberOfArguments {
+                function: function
                     .ident
                     .clone()
                     .unwrap_or_else(|| Arc::from("function")),
-                function.params.len(),
-            ));
+                expected_arguments: function.params.len(),
+            }
+            .into());
         }
         for (arg, param) in zip(args.iter(), function.params.iter()) {
             let arg_type = arg.as_type();
             if !arg_type.matches(&param.var_type) {
-                return Err(Error::WrongArgument {
+                return Err(WrongArgument {
                     function: function
                         .ident
                         .clone()
@@ -92,7 +94,8 @@ impl FunctionCall {
                     param: param.clone(),
                     given: arg.to_string().into(),
                     given_type: arg_type,
-                });
+                }
+                .into());
             }
         }
         let function = Variable::Function(function.clone()).into();
@@ -135,18 +138,27 @@ fn check_args_with_params(
     errors: &mut Vec<Error>,
 ) {
     if params.len() != args.len() {
-        errors.push(Error::WrongNumberOfArguments(ident.clone(), params.len()));
+        errors.push(
+            WrongNumberOfArguments {
+                function: ident.clone(),
+                expected_arguments: params.len(),
+            }
+            .into(),
+        );
     }
     for (arg, param) in zip(args, params.iter()) {
         let arg_type = arg.return_type();
         if !arg_type.matches(&param.var_type) {
             let given = arg.span.as_str().into();
-            errors.push(Error::WrongArgument {
-                function: ident.clone(),
-                param: param.clone(),
-                given,
-                given_type: arg_type,
-            });
+            errors.push(
+                WrongArgument {
+                    function: ident.clone(),
+                    param: param.clone(),
+                    given,
+                    given_type: arg_type,
+                }
+                .into(),
+            );
         }
     }
 }

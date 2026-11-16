@@ -15,6 +15,7 @@ pub fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
 mod tests {
     use crate::{
         BinOperator, Code, Error, Interpreter,
+        errors::CannotDo2,
         instruction::bin_op::bitwise::can_be_used,
         variable::{Type, Variable},
     };
@@ -78,7 +79,12 @@ mod tests {
     fn bitand_bool_float() {
         assert_eq!(
             parse_unwrap_first_error("true&5.5"),
-            Error::CannotDo2(Type::Bool, BinOperator::BitwiseAnd, Type::Float)
+            CannotDo2 {
+                lhs: Type::Bool,
+                op: BinOperator::BitwiseAnd,
+                rhs: Type::Float
+            }
+            .into()
         )
     }
 
@@ -96,11 +102,14 @@ mod tests {
     fn bitwise_float_int_int() {
         assert_eq!(
             parse_unwrap_errors("5.5|5&4"),
-            vec![Error::CannotDo2(
-                Type::Float,
-                BinOperator::BitwiseOr,
-                Type::Int
-            )]
+            vec![
+                CannotDo2 {
+                    lhs: Type::Float,
+                    op: BinOperator::BitwiseOr,
+                    rhs: Type::Int
+                }
+                .into()
+            ]
         )
     }
 

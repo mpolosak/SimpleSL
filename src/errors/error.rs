@@ -1,5 +1,5 @@
 use crate::{BinOperator, function::Param, unary_operator::UnaryOperator, variable::Type};
-use derive_more::From;
+use derive_more::{Display, From};
 use match_any::match_any;
 use simplesl_parser::Rule;
 use std::{
@@ -7,73 +7,74 @@ use std::{
     sync::Arc,
 };
 
-#[derive(Debug, From)]
+#[derive(Debug, From, Display)]
 pub enum Error {
+    #[display("Break outside loop")]
     BreakOutsideLoop,
-    CannotDetermineParams(Arc<str>),
-    CannotReduce(Arc<str>),
+    #[from]
+    CannotDetermineParams(CannotDetermineParams),
+    #[from]
+    CannotReduce(CannotReduce),
+    #[display("Continue outside loop")]
     ContinueOutsideLoop,
-    VariableDoesntExist(Arc<str>),
-    WrongType(Arc<str>, Type),
-    WrongNumberOfArguments(Arc<str>, usize),
-    TupleIndexTooBig(usize, Arc<str>, usize),
-    CannotBeParsed(Box<str>),
-    CannotIndexInto(Type),
-    CannotTupleAccess(Arc<str>, Type),
-    CannotFieldAccess(Arc<str>, Type),
-    CannotIndexWith(Arc<str>),
-    CannotSlice(Arc<str>, Type),
+    #[from]
+    VariableDoesntExist(VariableDoesntExist),
+    #[from]
+    WrongType(WrongType),
+    #[from]
+    WrongNumberOfArguments(WrongNumberOfArguments),
+    #[from]
+    TupleIndexTooBig(TupleIndexTooBig),
+    #[from]
+    CannotBeParsed(CannotBeParsed),
+    #[from]
+    CannotIndexInto(CannotIndexInto),
+    #[from]
+    CannotTupleAccess(CannotTupleAccess),
+    #[from]
+    CannotFieldAccess(CannotFieldAccess),
+    #[from]
+    CannotIndexWith(CannotIndexWith),
+    #[from]
+    CannotSlice(CannotSlice),
+    #[display("All posible values must be covered in match")]
     MatchNotCovered,
     #[from]
     IO(std::io::Error),
     #[from(pest::error::Error<Rule>)]
     Parsing(Box<pest::error::Error<Rule>>),
-    IntegerOverflow(Box<str>),
-    IncorectUnaryOperatorOperand {
-        ins: Arc<str>,
-        op: UnaryOperator,
-        expected: Type,
-        given: Type,
-    },
+    #[from]
+    IntegerOverflow(IntegerOverflow),
+    #[from]
+    IncorrectUnaryOperatorOperand(IncorrectUnaryOperatorOperand),
     #[from]
     CannotUnescapeString(unescaper::Error),
-    CannotDo2(Type, BinOperator, Type),
-    WrongReturn {
-        function_name: Option<Arc<str>>,
-        function_return_type: Type,
-        returned: Type,
-    },
+    #[from]
+    CannotDo2(CannotDo2),
+    #[from]
+    WrongReturn(WrongReturn),
+    #[display("Return statement can only be used inside of function body")]
     ReturnOutsideFunction,
-    MissingReturn {
-        function_name: Option<Arc<str>>,
-        return_type: Type,
-    },
-    NoField {
-        struct_ident: Arc<str>,
-        field_ident: Arc<str>,
-        struct_type: Type,
-    },
-    SelfContradictoryPattern(Arc<str>),
+    #[from]
+    MissingReturn(MissingReturn),
+    #[from]
+    NoField(NoField),
+    #[from]
+    SelfContradictoryPattern(SelfContradictoryPattern),
+    #[display("Array patterns require an else branch")]
     ArrayPatternRequiresElse,
-    SetPatternNotMatched {
-        ins: Arc<str>,
-        var_type: Type,
-        pattern: Arc<str>,
-    },
-    WrongLengthType(Arc<str>),
-    NotAFunction(Arc<str>),
-    WrongArgument {
-        function: Arc<str>,
-        param: Param,
-        given: Arc<str>,
-        given_type: Type,
-    },
-    WrongCondition(Arc<str>, Type),
-    WrongInitialization {
-        declared: Type,
-        given: Arc<str>,
-        given_type: Type,
-    },
+    #[from]
+    SetPatternNotMatched(SetPatternNotMatched),
+    #[from]
+    WrongLengthType(WrongLengthType),
+    #[from]
+    NotAFunction(NotAFunction),
+    #[from]
+    WrongArgument(WrongArgument),
+    #[from]
+    WrongCondition(WrongCondition),
+    #[from]
+    WrongInitialization(WrongInitialization),
 }
 
 impl PartialEq for Error {
@@ -89,50 +90,26 @@ impl PartialEq for Error {
             | (Self::CannotDetermineParams(l0), Self::CannotDetermineParams(r0))
             | (Self::CannotReduce(l0), Self::CannotReduce(r0))
             | (Self::SelfContradictoryPattern(l0), Self::SelfContradictoryPattern(r0))
+            | (Self::WrongType(l0), Self::WrongType(r0))
+            | (Self::WrongNumberOfArguments(l0), Self::WrongNumberOfArguments(r0))
+            | (Self::TupleIndexTooBig(l0), Self::TupleIndexTooBig(r0))
+            | (Self::IncorrectUnaryOperatorOperand(l0), Self::IncorrectUnaryOperatorOperand(r0))
+            | (Self::CannotDo2(l0), Self::CannotDo2(r0))
+            | (Self::WrongReturn(l0), Self::WrongReturn(r0))
+            | (Self::MissingReturn(l0), Self::MissingReturn(r0))
+            | (Self::NoField(l0), Self::NoField(r0))
+            | (Self::SetPatternNotMatched(l0), Self::SetPatternNotMatched(r0))
+            | (Self::WrongArgument(l0), Self::WrongArgument(r0))
+            | (Self::WrongInitialization(l0), Self::WrongInitialization(r0))
+            | (Self::WrongCondition(l0), Self::WrongCondition(r0))
+            | (Self::CannotTupleAccess(l0), Self::CannotTupleAccess(r0))
+            | (Self::CannotFieldAccess(l0), Self::CannotFieldAccess(r0))
+            | (Self::CannotSlice(l0), Self::CannotSlice(r0))
                 => l0 == r0,
-            (Self::WrongType(l0, l1), Self::WrongType(r0, r1))
-            | (Self::WrongCondition(l0, l1), Self::WrongCondition(r0, r1))
-            | (Self::WrongNumberOfArguments(l0, l1), Self::WrongNumberOfArguments(r0, r1))
-            | (Self::CannotTupleAccess(l0, l1), Self::CannotTupleAccess(r0, r1))
-            | (Self::CannotFieldAccess(l0, l1), Self::CannotFieldAccess(r0, r1))
-            | (Self::CannotSlice(l0, l1), Self::CannotSlice(r0, r1))
-             => l0 == r0 && l1 == r1,
-            (Self::IO(l0), Self::IO(r0)) | (Self::CannotUnescapeString(l0), Self::CannotUnescapeString(r0)) => {
+            (Self::IO(l0), Self::IO(r0))
+            | (Self::CannotUnescapeString(l0), Self::CannotUnescapeString(r0)) => {
                 l0.to_string() == r0.to_string()
             },
-            (Self::CannotDo2(l0, l1, l2), Self::CannotDo2(r0, r1, r2))
-            | (Self::TupleIndexTooBig(l0, l1, l2), Self::TupleIndexTooBig(r0, r1, r2))
-            | (Self::NoField{struct_ident: l0, field_ident: l1, struct_type: l2},
-                Self::NoField{struct_ident: r0, field_ident: r1, struct_type: r2})
-            | (Self::SetPatternNotMatched{pattern: l0, ins: l1, var_type: l2},
-                Self::SetPatternNotMatched{pattern: r0, ins: r1, var_type: r2})
-            => {
-                l0 == r0 && l1 == r1 && l2 == r2
-            },
-            (
-                Self::WrongReturn {
-                    function_name,
-                    function_return_type,
-                    returned,
-                },
-                Self::WrongReturn {
-                    function_name: function_name2,
-                    function_return_type: function_return_type2,
-                    returned: returned2,
-                },
-            ) => {
-                function_name == function_name2
-                    && function_return_type == function_return_type2
-                    && returned == returned2
-            },
-            (
-                Self::WrongArgument{ function: f, param: p, given: g, given_type: gt },
-                Self::WrongArgument{ function: f2, param: p2, given: g2, given_type: gt2 }
-            ) => f == f2 && p == p2 && g == g2 && gt == gt2,
-            (
-                Self::IncorectUnaryOperatorOperand{ins, op, expected, given },
-                Self::IncorectUnaryOperatorOperand{ins:ins2, op: op2, expected: expected2, given: given2 })
-                => ins == ins2 && op == op2 && expected == expected2 && given == given2,
             _ => core::mem::discriminant(self) == core::mem::discriminant(other)
         }
     }
@@ -140,175 +117,226 @@ impl PartialEq for Error {
 
 impl std::error::Error for Error {}
 
-impl fmt::Display for Error {
+#[derive(Debug, PartialEq, Eq, Display)]
+#[display("Cannot determine params of function {ident}")]
+pub struct CannotDetermineParams {
+    pub ident: Arc<str>,
+}
+
+#[derive(Debug, PartialEq, Eq, Display)]
+#[display("Cannot reduce {str}. It is not an array")]
+pub struct CannotReduce {
+    pub str: Arc<str>,
+}
+
+#[derive(Debug, PartialEq, Eq, Display)]
+#[display("{ident} doesn't exist")]
+pub struct VariableDoesntExist {
+    pub ident: Arc<str>,
+}
+
+#[derive(Debug, PartialEq, Eq, Display)]
+#[display("{ident} should be {expected_type}")]
+pub struct WrongType {
+    pub ident: Arc<str>,
+    pub expected_type: Type,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct WrongNumberOfArguments {
+    pub function: Arc<str>,
+    pub expected_arguments: usize,
+}
+
+impl fmt::Display for WrongNumberOfArguments {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::BreakOutsideLoop => write!(f, "Break outside loop"),
-            Self::ContinueOutsideLoop => write!(f, "Continue outside loop"),
-            Self::VariableDoesntExist(var_name) => {
-                write!(f, "{var_name} doesn't exist")
-            }
-            Self::WrongType(var_name, var_type) => {
-                write!(f, "{var_name} should be {var_type}")
-            }
-            Self::WrongNumberOfArguments(name, 0) => {
-                write!(f, "{name} requires no arguments but some passed")
-            }
-            Self::WrongNumberOfArguments(name, num) => {
-                write!(f, "{name} requires {num} args")
-            }
-            Self::TupleIndexTooBig(index, ins, len) => {
-                write!(
-                    f,
-                    "Cannot get element {index} of tuple {ins}. Tuple has len of {len}"
-                )
-            }
-            Self::CannotBeParsed(text) => {
-                write!(f, "{text} cannot be parsed to variable")
-            }
-            Self::CannotIndexInto(var_type) => {
-                write!(f, "Cannot index into value of type {var_type}")
-            }
-            Self::CannotIndexWith(var_type) => {
-                write!(f, "Cannot index with {var_type}. Index must be int")
-            }
-            Self::CannotTupleAccess(ins, var_type) => {
-                write!(
-                    f,
-                    "Cannot access element of {ins} which is {var_type}. Only accessing elements of tuple is possible"
-                )
-            }
-            Self::CannotFieldAccess(ins, var_type) => {
-                write!(
-                    f,
-                    "Cannot access field of {ins} which is {var_type}. Only accessing fields of struct is possible"
-                )
-            }
-            Self::CannotSlice(ins, var_type) => {
-                write!(
-                    f,
-                    "Cannot slice {ins} which is {var_type}. Only variables of type string | [any] can be sliced"
-                )
-            }
-            Self::NoField {
-                struct_ident,
-                field_ident,
-                struct_type,
-            } => {
-                write!(
-                    f,
-                    "{struct_ident} has no field '{field_ident}'. Type of {struct_ident} is {struct_type}"
-                )
-            }
-            Self::MatchNotCovered => {
-                write!(f, "All posible values must be covered in match")
-            }
-            Self::IO(error) => write!(f, "{error}"),
-            Self::Parsing(error) => write!(f, "{error}"),
-            Self::IntegerOverflow(value) => write!(f, "{value} is to big too fit in int type"),
-            Self::CannotUnescapeString(error) => write!(f, "{error}"),
-            Self::CannotDo2(var_type1, op, var_type2) => {
-                write!(f, "Cannot do {var_type1} {op} {var_type2}")
-            }
-            Self::WrongReturn {
-                function_name,
-                function_return_type,
-                returned,
-            } => {
-                write!(
-                    f,
+        if self.expected_arguments == 0 {
+            write!(f, "{} requires no arguments but some passed", self.function)
+        } else {
+            write!(
+                f,
+                "{} requires {} args",
+                self.function, self.expected_arguments
+            )
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Display)]
+#[display("Cannot get element {index} of tuple {ins}. Tuple has len of {len}")]
+pub struct TupleIndexTooBig {
+    pub index: usize,
+    pub ins: Arc<str>,
+    pub len: usize,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct IncorrectUnaryOperatorOperand {
+    pub ins: Arc<str>,
+    pub op: UnaryOperator,
+    pub expected: Type,
+    pub given: Type,
+}
+
+impl fmt::Display for IncorrectUnaryOperatorOperand {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.op.is_prefix() {
+            write!(
+                f,
+                "Cannot {} {}. Operand need to be {} but {} which is {} was given",
+                self.op, self.ins, self.expected, self.ins, self.given
+            )
+        } else {
+            write!(
+                f,
+                "Cannot {} {}. Operand need to be {} but {} wh#[derive(Debug, PartialEq, Eq, Display)]ich is {} was given",
+                self.ins, self.op, self.expected, self.ins, self.given
+            )
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Display)]
+#[display("Cannot do {lhs} {op} {rhs}")]
+pub struct CannotDo2 {
+    pub lhs: Type,
+    pub op: BinOperator,
+    pub rhs: Type,
+}
+
+#[derive(Debug, PartialEq, Eq, Display)]
+#[display(
                     "Cannot return {returned} from function{}\n\
                     Function{0} declared to return {function_return_type}",
                     function_name
                         .as_deref()
                         .map(|value| format!(" {value}"))
-                        .unwrap_or("".into())
-                )
-            }
-            Self::ReturnOutsideFunction => {
-                write!(
-                    f,
-                    "Return statement can only be used inside of function body"
-                )
-            }
-            Self::MissingReturn {
-                function_name,
-                return_type,
-            } => write!(
-                f,
-                "Function{} declared to return {return_type} may exit without returning any value\n\
+                        .unwrap_or("".into()))]
+pub struct WrongReturn {
+    pub function_name: Option<Arc<str>>,
+    pub function_return_type: Type,
+    pub returned: Type,
+}
+
+#[derive(Debug, PartialEq, Eq, Display)]
+#[display("Function{} declared to return {return_type} may exit without returning any value\n\
                 add return statement at the end of the function or change return type of the function to include ()",
                 function_name
                     .as_deref()
                     .map(|value| format!(" {value}"))
-                    .unwrap_or("".into())
-            ),
-            Self::WrongLengthType(str) => {
-                write!(f, "Cannot create array of length {str}. Length must be int")
-            }
-            Self::NotAFunction(str) => write!(f, "Cannot call {str}. It is not a function"),
-            Self::WrongArgument {
-                function,
-                param,
-                given,
-                given_type,
-            } => {
-                write!(
-                    f,
+                    .unwrap_or("".into()))]
+pub struct MissingReturn {
+    pub function_name: Option<Arc<str>>,
+    pub return_type: Type,
+}
+
+#[derive(Debug, PartialEq, Eq, Display)]
+#[display("{struct_ident} has no field '{field_ident}'. Type of {struct_ident} is {struct_type}")]
+pub struct NoField {
+    pub struct_ident: Arc<str>,
+    pub field_ident: Arc<str>,
+    pub struct_type: Type,
+}
+
+#[derive(Debug, PartialEq, Eq, Display)]
+#[display("{ins} of type {var_type} doesn't match pattern {pattern}")]
+pub struct SetPatternNotMatched {
+    pub ins: Arc<str>,
+    pub var_type: Type,
+    pub pattern: Arc<str>,
+}
+
+#[derive(Debug, PartialEq, Eq, Display)]
+#[display(
                     "Argument {} of function {function} needs to be {}. But {given} that is {given_type} was given",
-                    param.name, param.var_type
-                )
-            }
-            Self::CannotDetermineParams(function) => {
-                write!(f, "Cannot determine params of function {function}")
-            }
-            Self::CannotReduce(given) => write!(f, "Cannot reduce {given}. It is not an array"),
-            Self::WrongCondition(ins, var_type) => write!(
-                f,
-                "Condition must be bool but {ins} which is {var_type} was given"
-            ),
-            Self::IncorectUnaryOperatorOperand {
-                ins,
-                op,
-                expected,
-                given,
-            } if op.is_prefix() => write!(
-                f,
-                "Cannot {op} {ins}. Operand need to be {expected} but {ins} which is {given} was given"
-            ),
-            Self::IncorectUnaryOperatorOperand {
-                ins,
-                op,
-                expected,
-                given,
-            } => write!(
-                f,
-                "Cannot {ins} {op}. Operand need to be {expected} but {ins} which is {given} was given"
-            ),
-            Self::SelfContradictoryPattern(pattern) => {
-                write!(f, "Pattern {pattern} is self-contradictory")
-            }
-            Self::ArrayPatternRequiresElse => {
-                write!(f, "Array patterns require an else branch")
-            }
-            Self::SetPatternNotMatched {
-                pattern,
-                ins,
-                var_type,
-            } => {
-                write!(
-                    f,
-                    "{ins} of type {var_type} doesn't match pattern {pattern}"
-                )
-            }
-            Self::WrongInitialization {
-                declared,
-                given_type,
-                given,
-            } => write!(
-                f,
-                "mut declared to contain {declared} but initialized with {given} that is {given_type}"
-            ),
-        }
-    }
+                    param.name, param.var_type)]
+pub struct WrongArgument {
+    pub function: Arc<str>,
+    pub param: Param,
+    pub given: Arc<str>,
+    pub given_type: Type,
+}
+
+#[derive(Debug, PartialEq, Eq, Display)]
+#[display("mut declared to contain {declared} but initialized with {given} that is {given_type}")]
+pub struct WrongInitialization {
+    pub declared: Type,
+    pub given: Arc<str>,
+    pub given_type: Type,
+}
+
+#[derive(Debug, PartialEq, Eq, Display)]
+#[display("Condition must be bool but {ins} which is {var_type} was given")]
+pub struct WrongCondition {
+    pub ins: Arc<str>,
+    pub var_type: Type,
+}
+
+#[derive(Debug, PartialEq, Eq, Display)]
+#[display(
+    "Cannot access element of {ins} which is {var_type}. Only accessing elements of tuple is possible"
+)]
+pub struct CannotTupleAccess {
+    pub ins: Arc<str>,
+    pub var_type: Type,
+}
+
+#[derive(Debug, PartialEq, Eq, Display)]
+#[display(
+    "Cannot access field of {ins} which is {var_type}. Only accessing fields of struct is possible"
+)]
+pub struct CannotFieldAccess {
+    pub ins: Arc<str>,
+    pub var_type: Type,
+}
+
+#[derive(Debug, PartialEq, Eq, Display)]
+#[display(
+    "Cannot slice {ins} which is {var_type}. Only variables of type string | [any] can be sliced"
+)]
+pub struct CannotSlice {
+    pub ins: Arc<str>,
+    pub var_type: Type,
+}
+
+#[derive(Debug, PartialEq, Eq, Display)]
+#[display("{input} cannot be parsed to variable")]
+pub struct CannotBeParsed {
+    pub input: Box<str>,
+}
+
+#[derive(Debug, PartialEq, Eq, Display)]
+#[display("Cannot index into value of type {var_type}")]
+pub struct CannotIndexInto {
+    pub var_type: Type,
+}
+
+#[derive(Debug, PartialEq, Eq, Display)]
+#[display("Cannot index with {ins}. Index must be int")]
+pub struct CannotIndexWith {
+    pub ins: Arc<str>,
+}
+
+#[derive(Debug, PartialEq, Eq, Display)]
+#[display("{literal} is to big too fit in int type")]
+pub struct IntegerOverflow {
+    pub literal: Box<str>,
+}
+
+#[derive(Debug, PartialEq, Eq, Display)]
+#[display("Cannot create array of length {ins}. Length must be int")]
+pub struct WrongLengthType {
+    pub ins: Arc<str>,
+}
+
+#[derive(Debug, PartialEq, Eq, Display)]
+#[display("Pattern {pattern} is self-contradictory")]
+pub struct SelfContradictoryPattern {
+    pub pattern: Arc<str>,
+}
+
+#[derive(Debug, PartialEq, Eq, Display)]
+#[display("Cannot call {ins}. It is not a function")]
+pub struct NotAFunction {
+    pub ins: Arc<str>,
 }

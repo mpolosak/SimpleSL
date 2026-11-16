@@ -1,5 +1,6 @@
 use crate::{
     self as simplesl, Code, Error, Interpreter,
+    errors::IncorrectUnaryOperatorOperand,
     function::Function,
     instruction::{
         BaseInstruction, Exec, ExecResult, Instruction, InstructionWithSpan, Recreate,
@@ -42,12 +43,15 @@ impl Iter {
         let lhs_type = lhs.return_type();
         if !lhs_type.matches(&var_type!([any])) {
             let ins = lhs.span.as_str().into();
-            errors.push(Error::IncorectUnaryOperatorOperand {
-                ins,
-                op,
-                expected: var_type!([any]),
-                given: lhs_type,
-            });
+            errors.push(
+                IncorrectUnaryOperatorOperand {
+                    ins,
+                    op,
+                    expected: var_type!([any]),
+                    given: lhs_type,
+                }
+                .into(),
+            );
         }
         Self(lhs.instruction).into()
     }
@@ -88,6 +92,7 @@ impl ReturnType for Iter {
 mod tests {
     use crate::{
         self as simplesl, Code, Error, Interpreter,
+        errors::IncorrectUnaryOperatorOperand,
         unary_operator::UnaryOperator,
         variable::{Typed, Variable},
     };
@@ -98,21 +103,23 @@ mod tests {
     fn iter() {
         assert_eq!(
             parse_unwrap_first_error("45~"),
-            Error::IncorectUnaryOperatorOperand {
+            IncorrectUnaryOperatorOperand {
                 ins: "45".into(),
                 op: OP,
                 expected: var_type!([any]),
                 given: var_type!(int)
             }
+            .into()
         );
         assert_eq!(
             parse_unwrap_first_error(r#""abc"~"#),
-            Error::IncorectUnaryOperatorOperand {
+            IncorrectUnaryOperatorOperand {
                 ins: r#""abc""#.into(),
                 op: OP,
                 expected: var_type!([any]),
                 given: var_type!(string)
             }
+            .into()
         );
         assert_eq!(
             parse_unwrap_first_error(
@@ -121,12 +128,13 @@ mod tests {
                 }
                 x()~"
             ),
-            Error::IncorectUnaryOperatorOperand {
+            IncorrectUnaryOperatorOperand {
                 ins: "x()".into(),
                 op: OP,
                 expected: var_type!([any]),
                 given: var_type!([int] | string)
             }
+            .into()
         );
         assert_eq!(
             parse_and_exec(

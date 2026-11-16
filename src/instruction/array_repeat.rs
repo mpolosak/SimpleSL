@@ -1,4 +1,5 @@
 use super::{Instruction, InstructionWithSpan, local_variable::LocalVariables};
+use crate::errors::WrongLengthType;
 use crate::instruction::{function::call::FunctionCall, tuple::Tuple};
 use crate::{
     self as simplesl, Error,
@@ -20,8 +21,8 @@ pub fn create_instruction(
         .instruction;
     let len = InstructionWithSpan::new_expression(inner.next().unwrap(), local_variables, errors);
     if !len.return_type().matches(&Type::Int) {
-        let str = len.span.as_str().into();
-        errors.push(Error::WrongLengthType(str));
+        let ins = len.span.as_str().into();
+        errors.push(WrongLengthType { ins }.into());
     }
 
     let value_type = value.return_type();

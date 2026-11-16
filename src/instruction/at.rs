@@ -1,6 +1,7 @@
 use super::{ExecResult, Instruction, InstructionWithSpan, local_variable::LocalVariables};
 use crate::{
     Error, Interpreter,
+    errors::{CannotIndexInto, CannotIndexWith},
     instruction::{BaseInstruction, Exec, Recreate},
     stdlib::operators::at,
     variable::{ReturnType, Type},
@@ -24,11 +25,16 @@ pub fn create(
     let index = InstructionWithSpan::new_expression(pair, local_variables, errors);
     let instruction_return_type = instruction.return_type();
     if !instruction_return_type.can_be_indexed() {
-        errors.push(Error::CannotIndexInto(instruction_return_type));
+        errors.push(
+            CannotIndexInto {
+                var_type: instruction_return_type,
+            }
+            .into(),
+        );
     }
     if !index.return_type().matches(&Type::Int) {
-        let str = index.span.as_str().into();
-        errors.push(Error::CannotIndexWith(str));
+        let ins = index.span.as_str().into();
+        errors.push(CannotIndexWith { ins }.into());
     }
     At {
         instruction,
@@ -66,7 +72,11 @@ impl ReturnType for At {
 
 #[cfg(test)]
 mod tests {
-    use crate::{self as simplesl, Code, Error, ExecError, Interpreter, variable::Variable};
+    use crate::{
+        self as simplesl, Code, Error, ExecError, Interpreter,
+        errors::{CannotIndexInto, CannotIndexWith},
+        variable::Variable,
+    };
     use simplesl_macros::var_type;
 
     #[test]
@@ -137,7 +147,7 @@ mod tests {
     fn at_rejects_indexing_with_float() {
         assert_eq!(
             parse_unwrap_first_error("[45, 5.5, false][2.5]"),
-            Error::CannotIndexWith("2.5".into())
+            CannotIndexWith { ins: "2.5".into() }.into()
         )
     }
 
@@ -145,7 +155,10 @@ mod tests {
     fn at_rejects_indexing_into_tuple() {
         assert_eq!(
             parse_unwrap_first_error("(45, 5.5, false)[2]"),
-            Error::CannotIndexInto(var_type!((int, float, bool)))
+            CannotIndexInto {
+                var_type: var_type!((int, float, bool))
+            }
+            .into()
         )
     }
 
@@ -154,8 +167,14 @@ mod tests {
         assert_eq!(
             parse_unwrap_errors("true[#None]"),
             vec![
-                Error::CannotIndexInto(var_type!(bool)),
-                Error::CannotIndexWith("#None".into())
+                CannotIndexInto {
+                    var_type: var_type!(bool)
+                }
+                .into(),
+                CannotIndexWith {
+                    ins: "#None".into()
+                }
+                .into()
             ]
         )
     }
@@ -164,13 +183,21 @@ mod tests {
     fn at() {
         assert_eq!(
             parse_unwrap_errors("(45, 4.5)[0][0]"),
-            vec![Error::CannotIndexInto(var_type!((int, float)))]
+            vec![
+                CannotIndexInto {
+                    var_type: var_type!((int, float))
+                }
+                .into()
+            ]
         );
         assert_eq!(
             parse_unwrap_errors("(45, 4.5)[0][0.0]"),
             vec![
-                Error::CannotIndexInto(var_type!((int, float))),
-                Error::CannotIndexWith("0.0".into())
+                CannotIndexInto {
+                    var_type: var_type!((int, float))
+                }
+                .into(),
+                CannotIndexWith { ins: "0.0".into() }.into()
             ]
         )
     }

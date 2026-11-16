@@ -1,6 +1,7 @@
 pub mod call;
 use crate::{
     self as simplesl, Error,
+    errors::MissingReturn,
     function::{Body, Function as VarFunc, Param, Params},
     instruction::{
         BaseInstruction, Exec, ExecResult, Instruction, Recreate,
@@ -59,10 +60,13 @@ impl Function {
                 .map(ReturnType::return_type)
                 .any(|var_type| var_type == Type::Never)
         {
-            errors.push(Error::MissingReturn {
-                function_name: None,
-                return_type: return_type.clone(),
-            });
+            errors.push(
+                MissingReturn {
+                    function_name: None,
+                    return_type: return_type.clone(),
+                }
+                .into(),
+            );
         }
         Self {
             ident,

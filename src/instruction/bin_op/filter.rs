@@ -1,5 +1,6 @@
 use crate::{
     self as simplesl, BinOperator, Error, Interpreter,
+    errors::CannotDo2,
     instruction::{
         BaseInstruction, Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
     },
@@ -24,7 +25,14 @@ impl Filter {
         let lhs_type = lhs.return_type();
         let rhs_type = rhs.return_type();
         if !Self::can_be_used(&lhs_type, &rhs_type) {
-            errors.push(Error::CannotDo2(lhs_type, BinOperator::Filter, rhs_type));
+            errors.push(
+                CannotDo2 {
+                    lhs: lhs_type,
+                    op: BinOperator::Filter,
+                    rhs: rhs_type,
+                }
+                .into(),
+            );
         }
         Self { lhs, rhs }.into()
     }

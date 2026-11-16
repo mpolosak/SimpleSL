@@ -1,6 +1,7 @@
 use super::{ExecStop, Instruction, local_variable::LocalVariables};
 use crate::{
     Error,
+    errors::WrongReturn,
     instruction::{BaseInstruction, Exec, Recreate, panic::Panic},
     variable::{ReturnType, Type, Variable},
 };
@@ -27,11 +28,14 @@ impl Return {
         };
         let returned = instruction.return_type();
         if !returned.matches(function.return_type()) {
-            errors.push(Error::WrongReturn {
-                function_name: function.name(),
-                function_return_type: function.return_type().clone(),
-                returned,
-            });
+            errors.push(
+                WrongReturn {
+                    function_name: function.name(),
+                    function_return_type: function.return_type().clone(),
+                    returned,
+                }
+                .into(),
+            );
         }
         Self(instruction).into()
     }

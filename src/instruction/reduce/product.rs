@@ -2,6 +2,7 @@ use std::sync::LazyLock;
 
 use crate::{
     self as simplesl, Error,
+    errors::IncorrectUnaryOperatorOperand,
     instruction::{
         BaseInstruction, Exec, ExecResult, Instruction, InstructionWithSpan, Recreate,
         local_variable::LocalVariables,
@@ -25,12 +26,15 @@ impl Product {
         let return_type = iterator.return_type();
         if !return_type.matches(&ACCEPTED_TYPE) {
             let ins = iterator.span.as_str().into();
-            errors.push(Error::IncorectUnaryOperatorOperand {
-                ins,
-                op: UnaryOperator::Product,
-                expected: ACCEPTED_TYPE.clone(),
-                given: return_type,
-            });
+            errors.push(
+                IncorrectUnaryOperatorOperand {
+                    ins,
+                    op: UnaryOperator::Product,
+                    expected: ACCEPTED_TYPE.clone(),
+                    given: return_type,
+                }
+                .into(),
+            );
         }
         Self {
             iterator: iterator.instruction,
@@ -84,8 +88,9 @@ impl ReturnType for Product {
 #[cfg(test)]
 mod tests {
     use crate::{
-        self as simplesl, Code, Error, Interpreter, instruction::reduce::product::ACCEPTED_TYPE,
-        unary_operator::UnaryOperator, variable::Variable,
+        self as simplesl, Code, Error, Interpreter, errors::IncorrectUnaryOperatorOperand,
+        instruction::reduce::product::ACCEPTED_TYPE, unary_operator::UnaryOperator,
+        variable::Variable,
     };
     use simplesl_macros::{var, var_type};
     const OP: UnaryOperator = UnaryOperator::Product;
@@ -94,21 +99,23 @@ mod tests {
     fn product_rejects_non_iterators() {
         assert_eq!(
             parse_unwrap_first_error("[45, 76, 15]$*"),
-            Error::IncorectUnaryOperatorOperand {
+            IncorrectUnaryOperatorOperand {
                 ins: "[45, 76, 15]".into(),
                 op: OP,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!([int])
             }
+            .into()
         );
         assert_eq!(
             parse_unwrap_first_error(r#""abc"$*"#),
-            Error::IncorectUnaryOperatorOperand {
+            IncorrectUnaryOperatorOperand {
                 ins: r#""abc""#.into(),
                 op: OP,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(string)
             }
+            .into()
         );
     }
 
@@ -116,21 +123,23 @@ mod tests {
     fn product_rejects_invalid_iterator_function_types() {
         assert_eq!(
             parse_unwrap_first_error("x:= () -> int {return 5;} x$*"),
-            Error::IncorectUnaryOperatorOperand {
+            IncorrectUnaryOperatorOperand {
                 ins: "x".into(),
                 op: OP,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(() -> int)
             }
+            .into()
         );
         assert_eq!(
             parse_unwrap_first_error("x:= (a: int) -> #Some(int) {return #Some(a);} x$*"),
-            Error::IncorectUnaryOperatorOperand {
+            IncorrectUnaryOperatorOperand {
                 ins: "x".into(),
                 op: OP,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!((int) -> #Some(int))
             }
+            .into()
         );
     }
 
@@ -148,21 +157,23 @@ mod tests {
     fn product_rejects_string_and_mixed_numeric_iterators() {
         assert_eq!(
             parse_unwrap_first_error(r#"["a", "6.5", "$"]~$*"#),
-            Error::IncorectUnaryOperatorOperand {
+            IncorrectUnaryOperatorOperand {
                 ins: r#"["a", "6.5", "$"]~"#.into(),
                 op: OP,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(() -> (#Some(string)|#None))
             }
+            .into()
         );
         assert_eq!(
             parse_unwrap_first_error("[45, 16.5, 3]~$*"),
-            Error::IncorectUnaryOperatorOperand {
+            IncorrectUnaryOperatorOperand {
                 ins: "[45, 16.5, 3]~".into(),
                 op: OP,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(() -> (#Some(int|float)|#None))
             }
+            .into()
         );
     }
 

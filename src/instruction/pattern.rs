@@ -1,5 +1,6 @@
 use crate::{
     Error, Interpreter,
+    errors::SelfContradictoryPattern,
     function::Param,
     instruction::{
         local_variable::{LocalVariable, LocalVariables},
@@ -47,7 +48,7 @@ impl Pattern {
             };
         };
         if !var_type.matches(&destruct_pattern_type) {
-            errors.push(Error::SelfContradictoryPattern(str));
+            errors.push(SelfContradictoryPattern { pattern: str }.into());
         }
 
         Self {

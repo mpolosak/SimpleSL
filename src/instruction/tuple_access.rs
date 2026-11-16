@@ -1,6 +1,7 @@
 use super::{Instruction, InstructionWithSpan};
 use crate::{
     Error,
+    errors::{CannotTupleAccess, TupleIndexTooBig},
     instruction::{function::call::FunctionCall, panic::Panic, tuple::Tuple},
     stdlib::operators::At,
     variable::{ReturnType, Type, Variable, from_str::parse_int},
@@ -14,10 +15,10 @@ pub fn create_instruction(
     op: Pair<Rule>,
     errors: &mut Vec<Error>,
 ) -> Instruction {
-    let tuple_type = tuple.return_type();
-    let Some(len) = tuple_type.min_tuple_len() else {
-        let str = tuple.span.as_str().into();
-        errors.push(Error::CannotTupleAccess(str, tuple_type));
+    let var_type = tuple.return_type();
+    let Some(len) = var_type.min_tuple_len() else {
+        let ins = tuple.span.as_str().into();
+        errors.push(CannotTupleAccess { ins, var_type }.into());
         return Panic.into();
     };
 
@@ -30,9 +31,9 @@ pub fn create_instruction(
         }
     };
 
-    let return_type = tuple_type.tuple_element_at(index).unwrap_or_else(|| {
-        let str = tuple.span.as_str().into();
-        errors.push(Error::TupleIndexTooBig(index, str, len));
+    let return_type = var_type.tuple_element_at(index).unwrap_or_else(|| {
+        let ins = tuple.span.as_str().into();
+        errors.push(TupleIndexTooBig { index, ins, len }.into());
         Type::Never
     });
 

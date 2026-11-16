@@ -1,5 +1,6 @@
 use crate::{
     Error, Interpreter,
+    errors::IncorrectUnaryOperatorOperand,
     instruction::{
         BaseInstruction, Exec, ExecResult, Instruction, InstructionWithSpan, Recreate,
         local_variable::LocalVariables,
@@ -19,12 +20,15 @@ impl Deref {
         let return_type = instruction.return_type();
         if return_type.mut_element_type().is_none() {
             let ins = instruction.span.as_str().into();
-            errors.push(Error::IncorectUnaryOperatorOperand {
-                ins,
-                op: UnaryOperator::Indirection,
-                expected: Type::Mut(Type::Any.into()),
-                given: return_type,
-            });
+            errors.push(
+                IncorrectUnaryOperatorOperand {
+                    ins,
+                    op: UnaryOperator::Indirection,
+                    expected: Type::Mut(Type::Any.into()),
+                    given: return_type,
+                }
+                .into(),
+            );
         }
         Self(instruction.instruction).into()
     }

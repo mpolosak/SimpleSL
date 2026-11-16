@@ -3,6 +3,7 @@ use super::{
 };
 use crate::{
     Error, Interpreter,
+    errors::WrongInitialization,
     instruction::BaseInstruction,
     variable::{self, ReturnType, Type},
 };
@@ -35,11 +36,14 @@ impl Mut {
         let instruction_return_type = rhs.return_type();
         if !instruction_return_type.matches(&var_type) {
             let given = rhs.span.as_str().into();
-            errors.push(Error::WrongInitialization {
-                declared: var_type.clone(),
-                given,
-                given_type: instruction_return_type,
-            });
+            errors.push(
+                WrongInitialization {
+                    declared: var_type.clone(),
+                    given,
+                    given_type: instruction_return_type,
+                }
+                .into(),
+            );
         }
         Mut {
             var_type,

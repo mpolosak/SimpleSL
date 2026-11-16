@@ -1,3 +1,4 @@
+use crate::errors::CannotDo2;
 use crate::instruction::bin_op::concat::Concat;
 use crate::instruction::local_variable::LocalVariables;
 use crate::instruction::panic::Panic;
@@ -31,7 +32,14 @@ impl Add {
             return Concat { lhs, rhs }.into();
         }
         if !Self::can_be_used(lhs_rt.clone(), rhs_rt.clone()) {
-            errors.push(Error::CannotDo2(lhs_rt, BinOperator::Add, rhs_rt));
+            errors.push(
+                CannotDo2 {
+                    lhs: lhs_rt,
+                    op: BinOperator::Add,
+                    rhs: rhs_rt,
+                }
+                .into(),
+            );
             return Panic.into();
         }
         Self { lhs, rhs }.into()
@@ -78,6 +86,7 @@ mod tests {
 
     use crate::{
         self as simplesl, BinOperator, Code, Error, Interpreter,
+        errors::CannotDo2,
         instruction::bin_op::add::Add,
         variable::{Type, Variable},
     };
@@ -107,11 +116,21 @@ mod tests {
     fn test_add_array_to_scalar_fails() {
         assert_eq!(
             parse_unwrap_first_error(r#"[4, 5, 6] + 5"#),
-            Error::CannotDo2(var_type!([int]), BinOperator::Add, var_type!(int))
+            CannotDo2 {
+                lhs: var_type!([int]),
+                op: BinOperator::Add,
+                rhs: var_type!(int)
+            }
+            .into()
         );
         assert_eq!(
             parse_unwrap_first_error(r#"[4.5, 5.7, 6.0] + 3.3"#),
-            Error::CannotDo2(var_type!([float]), BinOperator::Add, var_type!(float))
+            CannotDo2 {
+                lhs: var_type!([float]),
+                op: BinOperator::Add,
+                rhs: var_type!(float)
+            }
+            .into()
         );
     }
 
@@ -119,11 +138,21 @@ mod tests {
     fn test_add_string_and_array_fails() {
         assert_eq!(
             parse_unwrap_first_error(r#""7" + ["a", "aaa"]"#),
-            Error::CannotDo2(var_type!(string), BinOperator::Add, var_type!([string]))
+            CannotDo2 {
+                lhs: var_type!(string),
+                op: BinOperator::Add,
+                rhs: var_type!([string])
+            }
+            .into()
         );
         assert_eq!(
             parse_unwrap_first_error(r#"["a", "aaa"]+"3""#),
-            Error::CannotDo2(var_type!([string]), BinOperator::Add, var_type!(string))
+            CannotDo2 {
+                lhs: var_type!([string]),
+                op: BinOperator::Add,
+                rhs: var_type!(string)
+            }
+            .into()
         );
     }
 
@@ -131,7 +160,12 @@ mod tests {
     fn test_add_different_numeric_types_fails() {
         assert_eq!(
             parse_unwrap_first_error("4+4.5"),
-            Error::CannotDo2(var_type!(int), BinOperator::Add, var_type!(float))
+            CannotDo2 {
+                lhs: var_type!(int),
+                op: BinOperator::Add,
+                rhs: var_type!(float)
+            }
+            .into()
         );
     }
 
@@ -139,11 +173,21 @@ mod tests {
     fn test_add_strings_and_numbers_fails() {
         assert_eq!(
             parse_unwrap_first_error(r#""4"+4.5"#),
-            Error::CannotDo2(var_type!(string), BinOperator::Add, var_type!(float))
+            CannotDo2 {
+                lhs: var_type!(string),
+                op: BinOperator::Add,
+                rhs: var_type!(float)
+            }
+            .into()
         );
         assert_eq!(
             parse_unwrap_first_error(r#""4"+4"#),
-            Error::CannotDo2(var_type!(string), BinOperator::Add, var_type!(int))
+            CannotDo2 {
+                lhs: var_type!(string),
+                op: BinOperator::Add,
+                rhs: var_type!(int)
+            }
+            .into()
         );
     }
 
@@ -151,11 +195,21 @@ mod tests {
     fn test_add_array_and_float_fails() {
         assert_eq!(
             parse_unwrap_first_error(r#"[4]+4.5"#),
-            Error::CannotDo2(var_type!([int]), BinOperator::Add, var_type!(float))
+            CannotDo2 {
+                lhs: var_type!([int]),
+                op: BinOperator::Add,
+                rhs: var_type!(float)
+            }
+            .into()
         );
         assert_eq!(
             parse_unwrap_first_error(r#"[4, 5.5]+4.5"#),
-            Error::CannotDo2(var_type!([int | float]), BinOperator::Add, var_type!(float))
+            CannotDo2 {
+                lhs: var_type!([int | float]),
+                op: BinOperator::Add,
+                rhs: var_type!(float)
+            }
+            .into()
         )
     }
 
@@ -163,11 +217,12 @@ mod tests {
     fn test_add_int_float_float() {
         assert_eq!(
             parse_unwrap_errors("4+5.5+5.5"),
-            Vec::from([Error::CannotDo2(
-                var_type!(int),
-                BinOperator::Add,
-                var_type!(float)
-            )])
+            Vec::from([CannotDo2 {
+                lhs: var_type!(int),
+                op: BinOperator::Add,
+                rhs: var_type!(float)
+            }
+            .into()])
         )
     }
 
@@ -176,8 +231,18 @@ mod tests {
         assert_eq!(
             parse_unwrap_errors(r#"(4+5.5)+(5.5+"")"#),
             Vec::from([
-                Error::CannotDo2(var_type!(int), BinOperator::Add, var_type!(float)),
-                Error::CannotDo2(var_type!(float), BinOperator::Add, var_type!(string))
+                CannotDo2 {
+                    lhs: var_type!(int),
+                    op: BinOperator::Add,
+                    rhs: var_type!(float)
+                }
+                .into(),
+                CannotDo2 {
+                    lhs: var_type!(float),
+                    op: BinOperator::Add,
+                    rhs: var_type!(string)
+                }
+                .into()
             ])
         )
     }
@@ -186,25 +251,41 @@ mod tests {
     fn test_multiple_add() {
         assert_eq!(
             parse_unwrap_errors("[1] + (2 + 3.0) + [4]"),
-            vec![Error::CannotDo2(
-                var_type!(int),
-                BinOperator::Add,
-                var_type!(float)
-            )]
+            vec![
+                CannotDo2 {
+                    lhs: var_type!(int),
+                    op: BinOperator::Add,
+                    rhs: var_type!(float)
+                }
+                .into()
+            ]
         );
         assert_eq!(
             parse_unwrap_errors("1 + (2 + 3.0) + 4"),
-            vec![Error::CannotDo2(
-                var_type!(int),
-                BinOperator::Add,
-                var_type!(float)
-            )]
+            vec![
+                CannotDo2 {
+                    lhs: var_type!(int),
+                    op: BinOperator::Add,
+                    rhs: var_type!(float)
+                }
+                .into()
+            ]
         );
         assert_eq!(
             parse_unwrap_errors("(2 + 3.0) + [4] + 5"),
             vec![
-                Error::CannotDo2(var_type!(int), BinOperator::Add, var_type!(float)),
-                Error::CannotDo2(var_type!([int]), BinOperator::Add, var_type!(int))
+                CannotDo2 {
+                    lhs: var_type!(int),
+                    op: BinOperator::Add,
+                    rhs: var_type!(float)
+                }
+                .into(),
+                CannotDo2 {
+                    lhs: var_type!([int]),
+                    op: BinOperator::Add,
+                    rhs: var_type!(int)
+                }
+                .into()
             ]
         )
     }

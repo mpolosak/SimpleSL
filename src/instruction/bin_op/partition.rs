@@ -1,5 +1,6 @@
 use crate::{
     self as simplesl, BinOperator, Error, Interpreter,
+    errors::CannotDo2,
     instruction::{
         BaseInstruction, Exec, ExecResult, Instruction, Recreate, bin_op::filter::Filter,
         local_variable::LocalVariables,
@@ -23,7 +24,14 @@ impl Partition {
         let lhs_type = lhs.return_type();
         let rhs_type = rhs.return_type();
         if !Filter::can_be_used(&lhs_type, &rhs_type) {
-            errors.push(Error::CannotDo2(lhs_type, BinOperator::Partition, rhs_type));
+            errors.push(
+                CannotDo2 {
+                    lhs: lhs_type,
+                    op: BinOperator::Partition,
+                    rhs: rhs_type,
+                }
+                .into(),
+            );
         }
         Self { lhs, rhs }.into()
     }

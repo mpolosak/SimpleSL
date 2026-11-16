@@ -1,5 +1,6 @@
 use crate::{
     self as simplesl, Error,
+    errors::IncorrectUnaryOperatorOperand,
     instruction::{
         BaseInstruction, Exec, ExecResult, Instruction, InstructionWithSpan, Recreate,
         local_variable::LocalVariables,
@@ -28,12 +29,15 @@ pub(crate) fn create(lhs: InstructionWithSpan, errors: &mut Vec<Error>) -> Instr
     } = lhs;
     if return_type.iter_element().is_none() {
         let ins = span.as_str().into();
-        errors.push(Error::IncorectUnaryOperatorOperand {
-            ins,
-            op,
-            expected: ACCEPTED_TYPE.clone(),
-            given: return_type,
-        });
+        errors.push(
+            IncorrectUnaryOperatorOperand {
+                ins,
+                op,
+                expected: ACCEPTED_TYPE.clone(),
+                given: return_type,
+            }
+            .into(),
+        );
     }
     Collect { iterator }.into()
 }
@@ -68,8 +72,9 @@ impl ReturnType for Collect {
 #[cfg(test)]
 mod tests {
     use crate::{
-        self as simplesl, Code, Error, Interpreter, instruction::reduce::collect::ACCEPTED_TYPE,
-        unary_operator::UnaryOperator, variable::Variable,
+        self as simplesl, Code, Error, Interpreter, errors::IncorrectUnaryOperatorOperand,
+        instruction::reduce::collect::ACCEPTED_TYPE, unary_operator::UnaryOperator,
+        variable::Variable,
     };
     use simplesl_macros::{var, var_type};
     const OP: UnaryOperator = UnaryOperator::Collect;
@@ -107,12 +112,13 @@ mod tests {
     fn collect_reject_array() {
         assert_eq!(
             parse_unwrap_first_error("[45, 15]$]"),
-            Error::IncorectUnaryOperatorOperand {
+            IncorrectUnaryOperatorOperand {
                 ins: "[45, 15]".into(),
                 op: OP,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!([int])
             }
+            .into()
         );
     }
 
@@ -120,12 +126,13 @@ mod tests {
     fn collect_reject_string() {
         assert_eq!(
             parse_unwrap_first_error(r#""abc"$]"#),
-            Error::IncorectUnaryOperatorOperand {
+            IncorrectUnaryOperatorOperand {
                 ins: r#""abc""#.into(),
                 op: OP,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(string)
             }
+            .into()
         );
     }
 
@@ -138,12 +145,13 @@ mod tests {
                 }
                 x$]"
             ),
-            Error::IncorectUnaryOperatorOperand {
+            IncorrectUnaryOperatorOperand {
                 ins: "x".into(),
                 op: OP,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!((int)-> #Some(int))
             }
+            .into()
         );
         assert_eq!(
             parse_unwrap_first_error(
@@ -152,12 +160,13 @@ mod tests {
                 }
                 x$]"
             ),
-            Error::IncorectUnaryOperatorOperand {
+            IncorrectUnaryOperatorOperand {
                 ins: "x".into(),
                 op: OP,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(()->int)
             }
+            .into()
         );
     }
 

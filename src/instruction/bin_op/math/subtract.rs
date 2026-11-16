@@ -9,6 +9,7 @@ pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instructi
 mod tests {
     use crate::{
         self as simplesl, BinOperator, Code, Error, Interpreter,
+        errors::CannotDo2,
         variable::{Type, Variable},
     };
     use simplesl_macros::var;
@@ -28,7 +29,12 @@ mod tests {
     fn subtract_float_from_int() {
         assert_eq!(
             parse_unwrap_first_error("4-1.0"),
-            Error::CannotDo2(Type::Int, OP, Type::Float)
+            CannotDo2 {
+                lhs: Type::Int,
+                op: OP,
+                rhs: Type::Float
+            }
+            .into()
         )
     }
 
@@ -36,7 +42,14 @@ mod tests {
     fn subtract_int_float_float() {
         assert_eq!(
             parse_unwrap_errors("4-1.0-5.5"),
-            vec![Error::CannotDo2(Type::Int, OP, Type::Float)]
+            vec![
+                CannotDo2 {
+                    lhs: Type::Int,
+                    op: OP,
+                    rhs: Type::Float
+                }
+                .into()
+            ]
         )
     }
 

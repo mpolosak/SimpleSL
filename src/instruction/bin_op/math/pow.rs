@@ -13,7 +13,8 @@ pub fn exec(base: Variable, exp: Variable) -> Result<Variable, ExecError> {
 #[cfg(test)]
 mod tests {
     use crate::{
-        self as simplesl, BinOperator, Code, Error, ExecError, Interpreter, variable::Variable,
+        self as simplesl, BinOperator, Code, Error, ExecError, Interpreter, errors::CannotDo2,
+        variable::Variable,
     };
     use simplesl_macros::var_type;
 
@@ -36,72 +37,117 @@ mod tests {
     #[test]
     fn int_to_float() {
         assert_eq!(
-            parse("4**4.5").unwrap_err()[0],
-            Error::CannotDo2(var_type!(int), BinOperator::Pow, var_type!(float))
+            parse_unwrap_first_error("4**4.5"),
+            CannotDo2 {
+                lhs: var_type!(int),
+                op: BinOperator::Pow,
+                rhs: var_type!(float)
+            }
+            .into()
         );
     }
 
     #[test]
     fn int_array_to_int() {
         assert_eq!(
-            parse(r#"[4, 5, 6] ** 5"#).unwrap_err()[0],
-            Error::CannotDo2(var_type!([int]), BinOperator::Pow, var_type!(int))
+            parse_unwrap_first_error(r#"[4, 5, 6] ** 5"#),
+            CannotDo2 {
+                lhs: var_type!([int]),
+                op: BinOperator::Pow,
+                rhs: var_type!(int)
+            }
+            .into()
         );
     }
 
     #[test]
     fn string_to_string_array() {
         assert_eq!(
-            parse(r#""7" ** ["a", "aaa"]"#).unwrap_err()[0],
-            Error::CannotDo2(var_type!(string), BinOperator::Pow, var_type!([string]))
+            parse_unwrap_first_error(r#""7" ** ["a", "aaa"]"#),
+            CannotDo2 {
+                lhs: var_type!(string),
+                op: BinOperator::Pow,
+                rhs: var_type!([string])
+            }
+            .into()
         );
     }
 
     #[test]
     fn string_array_to_string() {
         assert_eq!(
-            parse(r#"["a", "aaa"]**"3""#).unwrap_err()[0],
-            Error::CannotDo2(var_type!([string]), BinOperator::Pow, var_type!(string))
+            parse_unwrap_first_error(r#"["a", "aaa"]**"3""#),
+            CannotDo2 {
+                lhs: var_type!([string]),
+                op: BinOperator::Pow,
+                rhs: var_type!(string)
+            }
+            .into()
         );
     }
 
     #[test]
     fn float_array_to_float() {
         assert_eq!(
-            parse(r#"[4.5, 5.7, 6.0] ** 3.3"#).unwrap_err()[0],
-            Error::CannotDo2(var_type!([float]), BinOperator::Pow, var_type!(float))
+            parse_unwrap_first_error(r#"[4.5, 5.7, 6.0] ** 3.3"#),
+            CannotDo2 {
+                lhs: var_type!([float]),
+                op: BinOperator::Pow,
+                rhs: var_type!(float)
+            }
+            .into()
         );
     }
 
     #[test]
     fn string_to_float() {
         assert_eq!(
-            parse(r#""4"**4.5"#).unwrap_err()[0],
-            Error::CannotDo2(var_type!(string), BinOperator::Pow, var_type!(float))
+            parse_unwrap_first_error(r#""4"**4.5"#),
+            CannotDo2 {
+                lhs: var_type!(string),
+                op: BinOperator::Pow,
+                rhs: var_type!(float)
+            }
+            .into()
         );
     }
 
     #[test]
     fn string_to_int() {
         assert_eq!(
-            parse(r#""4"**4"#).unwrap_err()[0],
-            Error::CannotDo2(var_type!(string), BinOperator::Pow, var_type!(int))
+            parse_unwrap_first_error(r#""4"**4"#),
+            CannotDo2 {
+                lhs: var_type!(string),
+                op: BinOperator::Pow,
+                rhs: var_type!(int)
+            }
+            .into()
         );
     }
 
     #[test]
     fn int_to_float_array() {
         assert_eq!(
-            parse(r#"[4]**4.5"#).unwrap_err()[0],
-            Error::CannotDo2(var_type!([int]), BinOperator::Pow, var_type!(float))
+            parse_unwrap_first_error(r#"[4]**4.5"#),
+            CannotDo2 {
+                lhs: var_type!([int]),
+                op: BinOperator::Pow,
+                rhs: var_type!(float)
+            }
+            .into()
         );
     }
 
     #[test]
     fn int_float_array_to_float() {
         assert_eq!(
-            parse(r#"[4, 5.5]**4.5"#).unwrap_err()[0],
-            Error::CannotDo2(var_type!([int | float]), BinOperator::Pow, var_type!(float))
+            parse_unwrap_first_error(r#"[4, 5.5]**4.5"#),
+            CannotDo2 {
+                lhs: var_type!([int | float]),
+                op: BinOperator::Pow,
+                rhs: var_type!(float)
+            }
+            .into()
         );
     }
 
@@ -111,5 +157,13 @@ mod tests {
 
     fn parse(script: &str) -> Result<Code, Vec<Error>> {
         Code::parse(&Interpreter::without_stdlib(), script)
+    }
+
+    fn parse_unwrap_first_error(script: &str) -> Error {
+        parse_unwrap_errors(script).swap_remove(0)
+    }
+
+    fn parse_unwrap_errors(script: &str) -> Vec<Error> {
+        parse(script).unwrap_err()
     }
 }

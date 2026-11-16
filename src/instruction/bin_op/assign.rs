@@ -2,6 +2,7 @@ pub mod add;
 mod concat;
 use crate::{
     BinOperator, Error, ExecError, Interpreter,
+    errors::CannotDo2,
     instruction::{
         BaseInstruction, Exec, ExecResult, Instruction, Recreate,
         bin_op::assign::{add::AssignAdd, concat::AssignConcat},
@@ -29,7 +30,14 @@ impl Assign {
             && rhs_rt.matches(&element_type)
         {
         } else {
-            errors.push(Error::CannotDo2(lhs_rt, BinOperator::Assign, rhs_rt))
+            errors.push(
+                CannotDo2 {
+                    lhs: lhs_rt,
+                    op: BinOperator::Assign,
+                    rhs: rhs_rt,
+                }
+                .into(),
+            )
         }
         Assign { lhs, rhs }.into()
     }

@@ -1,5 +1,6 @@
 use crate::{
     Error,
+    errors::WrongCondition,
     instruction::{
         BaseInstruction, Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
         recreate_instructions, set::ConditionSet,
@@ -37,7 +38,13 @@ impl If {
                     let condition = Instruction::new(pair, &mut local_variables, errors);
                     let return_type = condition.return_type();
                     if return_type != Type::Bool {
-                        errors.push(Error::WrongCondition(condition_str, return_type));
+                        errors.push(
+                            WrongCondition {
+                                ins: condition_str,
+                                var_type: return_type,
+                            }
+                            .into(),
+                        );
                     }
                     condition
                 })

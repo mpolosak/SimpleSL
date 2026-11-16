@@ -1,4 +1,5 @@
 use super::{Instruction, InstructionWithSpan, local_variable::LocalVariables};
+use crate::errors::{CannotIndexWith, CannotSlice};
 use crate::stdlib::operators::Slice;
 use crate::{
     Error,
@@ -17,8 +18,14 @@ pub fn create(
 ) -> Instruction {
     let lhs_type = lhs.return_type();
     if !lhs_type.can_be_indexed() {
-        let str = lhs.span.as_str().into();
-        errors.push(Error::CannotSlice(str, lhs_type));
+        let ins = lhs.span.as_str().into();
+        errors.push(
+            CannotSlice {
+                ins,
+                var_type: lhs_type,
+            }
+            .into(),
+        );
     }
     let inner = pair.into_inner();
     if inner.peek().is_none() {
@@ -31,8 +38,8 @@ pub fn create(
         let rule = pair.as_rule();
         let instruction = InstructionWithSpan::new_expression(pair, local_variables, errors);
         if instruction.return_type() != Type::Int {
-            let str = instruction.span.as_str().into();
-            errors.push(Error::CannotIndexWith(str));
+            let ins = instruction.span.as_str().into();
+            errors.push(CannotIndexWith { ins }.into());
         }
         match rule {
             Rule::start => start = Some(instruction.instruction),
