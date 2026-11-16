@@ -1,4 +1,4 @@
-use super::{Instruction, InstructionWithStr, local_variable::LocalVariables};
+use super::{Instruction, InstructionWithSpan, local_variable::LocalVariables};
 use crate::instruction::{function::call::FunctionCall, tuple::Tuple};
 use crate::{
     self as simplesl, Error,
@@ -16,11 +16,12 @@ pub fn create_instruction(
     errors: &mut Vec<Error>,
 ) -> Instruction {
     let mut inner = pair.into_inner();
-    let value = InstructionWithStr::new_expression(inner.next().unwrap(), local_variables, errors)
+    let value = InstructionWithSpan::new_expression(inner.next().unwrap(), local_variables, errors)
         .instruction;
-    let len = InstructionWithStr::new_expression(inner.next().unwrap(), local_variables, errors);
+    let len = InstructionWithSpan::new_expression(inner.next().unwrap(), local_variables, errors);
     if !len.return_type().matches(&Type::Int) {
-        errors.push(Error::WrongLengthType(len.str));
+        let str = len.span.as_str().into();
+        errors.push(Error::WrongLengthType(str));
     }
 
     let value_type = value.return_type();

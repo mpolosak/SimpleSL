@@ -1,3 +1,5 @@
+use pest::Span;
+
 use crate::{
     Error,
     instruction::{
@@ -16,15 +18,16 @@ pub struct Ident {
 
 impl Ident {
     pub fn create_instruction(
-        str: &Arc<str>,
+        span: Span,
         local_variables: &LocalVariables<'_>,
         errors: &mut Vec<Error>,
     ) -> Instruction {
-        local_variables.get(str).map_or_else(
+        let str = Arc::from(span.as_str());
+        local_variables.get(&str).map_or_else(
             || {
                 local_variables
                     .interpreter
-                    .get_variable(str)
+                    .get_variable(&str)
                     .cloned()
                     .map(Instruction::from)
                     .unwrap_or_else(|| {

@@ -2,7 +2,7 @@ use crate::{
     self as simplesl, Code, Error, Interpreter,
     function::Function,
     instruction::{
-        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
+        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithSpan, Recreate,
         local_variable::LocalVariables,
     },
     unary_operator::UnaryOperator,
@@ -37,12 +37,13 @@ static ITER: LazyLock<Arc<Function>> = LazyLock::new(|| {
 pub struct Iter(Instruction);
 
 impl Iter {
-    pub fn create_instruction(lhs: InstructionWithStr, errors: &mut Vec<Error>) -> Instruction {
+    pub fn create_instruction(lhs: InstructionWithSpan, errors: &mut Vec<Error>) -> Instruction {
         let op = UnaryOperator::Iter;
         let lhs_type = lhs.return_type();
         if !lhs_type.matches(&var_type!([any])) {
+            let ins = lhs.span.as_str().into();
             errors.push(Error::IncorectUnaryOperatorOperand {
-                ins: lhs.str,
+                ins,
                 op,
                 expected: var_type!([any]),
                 given: lhs_type,
@@ -121,7 +122,7 @@ mod tests {
                 x()~"
             ),
             Error::IncorectUnaryOperatorOperand {
-                ins: "x ()".into(),
+                ins: "x()".into(),
                 op: OP,
                 expected: var_type!([any]),
                 given: var_type!([int] | string)

@@ -1,4 +1,4 @@
-use super::{ExecResult, Instruction, InstructionWithStr, local_variable::LocalVariables};
+use super::{ExecResult, Instruction, InstructionWithSpan, local_variable::LocalVariables};
 use crate::{
     Error, Interpreter,
     instruction::{BaseInstruction, Exec, Recreate},
@@ -21,13 +21,14 @@ pub fn create(
     errors: &mut Vec<Error>,
 ) -> Instruction {
     let pair = index.into_inner().next().unwrap();
-    let index = InstructionWithStr::new_expression(pair, local_variables, errors);
+    let index = InstructionWithSpan::new_expression(pair, local_variables, errors);
     let instruction_return_type = instruction.return_type();
     if !instruction_return_type.can_be_indexed() {
         errors.push(Error::CannotIndexInto(instruction_return_type));
     }
     if !index.return_type().matches(&Type::Int) {
-        errors.push(Error::CannotIndexWith(index.str));
+        let str = index.span.as_str().into();
+        errors.push(Error::CannotIndexWith(str));
     }
     At {
         instruction,

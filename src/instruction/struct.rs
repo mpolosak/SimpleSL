@@ -26,8 +26,9 @@ impl Struct {
             .into_inner()
             .map(|pair| {
                 if pair.as_rule() == Rule::ident {
-                    let ident: Arc<str> = pair.as_str().into();
-                    let instruction = Ident::create_instruction(&ident, local_variables, errors);
+                    let span = pair.as_span();
+                    let instruction = Ident::create_instruction(span, local_variables, errors);
+                    let ident = span.as_str().into();
                     return Set::new_ident(ident, instruction);
                 }
                 let mut local_variables = local_variables.create_layer();

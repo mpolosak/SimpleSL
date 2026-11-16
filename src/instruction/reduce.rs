@@ -6,7 +6,7 @@ pub mod sum;
 use crate::{
     self as simplesl, Error,
     instruction::{
-        Instruction, InstructionWithStr, function::call::FunctionCall,
+        Instruction, InstructionWithSpan, function::call::FunctionCall,
         local_variable::LocalVariables, tuple::Tuple,
     },
     stdlib::operators::REDUCE,
@@ -18,16 +18,17 @@ use simplesl_parser::Rule;
 use std::sync::Arc;
 
 pub fn create_instruction(
-    iter: InstructionWithStr,
+    iter: InstructionWithSpan,
     initial_value: Pair<Rule>,
-    function: InstructionWithStr,
+    function: InstructionWithSpan,
     local_variables: &LocalVariables,
     errors: &mut Vec<Error>,
 ) -> Instruction {
-    let initial_value = InstructionWithStr::new_expression(initial_value, local_variables, errors);
+    let initial_value = InstructionWithSpan::new_expression(initial_value, local_variables, errors);
     let iter_type = iter.return_type();
     let element_type = iter_type.iter_element().unwrap_or_else(|| {
-        errors.push(Error::CannotReduce(iter.str));
+        let str = iter.span.as_str().into();
+        errors.push(Error::CannotReduce(str));
         Type::Never
     });
     let function_return_type = function.return_type();

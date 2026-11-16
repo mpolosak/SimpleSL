@@ -1,25 +1,25 @@
-use std::sync::LazyLock;
-
 use crate::{
     self as simplesl, Error,
-    instruction::{Instruction, InstructionWithStr, function::call::FunctionCall, tuple::Tuple},
+    instruction::{Instruction, InstructionWithSpan, function::call::FunctionCall, tuple::Tuple},
     stdlib::operators::{ALL, ANY},
     unary_operator::UnaryOperator,
     variable::{ReturnType, Type, Variable},
 };
 use simplesl_macros::var_type;
+use std::sync::LazyLock;
 
 pub static ACCEPTED_TYPE: LazyLock<Type> = LazyLock::new(|| var_type!(() -> (#Some(bool)|#None)));
 
 pub fn create(
-    iterator: InstructionWithStr,
+    iterator: InstructionWithSpan,
     op: UnaryOperator,
     errors: &mut Vec<Error>,
 ) -> Instruction {
     let return_type = iterator.return_type();
     if !return_type.matches(&ACCEPTED_TYPE) {
+        let ins = iterator.span.as_str().into();
         errors.push(Error::IncorectUnaryOperatorOperand {
-            ins: iterator.str,
+            ins,
             op,
             expected: ACCEPTED_TYPE.clone(),
             given: return_type,
@@ -95,7 +95,7 @@ mod tests {
         assert_eq!(
             parse_and_exec("[6.5, 6.5, 3.4]~$&&").unwrap_err()[0],
             Error::IncorectUnaryOperatorOperand {
-                ins: "[6.5, 6.5, 3.4] ~".into(),
+                ins: "[6.5, 6.5, 3.4]~".into(),
                 op: ALL,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(() -> (#Some(float)|#None))
@@ -104,7 +104,7 @@ mod tests {
         assert_eq!(
             parse_unwrap_first_error(r#"["a", "6.5", "$"]~$&&"#),
             Error::IncorectUnaryOperatorOperand {
-                ins: r#"["a", "6.5", "$"] ~"#.into(),
+                ins: r#"["a", "6.5", "$"]~"#.into(),
                 op: ALL,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(() -> (#Some(string)|#None))
@@ -113,7 +113,7 @@ mod tests {
         assert_eq!(
             parse_unwrap_first_error("[45, 16, 3]~$&&"),
             Error::IncorectUnaryOperatorOperand {
-                ins: "[45, 16, 3] ~".into(),
+                ins: "[45, 16, 3]~".into(),
                 op: ALL,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(() -> (#Some(int)|#None))
@@ -193,7 +193,7 @@ mod tests {
         assert_eq!(
             parse_unwrap_first_error("[6.5, 6.5, 3.4]~$||"),
             Error::IncorectUnaryOperatorOperand {
-                ins: "[6.5, 6.5, 3.4] ~".into(),
+                ins: "[6.5, 6.5, 3.4]~".into(),
                 op: ANY,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(() -> (#Some(float)|#None))
@@ -202,7 +202,7 @@ mod tests {
         assert_eq!(
             parse_unwrap_first_error(r#"["a", "6.5", "$"]~$||"#),
             Error::IncorectUnaryOperatorOperand {
-                ins: r#"["a", "6.5", "$"] ~"#.into(),
+                ins: r#"["a", "6.5", "$"]~"#.into(),
                 op: ANY,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(() -> (#None | #Some(string)))
@@ -211,7 +211,7 @@ mod tests {
         assert_eq!(
             parse_unwrap_first_error("[45, 16, 3]~$||"),
             Error::IncorectUnaryOperatorOperand {
-                ins: "[45, 16, 3] ~".into(),
+                ins: "[45, 16, 3]~".into(),
                 op: ANY,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(() -> (#None | #Some(int)))

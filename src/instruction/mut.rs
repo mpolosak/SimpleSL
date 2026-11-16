@@ -1,5 +1,5 @@
 use super::{
-    Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
+    Exec, ExecResult, Instruction, InstructionWithSpan, Recreate, local_variable::LocalVariables,
 };
 use crate::{
     Error, Interpreter,
@@ -20,7 +20,7 @@ impl BaseInstruction for Mut {}
 impl Mut {
     pub fn create_instruction(
         op: Pair<Rule>,
-        rhs: InstructionWithStr,
+        rhs: InstructionWithSpan,
         errors: &mut Vec<Error>,
     ) -> Instruction {
         let mut inner = op.into_inner();
@@ -34,9 +34,10 @@ impl Mut {
         let var_type = Type::from(type_pair);
         let instruction_return_type = rhs.return_type();
         if !instruction_return_type.matches(&var_type) {
+            let given = rhs.span.as_str().into();
             errors.push(Error::WrongInitialization {
                 declared: var_type.clone(),
-                given: rhs.str,
+                given,
                 given_type: instruction_return_type,
             });
         }

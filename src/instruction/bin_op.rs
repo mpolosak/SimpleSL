@@ -9,7 +9,7 @@ mod partition;
 use std::sync::LazyLock;
 
 use super::{
-    Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
+    Exec, ExecResult, Instruction, InstructionWithSpan, Recreate, local_variable::LocalVariables,
     reduce,
 };
 use crate::{
@@ -27,7 +27,7 @@ use crate::{
 };
 pub use math::{add, multiply, pow, subtract};
 use math::{divide, modulo};
-use pest::iterators::Pair;
+use pest::{Span, iterators::Pair};
 use simplesl_macros::var_type;
 use simplesl_parser::Rule;
 
@@ -169,25 +169,25 @@ impl ReturnType for BinOperation {
     }
 }
 
-impl InstructionWithStr {
+impl<'a> InstructionWithSpan<'a> {
     pub fn create_infix(
-        op: Pair<'_, Rule>,
+        op: Pair<'a, Rule>,
         lhs: Self,
         rhs: Self,
         local_variables: &LocalVariables<'_>,
         errors: &mut Vec<Error>,
     ) -> Self {
-        let str = format!("{} {} {}", lhs.str, op.as_str(), rhs.str).into();
+        let span = Span::new(op.get_input(), lhs.span.start(), rhs.span.end()).unwrap();
         let instruction = Instruction::create_infix(op, lhs, rhs, local_variables, errors);
-        Self { instruction, str }
+        Self { instruction, span }
     }
 }
 
 impl Instruction {
     fn create_infix(
         op: Pair<'_, Rule>,
-        lhs: InstructionWithStr,
-        rhs: InstructionWithStr,
+        lhs: InstructionWithSpan,
+        rhs: InstructionWithSpan,
         local_variables: &LocalVariables<'_>,
         errors: &mut Vec<Error>,
     ) -> Self {

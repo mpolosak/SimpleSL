@@ -1,5 +1,5 @@
 use super::{
-    Exec, ExecResult, Instruction, InstructionWithStr, Recreate, local_variable::LocalVariables,
+    Exec, ExecResult, Instruction, InstructionWithSpan, Recreate, local_variable::LocalVariables,
 };
 use crate::{
     Error,
@@ -26,7 +26,7 @@ impl Tuple {
         let elements = pair
             .into_inner()
             .map(|pair| {
-                InstructionWithStr::new_expression(pair, local_variables, errors).instruction
+                InstructionWithSpan::new_expression(pair, local_variables, errors).instruction
             })
             .collect();
         Self { elements }.into()

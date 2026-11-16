@@ -2,7 +2,7 @@ use crate::{
     Error, Interpreter,
     function::{Function as VarFunc, Param, Params},
     instruction::{
-        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
+        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithSpan, Recreate,
         local_variable::LocalVariables, tuple::Tuple,
     },
     variable::{ReturnType, Type, Typed, Variable},
@@ -19,26 +19,27 @@ pub struct FunctionCall {
 
 impl FunctionCall {
     pub fn create_instruction(
-        function: InstructionWithStr,
+        function: InstructionWithSpan,
         args: Pair<Rule>,
         local_variables: &LocalVariables,
         errors: &mut Vec<Error>,
     ) -> Instruction {
         let args = args
             .into_inner()
-            .map(|pair| InstructionWithStr::new_expression(pair, local_variables, errors))
+            .map(|pair| InstructionWithSpan::new_expression(pair, local_variables, errors))
             .collect::<Box<_>>();
 
+        let ident = function.span.as_str().into();
         if let Some(Variable::Function(function2)) = function.instruction.downcast_ref::<Variable>()
         {
-            check_args_with_params(&function.str, &function2.params, &args, errors);
+            check_args_with_params(&ident, &function2.params, &args, errors);
         } else {
             let f_type = function.return_type();
             if !f_type.is_function() {
-                errors.push(Error::NotAFunction(function.str.clone()));
+                errors.push(Error::NotAFunction(ident.clone()));
             }
             let Some(params) = f_type.params() else {
-                errors.push(Error::CannotDetermineParams(function.str));
+                errors.push(Error::CannotDetermineParams(ident));
                 let args = Tuple {
                     elements: [].into(),
                 }
@@ -57,7 +58,7 @@ impl FunctionCall {
                     var_type: var_type.clone(),
                 })
                 .collect();
-            check_args_with_params(&function.str, &Params(params), &args, errors);
+            check_args_with_params(&ident, &Params(params), &args, errors);
         }
         let args = args.into_iter().map(|arg| arg.instruction).collect();
         let args = Tuple { elements: args }.into();
@@ -130,7 +131,7 @@ impl ReturnType for FunctionCall {
 fn check_args_with_params(
     ident: &Arc<str>,
     params: &Params,
-    args: &[InstructionWithStr],
+    args: &[InstructionWithSpan],
     errors: &mut Vec<Error>,
 ) {
     if params.len() != args.len() {
@@ -139,10 +140,11 @@ fn check_args_with_params(
     for (arg, param) in zip(args, params.iter()) {
         let arg_type = arg.return_type();
         if !arg_type.matches(&param.var_type) {
+            let given = arg.span.as_str().into();
             errors.push(Error::WrongArgument {
                 function: ident.clone(),
                 param: param.clone(),
-                given: arg.str.clone(),
+                given,
                 given_type: arg_type,
             });
         }

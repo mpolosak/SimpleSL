@@ -1,4 +1,4 @@
-use super::{Instruction, InstructionWithStr};
+use super::{Instruction, InstructionWithSpan};
 use crate::{
     Error,
     instruction::{function::call::FunctionCall, panic::Panic, tuple::Tuple},
@@ -10,13 +10,14 @@ use simplesl_parser::Rule;
 use std::sync::Arc;
 
 pub fn create_instruction(
-    tuple: InstructionWithStr,
+    tuple: InstructionWithSpan,
     op: Pair<Rule>,
     errors: &mut Vec<Error>,
 ) -> Instruction {
     let tuple_type = tuple.return_type();
     let Some(len) = tuple_type.min_tuple_len() else {
-        errors.push(Error::CannotTupleAccess(tuple.str, tuple_type));
+        let str = tuple.span.as_str().into();
+        errors.push(Error::CannotTupleAccess(str, tuple_type));
         return Panic.into();
     };
 
@@ -30,7 +31,8 @@ pub fn create_instruction(
     };
 
     let return_type = tuple_type.tuple_element_at(index).unwrap_or_else(|| {
-        errors.push(Error::TupleIndexTooBig(index, tuple.str, len));
+        let str = tuple.span.as_str().into();
+        errors.push(Error::TupleIndexTooBig(index, str, len));
         Type::Never
     });
 

@@ -1,7 +1,7 @@
 use crate::{
     Error,
     instruction::{
-        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
+        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithSpan, Recreate,
         local_variable::LocalVariables,
     },
     interpreter::Interpreter,
@@ -26,7 +26,7 @@ impl Tagged {
         let mut inner = pair.into_inner();
         let tag: Arc<str> = inner.next().unwrap().as_str().into();
         let payload = inner.next().map(|pair| {
-            InstructionWithStr::new_expression(pair, local_variables, errors).instruction
+            InstructionWithSpan::new_expression(pair, local_variables, errors).instruction
         });
         if let Some(payload) = payload {
             Self { tag, payload }.into()

@@ -1,6 +1,6 @@
 mod iter;
 use super::{
-    InstructionWithStr, at,
+    InstructionWithSpan, at,
     local_variable::LocalVariables,
     reduce::{self, bool_reduce, collect},
     tuple_access,
@@ -17,17 +17,17 @@ use crate::{
     },
     unary_operator::UnaryOperator,
 };
-use pest::iterators::Pair;
+use pest::{Span, iterators::Pair};
 use simplesl_parser::{Rule, unexpected};
 
-impl InstructionWithStr {
+impl<'a> InstructionWithSpan<'a> {
     pub fn create_postfix(
-        op: Pair<'_, Rule>,
+        op: Pair<'a, Rule>,
         lhs: Self,
         local_variables: &LocalVariables<'_>,
         errors: &mut Vec<Error>,
     ) -> Self {
-        let str = format!("{} {}", lhs.str, op.as_str()).into();
+        let span = Span::new(op.get_input(), lhs.span.start(), op.as_span().end()).unwrap();
         let instruction = match op.as_rule() {
             Rule::at => at::create(lhs.instruction, op, local_variables, errors),
             Rule::type_filter => TypeFilter::create_instruction(
@@ -51,6 +51,6 @@ impl InstructionWithStr {
             Rule::slicing => slicing::create(lhs, op, local_variables, errors),
             rule => unexpected!(rule),
         };
-        Self { instruction, str }
+        Self { instruction, span }
     }
 }

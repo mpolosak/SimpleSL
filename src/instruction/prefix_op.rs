@@ -1,5 +1,5 @@
 mod deref;
-use super::InstructionWithStr;
+use super::InstructionWithSpan;
 use super::local_variable::LocalVariables;
 use crate::instruction::prefix_op::deref::Deref;
 use crate::instruction::{BaseInstruction, Exec, Instruction, Recreate};
@@ -7,15 +7,15 @@ use crate::unary_operator::UnaryOperator;
 use crate::variable::{ReturnType, Type, Variable};
 use crate::{self as simplesl, instruction::r#mut::Mut};
 use crate::{Error, Interpreter};
+use pest::Span;
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
 use simplesl_parser::{Rule, unexpected};
 use std::sync::LazyLock;
 
-impl InstructionWithStr {
-    pub fn create_prefix(op: Pair<'_, Rule>, rhs: Self, errors: &mut Vec<Error>) -> Self {
-        let str = rhs.str.clone();
-        let str = format!("{} {}", op.as_str(), str).into();
+impl<'a> InstructionWithSpan<'a> {
+    pub fn create_prefix(op: Pair<'a, Rule>, rhs: Self, errors: &mut Vec<Error>) -> Self {
+        let span = Span::new(op.get_input(), op.as_span().start(), rhs.span.end()).unwrap();
         let instruction = match op.as_rule() {
             Rule::not => Not::create_instruction(rhs, errors),
             Rule::unary_minus => UnaryMinus::create_instruction(rhs, errors),
@@ -23,7 +23,7 @@ impl InstructionWithStr {
             Rule::r#mut => Mut::create_instruction(op, rhs, errors),
             rule => unexpected!(rule),
         };
-        Self { instruction, str }
+        Self { instruction, span }
     }
 }
 
@@ -34,14 +34,15 @@ pub struct UnaryMinus(Instruction);
 
 impl UnaryMinus {
     pub fn create_instruction(
-        instruction: InstructionWithStr,
+        instruction: InstructionWithSpan,
         errors: &mut Vec<Error>,
     ) -> Instruction {
         let op = UnaryOperator::UnaryMinus;
         let return_type = instruction.return_type();
         if !return_type.matches(&ACCEPTED_NUM) {
+            let ins = instruction.span.as_str().into();
             errors.push(Error::IncorectUnaryOperatorOperand {
-                ins: instruction.str,
+                ins,
                 op,
                 expected: ACCEPTED_NUM.clone(),
                 given: return_type,
@@ -83,14 +84,15 @@ pub static ACCEPTED_NOT: LazyLock<Type> = LazyLock::new(|| var_type!(int | bool)
 
 impl Not {
     pub fn create_instruction(
-        instruction: InstructionWithStr,
+        instruction: InstructionWithSpan,
         errors: &mut Vec<Error>,
     ) -> Instruction {
         let op = UnaryOperator::Not;
         let return_type = instruction.return_type();
         if !return_type.matches(&ACCEPTED_NOT) {
+            let ins = instruction.span.as_str().into();
             errors.push(Error::IncorectUnaryOperatorOperand {
-                ins: instruction.str,
+                ins,
                 op,
                 expected: ACCEPTED_NOT.clone(),
                 given: return_type,

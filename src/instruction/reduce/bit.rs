@@ -1,7 +1,7 @@
 use crate::{
     self as simplesl, Error,
     instruction::{
-        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
+        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithSpan, Recreate,
         local_variable::LocalVariables,
     },
     interpreter::Interpreter,
@@ -25,14 +25,15 @@ pub struct OrReduce {
 }
 
 pub fn create(
-    iterator: InstructionWithStr,
+    iterator: InstructionWithSpan,
     op: UnaryOperator,
     errors: &mut Vec<Error>,
 ) -> Instruction {
     let return_type = iterator.return_type();
     if !return_type.matches(&ACCEPTED_TYPE) {
+        let ins = iterator.span.as_str().into();
         errors.push(Error::IncorectUnaryOperatorOperand {
-            ins: iterator.str,
+            ins,
             op,
             expected: ACCEPTED_TYPE.clone(),
             given: return_type,
@@ -144,7 +145,7 @@ mod tests {
         assert_eq!(
             parse_unwrap_first_error("[6.5, 6.5, 3.4]~$&"),
             Error::IncorectUnaryOperatorOperand {
-                ins: "[6.5, 6.5, 3.4] ~".into(),
+                ins: "[6.5, 6.5, 3.4]~".into(),
                 op: AND,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(() -> (#Some(float)|#None))
@@ -153,7 +154,7 @@ mod tests {
         assert_eq!(
             parse_unwrap_first_error(r#"["a", "6.5", "$"]~$&"#),
             Error::IncorectUnaryOperatorOperand {
-                ins: r#"["a", "6.5", "$"] ~"#.into(),
+                ins: r#"["a", "6.5", "$"]~"#.into(),
                 op: AND,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(() -> (#Some(string)|#None))
@@ -162,7 +163,7 @@ mod tests {
         assert_eq!(
             parse_unwrap_first_error("[45, 16.5, 3]~$&"),
             Error::IncorectUnaryOperatorOperand {
-                ins: "[45, 16.5, 3] ~".into(),
+                ins: "[45, 16.5, 3]~".into(),
                 op: AND,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(() -> (#Some(int|float)|#None))
@@ -214,7 +215,7 @@ mod tests {
         assert_eq!(
             parse_unwrap_first_error("[6.5, 6.5, 3.4]~$|"),
             Error::IncorectUnaryOperatorOperand {
-                ins: "[6.5, 6.5, 3.4] ~".into(),
+                ins: "[6.5, 6.5, 3.4]~".into(),
                 op: OR,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(() -> (#Some(float)|#None))
@@ -223,7 +224,7 @@ mod tests {
         assert_eq!(
             parse_unwrap_first_error(r#"["a", "6.5", "$"]~$|"#),
             Error::IncorectUnaryOperatorOperand {
-                ins: r#"["a", "6.5", "$"] ~"#.into(),
+                ins: r#"["a", "6.5", "$"]~"#.into(),
                 op: OR,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(() -> (#Some(string)|#None))
@@ -232,7 +233,7 @@ mod tests {
         assert_eq!(
             parse_unwrap_first_error("[45, 16.5, 3]~$|"),
             Error::IncorectUnaryOperatorOperand {
-                ins: "[45, 16.5, 3] ~".into(),
+                ins: "[45, 16.5, 3]~".into(),
                 op: OR,
                 expected: ACCEPTED_TYPE.clone(),
                 given: var_type!(() -> (#Some(int|float)|#None))

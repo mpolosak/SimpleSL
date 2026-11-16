@@ -1,4 +1,4 @@
-use super::{ExecResult, Instruction, InstructionWithStr, local_variable::LocalVariables};
+use super::{ExecResult, Instruction, InstructionWithSpan, local_variable::LocalVariables};
 use crate::{
     Error, Interpreter,
     instruction::{BaseInstruction, Exec, Recreate},
@@ -16,23 +16,22 @@ pub struct FieldAccess {
 
 impl FieldAccess {
     pub fn create_instruction(
-        instruction: InstructionWithStr,
+        instruction: InstructionWithSpan,
         op: Pair<Rule>,
         errors: &mut Vec<Error>,
     ) -> Instruction {
         let return_type = instruction.return_type();
         if !return_type.is_struct() {
-            errors.push(Error::CannotFieldAccess(
-                instruction.str.clone(),
-                return_type.clone(),
-            ));
+            let ident = instruction.span.as_str().into();
+            errors.push(Error::CannotFieldAccess(ident, return_type.clone()));
         }
         let pair = op.into_inner().next().unwrap();
         let ident = Arc::from(pair.as_str());
 
         if !return_type.has_field(&ident) {
+            let struct_ident = instruction.span.as_str().into();
             errors.push(Error::NoField {
-                struct_ident: instruction.str,
+                struct_ident,
                 field_ident: ident.clone(),
                 struct_type: return_type,
             });

@@ -48,19 +48,19 @@ use crate::{
 };
 use derive_more::From;
 use r#loop::{Loop, r#while};
-use pest::iterators::Pair;
+use pest::{Span, iterators::Pair};
 use simplesl_parser::{PRATT_PARSER, Rule, unexpected};
 use std::{any::Any, fmt::Debug, sync::Arc};
 
 #[derive(Debug, Clone)]
-pub struct InstructionWithStr {
+pub struct InstructionWithSpan<'a> {
     pub instruction: Instruction,
-    pub str: Arc<str>,
+    pub span: Span<'a>,
 }
 
-impl InstructionWithStr {
+impl<'a> InstructionWithSpan<'a> {
     pub(crate) fn new_expression(
-        pair: Pair<Rule>,
+        pair: Pair<'a, Rule>,
         local_variables: &LocalVariables,
         errors: &mut Vec<Error>,
     ) -> Self {
@@ -85,7 +85,7 @@ impl InstructionWithStr {
     }
 
     fn create_primary(
-        pair: Pair<'_, Rule>,
+        pair: Pair<'a, Rule>,
         local_variables: &LocalVariables<'_>,
         errors: &mut Vec<Error>,
     ) -> Self {
@@ -93,9 +93,9 @@ impl InstructionWithStr {
         if rule == Rule::expr {
             return Self::new_expression(pair, local_variables, errors);
         }
-        let str: Arc<str> = pair.as_str().into();
+        let span = pair.as_span();
         let instruction: Instruction = match rule {
-            Rule::ident => Ident::create_instruction(&str, local_variables, errors),
+            Rule::ident => Ident::create_instruction(span, local_variables, errors),
             Rule::r#true | Rule::r#false | Rule::int | Rule::float | Rule::string => {
                 variable_from_pair(pair, errors).into()
             }
@@ -108,17 +108,11 @@ impl InstructionWithStr {
             Rule::r#mod => module::create_instruction(pair, local_variables, errors),
             rule => unexpected!(rule),
         };
-        Self { instruction, str }
+        Self { instruction, span }
     }
 }
 
-impl Exec for InstructionWithStr {
-    fn exec(&self, interpreter: &mut Interpreter) -> ExecResult {
-        self.instruction.exec(interpreter)
-    }
-}
-
-impl ReturnType for InstructionWithStr {
+impl<'a> ReturnType for InstructionWithSpan<'a> {
     fn return_type(&self) -> Type {
         self.instruction.return_type()
     }
@@ -144,7 +138,7 @@ impl Instruction {
             Rule::r#match => Match::create_instruction(pair, local_variables, errors),
             Rule::r#return => Return::create_instruction(pair, local_variables, errors),
             Rule::expr => {
-                InstructionWithStr::new_expression(pair, local_variables, errors).instruction
+                InstructionWithSpan::new_expression(pair, local_variables, errors).instruction
             }
             Rule::r#loop => Loop::create_instruction(pair, local_variables, errors),
             Rule::r#while => r#while::create_instruction(pair, local_variables, errors),

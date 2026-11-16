@@ -1,9 +1,7 @@
-use std::sync::LazyLock;
-
 use crate::{
     self as simplesl, Error,
     instruction::{
-        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
+        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithSpan, Recreate,
         local_variable::LocalVariables,
     },
     interpreter::Interpreter,
@@ -12,6 +10,7 @@ use crate::{
     variable::{ReturnType, Type},
 };
 use simplesl_macros::var_type;
+use std::sync::LazyLock;
 
 pub static ACCEPTED_TYPE: LazyLock<Type> = LazyLock::new(|| var_type!(() -> (bool, any)));
 
@@ -20,14 +19,15 @@ pub struct Collect {
     iterator: Instruction,
 }
 
-pub(crate) fn create(lhs: InstructionWithStr, errors: &mut Vec<Error>) -> Instruction {
+pub(crate) fn create(lhs: InstructionWithSpan, errors: &mut Vec<Error>) -> Instruction {
     let op = UnaryOperator::Collect;
     let return_type = lhs.return_type();
-    let InstructionWithStr {
+    let InstructionWithSpan {
         instruction: iterator,
-        str: ins,
+        span,
     } = lhs;
     if return_type.iter_element().is_none() {
+        let ins = span.as_str().into();
         errors.push(Error::IncorectUnaryOperatorOperand {
             ins,
             op,

@@ -1,4 +1,4 @@
-use super::{Instruction, InstructionWithStr, local_variable::LocalVariables};
+use super::{Instruction, InstructionWithSpan, local_variable::LocalVariables};
 use crate::stdlib::operators::Slice;
 use crate::{
     Error,
@@ -10,14 +10,15 @@ use simplesl_parser::{Rule, unexpected};
 use std::sync::Arc;
 
 pub fn create(
-    lhs: InstructionWithStr,
+    lhs: InstructionWithSpan,
     pair: Pair<Rule>,
     local_variables: &LocalVariables,
     errors: &mut Vec<Error>,
 ) -> Instruction {
     let lhs_type = lhs.return_type();
     if !lhs_type.can_be_indexed() {
-        errors.push(Error::CannotSlice(lhs.str.clone(), lhs_type));
+        let str = lhs.span.as_str().into();
+        errors.push(Error::CannotSlice(str, lhs_type));
     }
     let inner = pair.into_inner();
     if inner.peek().is_none() {
@@ -28,9 +29,10 @@ pub fn create(
     let mut step = None;
     for pair in inner {
         let rule = pair.as_rule();
-        let instruction = InstructionWithStr::new_expression(pair, local_variables, errors);
+        let instruction = InstructionWithSpan::new_expression(pair, local_variables, errors);
         if instruction.return_type() != Type::Int {
-            errors.push(Error::CannotIndexWith(instruction.str));
+            let str = instruction.span.as_str().into();
+            errors.push(Error::CannotIndexWith(str));
         }
         match rule {
             Rule::start => start = Some(instruction.instruction),

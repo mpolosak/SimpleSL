@@ -1,7 +1,7 @@
 use crate::{
     Error, Interpreter,
     instruction::{
-        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithStr, Recreate,
+        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithSpan, Recreate,
         local_variable::LocalVariables,
     },
     unary_operator::UnaryOperator,
@@ -13,13 +13,14 @@ pub struct Deref(Instruction);
 
 impl Deref {
     pub fn create_instruction(
-        instruction: InstructionWithStr,
+        instruction: InstructionWithSpan,
         errors: &mut Vec<Error>,
     ) -> Instruction {
         let return_type = instruction.return_type();
         if return_type.mut_element_type().is_none() {
+            let ins = instruction.span.as_str().into();
             errors.push(Error::IncorectUnaryOperatorOperand {
-                ins: instruction.str,
+                ins,
                 op: UnaryOperator::Indirection,
                 expected: Type::Mut(Type::Any.into()),
                 given: return_type,
