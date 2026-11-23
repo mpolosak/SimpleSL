@@ -113,7 +113,7 @@ pub(crate) fn bitand_reduce(
 
 #[export(BitOrReduce)]
 pub(crate) fn bitor_reduce(
-    #[var_type(() -> (bool, int))] iter: Arc<Function>,
+    #[var_type(() -> (#Some(int)|#None))] iter: Arc<Function>,
 ) -> Result<i64, ExecError> {
     let mut result = 0;
     loop {
