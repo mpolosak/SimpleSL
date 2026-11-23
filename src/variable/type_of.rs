@@ -64,8 +64,18 @@ impl TypeOf for T {
 impl<T: TypeOf, S: TypeOf> TypeOf for Result<T, S> {
     fn type_of() -> Type {
         let ok = T::type_of();
+        let ok = if ok.matches(&Type::none()) {
+            var_type!(#Ok)
+        } else {
+            var_type!(#Ok(ok))
+        };
         let err = S::type_of();
-        var_type!(ok | err)
+        let err = if err.matches(&Type::none()) {
+            var_type!(#Err)
+        } else {
+            var_type!(#Err(err))
+        };
+        var_type!(ok|err)
     }
 }
 
