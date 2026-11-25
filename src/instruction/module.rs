@@ -1,8 +1,9 @@
-use super::{Instruction, local_variable::LocalVariables};
+use super::Instruction;
 use crate::{
     Error,
     instruction::{
-        block::Block, ident::Ident, local_variable::LocalVariableMap, set::Set, r#struct::Struct,
+        block::Block, ident::Ident, local_variable::LocalVariableMap,
+        parsing_context::ParsingContext, set::Set, r#struct::Struct,
     },
 };
 use pest::iterators::Pair;
@@ -10,13 +11,13 @@ use simplesl_parser::Rule;
 
 pub fn create_instruction(
     pair: Pair<Rule>,
-    local_variables: &LocalVariables,
+    parsing_context: &ParsingContext,
     errors: &mut Vec<Error>,
 ) -> Instruction {
-    let mut local_variables = local_variables.create_layer();
+    let mut parsing_context = parsing_context.create_layer();
     let instructions =
-        local_variables.create_instructions(pair.into_inner().next().unwrap().into_inner(), errors);
-    new(instructions, local_variables.drop_layer())
+        parsing_context.create_instructions(pair.into_inner().next().unwrap().into_inner(), errors);
+    new(instructions, parsing_context.local_variables.drop_layer())
 }
 
 pub fn new(instructions: Box<[Instruction]>, lv_layer: LocalVariableMap) -> Instruction {

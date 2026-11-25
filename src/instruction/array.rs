@@ -1,7 +1,7 @@
 use super::{Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables};
 use crate::{
     self as simplesl, Error,
-    instruction::{BaseInstruction, recreate_instructions},
+    instruction::{BaseInstruction, parsing_context::ParsingContext, recreate_instructions},
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
 };
@@ -18,11 +18,11 @@ pub struct Array {
 impl Array {
     pub fn create_instruction(
         pair: Pair<Rule>,
-        local_variables: &LocalVariables,
+        parsing_context: &ParsingContext,
         errors: &mut Vec<Error>,
     ) -> Instruction {
         let inner = pair.into_inner();
-        let mut local_variables = local_variables.create_layer();
+        let mut local_variables = parsing_context.create_layer();
         let instructions: Box<[Instruction]> = inner
             .map(|arg| Instruction::new(arg, &mut local_variables, errors))
             .collect();

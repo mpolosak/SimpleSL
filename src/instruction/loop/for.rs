@@ -3,7 +3,7 @@ use crate::{
     errors::{SetPatternNotMatched, WrongType},
     instruction::{
         BaseInstruction, Exec, ExecResult, ExecStop, Instruction, Recreate,
-        local_variable::LocalVariables, pattern::Pattern,
+        local_variable::LocalVariables, parsing_context::ParsingContext, pattern::Pattern,
     },
     variable::{ReturnType, Type, Variable},
 };
@@ -21,12 +21,12 @@ pub struct For {
 impl For {
     pub fn create_instruction(
         pair: Pair<Rule>,
-        local_variables: &mut LocalVariables,
+        parsing_context: &mut ParsingContext,
         errors: &mut Vec<Error>,
     ) -> Instruction {
         let mut inner = pair.into_inner();
         let pattern_pair = inner.next().unwrap();
-        let iter = Instruction::new(inner.next().unwrap(), local_variables, errors);
+        let iter = Instruction::new(inner.next().unwrap(), parsing_context, errors);
         let iter_element = iter.return_type().iter_element().unwrap_or_else(|| {
             errors.push(
                 WrongType {
@@ -52,10 +52,10 @@ impl For {
                 .into(),
             );
         }
-        let mut local_variables = local_variables.create_layer();
-        local_variables.in_loop = true;
-        pattern.insert_local_variables(&mut local_variables);
-        let body = Instruction::new(inner.next().unwrap(), &mut local_variables, errors);
+        let mut parsing_context = parsing_context.create_layer();
+        parsing_context.local_variables.in_loop = true;
+        pattern.insert_local_variables(&mut parsing_context.local_variables);
+        let body = Instruction::new(inner.next().unwrap(), &mut parsing_context, errors);
         Self {
             pattern,
             iter,

@@ -3,7 +3,7 @@ use crate::{
     errors::WrongCondition,
     instruction::{
         BaseInstruction, Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
-        recreate_instructions, set::ConditionSet,
+        parsing_context::ParsingContext, recreate_instructions, set::ConditionSet,
     },
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
@@ -21,12 +21,12 @@ pub struct If {
 impl If {
     pub fn create(
         pair: Pair<Rule>,
-        local_variables: &mut LocalVariables,
+        parsing_context: &mut ParsingContext,
         errors: &mut Vec<Error>,
     ) -> Self {
         let mut inner = pair.into_inner();
         let (conditions, if_true) = {
-            let mut local_variables = local_variables.create_layer();
+            let mut local_variables = parsing_context.create_layer();
             let conditions_pair = inner.next().unwrap();
             let conditions = conditions_pair
                 .into_inner()
@@ -56,7 +56,7 @@ impl If {
         };
         let if_false = inner.next().map_or_else(
             || Variable::none().into(),
-            |pair| Instruction::new(pair, local_variables, errors),
+            |pair| Instruction::new(pair, parsing_context, errors),
         );
         Self {
             conditions,

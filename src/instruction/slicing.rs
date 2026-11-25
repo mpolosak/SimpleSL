@@ -1,5 +1,6 @@
-use super::{Instruction, InstructionWithSpan, local_variable::LocalVariables};
+use super::{Instruction, InstructionWithSpan};
 use crate::errors::{CannotIndexWith, CannotSlice};
+use crate::instruction::parsing_context::ParsingContext;
 use crate::stdlib::operators::Slice;
 use crate::{
     Error,
@@ -13,12 +14,12 @@ use std::sync::Arc;
 pub fn create(
     lhs: InstructionWithSpan,
     pair: Pair<Rule>,
-    local_variables: &LocalVariables,
+    parsing_context: &ParsingContext,
     errors: &mut Vec<Error>,
 ) -> Instruction {
     let lhs_type = lhs.return_type();
     if !lhs_type.can_be_indexed() {
-        let ins = lhs.span.as_str().into();
+        let ins = parsing_context.slice(lhs.span).into();
         errors.push(
             CannotSlice {
                 ins,
@@ -36,9 +37,9 @@ pub fn create(
     let mut step = None;
     for pair in inner {
         let rule = pair.as_rule();
-        let instruction = InstructionWithSpan::new_expression(pair, local_variables, errors);
+        let instruction = InstructionWithSpan::new_expression(pair, parsing_context, errors);
         if instruction.return_type() != Type::Int {
-            let ins = instruction.span.as_str().into();
+            let ins = parsing_context.slice(instruction.span).into();
             errors.push(CannotIndexWith { ins }.into());
         }
         match rule {

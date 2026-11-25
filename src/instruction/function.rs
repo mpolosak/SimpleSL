@@ -6,6 +6,7 @@ use crate::{
     instruction::{
         BaseInstruction, Exec, ExecResult, Instruction, Recreate,
         local_variable::{FunctionInfo, LocalVariable, LocalVariableMap, LocalVariables},
+        parsing_context::ParsingContext,
         recreate_instructions,
     },
     interpreter::Interpreter,
@@ -29,7 +30,7 @@ impl BaseInstruction for Function {}
 impl Function {
     pub fn create_instruction(
         pair: Pair<Rule>,
-        local_variables: &LocalVariables,
+        parsing_context: &ParsingContext,
         ident: Option<Arc<str>>,
         errors: &mut Vec<Error>,
     ) -> Instruction {
@@ -43,17 +44,17 @@ impl Function {
         } else {
             Type::none()
         };
-        let mut local_variables = local_variables.function_layer(
+        let mut parsing_context = parsing_context.function_layer(
             LocalVariableMap::from(params.clone()),
             FunctionInfo::new(ident.clone(), return_type.clone()),
         );
         if let Some(ident) = &ident {
-            local_variables.insert(
+            parsing_context.local_variables.insert(
                 ident.clone(),
                 LocalVariable::Function(params.clone(), return_type.clone()),
             );
         }
-        let body = local_variables.create_instructions(inner, errors);
+        let body = parsing_context.create_instructions(inner, errors);
         if !Type::none().matches(&return_type)
             && !body
                 .iter()

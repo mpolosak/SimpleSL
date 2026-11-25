@@ -13,6 +13,7 @@ mod r#loop;
 mod module;
 mod r#mut;
 pub mod panic;
+pub mod parsing_context;
 pub mod pattern;
 pub mod postfix_op;
 mod prefix_op;
@@ -40,6 +41,7 @@ use crate::{
     instruction::{
         ident::Ident,
         r#loop::{Break, Continue, r#for::For},
+        parsing_context::ParsingContext,
         r#return::Return,
         r#struct::Struct,
     },
@@ -48,20 +50,21 @@ use crate::{
 };
 use derive_more::From;
 use r#loop::{Loop, r#while};
-use pest::{Span, iterators::Pair};
+use miette::SourceSpan;
+use pest::iterators::Pair;
 use simplesl_parser::{PRATT_PARSER, Rule, unexpected};
 use std::{any::Any, fmt::Debug, sync::Arc};
 
 #[derive(Debug, Clone)]
-pub struct InstructionWithSpan<'a> {
+pub struct InstructionWithSpan {
     pub instruction: Instruction,
-    pub span: Span<'a>,
+    pub span: SourceSpan,
 }
 
-impl<'a> InstructionWithSpan<'a> {
+impl InstructionWithSpan {
     pub(crate) fn new_expression(
-        pair: Pair<'a, Rule>,
-        local_variables: &LocalVariables,
+        pair: Pair<'_, Rule>,
+        parsing_context: &ParsingContext,
         errors: &mut Vec<Error>,
     ) -> Self {
         let mut prefix_errors = Vec::new();
@@ -69,13 +72,13 @@ impl<'a> InstructionWithSpan<'a> {
         let mut postfix_errors = Vec::new();
 
         let result = PRATT_PARSER
-            .map_primary(|pair| Self::create_primary(pair, local_variables, errors))
-            .map_prefix(|op, rhs| Self::create_prefix(op, rhs, &mut prefix_errors))
+            .map_primary(|pair| Self::create_primary(pair, parsing_context, errors))
+            .map_prefix(|op, rhs| Self::create_prefix(op, rhs, parsing_context, &mut prefix_errors))
             .map_infix(|lhs, op, rhs| {
-                Self::create_infix(op, lhs, rhs, local_variables, &mut infix_errors)
+                Self::create_infix(op, lhs, rhs, parsing_context, &mut infix_errors)
             })
             .map_postfix(|lhs, op| {
-                Self::create_postfix(op, lhs, local_variables, &mut postfix_errors)
+                Self::create_postfix(op, lhs, parsing_context, &mut postfix_errors)
             })
             .parse(pair.into_inner());
         errors.append(&mut prefix_errors);
@@ -85,34 +88,37 @@ impl<'a> InstructionWithSpan<'a> {
     }
 
     fn create_primary(
-        pair: Pair<'a, Rule>,
-        local_variables: &LocalVariables<'_>,
+        pair: Pair<'_, Rule>,
+        parsing_context: &ParsingContext,
         errors: &mut Vec<Error>,
     ) -> Self {
         let rule = pair.as_rule();
         if rule == Rule::expr {
-            return Self::new_expression(pair, local_variables, errors);
+            return Self::new_expression(pair, parsing_context, errors);
         }
         let span = pair.as_span();
+        let start = span.start();
+        let length = span.end() - start;
+        let span = SourceSpan::new(start.into(), length);
         let instruction: Instruction = match rule {
-            Rule::ident => Ident::create_instruction(span, local_variables, errors),
+            Rule::ident => Ident::create_instruction(span, parsing_context, errors),
             Rule::r#true | Rule::r#false | Rule::int | Rule::float | Rule::string => {
                 variable_from_pair(pair, errors).into()
             }
-            Rule::tuple => Tuple::create_instruction(pair, local_variables, errors),
-            Rule::array => Array::create_instruction(pair, local_variables, errors),
-            Rule::array_repeat => array_repeat::create_instruction(pair, local_variables, errors),
-            Rule::function => Function::create_instruction(pair, local_variables, None, errors),
-            Rule::r#struct => Struct::create_instruction(pair, local_variables, errors),
-            Rule::tagged => tagged::Tagged::create_instruction(pair, local_variables, errors),
-            Rule::r#mod => module::create_instruction(pair, local_variables, errors),
+            Rule::tuple => Tuple::create_instruction(pair, parsing_context, errors),
+            Rule::array => Array::create_instruction(pair, parsing_context, errors),
+            Rule::array_repeat => array_repeat::create_instruction(pair, parsing_context, errors),
+            Rule::function => Function::create_instruction(pair, parsing_context, None, errors),
+            Rule::r#struct => Struct::create_instruction(pair, parsing_context, errors),
+            Rule::tagged => tagged::Tagged::create_instruction(pair, parsing_context, errors),
+            Rule::r#mod => module::create_instruction(pair, parsing_context, errors),
             rule => unexpected!(rule),
         };
         Self { instruction, span }
     }
 }
 
-impl<'a> ReturnType for InstructionWithSpan<'a> {
+impl ReturnType for InstructionWithSpan {
     fn return_type(&self) -> Type {
         self.instruction.return_type()
     }
@@ -126,31 +132,31 @@ pub struct Instruction(Arc<dyn BaseInstruction>);
 impl Instruction {
     pub fn new(
         pair: Pair<Rule>,
-        local_variables: &mut LocalVariables,
+        parsing_context: &mut ParsingContext,
         errors: &mut Vec<Error>,
     ) -> Self {
         match pair.as_rule() {
-            Rule::set | Rule::set_expr => Set::create(pair, local_variables, errors).into(),
-            Rule::set_else => SetElse::create(pair, local_variables, errors),
-            Rule::block => Block::create_instruction(pair, local_variables, errors),
-            Rule::import => import::create_instruction(pair, local_variables, errors),
-            Rule::r#if => If::create(pair, local_variables, errors).into(),
-            Rule::r#match => Match::create_instruction(pair, local_variables, errors),
-            Rule::r#return => Return::create_instruction(pair, local_variables, errors),
+            Rule::set | Rule::set_expr => Set::create(pair, parsing_context, errors).into(),
+            Rule::set_else => SetElse::create(pair, parsing_context, errors),
+            Rule::block => Block::create_instruction(pair, parsing_context, errors),
+            Rule::import => import::create_instruction(pair, parsing_context, errors),
+            Rule::r#if => If::create(pair, parsing_context, errors).into(),
+            Rule::r#match => Match::create_instruction(pair, parsing_context, errors),
+            Rule::r#return => Return::create_instruction(pair, parsing_context, errors),
             Rule::expr => {
-                InstructionWithSpan::new_expression(pair, local_variables, errors).instruction
+                InstructionWithSpan::new_expression(pair, parsing_context, errors).instruction
             }
-            Rule::r#loop => Loop::create_instruction(pair, local_variables, errors),
-            Rule::r#while => r#while::create_instruction(pair, local_variables, errors),
-            Rule::r#for => For::create_instruction(pair, local_variables, errors),
+            Rule::r#loop => Loop::create_instruction(pair, parsing_context, errors),
+            Rule::r#while => r#while::create_instruction(pair, parsing_context, errors),
+            Rule::r#for => For::create_instruction(pair, parsing_context, errors),
             Rule::r#break => {
-                if !local_variables.in_loop {
+                if !parsing_context.local_variables.in_loop {
                     errors.push(Error::BreakOutsideLoop);
                 }
                 Break.into()
             }
             Rule::r#continue => {
-                if !local_variables.in_loop {
+                if !parsing_context.local_variables.in_loop {
                     errors.push(Error::ContinueOutsideLoop);
                 }
                 Continue.into()

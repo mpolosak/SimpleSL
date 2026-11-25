@@ -1,7 +1,10 @@
 use crate::{
     self as simplesl, Error,
     errors::IncorrectUnaryOperatorOperand,
-    instruction::{Instruction, InstructionWithSpan, function::call::FunctionCall, tuple::Tuple},
+    instruction::{
+        Instruction, InstructionWithSpan, function::call::FunctionCall,
+        parsing_context::ParsingContext, tuple::Tuple,
+    },
     stdlib::operators::{ALL, ANY},
     unary_operator::UnaryOperator,
     variable::{ReturnType, Type, Variable},
@@ -14,11 +17,12 @@ pub static ACCEPTED_TYPE: LazyLock<Type> = LazyLock::new(|| var_type!(() -> (#So
 pub fn create(
     iterator: InstructionWithSpan,
     op: UnaryOperator,
+    parsing_context: &ParsingContext,
     errors: &mut Vec<Error>,
 ) -> Instruction {
     let return_type = iterator.return_type();
     if !return_type.matches(&ACCEPTED_TYPE) {
-        let ins = iterator.span.as_str().into();
+        let ins = parsing_context.slice(iterator.span).into();
         errors.push(
             IncorrectUnaryOperatorOperand {
                 ins,

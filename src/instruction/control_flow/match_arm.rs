@@ -4,7 +4,7 @@ use crate::{
     instruction::{
         Exec, ExecResult, ExecStop, Instruction, Recreate,
         control_flow::match_pattern::MatchPattern, local_variable::LocalVariables,
-        recreate_instructions, set::ConditionSet,
+        parsing_context::ParsingContext, recreate_instructions, set::ConditionSet,
     },
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
@@ -22,13 +22,13 @@ pub struct MatchArm {
 impl MatchArm {
     pub fn new(
         pair: Pair<Rule>,
-        local_variables: &mut LocalVariables,
+        parsing_context: &mut ParsingContext,
         exp_type: &Type,
         errors: &mut Vec<Error>,
     ) -> Self {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
-        let pattern = MatchPattern::new(pair, local_variables, exp_type, errors);
+        let pattern = MatchPattern::new(pair, parsing_context, exp_type, errors);
         let pair = inner.next().unwrap();
         let (guard_pair, body_pair) = if pair.as_rule() == Rule::match_guard {
             (Some(pair), inner.next().unwrap())
@@ -36,18 +36,18 @@ impl MatchArm {
             (None, pair)
         };
         let MatchPattern::Pattern(p) = &pattern else {
-            let guard = guard_pair.map(|pair| create_guard(pair, local_variables, errors));
-            let instruction = Instruction::new(body_pair, local_variables, errors);
+            let guard = guard_pair.map(|pair| create_guard(pair, parsing_context, errors));
+            let instruction = Instruction::new(body_pair, parsing_context, errors);
             return MatchArm {
                 pattern,
                 guard,
                 instruction,
             };
         };
-        let mut local_variables = local_variables.create_layer();
-        p.insert_local_variables(&mut local_variables);
-        let guard = guard_pair.map(|pair| create_guard(pair, &mut local_variables, errors));
-        let instruction = Instruction::new(body_pair, &mut local_variables, errors);
+        let mut parsing_context = parsing_context.create_layer();
+        p.insert_local_variables(&mut parsing_context.local_variables);
+        let guard = guard_pair.map(|pair| create_guard(pair, &mut parsing_context, errors));
+        let instruction = Instruction::new(body_pair, &mut parsing_context, errors);
         MatchArm {
             pattern,
             guard,
@@ -117,8 +117,8 @@ impl MatchArm {
 }
 
 fn create_guard(
-    pair: pest::iterators::Pair<Rule>,
-    local_variables: &mut LocalVariables,
+    pair: Pair<Rule>,
+    parsing_context: &mut ParsingContext,
     errors: &mut Vec<Error>,
 ) -> Box<[Instruction]> {
     let conditions_pair = pair.into_inner().next().unwrap();
@@ -126,10 +126,10 @@ fn create_guard(
         .into_inner()
         .map(|pair| {
             if pair.as_rule() == Rule::set_expr {
-                return ConditionSet::create(pair, local_variables, errors).into();
+                return ConditionSet::create(pair, parsing_context, errors).into();
             }
             let condition_str = pair.as_str().trim().into();
-            let condition = Instruction::new(pair, local_variables, errors);
+            let condition = Instruction::new(pair, parsing_context, errors);
             let return_type = condition.return_type();
             if return_type != Type::Bool {
                 errors.push(

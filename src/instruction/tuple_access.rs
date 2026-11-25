@@ -2,7 +2,9 @@ use super::{Instruction, InstructionWithSpan};
 use crate::{
     Error,
     errors::{CannotTupleAccess, TupleIndexTooBig},
-    instruction::{function::call::FunctionCall, panic::Panic, tuple::Tuple},
+    instruction::{
+        function::call::FunctionCall, panic::Panic, parsing_context::ParsingContext, tuple::Tuple,
+    },
     stdlib::operators::At,
     variable::{ReturnType, Type, Variable, from_str::parse_int},
 };
@@ -13,11 +15,12 @@ use std::sync::Arc;
 pub fn create_instruction(
     tuple: InstructionWithSpan,
     op: Pair<Rule>,
+    parsing_context: &ParsingContext,
     errors: &mut Vec<Error>,
 ) -> Instruction {
     let var_type = tuple.return_type();
     let Some(len) = var_type.min_tuple_len() else {
-        let ins = tuple.span.as_str().into();
+        let ins = parsing_context.slice(tuple.span).into();
         errors.push(CannotTupleAccess { ins, var_type }.into());
         return Panic.into();
     };
@@ -32,7 +35,7 @@ pub fn create_instruction(
     };
 
     let return_type = var_type.tuple_element_at(index).unwrap_or_else(|| {
-        let ins = tuple.span.as_str().into();
+        let ins = parsing_context.slice(tuple.span).into();
         errors.push(TupleIndexTooBig { index, ins, len }.into());
         Type::Never
     });

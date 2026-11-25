@@ -1,10 +1,11 @@
 use super::{Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables};
 use crate::{
     Error,
-    instruction::{BaseInstruction, ident::Ident, set::Set},
+    instruction::{BaseInstruction, ident::Ident, parsing_context::ParsingContext, set::Set},
     interpreter::{Interpreter, VariableMap},
     variable::{ReturnType, Type, Variable},
 };
+use miette::SourceSpan;
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
 use std::{collections::HashMap, sync::Arc};
@@ -19,19 +20,22 @@ impl BaseInstruction for Struct {}
 impl Struct {
     pub fn create_instruction(
         pair: Pair<Rule>,
-        local_variables: &LocalVariables,
+        parsing_context: &ParsingContext,
         errors: &mut Vec<Error>,
     ) -> Instruction {
         let sets = pair
             .into_inner()
             .map(|pair| {
                 if pair.as_rule() == Rule::ident {
-                    let span = pair.as_span();
-                    let instruction = Ident::create_instruction(span, local_variables, errors);
-                    let ident = span.as_str().into();
+                    let pest_span = pair.as_span();
+                    let start = pest_span.start();
+                    let length = pest_span.end() - start;
+                    let span = SourceSpan::new(start.into(), length);
+                    let instruction = Ident::create_instruction(span, parsing_context, errors);
+                    let ident = pest_span.as_str().into();
                     return Set::new_ident(ident, instruction);
                 }
-                let mut local_variables = local_variables.create_layer();
+                let mut local_variables = parsing_context.create_layer();
                 Set::create(pair, &mut local_variables, errors)
             })
             .collect();

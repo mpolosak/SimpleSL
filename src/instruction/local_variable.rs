@@ -1,19 +1,11 @@
-use super::Instruction;
 use crate::{
-    self as simplesl, Error, Interpreter,
+    self as simplesl, Interpreter,
     function::{Param, Params},
-    variable::{Type, Typed, Variable},
+    variable::{Type, Typed},
 };
 use derive_more::From;
-use pest::{Parser, iterators::Pairs};
 use simplesl_macros::var_type;
-use simplesl_parser::{Rule, SimpleSLParser};
-use std::{
-    any::{Any, TypeId},
-    collections::HashMap,
-    fs,
-    sync::Arc,
-};
+use std::{collections::HashMap, sync::Arc};
 
 pub type LocalVariableMap = HashMap<Arc<str>, LocalVariable>;
 pub struct LocalVariables<'a> {
@@ -85,48 +77,6 @@ impl<'a> LocalVariables<'a> {
         self.function
             .as_ref()
             .or_else(|| self.lower_layer.and_then(LocalVariables::function))
-    }
-
-    pub(crate) fn load(&mut self, path: &str, errors: &mut Vec<Error>) -> Box<[Instruction]> {
-        let contents = match fs::read_to_string(path) {
-            Ok(contents) => contents,
-            Err(error) => {
-                errors.push(error.into());
-                return [].into();
-            }
-        };
-        self.parse_input(&contents, errors)
-    }
-
-    pub(crate) fn parse_input(
-        &mut self,
-        input: &str,
-        errors: &mut Vec<Error>,
-    ) -> Box<[Instruction]> {
-        let pairs = match SimpleSLParser::parse(Rule::input, input) {
-            Ok(pairs) => pairs,
-            Err(error) => {
-                errors.push(error.into());
-                return [].into();
-            }
-        };
-        self.create_instructions(pairs, errors)
-    }
-
-    pub(crate) fn create_instructions(
-        &mut self,
-        pairs: Pairs<'_, Rule>,
-        errors: &mut Vec<Error>,
-    ) -> Box<[Instruction]> {
-        let mut instructions = pairs
-            .map(|pair| Instruction::new(pair, self, errors))
-            .collect::<Vec<Instruction>>();
-        let Some(last) = instructions.pop() else {
-            return Box::from([]);
-        };
-        instructions.retain(|instruction| instruction.0.type_id() != TypeId::of::<Variable>());
-        instructions.push(last);
-        instructions.into()
     }
 }
 

@@ -4,7 +4,7 @@ use crate::{
     function::Function,
     instruction::{
         BaseInstruction, Exec, ExecResult, Instruction, InstructionWithSpan, Recreate,
-        local_variable::LocalVariables,
+        local_variable::LocalVariables, parsing_context::ParsingContext,
     },
     unary_operator::UnaryOperator,
     variable::{ReturnType, Type, Typed},
@@ -38,11 +38,15 @@ static ITER: LazyLock<Arc<Function>> = LazyLock::new(|| {
 pub struct Iter(Instruction);
 
 impl Iter {
-    pub fn create_instruction(lhs: InstructionWithSpan, errors: &mut Vec<Error>) -> Instruction {
+    pub fn create_instruction(
+        lhs: InstructionWithSpan,
+        parsing_context: &ParsingContext,
+        errors: &mut Vec<Error>,
+    ) -> Instruction {
         let op = UnaryOperator::Iter;
         let lhs_type = lhs.return_type();
         if !lhs_type.matches(&var_type!([any])) {
-            let ins = lhs.span.as_str().into();
+            let ins = parsing_context.slice(lhs.span).into();
             errors.push(
                 IncorrectUnaryOperatorOperand {
                     ins,

@@ -4,7 +4,7 @@ use super::{
 use crate::{
     Error, Interpreter,
     errors::WrongInitialization,
-    instruction::BaseInstruction,
+    instruction::{BaseInstruction, parsing_context::ParsingContext},
     variable::{self, ReturnType, Type},
 };
 use pest::iterators::Pair;
@@ -22,6 +22,7 @@ impl Mut {
     pub fn create_instruction(
         op: Pair<Rule>,
         rhs: InstructionWithSpan,
+        parsing_context: &ParsingContext,
         errors: &mut Vec<Error>,
     ) -> Instruction {
         let mut inner = op.into_inner();
@@ -35,7 +36,7 @@ impl Mut {
         let var_type = Type::from(type_pair);
         let instruction_return_type = rhs.return_type();
         if !instruction_return_type.matches(&var_type) {
-            let given = rhs.span.as_str().into();
+            let given = parsing_context.slice(rhs.span).into();
             errors.push(
                 WrongInitialization {
                     declared: var_type.clone(),

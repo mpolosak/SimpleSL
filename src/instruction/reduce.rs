@@ -8,7 +8,7 @@ use crate::{
     errors::{CannotReduce, WrongType},
     instruction::{
         Instruction, InstructionWithSpan, function::call::FunctionCall,
-        local_variable::LocalVariables, tuple::Tuple,
+        parsing_context::ParsingContext, tuple::Tuple,
     },
     stdlib::operators::REDUCE,
     variable::{ReturnType, Type, Variable},
@@ -22,13 +22,13 @@ pub fn create_instruction(
     iter: InstructionWithSpan,
     initial_value: Pair<Rule>,
     function: InstructionWithSpan,
-    local_variables: &LocalVariables,
+    parsing_context: &ParsingContext,
     errors: &mut Vec<Error>,
 ) -> Instruction {
-    let initial_value = InstructionWithSpan::new_expression(initial_value, local_variables, errors);
+    let initial_value = InstructionWithSpan::new_expression(initial_value, parsing_context, errors);
     let iter_type = iter.return_type();
     let element_type = iter_type.iter_element().unwrap_or_else(|| {
-        let str = iter.span.as_str().into();
+        let str = parsing_context.slice(iter.span).into();
         errors.push(CannotReduce { str }.into());
         Type::Never
     });

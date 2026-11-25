@@ -2,7 +2,7 @@ use crate::{
     Error,
     instruction::{
         BaseInstruction, Exec, ExecResult, Instruction, InstructionWithSpan, Recreate,
-        local_variable::LocalVariables,
+        local_variable::LocalVariables, parsing_context::ParsingContext,
     },
     interpreter::Interpreter,
     variable::{ReturnType, TaggedType, TaggedValue, Type, Variable},
@@ -20,13 +20,13 @@ pub struct Tagged {
 impl Tagged {
     pub fn create_instruction(
         pair: Pair<Rule>,
-        local_variables: &LocalVariables,
+        parsing_context: &ParsingContext,
         errors: &mut Vec<Error>,
     ) -> Instruction {
         let mut inner = pair.into_inner();
         let tag: Arc<str> = inner.next().unwrap().as_str().into();
         let payload = inner.next().map(|pair| {
-            InstructionWithSpan::new_expression(pair, local_variables, errors).instruction
+            InstructionWithSpan::new_expression(pair, parsing_context, errors).instruction
         });
         if let Some(payload) = payload {
             Self { tag, payload }.into()

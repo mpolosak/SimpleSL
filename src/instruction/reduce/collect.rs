@@ -3,7 +3,7 @@ use crate::{
     errors::IncorrectUnaryOperatorOperand,
     instruction::{
         BaseInstruction, Exec, ExecResult, Instruction, InstructionWithSpan, Recreate,
-        local_variable::LocalVariables,
+        local_variable::LocalVariables, parsing_context::ParsingContext,
     },
     interpreter::Interpreter,
     stdlib::operators::collect,
@@ -20,7 +20,11 @@ pub struct Collect {
     iterator: Instruction,
 }
 
-pub(crate) fn create(lhs: InstructionWithSpan, errors: &mut Vec<Error>) -> Instruction {
+pub(crate) fn create(
+    lhs: InstructionWithSpan,
+    parsing_context: &ParsingContext,
+    errors: &mut Vec<Error>,
+) -> Instruction {
     let op = UnaryOperator::Collect;
     let return_type = lhs.return_type();
     let InstructionWithSpan {
@@ -28,7 +32,7 @@ pub(crate) fn create(lhs: InstructionWithSpan, errors: &mut Vec<Error>) -> Instr
         span,
     } = lhs;
     if return_type.iter_element().is_none() {
-        let ins = span.as_str().into();
+        let ins = parsing_context.slice(span).into();
         errors.push(
             IncorrectUnaryOperatorOperand {
                 ins,

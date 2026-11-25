@@ -250,14 +250,14 @@ impl<T: Into<Variable>> From<Option<T>> for Variable {
 impl<T: Into<Variable>> From<io::Result<T>> for Variable {
     fn from(value: io::Result<T>) -> Self {
         match value {
-            Ok(ok)  => {
+            Ok(ok) => {
                 let ok = ok.into();
                 if ok.as_type().matches(&Type::none()) {
                     var!(#Ok)
                 } else {
                     var!(#Ok(ok))
                 }
-            },
+            }
             Err(err) => var!(#Err(err)),
         }
     }

@@ -1,5 +1,6 @@
-use super::{Instruction, InstructionWithSpan, local_variable::LocalVariables};
+use super::{Instruction, InstructionWithSpan};
 use crate::errors::WrongLengthType;
+use crate::instruction::parsing_context::ParsingContext;
 use crate::instruction::{function::call::FunctionCall, tuple::Tuple};
 use crate::{
     self as simplesl, Error,
@@ -13,15 +14,15 @@ use std::sync::Arc;
 
 pub fn create_instruction(
     pair: Pair<Rule>,
-    local_variables: &LocalVariables,
+    parsing_context: &ParsingContext,
     errors: &mut Vec<Error>,
 ) -> Instruction {
     let mut inner = pair.into_inner();
-    let value = InstructionWithSpan::new_expression(inner.next().unwrap(), local_variables, errors)
+    let value = InstructionWithSpan::new_expression(inner.next().unwrap(), parsing_context, errors)
         .instruction;
-    let len = InstructionWithSpan::new_expression(inner.next().unwrap(), local_variables, errors);
+    let len = InstructionWithSpan::new_expression(inner.next().unwrap(), parsing_context, errors);
     if !len.return_type().matches(&Type::Int) {
-        let ins = len.span.as_str().into();
+        let ins = parsing_context.slice(len.span).into();
         errors.push(WrongLengthType { ins }.into());
     }
 

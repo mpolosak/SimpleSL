@@ -23,12 +23,14 @@ use crate::{
             logic::{And, Or},
         },
         panic::Panic,
+        parsing_context::ParsingContext,
     },
     variable::{ReturnType, Type, Variable},
 };
 pub use math::{add, multiply, pow, subtract};
 use math::{divide, modulo};
-use pest::{Span, iterators::Pair};
+use miette::SourceSpan;
+use pest::iterators::Pair;
 use simplesl_macros::var_type;
 use simplesl_parser::Rule;
 
@@ -170,16 +172,19 @@ impl ReturnType for BinOperation {
     }
 }
 
-impl<'a> InstructionWithSpan<'a> {
+impl InstructionWithSpan {
     pub fn create_infix(
-        op: Pair<'a, Rule>,
+        op: Pair<'_, Rule>,
         lhs: Self,
         rhs: Self,
-        local_variables: &LocalVariables<'_>,
+        parsing_context: &ParsingContext,
         errors: &mut Vec<Error>,
     ) -> Self {
-        let span = Span::new(op.get_input(), lhs.span.start(), rhs.span.end()).unwrap();
-        let instruction = Instruction::create_infix(op, lhs, rhs, local_variables, errors);
+        let start = lhs.span.offset();
+        let start2 = rhs.span.offset();
+        let length = start2 - start + rhs.span.len();
+        let span = SourceSpan::new(start.into(), length);
+        let instruction = Instruction::create_infix(op, lhs, rhs, parsing_context, errors);
         Self { instruction, span }
     }
 }
@@ -189,12 +194,12 @@ impl Instruction {
         op: Pair<'_, Rule>,
         lhs: InstructionWithSpan,
         rhs: InstructionWithSpan,
-        local_variables: &LocalVariables<'_>,
+        parsing_context: &ParsingContext,
         errors: &mut Vec<Error>,
     ) -> Self {
         let rule = op.as_rule();
         if rule == Rule::reduce {
-            return reduce::create_instruction(lhs, op, rhs, local_variables, errors);
+            return reduce::create_instruction(lhs, op, rhs, parsing_context, errors);
         }
         let op = BinOperator::from(rule);
         let (lhs, rhs) = (lhs.instruction, rhs.instruction);

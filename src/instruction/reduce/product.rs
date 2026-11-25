@@ -1,17 +1,16 @@
-use std::sync::LazyLock;
-
 use crate::{
     self as simplesl, Error,
     errors::IncorrectUnaryOperatorOperand,
     instruction::{
         BaseInstruction, Exec, ExecResult, Instruction, InstructionWithSpan, Recreate,
-        local_variable::LocalVariables,
+        local_variable::LocalVariables, parsing_context::ParsingContext,
     },
     interpreter::Interpreter,
     unary_operator::UnaryOperator,
     variable::{ReturnType, Type, Typed, Variable},
 };
 use simplesl_macros::var_type;
+use std::sync::LazyLock;
 
 pub static ACCEPTED_TYPE: LazyLock<Type> =
     LazyLock::new(|| var_type!(() -> (#Some(int)|#None) | () -> (#Some(float)|#None)));
@@ -22,10 +21,14 @@ pub struct Product {
 }
 
 impl Product {
-    pub fn create(iterator: InstructionWithSpan, errors: &mut Vec<Error>) -> Instruction {
+    pub fn create(
+        iterator: InstructionWithSpan,
+        parsing_context: &ParsingContext,
+        errors: &mut Vec<Error>,
+    ) -> Instruction {
         let return_type = iterator.return_type();
         if !return_type.matches(&ACCEPTED_TYPE) {
-            let ins = iterator.span.as_str().into();
+            let ins = parsing_context.slice(iterator.span).into();
             errors.push(
                 IncorrectUnaryOperatorOperand {
                     ins,

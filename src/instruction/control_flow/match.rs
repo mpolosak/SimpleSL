@@ -3,6 +3,7 @@ use crate::{
     Error,
     instruction::{
         BaseInstruction, Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
+        parsing_context::ParsingContext,
     },
     interpreter::Interpreter,
     variable::{ReturnType, Type},
@@ -19,15 +20,15 @@ pub struct Match {
 impl Match {
     pub fn create_instruction(
         pair: Pair<Rule>,
-        local_variables: &mut LocalVariables,
+        parsing_context: &mut ParsingContext,
         errors: &mut Vec<Error>,
     ) -> Instruction {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
-        let expression = Instruction::new(pair, local_variables, errors);
+        let expression = Instruction::new(pair, parsing_context, errors);
         let var_type = expression.return_type();
         let arms = inner
-            .map(|pair| MatchArm::new(pair, local_variables, &var_type, errors))
+            .map(|pair| MatchArm::new(pair, parsing_context, &var_type, errors))
             .collect::<Box<[MatchArm]>>();
         let result = Self { expression, arms };
         if !result.is_covering_type(&var_type) {

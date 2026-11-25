@@ -5,6 +5,7 @@ use crate::{
     instruction::{
         BaseInstruction,
         function::Function,
+        parsing_context::ParsingContext,
         pattern::{Pattern, destruct_pattern::DestructPattern},
     },
     interpreter::Interpreter,
@@ -23,11 +24,11 @@ pub struct Set {
 impl Set {
     pub fn create(
         pair: Pair<Rule>,
-        local_variables: &mut LocalVariables,
+        parsing_context: &mut ParsingContext,
         errors: &mut Vec<Error>,
     ) -> Self {
         let is_declaration = pair.as_rule() == Rule::set;
-        let (set, error) = Self::new(pair, local_variables, errors);
+        let (set, error) = Self::new(pair, parsing_context, errors);
         if is_declaration && matches!(&set.pattern.destruct_pattern, DestructPattern::Array { .. })
         {
             errors.push(Error::ArrayPatternRequiresElse);
@@ -40,7 +41,7 @@ impl Set {
 
     fn new(
         pair: Pair<Rule>,
-        local_variables: &mut LocalVariables,
+        parsing_context: &mut ParsingContext,
         errors: &mut Vec<Error>,
     ) -> (Self, Error) {
         let mut inner = pair.into_inner();
@@ -48,13 +49,13 @@ impl Set {
         let pair = inner.next().unwrap();
         let ins = pair.as_str().into();
         if pair.as_rule() == Rule::function {
-            return Self::create_function_declaration(pattern_pair, pair, local_variables, errors);
+            return Self::create_function_declaration(pattern_pair, pair, parsing_context, errors);
         }
-        let instruction = Instruction::new(pair, local_variables, errors);
+        let instruction = Instruction::new(pair, parsing_context, errors);
         let var_type = instruction.return_type();
         let pattern_str = pattern_pair.as_str().into();
         let pattern = Pattern::create_instruction(pattern_pair, &var_type, errors);
-        pattern.insert_local_variables(local_variables);
+        pattern.insert_local_variables(&mut parsing_context.local_variables);
         (
             Self {
                 pattern,
@@ -72,7 +73,7 @@ impl Set {
     fn create_function_declaration(
         pattern_pair: Pair<Rule>,
         function_pair: Pair<Rule>,
-        local_variables: &mut LocalVariables,
+        parsing_context: &mut ParsingContext,
         errors: &mut Vec<Error>,
     ) -> (Self, Error) {
         let pattern_str = pattern_pair.as_str().into();
@@ -84,10 +85,10 @@ impl Set {
         };
         let ins: Arc<str> = function_pair.as_str().into();
         let instruction =
-            Function::create_instruction(function_pair, local_variables, ident.cloned(), errors);
+            Function::create_instruction(function_pair, parsing_context, ident.cloned(), errors);
         let var_type = instruction.return_type();
         pattern.var_type = pattern.var_type.conjoin(&instruction.return_type());
-        pattern.insert_local_variables(local_variables);
+        pattern.insert_local_variables(&mut parsing_context.local_variables);
         (
             Self {
                 pattern,
@@ -151,14 +152,14 @@ pub struct SetElse {
 impl SetElse {
     pub fn create(
         pair: Pair<Rule>,
-        local_variables: &mut LocalVariables,
+        parsing_context: &mut ParsingContext,
         errors: &mut Vec<Error>,
     ) -> Instruction {
         let mut inner = pair.into_inner();
         let pattern_pair = inner.next().unwrap();
-        let instruction = Instruction::new(inner.next().unwrap(), local_variables, errors);
+        let instruction = Instruction::new(inner.next().unwrap(), parsing_context, errors);
         let pattern = Pattern::create_instruction(pattern_pair, &instruction.return_type(), errors);
-        let else_instruction = Instruction::new(inner.next().unwrap(), local_variables, errors);
+        let else_instruction = Instruction::new(inner.next().unwrap(), parsing_context, errors);
         if else_instruction.return_type() != Type::Never {
             errors.push(
                 WrongType {
@@ -168,7 +169,7 @@ impl SetElse {
                 .into(),
             );
         }
-        pattern.insert_local_variables(local_variables);
+        pattern.insert_local_variables(&mut parsing_context.local_variables);
         Self {
             pattern,
             instruction,
@@ -220,10 +221,10 @@ pub struct ConditionSet(Set);
 impl ConditionSet {
     pub fn create(
         pair: Pair<Rule>,
-        local_variables: &mut LocalVariables,
+        parsing_context: &mut ParsingContext,
         errors: &mut Vec<Error>,
     ) -> Self {
-        ConditionSet(Set::new(pair, local_variables, errors).0)
+        ConditionSet(Set::new(pair, parsing_context, errors).0)
     }
 }
 

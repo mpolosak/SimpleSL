@@ -3,7 +3,7 @@ pub mod r#while;
 use super::{Exec, ExecResult, ExecStop, Instruction, Recreate, local_variable::LocalVariables};
 use crate::{
     Error, Interpreter,
-    instruction::BaseInstruction,
+    instruction::{BaseInstruction, parsing_context::ParsingContext},
     variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
@@ -15,14 +15,14 @@ pub struct Loop(pub Instruction);
 impl Loop {
     pub fn create_instruction(
         pair: Pair<Rule>,
-        local_variables: &mut LocalVariables,
+        parsing_context: &mut ParsingContext,
         errors: &mut Vec<Error>,
     ) -> Instruction {
         let mut inner = pair.into_inner();
-        let in_loop = local_variables.in_loop;
-        local_variables.in_loop = true;
-        let instruction = Instruction::new(inner.next().unwrap(), local_variables, errors);
-        local_variables.in_loop = in_loop;
+        let in_loop = parsing_context.local_variables.in_loop;
+        parsing_context.local_variables.in_loop = true;
+        let instruction = Instruction::new(inner.next().unwrap(), parsing_context, errors);
+        parsing_context.local_variables.in_loop = in_loop;
         Self(instruction).into()
     }
 }

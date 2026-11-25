@@ -2,7 +2,7 @@ use super::{ExecResult, Instruction, InstructionWithSpan, local_variable::LocalV
 use crate::{
     Error, Interpreter,
     errors::{CannotIndexInto, CannotIndexWith},
-    instruction::{BaseInstruction, Exec, Recreate},
+    instruction::{BaseInstruction, Exec, Recreate, parsing_context::ParsingContext},
     stdlib::operators::at,
     variable::{ReturnType, Type},
 };
@@ -18,11 +18,11 @@ struct At {
 pub fn create(
     instruction: Instruction,
     index: Pair<Rule>,
-    local_variables: &LocalVariables,
+    parsing_context: &ParsingContext,
     errors: &mut Vec<Error>,
 ) -> Instruction {
     let pair = index.into_inner().next().unwrap();
-    let index = InstructionWithSpan::new_expression(pair, local_variables, errors);
+    let index = InstructionWithSpan::new_expression(pair, parsing_context, errors);
     let instruction_return_type = instruction.return_type();
     if !instruction_return_type.can_be_indexed() {
         errors.push(
@@ -33,7 +33,7 @@ pub fn create(
         );
     }
     if !index.return_type().matches(&Type::Int) {
-        let ins = index.span.as_str().into();
+        let ins = parsing_context.slice(index.span).into();
         errors.push(CannotIndexWith { ins }.into());
     }
     At {

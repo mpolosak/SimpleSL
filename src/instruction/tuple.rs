@@ -3,7 +3,7 @@ use super::{
 };
 use crate::{
     Error,
-    instruction::{BaseInstruction, recreate_instructions},
+    instruction::{BaseInstruction, parsing_context::ParsingContext, recreate_instructions},
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
 };
@@ -20,13 +20,13 @@ impl BaseInstruction for Tuple {}
 impl Tuple {
     pub fn create_instruction(
         pair: Pair<Rule>,
-        local_variables: &LocalVariables,
+        parsing_context: &ParsingContext,
         errors: &mut Vec<Error>,
     ) -> Instruction {
         let elements = pair
             .into_inner()
             .map(|pair| {
-                InstructionWithSpan::new_expression(pair, local_variables, errors).instruction
+                InstructionWithSpan::new_expression(pair, parsing_context, errors).instruction
             })
             .collect();
         Self { elements }.into()

@@ -3,7 +3,7 @@ use crate::{
     errors::IncorrectUnaryOperatorOperand,
     instruction::{
         BaseInstruction, Exec, ExecResult, Instruction, InstructionWithSpan, Recreate,
-        local_variable::LocalVariables,
+        local_variable::LocalVariables, parsing_context::ParsingContext,
     },
     unary_operator::UnaryOperator,
     variable::{ReturnType, Type},
@@ -15,11 +15,12 @@ pub struct Deref(Instruction);
 impl Deref {
     pub fn create_instruction(
         instruction: InstructionWithSpan,
+        parsing_context: &ParsingContext,
         errors: &mut Vec<Error>,
     ) -> Instruction {
         let return_type = instruction.return_type();
         if return_type.mut_element_type().is_none() {
-            let ins = instruction.span.as_str().into();
+            let ins = parsing_context.slice(instruction.span).into();
             errors.push(
                 IncorrectUnaryOperatorOperand {
                     ins,

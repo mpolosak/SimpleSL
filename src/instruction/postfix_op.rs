@@ -1,7 +1,6 @@
 mod iter;
 use super::{
     InstructionWithSpan, at,
-    local_variable::LocalVariables,
     reduce::{self, bool_reduce, collect},
     tuple_access,
     type_filter::TypeFilter,
@@ -11,44 +10,57 @@ use crate::{
     instruction::{
         field_access::FieldAccess,
         function::call::FunctionCall,
+        parsing_context::ParsingContext,
         postfix_op::iter::Iter,
         reduce::{product::Product, sum::Sum},
         slicing,
     },
     unary_operator::UnaryOperator,
 };
-use pest::{Span, iterators::Pair};
+use miette::SourceSpan;
+use pest::iterators::Pair;
 use simplesl_parser::{Rule, unexpected};
 
-impl<'a> InstructionWithSpan<'a> {
+impl InstructionWithSpan {
     pub fn create_postfix(
-        op: Pair<'a, Rule>,
+        op: Pair<'_, Rule>,
         lhs: Self,
-        local_variables: &LocalVariables<'_>,
+        parsing_context: &ParsingContext,
         errors: &mut Vec<Error>,
     ) -> Self {
-        let span = Span::new(op.get_input(), lhs.span.start(), op.as_span().end()).unwrap();
+        let start = lhs.span.offset();
+        let end = op.as_span().end();
+        let len = end - start;
+        let span = SourceSpan::new(start.into(), len);
         let instruction = match op.as_rule() {
-            Rule::at => at::create(lhs.instruction, op, local_variables, errors),
+            Rule::at => at::create(lhs.instruction, op, parsing_context, errors),
             Rule::type_filter => TypeFilter::create_instruction(
                 lhs.instruction,
                 op.into_inner().next().unwrap(),
                 errors,
             ),
             Rule::function_call => {
-                FunctionCall::create_instruction(lhs, op, local_variables, errors)
+                FunctionCall::create_instruction(lhs, op, parsing_context, errors)
             }
-            Rule::tuple_access => tuple_access::create_instruction(lhs, op, errors),
-            Rule::field_access => FieldAccess::create_instruction(lhs, op, errors),
-            Rule::sum => Sum::create(lhs, errors),
-            Rule::product => Product::create(lhs, errors),
-            Rule::all => bool_reduce::create(lhs, UnaryOperator::All, errors),
-            Rule::reduce_any => bool_reduce::create(lhs, UnaryOperator::Any, errors),
-            Rule::bitand_reduce => reduce::bit::create(lhs, UnaryOperator::BitAnd, errors),
-            Rule::bitor_reduce => reduce::bit::create(lhs, UnaryOperator::BitOr, errors),
-            Rule::collect => collect::create(lhs, errors),
-            Rule::iter => Iter::create_instruction(lhs, errors),
-            Rule::slicing => slicing::create(lhs, op, local_variables, errors),
+            Rule::tuple_access => {
+                tuple_access::create_instruction(lhs, op, parsing_context, errors)
+            }
+            Rule::field_access => FieldAccess::create_instruction(lhs, op, parsing_context, errors),
+            Rule::sum => Sum::create(lhs, parsing_context, errors),
+            Rule::product => Product::create(lhs, parsing_context, errors),
+            Rule::all => bool_reduce::create(lhs, UnaryOperator::All, parsing_context, errors),
+            Rule::reduce_any => {
+                bool_reduce::create(lhs, UnaryOperator::Any, parsing_context, errors)
+            }
+            Rule::bitand_reduce => {
+                reduce::bit::create(lhs, UnaryOperator::BitAnd, parsing_context, errors)
+            }
+            Rule::bitor_reduce => {
+                reduce::bit::create(lhs, UnaryOperator::BitOr, parsing_context, errors)
+            }
+            Rule::collect => collect::create(lhs, parsing_context, errors),
+            Rule::iter => Iter::create_instruction(lhs, parsing_context, errors),
+            Rule::slicing => slicing::create(lhs, op, parsing_context, errors),
             rule => unexpected!(rule),
         };
         Self { instruction, span }

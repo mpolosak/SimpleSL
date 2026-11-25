@@ -1,14 +1,14 @@
-use pest::Span;
-
 use crate::{
     Error,
     errors::VariableDoesntExist,
     instruction::{
         BaseInstruction, Exec, Instruction, Recreate,
         local_variable::{LocalVariable, LocalVariables},
+        parsing_context::ParsingContext,
     },
     variable::{ReturnType, Type, Typed},
 };
+use miette::SourceSpan;
 use std::sync::Arc;
 
 #[derive(Debug)]
@@ -19,14 +19,15 @@ pub struct Ident {
 
 impl Ident {
     pub fn create_instruction(
-        span: Span,
-        local_variables: &LocalVariables<'_>,
+        span: SourceSpan,
+        parsing_context: &ParsingContext,
         errors: &mut Vec<Error>,
     ) -> Instruction {
-        let ident = Arc::from(span.as_str());
-        local_variables.get(&ident).map_or_else(
+        let ident = Arc::from(parsing_context.slice(span));
+        parsing_context.local_variables.get(&ident).map_or_else(
             || {
-                local_variables
+                parsing_context
+                    .local_variables
                     .interpreter
                     .get_variable(&ident)
                     .cloned()

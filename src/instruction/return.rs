@@ -2,7 +2,7 @@ use super::{ExecStop, Instruction, local_variable::LocalVariables};
 use crate::{
     Error,
     errors::WrongReturn,
-    instruction::{BaseInstruction, Exec, Recreate, panic::Panic},
+    instruction::{BaseInstruction, Exec, Recreate, panic::Panic, parsing_context::ParsingContext},
     variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
@@ -14,15 +14,15 @@ pub struct Return(pub Instruction);
 impl Return {
     pub fn create_instruction(
         pair: Pair<Rule>,
-        local_variables: &mut LocalVariables,
+        parsing_context: &mut ParsingContext,
         errors: &mut Vec<Error>,
     ) -> Instruction {
-        let Some(function) = local_variables.function().cloned() else {
+        let Some(function) = parsing_context.local_variables.function().cloned() else {
             errors.push(Error::ReturnOutsideFunction);
             return Panic.into();
         };
         let instruction = if let Some(pair) = pair.into_inner().next() {
-            Instruction::new(pair, local_variables, errors)
+            Instruction::new(pair, parsing_context, errors)
         } else {
             Variable::none().into()
         };

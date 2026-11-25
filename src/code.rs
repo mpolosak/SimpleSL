@@ -1,7 +1,8 @@
 use crate::{
     Error, ExecError, Interpreter,
     instruction::{
-        Exec, ExecStop, Instruction, local_variable::LocalVariables, recreate_instructions,
+        Exec, ExecStop, Instruction, local_variable::LocalVariables,
+        parsing_context::ParsingContext, recreate_instructions,
     },
     variable::{ReturnType, Type, Variable},
 };
@@ -20,10 +21,14 @@ impl Code {
             Ok(parse) => parse,
             Err(error) => return Err([error.into()].into()),
         };
-        let mut local_variables = LocalVariables::new(interpreter);
+        let local_variables = LocalVariables::new(interpreter);
+        let mut parsing_context = ParsingContext {
+            source: script,
+            local_variables,
+        };
         let mut errors = Vec::new();
         let instructions: Box<[Instruction]> = parse
-            .map(|pair| Instruction::new(pair, &mut local_variables, &mut errors))
+            .map(|pair| Instruction::new(pair, &mut parsing_context, &mut errors))
             .collect();
         if !errors.is_empty() {
             return Err(errors);

@@ -2,7 +2,7 @@ use super::{ExecResult, Instruction, InstructionWithSpan, local_variable::LocalV
 use crate::{
     Error, Interpreter,
     errors::{CannotFieldAccess, NoField},
-    instruction::{BaseInstruction, Exec, Recreate},
+    instruction::{BaseInstruction, Exec, Recreate, parsing_context::ParsingContext},
     variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
@@ -19,11 +19,12 @@ impl FieldAccess {
     pub fn create_instruction(
         instruction: InstructionWithSpan,
         op: Pair<Rule>,
+        parsing_context: &ParsingContext,
         errors: &mut Vec<Error>,
     ) -> Instruction {
         let return_type = instruction.return_type();
         if !return_type.is_struct() {
-            let ins = instruction.span.as_str().into();
+            let ins = parsing_context.slice(instruction.span).into();
             errors.push(
                 CannotFieldAccess {
                     ins,
@@ -36,7 +37,7 @@ impl FieldAccess {
         let ident = Arc::from(pair.as_str());
 
         if !return_type.has_field(&ident) {
-            let struct_ident = instruction.span.as_str().into();
+            let struct_ident = parsing_context.slice(instruction.span).into();
             errors.push(
                 NoField {
                     struct_ident,

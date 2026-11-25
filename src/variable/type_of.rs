@@ -75,7 +75,7 @@ impl<T: TypeOf, S: TypeOf> TypeOf for Result<T, S> {
         } else {
             var_type!(#Err(err))
         };
-        var_type!(ok|err)
+        var_type!(ok | err)
     }
 }
 

@@ -3,6 +3,7 @@ use crate::{
     instruction::{
         Exec, ExecStop, Instruction,
         local_variable::LocalVariables,
+        parsing_context::ParsingContext,
         pattern::{Pattern, destruct_pattern::DestructPattern},
         recreate_instructions,
     },
@@ -22,7 +23,7 @@ pub enum MatchPattern {
 impl MatchPattern {
     pub fn new(
         pair: Pair<Rule>,
-        local_variables: &mut LocalVariables,
+        parsing_context: &mut ParsingContext,
         exp_type: &Type,
         errors: &mut Vec<Error>,
     ) -> MatchPattern {
@@ -32,7 +33,7 @@ impl MatchPattern {
             Rule::values => {
                 let inner_values = pair.into_inner();
                 let values = inner_values
-                    .map(|pair| Instruction::new(pair, local_variables, errors))
+                    .map(|pair| Instruction::new(pair, parsing_context, errors))
                     .collect();
                 MatchPattern::Values(values)
             }
