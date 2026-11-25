@@ -1,12 +1,7 @@
 use crate::{
-    Error, Interpreter,
-    errors::{CannotDetermineParams, NotAFunction, WrongArgument, WrongNumberOfArguments},
-    function::{Function as VarFunc, Param, Params},
-    instruction::{
-        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithSpan, Recreate,
-        local_variable::LocalVariables, tuple::Tuple,
-    },
-    variable::{ReturnType, Type, Typed, Variable},
+    Error, Interpreter, errors::{CannotDetermineParams, NotAFunction, WrongArgument, WrongNumberOfArguments}, function::{Function as VarFunc, Param, Params}, instruction::{
+        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithSpan, Recreate, local_variable::LocalVariables, panic::Panic, tuple::Tuple,
+    }, variable::{ReturnType, Type, Typed, Variable},
 };
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
@@ -38,6 +33,7 @@ impl FunctionCall {
             let f_type = function.return_type();
             if !f_type.is_function() {
                 errors.push(NotAFunction { ins: ident.clone() }.into());
+                return Panic.into()
             }
             let Some(params) = f_type.params() else {
                 errors.push(CannotDetermineParams { ident }.into());
