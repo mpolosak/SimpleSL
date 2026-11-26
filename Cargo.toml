@@ -30,7 +30,7 @@ pest.workspace = true
 simplesl_parser.workspace = true
 unescaper.workspace = true
 itertools.workspace = true
-miette = "7.6"
+miette = { version = "7.6", features = ["fancy"] }
 
 [dev-dependencies]
 markdown = "1.0"

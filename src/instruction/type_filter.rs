@@ -52,7 +52,7 @@ impl Exec for TypeFilter {
         interpreter.insert("default".into(), default_value);
         Ok(Code::parse(
             &interpreter,
-            &format!(
+            format!(
                 "() -> (bool, {}) {{
                     for value in iterator {{
                         if value:{0} = value return (true, value);

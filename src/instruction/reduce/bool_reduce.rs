@@ -51,9 +51,8 @@ pub fn create(
 #[cfg(test)]
 mod tests {
     use crate::{
-        self as simplesl, Code, Error, Interpreter, errors::IncorrectUnaryOperatorOperand,
-        instruction::reduce::bool_reduce::ACCEPTED_TYPE, unary_operator::UnaryOperator,
-        variable::Variable,
+        errors::IncorrectUnaryOperatorOperand, instruction::reduce::bool_reduce::ACCEPTED_TYPE, test::{parse_and_exec, parse_unwrap_first_error}, unary_operator::UnaryOperator,
+        self as simplesl
     };
     use simplesl_macros::{var, var_type};
     const ALL: UnaryOperator = UnaryOperator::All;
@@ -105,7 +104,7 @@ mod tests {
         assert_eq!(parse_and_exec("[true, true]~$&&"), Ok(var!(true)));
         assert_eq!(parse_and_exec("[]~$&&"), Ok(var!(true)));
         assert_eq!(
-            parse_and_exec("[6.5, 6.5, 3.4]~$&&").unwrap_err()[0],
+            parse_unwrap_first_error("[6.5, 6.5, 3.4]~$&&"),
             IncorrectUnaryOperatorOperand {
                 ins: "[6.5, 6.5, 3.4]~".into(),
                 op: ALL,
@@ -267,17 +266,5 @@ mod tests {
             ),
             Ok(var!((false, 4)))
         )
-    }
-
-    fn parse_and_exec(script: &str) -> Result<Variable, Vec<Error>> {
-        Code::parse(&Interpreter::without_stdlib(), script)
-            .map(|code| code.exec().unwrap())
-            .map_err(|e| e.into_iter().map(|e| e.error).collect())
-    }
-    fn parse_unwrap_first_error(script: &str) -> Error {
-        Code::parse(&Interpreter::without_stdlib(), script)
-            .unwrap_err()
-            .swap_remove(0)
-            .error
     }
 }

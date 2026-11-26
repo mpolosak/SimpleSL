@@ -91,9 +91,7 @@ impl ReturnType for Product {
 #[cfg(test)]
 mod tests {
     use crate::{
-        self as simplesl, Code, Error, Interpreter, errors::IncorrectUnaryOperatorOperand,
-        instruction::reduce::product::ACCEPTED_TYPE, unary_operator::UnaryOperator,
-        variable::Variable,
+        self as simplesl, Code, Interpreter, errors::IncorrectUnaryOperatorOperand, instruction::reduce::product::ACCEPTED_TYPE, test::parse_unwrap_first_error, unary_operator::UnaryOperator, variable::Variable,
     };
     use simplesl_macros::{var, var_type};
     const OP: UnaryOperator = UnaryOperator::Product;
@@ -236,12 +234,5 @@ mod tests {
             .unwrap()
             .exec()
             .unwrap()
-    }
-
-    fn parse_unwrap_first_error(script: &str) -> Error {
-        Code::parse(&Interpreter::without_stdlib(), script)
-            .unwrap_err()
-            .swap_remove(0)
-            .error
     }
 }

@@ -58,5 +58,5 @@ fn tagged_match_requires_coverage_of_known_variants() {
     )
     .unwrap_err();
 
-    assert_eq!(errors[0].error, Error::MatchNotCovered);
+    assert_eq!(errors.errors[0].error, Error::MatchNotCovered);
 }

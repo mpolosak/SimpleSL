@@ -217,6 +217,7 @@ mod tests {
     fn parse_unwrap_errors(script: &str) -> Vec<Error> {
         Code::parse(&Interpreter::without_stdlib(), script)
             .unwrap_err()
+            .errors
             .into_iter()
             .map(|e| e.error)
             .collect()

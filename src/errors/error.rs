@@ -1,13 +1,25 @@
 use crate::{BinOperator, function::Param, unary_operator::UnaryOperator, variable::Type};
 use derive_more::{Display, From};
+use itertools::join;
 use match_any::match_any;
-use miette::{Diagnostic, SourceSpan};
+use miette::{Diagnostic, NamedSource, SourceSpan};
 use pest::error::InputLocation;
 use simplesl_parser::Rule;
 use std::{
-    fmt::{self},
-    sync::Arc,
+    fmt::{self}, sync::Arc,
 };
+
+#[derive(Debug, Diagnostic, Display, PartialEq)]
+#[display("Errors in {} {{\n{}\n}}", source.name(), join(errors, "\n"))]
+#[diagnostic()]
+pub struct ErrorsWithSource {
+    #[source_code]
+    pub source: NamedSource<String>,
+    #[related]
+    pub errors: Vec<ErrorWithSpan>
+}
+
+impl std::error::Error for ErrorsWithSource{}
 
 #[derive(Debug, Diagnostic, Display, PartialEq)]
 #[display("{error} on {}:{}", span.offset(), span.len())]
@@ -103,6 +115,8 @@ pub enum Error {
     WrongCondition(WrongCondition),
     #[from]
     WrongInitialization(WrongInitialization),
+    #[from]
+    ErrorsWithSource(ErrorsWithSource)
 }
 
 impl PartialEq for Error {
@@ -133,6 +147,7 @@ impl PartialEq for Error {
             | (Self::CannotTupleAccess(l0), Self::CannotTupleAccess(r0))
             | (Self::CannotFieldAccess(l0), Self::CannotFieldAccess(r0))
             | (Self::CannotSlice(l0), Self::CannotSlice(r0))
+            | (Self::ErrorsWithSource(l0), Self::ErrorsWithSource(r0))
                 => l0 == r0,
             (Self::IO(l0), Self::IO(r0))
             | (Self::CannotUnescapeString(l0), Self::CannotUnescapeString(r0)) => {

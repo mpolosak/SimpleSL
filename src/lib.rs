@@ -62,6 +62,7 @@ pub(crate) mod test {
     pub fn parse_unwrap_first_error(script: &str) -> Error {
         Code::parse(&Interpreter::without_stdlib(), script)
             .unwrap_err()
+            .errors
             .swap_remove(0)
             .error
     }
@@ -69,6 +70,7 @@ pub(crate) mod test {
     pub fn parse_unwrap_errors(script: &str) -> Vec<Error> {
         Code::parse(&Interpreter::without_stdlib(), script)
             .unwrap_err()
+            .errors
             .into_iter()
             .map(|e| e.error)
             .collect()

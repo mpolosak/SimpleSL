@@ -1,12 +1,9 @@
-use crate::{
-    errors::ErrorWithSpan,
-    instruction::{
+use crate::{errors::{ErrorWithSpan, ErrorsWithSource}, instruction::{
         Instruction,
         local_variable::{FunctionInfo, LocalVariableMap, LocalVariables},
-    },
-    variable::Variable,
+    }, variable::Variable,
 };
-use miette::SourceSpan;
+use miette::{NamedSource, SourceSpan};
 use pest::{Parser, iterators::Pairs};
 use simplesl_parser::{Rule, SimpleSLParser};
 use std::{
@@ -41,7 +38,14 @@ impl<'a> ParsingContext<'a> {
         errors: &mut Vec<ErrorWithSpan>,
     ) -> io::Result<(Box<[Instruction]>, LocalVariableMap)> {
         let contents = fs::read_to_string(path)?;
-        Ok(self.parse_input(&contents, errors))
+        let mut errors2 = Vec::new();
+        let res = self.parse_input(&contents, &mut errors2);
+        if !errors2.is_empty() {
+            let source = NamedSource::new(path, contents);
+            let error = ErrorsWithSource{ source, errors: errors2 }.into();
+            errors.push(ErrorWithSpan { error, span: SourceSpan::new(0.into(), 0) });
+        }
+        Ok(res)
     }
 
     pub(crate) fn parse_input(

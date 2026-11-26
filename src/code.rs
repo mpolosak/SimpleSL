@@ -1,12 +1,10 @@
 use crate::{
-    ExecError, Interpreter,
-    errors::ErrorWithSpan,
-    instruction::{
+    ExecError, Interpreter, errors::ErrorsWithSource, instruction::{
         Exec, ExecStop, Instruction, local_variable::LocalVariables,
         parsing_context::ParsingContext, recreate_instructions,
-    },
-    variable::{ReturnType, Type, Variable},
+    }, variable::{ReturnType, Type, Variable},
 };
+use miette::NamedSource;
 use pest::Parser;
 use simplesl_parser::{Rule, SimpleSLParser};
 use std::sync::Arc;
@@ -17,14 +15,19 @@ pub struct Code {
 }
 
 impl Code {
-    pub fn parse(interpreter: &Interpreter, script: &str) -> Result<Self, Vec<ErrorWithSpan>> {
-        let parse = match SimpleSLParser::parse(Rule::input, script) {
+    pub fn parse(interpreter: &Interpreter, script: impl Into<String>) -> Result<Self, ErrorsWithSource> {
+        let source = script.into();
+        let parse = match SimpleSLParser::parse(Rule::input, &source) {
             Ok(parse) => parse,
-            Err(error) => return Err([error.into()].into()),
+            Err(error) =>{
+                let source = NamedSource::new("name", source);
+                return Err(ErrorsWithSource { source, errors: [error.into()].into() })
+            }
+
         };
         let local_variables = LocalVariables::new(interpreter);
         let mut parsing_context = ParsingContext {
-            source: script,
+            source: &source,
             local_variables,
         };
         let mut errors = Vec::new();
@@ -32,7 +35,8 @@ impl Code {
             .map(|pair| Instruction::new(pair, &mut parsing_context, &mut errors))
             .collect();
         if !errors.is_empty() {
-            return Err(errors);
+            let source = NamedSource::new("name", source);
+            return Err(ErrorsWithSource { source, errors });
         }
         let mut local_variables = LocalVariables::new(interpreter);
         let instructions = recreate_instructions(&instructions, &mut local_variables).into();
