@@ -1,5 +1,5 @@
 use crate::{
-    Error,
+    errors::ErrorWithSpan,
     instruction::{
         Instruction, Loop, control_flow::If, r#loop::Break, parsing_context::ParsingContext,
     },
@@ -10,7 +10,7 @@ use simplesl_parser::Rule;
 pub fn create_instruction(
     pair: Pair<Rule>,
     parsing_context: &mut ParsingContext,
-    errors: &mut Vec<Error>,
+    errors: &mut Vec<ErrorWithSpan>,
 ) -> Instruction {
     let in_loop = parsing_context.local_variables.in_loop;
     parsing_context.local_variables.in_loop = true;

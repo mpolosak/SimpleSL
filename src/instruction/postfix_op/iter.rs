@@ -1,6 +1,6 @@
 use crate::{
-    self as simplesl, Code, Error, Interpreter,
-    errors::IncorrectUnaryOperatorOperand,
+    self as simplesl, Code, Interpreter,
+    errors::{ErrorWithSpan, IncorrectUnaryOperatorOperand},
     function::Function,
     instruction::{
         BaseInstruction, Exec, ExecResult, Instruction, InstructionWithSpan, Recreate,
@@ -41,21 +41,21 @@ impl Iter {
     pub fn create_instruction(
         lhs: InstructionWithSpan,
         parsing_context: &ParsingContext,
-        errors: &mut Vec<Error>,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Instruction {
         let op = UnaryOperator::Iter;
         let lhs_type = lhs.return_type();
         if !lhs_type.matches(&var_type!([any])) {
-            let ins = parsing_context.slice(lhs.span).into();
-            errors.push(
-                IncorrectUnaryOperatorOperand {
-                    ins,
-                    op,
-                    expected: var_type!([any]),
-                    given: lhs_type,
-                }
-                .into(),
-            );
+            let span = lhs.span;
+            let ins = parsing_context.slice(span).into();
+            let error = IncorrectUnaryOperatorOperand {
+                ins,
+                op,
+                expected: var_type!([any]),
+                given: lhs_type,
+            }
+            .into();
+            errors.push(ErrorWithSpan { error, span });
         }
         Self(lhs.instruction).into()
     }
@@ -95,8 +95,9 @@ impl ReturnType for Iter {
 #[cfg(test)]
 mod tests {
     use crate::{
-        self as simplesl, Code, Error, Interpreter,
+        self as simplesl, Code, Interpreter,
         errors::IncorrectUnaryOperatorOperand,
+        test::parse_unwrap_first_error,
         unary_operator::UnaryOperator,
         variable::{Typed, Variable},
     };
@@ -166,11 +167,5 @@ mod tests {
             .unwrap()
             .exec()
             .unwrap()
-    }
-
-    fn parse_unwrap_first_error(script: &str) -> Error {
-        Code::parse(&Interpreter::without_stdlib(), script)
-            .unwrap_err()
-            .swap_remove(0)
     }
 }

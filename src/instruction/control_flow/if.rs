@@ -1,11 +1,11 @@
 use crate::{
-    Error,
-    errors::WrongCondition,
+    errors::{ErrorWithSpan, WrongCondition},
     instruction::{
         BaseInstruction, Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
         parsing_context::ParsingContext, recreate_instructions, set::ConditionSet,
     },
     interpreter::Interpreter,
+    source_span_from_pest_span,
     variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
@@ -22,7 +22,7 @@ impl If {
     pub fn create(
         pair: Pair<Rule>,
         parsing_context: &mut ParsingContext,
-        errors: &mut Vec<Error>,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Self {
         let mut inner = pair.into_inner();
         let (conditions, if_true) = {
@@ -35,16 +35,17 @@ impl If {
                         return ConditionSet::create(pair, &mut local_variables, errors).into();
                     }
                     let condition_str = pair.as_str().into();
+                    let span = pair.as_span();
                     let condition = Instruction::new(pair, &mut local_variables, errors);
                     let return_type = condition.return_type();
                     if return_type != Type::Bool {
-                        errors.push(
-                            WrongCondition {
-                                ins: condition_str,
-                                var_type: return_type,
-                            }
-                            .into(),
-                        );
+                        let span = source_span_from_pest_span(&span);
+                        let error = WrongCondition {
+                            ins: condition_str,
+                            var_type: return_type,
+                        }
+                        .into();
+                        errors.push(ErrorWithSpan { error, span });
                     }
                     condition
                 })

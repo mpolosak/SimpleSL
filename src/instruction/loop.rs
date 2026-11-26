@@ -2,7 +2,8 @@ pub mod r#for;
 pub mod r#while;
 use super::{Exec, ExecResult, ExecStop, Instruction, Recreate, local_variable::LocalVariables};
 use crate::{
-    Error, Interpreter,
+    Interpreter,
+    errors::ErrorWithSpan,
     instruction::{BaseInstruction, parsing_context::ParsingContext},
     variable::{ReturnType, Type, Variable},
 };
@@ -16,7 +17,7 @@ impl Loop {
     pub fn create_instruction(
         pair: Pair<Rule>,
         parsing_context: &mut ParsingContext,
-        errors: &mut Vec<Error>,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Instruction {
         let mut inner = pair.into_inner();
         let in_loop = parsing_context.local_variables.in_loop;

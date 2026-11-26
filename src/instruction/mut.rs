@@ -2,8 +2,8 @@ use super::{
     Exec, ExecResult, Instruction, InstructionWithSpan, Recreate, local_variable::LocalVariables,
 };
 use crate::{
-    Error, Interpreter,
-    errors::WrongInitialization,
+    Interpreter,
+    errors::{ErrorWithSpan, WrongInitialization},
     instruction::{BaseInstruction, parsing_context::ParsingContext},
     variable::{self, ReturnType, Type},
 };
@@ -23,7 +23,7 @@ impl Mut {
         op: Pair<Rule>,
         rhs: InstructionWithSpan,
         parsing_context: &ParsingContext,
-        errors: &mut Vec<Error>,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Instruction {
         let mut inner = op.into_inner();
         let Some(type_pair) = inner.next() else {
@@ -36,15 +36,15 @@ impl Mut {
         let var_type = Type::from(type_pair);
         let instruction_return_type = rhs.return_type();
         if !instruction_return_type.matches(&var_type) {
-            let given = parsing_context.slice(rhs.span).into();
-            errors.push(
-                WrongInitialization {
-                    declared: var_type.clone(),
-                    given,
-                    given_type: instruction_return_type,
-                }
-                .into(),
-            );
+            let span = rhs.span;
+            let given = parsing_context.slice(span).into();
+            let error = WrongInitialization {
+                declared: var_type.clone(),
+                given,
+                given_type: instruction_return_type,
+            }
+            .into();
+            errors.push(ErrorWithSpan { error, span });
         }
         Mut {
             var_type,

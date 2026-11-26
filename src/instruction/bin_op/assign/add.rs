@@ -1,13 +1,13 @@
 use crate::{
     BinOperator, Interpreter,
-    errors::CannotDo2,
+    errors::{CannotDo2, ErrorWithSpan},
     instruction::{
-        BaseInstruction, Exec, ExecResult,
+        BaseInstruction, Exec, ExecResult, InstructionWithSpan,
         bin_op::{add::Add, assign::concat::AssignConcat},
     },
+    source_span_from_2_spans,
 };
 use crate::{
-    Error,
     instruction::Instruction,
     variable::{ReturnType, Type},
 };
@@ -22,9 +22,9 @@ impl BaseInstruction for AssignAdd {}
 
 impl AssignAdd {
     pub fn create_instruction(
-        lhs: Instruction,
-        rhs: Instruction,
-        errors: &mut Vec<Error>,
+        lhs: InstructionWithSpan,
+        rhs: InstructionWithSpan,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Instruction {
         let lhs_rt = lhs.return_type();
         let rhs_rt = rhs.return_type();
@@ -32,16 +32,20 @@ impl AssignAdd {
             return AssignConcat::create_instruction(lhs, rhs, errors);
         }
         if !Self::can_be_used(&lhs_rt, &rhs_rt) {
-            errors.push(
-                CannotDo2 {
-                    lhs: lhs_rt,
-                    op: BinOperator::AssignAdd,
-                    rhs: rhs_rt,
-                }
-                .into(),
-            );
+            let error = CannotDo2 {
+                lhs: lhs_rt,
+                op: BinOperator::AssignAdd,
+                rhs: rhs_rt,
+            }
+            .into();
+            let span = source_span_from_2_spans(&lhs.span, &rhs.span);
+            errors.push(ErrorWithSpan { error, span });
         }
-        Self { lhs, rhs }.into()
+        Self {
+            lhs: lhs.instruction,
+            rhs: rhs.instruction,
+        }
+        .into()
     }
 
     fn can_be_used(lhs: &Type, rhs: &Type) -> bool {

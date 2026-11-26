@@ -2,7 +2,7 @@ use super::{
     Exec, ExecResult, Instruction, InstructionWithSpan, Recreate, local_variable::LocalVariables,
 };
 use crate::{
-    Error,
+    errors::ErrorWithSpan,
     instruction::{BaseInstruction, parsing_context::ParsingContext, recreate_instructions},
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
@@ -21,7 +21,7 @@ impl Tuple {
     pub fn create_instruction(
         pair: Pair<Rule>,
         parsing_context: &ParsingContext,
-        errors: &mut Vec<Error>,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Instruction {
         let elements = pair
             .into_inner()

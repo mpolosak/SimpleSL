@@ -1,11 +1,39 @@
 use crate::{BinOperator, function::Param, unary_operator::UnaryOperator, variable::Type};
 use derive_more::{Display, From};
 use match_any::match_any;
+use miette::{Diagnostic, SourceSpan};
+use pest::error::InputLocation;
 use simplesl_parser::Rule;
 use std::{
     fmt::{self},
     sync::Arc,
 };
+
+#[derive(Debug, Diagnostic, Display, PartialEq)]
+#[display("{error} on {}:{}", span.offset(), span.len())]
+pub struct ErrorWithSpan {
+    pub error: Error,
+    pub span: SourceSpan,
+}
+
+impl std::error::Error for ErrorWithSpan {}
+
+impl From<pest::error::Error<Rule>> for ErrorWithSpan {
+    fn from(value: pest::error::Error<Rule>) -> Self {
+        let span = source_span_from_input_location(&value.location);
+        let error = value.variant.into();
+        Self { error, span }
+    }
+}
+
+pub(crate) fn source_span_from_input_location(loc: &InputLocation) -> SourceSpan {
+    let (start, end) = match loc {
+        InputLocation::Pos(start) => (*start, *start),
+        InputLocation::Span((start, end)) => (*start, *end),
+    };
+    let length = end - start;
+    SourceSpan::new(start.into(), length)
+}
 
 #[derive(Debug, From, Display)]
 pub enum Error {
@@ -41,8 +69,8 @@ pub enum Error {
     MatchNotCovered,
     #[from]
     IO(std::io::Error),
-    #[from(pest::error::Error<Rule>)]
-    Parsing(Box<pest::error::Error<Rule>>),
+    #[from]
+    Parsing(pest::error::ErrorVariant<Rule>),
     #[from]
     IntegerOverflow(IntegerOverflow),
     #[from]

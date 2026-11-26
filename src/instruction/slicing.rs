@@ -1,9 +1,8 @@
 use super::{Instruction, InstructionWithSpan};
-use crate::errors::{CannotIndexWith, CannotSlice};
+use crate::errors::{CannotIndexWith, CannotSlice, ErrorWithSpan};
 use crate::instruction::parsing_context::ParsingContext;
 use crate::stdlib::operators::Slice;
 use crate::{
-    Error,
     instruction::{function::call::FunctionCall, tuple::Tuple},
     variable::{ReturnType, Type, Variable},
 };
@@ -15,18 +14,18 @@ pub fn create(
     lhs: InstructionWithSpan,
     pair: Pair<Rule>,
     parsing_context: &ParsingContext,
-    errors: &mut Vec<Error>,
+    errors: &mut Vec<ErrorWithSpan>,
 ) -> Instruction {
     let lhs_type = lhs.return_type();
     if !lhs_type.can_be_indexed() {
-        let ins = parsing_context.slice(lhs.span).into();
-        errors.push(
-            CannotSlice {
-                ins,
-                var_type: lhs_type,
-            }
-            .into(),
-        );
+        let span = lhs.span;
+        let ins = parsing_context.slice(span).into();
+        let error = CannotSlice {
+            ins,
+            var_type: lhs_type,
+        }
+        .into();
+        errors.push(ErrorWithSpan { error, span });
     }
     let inner = pair.into_inner();
     if inner.peek().is_none() {
@@ -39,8 +38,10 @@ pub fn create(
         let rule = pair.as_rule();
         let instruction = InstructionWithSpan::new_expression(pair, parsing_context, errors);
         if instruction.return_type() != Type::Int {
-            let ins = parsing_context.slice(instruction.span).into();
-            errors.push(CannotIndexWith { ins }.into());
+            let span = instruction.span;
+            let ins = parsing_context.slice(span).into();
+            let error = CannotIndexWith { ins }.into();
+            errors.push(ErrorWithSpan { error, span });
         }
         match rule {
             Rule::start => start = Some(instruction.instruction),

@@ -1,11 +1,11 @@
 use super::{Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables};
 use crate::{
-    Error,
+    errors::ErrorWithSpan,
     instruction::{BaseInstruction, ident::Ident, parsing_context::ParsingContext, set::Set},
     interpreter::{Interpreter, VariableMap},
+    source_span_from_pest_span,
     variable::{ReturnType, Type, Variable},
 };
-use miette::SourceSpan;
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
 use std::{collections::HashMap, sync::Arc};
@@ -21,16 +21,14 @@ impl Struct {
     pub fn create_instruction(
         pair: Pair<Rule>,
         parsing_context: &ParsingContext,
-        errors: &mut Vec<Error>,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Instruction {
         let sets = pair
             .into_inner()
             .map(|pair| {
                 if pair.as_rule() == Rule::ident {
                     let pest_span = pair.as_span();
-                    let start = pest_span.start();
-                    let length = pest_span.end() - start;
-                    let span = SourceSpan::new(start.into(), length);
+                    let span = source_span_from_pest_span(&pest_span);
                     let instruction = Ident::create_instruction(span, parsing_context, errors);
                     let ident = pest_span.as_str().into();
                     return Set::new_ident(ident, instruction);

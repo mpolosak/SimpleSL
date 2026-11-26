@@ -1,11 +1,13 @@
 use super::match_arm::MatchArm;
 use crate::{
     Error,
+    errors::ErrorWithSpan,
     instruction::{
         BaseInstruction, Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
         parsing_context::ParsingContext,
     },
     interpreter::Interpreter,
+    source_span_from_pest_span,
     variable::{ReturnType, Type},
 };
 use pest::iterators::Pair;
@@ -21,8 +23,9 @@ impl Match {
     pub fn create_instruction(
         pair: Pair<Rule>,
         parsing_context: &mut ParsingContext,
-        errors: &mut Vec<Error>,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Instruction {
+        let span = pair.as_span();
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
         let expression = Instruction::new(pair, parsing_context, errors);
@@ -32,7 +35,9 @@ impl Match {
             .collect::<Box<[MatchArm]>>();
         let result = Self { expression, arms };
         if !result.is_covering_type(&var_type) {
-            errors.push(Error::MatchNotCovered);
+            let error = Error::MatchNotCovered;
+            let span = source_span_from_pest_span(&span);
+            errors.push(ErrorWithSpan { error, span });
         }
         result.into()
     }

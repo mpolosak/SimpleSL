@@ -14,9 +14,10 @@ pub fn can_be_used(lhs: &Type, rhs: &Type) -> bool {
 #[cfg(test)]
 mod tests {
     use crate::{
-        BinOperator, Code, Error, Interpreter,
+        BinOperator, Code, Interpreter,
         errors::CannotDo2,
         instruction::bin_op::bitwise::can_be_used,
+        test::{parse_unwrap_errors, parse_unwrap_first_error},
         variable::{Type, Variable},
     };
 
@@ -118,13 +119,5 @@ mod tests {
             .unwrap()
             .exec()
             .unwrap()
-    }
-
-    fn parse_unwrap_first_error(script: &str) -> Error {
-        parse_unwrap_errors(script).swap_remove(0)
-    }
-
-    fn parse_unwrap_errors(script: &str) -> Vec<Error> {
-        Code::parse(&Interpreter::without_stdlib(), script).unwrap_err()
     }
 }

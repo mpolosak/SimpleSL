@@ -1,4 +1,4 @@
-use simplesl::{Code, Interpreter};
+use simplesl::{Code, Error, Interpreter};
 use simplesl_macros::var;
 
 #[test]
@@ -58,5 +58,5 @@ fn tagged_match_requires_coverage_of_known_variants() {
     )
     .unwrap_err();
 
-    assert!(errors.contains(&simplesl::Error::MatchNotCovered));
+    assert_eq!(errors[0].error, Error::MatchNotCovered);
 }

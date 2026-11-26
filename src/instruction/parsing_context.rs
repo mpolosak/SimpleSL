@@ -1,19 +1,17 @@
-use std::{
-    any::{Any, TypeId},
-    fs,
-};
-
-use miette::SourceSpan;
-use pest::{Parser, iterators::Pairs};
-use simplesl_parser::{Rule, SimpleSLParser};
-
 use crate::{
-    Error,
+    errors::ErrorWithSpan,
     instruction::{
         Instruction,
         local_variable::{FunctionInfo, LocalVariableMap, LocalVariables},
     },
     variable::Variable,
+};
+use miette::SourceSpan;
+use pest::{Parser, iterators::Pairs};
+use simplesl_parser::{Rule, SimpleSLParser};
+use std::{
+    any::{Any, TypeId},
+    fs, io,
 };
 
 pub struct ParsingContext<'a> {
@@ -37,36 +35,40 @@ impl<'a> ParsingContext<'a> {
         }
     }
 
-    pub(crate) fn load(&mut self, path: &str, errors: &mut Vec<Error>) -> Box<[Instruction]> {
-        let contents = match fs::read_to_string(path) {
-            Ok(contents) => contents,
-            Err(error) => {
-                errors.push(error.into());
-                return [].into();
-            }
-        };
-        self.parse_input(&contents, errors)
+    pub(crate) fn load(
+        &self,
+        path: &str,
+        errors: &mut Vec<ErrorWithSpan>,
+    ) -> io::Result<(Box<[Instruction]>, LocalVariableMap)> {
+        let contents = fs::read_to_string(path)?;
+        Ok(self.parse_input(&contents, errors))
     }
 
     pub(crate) fn parse_input(
-        &mut self,
-        input: &str,
-        errors: &mut Vec<Error>,
-    ) -> Box<[Instruction]> {
+        &'a self,
+        input: &'a str,
+        errors: &mut Vec<ErrorWithSpan>,
+    ) -> (Box<[Instruction]>, LocalVariableMap) {
         let pairs = match SimpleSLParser::parse(Rule::input, input) {
             Ok(pairs) => pairs,
             Err(error) => {
                 errors.push(error.into());
-                return [].into();
+                return ([].into(), LocalVariableMap::new());
             }
         };
-        self.create_instructions(pairs, errors)
+        let mut parsing_context = Self {
+            source: input,
+            local_variables: self.local_variables.create_layer(),
+        };
+        let instructions = parsing_context.create_instructions(pairs, errors);
+        let layer = parsing_context.local_variables.drop_layer();
+        (instructions, layer)
     }
 
     pub(crate) fn create_instructions(
         &mut self,
         pairs: Pairs<'_, Rule>,
-        errors: &mut Vec<Error>,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Box<[Instruction]> {
         let mut instructions = pairs
             .map(|pair| Instruction::new(pair, self, errors))

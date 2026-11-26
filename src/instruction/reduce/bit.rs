@@ -1,6 +1,6 @@
 use crate::{
-    self as simplesl, Error,
-    errors::IncorrectUnaryOperatorOperand,
+    self as simplesl,
+    errors::{ErrorWithSpan, IncorrectUnaryOperatorOperand},
     instruction::{
         BaseInstruction, Exec, ExecResult, Instruction, InstructionWithSpan, Recreate,
         local_variable::LocalVariables, parsing_context::ParsingContext,
@@ -29,20 +29,20 @@ pub fn create(
     iterator: InstructionWithSpan,
     op: UnaryOperator,
     parsing_context: &ParsingContext,
-    errors: &mut Vec<Error>,
+    errors: &mut Vec<ErrorWithSpan>,
 ) -> Instruction {
     let return_type = iterator.return_type();
     if !return_type.matches(&ACCEPTED_TYPE) {
+        let span = iterator.span;
         let ins = parsing_context.slice(iterator.span).into();
-        errors.push(
-            IncorrectUnaryOperatorOperand {
-                ins,
-                op,
-                expected: ACCEPTED_TYPE.clone(),
-                given: return_type,
-            }
-            .into(),
-        );
+        let error = IncorrectUnaryOperatorOperand {
+            ins,
+            op,
+            expected: ACCEPTED_TYPE.clone(),
+            given: return_type,
+        }
+        .into();
+        errors.push(ErrorWithSpan { error, span });
     }
     let iterator = iterator.instruction;
     if op == UnaryOperator::BitAnd {
@@ -99,8 +99,9 @@ impl ReturnType for OrReduce {
 #[cfg(test)]
 mod tests {
     use crate::{
-        self as simplesl, Code, Error, Interpreter, errors::IncorrectUnaryOperatorOperand,
-        instruction::reduce::bit::ACCEPTED_TYPE, unary_operator::UnaryOperator, variable::Variable,
+        self as simplesl, Code, Interpreter, errors::IncorrectUnaryOperatorOperand,
+        instruction::reduce::bit::ACCEPTED_TYPE, test::parse_unwrap_first_error,
+        unary_operator::UnaryOperator, variable::Variable,
     };
     use simplesl_macros::{var, var_type};
     const AND: UnaryOperator = UnaryOperator::BitAnd;
@@ -301,11 +302,5 @@ mod tests {
             .unwrap()
             .exec()
             .unwrap()
-    }
-
-    fn parse_unwrap_first_error(script: &str) -> Error {
-        Code::parse(&Interpreter::without_stdlib(), script)
-            .unwrap_err()
-            .swap_remove(0)
     }
 }

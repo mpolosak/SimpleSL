@@ -1,10 +1,12 @@
-use crate::errors::CannotDo2;
+use crate::errors::{CannotDo2, ErrorWithSpan};
 use crate::instruction::bin_op::concat::Concat;
 use crate::instruction::local_variable::LocalVariables;
 use crate::instruction::panic::Panic;
-use crate::instruction::{BaseInstruction, Exec, ExecResult, Instruction, Recreate};
+use crate::instruction::{
+    BaseInstruction, Exec, ExecResult, Instruction, InstructionWithSpan, Recreate,
+};
 use crate::variable::{ReturnType, Type, Variable};
-use crate::{self as simplesl, BinOperator, Error, Interpreter};
+use crate::{self as simplesl, BinOperator, Interpreter, source_span_from_2_spans};
 use simplesl_macros::var_type;
 use std::sync::LazyLock;
 
@@ -19,10 +21,18 @@ pub struct Add {
 
 impl Add {
     pub fn create_instruction(
-        lhs: Instruction,
-        rhs: Instruction,
-        errors: &mut Vec<Error>,
+        lhs: InstructionWithSpan,
+        rhs: InstructionWithSpan,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Instruction {
+        let InstructionWithSpan {
+            instruction: lhs,
+            span: lhs_span,
+        } = lhs;
+        let InstructionWithSpan {
+            instruction: rhs,
+            span: rhs_span,
+        } = rhs;
         let lhs_rt = lhs.return_type();
         let rhs_rt = rhs.return_type();
         if lhs_rt.is_array()
@@ -32,14 +42,14 @@ impl Add {
             return Concat { lhs, rhs }.into();
         }
         if !Self::can_be_used(lhs_rt.clone(), rhs_rt.clone()) {
-            errors.push(
-                CannotDo2 {
-                    lhs: lhs_rt,
-                    op: BinOperator::Add,
-                    rhs: rhs_rt,
-                }
-                .into(),
-            );
+            let error = CannotDo2 {
+                lhs: lhs_rt,
+                op: BinOperator::Add,
+                rhs: rhs_rt,
+            }
+            .into();
+            let span = source_span_from_2_spans(&lhs_span, &rhs_span);
+            errors.push(ErrorWithSpan { error, span });
             return Panic.into();
         }
         Self { lhs, rhs }.into()
@@ -85,9 +95,10 @@ mod tests {
     use std::vec;
 
     use crate::{
-        self as simplesl, BinOperator, Code, Error, Interpreter,
+        self as simplesl, BinOperator, Code, Interpreter,
         errors::CannotDo2,
         instruction::bin_op::add::Add,
+        test::{parse_unwrap_errors, parse_unwrap_first_error},
         variable::{Type, Variable},
     };
     use simplesl_macros::{var, var_type};
@@ -345,13 +356,5 @@ mod tests {
             .unwrap()
             .exec()
             .unwrap()
-    }
-
-    fn parse_unwrap_first_error(script: &str) -> Error {
-        parse_unwrap_errors(script).swap_remove(0)
-    }
-
-    fn parse_unwrap_errors(script: &str) -> Vec<Error> {
-        Code::parse(&Interpreter::without_stdlib(), script).unwrap_err()
     }
 }

@@ -1,5 +1,5 @@
 use crate::{
-    Error,
+    errors::ErrorWithSpan,
     instruction::{
         BaseInstruction, Exec, ExecResult, Instruction, InstructionWithSpan, Recreate,
         local_variable::LocalVariables, parsing_context::ParsingContext,
@@ -21,7 +21,7 @@ impl Tagged {
     pub fn create_instruction(
         pair: Pair<Rule>,
         parsing_context: &ParsingContext,
-        errors: &mut Vec<Error>,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Instruction {
         let mut inner = pair.into_inner();
         let tag: Arc<str> = inner.next().unwrap().as_str().into();

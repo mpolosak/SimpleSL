@@ -1,7 +1,7 @@
 use super::{ExecResult, Instruction, InstructionWithSpan, local_variable::LocalVariables};
 use crate::{
-    Error, Interpreter,
-    errors::{CannotIndexInto, CannotIndexWith},
+    Interpreter,
+    errors::{CannotIndexInto, CannotIndexWith, ErrorWithSpan},
     instruction::{BaseInstruction, Exec, Recreate, parsing_context::ParsingContext},
     stdlib::operators::at,
     variable::{ReturnType, Type},
@@ -16,28 +16,30 @@ struct At {
 }
 
 pub fn create(
-    instruction: Instruction,
+    instruction: InstructionWithSpan,
     index: Pair<Rule>,
     parsing_context: &ParsingContext,
-    errors: &mut Vec<Error>,
+    errors: &mut Vec<ErrorWithSpan>,
 ) -> Instruction {
     let pair = index.into_inner().next().unwrap();
     let index = InstructionWithSpan::new_expression(pair, parsing_context, errors);
     let instruction_return_type = instruction.return_type();
     if !instruction_return_type.can_be_indexed() {
-        errors.push(
-            CannotIndexInto {
-                var_type: instruction_return_type,
-            }
-            .into(),
-        );
+        let error = CannotIndexInto {
+            var_type: instruction_return_type,
+        }
+        .into();
+        let span = instruction.span;
+        errors.push(ErrorWithSpan { error, span });
     }
     if !index.return_type().matches(&Type::Int) {
-        let ins = parsing_context.slice(index.span).into();
-        errors.push(CannotIndexWith { ins }.into());
+        let span = index.span;
+        let ins = parsing_context.slice(span).into();
+        let error = CannotIndexWith { ins }.into();
+        errors.push(ErrorWithSpan { error, span });
     }
     At {
-        instruction,
+        instruction: instruction.instruction,
         index: index.instruction,
     }
     .into()
@@ -213,6 +215,10 @@ mod tests {
     }
 
     fn parse_unwrap_errors(script: &str) -> Vec<Error> {
-        Code::parse(&Interpreter::without_stdlib(), script).unwrap_err()
+        Code::parse(&Interpreter::without_stdlib(), script)
+            .unwrap_err()
+            .into_iter()
+            .map(|e| e.error)
+            .collect()
     }
 }

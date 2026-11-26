@@ -1,7 +1,7 @@
 pub mod call;
 use crate::{
-    self as simplesl, Error,
-    errors::MissingReturn,
+    self as simplesl,
+    errors::{ErrorWithSpan, MissingReturn},
     function::{Body, Function as VarFunc, Param, Params},
     instruction::{
         BaseInstruction, Exec, ExecResult, Instruction, Recreate,
@@ -12,6 +12,7 @@ use crate::{
     interpreter::Interpreter,
     variable::{ReturnType, Type},
 };
+use miette::SourceSpan;
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
 use simplesl_parser::Rule;
@@ -32,8 +33,9 @@ impl Function {
         pair: Pair<Rule>,
         parsing_context: &ParsingContext,
         ident: Option<Arc<str>>,
-        errors: &mut Vec<Error>,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Instruction {
+        let end = pair.as_span().end();
         let mut inner = pair.into_inner();
         let params_pair = inner.next().unwrap();
         let params = Params(params_pair.into_inner().map(Param::from).collect());
@@ -61,13 +63,13 @@ impl Function {
                 .map(ReturnType::return_type)
                 .any(|var_type| var_type == Type::Never)
         {
-            errors.push(
-                MissingReturn {
-                    function_name: None,
-                    return_type: return_type.clone(),
-                }
-                .into(),
-            );
+            let error = MissingReturn {
+                function_name: None,
+                return_type: return_type.clone(),
+            }
+            .into();
+            let span = SourceSpan::new(end.into(), 0);
+            errors.push(ErrorWithSpan { error, span });
         }
         Self {
             ident,

@@ -1,7 +1,7 @@
 use super::{ExecResult, Instruction, InstructionWithSpan, local_variable::LocalVariables};
 use crate::{
-    Error, Interpreter,
-    errors::{CannotFieldAccess, NoField},
+    Interpreter,
+    errors::{CannotFieldAccess, ErrorWithSpan, NoField},
     instruction::{BaseInstruction, Exec, Recreate, parsing_context::ParsingContext},
     variable::{ReturnType, Type, Variable},
 };
@@ -20,32 +20,32 @@ impl FieldAccess {
         instruction: InstructionWithSpan,
         op: Pair<Rule>,
         parsing_context: &ParsingContext,
-        errors: &mut Vec<Error>,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Instruction {
         let return_type = instruction.return_type();
         if !return_type.is_struct() {
-            let ins = parsing_context.slice(instruction.span).into();
-            errors.push(
-                CannotFieldAccess {
-                    ins,
-                    var_type: return_type.clone(),
-                }
-                .into(),
-            );
+            let span = instruction.span;
+            let ins = parsing_context.slice(span).into();
+            let error = CannotFieldAccess {
+                ins,
+                var_type: return_type.clone(),
+            }
+            .into();
+            errors.push(ErrorWithSpan { error, span });
         }
         let pair = op.into_inner().next().unwrap();
         let ident = Arc::from(pair.as_str());
 
         if !return_type.has_field(&ident) {
-            let struct_ident = parsing_context.slice(instruction.span).into();
-            errors.push(
-                NoField {
-                    struct_ident,
-                    field_ident: ident.clone(),
-                    struct_type: return_type,
-                }
-                .into(),
-            );
+            let span = instruction.span;
+            let struct_ident = parsing_context.slice(span).into();
+            let error = NoField {
+                struct_ident,
+                field_ident: ident.clone(),
+                struct_type: return_type,
+            }
+            .into();
+            errors.push(ErrorWithSpan { error, span });
         }
         Self {
             instruction: instruction.instruction,

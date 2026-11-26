@@ -1,5 +1,6 @@
 use crate::{
-    Error, ExecError, Interpreter,
+    ExecError, Interpreter,
+    errors::ErrorWithSpan,
     instruction::{
         Exec, ExecStop, Instruction, local_variable::LocalVariables,
         parsing_context::ParsingContext, recreate_instructions,
@@ -16,7 +17,7 @@ pub struct Code {
 }
 
 impl Code {
-    pub fn parse(interpreter: &Interpreter, script: &str) -> Result<Self, Vec<Error>> {
+    pub fn parse(interpreter: &Interpreter, script: &str) -> Result<Self, Vec<ErrorWithSpan>> {
         let parse = match SimpleSLParser::parse(Rule::input, script) {
             Ok(parse) => parse,
             Err(error) => return Err([error.into()].into()),

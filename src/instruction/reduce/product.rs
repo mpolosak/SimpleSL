@@ -1,6 +1,6 @@
 use crate::{
-    self as simplesl, Error,
-    errors::IncorrectUnaryOperatorOperand,
+    self as simplesl,
+    errors::{ErrorWithSpan, IncorrectUnaryOperatorOperand},
     instruction::{
         BaseInstruction, Exec, ExecResult, Instruction, InstructionWithSpan, Recreate,
         local_variable::LocalVariables, parsing_context::ParsingContext,
@@ -24,20 +24,20 @@ impl Product {
     pub fn create(
         iterator: InstructionWithSpan,
         parsing_context: &ParsingContext,
-        errors: &mut Vec<Error>,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Instruction {
         let return_type = iterator.return_type();
         if !return_type.matches(&ACCEPTED_TYPE) {
-            let ins = parsing_context.slice(iterator.span).into();
-            errors.push(
-                IncorrectUnaryOperatorOperand {
-                    ins,
-                    op: UnaryOperator::Product,
-                    expected: ACCEPTED_TYPE.clone(),
-                    given: return_type,
-                }
-                .into(),
-            );
+            let span = iterator.span;
+            let ins = parsing_context.slice(span).into();
+            let error = IncorrectUnaryOperatorOperand {
+                ins,
+                op: UnaryOperator::Product,
+                expected: ACCEPTED_TYPE.clone(),
+                given: return_type,
+            }
+            .into();
+            errors.push(ErrorWithSpan { error, span });
         }
         Self {
             iterator: iterator.instruction,
@@ -242,5 +242,6 @@ mod tests {
         Code::parse(&Interpreter::without_stdlib(), script)
             .unwrap_err()
             .swap_remove(0)
+            .error
     }
 }

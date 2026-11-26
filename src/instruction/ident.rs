@@ -1,6 +1,5 @@
 use crate::{
-    Error,
-    errors::VariableDoesntExist,
+    errors::{ErrorWithSpan, VariableDoesntExist},
     instruction::{
         BaseInstruction, Exec, Instruction, Recreate,
         local_variable::{LocalVariable, LocalVariables},
@@ -21,7 +20,7 @@ impl Ident {
     pub fn create_instruction(
         span: SourceSpan,
         parsing_context: &ParsingContext,
-        errors: &mut Vec<Error>,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Instruction {
         let ident = Arc::from(parsing_context.slice(span));
         parsing_context.local_variables.get(&ident).map_or_else(
@@ -33,12 +32,11 @@ impl Ident {
                     .cloned()
                     .map(Instruction::from)
                     .unwrap_or_else(|| {
-                        errors.push(
-                            VariableDoesntExist {
-                                ident: ident.clone(),
-                            }
-                            .into(),
-                        );
+                        let error = VariableDoesntExist {
+                            ident: ident.clone(),
+                        }
+                        .into();
+                        errors.push(ErrorWithSpan { error, span });
                         Self {
                             ident: ident.clone(),
                             variable: LocalVariable::Other(Type::Never),

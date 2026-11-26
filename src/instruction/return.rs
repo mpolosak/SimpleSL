@@ -1,8 +1,9 @@
 use super::{ExecStop, Instruction, local_variable::LocalVariables};
 use crate::{
     Error,
-    errors::WrongReturn,
+    errors::{ErrorWithSpan, WrongReturn},
     instruction::{BaseInstruction, Exec, Recreate, panic::Panic, parsing_context::ParsingContext},
+    source_span_from_pest_span,
     variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
@@ -15,12 +16,15 @@ impl Return {
     pub fn create_instruction(
         pair: Pair<Rule>,
         parsing_context: &mut ParsingContext,
-        errors: &mut Vec<Error>,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Instruction {
         let Some(function) = parsing_context.local_variables.function().cloned() else {
-            errors.push(Error::ReturnOutsideFunction);
+            let error = Error::ReturnOutsideFunction;
+            let span = source_span_from_pest_span(&pair.as_span());
+            errors.push(ErrorWithSpan { error, span });
             return Panic.into();
         };
+        let span = pair.as_span();
         let instruction = if let Some(pair) = pair.into_inner().next() {
             Instruction::new(pair, parsing_context, errors)
         } else {
@@ -28,14 +32,14 @@ impl Return {
         };
         let returned = instruction.return_type();
         if !returned.matches(function.return_type()) {
-            errors.push(
-                WrongReturn {
-                    function_name: function.name(),
-                    function_return_type: function.return_type().clone(),
-                    returned,
-                }
-                .into(),
-            );
+            let error = WrongReturn {
+                function_name: function.name(),
+                function_return_type: function.return_type().clone(),
+                returned,
+            }
+            .into();
+            let span = source_span_from_pest_span(&span);
+            errors.push(ErrorWithSpan { error, span });
         }
         Self(instruction).into()
     }

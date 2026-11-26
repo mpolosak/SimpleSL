@@ -1,13 +1,14 @@
 pub mod add;
 mod concat;
 use crate::{
-    BinOperator, Error, ExecError, Interpreter,
-    errors::CannotDo2,
+    BinOperator, ExecError, Interpreter,
+    errors::{CannotDo2, ErrorWithSpan},
     instruction::{
-        BaseInstruction, Exec, ExecResult, Instruction, Recreate,
+        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithSpan, Recreate,
         bin_op::assign::{add::AssignAdd, concat::AssignConcat},
         local_variable::LocalVariables,
     },
+    source_span_from_2_spans,
     variable::{ReturnType, Type, Variable},
 };
 use duplicate::duplicate_item;
@@ -20,9 +21,9 @@ pub struct Assign {
 
 impl Assign {
     pub fn create_instruction(
-        lhs: Instruction,
-        rhs: Instruction,
-        errors: &mut Vec<Error>,
+        lhs: InstructionWithSpan,
+        rhs: InstructionWithSpan,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Instruction {
         let lhs_rt = lhs.return_type();
         let rhs_rt = rhs.return_type();
@@ -30,16 +31,20 @@ impl Assign {
             && rhs_rt.matches(&element_type)
         {
         } else {
-            errors.push(
-                CannotDo2 {
-                    lhs: lhs_rt,
-                    op: BinOperator::Assign,
-                    rhs: rhs_rt,
-                }
-                .into(),
-            )
+            let error = CannotDo2 {
+                lhs: lhs_rt,
+                op: BinOperator::Assign,
+                rhs: rhs_rt,
+            }
+            .into();
+            let span = source_span_from_2_spans(&lhs.span, &rhs.span);
+            errors.push(ErrorWithSpan { error, span })
         }
-        Assign { lhs, rhs }.into()
+        Assign {
+            lhs: lhs.instruction,
+            rhs: rhs.instruction,
+        }
+        .into()
     }
 }
 

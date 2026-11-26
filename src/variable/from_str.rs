@@ -1,8 +1,9 @@
 use crate::{
     Error,
-    errors::{CannotBeParsed, IntegerOverflow, SetPatternNotMatched},
+    errors::{CannotBeParsed, ErrorWithSpan, IntegerOverflow, SetPatternNotMatched},
     instruction::pattern::Pattern,
     interpreter::VariableMap,
+    source_span_from_pest_span,
     variable::{Array, TaggedValue, Type, Typed, Variable},
 };
 use itertools::Itertools;
@@ -11,9 +12,9 @@ use simplesl_parser::{Rule, SimpleSLParser, unexpected};
 use std::{str::FromStr, sync::Arc};
 
 impl FromStr for Variable {
-    type Err = Vec<Error>;
+    type Err = Vec<ErrorWithSpan>;
 
-    fn from_str(s: &str) -> Result<Self, Vec<Error>> {
+    fn from_str(s: &str) -> Result<Self, Vec<ErrorWithSpan>> {
         let s = s.trim();
         let mut parse = match SimpleSLParser::parse(Rule::only_var, s) {
             Ok(parse) => parse,
@@ -29,58 +30,73 @@ impl FromStr for Variable {
     }
 }
 
-pub(crate) fn variable_from_pair(pair: Pair<Rule>, errors: &mut Vec<Error>) -> Variable {
+pub(crate) fn variable_from_pair(pair: Pair<Rule>, errors: &mut Vec<ErrorWithSpan>) -> Variable {
     match pair.as_rule() {
         Rule::r#true => Variable::Bool(true),
         Rule::r#false => Variable::Bool(false),
-        Rule::minus_int => parse_int(pair.into_inner().next().unwrap())
-            .map(|value| Variable::Int(-value))
-            .unwrap_or_else(|error| {
-                errors.push(error);
-                Variable::Int(-1)
-            }),
-        Rule::int => parse_int(pair).map(Variable::from).unwrap_or_else(|error| {
-            errors.push(error);
-            Variable::Int(0)
-        }),
+        Rule::minus_int => {
+            let pair = pair.into_inner().next().unwrap();
+            let span = pair.as_span();
+            parse_int(pair)
+                .map(|value| Variable::Int(-value))
+                .unwrap_or_else(|error| {
+                    let span = source_span_from_pest_span(&span);
+                    errors.push(ErrorWithSpan { error, span });
+                    Variable::Int(-1)
+                })
+        }
+        Rule::int => {
+            let span = pair.as_span();
+            parse_int(pair).map(Variable::from).unwrap_or_else(|error| {
+                let span = source_span_from_pest_span(&span);
+                errors.push(ErrorWithSpan { error, span });
+                Variable::Int(0)
+            })
+        }
         Rule::minus_float => {
+            let span = pair.as_span();
             let value = pair
                 .as_str()
                 .replace([' ', '_'], "")
                 .parse::<f64>()
                 .unwrap_or_else(|_| {
-                    errors.push(
-                        CannotBeParsed {
-                            input: pair.as_str().into(),
-                        }
-                        .into(),
-                    );
+                    let span = source_span_from_pest_span(&span);
+                    let error = CannotBeParsed {
+                        input: pair.as_str().into(),
+                    }
+                    .into();
+                    errors.push(ErrorWithSpan { error, span });
                     -1.0
                 });
             Variable::Float(value)
         }
         Rule::float => {
+            let span = pair.as_span();
             let value = pair
                 .as_str()
                 .replace([' ', '_'], "")
                 .parse::<f64>()
                 .unwrap_or_else(|_| {
-                    errors.push(
-                        CannotBeParsed {
-                            input: pair.as_str().into(),
-                        }
-                        .into(),
-                    );
+                    let span = source_span_from_pest_span(&span);
+                    let error = CannotBeParsed {
+                        input: pair.as_str().into(),
+                    }
+                    .into();
+                    errors.push(ErrorWithSpan { error, span });
                     0.0
                 });
             Variable::Float(value)
         }
-        Rule::string => string_from_pair(pair)
-            .unwrap_or_else(|error| {
-                errors.push(error);
-                String::new()
-            })
-            .into(),
+        Rule::string => {
+            let span = pair.as_span();
+            string_from_pair(pair)
+                .unwrap_or_else(|error| {
+                    let span = source_span_from_pest_span(&span);
+                    errors.push(ErrorWithSpan { error, span });
+                    String::new()
+                })
+                .into()
+        }
         Rule::array_from_str => {
             let elements: Arc<[Variable]> = pair
                 .into_inner()
@@ -101,8 +117,10 @@ pub(crate) fn variable_from_pair(pair: Pair<Rule>, errors: &mut Vec<Error>) -> V
             let mut inner = pair.into_inner();
             let value = variable_from_pair(inner.next().unwrap(), errors);
             let len_pair = inner.next().unwrap();
+            let span = len_pair.as_span();
             let len = parse_int(len_pair).unwrap_or_else(|error| {
-                errors.push(error);
+                let span = source_span_from_pest_span(&span);
+                errors.push(ErrorWithSpan { error, span });
                 0
             });
             Array::new_repeat(value, len as usize).into()
@@ -123,32 +141,32 @@ pub(crate) fn variable_from_pair(pair: Pair<Rule>, errors: &mut Vec<Error>) -> V
         Rule::struct_from_str => {
             let mut vm = VariableMap::new();
             for (pattern, value) in pair.into_inner().tuples() {
+                let span = source_span_from_pest_span(&pattern.as_span());
                 let value_str = value.as_str().into();
                 let value = variable_from_pair(value, errors);
                 let var_type = value.as_type();
                 let pattern_str = pattern.as_str().into();
                 let pattern = Pattern::create_instruction(pattern, &var_type, errors);
                 if !pattern.matches_variable(&value) {
-                    errors.push(
-                        SetPatternNotMatched {
-                            ins: value_str,
-                            var_type,
-                            pattern: pattern_str,
-                        }
-                        .into(),
-                    );
+                    let error = SetPatternNotMatched {
+                        ins: value_str,
+                        var_type,
+                        pattern: pattern_str,
+                    }
+                    .into();
+                    errors.push(ErrorWithSpan { error, span });
                 }
                 pattern.insert_variables_into_vm(&mut vm, value);
             }
             Variable::Struct(vm.into())
         }
         _ => {
-            errors.push(
-                CannotBeParsed {
-                    input: pair.as_str().into(),
-                }
-                .into(),
-            );
+            let span = source_span_from_pest_span(&pair.as_span());
+            let error = CannotBeParsed {
+                input: pair.as_str().into(),
+            }
+            .into();
+            errors.push(ErrorWithSpan { error, span });
             Variable::none()
         }
     }
@@ -300,7 +318,7 @@ mod tests {
     #[test]
     fn struct_from_str_pattern_not_matched() {
         assert_eq!(
-            Variable::from_str("struct{a:float=5}").unwrap_err()[0],
+            Variable::from_str("struct{a:float=5}").unwrap_err()[0].error,
             SetPatternNotMatched {
                 ins: "5".into(),
                 var_type: Type::Int,
@@ -310,7 +328,8 @@ mod tests {
         );
         assert_eq!(
             Variable::from_str(r#"struct{(a, b, c):(int, float, int)=(5, 5.5, "")}"#).unwrap_err()
-                [0],
+                [0]
+            .error,
             SetPatternNotMatched {
                 ins: r#"(5, 5.5, "")"#.into(),
                 var_type: var_type!((int, float, string)),
@@ -319,7 +338,7 @@ mod tests {
             .into()
         );
         assert_eq!(
-            Variable::from_str(r#"struct{(a, b, c):=(5, 5.5)}"#).unwrap_err()[0],
+            Variable::from_str(r#"struct{(a, b, c):=(5, 5.5)}"#).unwrap_err()[0].error,
             SetPatternNotMatched {
                 ins: r#"(5, 5.5)"#.into(),
                 var_type: var_type!((int, float)),
@@ -332,22 +351,23 @@ mod tests {
     #[test]
     fn tuple_from_str() {
         assert_eq!(
-            Variable::from_str(r#"(10, "45")"#),
-            Ok(Variable::Tuple([10.into(), "45".into()].into()))
+            Variable::from_str(r#"(10, "45")"#).unwrap(),
+            Variable::Tuple([10.into(), "45".into()].into())
         )
     }
 
     #[test]
     fn struct_from_str_self_contradictory_pattern() {
         assert_eq!(
-            Variable::from_str("struct{(a, b):float=5}").unwrap_err()[0],
+            Variable::from_str("struct{(a, b):float=5}").unwrap_err()[0].error,
             SelfContradictoryPattern {
                 pattern: "(a, b):float".into()
             }
             .into()
         );
         assert_eq!(
-            Variable::from_str(r#"struct{(a, b, c):(int, float)=(5, 5.5, "")}"#).unwrap_err()[0],
+            Variable::from_str(r#"struct{(a, b, c):(int, float)=(5, 5.5, "")}"#).unwrap_err()[0]
+                .error,
             SelfContradictoryPattern {
                 pattern: "(a, b, c):(int, float)".into()
             }

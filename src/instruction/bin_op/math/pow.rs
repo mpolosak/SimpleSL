@@ -13,7 +13,9 @@ pub fn exec(base: Variable, exp: Variable) -> Result<Variable, ExecError> {
 #[cfg(test)]
 mod tests {
     use crate::{
-        self as simplesl, BinOperator, Code, Error, ExecError, Interpreter, errors::CannotDo2,
+        self as simplesl, BinOperator, ExecError,
+        errors::CannotDo2,
+        test::{parse_and_exec, parse_unwrap_first_error},
         variable::Variable,
     };
     use simplesl_macros::var_type;
@@ -149,21 +151,5 @@ mod tests {
             }
             .into()
         );
-    }
-
-    fn parse_and_exec(script: &str) -> Result<Variable, ExecError> {
-        parse(script).unwrap().exec()
-    }
-
-    fn parse(script: &str) -> Result<Code, Vec<Error>> {
-        Code::parse(&Interpreter::without_stdlib(), script)
-    }
-
-    fn parse_unwrap_first_error(script: &str) -> Error {
-        parse_unwrap_errors(script).swap_remove(0)
-    }
-
-    fn parse_unwrap_errors(script: &str) -> Vec<Error> {
-        parse(script).unwrap_err()
     }
 }

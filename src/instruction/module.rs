@@ -1,6 +1,6 @@
 use super::Instruction;
 use crate::{
-    Error,
+    errors::ErrorWithSpan,
     instruction::{
         block::Block, ident::Ident, local_variable::LocalVariableMap,
         parsing_context::ParsingContext, set::Set, r#struct::Struct,
@@ -12,7 +12,7 @@ use simplesl_parser::Rule;
 pub fn create_instruction(
     pair: Pair<Rule>,
     parsing_context: &ParsingContext,
-    errors: &mut Vec<Error>,
+    errors: &mut Vec<ErrorWithSpan>,
 ) -> Instruction {
     let mut parsing_context = parsing_context.create_layer();
     let instructions =

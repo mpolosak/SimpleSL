@@ -1,8 +1,8 @@
 use super::{Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables};
 use crate::{
-    self as simplesl, BinOperator, Code, Error,
-    errors::CannotDo2,
-    instruction::BaseInstruction,
+    self as simplesl, BinOperator, Code,
+    errors::{CannotDo2, ErrorWithSpan},
+    instruction::{BaseInstruction, InstructionWithSpan},
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
 };
@@ -18,21 +18,24 @@ pub struct TypeFilter {
 
 impl TypeFilter {
     pub fn create_instruction(
-        iterator: Instruction,
+        iterator: InstructionWithSpan,
         var_type: Pair<Rule>,
-        errors: &mut Vec<Error>,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Instruction {
+        let InstructionWithSpan {
+            instruction: iterator,
+            span,
+        } = iterator;
         let array_type = iterator.return_type();
         let var_type = Type::from(var_type);
         if !array_type.is_iterator() {
-            errors.push(
-                CannotDo2 {
-                    lhs: array_type,
-                    op: BinOperator::Filter,
-                    rhs: var_type.clone(),
-                }
-                .into(),
-            );
+            let error = CannotDo2 {
+                lhs: array_type,
+                op: BinOperator::Filter,
+                rhs: var_type.clone(),
+            }
+            .into();
+            errors.push(ErrorWithSpan { error, span });
         }
         Self { iterator, var_type }.into()
     }

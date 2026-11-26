@@ -6,7 +6,7 @@ use super::{
     type_filter::TypeFilter,
 };
 use crate::{
-    Error,
+    errors::ErrorWithSpan,
     instruction::{
         field_access::FieldAccess,
         function::call::FunctionCall,
@@ -26,19 +26,17 @@ impl InstructionWithSpan {
         op: Pair<'_, Rule>,
         lhs: Self,
         parsing_context: &ParsingContext,
-        errors: &mut Vec<Error>,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Self {
         let start = lhs.span.offset();
         let end = op.as_span().end();
         let len = end - start;
         let span = SourceSpan::new(start.into(), len);
         let instruction = match op.as_rule() {
-            Rule::at => at::create(lhs.instruction, op, parsing_context, errors),
-            Rule::type_filter => TypeFilter::create_instruction(
-                lhs.instruction,
-                op.into_inner().next().unwrap(),
-                errors,
-            ),
+            Rule::at => at::create(lhs, op, parsing_context, errors),
+            Rule::type_filter => {
+                TypeFilter::create_instruction(lhs, op.into_inner().next().unwrap(), errors)
+            }
             Rule::function_call => {
                 FunctionCall::create_instruction(lhs, op, parsing_context, errors)
             }

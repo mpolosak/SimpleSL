@@ -13,8 +13,8 @@ use super::{
     reduce,
 };
 use crate::{
-    self as simplesl, BinOperator, Error, Interpreter,
-    errors::CannotDo2,
+    self as simplesl, BinOperator, Interpreter,
+    errors::{CannotDo2, ErrorWithSpan},
     instruction::{
         BaseInstruction,
         bin_op::{
@@ -25,11 +25,11 @@ use crate::{
         panic::Panic,
         parsing_context::ParsingContext,
     },
+    source_span_from_2_spans,
     variable::{ReturnType, Type, Variable},
 };
 pub use math::{add, multiply, pow, subtract};
 use math::{divide, modulo};
-use miette::SourceSpan;
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
 use simplesl_parser::Rule;
@@ -178,12 +178,9 @@ impl InstructionWithSpan {
         lhs: Self,
         rhs: Self,
         parsing_context: &ParsingContext,
-        errors: &mut Vec<Error>,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Self {
-        let start = lhs.span.offset();
-        let start2 = rhs.span.offset();
-        let length = start2 - start + rhs.span.len();
-        let span = SourceSpan::new(start.into(), length);
+        let span = source_span_from_2_spans(&lhs.span, &rhs.span);
         let instruction = Instruction::create_infix(op, lhs, rhs, parsing_context, errors);
         Self { instruction, span }
     }
@@ -195,14 +192,13 @@ impl Instruction {
         lhs: InstructionWithSpan,
         rhs: InstructionWithSpan,
         parsing_context: &ParsingContext,
-        errors: &mut Vec<Error>,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Self {
         let rule = op.as_rule();
         if rule == Rule::reduce {
             return reduce::create_instruction(lhs, op, rhs, parsing_context, errors);
         }
         let op = BinOperator::from(rule);
-        let (lhs, rhs) = (lhs.instruction, rhs.instruction);
 
         match op {
             BinOperator::Add => {
@@ -229,20 +225,33 @@ impl Instruction {
         let lhs_type = lhs.return_type();
         let rhs_type = rhs.return_type();
         if !can_be_used(&lhs_type, &rhs_type, op) {
-            errors.push(
-                CannotDo2 {
-                    lhs: lhs_type,
-                    op,
-                    rhs: rhs_type,
-                }
-                .into(),
-            );
+            let error = CannotDo2 {
+                lhs: lhs_type,
+                op,
+                rhs: rhs_type,
+            }
+            .into();
+            let span = source_span_from_2_spans(&lhs.span, &rhs.span);
+            errors.push(ErrorWithSpan { error, span });
             return Panic.into();
         }
         match op {
-            BinOperator::And => And { lhs, rhs }.into(),
-            BinOperator::Or => Or { lhs, rhs }.into(),
-            _ => BinOperation { lhs, rhs, op }.into(),
+            BinOperator::And => And {
+                lhs: lhs.instruction,
+                rhs: rhs.instruction,
+            }
+            .into(),
+            BinOperator::Or => Or {
+                lhs: lhs.instruction,
+                rhs: rhs.instruction,
+            }
+            .into(),
+            _ => BinOperation {
+                lhs: lhs.instruction,
+                rhs: rhs.instruction,
+                op,
+            }
+            .into(),
         }
     }
 }

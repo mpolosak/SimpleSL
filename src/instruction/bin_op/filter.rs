@@ -1,9 +1,11 @@
 use crate::{
-    self as simplesl, BinOperator, Error, Interpreter,
-    errors::CannotDo2,
+    self as simplesl, BinOperator, Interpreter,
+    errors::{CannotDo2, ErrorWithSpan},
     instruction::{
-        BaseInstruction, Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables,
+        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithSpan, Recreate,
+        local_variable::LocalVariables,
     },
+    source_span_from_2_spans,
     stdlib::operators::FILTER,
     variable::{ReturnType, Type, Typed, Variable},
 };
@@ -18,23 +20,27 @@ pub struct Filter {
 
 impl Filter {
     pub fn create_instruction(
-        lhs: Instruction,
-        rhs: Instruction,
-        errors: &mut Vec<Error>,
+        lhs: InstructionWithSpan,
+        rhs: InstructionWithSpan,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Instruction {
         let lhs_type = lhs.return_type();
         let rhs_type = rhs.return_type();
         if !Self::can_be_used(&lhs_type, &rhs_type) {
-            errors.push(
-                CannotDo2 {
-                    lhs: lhs_type,
-                    op: BinOperator::Filter,
-                    rhs: rhs_type,
-                }
-                .into(),
-            );
+            let error = CannotDo2 {
+                lhs: lhs_type,
+                op: BinOperator::Filter,
+                rhs: rhs_type,
+            }
+            .into();
+            let span = source_span_from_2_spans(&lhs.span, &rhs.span);
+            errors.push(ErrorWithSpan { error, span });
         }
-        Self { lhs, rhs }.into()
+        Self {
+            lhs: lhs.instruction,
+            rhs: rhs.instruction,
+        }
+        .into()
     }
 
     pub fn can_be_used(lhs: &Type, rhs: &Type) -> bool {

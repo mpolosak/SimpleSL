@@ -1,12 +1,13 @@
 use crate::{
-    Error, Interpreter,
-    errors::SelfContradictoryPattern,
+    Interpreter,
+    errors::{ErrorWithSpan, SelfContradictoryPattern},
     function::Param,
     instruction::{
         local_variable::{LocalVariable, LocalVariables},
         pattern::destruct_pattern::DestructPattern,
     },
     interpreter::VariableMap,
+    source_span_from_pest_span,
     variable::{Array, Type, Typed, Variable},
 };
 use pest::iterators::Pair;
@@ -28,8 +29,13 @@ impl Pattern {
         }
     }
 
-    pub fn create_instruction(pair: Pair<Rule>, ex_type: &Type, errors: &mut Vec<Error>) -> Self {
+    pub fn create_instruction(
+        pair: Pair<Rule>,
+        ex_type: &Type,
+        errors: &mut Vec<ErrorWithSpan>,
+    ) -> Self {
         let str = pair.as_str().into();
+        let span = pair.as_span();
         let mut inner = pair.into_inner();
         let destruct_pattern_pair = inner.next().unwrap();
         let destruct_pattern = DestructPattern::create_instruction(destruct_pattern_pair);
@@ -48,7 +54,9 @@ impl Pattern {
             };
         };
         if !var_type.matches(&destruct_pattern_type) {
-            errors.push(SelfContradictoryPattern { pattern: str }.into());
+            let error = SelfContradictoryPattern { pattern: str }.into();
+            let span = source_span_from_pest_span(&span);
+            errors.push(ErrorWithSpan { error, span });
         }
 
         Self {

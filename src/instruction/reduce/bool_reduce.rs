@@ -1,6 +1,6 @@
 use crate::{
-    self as simplesl, Error,
-    errors::IncorrectUnaryOperatorOperand,
+    self as simplesl,
+    errors::{ErrorWithSpan, IncorrectUnaryOperatorOperand},
     instruction::{
         Instruction, InstructionWithSpan, function::call::FunctionCall,
         parsing_context::ParsingContext, tuple::Tuple,
@@ -18,20 +18,20 @@ pub fn create(
     iterator: InstructionWithSpan,
     op: UnaryOperator,
     parsing_context: &ParsingContext,
-    errors: &mut Vec<Error>,
+    errors: &mut Vec<ErrorWithSpan>,
 ) -> Instruction {
     let return_type = iterator.return_type();
     if !return_type.matches(&ACCEPTED_TYPE) {
+        let span = iterator.span;
         let ins = parsing_context.slice(iterator.span).into();
-        errors.push(
-            IncorrectUnaryOperatorOperand {
-                ins,
-                op,
-                expected: ACCEPTED_TYPE.clone(),
-                given: return_type,
-            }
-            .into(),
-        );
+        let error = IncorrectUnaryOperatorOperand {
+            ins,
+            op,
+            expected: ACCEPTED_TYPE.clone(),
+            given: return_type,
+        }
+        .into();
+        errors.push(ErrorWithSpan { error, span });
     }
     let function = if op == UnaryOperator::All {
         Variable::from(ALL)
@@ -270,11 +270,14 @@ mod tests {
     }
 
     fn parse_and_exec(script: &str) -> Result<Variable, Vec<Error>> {
-        Code::parse(&Interpreter::without_stdlib(), script).map(|code| code.exec().unwrap())
+        Code::parse(&Interpreter::without_stdlib(), script)
+            .map(|code| code.exec().unwrap())
+            .map_err(|e| e.into_iter().map(|e| e.error).collect())
     }
     fn parse_unwrap_first_error(script: &str) -> Error {
         Code::parse(&Interpreter::without_stdlib(), script)
             .unwrap_err()
             .swap_remove(0)
+            .error
     }
 }

@@ -1,12 +1,12 @@
 use crate::{
-    Error,
-    errors::WrongCondition,
+    errors::{ErrorWithSpan, WrongCondition},
     instruction::{
         Exec, ExecResult, ExecStop, Instruction, Recreate,
         control_flow::match_pattern::MatchPattern, local_variable::LocalVariables,
         parsing_context::ParsingContext, recreate_instructions, set::ConditionSet,
     },
     interpreter::Interpreter,
+    source_span_from_pest_span,
     variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
@@ -24,7 +24,7 @@ impl MatchArm {
         pair: Pair<Rule>,
         parsing_context: &mut ParsingContext,
         exp_type: &Type,
-        errors: &mut Vec<Error>,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Self {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
@@ -119,7 +119,7 @@ impl MatchArm {
 fn create_guard(
     pair: Pair<Rule>,
     parsing_context: &mut ParsingContext,
-    errors: &mut Vec<Error>,
+    errors: &mut Vec<ErrorWithSpan>,
 ) -> Box<[Instruction]> {
     let conditions_pair = pair.into_inner().next().unwrap();
     conditions_pair
@@ -129,16 +129,17 @@ fn create_guard(
                 return ConditionSet::create(pair, parsing_context, errors).into();
             }
             let condition_str = pair.as_str().trim().into();
+            let span = pair.as_span();
             let condition = Instruction::new(pair, parsing_context, errors);
             let return_type = condition.return_type();
             if return_type != Type::Bool {
-                errors.push(
-                    WrongCondition {
-                        ins: condition_str,
-                        var_type: return_type,
-                    }
-                    .into(),
-                );
+                let span = source_span_from_pest_span(&span);
+                let error = WrongCondition {
+                    ins: condition_str,
+                    var_type: return_type,
+                }
+                .into();
+                errors.push(ErrorWithSpan { error, span });
             }
             condition
         })

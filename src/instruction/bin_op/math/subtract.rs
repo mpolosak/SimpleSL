@@ -8,8 +8,9 @@ pub fn create_from_instructions(lhs: Instruction, rhs: Instruction) -> Instructi
 #[cfg(test)]
 mod tests {
     use crate::{
-        self as simplesl, BinOperator, Code, Error, Interpreter,
+        self as simplesl, BinOperator, Code, Interpreter,
         errors::CannotDo2,
+        test::{parse_unwrap_errors, parse_unwrap_first_error},
         variable::{Type, Variable},
     };
     use simplesl_macros::var;
@@ -58,13 +59,5 @@ mod tests {
             .unwrap()
             .exec()
             .unwrap()
-    }
-
-    fn parse_unwrap_first_error(script: &str) -> Error {
-        parse_unwrap_errors(script).swap_remove(0)
-    }
-
-    fn parse_unwrap_errors(script: &str) -> Vec<Error> {
-        Code::parse(&Interpreter::without_stdlib(), script).unwrap_err()
     }
 }

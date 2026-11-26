@@ -1,6 +1,6 @@
 use crate::{
-    Error, Interpreter,
-    errors::IncorrectUnaryOperatorOperand,
+    Interpreter,
+    errors::{ErrorWithSpan, IncorrectUnaryOperatorOperand},
     instruction::{
         BaseInstruction, Exec, ExecResult, Instruction, InstructionWithSpan, Recreate,
         local_variable::LocalVariables, parsing_context::ParsingContext,
@@ -16,20 +16,20 @@ impl Deref {
     pub fn create_instruction(
         instruction: InstructionWithSpan,
         parsing_context: &ParsingContext,
-        errors: &mut Vec<Error>,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Instruction {
         let return_type = instruction.return_type();
         if return_type.mut_element_type().is_none() {
+            let span = instruction.span;
             let ins = parsing_context.slice(instruction.span).into();
-            errors.push(
-                IncorrectUnaryOperatorOperand {
-                    ins,
-                    op: UnaryOperator::Indirection,
-                    expected: Type::Mut(Type::Any.into()),
-                    given: return_type,
-                }
-                .into(),
-            );
+            let error = IncorrectUnaryOperatorOperand {
+                ins,
+                op: UnaryOperator::Indirection,
+                expected: Type::Mut(Type::Any.into()),
+                given: return_type,
+            }
+            .into();
+            errors.push(ErrorWithSpan { error, span });
         }
         Self(instruction.instruction).into()
     }

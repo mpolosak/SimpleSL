@@ -38,6 +38,7 @@ use self::{
 };
 use crate::{
     Error, ExecError,
+    errors::ErrorWithSpan,
     instruction::{
         ident::Ident,
         r#loop::{Break, Continue, r#for::For},
@@ -46,6 +47,7 @@ use crate::{
         r#struct::Struct,
     },
     interpreter::Interpreter,
+    source_span_from_pest_span,
     variable::{ReturnType, Type, Variable, from_str::variable_from_pair},
 };
 use derive_more::From;
@@ -65,7 +67,7 @@ impl InstructionWithSpan {
     pub(crate) fn new_expression(
         pair: Pair<'_, Rule>,
         parsing_context: &ParsingContext,
-        errors: &mut Vec<Error>,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Self {
         let mut prefix_errors = Vec::new();
         let mut infix_errors = Vec::new();
@@ -90,16 +92,13 @@ impl InstructionWithSpan {
     fn create_primary(
         pair: Pair<'_, Rule>,
         parsing_context: &ParsingContext,
-        errors: &mut Vec<Error>,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Self {
         let rule = pair.as_rule();
         if rule == Rule::expr {
             return Self::new_expression(pair, parsing_context, errors);
         }
-        let span = pair.as_span();
-        let start = span.start();
-        let length = span.end() - start;
-        let span = SourceSpan::new(start.into(), length);
+        let span = source_span_from_pest_span(&pair.as_span());
         let instruction: Instruction = match rule {
             Rule::ident => Ident::create_instruction(span, parsing_context, errors),
             Rule::r#true | Rule::r#false | Rule::int | Rule::float | Rule::string => {
@@ -133,7 +132,7 @@ impl Instruction {
     pub fn new(
         pair: Pair<Rule>,
         parsing_context: &mut ParsingContext,
-        errors: &mut Vec<Error>,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Self {
         match pair.as_rule() {
             Rule::set | Rule::set_expr => Set::create(pair, parsing_context, errors).into(),
@@ -151,13 +150,21 @@ impl Instruction {
             Rule::r#for => For::create_instruction(pair, parsing_context, errors),
             Rule::r#break => {
                 if !parsing_context.local_variables.in_loop {
-                    errors.push(Error::BreakOutsideLoop);
+                    let span = source_span_from_pest_span(&pair.as_span());
+                    errors.push(ErrorWithSpan {
+                        error: Error::BreakOutsideLoop,
+                        span,
+                    });
                 }
                 Break.into()
             }
             Rule::r#continue => {
                 if !parsing_context.local_variables.in_loop {
-                    errors.push(Error::ContinueOutsideLoop);
+                    let span = source_span_from_pest_span(&pair.as_span());
+                    errors.push(ErrorWithSpan {
+                        error: Error::ContinueOutsideLoop,
+                        span,
+                    });
                 }
                 Continue.into()
             }

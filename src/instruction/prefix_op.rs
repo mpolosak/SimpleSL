@@ -1,14 +1,14 @@
 mod deref;
 use super::InstructionWithSpan;
 use super::local_variable::LocalVariables;
-use crate::errors::IncorrectUnaryOperatorOperand;
+use crate::Interpreter;
+use crate::errors::{ErrorWithSpan, IncorrectUnaryOperatorOperand};
 use crate::instruction::parsing_context::ParsingContext;
 use crate::instruction::prefix_op::deref::Deref;
 use crate::instruction::{BaseInstruction, Exec, Instruction, Recreate};
 use crate::unary_operator::UnaryOperator;
 use crate::variable::{ReturnType, Type, Variable};
 use crate::{self as simplesl, instruction::r#mut::Mut};
-use crate::{Error, Interpreter};
 use miette::SourceSpan;
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
@@ -20,7 +20,7 @@ impl InstructionWithSpan {
         op: Pair<'_, Rule>,
         rhs: Self,
         parsing_context: &ParsingContext,
-        errors: &mut Vec<Error>,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Self {
         let start = op.as_span().start();
         let start2 = rhs.span.offset();
@@ -46,21 +46,21 @@ impl UnaryMinus {
     pub fn create_instruction(
         instruction: InstructionWithSpan,
         parsing_context: &ParsingContext,
-        errors: &mut Vec<Error>,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Instruction {
         let op = UnaryOperator::UnaryMinus;
         let return_type = instruction.return_type();
         if !return_type.matches(&ACCEPTED_NUM) {
-            let ins = parsing_context.slice(instruction.span).into();
-            errors.push(
-                IncorrectUnaryOperatorOperand {
-                    ins,
-                    op,
-                    expected: ACCEPTED_NUM.clone(),
-                    given: return_type,
-                }
-                .into(),
-            );
+            let span = instruction.span;
+            let ins = parsing_context.slice(span).into();
+            let error = IncorrectUnaryOperatorOperand {
+                ins,
+                op,
+                expected: ACCEPTED_NUM.clone(),
+                given: return_type,
+            }
+            .into();
+            errors.push(ErrorWithSpan { error, span });
         }
         UnaryMinus(instruction.instruction).into()
     }
@@ -100,21 +100,21 @@ impl Not {
     pub fn create_instruction(
         instruction: InstructionWithSpan,
         parsing_context: &ParsingContext,
-        errors: &mut Vec<Error>,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Instruction {
         let op = UnaryOperator::Not;
         let return_type = instruction.return_type();
         if !return_type.matches(&ACCEPTED_NOT) {
-            let ins = parsing_context.slice(instruction.span).into();
-            errors.push(
-                IncorrectUnaryOperatorOperand {
-                    ins,
-                    op,
-                    expected: ACCEPTED_NOT.clone(),
-                    given: return_type,
-                }
-                .into(),
-            );
+            let span = instruction.span;
+            let ins = parsing_context.slice(span).into();
+            let error = IncorrectUnaryOperatorOperand {
+                ins,
+                op,
+                expected: ACCEPTED_NOT.clone(),
+                given: return_type,
+            }
+            .into();
+            errors.push(ErrorWithSpan { error, span });
         }
         Not(instruction.instruction).into()
     }
@@ -148,8 +148,10 @@ impl ReturnType for Not {
 #[cfg(test)]
 mod tests {
     use crate::{
-        self as simplesl, Code, Error, Interpreter, errors::IncorrectUnaryOperatorOperand,
-        unary_operator::UnaryOperator, variable::Variable,
+        self as simplesl,
+        errors::IncorrectUnaryOperatorOperand,
+        test::{parse_and_exec, parse_unwrap_errors},
+        unary_operator::UnaryOperator,
     };
     use simplesl_macros::{var, var_type};
 
@@ -160,40 +162,36 @@ mod tests {
         assert_eq!(parse_and_exec("!5"), Ok(var!(-6)));
         assert_eq!(parse_and_exec("!0"), Ok(var!(-1)));
         assert_eq!(
-            parse_and_exec("!7.5"),
-            Err(Vec::from([IncorrectUnaryOperatorOperand {
+            parse_unwrap_errors("!7.5"),
+            Vec::from([IncorrectUnaryOperatorOperand {
                 ins: "7.5".into(),
                 op: UnaryOperator::Not,
                 expected: var_type!(int | bool),
                 given: var_type!(float)
             }
-            .into()]))
+            .into()])
         );
         assert_eq!(parse_and_exec("!true"), Ok(var!(false)));
         assert_eq!(parse_and_exec("!false"), Ok(var!(true)));
         assert_eq!(
-            parse_and_exec("![7, -4.5, 0]"),
-            Err(Vec::from([IncorrectUnaryOperatorOperand {
+            parse_unwrap_errors("![7, -4.5, 0]"),
+            Vec::from([IncorrectUnaryOperatorOperand {
                 ins: "[7, -4.5, 0]".into(),
                 op: UnaryOperator::Not,
                 expected: var_type!(int | bool),
                 given: var_type!([int | float])
             }
-            .into()]))
+            .into()])
         );
         assert_eq!(
-            parse_and_exec("-[7, true, 0]"),
-            Err(Vec::from([IncorrectUnaryOperatorOperand {
+            parse_unwrap_errors("-[7, true, 0]"),
+            Vec::from([IncorrectUnaryOperatorOperand {
                 ins: "[7, true, 0]".into(),
                 op: UnaryOperator::UnaryMinus,
                 expected: var_type!(int | float),
                 given: var_type!([int | bool])
             }
-            .into()]))
+            .into()])
         );
-    }
-
-    fn parse_and_exec(script: &str) -> Result<Variable, Vec<Error>> {
-        Code::parse(&Interpreter::without_stdlib(), script).map(|code| code.exec().unwrap())
     }
 }

@@ -1,10 +1,11 @@
 use crate::{
-    self as simplesl, Error, Interpreter,
-    errors::{SetPatternNotMatched, WrongType},
+    self as simplesl, Interpreter,
+    errors::{ErrorWithSpan, SetPatternNotMatched, WrongType},
     instruction::{
         BaseInstruction, Exec, ExecResult, ExecStop, Instruction, Recreate,
         local_variable::LocalVariables, parsing_context::ParsingContext, pattern::Pattern,
     },
+    source_span_from_pest_span,
     variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
@@ -22,35 +23,38 @@ impl For {
     pub fn create_instruction(
         pair: Pair<Rule>,
         parsing_context: &mut ParsingContext,
-        errors: &mut Vec<Error>,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Instruction {
         let mut inner = pair.into_inner();
         let pattern_pair = inner.next().unwrap();
-        let iter = Instruction::new(inner.next().unwrap(), parsing_context, errors);
+        let iter_pair = inner.next().unwrap();
+        let iter_span = iter_pair.as_span();
+        let iter = Instruction::new(iter_pair, parsing_context, errors);
         let iter_element = iter.return_type().iter_element().unwrap_or_else(|| {
-            errors.push(
-                WrongType {
-                    ident: "iterator".into(),
-                    expected_type: var_type!(() -> (#Some(any)|#None)),
-                }
-                .into(),
-            );
+            let error = WrongType {
+                ident: "iterator".into(),
+                expected_type: var_type!(() -> (#Some(any)|#None)),
+            }
+            .into();
+            let span = source_span_from_pest_span(&iter_span);
+            errors.push(ErrorWithSpan { error, span });
             Type::Never
         });
+        let span = pattern_pair.as_span();
         let pattern = if pattern_pair.as_rule() == Rule::ident {
             Pattern::new_ident_pattern(pattern_pair.as_str().into(), iter_element.clone())
         } else {
             Pattern::create_instruction(pattern_pair.clone(), &iter_element, errors)
         };
         if !pattern.is_matched(&iter_element) {
-            errors.push(
-                SetPatternNotMatched {
-                    ins: "for loop element".into(),
-                    var_type: iter_element,
-                    pattern: pattern_pair.as_str().into(),
-                }
-                .into(),
-            );
+            let span = source_span_from_pest_span(&span);
+            let error = SetPatternNotMatched {
+                ins: "for loop element".into(),
+                var_type: iter_element,
+                pattern: pattern_pair.as_str().into(),
+            }
+            .into();
+            errors.push(ErrorWithSpan { error, span });
         }
         let mut parsing_context = parsing_context.create_layer();
         parsing_context.local_variables.in_loop = true;

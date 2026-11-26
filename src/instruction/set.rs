@@ -1,7 +1,7 @@
 use super::{Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables};
 use crate::{
     Error,
-    errors::{SetPatternNotMatched, WrongType},
+    errors::{ErrorWithSpan, SetPatternNotMatched, WrongType},
     instruction::{
         BaseInstruction,
         function::Function,
@@ -9,6 +9,7 @@ use crate::{
         pattern::{Pattern, destruct_pattern::DestructPattern},
     },
     interpreter::Interpreter,
+    source_span_from_pest_span,
     variable::{ReturnType, Type},
 };
 use pest::iterators::Pair;
@@ -25,16 +26,18 @@ impl Set {
     pub fn create(
         pair: Pair<Rule>,
         parsing_context: &mut ParsingContext,
-        errors: &mut Vec<Error>,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Self {
         let is_declaration = pair.as_rule() == Rule::set;
+        let span = source_span_from_pest_span(&pair.as_span());
         let (set, error) = Self::new(pair, parsing_context, errors);
         if is_declaration && matches!(&set.pattern.destruct_pattern, DestructPattern::Array { .. })
         {
-            errors.push(Error::ArrayPatternRequiresElse);
+            let error = Error::ArrayPatternRequiresElse;
+            errors.push(ErrorWithSpan { error, span });
         }
         if !set.pattern.is_matched(&set.instruction.return_type()) {
-            errors.push(error);
+            errors.push(ErrorWithSpan { error, span });
         }
         set
     }
@@ -42,7 +45,7 @@ impl Set {
     fn new(
         pair: Pair<Rule>,
         parsing_context: &mut ParsingContext,
-        errors: &mut Vec<Error>,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> (Self, Error) {
         let mut inner = pair.into_inner();
         let pattern_pair = inner.next().unwrap();
@@ -74,7 +77,7 @@ impl Set {
         pattern_pair: Pair<Rule>,
         function_pair: Pair<Rule>,
         parsing_context: &mut ParsingContext,
-        errors: &mut Vec<Error>,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> (Self, Error) {
         let pattern_str = pattern_pair.as_str().into();
         let mut pattern = Pattern::create_instruction(pattern_pair, &Type::Any, errors);
@@ -153,21 +156,23 @@ impl SetElse {
     pub fn create(
         pair: Pair<Rule>,
         parsing_context: &mut ParsingContext,
-        errors: &mut Vec<Error>,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Instruction {
         let mut inner = pair.into_inner();
         let pattern_pair = inner.next().unwrap();
         let instruction = Instruction::new(inner.next().unwrap(), parsing_context, errors);
         let pattern = Pattern::create_instruction(pattern_pair, &instruction.return_type(), errors);
-        let else_instruction = Instruction::new(inner.next().unwrap(), parsing_context, errors);
+        let else_pair = inner.next().unwrap();
+        let span = else_pair.as_span();
+        let else_instruction = Instruction::new(else_pair, parsing_context, errors);
         if else_instruction.return_type() != Type::Never {
-            errors.push(
-                WrongType {
-                    ident: "else branch".into(),
-                    expected_type: Type::Never,
-                }
-                .into(),
-            );
+            let error = WrongType {
+                ident: "else branch".into(),
+                expected_type: Type::Never,
+            }
+            .into();
+            let span = source_span_from_pest_span(&span);
+            errors.push(ErrorWithSpan { error, span });
         }
         pattern.insert_local_variables(&mut parsing_context.local_variables);
         Self {
@@ -222,7 +227,7 @@ impl ConditionSet {
     pub fn create(
         pair: Pair<Rule>,
         parsing_context: &mut ParsingContext,
-        errors: &mut Vec<Error>,
+        errors: &mut Vec<ErrorWithSpan>,
     ) -> Self {
         ConditionSet(Set::new(pair, parsing_context, errors).0)
     }
@@ -258,6 +263,7 @@ mod tests {
     use crate::{
         self as simplesl, Code, Error, Interpreter,
         errors::{SelfContradictoryPattern, SetPatternNotMatched, WrongCondition, WrongType},
+        test::parse_unwrap_first_error,
         variable::{Array, Type, Variable},
     };
     use simplesl_macros::var_type;
@@ -565,11 +571,5 @@ mod tests {
             .unwrap()
             .exec()
             .unwrap()
-    }
-
-    fn parse_unwrap_first_error(script: &str) -> Error {
-        Code::parse(&Interpreter::without_stdlib(), script)
-            .unwrap_err()
-            .swap_remove(0)
     }
 }
