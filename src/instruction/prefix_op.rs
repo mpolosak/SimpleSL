@@ -1,31 +1,27 @@
 mod deref;
-use super::InstructionWithSpan;
+use super::InstructionWithRange;
 use super::local_variable::LocalVariables;
 use crate::Interpreter;
-use crate::errors::{ErrorWithSpan, IncorrectUnaryOperatorOperand};
+use crate::errors::{ErrorWithRange, IncorrectUnaryOperatorOperand};
 use crate::instruction::parsing_context::ParsingContext;
 use crate::instruction::prefix_op::deref::Deref;
 use crate::instruction::{BaseInstruction, Exec, Instruction, Recreate};
 use crate::unary_operator::UnaryOperator;
 use crate::variable::{ReturnType, Type, Variable};
 use crate::{self as simplesl, instruction::r#mut::Mut};
-use miette::SourceSpan;
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
 use simplesl_parser::{Rule, unexpected};
 use std::sync::LazyLock;
 
-impl InstructionWithSpan {
+impl InstructionWithRange {
     pub fn create_prefix(
         op: Pair<'_, Rule>,
         rhs: Self,
         parsing_context: &ParsingContext,
-        errors: &mut Vec<ErrorWithSpan>,
+        errors: &mut Vec<ErrorWithRange>,
     ) -> Self {
-        let start = op.as_span().start();
-        let start2 = rhs.span.offset();
-        let length = start2 - start + rhs.span.len();
-        let span = SourceSpan::new(start.into(), length);
+        let range = op.as_span().start()..rhs.range.end;
         let instruction = match op.as_rule() {
             Rule::not => Not::create_instruction(rhs, parsing_context, errors),
             Rule::unary_minus => UnaryMinus::create_instruction(rhs, parsing_context, errors),
@@ -33,7 +29,7 @@ impl InstructionWithSpan {
             Rule::r#mut => Mut::create_instruction(op, rhs, parsing_context, errors),
             rule => unexpected!(rule),
         };
-        Self { instruction, span }
+        Self { instruction, range }
     }
 }
 
@@ -44,15 +40,15 @@ pub struct UnaryMinus(Instruction);
 
 impl UnaryMinus {
     pub fn create_instruction(
-        instruction: InstructionWithSpan,
+        instruction: InstructionWithRange,
         parsing_context: &ParsingContext,
-        errors: &mut Vec<ErrorWithSpan>,
+        errors: &mut Vec<ErrorWithRange>,
     ) -> Instruction {
         let op = UnaryOperator::UnaryMinus;
         let return_type = instruction.return_type();
         if !return_type.matches(&ACCEPTED_NUM) {
-            let span = instruction.span;
-            let ins = parsing_context.slice(span).into();
+            let range = instruction.range;
+            let ins = parsing_context.slice(range.clone()).into();
             let error = IncorrectUnaryOperatorOperand {
                 ins,
                 op,
@@ -60,7 +56,7 @@ impl UnaryMinus {
                 given: return_type,
             }
             .into();
-            errors.push(ErrorWithSpan { error, span });
+            errors.push(ErrorWithRange { error, range });
         }
         UnaryMinus(instruction.instruction).into()
     }
@@ -98,15 +94,15 @@ pub static ACCEPTED_NOT: LazyLock<Type> = LazyLock::new(|| var_type!(int | bool)
 
 impl Not {
     pub fn create_instruction(
-        instruction: InstructionWithSpan,
+        instruction: InstructionWithRange,
         parsing_context: &ParsingContext,
-        errors: &mut Vec<ErrorWithSpan>,
+        errors: &mut Vec<ErrorWithRange>,
     ) -> Instruction {
         let op = UnaryOperator::Not;
         let return_type = instruction.return_type();
         if !return_type.matches(&ACCEPTED_NOT) {
-            let span = instruction.span;
-            let ins = parsing_context.slice(span).into();
+            let range = instruction.range;
+            let ins = parsing_context.slice(range.clone()).into();
             let error = IncorrectUnaryOperatorOperand {
                 ins,
                 op,
@@ -114,7 +110,7 @@ impl Not {
                 given: return_type,
             }
             .into();
-            errors.push(ErrorWithSpan { error, span });
+            errors.push(ErrorWithRange { error, range });
         }
         Not(instruction.instruction).into()
     }

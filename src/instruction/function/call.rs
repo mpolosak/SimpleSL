@@ -1,21 +1,20 @@
 use crate::{
     Error, Interpreter,
     errors::{
-        CannotDetermineParams, ErrorWithSpan, NotAFunction, WrongArgument, WrongNumberOfArguments,
+        CannotDetermineParams, ErrorWithRange, NotAFunction, WrongArgument, WrongNumberOfArguments,
     },
     function::{Function as VarFunc, Param, Params},
     instruction::{
-        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithSpan, Recreate,
+        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithRange, Recreate,
         local_variable::LocalVariables, panic::Panic, parsing_context::ParsingContext,
         tuple::Tuple,
     },
-    source_span_from_2_spans, source_span_from_pest_span,
+    range_from_2_ranges, range_from_pest_span,
     variable::{ReturnType, Type, Typed, Variable},
 };
-use miette::SourceSpan;
 use pest::iterators::Pair;
 use simplesl_parser::Rule;
-use std::{iter::zip, sync::Arc};
+use std::{iter::zip, ops::Range, sync::Arc};
 
 #[derive(Debug)]
 pub struct FunctionCall {
@@ -25,19 +24,19 @@ pub struct FunctionCall {
 
 impl FunctionCall {
     pub fn create_instruction(
-        function: InstructionWithSpan,
+        function: InstructionWithRange,
         args: Pair<Rule>,
         parsing_context: &ParsingContext,
-        errors: &mut Vec<ErrorWithSpan>,
+        errors: &mut Vec<ErrorWithRange>,
     ) -> Instruction {
-        let args_span = source_span_from_pest_span(&args.as_span());
-        let span = source_span_from_2_spans(&function.span, &args_span);
+        let args_span = range_from_pest_span(&args.as_span());
+        let span = range_from_2_ranges(&function.range, &args_span);
         let args = args
             .into_inner()
-            .map(|pair| InstructionWithSpan::new_expression(pair, parsing_context, errors))
+            .map(|pair| InstructionWithRange::new_expression(pair, parsing_context, errors))
             .collect::<Box<_>>();
 
-        let ident = parsing_context.slice(function.span).into();
+        let ident = parsing_context.slice(function.range.clone()).into();
         if let Some(Variable::Function(function2)) = function.instruction.downcast_ref::<Variable>()
         {
             check_args_with_params(
@@ -52,14 +51,14 @@ impl FunctionCall {
             let f_type = function.return_type();
             if !f_type.is_function() {
                 let error = NotAFunction { ins: ident.clone() }.into();
-                let span = function.span;
-                errors.push(ErrorWithSpan { error, span });
+                let range = function.range;
+                errors.push(ErrorWithRange { error, range });
                 return Panic.into();
             }
             let Some(params) = f_type.params() else {
                 let error = CannotDetermineParams { ident }.into();
-                let span = function.span;
-                errors.push(ErrorWithSpan { error, span });
+                let span = function.range;
+                errors.push(ErrorWithRange { error, range: span });
                 let args = Tuple {
                     elements: [].into(),
                 }
@@ -158,12 +157,12 @@ impl ReturnType for FunctionCall {
 }
 
 fn check_args_with_params(
-    span: SourceSpan,
+    range: Range<usize>,
     ident: &Arc<str>,
     params: &Params,
-    args: &[InstructionWithSpan],
+    args: &[InstructionWithRange],
     parsing_context: &ParsingContext,
-    errors: &mut Vec<ErrorWithSpan>,
+    errors: &mut Vec<ErrorWithRange>,
 ) {
     if params.len() != args.len() {
         let error = WrongNumberOfArguments {
@@ -171,13 +170,13 @@ fn check_args_with_params(
             expected_arguments: params.len(),
         }
         .into();
-        errors.push(ErrorWithSpan { error, span });
+        errors.push(ErrorWithRange { error, range });
     }
     for (arg, param) in zip(args, params.iter()) {
         let arg_type = arg.return_type();
         if !arg_type.matches(&param.var_type) {
-            let span = arg.span;
-            let given = parsing_context.slice(span).into();
+            let range = arg.range.clone();
+            let given = parsing_context.slice(range.clone()).into();
             let error = WrongArgument {
                 function: ident.clone(),
                 param: param.clone(),
@@ -185,7 +184,7 @@ fn check_args_with_params(
                 given_type: arg_type,
             }
             .into();
-            errors.push(ErrorWithSpan { error, span });
+            errors.push(ErrorWithRange { error, range });
         }
     }
 }

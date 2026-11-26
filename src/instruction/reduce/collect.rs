@@ -1,8 +1,8 @@
 use crate::{
     self as simplesl,
-    errors::{ErrorWithSpan, IncorrectUnaryOperatorOperand},
+    errors::{ErrorWithRange, IncorrectUnaryOperatorOperand},
     instruction::{
-        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithSpan, Recreate,
+        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithRange, Recreate,
         local_variable::LocalVariables, parsing_context::ParsingContext,
     },
     interpreter::Interpreter,
@@ -21,18 +21,18 @@ pub struct Collect {
 }
 
 pub(crate) fn create(
-    lhs: InstructionWithSpan,
+    lhs: InstructionWithRange,
     parsing_context: &ParsingContext,
-    errors: &mut Vec<ErrorWithSpan>,
+    errors: &mut Vec<ErrorWithRange>,
 ) -> Instruction {
     let op = UnaryOperator::Collect;
     let return_type = lhs.return_type();
-    let InstructionWithSpan {
+    let InstructionWithRange {
         instruction: iterator,
-        span,
+        range,
     } = lhs;
     if return_type.iter_element().is_none() {
-        let ins = parsing_context.slice(span).into();
+        let ins = parsing_context.slice(range.clone()).into();
         let error = IncorrectUnaryOperatorOperand {
             ins,
             op,
@@ -40,7 +40,7 @@ pub(crate) fn create(
             given: return_type,
         }
         .into();
-        errors.push(ErrorWithSpan { error, span });
+        errors.push(ErrorWithRange { error, range });
     }
     Collect { iterator }.into()
 }

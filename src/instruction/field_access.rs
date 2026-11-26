@@ -1,7 +1,7 @@
-use super::{ExecResult, Instruction, InstructionWithSpan, local_variable::LocalVariables};
+use super::{ExecResult, Instruction, InstructionWithRange, local_variable::LocalVariables};
 use crate::{
     Interpreter,
-    errors::{CannotFieldAccess, ErrorWithSpan, NoField},
+    errors::{CannotFieldAccess, ErrorWithRange, NoField},
     instruction::{BaseInstruction, Exec, Recreate, parsing_context::ParsingContext},
     variable::{ReturnType, Type, Variable},
 };
@@ -17,35 +17,35 @@ pub struct FieldAccess {
 
 impl FieldAccess {
     pub fn create_instruction(
-        instruction: InstructionWithSpan,
+        instruction: InstructionWithRange,
         op: Pair<Rule>,
         parsing_context: &ParsingContext,
-        errors: &mut Vec<ErrorWithSpan>,
+        errors: &mut Vec<ErrorWithRange>,
     ) -> Instruction {
         let return_type = instruction.return_type();
         if !return_type.is_struct() {
-            let span = instruction.span;
-            let ins = parsing_context.slice(span).into();
+            let range = instruction.range.clone();
+            let ins = parsing_context.slice(range.clone()).into();
             let error = CannotFieldAccess {
                 ins,
                 var_type: return_type.clone(),
             }
             .into();
-            errors.push(ErrorWithSpan { error, span });
+            errors.push(ErrorWithRange { error, range });
         }
         let pair = op.into_inner().next().unwrap();
         let ident = Arc::from(pair.as_str());
 
         if !return_type.has_field(&ident) {
-            let span = instruction.span;
-            let struct_ident = parsing_context.slice(span).into();
+            let range = instruction.range;
+            let struct_ident = parsing_context.slice(range.clone()).into();
             let error = NoField {
                 struct_ident,
                 field_ident: ident.clone(),
                 struct_type: return_type,
             }
             .into();
-            errors.push(ErrorWithSpan { error, span });
+            errors.push(ErrorWithRange { error, range });
         }
         Self {
             instruction: instruction.instruction,

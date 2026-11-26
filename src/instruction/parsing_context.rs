@@ -1,14 +1,17 @@
-use crate::{errors::{ErrorWithSpan, ErrorsWithSource}, instruction::{
+use crate::{
+    errors::{ErrorWithRange, ErrorsWithSource, Source},
+    instruction::{
         Instruction,
         local_variable::{FunctionInfo, LocalVariableMap, LocalVariables},
-    }, variable::Variable,
+    },
+    variable::Variable,
 };
-use miette::{NamedSource, SourceSpan};
 use pest::{Parser, iterators::Pairs};
 use simplesl_parser::{Rule, SimpleSLParser};
 use std::{
     any::{Any, TypeId},
     fs, io,
+    ops::Range,
 };
 
 pub struct ParsingContext<'a> {
@@ -35,15 +38,19 @@ impl<'a> ParsingContext<'a> {
     pub(crate) fn load(
         &self,
         path: &str,
-        errors: &mut Vec<ErrorWithSpan>,
+        errors: &mut Vec<ErrorWithRange>,
     ) -> io::Result<(Box<[Instruction]>, LocalVariableMap)> {
         let contents = fs::read_to_string(path)?;
         let mut errors2 = Vec::new();
         let res = self.parse_input(&contents, &mut errors2);
         if !errors2.is_empty() {
-            let source = NamedSource::new(path, contents);
-            let error = ErrorsWithSource{ source, errors: errors2 }.into();
-            errors.push(ErrorWithSpan { error, span: SourceSpan::new(0.into(), 0) });
+            let source = Source::new(path, contents);
+            let error = ErrorsWithSource {
+                source,
+                errors: errors2,
+            }
+            .into();
+            errors.push(ErrorWithRange { error, range: 0..0 });
         }
         Ok(res)
     }
@@ -51,7 +58,7 @@ impl<'a> ParsingContext<'a> {
     pub(crate) fn parse_input(
         &'a self,
         input: &'a str,
-        errors: &mut Vec<ErrorWithSpan>,
+        errors: &mut Vec<ErrorWithRange>,
     ) -> (Box<[Instruction]>, LocalVariableMap) {
         let pairs = match SimpleSLParser::parse(Rule::input, input) {
             Ok(pairs) => pairs,
@@ -72,7 +79,7 @@ impl<'a> ParsingContext<'a> {
     pub(crate) fn create_instructions(
         &mut self,
         pairs: Pairs<'_, Rule>,
-        errors: &mut Vec<ErrorWithSpan>,
+        errors: &mut Vec<ErrorWithRange>,
     ) -> Box<[Instruction]> {
         let mut instructions = pairs
             .map(|pair| Instruction::new(pair, self, errors))
@@ -85,9 +92,7 @@ impl<'a> ParsingContext<'a> {
         instructions.into()
     }
 
-    pub(crate) fn slice(&self, span: SourceSpan) -> &str {
-        let start = span.offset();
-        let end = start + span.len();
-        &self.source[start..end]
+    pub(crate) fn slice(&self, range: Range<usize>) -> &str {
+        &self.source[range]
     }
 }

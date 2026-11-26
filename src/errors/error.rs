@@ -2,49 +2,64 @@ use crate::{BinOperator, function::Param, unary_operator::UnaryOperator, variabl
 use derive_more::{Display, From};
 use itertools::join;
 use match_any::match_any;
-use miette::{Diagnostic, NamedSource, SourceSpan};
 use pest::error::InputLocation;
 use simplesl_parser::Rule;
 use std::{
-    fmt::{self}, sync::Arc,
+    fmt::{self},
+    ops::Range,
+    sync::Arc,
 };
 
-#[derive(Debug, Diagnostic, Display, PartialEq)]
+#[derive(Debug, Display, PartialEq)]
 #[display("Errors in {} {{\n{}\n}}", source.name(), join(errors, "\n"))]
-#[diagnostic()]
 pub struct ErrorsWithSource {
-    #[source_code]
-    pub source: NamedSource<String>,
-    #[related]
-    pub errors: Vec<ErrorWithSpan>
+    pub source: Source,
+    pub errors: Vec<ErrorWithRange>,
 }
 
-impl std::error::Error for ErrorsWithSource{}
+impl std::error::Error for ErrorsWithSource {}
 
-#[derive(Debug, Diagnostic, Display, PartialEq)]
-#[display("{error} on {}:{}", span.offset(), span.len())]
-pub struct ErrorWithSpan {
-    pub error: Error,
-    pub span: SourceSpan,
+#[derive(Debug, PartialEq)]
+pub struct Source {
+    name: String,
+    content: String,
 }
 
-impl std::error::Error for ErrorWithSpan {}
+impl Source {
+    pub fn new(name: impl Into<String>, content: String) -> Self {
+        Self {
+            name: name.into(),
+            content,
+        }
+    }
 
-impl From<pest::error::Error<Rule>> for ErrorWithSpan {
-    fn from(value: pest::error::Error<Rule>) -> Self {
-        let span = source_span_from_input_location(&value.location);
-        let error = value.variant.into();
-        Self { error, span }
+    pub fn name(&self) -> &str {
+        &self.name
     }
 }
 
-pub(crate) fn source_span_from_input_location(loc: &InputLocation) -> SourceSpan {
-    let (start, end) = match loc {
-        InputLocation::Pos(start) => (*start, *start),
-        InputLocation::Span((start, end)) => (*start, *end),
-    };
-    let length = end - start;
-    SourceSpan::new(start.into(), length)
+#[derive(Debug, Display, PartialEq)]
+#[display("{error} on {}:{}", range.start, range.end)]
+pub struct ErrorWithRange {
+    pub error: Error,
+    pub range: Range<usize>,
+}
+
+impl std::error::Error for ErrorWithRange {}
+
+impl From<pest::error::Error<Rule>> for ErrorWithRange {
+    fn from(value: pest::error::Error<Rule>) -> Self {
+        let range = range_from_input_location(value.location);
+        let error = value.variant.into();
+        Self { error, range }
+    }
+}
+
+pub(crate) fn range_from_input_location(loc: InputLocation) -> Range<usize> {
+    match loc {
+        InputLocation::Pos(start) => start..start,
+        InputLocation::Span((start, end)) => start..end,
+    }
 }
 
 #[derive(Debug, From, Display)]
@@ -116,7 +131,7 @@ pub enum Error {
     #[from]
     WrongInitialization(WrongInitialization),
     #[from]
-    ErrorsWithSource(ErrorsWithSource)
+    ErrorsWithSource(ErrorsWithSource),
 }
 
 impl PartialEq for Error {

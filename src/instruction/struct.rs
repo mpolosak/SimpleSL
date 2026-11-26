@@ -1,9 +1,9 @@
 use super::{Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables};
 use crate::{
-    errors::ErrorWithSpan,
+    errors::ErrorWithRange,
     instruction::{BaseInstruction, ident::Ident, parsing_context::ParsingContext, set::Set},
     interpreter::{Interpreter, VariableMap},
-    source_span_from_pest_span,
+    range_from_pest_span,
     variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
@@ -21,14 +21,14 @@ impl Struct {
     pub fn create_instruction(
         pair: Pair<Rule>,
         parsing_context: &ParsingContext,
-        errors: &mut Vec<ErrorWithSpan>,
+        errors: &mut Vec<ErrorWithRange>,
     ) -> Instruction {
         let sets = pair
             .into_inner()
             .map(|pair| {
                 if pair.as_rule() == Rule::ident {
                     let pest_span = pair.as_span();
-                    let span = source_span_from_pest_span(&pest_span);
+                    let span = range_from_pest_span(&pest_span);
                     let instruction = Ident::create_instruction(span, parsing_context, errors);
                     let ident = pest_span.as_str().into();
                     return Set::new_ident(ident, instruction);

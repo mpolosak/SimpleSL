@@ -1,12 +1,12 @@
-use crate::errors::{CannotDo2, ErrorWithSpan};
+use crate::errors::{CannotDo2, ErrorWithRange};
 use crate::instruction::bin_op::concat::Concat;
 use crate::instruction::local_variable::LocalVariables;
 use crate::instruction::panic::Panic;
 use crate::instruction::{
-    BaseInstruction, Exec, ExecResult, Instruction, InstructionWithSpan, Recreate,
+    BaseInstruction, Exec, ExecResult, Instruction, InstructionWithRange, Recreate,
 };
 use crate::variable::{ReturnType, Type, Variable};
-use crate::{self as simplesl, BinOperator, Interpreter, source_span_from_2_spans};
+use crate::{self as simplesl, BinOperator, Interpreter, range_from_2_ranges};
 use simplesl_macros::var_type;
 use std::sync::LazyLock;
 
@@ -21,17 +21,17 @@ pub struct Add {
 
 impl Add {
     pub fn create_instruction(
-        lhs: InstructionWithSpan,
-        rhs: InstructionWithSpan,
-        errors: &mut Vec<ErrorWithSpan>,
+        lhs: InstructionWithRange,
+        rhs: InstructionWithRange,
+        errors: &mut Vec<ErrorWithRange>,
     ) -> Instruction {
-        let InstructionWithSpan {
+        let InstructionWithRange {
             instruction: lhs,
-            span: lhs_span,
+            range: lhs_span,
         } = lhs;
-        let InstructionWithSpan {
+        let InstructionWithRange {
             instruction: rhs,
-            span: rhs_span,
+            range: rhs_span,
         } = rhs;
         let lhs_rt = lhs.return_type();
         let rhs_rt = rhs.return_type();
@@ -48,8 +48,8 @@ impl Add {
                 rhs: rhs_rt,
             }
             .into();
-            let span = source_span_from_2_spans(&lhs_span, &rhs_span);
-            errors.push(ErrorWithSpan { error, span });
+            let span = range_from_2_ranges(&lhs_span, &rhs_span);
+            errors.push(ErrorWithRange { error, range: span });
             return Panic.into();
         }
         Self { lhs, rhs }.into()

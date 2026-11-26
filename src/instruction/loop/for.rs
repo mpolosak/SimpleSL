@@ -1,11 +1,11 @@
 use crate::{
     self as simplesl, Interpreter,
-    errors::{ErrorWithSpan, SetPatternNotMatched, WrongType},
+    errors::{ErrorWithRange, SetPatternNotMatched, WrongType},
     instruction::{
         BaseInstruction, Exec, ExecResult, ExecStop, Instruction, Recreate,
         local_variable::LocalVariables, parsing_context::ParsingContext, pattern::Pattern,
     },
-    source_span_from_pest_span,
+    range_from_pest_span,
     variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
@@ -23,7 +23,7 @@ impl For {
     pub fn create_instruction(
         pair: Pair<Rule>,
         parsing_context: &mut ParsingContext,
-        errors: &mut Vec<ErrorWithSpan>,
+        errors: &mut Vec<ErrorWithRange>,
     ) -> Instruction {
         let mut inner = pair.into_inner();
         let pattern_pair = inner.next().unwrap();
@@ -36,8 +36,8 @@ impl For {
                 expected_type: var_type!(() -> (#Some(any)|#None)),
             }
             .into();
-            let span = source_span_from_pest_span(&iter_span);
-            errors.push(ErrorWithSpan { error, span });
+            let span = range_from_pest_span(&iter_span);
+            errors.push(ErrorWithRange { error, range: span });
             Type::Never
         });
         let span = pattern_pair.as_span();
@@ -47,14 +47,14 @@ impl For {
             Pattern::create_instruction(pattern_pair.clone(), &iter_element, errors)
         };
         if !pattern.is_matched(&iter_element) {
-            let span = source_span_from_pest_span(&span);
+            let span = range_from_pest_span(&span);
             let error = SetPatternNotMatched {
                 ins: "for loop element".into(),
                 var_type: iter_element,
                 pattern: pattern_pair.as_str().into(),
             }
             .into();
-            errors.push(ErrorWithSpan { error, span });
+            errors.push(ErrorWithRange { error, range: span });
         }
         let mut parsing_context = parsing_context.create_layer();
         parsing_context.local_variables.in_loop = true;

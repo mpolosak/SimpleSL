@@ -1,9 +1,9 @@
 use crate::{
     self as simplesl, Code, Interpreter,
-    errors::{ErrorWithSpan, IncorrectUnaryOperatorOperand},
+    errors::{ErrorWithRange, IncorrectUnaryOperatorOperand},
     function::Function,
     instruction::{
-        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithSpan, Recreate,
+        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithRange, Recreate,
         local_variable::LocalVariables, parsing_context::ParsingContext,
     },
     unary_operator::UnaryOperator,
@@ -39,15 +39,15 @@ pub struct Iter(Instruction);
 
 impl Iter {
     pub fn create_instruction(
-        lhs: InstructionWithSpan,
+        lhs: InstructionWithRange,
         parsing_context: &ParsingContext,
-        errors: &mut Vec<ErrorWithSpan>,
+        errors: &mut Vec<ErrorWithRange>,
     ) -> Instruction {
         let op = UnaryOperator::Iter;
         let lhs_type = lhs.return_type();
         if !lhs_type.matches(&var_type!([any])) {
-            let span = lhs.span;
-            let ins = parsing_context.slice(span).into();
+            let range = lhs.range;
+            let ins = parsing_context.slice(range.clone()).into();
             let error = IncorrectUnaryOperatorOperand {
                 ins,
                 op,
@@ -55,7 +55,7 @@ impl Iter {
                 given: lhs_type,
             }
             .into();
-            errors.push(ErrorWithSpan { error, span });
+            errors.push(ErrorWithRange { error, range });
         }
         Self(lhs.instruction).into()
     }

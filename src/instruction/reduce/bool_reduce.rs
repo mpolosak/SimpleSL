@@ -1,8 +1,8 @@
 use crate::{
     self as simplesl,
-    errors::{ErrorWithSpan, IncorrectUnaryOperatorOperand},
+    errors::{ErrorWithRange, IncorrectUnaryOperatorOperand},
     instruction::{
-        Instruction, InstructionWithSpan, function::call::FunctionCall,
+        Instruction, InstructionWithRange, function::call::FunctionCall,
         parsing_context::ParsingContext, tuple::Tuple,
     },
     stdlib::operators::{ALL, ANY},
@@ -15,15 +15,15 @@ use std::sync::LazyLock;
 pub static ACCEPTED_TYPE: LazyLock<Type> = LazyLock::new(|| var_type!(() -> (#Some(bool)|#None)));
 
 pub fn create(
-    iterator: InstructionWithSpan,
+    iterator: InstructionWithRange,
     op: UnaryOperator,
     parsing_context: &ParsingContext,
-    errors: &mut Vec<ErrorWithSpan>,
+    errors: &mut Vec<ErrorWithRange>,
 ) -> Instruction {
     let return_type = iterator.return_type();
     if !return_type.matches(&ACCEPTED_TYPE) {
-        let span = iterator.span;
-        let ins = parsing_context.slice(iterator.span).into();
+        let range = iterator.range;
+        let ins = parsing_context.slice(range.clone()).into();
         let error = IncorrectUnaryOperatorOperand {
             ins,
             op,
@@ -31,7 +31,7 @@ pub fn create(
             given: return_type,
         }
         .into();
-        errors.push(ErrorWithSpan { error, span });
+        errors.push(ErrorWithRange { error, range });
     }
     let function = if op == UnaryOperator::All {
         Variable::from(ALL)
@@ -51,8 +51,11 @@ pub fn create(
 #[cfg(test)]
 mod tests {
     use crate::{
-        errors::IncorrectUnaryOperatorOperand, instruction::reduce::bool_reduce::ACCEPTED_TYPE, test::{parse_and_exec, parse_unwrap_first_error}, unary_operator::UnaryOperator,
-        self as simplesl
+        self as simplesl,
+        errors::IncorrectUnaryOperatorOperand,
+        instruction::reduce::bool_reduce::ACCEPTED_TYPE,
+        test::{parse_and_exec, parse_unwrap_first_error},
+        unary_operator::UnaryOperator,
     };
     use simplesl_macros::{var, var_type};
     const ALL: UnaryOperator = UnaryOperator::All;

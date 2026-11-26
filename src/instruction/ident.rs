@@ -1,5 +1,5 @@
 use crate::{
-    errors::{ErrorWithSpan, VariableDoesntExist},
+    errors::{ErrorWithRange, VariableDoesntExist},
     instruction::{
         BaseInstruction, Exec, Instruction, Recreate,
         local_variable::{LocalVariable, LocalVariables},
@@ -7,8 +7,7 @@ use crate::{
     },
     variable::{ReturnType, Type, Typed},
 };
-use miette::SourceSpan;
-use std::sync::Arc;
+use std::{ops::Range, sync::Arc};
 
 #[derive(Debug)]
 pub struct Ident {
@@ -18,11 +17,11 @@ pub struct Ident {
 
 impl Ident {
     pub fn create_instruction(
-        span: SourceSpan,
+        range: Range<usize>,
         parsing_context: &ParsingContext,
-        errors: &mut Vec<ErrorWithSpan>,
+        errors: &mut Vec<ErrorWithRange>,
     ) -> Instruction {
-        let ident = Arc::from(parsing_context.slice(span));
+        let ident = Arc::from(parsing_context.slice(range.clone()));
         parsing_context.local_variables.get(&ident).map_or_else(
             || {
                 parsing_context
@@ -36,7 +35,7 @@ impl Ident {
                             ident: ident.clone(),
                         }
                         .into();
-                        errors.push(ErrorWithSpan { error, span });
+                        errors.push(ErrorWithRange { error, range });
                         Self {
                             ident: ident.clone(),
                             variable: LocalVariable::Other(Type::Never),

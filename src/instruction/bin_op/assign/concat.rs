@@ -1,10 +1,10 @@
 use crate::{
     BinOperator,
-    errors::{CannotDo2, ErrorWithSpan},
+    errors::{CannotDo2, ErrorWithRange},
     instruction::{
-        BaseInstruction, Exec, Instruction, InstructionWithSpan, bin_op::concat::Concat,
+        BaseInstruction, Exec, Instruction, InstructionWithRange, bin_op::concat::Concat,
     },
-    source_span_from_2_spans,
+    range_from_2_ranges,
     variable::{ReturnType, Type},
 };
 
@@ -18,9 +18,9 @@ impl BaseInstruction for AssignConcat {}
 
 impl AssignConcat {
     pub fn create_instruction(
-        lhs: InstructionWithSpan,
-        rhs: InstructionWithSpan,
-        errors: &mut Vec<ErrorWithSpan>,
+        lhs: InstructionWithRange,
+        rhs: InstructionWithRange,
+        errors: &mut Vec<ErrorWithRange>,
     ) -> Instruction {
         let lhs_rt = lhs.return_type();
         let rhs_rt = rhs.return_type();
@@ -31,8 +31,8 @@ impl AssignConcat {
                 rhs: rhs_rt,
             }
             .into();
-            let span = source_span_from_2_spans(&lhs.span, &rhs.span);
-            errors.push(ErrorWithSpan { error, span });
+            let span = range_from_2_ranges(&lhs.range, &rhs.range);
+            errors.push(ErrorWithRange { error, range: span });
         }
         Self {
             lhs: lhs.instruction,

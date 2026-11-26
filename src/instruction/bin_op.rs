@@ -9,12 +9,12 @@ mod partition;
 use std::sync::LazyLock;
 
 use super::{
-    Exec, ExecResult, Instruction, InstructionWithSpan, Recreate, local_variable::LocalVariables,
+    Exec, ExecResult, Instruction, InstructionWithRange, Recreate, local_variable::LocalVariables,
     reduce,
 };
 use crate::{
     self as simplesl, BinOperator, Interpreter,
-    errors::{CannotDo2, ErrorWithSpan},
+    errors::{CannotDo2, ErrorWithRange},
     instruction::{
         BaseInstruction,
         bin_op::{
@@ -25,7 +25,7 @@ use crate::{
         panic::Panic,
         parsing_context::ParsingContext,
     },
-    source_span_from_2_spans,
+    range_from_2_ranges,
     variable::{ReturnType, Type, Variable},
 };
 pub use math::{add, multiply, pow, subtract};
@@ -172,27 +172,27 @@ impl ReturnType for BinOperation {
     }
 }
 
-impl InstructionWithSpan {
+impl InstructionWithRange {
     pub fn create_infix(
         op: Pair<'_, Rule>,
         lhs: Self,
         rhs: Self,
         parsing_context: &ParsingContext,
-        errors: &mut Vec<ErrorWithSpan>,
+        errors: &mut Vec<ErrorWithRange>,
     ) -> Self {
-        let span = source_span_from_2_spans(&lhs.span, &rhs.span);
+        let range = range_from_2_ranges(&lhs.range, &rhs.range);
         let instruction = Instruction::create_infix(op, lhs, rhs, parsing_context, errors);
-        Self { instruction, span }
+        Self { instruction, range }
     }
 }
 
 impl Instruction {
     fn create_infix(
         op: Pair<'_, Rule>,
-        lhs: InstructionWithSpan,
-        rhs: InstructionWithSpan,
+        lhs: InstructionWithRange,
+        rhs: InstructionWithRange,
         parsing_context: &ParsingContext,
-        errors: &mut Vec<ErrorWithSpan>,
+        errors: &mut Vec<ErrorWithRange>,
     ) -> Self {
         let rule = op.as_rule();
         if rule == Rule::reduce {
@@ -231,8 +231,8 @@ impl Instruction {
                 rhs: rhs_type,
             }
             .into();
-            let span = source_span_from_2_spans(&lhs.span, &rhs.span);
-            errors.push(ErrorWithSpan { error, span });
+            let span = range_from_2_ranges(&lhs.range, &rhs.range);
+            errors.push(ErrorWithRange { error, range: span });
             return Panic.into();
         }
         match op {

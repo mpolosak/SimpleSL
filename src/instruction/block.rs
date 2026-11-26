@@ -1,6 +1,6 @@
 use super::{Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables};
 use crate::{
-    errors::ErrorWithSpan,
+    errors::ErrorWithRange,
     instruction::{BaseInstruction, parsing_context::ParsingContext, recreate_instructions},
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
@@ -19,7 +19,7 @@ impl Block {
     pub fn create_instruction(
         pair: Pair<Rule>,
         parsing_context: &ParsingContext,
-        errors: &mut Vec<ErrorWithSpan>,
+        errors: &mut Vec<ErrorWithRange>,
     ) -> Instruction {
         let mut local_variables = parsing_context.create_layer();
         let instructions = local_variables.create_instructions(pair.into_inner(), errors);

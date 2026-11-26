@@ -1,8 +1,8 @@
 use super::{
-    Exec, ExecResult, Instruction, InstructionWithSpan, Recreate, local_variable::LocalVariables,
+    Exec, ExecResult, Instruction, InstructionWithRange, Recreate, local_variable::LocalVariables,
 };
 use crate::{
-    errors::ErrorWithSpan,
+    errors::ErrorWithRange,
     instruction::{BaseInstruction, parsing_context::ParsingContext, recreate_instructions},
     interpreter::Interpreter,
     variable::{ReturnType, Type, Variable},
@@ -21,12 +21,12 @@ impl Tuple {
     pub fn create_instruction(
         pair: Pair<Rule>,
         parsing_context: &ParsingContext,
-        errors: &mut Vec<ErrorWithSpan>,
+        errors: &mut Vec<ErrorWithRange>,
     ) -> Instruction {
         let elements = pair
             .into_inner()
             .map(|pair| {
-                InstructionWithSpan::new_expression(pair, parsing_context, errors).instruction
+                InstructionWithRange::new_expression(pair, parsing_context, errors).instruction
             })
             .collect();
         Self { elements }.into()

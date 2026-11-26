@@ -1,12 +1,12 @@
 use crate::{
-    errors::{ErrorWithSpan, WrongCondition},
+    errors::{ErrorWithRange, WrongCondition},
     instruction::{
         Exec, ExecResult, ExecStop, Instruction, Recreate,
         control_flow::match_pattern::MatchPattern, local_variable::LocalVariables,
         parsing_context::ParsingContext, recreate_instructions, set::ConditionSet,
     },
     interpreter::Interpreter,
-    source_span_from_pest_span,
+    range_from_pest_span,
     variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
@@ -24,7 +24,7 @@ impl MatchArm {
         pair: Pair<Rule>,
         parsing_context: &mut ParsingContext,
         exp_type: &Type,
-        errors: &mut Vec<ErrorWithSpan>,
+        errors: &mut Vec<ErrorWithRange>,
     ) -> Self {
         let mut inner = pair.into_inner();
         let pair = inner.next().unwrap();
@@ -119,7 +119,7 @@ impl MatchArm {
 fn create_guard(
     pair: Pair<Rule>,
     parsing_context: &mut ParsingContext,
-    errors: &mut Vec<ErrorWithSpan>,
+    errors: &mut Vec<ErrorWithRange>,
 ) -> Box<[Instruction]> {
     let conditions_pair = pair.into_inner().next().unwrap();
     conditions_pair
@@ -133,13 +133,13 @@ fn create_guard(
             let condition = Instruction::new(pair, parsing_context, errors);
             let return_type = condition.return_type();
             if return_type != Type::Bool {
-                let span = source_span_from_pest_span(&span);
+                let span = range_from_pest_span(&span);
                 let error = WrongCondition {
                     ins: condition_str,
                     var_type: return_type,
                 }
                 .into();
-                errors.push(ErrorWithSpan { error, span });
+                errors.push(ErrorWithRange { error, range: span });
             }
             condition
         })

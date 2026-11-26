@@ -1,9 +1,9 @@
 use super::{ExecStop, Instruction, local_variable::LocalVariables};
 use crate::{
     Error,
-    errors::{ErrorWithSpan, WrongReturn},
+    errors::{ErrorWithRange, WrongReturn},
     instruction::{BaseInstruction, Exec, Recreate, panic::Panic, parsing_context::ParsingContext},
-    source_span_from_pest_span,
+    range_from_pest_span,
     variable::{ReturnType, Type, Variable},
 };
 use pest::iterators::Pair;
@@ -16,12 +16,12 @@ impl Return {
     pub fn create_instruction(
         pair: Pair<Rule>,
         parsing_context: &mut ParsingContext,
-        errors: &mut Vec<ErrorWithSpan>,
+        errors: &mut Vec<ErrorWithRange>,
     ) -> Instruction {
         let Some(function) = parsing_context.local_variables.function().cloned() else {
             let error = Error::ReturnOutsideFunction;
-            let span = source_span_from_pest_span(&pair.as_span());
-            errors.push(ErrorWithSpan { error, span });
+            let span = range_from_pest_span(&pair.as_span());
+            errors.push(ErrorWithRange { error, range: span });
             return Panic.into();
         };
         let span = pair.as_span();
@@ -38,8 +38,8 @@ impl Return {
                 returned,
             }
             .into();
-            let span = source_span_from_pest_span(&span);
-            errors.push(ErrorWithSpan { error, span });
+            let span = range_from_pest_span(&span);
+            errors.push(ErrorWithRange { error, range: span });
         }
         Self(instruction).into()
     }

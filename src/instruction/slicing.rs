@@ -1,5 +1,5 @@
-use super::{Instruction, InstructionWithSpan};
-use crate::errors::{CannotIndexWith, CannotSlice, ErrorWithSpan};
+use super::{Instruction, InstructionWithRange};
+use crate::errors::{CannotIndexWith, CannotSlice, ErrorWithRange};
 use crate::instruction::parsing_context::ParsingContext;
 use crate::stdlib::operators::Slice;
 use crate::{
@@ -11,21 +11,21 @@ use simplesl_parser::{Rule, unexpected};
 use std::sync::Arc;
 
 pub fn create(
-    lhs: InstructionWithSpan,
+    lhs: InstructionWithRange,
     pair: Pair<Rule>,
     parsing_context: &ParsingContext,
-    errors: &mut Vec<ErrorWithSpan>,
+    errors: &mut Vec<ErrorWithRange>,
 ) -> Instruction {
     let lhs_type = lhs.return_type();
     if !lhs_type.can_be_indexed() {
-        let span = lhs.span;
-        let ins = parsing_context.slice(span).into();
+        let range = lhs.range;
+        let ins = parsing_context.slice(range.clone()).into();
         let error = CannotSlice {
             ins,
             var_type: lhs_type,
         }
         .into();
-        errors.push(ErrorWithSpan { error, span });
+        errors.push(ErrorWithRange { error, range });
     }
     let inner = pair.into_inner();
     if inner.peek().is_none() {
@@ -36,12 +36,12 @@ pub fn create(
     let mut step = None;
     for pair in inner {
         let rule = pair.as_rule();
-        let instruction = InstructionWithSpan::new_expression(pair, parsing_context, errors);
+        let instruction = InstructionWithRange::new_expression(pair, parsing_context, errors);
         if instruction.return_type() != Type::Int {
-            let span = instruction.span;
-            let ins = parsing_context.slice(span).into();
+            let range = instruction.range;
+            let ins = parsing_context.slice(range.clone()).into();
             let error = CannotIndexWith { ins }.into();
-            errors.push(ErrorWithSpan { error, span });
+            errors.push(ErrorWithRange { error, range });
         }
         match rule {
             Rule::start => start = Some(instruction.instruction),
@@ -55,7 +55,7 @@ pub fn create(
     let stop = stop.unwrap_or_else(|| Variable::none().into());
     let step = step.unwrap_or_else(|| Variable::none().into());
 
-    let variable_type = lhs.return_type();
+    let variable_type = lhs.instruction.return_type();
 
     let mut function = Arc::unwrap_or_clone(Variable::from(Slice).into_function().unwrap());
     function.return_type = variable_type;

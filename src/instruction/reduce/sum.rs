@@ -1,8 +1,8 @@
 use crate::{
     self as simplesl,
-    errors::{ErrorWithSpan, IncorrectUnaryOperatorOperand},
+    errors::{ErrorWithRange, IncorrectUnaryOperatorOperand},
     instruction::{
-        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithSpan, Recreate,
+        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithRange, Recreate,
         local_variable::LocalVariables, parsing_context::ParsingContext,
     },
     interpreter::Interpreter,
@@ -23,14 +23,14 @@ pub struct Sum {
 
 impl Sum {
     pub fn create(
-        iterator: InstructionWithSpan,
+        iterator: InstructionWithRange,
         parsing_context: &ParsingContext,
-        errors: &mut Vec<ErrorWithSpan>,
+        errors: &mut Vec<ErrorWithRange>,
     ) -> Instruction {
         let return_type = iterator.return_type();
         if !return_type.matches(&ACCEPTED_TYPE) {
-            let span = iterator.span;
-            let ins = parsing_context.slice(span).into();
+            let range = iterator.range;
+            let ins = parsing_context.slice(range.clone()).into();
             let error = IncorrectUnaryOperatorOperand {
                 ins,
                 op: UnaryOperator::Sum,
@@ -38,7 +38,7 @@ impl Sum {
                 given: return_type,
             }
             .into();
-            errors.push(ErrorWithSpan { error, span });
+            errors.push(ErrorWithRange { error, range });
         }
         Self {
             iterator: iterator.instruction,

@@ -1,9 +1,9 @@
 use crate::{
     Error,
-    errors::{CannotBeParsed, ErrorWithSpan, IntegerOverflow, SetPatternNotMatched},
+    errors::{CannotBeParsed, ErrorWithRange, IntegerOverflow, SetPatternNotMatched},
     instruction::pattern::Pattern,
     interpreter::VariableMap,
-    source_span_from_pest_span,
+    range_from_pest_span,
     variable::{Array, TaggedValue, Type, Typed, Variable},
 };
 use itertools::Itertools;
@@ -12,9 +12,9 @@ use simplesl_parser::{Rule, SimpleSLParser, unexpected};
 use std::{str::FromStr, sync::Arc};
 
 impl FromStr for Variable {
-    type Err = Vec<ErrorWithSpan>;
+    type Err = Vec<ErrorWithRange>;
 
-    fn from_str(s: &str) -> Result<Self, Vec<ErrorWithSpan>> {
+    fn from_str(s: &str) -> Result<Self, Vec<ErrorWithRange>> {
         let s = s.trim();
         let mut parse = match SimpleSLParser::parse(Rule::only_var, s) {
             Ok(parse) => parse,
@@ -30,7 +30,7 @@ impl FromStr for Variable {
     }
 }
 
-pub(crate) fn variable_from_pair(pair: Pair<Rule>, errors: &mut Vec<ErrorWithSpan>) -> Variable {
+pub(crate) fn variable_from_pair(pair: Pair<Rule>, errors: &mut Vec<ErrorWithRange>) -> Variable {
     match pair.as_rule() {
         Rule::r#true => Variable::Bool(true),
         Rule::r#false => Variable::Bool(false),
@@ -40,16 +40,16 @@ pub(crate) fn variable_from_pair(pair: Pair<Rule>, errors: &mut Vec<ErrorWithSpa
             parse_int(pair)
                 .map(|value| Variable::Int(-value))
                 .unwrap_or_else(|error| {
-                    let span = source_span_from_pest_span(&span);
-                    errors.push(ErrorWithSpan { error, span });
+                    let span = range_from_pest_span(&span);
+                    errors.push(ErrorWithRange { error, range: span });
                     Variable::Int(-1)
                 })
         }
         Rule::int => {
             let span = pair.as_span();
             parse_int(pair).map(Variable::from).unwrap_or_else(|error| {
-                let span = source_span_from_pest_span(&span);
-                errors.push(ErrorWithSpan { error, span });
+                let span = range_from_pest_span(&span);
+                errors.push(ErrorWithRange { error, range: span });
                 Variable::Int(0)
             })
         }
@@ -60,12 +60,12 @@ pub(crate) fn variable_from_pair(pair: Pair<Rule>, errors: &mut Vec<ErrorWithSpa
                 .replace([' ', '_'], "")
                 .parse::<f64>()
                 .unwrap_or_else(|_| {
-                    let span = source_span_from_pest_span(&span);
+                    let span = range_from_pest_span(&span);
                     let error = CannotBeParsed {
                         input: pair.as_str().into(),
                     }
                     .into();
-                    errors.push(ErrorWithSpan { error, span });
+                    errors.push(ErrorWithRange { error, range: span });
                     -1.0
                 });
             Variable::Float(value)
@@ -77,12 +77,12 @@ pub(crate) fn variable_from_pair(pair: Pair<Rule>, errors: &mut Vec<ErrorWithSpa
                 .replace([' ', '_'], "")
                 .parse::<f64>()
                 .unwrap_or_else(|_| {
-                    let span = source_span_from_pest_span(&span);
+                    let span = range_from_pest_span(&span);
                     let error = CannotBeParsed {
                         input: pair.as_str().into(),
                     }
                     .into();
-                    errors.push(ErrorWithSpan { error, span });
+                    errors.push(ErrorWithRange { error, range: span });
                     0.0
                 });
             Variable::Float(value)
@@ -91,8 +91,8 @@ pub(crate) fn variable_from_pair(pair: Pair<Rule>, errors: &mut Vec<ErrorWithSpa
             let span = pair.as_span();
             string_from_pair(pair)
                 .unwrap_or_else(|error| {
-                    let span = source_span_from_pest_span(&span);
-                    errors.push(ErrorWithSpan { error, span });
+                    let span = range_from_pest_span(&span);
+                    errors.push(ErrorWithRange { error, range: span });
                     String::new()
                 })
                 .into()
@@ -119,8 +119,8 @@ pub(crate) fn variable_from_pair(pair: Pair<Rule>, errors: &mut Vec<ErrorWithSpa
             let len_pair = inner.next().unwrap();
             let span = len_pair.as_span();
             let len = parse_int(len_pair).unwrap_or_else(|error| {
-                let span = source_span_from_pest_span(&span);
-                errors.push(ErrorWithSpan { error, span });
+                let span = range_from_pest_span(&span);
+                errors.push(ErrorWithRange { error, range: span });
                 0
             });
             Array::new_repeat(value, len as usize).into()
@@ -141,7 +141,7 @@ pub(crate) fn variable_from_pair(pair: Pair<Rule>, errors: &mut Vec<ErrorWithSpa
         Rule::struct_from_str => {
             let mut vm = VariableMap::new();
             for (pattern, value) in pair.into_inner().tuples() {
-                let span = source_span_from_pest_span(&pattern.as_span());
+                let span = range_from_pest_span(&pattern.as_span());
                 let value_str = value.as_str().into();
                 let value = variable_from_pair(value, errors);
                 let var_type = value.as_type();
@@ -154,19 +154,19 @@ pub(crate) fn variable_from_pair(pair: Pair<Rule>, errors: &mut Vec<ErrorWithSpa
                         pattern: pattern_str,
                     }
                     .into();
-                    errors.push(ErrorWithSpan { error, span });
+                    errors.push(ErrorWithRange { error, range: span });
                 }
                 pattern.insert_variables_into_vm(&mut vm, value);
             }
             Variable::Struct(vm.into())
         }
         _ => {
-            let span = source_span_from_pest_span(&pair.as_span());
+            let span = range_from_pest_span(&pair.as_span());
             let error = CannotBeParsed {
                 input: pair.as_str().into(),
             }
             .into();
-            errors.push(ErrorWithSpan { error, span });
+            errors.push(ErrorWithRange { error, range: span });
             Variable::none()
         }
     }

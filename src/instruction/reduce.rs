@@ -5,9 +5,9 @@ pub mod product;
 pub mod sum;
 use crate::{
     self as simplesl,
-    errors::{CannotReduce, ErrorWithSpan, WrongType},
+    errors::{CannotReduce, ErrorWithRange, WrongType},
     instruction::{
-        Instruction, InstructionWithSpan, function::call::FunctionCall,
+        Instruction, InstructionWithRange, function::call::FunctionCall,
         parsing_context::ParsingContext, tuple::Tuple,
     },
     stdlib::operators::REDUCE,
@@ -19,19 +19,20 @@ use simplesl_parser::Rule;
 use std::sync::Arc;
 
 pub fn create_instruction(
-    iter: InstructionWithSpan,
+    iter: InstructionWithRange,
     initial_value: Pair<Rule>,
-    function: InstructionWithSpan,
+    function: InstructionWithRange,
     parsing_context: &ParsingContext,
-    errors: &mut Vec<ErrorWithSpan>,
+    errors: &mut Vec<ErrorWithRange>,
 ) -> Instruction {
-    let initial_value = InstructionWithSpan::new_expression(initial_value, parsing_context, errors);
+    let initial_value =
+        InstructionWithRange::new_expression(initial_value, parsing_context, errors);
     let iter_type = iter.return_type();
     let element_type = iter_type.iter_element().unwrap_or_else(|| {
-        let span = iter.span;
-        let str = parsing_context.slice(span).into();
+        let range = iter.range;
+        let str = parsing_context.slice(range.clone()).into();
         let error = CannotReduce { str }.into();
-        errors.push(ErrorWithSpan { error, span });
+        errors.push(ErrorWithRange { error, range });
         Type::Never
     });
     let function_return_type = function.return_type();
@@ -42,8 +43,8 @@ pub fn create_instruction(
             expected_type: var_type!((any, element_type)->any),
         }
         .into();
-        let span = function.span;
-        errors.push(ErrorWithSpan { error, span });
+        let range = function.range.clone();
+        errors.push(ErrorWithRange { error, range });
         Type::Never
     });
     let acc_type = initial_value.return_type() | element_type.clone() | return_type.clone();
@@ -54,8 +55,8 @@ pub fn create_instruction(
             expected_type: expected_function,
         }
         .into();
-        let span = function.span;
-        errors.push(ErrorWithSpan { error, span });
+        let range = function.range;
+        errors.push(ErrorWithRange { error, range });
     }
 
     let mut reduce = Arc::unwrap_or_clone(Variable::from(REDUCE).into_function().unwrap());

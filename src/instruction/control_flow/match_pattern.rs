@@ -1,6 +1,6 @@
 use crate::{
     Interpreter,
-    errors::ErrorWithSpan,
+    errors::ErrorWithRange,
     instruction::{
         Exec, ExecStop, Instruction,
         local_variable::LocalVariables,
@@ -26,7 +26,7 @@ impl MatchPattern {
         pair: Pair<Rule>,
         parsing_context: &mut ParsingContext,
         exp_type: &Type,
-        errors: &mut Vec<ErrorWithSpan>,
+        errors: &mut Vec<ErrorWithRange>,
     ) -> MatchPattern {
         let rule = pair.as_rule();
         match rule {

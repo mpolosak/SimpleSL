@@ -1,7 +1,7 @@
 pub mod call;
 use crate::{
     self as simplesl,
-    errors::{ErrorWithSpan, MissingReturn},
+    errors::{ErrorWithRange, MissingReturn},
     function::{Body, Function as VarFunc, Param, Params},
     instruction::{
         BaseInstruction, Exec, ExecResult, Instruction, Recreate,
@@ -12,7 +12,6 @@ use crate::{
     interpreter::Interpreter,
     variable::{ReturnType, Type},
 };
-use miette::SourceSpan;
 use pest::iterators::Pair;
 use simplesl_macros::var_type;
 use simplesl_parser::Rule;
@@ -33,7 +32,7 @@ impl Function {
         pair: Pair<Rule>,
         parsing_context: &ParsingContext,
         ident: Option<Arc<str>>,
-        errors: &mut Vec<ErrorWithSpan>,
+        errors: &mut Vec<ErrorWithRange>,
     ) -> Instruction {
         let end = pair.as_span().end();
         let mut inner = pair.into_inner();
@@ -68,8 +67,8 @@ impl Function {
                 return_type: return_type.clone(),
             }
             .into();
-            let span = SourceSpan::new(end.into(), 0);
-            errors.push(ErrorWithSpan { error, span });
+            let range = end..end;
+            errors.push(ErrorWithRange { error, range });
         }
         Self {
             ident,

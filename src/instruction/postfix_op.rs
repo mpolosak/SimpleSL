@@ -1,12 +1,12 @@
 mod iter;
 use super::{
-    InstructionWithSpan, at,
+    InstructionWithRange, at,
     reduce::{self, bool_reduce, collect},
     tuple_access,
     type_filter::TypeFilter,
 };
 use crate::{
-    errors::ErrorWithSpan,
+    errors::ErrorWithRange,
     instruction::{
         field_access::FieldAccess,
         function::call::FunctionCall,
@@ -17,21 +17,17 @@ use crate::{
     },
     unary_operator::UnaryOperator,
 };
-use miette::SourceSpan;
 use pest::iterators::Pair;
 use simplesl_parser::{Rule, unexpected};
 
-impl InstructionWithSpan {
+impl InstructionWithRange {
     pub fn create_postfix(
         op: Pair<'_, Rule>,
         lhs: Self,
         parsing_context: &ParsingContext,
-        errors: &mut Vec<ErrorWithSpan>,
+        errors: &mut Vec<ErrorWithRange>,
     ) -> Self {
-        let start = lhs.span.offset();
-        let end = op.as_span().end();
-        let len = end - start;
-        let span = SourceSpan::new(start.into(), len);
+        let range = lhs.range.start..op.as_span().end();
         let instruction = match op.as_rule() {
             Rule::at => at::create(lhs, op, parsing_context, errors),
             Rule::type_filter => {
@@ -61,6 +57,6 @@ impl InstructionWithSpan {
             Rule::slicing => slicing::create(lhs, op, parsing_context, errors),
             rule => unexpected!(rule),
         };
-        Self { instruction, span }
+        Self { instruction, range }
     }
 }

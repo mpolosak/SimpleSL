@@ -1,7 +1,7 @@
 use super::{Exec, ExecResult, Instruction, Recreate, local_variable::LocalVariables};
 use crate::{
     Error,
-    errors::{ErrorWithSpan, SetPatternNotMatched, WrongType},
+    errors::{ErrorWithRange, SetPatternNotMatched, WrongType},
     instruction::{
         BaseInstruction,
         function::Function,
@@ -9,7 +9,7 @@ use crate::{
         pattern::{Pattern, destruct_pattern::DestructPattern},
     },
     interpreter::Interpreter,
-    source_span_from_pest_span,
+    range_from_pest_span,
     variable::{ReturnType, Type},
 };
 use pest::iterators::Pair;
@@ -26,18 +26,21 @@ impl Set {
     pub fn create(
         pair: Pair<Rule>,
         parsing_context: &mut ParsingContext,
-        errors: &mut Vec<ErrorWithSpan>,
+        errors: &mut Vec<ErrorWithRange>,
     ) -> Self {
         let is_declaration = pair.as_rule() == Rule::set;
-        let span = source_span_from_pest_span(&pair.as_span());
+        let range = range_from_pest_span(&pair.as_span());
         let (set, error) = Self::new(pair, parsing_context, errors);
         if is_declaration && matches!(&set.pattern.destruct_pattern, DestructPattern::Array { .. })
         {
             let error = Error::ArrayPatternRequiresElse;
-            errors.push(ErrorWithSpan { error, span });
+            errors.push(ErrorWithRange {
+                error,
+                range: range.clone(),
+            });
         }
         if !set.pattern.is_matched(&set.instruction.return_type()) {
-            errors.push(ErrorWithSpan { error, span });
+            errors.push(ErrorWithRange { error, range });
         }
         set
     }
@@ -45,7 +48,7 @@ impl Set {
     fn new(
         pair: Pair<Rule>,
         parsing_context: &mut ParsingContext,
-        errors: &mut Vec<ErrorWithSpan>,
+        errors: &mut Vec<ErrorWithRange>,
     ) -> (Self, Error) {
         let mut inner = pair.into_inner();
         let pattern_pair = inner.next().unwrap();
@@ -77,7 +80,7 @@ impl Set {
         pattern_pair: Pair<Rule>,
         function_pair: Pair<Rule>,
         parsing_context: &mut ParsingContext,
-        errors: &mut Vec<ErrorWithSpan>,
+        errors: &mut Vec<ErrorWithRange>,
     ) -> (Self, Error) {
         let pattern_str = pattern_pair.as_str().into();
         let mut pattern = Pattern::create_instruction(pattern_pair, &Type::Any, errors);
@@ -156,7 +159,7 @@ impl SetElse {
     pub fn create(
         pair: Pair<Rule>,
         parsing_context: &mut ParsingContext,
-        errors: &mut Vec<ErrorWithSpan>,
+        errors: &mut Vec<ErrorWithRange>,
     ) -> Instruction {
         let mut inner = pair.into_inner();
         let pattern_pair = inner.next().unwrap();
@@ -171,8 +174,8 @@ impl SetElse {
                 expected_type: Type::Never,
             }
             .into();
-            let span = source_span_from_pest_span(&span);
-            errors.push(ErrorWithSpan { error, span });
+            let span = range_from_pest_span(&span);
+            errors.push(ErrorWithRange { error, range: span });
         }
         pattern.insert_local_variables(&mut parsing_context.local_variables);
         Self {
@@ -227,7 +230,7 @@ impl ConditionSet {
     pub fn create(
         pair: Pair<Rule>,
         parsing_context: &mut ParsingContext,
-        errors: &mut Vec<ErrorWithSpan>,
+        errors: &mut Vec<ErrorWithRange>,
     ) -> Self {
         ConditionSet(Set::new(pair, parsing_context, errors).0)
     }

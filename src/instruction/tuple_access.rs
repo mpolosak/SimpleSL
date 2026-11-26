@@ -1,10 +1,10 @@
-use super::{Instruction, InstructionWithSpan};
+use super::{Instruction, InstructionWithRange};
 use crate::{
-    errors::{CannotTupleAccess, ErrorWithSpan, TupleIndexTooBig},
+    errors::{CannotTupleAccess, ErrorWithRange, TupleIndexTooBig},
     instruction::{
         function::call::FunctionCall, panic::Panic, parsing_context::ParsingContext, tuple::Tuple,
     },
-    source_span_from_pest_span,
+    range_from_pest_span,
     stdlib::operators::At,
     variable::{ReturnType, Type, Variable, from_str::parse_int},
 };
@@ -13,17 +13,17 @@ use simplesl_parser::Rule;
 use std::sync::Arc;
 
 pub fn create_instruction(
-    tuple: InstructionWithSpan,
+    tuple: InstructionWithRange,
     op: Pair<Rule>,
     parsing_context: &ParsingContext,
-    errors: &mut Vec<ErrorWithSpan>,
+    errors: &mut Vec<ErrorWithRange>,
 ) -> Instruction {
     let var_type = tuple.return_type();
     let Some(len) = var_type.min_tuple_len() else {
-        let span = tuple.span;
-        let ins = parsing_context.slice(span).into();
+        let range = tuple.range;
+        let ins = parsing_context.slice(range.clone()).into();
         let error = CannotTupleAccess { ins, var_type }.into();
-        errors.push(ErrorWithSpan { error, span });
+        errors.push(ErrorWithRange { error, range });
         return Panic.into();
     };
 
@@ -32,17 +32,17 @@ pub fn create_instruction(
     let index = match parse_int(pair) {
         Ok(index) => index as usize,
         Err(error) => {
-            let span = source_span_from_pest_span(&span);
-            errors.push(ErrorWithSpan { error, span });
+            let span = range_from_pest_span(&span);
+            errors.push(ErrorWithRange { error, range: span });
             0
         }
     };
 
     let return_type = var_type.tuple_element_at(index).unwrap_or_else(|| {
-        let span = tuple.span;
-        let ins = parsing_context.slice(span).into();
+        let range = tuple.range;
+        let ins = parsing_context.slice(range.clone()).into();
         let error = TupleIndexTooBig { index, ins, len }.into();
-        errors.push(ErrorWithSpan { error, span });
+        errors.push(ErrorWithRange { error, range });
         Type::Never
     });
 

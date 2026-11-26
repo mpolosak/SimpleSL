@@ -9,10 +9,12 @@ mod to_result;
 mod unary_operator;
 pub mod variable;
 use itertools::Itertools;
-use miette::SourceSpan;
 use pest::Span;
 pub use simplesl_macros::{var, var_type};
-use std::fmt::{Debug, Display};
+use std::{
+    fmt::{Debug, Display},
+    ops::Range,
+};
 pub use {
     bin_operator::BinOperator, code::Code, errors::Error, errors::ExecError,
     interpreter::Interpreter, to_result::ToResult,
@@ -37,17 +39,12 @@ where
         .join(separator)
 }
 
-pub(crate) fn source_span_from_pest_span(span: &Span) -> SourceSpan {
-    let start = span.start();
-    let length = span.end() - start;
-    SourceSpan::new(start.into(), length)
+pub(crate) fn range_from_pest_span(span: &Span) -> Range<usize> {
+    span.start()..span.end()
 }
 
-pub(crate) fn source_span_from_2_spans(start: &SourceSpan, end: &SourceSpan) -> SourceSpan {
-    let start = start.offset();
-    let start2 = end.offset();
-    let length = start2 - start + end.len();
-    SourceSpan::new(start.into(), length)
+pub(crate) fn range_from_2_ranges(start: &Range<usize>, end: &Range<usize>) -> Range<usize> {
+    start.start..end.end
 }
 
 #[cfg(test)]

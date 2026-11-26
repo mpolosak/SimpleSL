@@ -1,7 +1,7 @@
-use super::{ExecResult, Instruction, InstructionWithSpan, local_variable::LocalVariables};
+use super::{ExecResult, Instruction, InstructionWithRange, local_variable::LocalVariables};
 use crate::{
     Interpreter,
-    errors::{CannotIndexInto, CannotIndexWith, ErrorWithSpan},
+    errors::{CannotIndexInto, CannotIndexWith, ErrorWithRange},
     instruction::{BaseInstruction, Exec, Recreate, parsing_context::ParsingContext},
     stdlib::operators::at,
     variable::{ReturnType, Type},
@@ -16,27 +16,27 @@ struct At {
 }
 
 pub fn create(
-    instruction: InstructionWithSpan,
+    instruction: InstructionWithRange,
     index: Pair<Rule>,
     parsing_context: &ParsingContext,
-    errors: &mut Vec<ErrorWithSpan>,
+    errors: &mut Vec<ErrorWithRange>,
 ) -> Instruction {
     let pair = index.into_inner().next().unwrap();
-    let index = InstructionWithSpan::new_expression(pair, parsing_context, errors);
+    let index = InstructionWithRange::new_expression(pair, parsing_context, errors);
     let instruction_return_type = instruction.return_type();
     if !instruction_return_type.can_be_indexed() {
         let error = CannotIndexInto {
             var_type: instruction_return_type,
         }
         .into();
-        let span = instruction.span;
-        errors.push(ErrorWithSpan { error, span });
+        let span = instruction.range;
+        errors.push(ErrorWithRange { error, range: span });
     }
     if !index.return_type().matches(&Type::Int) {
-        let span = index.span;
-        let ins = parsing_context.slice(span).into();
+        let range = index.range;
+        let ins = parsing_context.slice(range.clone()).into();
         let error = CannotIndexWith { ins }.into();
-        errors.push(ErrorWithSpan { error, span });
+        errors.push(ErrorWithRange { error, range });
     }
     At {
         instruction: instruction.instruction,

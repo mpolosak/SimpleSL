@@ -1,12 +1,12 @@
 use crate::{
     self as simplesl, BinOperator, Code, Interpreter,
-    errors::{CannotDo2, ErrorWithSpan},
+    errors::{CannotDo2, ErrorWithRange},
     function::Function,
     instruction::{
-        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithSpan, Recreate,
+        BaseInstruction, Exec, ExecResult, Instruction, InstructionWithRange, Recreate,
         local_variable::LocalVariables,
     },
-    source_span_from_2_spans,
+    range_from_2_ranges,
     variable::{ReturnType, Type, Typed, Variable},
 };
 use simplesl_macros::var_type;
@@ -39,9 +39,9 @@ pub struct Map {
 
 impl Map {
     pub fn create_instruction(
-        lhs: InstructionWithSpan,
-        rhs: InstructionWithSpan,
-        errors: &mut Vec<ErrorWithSpan>,
+        lhs: InstructionWithRange,
+        rhs: InstructionWithRange,
+        errors: &mut Vec<ErrorWithRange>,
     ) -> Instruction {
         let lhs_type = lhs.return_type();
         let rhs_type = rhs.return_type();
@@ -52,8 +52,8 @@ impl Map {
                 rhs: rhs_type,
             }
             .into();
-            let span = source_span_from_2_spans(&lhs.span, &rhs.span);
-            errors.push(ErrorWithSpan { error, span });
+            let span = range_from_2_ranges(&lhs.range, &rhs.range);
+            errors.push(ErrorWithRange { error, range: span });
         }
         Self {
             lhs: lhs.instruction,
