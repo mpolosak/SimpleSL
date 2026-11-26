@@ -30,6 +30,7 @@ pest.workspace = true
 simplesl_parser.workspace = true
 unescaper.workspace = true
 itertools.workspace = true
+codespan-reporting = "0.13"
 
 [dev-dependencies]
 markdown = "1.0"

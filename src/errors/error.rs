@@ -1,4 +1,12 @@
 use crate::{BinOperator, function::Param, unary_operator::UnaryOperator, variable::Type};
+use codespan_reporting::{
+    diagnostic::{Diagnostic, Label},
+    files::SimpleFile,
+    term::{
+        self,
+        termcolor::{ColorChoice, StandardStream},
+    },
+};
 use derive_more::{Display, From};
 use itertools::join;
 use match_any::match_any;
@@ -18,6 +26,15 @@ pub struct ErrorsWithSource {
 }
 
 impl std::error::Error for ErrorsWithSource {}
+
+impl ErrorsWithSource {
+    pub fn report(&self) {
+        let file = SimpleFile::new(self.source.name.as_ref(), self.source.content.as_ref());
+        for error in self.errors.iter() {
+            error.report(&file);
+        }
+    }
+}
 
 #[derive(Debug, PartialEq)]
 pub struct Source {
@@ -43,6 +60,24 @@ impl Source {
 pub struct ErrorWithRange {
     pub error: Error,
     pub range: Range<usize>,
+}
+
+impl ErrorWithRange {
+    fn report(&self, file: &SimpleFile<&str, &str>) {
+        if let Error::ErrorsWithSource(error) = &self.error {
+            error.report();
+            return;
+        }
+
+        let diagnostic = Diagnostic::error().with_message("error").with_label(
+            Label::primary((), self.range.clone()).with_message(self.error.to_string()),
+        );
+
+        let writer = StandardStream::stderr(ColorChoice::Always);
+        let config = codespan_reporting::term::Config::default();
+
+        term::emit_to_write_style(&mut writer.lock(), &config, file, &diagnostic).unwrap();
+    }
 }
 
 impl std::error::Error for ErrorWithRange {}
