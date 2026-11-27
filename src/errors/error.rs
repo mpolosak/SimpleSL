@@ -1,4 +1,4 @@
-use crate::{BinOperator, function::Param, unary_operator::UnaryOperator, variable::Type};
+use crate::{BinOperator, Source, function::Param, unary_operator::UnaryOperator, variable::Type};
 use codespan_reporting::{
     diagnostic::{Diagnostic, Label},
     files::SimpleFile,
@@ -19,7 +19,7 @@ use std::{
 };
 
 #[derive(Debug, Display, PartialEq)]
-#[display("Errors in {} {{\n{}\n}}", source.name(), join(errors, "\n"))]
+#[display("Errors in {} {{\n{}\n}}", source.name().unwrap_or("code"), join(errors, "\n"))]
 pub struct ErrorsWithSource {
     pub source: Source,
     pub errors: Vec<ErrorWithRange>,
@@ -29,29 +29,10 @@ impl std::error::Error for ErrorsWithSource {}
 
 impl ErrorsWithSource {
     pub fn report(&self) {
-        let file = SimpleFile::new(self.source.name.as_ref(), self.source.content.as_ref());
+        let file = SimpleFile::new(self.source.name().unwrap_or("code"), self.source.content());
         for error in self.errors.iter() {
             error.report(&file);
         }
-    }
-}
-
-#[derive(Debug, PartialEq)]
-pub struct Source {
-    name: String,
-    content: String,
-}
-
-impl Source {
-    pub fn new(name: impl Into<String>, content: String) -> Self {
-        Self {
-            name: name.into(),
-            content,
-        }
-    }
-
-    pub fn name(&self) -> &str {
-        &self.name
     }
 }
 

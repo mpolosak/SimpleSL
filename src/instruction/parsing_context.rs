@@ -1,5 +1,6 @@
 use crate::{
-    errors::{ErrorWithRange, ErrorsWithSource, Source},
+    Source,
+    errors::{ErrorWithRange, ErrorsWithSource},
     instruction::{
         Instruction,
         local_variable::{FunctionInfo, LocalVariableMap, LocalVariables},

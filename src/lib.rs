@@ -4,6 +4,7 @@ mod errors;
 pub mod function;
 mod instruction;
 mod interpreter;
+mod source;
 pub mod stdlib;
 mod to_result;
 mod unary_operator;
@@ -17,7 +18,7 @@ use std::{
 };
 pub use {
     bin_operator::BinOperator, code::Code, errors::Error, errors::ExecError,
-    interpreter::Interpreter, to_result::ToResult,
+    interpreter::Interpreter, source::Source, to_result::ToResult,
 };
 
 pub fn join<'a, T, I>(items: I, separator: &str) -> String

@@ -1,6 +1,6 @@
 use crate::{
-    ExecError, Interpreter,
-    errors::{ErrorsWithSource, Source},
+    ExecError, Interpreter, Source,
+    errors::ErrorsWithSource,
     instruction::{
         Exec, ExecStop, Instruction, local_variable::LocalVariables,
         parsing_context::ParsingContext, recreate_instructions,
@@ -19,13 +19,12 @@ pub struct Code {
 impl Code {
     pub fn parse(
         interpreter: &Interpreter,
-        script: impl Into<String>,
+        source: impl Into<Source>,
     ) -> Result<Self, ErrorsWithSource> {
-        let source = script.into();
-        let parse = match SimpleSLParser::parse(Rule::input, &source) {
+        let source = source.into();
+        let parse = match SimpleSLParser::parse(Rule::input, source.content()) {
             Ok(parse) => parse,
             Err(error) => {
-                let source = Source::new("name", source);
                 return Err(ErrorsWithSource {
                     source,
                     errors: [error.into()].into(),
@@ -34,7 +33,7 @@ impl Code {
         };
         let local_variables = LocalVariables::new(interpreter);
         let mut parsing_context = ParsingContext {
-            source: &source,
+            source: source.content(),
             local_variables,
         };
         let mut errors = Vec::new();
@@ -42,7 +41,6 @@ impl Code {
             .map(|pair| Instruction::new(pair, &mut parsing_context, &mut errors))
             .collect();
         if !errors.is_empty() {
-            let source = Source::new("name", source);
             return Err(ErrorsWithSource { source, errors });
         }
         let mut local_variables = LocalVariables::new(interpreter);
