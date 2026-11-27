@@ -29,7 +29,10 @@ impl std::error::Error for ErrorsWithSource {}
 
 impl ErrorsWithSource {
     pub fn report(&self) {
-        let file = SimpleFile::new(self.source.name().unwrap_or("code"), self.source.content());
+        let file = SimpleFile::new(
+            self.source.name().unwrap_or("default"),
+            self.source.content(),
+        );
         for error in self.errors.iter() {
             error.report(&file);
         }
@@ -50,9 +53,9 @@ impl ErrorWithRange {
             return;
         }
 
-        let diagnostic = Diagnostic::error().with_message("error").with_label(
-            Label::primary((), self.range.clone()).with_message(self.error.to_string()),
-        );
+        let diagnostic = Diagnostic::error()
+            .with_message(self.error.to_string())
+            .with_label(Label::primary((), self.range.clone()));
 
         let writer = StandardStream::stderr(ColorChoice::Always);
         let config = codespan_reporting::term::Config::default();
