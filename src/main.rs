@@ -1,5 +1,5 @@
 use rustyline::{DefaultEditor, error::ReadlineError};
-use simplesl::{Code, Interpreter, variable::Variable};
+use simplesl::{Code, Interpreter, Source, variable::Variable};
 use std::{env, fs, process::ExitCode};
 
 fn main() -> ExitCode {
@@ -49,7 +49,7 @@ fn run_from_file(path: &str) -> ExitCode {
 }
 
 fn parse_exec_print_error(interpreter: &mut Interpreter, script: &str) -> Option<Variable> {
-    let code = Code::parse(interpreter, script)
+    let code = Code::parse(interpreter, Source::new("REPL", script))
         .inspect_err(|error| error.report())
         .ok()?;
     code.exec_unscoped(interpreter)
